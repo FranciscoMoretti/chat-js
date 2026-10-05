@@ -49,6 +49,7 @@ beforeEach(() => {
   mocks.state.mockResolvedValue({ rootId: id, state: "bound" });
   mocks.remove.mockResolvedValue({ rootId: id });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("cleans an unaccepted copy with never-dispatched proof instead of native retiremen uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -63,6 +64,8 @@ it("cleans an unaccepted copy with never-dispatched proof instead of native reti
   expect(mocks.removeCopy).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("runs owner-authorized family deletion with a server-controlled worker root") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -74,6 +77,8 @@ it("runs owner-authorized family deletion with a server-controlled worker root",
   expect(response.headers.get("cache-control")).toBe("no-store");
   expect(mocks.remove).toHaveBeenCalledWith("owner", id, process.cwd());
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("hides unavailable and foreign bindings without cleanup") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -86,6 +91,8 @@ it("hides unavailable and foreign bindings without cleanup", async () => {
   expect(mocks.state).toHaveBeenCalledWith("owner", id);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): it("requires login and valid coordinates") uses 401, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -102,6 +109,8 @@ it("requires login and valid coordinates", async () => {
   expect(resolvedResult4.status).toBe(400);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects cross-origin mutation before any cleanup") uses 403 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -114,6 +123,8 @@ it("rejects cross-origin mutation before any cleanup", async () => {
   expect(resolvedResult6.status).toBe(403);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("refuses unsupported provider configuration before revoking access") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -128,6 +139,8 @@ it("refuses unsupported provider configuration before revoking access", async ()
   expect(resolvedResult8.status).toBe(503);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("reports pending erasure without leaking internal failure details") uses 202 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -144,6 +157,8 @@ it("reports pending erasure without leaking internal failure details", async () 
     status: "pending",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not call an unstarted operation pending") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -153,6 +168,8 @@ it("does not call an unstarted operation pending", async () => {
   const resolvedResult9 = await DELETE(request(), context);
   expect(resolvedResult9.status).toBe(409);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 it("returns completed tombstones idempotently and GET never resumes cleanup", async () => {
   mocks.state.mockResolvedValue({ rootId: id, state: "deleted" });
@@ -174,3 +191,4 @@ it("returns completed tombstones idempotently and GET never resumes cleanup", as
   });
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

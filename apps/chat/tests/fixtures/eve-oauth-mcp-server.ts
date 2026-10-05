@@ -92,6 +92,7 @@ function sendJson(
     .writeHead(status, { "content-type": "application/json" })
     .end(JSON.stringify(value));
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startEveOAuthMcpServer's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
@@ -399,6 +400,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     tokenResult: eveOAuthMcpTokenResultMarker,
   };
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-oauth-mcp-server.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

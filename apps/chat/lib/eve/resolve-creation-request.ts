@@ -19,6 +19,7 @@ import { finishCreation, readCreationRequest } from "./pending-create";
 /* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveCreationRequest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
 
  * jsdoc/require-param (#534): resolveCreationRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -107,4 +108,5 @@ export const resolveCreationRequest = async (
   }
   return { ...binding, group: undefined };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

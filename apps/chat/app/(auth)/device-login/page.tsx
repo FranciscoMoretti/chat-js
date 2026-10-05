@@ -27,6 +27,7 @@ const DeviceLoginFallback = (): React.JSX.Element => (
   </div>
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DeviceLoginContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
@@ -57,6 +58,7 @@ const DeviceLoginContent = async ({
     </Suspense>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types --

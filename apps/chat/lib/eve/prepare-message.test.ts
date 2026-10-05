@@ -35,6 +35,7 @@ test("only accepts supported ChatJS attachment references", () => {
   ).toBe(false);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reads verified bytes from storage and rejects mismatched types and unsupported  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reads verified bytes from storage and rejects mismatched types and unsupported  uses 1025 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -69,4 +70,5 @@ test("reads verified bytes from storage and rejects mismatched types and unsuppo
     "does not support"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

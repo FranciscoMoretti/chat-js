@@ -40,6 +40,7 @@ const createToolUsage = () => {
     markUnknown: (): void => {
       unknown = true;
     },
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve totalUsd's awaited sequencing and rejected-Promise behavior. */
     async totalUsd() {
       await Promise.all(
         pending.splice(0).map(async (resolve) => {
@@ -52,11 +53,13 @@ const createToolUsage = () => {
       );
       return reported && !unknown ? total : undefined;
     },
+    /* oxlint-enable oxc/no-async-await */
   };
 };
 /* oxlint-enable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 type ToolUsage = ReturnType<typeof createToolUsage>;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeWithToolUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 max-statements (#512): executeWithToolUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): executeWithToolUsage accepts context: Pick<ToolContext, "abortSignal">; usage: ToolUsage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -81,14 +84,15 @@ const executeWithToolUsage = async <T extends ToolOutput>(
     return createToolError(costUsd);
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern targets support async iteration and native async callbacks; preserve asynchronous iteration, awaited sequencing, and rejection behavior in executeWithToolProgress. executeWithToolProgress returns AsyncGenerator<ToolResult<T>> and yield-delegates to ReadableStream asynchronous iteration; deleting async yields the wrong iterator protocol. */
 /* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 init-declarations (#507): executeWithToolProgress assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 jsdoc/require-param (#534): executeWithToolProgress's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 no-undefined (#519): executeWithToolProgress uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/promise-function-async (#606): executeWithToolProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
+typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Streaming alone needs a queue; accounting is shared.
  * @yields {object} Progress snapshots followed by the final usage receipt.
  */
@@ -123,6 +127,7 @@ const executeWithToolProgress = async function* executeWithToolProgress<
         }
       };
       try {
+        // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
         const result = await executeWithToolUsage({ abortSignal }, (usage) =>
           execute({ abortSignal, publish, usage })
         );
@@ -139,6 +144,7 @@ const executeWithToolProgress = async function* executeWithToolProgress<
   });
   yield* stream;
 };
-/* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types */
 export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
 export type { ToolUsage };

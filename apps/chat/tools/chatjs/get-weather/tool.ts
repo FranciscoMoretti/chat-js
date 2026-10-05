@@ -15,6 +15,7 @@ import { weatherInput, weatherResult } from "./schemas";
 
 const UNBILLED_TOOL_COST_USD = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getWeather's awaited sequencing and rejected-Promise behavior. */
 export const getWeather = defineTool({
   description: "Get the current weather at a location",
   execute: async (
@@ -38,3 +39,4 @@ export const getWeather = defineTool({
   inputSchema: weatherInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable oxc/no-async-await */

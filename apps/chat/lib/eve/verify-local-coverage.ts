@@ -45,6 +45,7 @@ const receiptSchema = z.strictObject({
   snapshotVersion: z.literal(2),
   version: z.literal(1),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyLocalEveFamilyCoverage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -150,4 +151,5 @@ export const verifyLocalEveFamilyCoverage = async (
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

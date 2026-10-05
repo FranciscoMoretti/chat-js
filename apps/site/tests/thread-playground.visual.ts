@@ -26,6 +26,7 @@ const output = fileURLToPath(
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- capture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const capture = async (page: Page, name: string): Promise<void> => {
   await page.getByTestId("thread-playground").screenshot({
@@ -35,6 +36,7 @@ const capture = async (page: Page, name: string): Promise<void> => {
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable node/no-process-env -- thread-playground.visual.ts: The scenario explicitly controls process environment inputs and restores them during cleanup. */

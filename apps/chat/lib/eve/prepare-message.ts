@@ -7,6 +7,7 @@ import { keyFromFileUrl } from "@/lib/file-url";
 import { loadEveModelDefinition } from "./model-selection";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable max-statements, no-continue --
@@ -66,4 +67,5 @@ export const prepareEveMessage = async (
   }
   return content;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-continue */

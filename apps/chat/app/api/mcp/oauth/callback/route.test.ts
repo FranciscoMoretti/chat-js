@@ -73,6 +73,7 @@ beforeEach(() => {
     state: "state",
   };
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -97,6 +98,8 @@ it("redirects an OAuth callback with an explicit setup error before accessing co
   );
   expect(mocks.getSession).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, unicorn/no-null --
@@ -128,6 +131,8 @@ it("provider cancellation deletes only pending state and returns a safe connecto
   expect(mocks.removeClient).toHaveBeenCalledWith("connector", "state");
   expect(mocks.invalidate).toHaveBeenCalledWith("connector");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   {     mcpConnectorId: "connector",     state: "state",     tokens: { access's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, unicorn/no-null */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -166,6 +171,8 @@ it.each([
     expect(mocks.invalidate).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable no-undefined, unicorn/no-null --
@@ -193,4 +200,5 @@ it("an attempt completed between lookup and deletion retains its client", async 
   expect(mocks.removeClient).not.toHaveBeenCalled();
   expect(mocks.invalidate).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined, unicorn/no-null */

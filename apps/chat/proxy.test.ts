@@ -16,6 +16,7 @@ vi.mock("@/lib/constants", () => ({ isPlaywrightTestEnvironment: false }));
 beforeEach(() => {
   mocks.session.mockResolvedValue(null);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 it("lets guest EVE conversations reach page-level ownership checks", async () => {
@@ -23,7 +24,8 @@ it("lets guest EVE conversations reach page-level ownership checks", async () =>
     await proxy(new NextRequest("http://localhost/chat/guest-conversation"))
   ).toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps registered-only pages behind login", async () => {
   for (const path of ["/project/private", "/chat/private/settings"]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
@@ -35,3 +37,4 @@ it("keeps registered-only pages behind login", async () => {
     );
   }
 });
+/* oxlint-enable oxc/no-async-await */

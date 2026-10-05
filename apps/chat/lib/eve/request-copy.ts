@@ -76,6 +76,7 @@ const copyFailureSchema = z.object({
   retryable: z.boolean().optional(),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCopyFailure's awaited sequencing and rejected-Promise behavior. */
 const readCopyFailure = async (
   response: ReadonlyNativeSurface<Response>
 ): Promise<EveCopyRequestError> => {
@@ -93,7 +94,7 @@ const readCopyFailure = async (
     failure.success ? failure.data.conversationId : undefined
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 const copyRequestError = (
   error: unknown,
   aborted: boolean
@@ -110,6 +111,7 @@ const copyRequestError = (
       );
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveCopy's awaited sequencing and rejected-Promise behavior. */
 const requestEveCopy = async (
   input: EveCopyInput
 ): Promise<z.output<typeof conversationBinding>> => {
@@ -129,6 +131,7 @@ const requestEveCopy = async (
     throw copyRequestError(error, signal.aborted);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 export {
   EveCopyRequestError,
   finishPendingEveCopy,

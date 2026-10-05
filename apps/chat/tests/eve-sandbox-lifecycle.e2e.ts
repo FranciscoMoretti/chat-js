@@ -51,6 +51,7 @@ import { testToolContext } from "./helpers/eve-tool-context";
  * no-magic-numbers (#517): for (const language of ["javascript", "python"] as cons uses 120_000, 30_000, 15_000, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 for (const language of ["javascript", "python"] as const) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`Sandbox SDK executes ${language} and removes the disposable resource`, async () => {
     test.setTimeout(120_000);
     const auth = resolveSandboxAuth();
@@ -101,7 +102,9 @@ for (const language of ["javascript", "python"] as const) {
       "Deleted sandbox must no longer be retrievable by its exact name"
     ).toBe(true);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -222,4 +225,5 @@ test("native sandbox ownership is durably released after real provider cleanup",
     }
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

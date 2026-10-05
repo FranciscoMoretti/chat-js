@@ -44,6 +44,7 @@ export const EveDocumentActions = ({
   disabled: boolean;
   run: ReactNode;
 }): React.JSX.Element => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copy's awaited sequencing and rejected-Promise behavior. */
   const copy = async (): Promise<void> => {
     try {
       const copied = documentUi[kind]?.copyContent?.(content) ?? content;
@@ -57,6 +58,7 @@ export const EveDocumentActions = ({
       );
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   let copyLabel = "Copy to clipboard";
   if (kind === "code") {
     copyLabel = "Copy code to clipboard";

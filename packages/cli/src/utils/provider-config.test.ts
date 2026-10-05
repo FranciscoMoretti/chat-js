@@ -18,6 +18,7 @@ import { gatewayConfigEdit, readProviderId } from "./provider-config";
 /* oxlint-enable sort-imports */
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async () => {
   await Promise.all(
@@ -26,6 +27,8 @@ afterEach(async () => {
       .map(async (root) => await rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 test("provider replacement recognizes literal wrappers and refuses unknown installed IDs", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-"));
@@ -42,6 +45,8 @@ test("provider replacement recognizes literal wrappers and refuses unknown insta
   await writeFile(file, "export const gatewayType = process.env.GATEWAY;");
   expect(readProviderId(root, "gateway")).rejects.toThrow("Cannot determine");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -103,6 +108,8 @@ test("gateway replacement edits only the active root config discriminator", asyn
     "literal ai.gateway"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],   ['{ ai: { gateway: "o's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -145,5 +152,6 @@ test.each([
     expect(await readFile(file, "utf-8")).toBe(original);
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */

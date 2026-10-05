@@ -51,6 +51,7 @@ interface ImageGenerationOptions {
   readonly modelProvider: Readonly<ToolModelProvider>;
 }
 type GeneratedImageResult = Required<z.infer<typeof generateImageResult>>;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve traditionalPrompt's awaited sequencing and rejected-Promise behavior. */
 const traditionalPrompt = async (
   options: Readonly<ImageGenerationOptions>
 ): Promise<string | { text: string; images: Buffer[] }> => {
@@ -69,6 +70,8 @@ const traditionalPrompt = async (
   );
   return { images: await collectEditImages(options), text: options.prompt };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeImage's awaited sequencing and rejected-Promise behavior. */
 const storeImage = async (
   options: Readonly<ImageGenerationOptions>,
   image: Readonly<{
@@ -101,6 +104,8 @@ const storeImage = async (
     prompt: options.prompt,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runGenerateImageTraditional's awaited sequencing and rejected-Promise behavior. */
 const runGenerateImageTraditional = async (
   options: Readonly<ImageGenerationOptions>,
   modelId: string
@@ -136,6 +141,7 @@ const runGenerateImageTraditional = async (
     { modelId, multimodal: false }
   );
 };
+/* oxlint-enable oxc/no-async-await */
 interface ImageContent {
   image: Readonly<Buffer>;
   type: "image";
@@ -144,6 +150,7 @@ interface TextContent {
   text: string;
   type: "text";
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multimodalContent's awaited sequencing and rejected-Promise behavior. */
 const multimodalContent = async (
   options: Readonly<ImageGenerationOptions>
 ): Promise<(ImageContent | TextContent)[]> => {
@@ -166,6 +173,8 @@ const multimodalContent = async (
     },
   ];
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeMultimodalImage's awaited sequencing and rejected-Promise behavior. */
 const storeMultimodalImage = async (
   options: Readonly<ImageGenerationOptions>,
   selection: Readonly<Extract<ImageModelSelection, { multimodal: true }>>,
@@ -197,6 +206,7 @@ const storeMultimodalImage = async (
     selection
   );
 };
+/* oxlint-enable oxc/no-async-await */
 const multimodalProviderOptions = (
   modelId: string
 ): {
@@ -210,6 +220,7 @@ const multimodalProviderOptions = (
     openai: { modalities: ["text", "image"] },
   }),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runGenerateImageMultimodal's awaited sequencing and rejected-Promise behavior. */
 const runGenerateImageMultimodal = async (
   options: Readonly<ImageGenerationOptions>,
   selection: Readonly<Extract<ImageModelSelection, { multimodal: true }>>
@@ -245,5 +256,6 @@ const runGenerateImageMultimodal = async (
   }
   return await storeMultimodalImage(options, selection, imageFile);
 };
+/* oxlint-enable oxc/no-async-await */
 export { runGenerateImageTraditional, runGenerateImageMultimodal };
 export type { ImageGenerationOptions, GeneratedImageResult, ImageStoreFile };

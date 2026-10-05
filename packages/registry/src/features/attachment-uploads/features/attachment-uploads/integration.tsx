@@ -41,6 +41,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   useEffect((): void => {
     currentCount.current = attachmentCount;
   }, [attachmentCount]);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve upload's awaited sequencing and rejected-Promise behavior. */
   const upload = async (files: File[]): Promise<void> => {
     if (lock.current || files.length === 0) {
       return;
@@ -83,6 +84,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       setUploadQueue([]);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const { getRootProps } = useDropzone({
     disabled: uploadQueue.length > 0,
     noClick: true,
@@ -90,6 +92,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
     onDrop: upload,
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     composer: (disabled: boolean) => ({
       input: (
@@ -138,6 +141,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     }),
     uploadQueue,
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

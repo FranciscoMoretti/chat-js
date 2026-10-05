@@ -36,6 +36,7 @@ interface RunOptions {
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectRejection's awaited sequencing and rejected-Promise behavior. */
 const expectRejection = async (
   operation: Readonly<Promise<unknown>>,
   messageFragment?: string
@@ -58,7 +59,8 @@ const expectRejection = async (
   }
   throw new Error("Expected the operation to reject.");
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -123,6 +125,7 @@ const run = async ({
   });
   return { calls, result };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
@@ -134,6 +137,7 @@ const run = async ({
 /* oxlint-disable eslint/no-magic-numbers -- preview database cleanup: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- preview database cleanup: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 describe("preview database cleanup", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("deletes only the exact closed-PR preview in the dedicated project", async (): Promise<void> => {
     const { calls } = await run();
     expect(calls).toEqual([
@@ -147,6 +151,8 @@ describe("preview database cleanup", (): void => {
       },
     ]);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("accepts root branches with null or absent parent_id beside the preview", async (): Promise<void> => {
     const absentParent = {
       created_at: rootBranch.created_at,
@@ -166,6 +172,8 @@ describe("preview database cleanup", (): void => {
       expect(calls[1]?.url).toEndWith("/br-preview");
     }
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])'s awaited sequencing and rejected-Promise behavior. */
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
     async (options): Promise<void> => {
@@ -173,6 +181,8 @@ describe("preview database cleanup", (): void => {
       expect(calls).toEqual([]);
     }
   );
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])'s awaited sequencing and rejected-Promise behavior. */
   it.each([{ stateBeforeDelete: "open" }, { openBeforeDelete: true }])(
     "preserves a preview whose PR use changes during lookup %j",
     async (options): Promise<void> => {
@@ -181,6 +191,8 @@ describe("preview database cleanup", (): void => {
       expect(result).toContain("Skipped");
     }
   );
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["2026-09-30T00:00:00Z", "invalid"])'s awaited sequencing and rejected-Promise behavior. */
   it.each(["2026-09-30T00:00:00Z", "invalid"])(
     "preserves recreated previews or unknown creation dates %s",
     async (created_at): Promise<void> => {
@@ -191,6 +203,8 @@ describe("preview database cleanup", (): void => {
       expect(result).toContain("Skipped");
     }
   );
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("finds later-page previews using the opaque next cursor", async (): Promise<void> => {
     const { calls, result } = await run({
       pages: [
@@ -201,6 +215,8 @@ describe("preview database cleanup", (): void => {
     expect(calls[1]?.url).toEndWith("?cursor=next%2Fpage%3F");
     expect(result).toContain("Deleted");
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("checks uniqueness across all pages and rejects looping pagination", async (): Promise<void> => {
     await expectRejection(
       run({
@@ -221,12 +237,16 @@ describe("preview database cleanup", (): void => {
       "repeated"
     );
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
     expect(absent.calls).toHaveLength(1);
     const concurrent = await run({ deleteStatus: 404 });
     expect(concurrent.result).toContain("Deleted");
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([     { ...preview, id: "br-quiet-pine-za1aryyz" },     { ...preview, parent_id: rootBranch.'s awaited sequencing and rejected-Promise behavior. */
   it.each([
     { ...preview, id: "br-quiet-pine-za1aryyz" },
     { ...preview, parent_id: rootBranch.parent_id },
@@ -240,10 +260,13 @@ describe("preview database cleanup", (): void => {
       await expectRejection(run({ branches: [branch] }), "Refusing");
     }
   );
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("rejects ambiguous branch names and reports API failure", async (): Promise<void> => {
     await expectRejection(run({ branches: [preview, preview] }), "ambiguous");
     await expectRejection(run({ deleteStatus: 403 }), "deletion failed (403)");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

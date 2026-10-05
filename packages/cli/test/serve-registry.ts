@@ -12,6 +12,7 @@ const [archive, addressFile] = process.argv.slice(2);
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const server = Bun.serve({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
   async fetch(request) {
     const path = new URL(request.url).pathname;
     if (path === "/contracts.tgz") {
@@ -39,6 +40,7 @@ const server = Bun.serve({
     }
     return Response.json(item);
   },
+  /* oxlint-enable oxc/no-async-await */
   hostname: "127.0.0.1",
   port: 0,
 });

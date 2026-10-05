@@ -76,6 +76,7 @@ export const ProjectDetailsDialog = ({
   const finalIcon = icon ?? DEFAULT_PROJECT_ICON;
   const finalColor = color ?? DEFAULT_PROJECT_COLOR;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitChanges's awaited sequencing and rejected-Promise behavior. */
   const submitChanges = async (): Promise<void> => {
     const trimmedName = name.trim();
 
@@ -107,7 +108,8 @@ export const ProjectDetailsDialog = ({
       onOpenChange(false);
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleSubmit's awaited sequencing and rejected-Promise behavior. */
   const handleSubmit = async (): Promise<void> => {
     setSubmitError("");
     try {
@@ -116,7 +118,7 @@ export const ProjectDetailsDialog = ({
       setSubmitError("Could not save project. Try again.");
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       setName(initialName ?? "");

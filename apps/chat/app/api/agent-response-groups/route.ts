@@ -13,6 +13,7 @@ import { createEveResponseGroup } from "@/lib/eve/response-group";
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
@@ -78,4 +79,5 @@ export const POST = async (request: Request): Promise<Response> => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */

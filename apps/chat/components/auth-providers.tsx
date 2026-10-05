@@ -134,6 +134,7 @@ export const SocialAuthProviders = ({
     return <ElectronBrowserSignIn buttonLabel={electronBrowserLabel} />;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve signIn's awaited sequencing and rejected-Promise behavior. */
   const signIn = async (provider: SocialAuthProvider): Promise<void> => {
     try {
       const result = await authClient.signIn.social({
@@ -154,7 +155,7 @@ export const SocialAuthProviders = ({
       toast.error("Couldn't start sign-in. Please try again.");
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <div className="space-y-2">
       {providers.map(({ icon: Icon, id, label }) => {

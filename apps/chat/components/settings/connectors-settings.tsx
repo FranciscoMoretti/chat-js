@@ -347,6 +347,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
 
   const queryKey = trpc.mcp.list.queryKey();
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: deleteConnector }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
@@ -379,7 +380,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
   const { mutate: disconnectConnector, isPending: isDisconnecting } =
     useMutation(
       trpc.mcp.disconnect.mutationOptions({

@@ -134,6 +134,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
   private initializationPromise: Promise<void> | null = null;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeOAuth's awaited sequencing and rejected-Promise behavior. */
   // Prevent concurrent initialization - return existing promise if in progress
 
   private async initializeOAuth(): Promise<void> {
@@ -153,7 +154,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.initializationPromise = null;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve doInitializeOAuth's awaited sequencing and rejected-Promise behavior. */
   // If state was provided (e.g., from callback), adopt it
 
   private async doInitializeOAuth(): Promise<void> {
@@ -189,7 +191,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     });
     this.initialized = true;
   }
-
+  /* oxlint-enable oxc/no-async-await */
   private static decodeStoredCredentials<Result>(
     schema: Readonly<Pick<z.ZodType<Result>, "safeParse">>,
     value: unknown,
@@ -208,11 +210,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return result.data;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAuthData's awaited sequencing and rejected-Promise behavior. */
   private async getAuthData() {
     await this.initializeOAuth();
     return this.cachedAuthData;
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateAuthData's awaited sequencing and rejected-Promise behavior. */
   private async updateAuthData(data: {
     tokens?: OAuthTokens | null;
     clientInfo?: OAuthClientInformationFull | null;
@@ -229,7 +233,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     return this.cachedAuthData;
   }
-
+  /* oxlint-enable oxc/no-async-await */
   public get redirectUrl(): string {
     return this.config.clientMetadata.redirect_uris[0];
   }
@@ -242,6 +246,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     return this.currentOAuthState;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve clientInformation's awaited sequencing and rejected-Promise behavior. */
   public async clientInformation(): Promise<
     OAuthClientInformationFull | undefined
   > {
@@ -288,7 +293,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       return clientInfo;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveClientInformation's awaited sequencing and rejected-Promise behavior. */
   public async saveClientInformation(
     clientCredentials: OAuthClientInformationFull
   ): Promise<void> {
@@ -314,7 +320,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     })();
     await this.saveClientInformationPromise;
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tokens's awaited sequencing and rejected-Promise behavior. */
   public async tokens(): Promise<OAuthTokens | undefined> {
     const authData = await this.getAuthData();
     return McpOAuthClientProvider.decodeStoredCredentials(
@@ -323,7 +330,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       "tokens"
     );
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
   /** The SDK uses this for transport and OAuth requests, including later 401 refreshes. */
   public fetch = async (
     input: string | URL | Request,
@@ -401,7 +409,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       request.signal
     );
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveTokens's awaited sequencing and rejected-Promise behavior. */
   public async saveTokens(tokens: OAuthTokens): Promise<void> {
     if (this.committedRefreshes > 0) {
       // Refresh was saved while holding the cross-process lock. The SDK's
@@ -418,7 +427,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       tokens,
     });
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve redirectToAuthorization's awaited sequencing and rejected-Promise behavior. */
   public async redirectToAuthorization(authorizationUrl: URL): Promise<void> {
     // If the SDK calls redirect twice, keep the first URL stable.
     authorizationUrl.searchParams.set("state", this.state());
@@ -432,7 +442,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 
     await this.config.onRedirectToAuthorization(authorizationUrl);
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveCodeVerifier's awaited sequencing and rejected-Promise behavior. */
   public async saveCodeVerifier(pkceVerifier: string): Promise<void> {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
@@ -480,7 +491,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     })();
     await this.saveCodeVerifierPromise;
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve codeVerifier's awaited sequencing and rejected-Promise behavior. */
   public async codeVerifier(): Promise<string> {
     const authData = await this.getAuthData();
     log.info(
@@ -495,7 +507,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     return authData.codeVerifier;
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve adoptState's awaited sequencing and rejected-Promise behavior. */
   /**
    * Adopt state from another instance (multi-instance support).
    * Used when the callback needs to reconcile with an existing session.
@@ -545,7 +558,8 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     this.cachedAuthData = session;
     this.initialized = true;
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve invalidateCredentials's awaited sequencing and rejected-Promise behavior. */
   public async invalidateCredentials(
     scope: "all" | "client" | "tokens" | "verifier"
   ): Promise<void> {
@@ -573,6 +587,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.cachedAuthorizationUrl = null;
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

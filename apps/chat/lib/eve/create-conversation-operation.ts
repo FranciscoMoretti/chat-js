@@ -43,6 +43,7 @@ import {
 
 const logger = createModuleLogger("eve/admission");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveConversationOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * init-declarations (#507): createEveConversationOperation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createEveConversationOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -144,4 +145,5 @@ export const createEveConversationOperation = async (
     preparedMessage
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

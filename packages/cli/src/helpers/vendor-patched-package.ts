@@ -46,6 +46,7 @@ const isInstalledManifest = (value: unknown): value is InstalledManifest =>
   typeof value.name === "string" &&
   typeof value.version === "string";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readVendoringMetadata's awaited sequencing and rejected-Promise behavior. */
 const readVendoringMetadata = async (
   input: VendorInput
 ): Promise<{ installed: InstalledManifest; manifest: TemplateManifest }> => {
@@ -69,7 +70,7 @@ const readVendoringMetadata = async (
   // unrelated template fields remain intact when the selected dependency is pinned.
   return { installed, manifest };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const formattedManifest = (value: unknown): string =>
   // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer preserves every metadata field while its third argument requests deterministic two-space formatting.
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
@@ -77,6 +78,7 @@ const formattedManifest = (value: unknown): string =>
 const tarballName = (packageName: string, version: string): string =>
   `${packageName.replace(SCOPED_PACKAGE_PREFIX, "").replaceAll("/", "-")}-${version}.tgz`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve packMaintainedArchive's awaited sequencing and rejected-Promise behavior. */
 const packMaintainedArchive = async (
   staging: string,
   input: VendorInput,
@@ -107,7 +109,8 @@ const packMaintainedArchive = async (
   );
   return archiveName;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vendorPatchedPackage's awaited sequencing and rejected-Promise behavior. */
 /**
  * Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn.
  * @param {VendorInput} input The installed package, maintained patch and template destination.
@@ -136,3 +139,4 @@ export const vendorPatchedPackage = async (
     await rm(temporary, { force: true, recursive: true });
   }
 };
+/* oxlint-enable oxc/no-async-await */

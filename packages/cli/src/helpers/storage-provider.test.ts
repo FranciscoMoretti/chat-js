@@ -62,6 +62,7 @@ describe("storage registry integration", () => {
       expect(() => parseStorageOptions(input)).toThrow("JSON object");
     }
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("accepts external storage and configures it without touching source or dependencies", async () => {
     const cwd = await mkdtemp(pathModule.join(tmpdir(), "chatjs-storage-"));
     try {
@@ -123,6 +124,7 @@ describe("storage registry integration", () => {
       await rm(cwd, { force: true, recursive: true });
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

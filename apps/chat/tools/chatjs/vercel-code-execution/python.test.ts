@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
   Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -67,4 +68,5 @@ it.each([0, 1])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

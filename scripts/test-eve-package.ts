@@ -36,6 +36,7 @@ const manifestPaths = [
   "apps/chat/package.json",
   "apps/chat/tests/eve-fixture/package.json",
 ];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve originals's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable saves manifests and lockfile contents before temporary edits.
 const originals = await Promise.all(
   [...manifestPaths, "bun.lock"].map(async (file) => ({
@@ -43,6 +44,7 @@ const originals = await Promise.all(
     file,
   }))
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable node/no-sync -- run: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 const run = (args: readonly string[], cwd = root): Buffer =>
   execFileSync("bun", args, { cwd, stdio: "inherit" });

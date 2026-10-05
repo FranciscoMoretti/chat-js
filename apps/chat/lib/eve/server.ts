@@ -22,6 +22,7 @@ const assertEveConfigured = (): void => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRequest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params, typescript/prefer-readonly-parameter-types -- Existing exported request API accepts owner, path, native request options and optional model/tool headers. Fetch RequestInit accepts mutable header tuple arrays and body streams; a deep readonly wrapper is not assignable to the native fetch contract. */
 const eveRequest = async (
   owner: string,
@@ -53,5 +54,6 @@ const eveRequest = async (
     redirect: "error",
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, typescript/prefer-readonly-parameter-types */
 export { assertEveConfigured, eveRequest };

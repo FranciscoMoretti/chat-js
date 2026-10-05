@@ -45,6 +45,7 @@ import {
 
 const eveProcedure = protectedProcedure;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveOwnedProcedure's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): eveOwnedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): eveOwnedProcedure intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -60,6 +61,8 @@ const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   }
   return await next({ ctx: { eveOwnerId: ownerId } });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -252,4 +255,5 @@ export const eveRouter = createTRPCRouter({
         await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

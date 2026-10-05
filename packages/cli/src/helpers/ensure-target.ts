@@ -15,6 +15,7 @@ const rejectTarget = (messages: readonly string[]): never => {
   process.exit(FAILURE_EXIT_CODE);
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureTargetEmpty's awaited sequencing and rejected-Promise behavior. */
 export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   const targetStats = await lstat(targetDir).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -43,3 +44,4 @@ export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
     ]);
   }
 };
+/* oxlint-enable oxc/no-async-await */

@@ -21,6 +21,7 @@ vi.mock("shiki", () => ({
 /* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations -- code-block.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state;  */
 
 test("an older empty highlight cannot block streamed code until remount", async () => {
@@ -59,4 +60,5 @@ test("an older empty highlight cannot block streamed code until remount", async 
     pending.clear();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations */

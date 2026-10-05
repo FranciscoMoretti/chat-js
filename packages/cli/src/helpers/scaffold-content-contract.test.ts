@@ -10,6 +10,7 @@ import path from "node:path";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { normalizeScaffoldContent } from "./scaffold-content";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 const createFixture = async (
@@ -35,7 +36,7 @@ const createFixture = async (
   );
   return directory;
 };
-
+/* oxlint-enable oxc/no-async-await */
 const sourceManifest =
   '{"z_extension":{"keep":["nested"]},"dependencies":{"keep":"^1","diff":"^1","@lexical/react":"^1","@lexical/list":"^1"},"devDependencies":{"pg":"^1","retain":"^1"},"scripts":{"keep":"command","test:tools:live":"bad"},"overrides":{"evalite":"^1","keep":{"nested":"value"}}}';
 const normalizedManifest = `{
@@ -84,6 +85,7 @@ const normalizedTsConfig = `{
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("normalizes the original JSON objects while preserving extensions and property order", async () => {
   const directory = await createFixture(sourceManifest, sourceTsConfig);
   try {
@@ -98,7 +100,8 @@ test("normalizes the original JSON objects while preserving extensions and prope
     await rm(directory, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preserves optional null maps instead of replacing or dropping their own fields", async () => {
   const directory = await createFixture(
     '{"z_extension":"keep","dependencies":null,"devDependencies":null,"scripts":null,"overrides":null}'
@@ -118,7 +121,7 @@ test("preserves optional null maps instead of replacing or dropping their own fi
     await rm(directory, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
 const invalidManifests = [
   "[]",
   "null",
@@ -128,6 +131,7 @@ const invalidManifests = [
   '{"scripts":[]}',
 ] as const;
 for (const manifest of invalidManifests) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`rejects invalid template map shape before rewriting ${manifest}`, async () => {
     const directory = await createFixture(manifest);
     try {
@@ -144,4 +148,5 @@ for (const manifest of invalidManifests) {
       await rm(directory, { force: true, recursive: true });
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }

@@ -27,6 +27,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -64,6 +65,8 @@ test("file identity survives changing its private storage location", async () =>
     await db.delete(user).where(eq(user.id, owner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
@@ -113,4 +116,5 @@ test("document migration backfills owned attachments and retention from existing
     expect([...references]).toEqual([{ key: image }, { key: video }]);
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */

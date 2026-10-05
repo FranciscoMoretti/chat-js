@@ -37,6 +37,7 @@ import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { readPublicEveCopySource } from "./public-copy-source";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareCopyReservation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
@@ -88,6 +89,8 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -155,4 +158,5 @@ export const saveEveCopyOperation = async (
     createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

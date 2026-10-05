@@ -17,6 +17,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve definitions's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line node/no-top-level-await -- Vitest awaits hoisted tool definitions before applying the tool-registry mocks that consume them.
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
@@ -31,13 +32,14 @@ const definitions = await vi.hoisted(async () => {
     }),
   };
 });
-
+/* oxlint-enable oxc/no-async-await */
 vi.mock("../../tools/chatjs/tools", () => ({ tools: definitions }));
 /* oxlint-disable id-length, typescript/explicit-function-return-type --
  * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 vi.mock("./turn-tools", () => ({ filterEveTools: <T>(tools: T) => tools }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("installed and custom definitions retain their native policies and concrete defi uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -60,6 +62,8 @@ test("installed and custom definitions retain their native policies and concrete
   expect(Object.values(result)[0]).toBe(definitions.customEcho);
   expect(state.update).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -135,4 +139,5 @@ test("steps retain only current image inputs, not the conversation history", asy
     lastGeneratedImage: next?.lastGeneratedImage,
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

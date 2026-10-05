@@ -184,6 +184,7 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     );
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("uses only the host's fallback snapshot after a discovery failure", async () => {
     const requested: string[] = [];
     const gateway = adapter.create({
@@ -199,5 +200,6 @@ describe.each(adapters)("$name gateway contract", (adapter) => {
     expect(await gateway.fetchModels()).toEqual([]);
     expect(requested).toEqual([adapter.name]);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable unicorn/no-null */

@@ -10,6 +10,7 @@ import path from "node:path";
 
 import { resolvePackageDirectory } from "./resolve-package-directory";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("resolves a non-hoisted package from the workspace that declares it", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-package-resolution-"));
   const app = path.join(root, "apps", "chat");
@@ -47,3 +48,4 @@ it("resolves a non-hoisted package from the workspace that declares it", async (
     await rm(root, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */

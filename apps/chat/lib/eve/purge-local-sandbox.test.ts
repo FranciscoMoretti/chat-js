@@ -42,6 +42,7 @@ beforeEach(() => {
   remove.mockReset();
   mocks.destroySandbox.mockReset();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -51,6 +52,8 @@ afterEach(async () => {
     await rm(directory, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type --
  * max-statements (#512): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -91,6 +94,8 @@ const fixture = async (letter = "a") => {
     snapshotName,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type */
 
 test("retains identities through provider failure and treats only explicit missing snapshots as removed", async () => {
@@ -118,7 +123,8 @@ test("retains identities through provider failure and treats only explicit missi
     errors: [expect.objectContaining({ message: "runtime library not found" })],
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("validates all records before deletion and rejects another session or shared tem keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("validates all records before deletion and rejects another session or shared tem uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -146,6 +152,8 @@ test("validates all records before deletion and rejects another session or share
   expect(remove).not.toHaveBeenCalled();
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -186,6 +194,8 @@ test("validates the whole family and removes all VMs before resolving snapshot d
     parent.snapshotName,
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -235,6 +245,8 @@ test("retains resources created before metadata and across replacements", async 
   );
   expect(mocks.destroySandbox).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -279,4 +291,5 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(mocks.destroySandbox).not.toHaveBeenCalled();
   expect(remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */

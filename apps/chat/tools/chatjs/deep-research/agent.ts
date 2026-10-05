@@ -8,6 +8,7 @@ import { getDeepResearchConfig } from "./configuration";
 /* oxlint-enable sort-imports */
 
 type Phase = "research" | "compression" | "final_report";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve defineResearchAgent's awaited sequencing and rejected-Promise behavior. */
 export const defineResearchAgent = (
   phase: Phase
 ): DefinedAgent<{
@@ -31,3 +32,4 @@ export const defineResearchAgent = (
     }),
     tool: false,
   });
+/* oxlint-enable oxc/no-async-await */

@@ -107,6 +107,7 @@ const ResponseStatus = ({
 const ThreadInstallCommand = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyCommand's awaited sequencing and rejected-Promise behavior. */
   const copyCommand = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(INSTALL_COMMAND);
@@ -116,7 +117,7 @@ const ThreadInstallCommand = (): React.JSX.Element => {
       setCopied(false);
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <div className="border-border bg-card mt-8 max-w-3xl border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
@@ -681,6 +682,7 @@ const PlaygroundSession = (): React.JSX.Element => {
   });
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendDraft's awaited sequencing and rejected-Promise behavior. */
   const sendDraft = async (
     input?: string,
     count = responseCount
@@ -727,7 +729,8 @@ const PlaygroundSession = (): React.JSX.Element => {
       );
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve branchFrom's awaited sequencing and rejected-Promise behavior. */
   const branchFrom = async (messageId: string): Promise<void> => {
     setPlaygroundError(null);
     try {
@@ -755,7 +758,7 @@ const PlaygroundSession = (): React.JSX.Element => {
       );
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <div className={styles.playground} data-testid="thread-playground">
       <div className="border-border flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3">

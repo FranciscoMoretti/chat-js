@@ -11,6 +11,7 @@ import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { eveRequest } from "./server";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSessionMappingError } from "./session-mapping-error";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertNativeReceipt's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable init-declarations, max-params, max-statements, no-magic-numbers -- * init-declarations (#507): assertNativeReceipt assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -54,6 +55,8 @@ const assertNativeReceipt = async (
     throw new EveSessionMappingError("binding_conflict");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveConversationScope's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-params, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-params, max-statements, typescript/strict-boolean-expressions -- * max-params (#511): resolveEveConversationScope keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -115,4 +118,5 @@ export const resolveEveConversationScope = async (
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
   return { conversationId: row.id, ownerId };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, typescript/strict-boolean-expressions */

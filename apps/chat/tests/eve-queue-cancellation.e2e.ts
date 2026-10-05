@@ -21,6 +21,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue cancellation acceptance requires local Postgres.");
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * max-lines-per-function (#510): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -99,4 +100,5 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     vi.unstubAllEnvs();
   }
 }, 15_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */

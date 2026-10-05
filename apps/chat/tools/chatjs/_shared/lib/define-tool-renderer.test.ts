@@ -23,6 +23,7 @@ import type * as ChatjsUI from "@/tools/chatjs/ui";
 vi.mock("@/components/eve/eve-document-tool", () => ({
   EveDocumentTool: () => null,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
@@ -57,6 +58,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
     },
   };
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params --

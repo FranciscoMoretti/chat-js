@@ -37,6 +37,7 @@ type ResearchExecution = Readonly<{
 }>;
 
 const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchFirecrawl's awaited sequencing and rejected-Promise behavior. */
 const searchFirecrawl = async ({
   query,
   maxResults,
@@ -63,7 +64,8 @@ const searchFirecrawl = async ({
     })
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve webSearch's awaited sequencing and rejected-Promise behavior. */
 export const webSearch = defineTool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
 
@@ -106,3 +108,4 @@ Avoid:
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable oxc/no-async-await */

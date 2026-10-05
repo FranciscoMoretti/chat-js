@@ -25,6 +25,7 @@ type DownloadImplementation = (
   }>
 ) => Promise<AssetDownloadResult>;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve defaultDownload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): defaultDownload keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): defaultDownload uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -67,6 +68,7 @@ const defaultDownload = async ({
   const arrayBuffer = await response.arrayBuffer();
   return { data: new Uint8Array(arrayBuffer), mediaType: contentType };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
@@ -101,6 +103,7 @@ const toHttpUrl = (value: unknown): URL | null => {
   }
   return null;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve downloadAssetsFromModelMessages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
@@ -152,6 +155,7 @@ const downloadAssetsFromModelMessages = async (
     )
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -208,6 +212,7 @@ const mapImagePart = (
   }
   return part;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceFilePartUrlByBinaryDataInMessages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -279,6 +284,7 @@ const replaceFilePartUrlByBinaryDataInMessages = async (
     .filter((message) => message.role === "system");
   return [...leadingSystemMessages, ...availableMessages.slice(firstUserIndex)];
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { replaceFilePartUrlByBinaryDataInMessages };
 export type { DownloadImplementation };

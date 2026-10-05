@@ -43,6 +43,7 @@ type ReservedResponseGroup = Omit<
   inputHash: string;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveGroupRow's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): reserveGroupRow keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -126,6 +127,7 @@ const reserveGroupRow = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: reserveGroupRow has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return group;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -147,6 +149,7 @@ const requireGroup = (
     inputHash: result.inputHash,
   };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): reserveEveResponseGroup accepts value: z.infer<typeof eveResponseGroupInput>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -167,6 +170,8 @@ const reserveEveResponseGroup = async (
   );
   return requireGroup(result);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveResponseGroupInTransaction's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --typescript/prefer-readonly-parameter-types (#565): reserveEveResponseGroupInTransaction accepts tx: ResponseGroupTransaction; value: z.infer<typeof eveResponseGroupInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -184,6 +189,8 @@ const reserveEveResponseGroupInTransaction = async (
   value: z.infer<typeof eveResponseGroupInput>
 ): Promise<ReservedResponseGroup> =>
   requireGroup(await reserveGroupRow(tx, ownerId, value));
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tombstoneEveResponseGroups's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): tombstoneEveResponseGroups accepts tx: ResponseGroupTransaction; family: { id: string; operationId: string; }[]; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -241,6 +248,8 @@ const tombstoneEveResponseGroups = async (
       )
     );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveResponseGroupRejection's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -293,6 +302,8 @@ const recordEveResponseGroupRejection = async (
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, typescript/strict-boolean-expressions --max-lines-per-function (#510): getEveResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -373,6 +384,8 @@ const getEveResponseGroup = async (
     id: group.id,
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveResponseGroupForConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- max-lines-per-function (#510): getEveResponseGroupForConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -557,6 +570,7 @@ const getEveResponseGroupForConversation = async (
     ),
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines -- #509: This eve-response-groups.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.

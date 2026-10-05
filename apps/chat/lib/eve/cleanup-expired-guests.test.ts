@@ -28,6 +28,7 @@ beforeEach(() => {
   mocks.copy.mockResolvedValue(false);
   mocks.claim.mockResolvedValue([]);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unsupported providers do not claim or revoke expired families", async () => {
   mocks.available.mockReturnValue(false);
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
@@ -37,6 +38,8 @@ test("unsupported providers do not claim or revoke expired families", async () =
   });
   expect(mocks.claim).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("failed deletion remains pending while the rest of the batch progresses", async () => {
   mocks.claim
     .mockResolvedValueOnce([{ id: "stuck", ownerId: "guest" }])
@@ -54,6 +57,8 @@ test("failed deletion remains pending while the rest of the batch progresses", a
     ["guest", "ready", "/trusted/app"],
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("never-dispatched copies use their proven unaccepted deletion path") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -65,6 +70,8 @@ test("never-dispatched copies use their proven unaccepted deletion path", async 
   expect(mocks.deleteCopy).toHaveBeenCalledWith("guest", "copy");
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("an absent deletion receipt is pending and cannot count as an erased family", async () => {
@@ -75,14 +82,16 @@ test("an absent deletion receipt is pending and cannot count as an erased family
     skipped: false,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("inventory failures reject instead of claiming an empty successful sweep", async () => {
   const failure = new Error("guest inventory unavailable");
   mocks.claim.mockRejectedValueOnce(failure);
   await expect(cleanupExpiredEveGuests("/trusted/app")).rejects.toBe(failure);
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a supported empty sweep reports success only after checking inventory", async () => {
   expect(await cleanupExpiredEveGuests("/trusted/app")).toEqual({
     deletedCount: 0,
@@ -91,3 +100,4 @@ test("a supported empty sweep reports success only after checking inventory", as
   });
   expect(mocks.claim).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */

@@ -78,6 +78,7 @@ const visibleConversation = inArray(eveConversation.state, [
   "uncertain",
 ]);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getBoundEveConversationForSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): getBoundEveConversationForSession uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
@@ -98,6 +99,8 @@ const getBoundEveConversationForSession = async (
     .limit(1);
   return rows[0];
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveSessionMapping's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
@@ -132,13 +135,15 @@ const readEveSessionMapping = async (
     );
   return row;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownsEveSession's awaited sequencing and rejected-Promise behavior. */
 const ownsEveSession = async (
   ownerId: string,
   sessionId: string
 ): Promise<boolean> =>
   Boolean(await getBoundEveConversationForSession(ownerId, sessionId));
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveConversations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): listEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -248,6 +253,8 @@ const listEveConversations = async (
         : null,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): getEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -298,6 +305,8 @@ const getEveConversation = async (
     updatedAt: row.chat.updatedAt,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveChatPageConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -359,6 +368,8 @@ const getEveChatPageConversation = async (
   }
   return undefined;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveChatIdentity's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
@@ -409,6 +420,7 @@ const getEveChatIdentity = async (
     .limit(1);
   return identity;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 class CreationConflictError extends Error {
   public readonly code: "creation_conflict" | "creation_in_progress";
@@ -448,6 +460,7 @@ const boundConversation = (
   }
   return undefined;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
 const getEveCreation = async (
@@ -465,7 +478,7 @@ const getEveCreation = async (
     );
   return row;
 };
-
+/* oxlint-enable oxc/no-async-await */
 class CreationProjectNotFoundError extends Error {
   public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
@@ -473,6 +486,7 @@ class CreationProjectNotFoundError extends Error {
   }
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertResponseGroupCandidateAvailable's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): assertResponseGroupCandidateAvailable uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): assertResponseGroupCandidateAvailable accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -498,6 +512,8 @@ const assertResponseGroupCandidateAvailable = async (
     throw new CreationConflictError("This response group has been deleted.");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertGuestCreationAdmission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -564,6 +580,8 @@ const assertGuestCreationAdmission = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assignCreationProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -591,6 +609,8 @@ const assignCreationProject = async (
     .values({ chatId, ownerId, projectId: target.id })
     .onConflictDoNothing();
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -734,6 +754,8 @@ const reserveEveConversation = async (
     }
     return rows;
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beginEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
@@ -828,6 +850,7 @@ const beginEveConversationDeletion = async (
       rootId: source.chatId,
     };
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable unicorn/no-null --
@@ -856,6 +879,7 @@ const matchesEveFork = (
  * no-magic-numbers (#517): CreationTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type CreationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve bindConversationSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): bindConversationSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -927,6 +951,8 @@ const bindConversationSession = async (
     .where(and(eq(eveChat.id, bound.chatId), eq(eveChat.ownerId, ownerId)));
   return { id: bound.id, sessionId: bound.sessionId };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -1088,6 +1114,8 @@ const createEveConversation = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveOwnerBindings's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const listEveOwnerBindings = async (
@@ -1108,7 +1136,8 @@ const listEveOwnerBindings = async (
         ne(eveConversation.state, "deleted")
       )
     );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateEveConversationMetadata's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): Omit titleStatus in the Drizzle update unless a nonempty title is supplied; visibility updates retain their separate conversation-row path.
 typescript/strict-boolean-expressions (#610): Empty title text leaves titleStatus unchanged; keep the original title getter read before the update payload is built.
  */
@@ -1161,6 +1190,8 @@ const updateEveConversationMetadata = async (
     .returning({ id: eveChat.id });
   return row;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isEveRootTitlePending's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): isEveRootTitlePending uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -1191,6 +1222,8 @@ const isEveRootTitlePending = async (
     .limit(1);
   return Boolean(row);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceEveRootFallbackTitle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-params -- max-params (#511): replaceEveRootFallbackTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -1218,6 +1251,8 @@ const replaceEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleEveRootFallbackTitle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params */
 
 const settleEveRootFallbackTitle = async (
@@ -1242,7 +1277,8 @@ const settleEveRootFallbackTitle = async (
     .returning({ id: eveChat.id });
   return Boolean(row);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveConversationActivity's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const recordEveConversationActivity = async (
@@ -1265,6 +1301,8 @@ const recordEveConversationActivity = async (
       )
     );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getPublicEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -1297,6 +1335,8 @@ const getPublicEveConversation = async (
   }
   return undefined;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveConversationBranches's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 const listEveConversationBranches = async (
@@ -1349,7 +1389,8 @@ const listEveConversationBranches = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: listEveConversationBranches has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { branches, chatId: conversation.chatId, rootId };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getDeletingEveConversationForSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --no-magic-numbers (#517): getDeletingEveConversationForSession uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 /**
@@ -1375,6 +1416,8 @@ const getDeletingEveConversationForSession = async (
     .limit(1);
   return row;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveConversationProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --unicorn/max-nested-calls (#568): getEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -1423,6 +1466,8 @@ const getEveConversationProject = async (
     );
   return assigned ?? null;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listPendingEveCreations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable unicorn/max-nested-calls --unicorn/max-nested-calls (#568): listPendingEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -1448,6 +1493,8 @@ const listPendingEveCreations = async (
         )
       )
     );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve bindAcceptedEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): bindAcceptedEveConversation accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -1468,6 +1515,7 @@ const bindAcceptedEveConversation = async (
   await db.transaction((tx) =>
     bindConversationSession(tx, ownerId, reservationId, sessionId)
   );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-queries.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.

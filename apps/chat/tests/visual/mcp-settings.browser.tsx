@@ -65,6 +65,7 @@ const mocks = vi.hoisted(() => {
     sharedConnector: false,
   };
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(async () => {
@@ -78,7 +79,7 @@ afterEach(async () => {
   vi.clearAllMocks();
   mocks.search = new URLSearchParams();
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable unicorn/no-null -- connector: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -170,6 +171,7 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useQueryClient: () => mocks.queryClient,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve renderPage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable max-statements, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
@@ -225,6 +227,8 @@ const renderPage = async (
     container.remove();
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/strict-void-return */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
@@ -253,7 +257,8 @@ test("connector list shows custom and shared connectors with their management li
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("connector details show discovery, owner controls and the back link", async () => {
   const cleanup = await renderPage(true);
   try {
@@ -283,8 +288,9 @@ test("connector details show discovery, owner controls and the back link", async
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const details of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`connector ${details ? "details" : "list"} displays missing credentials instead of an empty state`, async () => {
     mocks.listError = true;
     const cleanup = await renderPage(details);
@@ -304,9 +310,11 @@ for (const details of [false, true]) {
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
 for (const details of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`cached ${details ? "details" : "list"} remains usable after a background refresh error`, async () => {
     mocks.listError = true;
     mocks.cachedData = true;
@@ -323,8 +331,10 @@ for (const details of [false, true]) {
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("expired OAuth discovery offers reconnect instead of a permanent spinner", async () => {
   mocks.needsOAuth = true;
   const cleanup = await renderPage(true);
@@ -338,6 +348,8 @@ test("expired OAuth discovery offers reconnect instead of a permanent spinner", 
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, typescript/promise-function-async -- mcp-settings.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
@@ -369,6 +381,8 @@ test("custom connector advanced settings expose transport and credentials and re
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -392,6 +406,8 @@ test("pending OAuth can be dismissed", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -419,6 +435,8 @@ test("dismissed OAuth ignores a late authorization result", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { clientId: "   ", expectedClientId: undefined },   { clientId: " client id ", expecte's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- mcp-settings.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { clientId, expectedClientId }); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -465,6 +483,8 @@ test.each([
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("OAuth callback errors display the safe actionable message", async () => {
@@ -489,7 +509,8 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 test("invalid authorization links keep the dialog open and display an error", async () => {
   const cleanup = await renderPage(false, false, true);
@@ -520,11 +541,13 @@ test("invalid authorization links keep the dialog open and display an error", as
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- mcp-settings.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 
 for (const state of ["off", "enabled", "saving", "shared"] as const) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line max-statements -- Keep each approval state, interaction, capture and cleanup together so the persisted setting is verified as one scenario.
   test(`connection approval setting is ${state}`, async () => {
     Object.assign(mocks, {
@@ -552,4 +575,5 @@ for (const state of ["off", "enabled", "saving", "shared"] as const) {
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }

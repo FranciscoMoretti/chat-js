@@ -9,6 +9,7 @@ import { isSafeTarget } from "./is-safe-target";
 
 const LAST_PART_OFFSET = 1;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve managedRootDirectory's awaited sequencing and rejected-Promise behavior. */
 const managedRootDirectory = async (cwd: string): Promise<string> => {
   const resolvedCwd = path.resolve(cwd);
   const root = await lstat(resolvedCwd);
@@ -17,13 +18,14 @@ const managedRootDirectory = async (cwd: string): Promise<string> => {
   }
   return resolvedCwd;
 };
-
+/* oxlint-enable oxc/no-async-await */
 const assertSafeTarget = (target: string, resolvedCwd: string): void => {
   if (!isSafeTarget(target, resolvedCwd)) {
     throw new Error(`Unsafe ChatJS target: ${target}`);
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve preflight's awaited sequencing and rejected-Promise behavior. */
 /**
  * Protect ChatJS-managed outputs before generating integration files.
  * @param {string} cwd Project destination, resolved relative to the current directory.
@@ -63,3 +65,4 @@ export const preflight = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */

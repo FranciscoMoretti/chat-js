@@ -50,6 +50,7 @@ const isWorktreeEnvConfig = (value: unknown): value is WorktreeEnvConfig => {
   );
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadWorktreeConfig's awaited sequencing and rejected-Promise behavior. */
 const loadWorktreeConfig = async (
   path = ".worktree-env.json"
 ): Promise<WorktreeEnvConfig> => {
@@ -63,6 +64,6 @@ const loadWorktreeConfig = async (
   }
   return parsedConfig;
 };
-
+/* oxlint-enable oxc/no-async-await */
 export { isWorktreeEnvConfig, loadWorktreeConfig };
 export type { WorktreeAppConfig, WorktreeEnvConfig };

@@ -16,6 +16,7 @@ import { builtInGateways } from "../../../registry/src/gateways/catalog";
 import { configureGatewayProvider } from "./gateway-provider";
 import { scaffoldFromTemplate } from "./scaffold";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -90,6 +91,7 @@ it("wires selected defaults and snapshot identity without managing dependencies"
     await rm(cwd, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

@@ -60,6 +60,7 @@ const makeApp = (baseUrl: string, databaseUrl: string) => {
   });
   return { auth, data };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve signup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -88,6 +89,8 @@ const signup = async (
     .map((cookie) => cookie.split(";")[0])
     .join("; ");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements --
@@ -119,4 +122,5 @@ it("two local apps sharing a browser cookie jar retain separate users", async ()
     user: { name: "second" },
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */

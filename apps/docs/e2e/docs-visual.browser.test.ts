@@ -30,6 +30,7 @@ const pages = [
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- docs-visual.browser.test.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- docs-visual.browser.test.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 for (const page of pages) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`docs ${page.name}`, async () => {
     document.head.replaceChildren();
     document.body.replaceChildren();
@@ -70,6 +71,7 @@ for (const page of pages) {
     await document.fonts.ready;
     await takeSnapshot(page.name);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -45,6 +45,7 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
   const hex = bytes.toString("hex");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveDocumentTool's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -128,4 +129,5 @@ export const executeEveDocumentTool = async (
     title: revision.title,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */

@@ -28,6 +28,7 @@ beforeEach(() => {
   mocks.execute.mockReset();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -41,7 +42,8 @@ it("the selected typed executor returns exactly one completed usage receipt", as
     usage: { costUsd: 0.05 },
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -59,3 +61,4 @@ it("failed cleanup or invalid output does not receive a completed execution char
     usage: { costUsd: 0 },
   });
 });
+/* oxlint-enable oxc/no-async-await */

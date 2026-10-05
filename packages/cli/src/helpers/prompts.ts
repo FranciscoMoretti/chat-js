@@ -146,6 +146,7 @@ const toSelectionRecord = <T extends string>(
   Object.fromEntries(
     keys.map((key) => [key, selected.includes(key)])
   ) as Record<T, boolean>;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptProjectName's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/id-length */
 
 const promptProjectName = async (
@@ -171,7 +172,8 @@ const promptProjectName = async (
 
   return toKebabCase(name) || "my-chat-app";
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptGateway's awaited sequencing and rejected-Promise behavior. */
 const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
@@ -212,7 +214,7 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   }
   return gateway;
 };
-
+/* oxlint-enable oxc/no-async-await */
 const APPEND_DELETE_COUNT = 0;
 const EMPTY_CONFIG_KEY_COUNT = 0;
 
@@ -237,6 +239,7 @@ const registryStorageRequirement = (
   }),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptStorage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
@@ -331,6 +334,8 @@ const promptStorage = async (
   }
   return selection;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCoreFeatures's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -384,7 +389,8 @@ const promptCoreFeatures = async (
   result.mcp = mcp ?? result.mcp;
   return result;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptDocumentTypes's awaited sequencing and rejected-Promise behavior. */
 const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean
@@ -419,7 +425,7 @@ const promptDocumentTypes = async (
 
   return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
 };
-
+/* oxlint-enable oxc/no-async-await */
 const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
   if (item.hidden === true) {
     return false;
@@ -468,6 +474,7 @@ const supportedAssistantTools = (
     return true;
   });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptAssistantTools's awaited sequencing and rejected-Promise behavior. */
 const promptAssistantTools = async (
   registryItems: readonly ReadonlyInput<RegistryIndexItem>[],
   skipPrompt: boolean,
@@ -515,7 +522,8 @@ const promptAssistantTools = async (
     ),
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptAuth's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptAuth = async (
@@ -553,6 +561,8 @@ const promptAuth = async (
 
   return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptElectron's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -576,7 +586,8 @@ const promptElectron = async (
 
   return wantsElectron;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptSearchTool's awaited sequencing and rejected-Promise behavior. */
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
@@ -609,7 +620,8 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCodeExecutionTool's awaited sequencing and rejected-Promise behavior. */
 const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -644,7 +656,8 @@ const promptCodeExecutionTool = async (
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptUrlRetrievalTool's awaited sequencing and rejected-Promise behavior. */
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
@@ -672,7 +685,8 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptImageGenerationTool's awaited sequencing and rejected-Promise behavior. */
 const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -702,7 +716,8 @@ const promptImageGenerationTool = async (
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptVideoGenerationTool's awaited sequencing and rejected-Promise behavior. */
 const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -732,7 +747,8 @@ const promptVideoGenerationTool = async (
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptObservability's awaited sequencing and rejected-Promise behavior. */
 // One optional group; new applications never enable telemetry by default.
 const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (yes) {
@@ -755,7 +771,7 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   }
   return result;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {
   promptAssistantTools,

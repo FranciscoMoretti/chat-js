@@ -33,6 +33,7 @@ beforeEach(() => {
     new Blob(["image bytes"], { type: "image/png" })
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -51,6 +52,8 @@ it("checks the destination owner before reading local storage, regardless of the
   expect(result?.bytes.toString()).toBe("image bytes");
   expect(result?.mediaType).toBe("image/png");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
@@ -60,7 +63,8 @@ it("never reads a foreign or deleted file after an ownership rejection", async (
   ).rejects.toThrow("Not owned");
   expect(mocks.download).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not resolve files without authenticated session context", async () => {
   await expect(fetchEveChannelFile(`/api/files/${key}`)).rejects.toThrow(
     "authenticated owner"
@@ -68,7 +72,8 @@ it("does not resolve files without authenticated session context", async () => {
   expect(mocks.owned).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "https://foreign.example/private",   "/api/files/../../private",   "https://foreign.exam's awaited sequencing and rejected-Promise behavior. */
 it.each([
   "https://foreign.example/private",
   "/api/files/../../private",
@@ -81,3 +86,4 @@ it.each([
     expect(mocks.download).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */

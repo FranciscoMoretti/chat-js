@@ -25,6 +25,7 @@ const ChartSkeleton = () => (
 /* oxlint-enable typescript/explicit-function-return-type */
 
 export type { BaseChart } from "./interactive-chart-impl";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, react/only-export-components -- #623: The chart loader and dynamic import consume this existing default chart entrypoint; preserving that contract retains its established Fast Refresh exception. */
 export default dynamic(
   async () => {
@@ -37,4 +38,5 @@ export default dynamic(
     ssr: false,
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, react/only-export-components */

@@ -21,6 +21,7 @@ type CodeSandboxForDeletion = Pick<
 > &
   Pick<typeof eveConversation.$inferSelect, "sessionId">;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveCodeSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-params, max-statements --
 max-lines-per-function (#510): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): reserveEveCodeSandbox keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -96,6 +97,8 @@ const reserveEveCodeSandbox = async (
     }
     return inserted.name;
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveCodeSandboxDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements */
 
 /** Internal coordinator only: caller must prove no pending allocation can finish later.
@@ -124,7 +127,8 @@ const recordEveCodeSandboxDeletion = async (
     throw new Error("Code sandbox ownership not found.");
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve confirmEveCodeSandboxCreation's awaited sequencing and rejected-Promise behavior. */
 /** A successful create reply proves this invocation has finished allocating.
  * @param {string} ownerId Owner whose unresolved allocation may be confirmed.
  * @param {string} conversationId Conversation that owns the allocation.
@@ -152,7 +156,8 @@ const confirmEveCodeSandboxCreation = async (
     throw new Error("Unresolved code sandbox ownership not found.");
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveCodeSandboxesForDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
 no-magic-numbers (#517): listEveCodeSandboxesForDeletion uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /** Internal cleanup inventory; unretired families cannot authorize provider deletion.
@@ -205,6 +210,7 @@ const listEveCodeSandboxesForDeletion = async (
       )
     );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 export {
   confirmEveCodeSandboxCreation,

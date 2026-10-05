@@ -472,6 +472,7 @@ const reviewBaselineUpdate = (
   return errors;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve main's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- The CLI inventories files, validates errors and performs explicit baseline writes in their required execution order.
 const main = async (): Promise<void> => {
   // Git includes standalone and checked-in generated sources; ignored output stays excluded.
@@ -535,7 +536,7 @@ const main = async (): Promise<void> => {
     `Lint exception budget passed (${filenames.length} source files).\n`
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 if (import.meta.main) {
   // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits the exception audit and optional baseline write before exiting.
   await main();

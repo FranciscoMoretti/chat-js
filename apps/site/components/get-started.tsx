@@ -15,6 +15,7 @@ const command = "npx @chat-js/cli@latest create my-app";
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleCopy's awaited sequencing and rejected-Promise behavior. */
   const handleCopy = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(command);
@@ -27,7 +28,7 @@ export const GetStarted = (): React.JSX.Element => {
       // Ignore clipboard permission failures.
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       {/* Background atmosphere */}

@@ -10,6 +10,7 @@ const FIRST_ROW_INDEX = 0;
 const FIRST_ARGUMENT_INDEX = 0;
 const SINGLE_ROW_LIMIT = 1;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): deletingFamilyIds accepts tx: Parameters<Parameters<typeof db.transaction>[typeof FIRST_ARGUMENT_INDEX]>[typeof FIRST_ARGUMENT_INDEX]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const deletingFamilyIds = async (
   tx: Parameters<
@@ -38,6 +39,8 @@ const deletingFamilyIds = async (
   }
   return family.map((row) => row.id);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyFilePurge's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): prepareEveFamilyFilePurge accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -83,6 +86,8 @@ const prepareEveFamilyFilePurge = async (
       .returning({ key: eveStoredFile.key });
     return files.map((file) => file.key).toSorted();
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveFilePurge's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): completeEveFilePurge accepts keys: readonly string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -114,6 +119,8 @@ const completeEveFilePurge = async (
       );
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveFamilyFileReferences's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls -- max-lines-per-function (#510): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -176,6 +183,7 @@ const releaseEveFamilyFileReferences = async (
       );
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 export {
   completeEveFilePurge,

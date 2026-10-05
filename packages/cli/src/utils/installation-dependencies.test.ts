@@ -12,6 +12,7 @@ import path from "node:path";
 import { toolDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { prepareDependencyUpdate } from "./installation-dependencies";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
@@ -109,3 +110,4 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await rm(cwd, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */

@@ -41,6 +41,7 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
   return providerCache.current;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
 const executeCode: CodeExecutor = async (input, context) =>
   await executeWithToolUsage(context, async (usage) => {
     usage.addCostUsd(NO_COST_USD);
@@ -71,7 +72,7 @@ const executeCode: CodeExecutor = async (input, context) =>
       return usage.fail();
     }
   });
-
+/* oxlint-enable oxc/no-async-await */
 const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description:

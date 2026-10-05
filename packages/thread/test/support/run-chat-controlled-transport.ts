@@ -32,6 +32,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     return this.requests.at(LAST_REQUEST_INDEX)?.options;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessages's awaited sequencing and rejected-Promise behavior. */
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
     options: ReadonlyDeep<
       Parameters<
@@ -48,7 +49,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         },
       })
     );
-
+  /* oxlint-enable oxc/no-async-await */
   public reconnectToStream = reconnectToNoStream;
 
   public emit(...chunks: readonly ReadonlyDeep<UIMessageChunk>[]): void {

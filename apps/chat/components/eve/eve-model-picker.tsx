@@ -50,6 +50,7 @@ export const EveModelPicker = ({
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
     getPrimarySelectedModelId(modelSelection?.value) ||
     defaultModel;
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <fieldset disabled={disabled}>
       <ModelSelector
@@ -74,5 +75,6 @@ export const EveModelPicker = ({
       />
     </fieldset>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */

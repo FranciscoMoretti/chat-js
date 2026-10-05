@@ -28,6 +28,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 const owners: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -39,6 +40,8 @@ afterAll(async () => {
     await db.delete(user).where(inArray(user.id, owners));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -135,4 +138,5 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
   const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
   expect(expiredGuestClaimIds.map((row) => row.id)).toContain(first.id);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

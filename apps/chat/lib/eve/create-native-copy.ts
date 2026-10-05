@@ -9,6 +9,7 @@ const SEED_CREATION_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createNativeEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
 
  * max-statements (#512): createNativeEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -63,4 +64,5 @@ export const createNativeEveCopy = async (
   }
   return session.parse(await result.json()).sessionId;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */

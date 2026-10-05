@@ -52,6 +52,7 @@ const { useThread } = await import("#thread-source/use-thread");
 const roots = new Set<Root>();
 const NO_ERRORS = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve commit's awaited sequencing and rejected-Promise behavior. */
 // Use React's asynchronous act path even for synchronous actions. The microtask
 // boundary lets act flush effects and any updates scheduled by the commit.
 const commit = async (action: () => void): Promise<void> => {
@@ -60,7 +61,8 @@ const commit = async (action: () => void): Promise<void> => {
     await Promise.resolve();
   });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async (): Promise<void> => {
   try {
     await commit((): void => {
@@ -81,11 +83,12 @@ afterEach(async (): Promise<void> => {
     globalThis.document.body.replaceChildren();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async (): Promise<void> => {
   await dom.close();
 });
-
+/* oxlint-enable oxc/no-async-await */
 const user = (id: string): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
@@ -132,6 +135,7 @@ const HookHarness = ({
     ref: () => onCommit?.(helpers.setMessages),
   });
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve renderUseThread's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -185,6 +189,8 @@ const renderUseThread = async (
     },
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitFor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -202,6 +208,7 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 const trackSubscriptions = (
@@ -227,6 +234,7 @@ const trackSubscriptions = (
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("useThread", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("observes messages sent through a custom state-backed AbstractThread", async (): Promise<void> => {
     const state = new MemoryThreadState<UIMessage>({
       messages: [user("user-1")],
@@ -284,7 +292,8 @@ describe("useThread", (): void => {
     expect(getMessageText(response)).toBe("reply");
     await hook.unmount();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("forwards setters called by an initial commit ref", async (): Promise<void> => {
     let isFirstCommit = true;
     const hook = await renderUseThread(
@@ -304,6 +313,8 @@ describe("useThread", (): void => {
     ).toEqual(["user-b"]);
     await hook.unmount();
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("uses current callbacks without replacing the chat transport", async (): Promise<void> => {
     const firstTransport = new RejectingTransport();
     const secondTransport = new RejectingTransport();
@@ -352,7 +363,8 @@ describe("useThread", (): void => {
     expect(secondTransport.requests).toBe(1);
     await hook.unmount();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("resubscribes when the supplied thread changes", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
@@ -388,7 +400,8 @@ describe("useThread", (): void => {
     expect(firstListeners.size).toBe(0);
     expect(secondListeners.size).toBe(0);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("forwards a retained setter to the replacement supplied thread", async (): Promise<void> => {
     const first = new Thread({ messages: [user("user-a")] });
     const second = new Thread({ messages: [user("user-b")] });
@@ -412,7 +425,8 @@ describe("useThread", (): void => {
     ).toEqual(["user-c"]);
     await hook.unmount();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("automatically resumes the supplied thread", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const thread = new Thread({
@@ -428,7 +442,8 @@ describe("useThread", (): void => {
     expect(transport.reconnects).toBe(1);
     await hook.unmount();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("resumes a replacement supplied thread while resume remains enabled", async (): Promise<void> => {
     const firstTransport = new ResumeTransport();
     const secondTransport = new ResumeTransport();
@@ -459,7 +474,8 @@ describe("useThread", (): void => {
     ).toEqual(["user-2", "assistant-2"]);
     await hook.unmount();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("keeps status immediate while throttling message snapshots", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const hook = await renderUseThread({
@@ -517,6 +533,8 @@ describe("useThread", (): void => {
     expect(hook.current.status).toBe("ready");
     await hook.unmount();
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("cancels pending throttled notifications on unmount", async (): Promise<void> => {
     const thread = new Thread({ messages: [user("user-a")] });
     const listeners = trackSubscriptions(thread);
@@ -563,6 +581,7 @@ describe("useThread", (): void => {
       )
     ).toEqual(["user-b"]);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */

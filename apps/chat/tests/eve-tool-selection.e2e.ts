@@ -24,6 +24,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable unicorn/max-nested-calls --
@@ -60,6 +61,8 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
     "mcp",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -194,4 +197,5 @@ test("Canvas selection survives native history and edits while later turns reset
     path: testInfo.outputPath("tool-selection-edit-mobile.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

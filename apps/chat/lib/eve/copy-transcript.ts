@@ -546,6 +546,7 @@ const copyAttachmentResolver = (
     destinationKeys.add(key);
   }
   const metadata = new Map<string, Promise<Pick<Blob, "type" | "size">>>();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return async (
     part: Extract<
       SeedPart,
@@ -581,6 +582,7 @@ const copyAttachmentResolver = (
     part.url = new URL(createFileUrl(key), origin).href;
     part.size = stored.size;
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -617,6 +619,7 @@ const rewriteDocumentPart = (
     true
   );
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve materializeEveCopyTranscript's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -672,6 +675,7 @@ const materializeEveCopyTranscript = async (
   }
   return copied;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This copy-transcript.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

@@ -22,6 +22,7 @@ const options = {
   maxBytes: 10,
   maxDimension: 2048,
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("upload preparation respects configured accepted types and size limits", async () => {
   const pdf = new File(["pdf"], "document.pdf", { type: "application/pdf" });
   const oversized = new File(["oversized document"], "large.pdf", {
@@ -37,12 +38,15 @@ test("upload preparation respects configured accepted types and size limits", as
   expect(prepared.stillOversized).toEqual([oversized]);
   expect(prepared.unsupportedFiles).toEqual([svg, jpg]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("small accepted images preserve exact bytes without browser compression", async () => {
   const image = new File(["png"], "photo.png", { type: "image/png" });
   const prepared = await processFilesForUpload([image], options);
   expect(prepared.files).toEqual([image]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("compresses large accepted images with configured limits", async () => {
   const image = new File(["oversized image data"], "photo.original", {
     type: "image/png",
@@ -58,7 +62,8 @@ test("compresses large accepted images with configured limits", async () => {
     maxWidthOrHeight: options.maxDimension,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retains failed oversized originals", async () => {
   const image = new File(["oversized image data"], "photo.original", {
     type: "image/png",
@@ -68,7 +73,8 @@ test("retains failed oversized originals", async () => {
   expect(failed.stillOversized).toEqual([image]);
   expect(failed.files).toEqual([]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preparation preserves mixed PDF and compressed-image input order", async () => {
   const pdf = new File(["pdf"], "first.pdf", { type: "application/pdf" });
   const image = new File(["oversized image data"], "second.original", {
@@ -80,3 +86,4 @@ test("preparation preserves mixed PDF and compressed-image input order", async (
     "second.png",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */

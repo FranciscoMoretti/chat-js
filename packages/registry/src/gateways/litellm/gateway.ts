@@ -97,6 +97,7 @@ class LiteLLMGateway
     return this.env.LITELLM_BASE_URL;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
@@ -147,6 +148,7 @@ class LiteLLMGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */

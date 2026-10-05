@@ -143,6 +143,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
 
     let cancelled = false;
 
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkSession's awaited sequencing and rejected-Promise behavior. */
     const checkSession = async (): Promise<void> => {
       const { data: session } = await authClient.getSession();
 
@@ -176,8 +177,9 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         },
       });
     };
-
+    /* oxlint-enable oxc/no-async-await */
     const sessionCheck = checkSession();
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     void (async (): Promise<void> => {
       try {
         await sessionCheck;
@@ -190,7 +192,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
         setState("waiting-for-app");
       }
     })();
-
+    /* oxlint-enable oxc/no-async-await */
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {
       cancelled = true;
@@ -219,6 +221,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
             query,
           },
         });
+        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
         void (async (): Promise<void> => {
           try {
             await transfer;
@@ -227,6 +230,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
             setState("waiting-for-app");
           }
         })();
+        /* oxlint-enable oxc/no-async-await */
       }}
       state={displayState}
     />

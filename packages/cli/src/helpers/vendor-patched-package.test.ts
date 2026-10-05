@@ -16,6 +16,7 @@ import nodePath from "node:path";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 it("refuses to distribute a stale installed runtime", async () => {
@@ -56,6 +57,8 @@ it("refuses to distribute a stale installed runtime", async () => {
     await rm(root, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   {     archiveName: "ai-sdk-mcp-2.0.45.tgz",     name: "@ai-sdk/mcp",     version: "2.0.4's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
 
@@ -130,6 +133,7 @@ it.each([
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

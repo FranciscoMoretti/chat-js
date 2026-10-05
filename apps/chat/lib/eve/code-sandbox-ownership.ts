@@ -35,6 +35,7 @@ export const eveCodeSandboxOwnership = (context: {
       }
     | undefined;
   return {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve created's awaited sequencing and rejected-Promise behavior. */
     async created(name: string): Promise<void> {
       if (!reservation || reservation.name !== name) {
         throw new Error(
@@ -47,6 +48,8 @@ export const eveCodeSandboxOwnership = (context: {
         name
       );
     },
+    /* oxlint-enable oxc/no-async-await */
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve release's awaited sequencing and rejected-Promise behavior. */
     async release(): Promise<void> {
       if (!reservation) {
         throw new Error("Code sandbox allocation intent is missing.");
@@ -57,6 +60,8 @@ export const eveCodeSandboxOwnership = (context: {
         reservation.name
       );
     },
+    /* oxlint-enable oxc/no-async-await */
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserve's awaited sequencing and rejected-Promise behavior. */
     async reserve(
       provider: {
         teamId: string;
@@ -81,6 +86,7 @@ export const eveCodeSandboxOwnership = (context: {
       reservation = { ...scope, name };
       return name;
     },
+    /* oxlint-enable oxc/no-async-await */
   };
 };
 /* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

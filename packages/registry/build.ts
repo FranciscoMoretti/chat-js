@@ -22,6 +22,7 @@ const cwd = import.meta.dir;
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
 // oxlint-disable-next-line node/no-top-level-await -- This Bun build executable creates the source directory before writing registry items.
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun build executable completes all item copies before serializing the registry manifest.
 await Promise.all(
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The build appends descriptor files to each mutable Shadcn RegistryItem before serializing registry.json.
@@ -54,6 +55,7 @@ await Promise.all(
     }
   })
 );
+/* oxlint-enable oxc/no-async-await */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun build executable writes the registry manifest before invoking shadcn.
 await writeFile(
   path.join(cwd, "registry.json"),

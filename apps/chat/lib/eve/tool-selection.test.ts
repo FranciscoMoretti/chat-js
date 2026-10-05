@@ -41,6 +41,7 @@ import {
 /* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   const actual = await importOriginal<typeof InstalledFeatures>();
   for (const kind of actual.installedDocumentKinds) {
@@ -48,7 +49,7 @@ vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   }
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
-
+/* oxlint-enable oxc/no-async-await */
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
@@ -97,6 +98,7 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
       },
     }
   );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
@@ -115,7 +117,7 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 it("includes document revision reads without leaking unrelated tools", () => {
   expect(selectedEveTools("createTextDocument")).toEqual([
     "createTextDocument",
@@ -206,6 +208,7 @@ it.each([["model-a"], ["model-a", "model-b"]])(
     expect(moved.operationId).not.toBe(original.operationId);
   }
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
@@ -231,7 +234,8 @@ it("restores the selected capability from Eve serialized context before a resume
     expect(eveTurnTool.get()).toBeNull();
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("guest automatic and explicit turns retain only configured anonymous tools") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -251,6 +255,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable max-statements --

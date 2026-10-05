@@ -66,6 +66,7 @@ const eveConversationTitleFallback = (
 const normalizeGeneratedTitle = (title: string): string =>
   compactTitle(title.replace(surroundingQuotes, ""));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateEveConversationTitleResult's awaited sequencing and rejected-Promise behavior. */
 /**
  * Auxiliary title generation must never prevent a conversation from starting.
  * @param {ReadonlyEveMessageInput} message First user message supplied to the auxiliary title model.
@@ -100,7 +101,8 @@ Rules (strictly follow all):
     return { source: "fallback", title: fallback };
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve persistGeneratedEveConversationTitle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements -- max-statements (#512): persistGeneratedEveConversationTitle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 /**
  * The conditional update preserves manual titles and every branch's shared root title.
@@ -158,6 +160,7 @@ const persistGeneratedEveConversationTitle = async ({
   // oxlint-disable-next-line typescript/consistent-return -- #580: No title is returned when generation is inapplicable; successful generation returns the optional title result.
   return generated;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */
 export {
   EVE_TITLE_MAX_LENGTH,

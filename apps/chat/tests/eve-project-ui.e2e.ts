@@ -16,6 +16,7 @@ const modelId = "openai/gpt-5-nano";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -383,6 +384,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
     throw cleanupFailure.error;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-project-ui.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

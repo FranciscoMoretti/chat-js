@@ -41,6 +41,7 @@ type ActiveGatewayImageModelId = Parameters<
 type ActiveGatewayVideoModelId = Parameters<
   InstalledGateway["createVideoModel"]
 >[0];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getLanguageModel's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, node/no-process-env --
@@ -75,6 +76,7 @@ const getLanguageModel = async (
     model: languageProvider,
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, node/no-process-env */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -111,13 +113,14 @@ const getMultimodalImageModel = (
   modelId: ActiveGatewayModelId
 ): LanguageModelV4 => getActiveGateway().createLanguageModel(modelId);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getModelProviderOptions's awaited sequencing and rejected-Promise behavior. */
 // Model aliases removed - use getLanguageModel directly with specific model IDs
 
 const getModelProviderOptions = async (
   providerModelId: AppModelId
 ): Promise<SharedV4ProviderOptions> =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
-
+/* oxlint-enable oxc/no-async-await */
 export {
   getImageModel,
   getLanguageModel,

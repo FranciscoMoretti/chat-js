@@ -150,6 +150,7 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
   ).toThrow("Trusted client address");
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("checks guest policy and ownership before reserving account/quota", async () => {
   const denied = await admitGuestCreation(request, principal, {
     ...input,
@@ -170,7 +171,8 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("binds quota to the complete creation intent and retains native operation replays", async () => {
   expect(await admitGuestCreation(request, principal, input)).toEqual({
     reservationId: "attempt",
@@ -198,7 +200,8 @@ it("binds quota to the complete creation intent and retains native operation rep
     status: "replay",
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("recovers an active durable reservation without repeating volatile validation", async () => {
   mocks.existing.mockResolvedValue({
     requestHash: requestHash(input),
@@ -215,7 +218,8 @@ it("recovers an active durable reservation without repeating volatile validation
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects changed replay content before volatile validation") uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -238,6 +242,8 @@ it("rejects changed replay content before volatile validation", async () => {
   expect(mocks.files).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("runs full validation before reusing a released operation", async () => {
@@ -254,7 +260,8 @@ it("runs full validation before reusing a released operation", async () => {
   expect(mocks.files).toHaveBeenCalled();
   expect(mocks.reserve).toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("refunds only explicit rejection, keeps ambiguous reservations, and commits succes preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -290,6 +297,8 @@ it("refunds only explicit rejection, keeps ambiguous reservations, and commits s
     "attempt"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 it("propagates the atomic refund decision when a creation already exists", async () => {
@@ -304,3 +313,4 @@ it("propagates the atomic refund decision when a creation already exists", async
   ).toBe(false);
   expect(mocks.commit).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

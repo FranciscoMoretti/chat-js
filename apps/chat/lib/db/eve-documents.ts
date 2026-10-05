@@ -49,6 +49,7 @@ const revisionInput = z.object({
  * no-magic-numbers (#517): DocumentTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type DocumentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
@@ -165,6 +166,7 @@ const purgeEveFamilyDocuments = async (
         )
       );
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 const ancestorIds = (
@@ -203,6 +205,7 @@ const orderRevisionHistory = <
   }
   return history.toReversed();
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve backfillDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-statements */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): backfillDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -308,6 +311,8 @@ const backfillDocumentCheckpoints = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareManualRevision's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -333,6 +338,8 @@ const prepareManualRevision = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveDocumentRevision's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- moving it below executable initialization can obscure ordering and API ownership.
@@ -467,6 +474,8 @@ const saveEveDocumentRevision = async (
     return revision;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDocumentHistory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -526,6 +535,8 @@ const getEveDocumentHistory = async (
     );
   return orderRevisionHistory(revisions, head.revisionId);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve inheritImportedDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
@@ -586,6 +597,8 @@ const inheritImportedDocumentCheckpoints = async (
       .values(entries.map((entry) => ({ ...entry, conversationId })));
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeImportedForkDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -647,6 +660,7 @@ const initializeImportedForkDocuments = async (
     messageIndex
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
@@ -659,6 +673,7 @@ const parseForkTurnIndex = (turnId: string): number => {
   }
   return turnIndex;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve inheritDocumentCheckpoints's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
@@ -723,6 +738,8 @@ const inheritDocumentCheckpoints = async (
   }
   return inheritedCheckpoints;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeNamedForkDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -788,6 +805,8 @@ const initializeNamedForkDocuments = async (
       .onConflictDoNothing();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeEveForkDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -940,6 +959,8 @@ const initializeEveForkDocuments = async (
       }
     }
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve captureEveDocumentCheckpoint's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -1000,6 +1021,8 @@ const captureEveDocumentCheckpoint = async (
     }
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve captureEveNamedDocumentCheckpoint's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -1083,6 +1106,8 @@ const captureEveNamedDocumentCheckpoint = async (
     }
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readDocumentRevision's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /**
@@ -1109,7 +1134,8 @@ const readDocumentRevision = async (
     );
   return revisions.at(FIRST_ROW_INDEX);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDocumentRevision's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params, no-magic-numbers, typescript/strict-boolean-expressions -- max-params (#511): getEveDocumentRevision keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
@@ -1144,6 +1170,8 @@ const getEveDocumentRevision = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDocumentRevision has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readDocumentRevision(ownerId, documentId, selected.id);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAccessibleEveDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- max-lines-per-function (#510): getAccessibleEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -1238,6 +1266,8 @@ const getAccessibleEveDocument = async (
     },
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeEveDocumentFromConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): removeEveDocumentFromConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -1331,6 +1361,7 @@ const removeEveDocumentFromConversation = async (
       title: revision.title,
     };
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

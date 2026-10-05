@@ -217,6 +217,7 @@ export const EveHistoryList = ({
                   );
                 }
                 if (projectId) {
+                  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
                   return (
                     <li key={item.id}>
                       {index > 0 && <Separator />}
@@ -243,7 +244,9 @@ export const EveHistoryList = ({
                       />
                     </li>
                   );
+                  /* oxlint-enable oxc/no-async-await */
                 }
+                /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
                 return (
                   <SidebarChatItem
                     chat={item}
@@ -271,6 +274,7 @@ export const EveHistoryList = ({
                     setOpenMobile={setOpenMobile}
                   />
                 );
+                /* oxlint-enable oxc/no-async-await */
               })}
             </SidebarMenu>
           </div>

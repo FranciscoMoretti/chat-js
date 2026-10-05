@@ -94,6 +94,7 @@ const windows = (now: ReadonlyNativeSurface<Date>): GuestRateWindow[] =>
     ),
   }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 typescript/prefer-readonly-parameter-types (#565): createEveGuest accepts input: { tokenHash: string; messageLimit: number; expiresAt: Date; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -124,6 +125,8 @@ const createEveGuest = async (input: {
     return guest;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readExistingEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const readExistingEveGuestMessage = async (
@@ -150,7 +153,7 @@ const readExistingEveGuestMessage = async (
     );
   return message;
 };
-
+/* oxlint-enable oxc/no-async-await */
 interface GuestBootstrap {
   tokenHash: string;
   messageLimit: number;
@@ -176,6 +179,7 @@ const validateReservation = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rateAvailable's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): rateAvailable accepts tx: GuestTransaction; input: { ipHash: string; requestsPerMinute: number; requestsPerMonth: number; }; periods: ReturnType<typeof windows>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -210,6 +214,8 @@ const rateAvailable = async (
   }
   return true;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admissionGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -264,6 +270,8 @@ const admissionGuest = async (
   }
   return { guest, status: "ready" } as const;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -357,6 +365,8 @@ const reserveMessage = async (
     });
   return { reservationId, status: "reserved" } as const;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
@@ -376,6 +386,7 @@ const reserveEveGuestMessage = async (
   validateReservation(input, bootstrap);
   return await db.transaction((tx) => reserveMessage(tx, input, bootstrap));
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 type GuestReservationFailure = Exclude<
@@ -391,6 +402,7 @@ class GuestBatchRejectedError extends Error {
   }
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGuestMessages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 moving it below executable initialization can obscure ordering and API ownership.
 max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -454,6 +466,8 @@ const reserveEveGuestMessages = async <T = undefined>(
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve commitEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const commitEveGuestMessage = async (
@@ -475,7 +489,8 @@ const commitEveGuestMessage = async (
     .returning();
   return Boolean(row);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): releaseMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -558,6 +573,8 @@ const releaseMessage = async (
     }
     return true;
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /**
@@ -573,7 +590,8 @@ const releaseEveGuestMessage = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, false);
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /**
  * Serialize proof of no creation with the same family lock used before native dispatch.
  * @param {string} ownerId Owner whose guest and conversation family locks fence the refund.
@@ -587,7 +605,8 @@ const releaseEveGuestCreation = async (
   reservationId: string
 ): Promise<boolean> =>
   await releaseMessage(ownerId, operationId, reservationId, true);
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveGuestOwner's awaited sequencing and rejected-Promise behavior. */
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
  * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
@@ -602,7 +621,7 @@ const readEveGuestOwner = async (
     .where(eq(eveGuest.ownerId, ownerId));
   return guest;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- #509: This eve-guests.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric.
  */
 export {

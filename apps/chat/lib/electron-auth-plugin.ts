@@ -20,6 +20,7 @@ const plugin = electron({
 // exact synthetic origin; validate it before the plugin promotes the header.
 const electronAuthPlugin = {
   ...plugin,
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onRequest's awaited sequencing and rejected-Promise behavior. */
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Better Auth owns and mutates the native request context. */
   async onRequest(
     request: Request,
@@ -39,6 +40,7 @@ const electronAuthPlugin = {
     }
     return await plugin.onRequest(request, context);
   },
+  /* oxlint-enable oxc/no-async-await */
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 };
 

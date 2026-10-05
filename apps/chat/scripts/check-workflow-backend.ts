@@ -8,6 +8,7 @@ import { databaseConnection } from "../lib/db/connection";
 /* oxlint-enable sort-imports */
 import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -29,6 +30,8 @@ const check = async (): Promise<void> => {
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
  * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -43,4 +46,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, typescript/explicit-function-return-type */

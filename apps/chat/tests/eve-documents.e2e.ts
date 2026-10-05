@@ -80,6 +80,7 @@ await db.insert(user).values(
     name: "Artifact fixture",
   }))
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -114,6 +115,8 @@ afterAll(async () => {
   await db.delete(user).where(eq(user.id, owner));
   await db.delete(user).where(eq(user.id, stranger));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve conversation's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements */
 
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -127,6 +130,7 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
@@ -147,6 +151,7 @@ function draft(conversationId: string) {
     turnIndex: 0,
   };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -220,6 +225,8 @@ test("document purge requires the owned family fence, erases inherited revisions
     })
   ).rejects.toThrow();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -261,6 +268,8 @@ test("an external document reference rolls back every purge step", async () => {
       .where(eq(eveDocumentHead.conversationId, external.id))
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --
@@ -326,6 +335,8 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
   );
   expect(earlierBranchRevision?.id).toBe(original.id);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
@@ -419,6 +430,8 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     })
   ).rejects.toThrow("native history");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -498,6 +511,8 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     captureEveDocumentCheckpoint(stranger, chat.id, 2)
   ).rejects.toThrow("not found");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
@@ -546,6 +561,8 @@ test("a document save cancelled while waiting for its lock never writes", async 
     []
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
@@ -616,6 +633,8 @@ test("document viewing respects visibility, revocation and fork ancestry without
     await getAccessibleEveDocument(undefined, child.id, input.documentId)
   ).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -706,6 +725,8 @@ test("native document calls replay safely and reject stale edits and cross-conve
     await getEveDocumentHistory(owner, chat.id, created.documentId)
   ).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -739,6 +760,8 @@ test("concurrent replays create one revision and old replays never rewind the he
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -770,6 +793,8 @@ test("two distinct saves from the same revision cannot overwrite each other", as
     await getEveDocumentHistory(owner, chat.id, input.documentId)
   ).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("artifact reads and updates are scoped to owner and conversation", async () => {
@@ -808,7 +833,8 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
     })
   ).rejects.toThrow();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * max-lines-per-function (#510): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("forks select the pre-turn revision and parent and child edits stay independent" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -895,6 +921,8 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
       )
   ).toHaveLength(4);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -964,6 +992,8 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
   ).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -1015,6 +1045,8 @@ test("document references protect owned files across families and revision histo
   );
   expect(copiedDocumentRevision?.content).toBe(input.content);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
@@ -1113,6 +1145,8 @@ test("named idle snapshots preserve manual edits across retries without changing
     )
   ).rejects.toThrow("different");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -1165,6 +1199,8 @@ test("named checkpoints reject foreign owners, changed boundaries and deletion, 
     ).toEqual([]);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -1205,6 +1241,8 @@ test("missing or mismatched named document boundaries stop native allocation", a
   ).rejects.toThrow("Named document checkpoint");
   expect(allocations).toBe(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
@@ -1266,6 +1304,8 @@ test.each([false, true])(
     ]);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -1339,6 +1379,8 @@ test("imported forks restore the selected document boundary and exclude the late
     expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves sessionId for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null --
@@ -1408,6 +1450,8 @@ test("imported fork reservations retain their boundary across uncertain creation
     )
   ).toEqual(bound);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -1501,6 +1545,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   );
   expect(rootRevisionAfterDeletion?.id).toBe(replacement.id);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-documents.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

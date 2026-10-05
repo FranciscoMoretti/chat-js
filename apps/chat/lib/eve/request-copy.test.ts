@@ -56,6 +56,7 @@ afterEach((): void => {
   vi.restoreAllMocks();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("preserves a server rejection's recovery identity and retryability", async () => {
   const conversationId = crypto.randomUUID();
   const response = Response.json(
@@ -73,7 +74,8 @@ it("preserves a server rejection's recovery identity and retryability", async ()
     retryable: false,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps malformed server failures retryable", async () => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue(
     new Response("invalid JSON", { status: 500 })
@@ -83,7 +85,8 @@ it("keeps malformed server failures retryable", async () => {
     retryable: true,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("distinguishes an expired request from a network failure", async () => {
   vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network failure"));
   await expect(requestEveCopy(copyInput)).rejects.toMatchObject({
@@ -97,3 +100,4 @@ it("distinguishes an expired request from a network failure", async () => {
       "Saving is taking longer than expected. Retry to recover the same copy.",
   });
 });
+/* oxlint-enable oxc/no-async-await */

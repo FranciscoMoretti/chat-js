@@ -33,6 +33,7 @@ import { assertEveConfigured } from "./server";
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveSubagentUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -105,6 +106,8 @@ const reconcileEveSubagentUsage = async (
   }
   return !unresolved;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
@@ -166,6 +169,8 @@ const reconcileEveUsage = async (
     await advanceEveUsageCursor(ownerId, sessionId, streamIndex);
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileAllOwnerUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -259,6 +264,8 @@ const reconcileAllOwnerUsage = async (
     throw failure.cause;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconcileEveOwnerUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- no-magic-numbers (#517): reconcileEveOwnerUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -289,5 +296,6 @@ const reconcileEveOwnerUsage = async (
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { reconcileEveOwnerUsage, reconcileEveSubagentUsage, reconcileEveUsage };

@@ -11,6 +11,7 @@ const CHART_JSON_PREFIX = "__CHART_JSON__:";
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const packageName = (spec: string): string =>
   spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installBasePackages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
@@ -49,6 +50,8 @@ const installBasePackages = async (
   log.info({ requestId }, "base packages installed");
   return { success: true };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve processExtraPackages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
@@ -131,6 +134,7 @@ const processExtraPackages = async (
     installResult: { success: true },
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -190,6 +194,7 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve parseExecutionOutput's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -254,6 +259,8 @@ const parseExecutionOutput = async (execResult: {
 
   return { chartData, execInfo, outputText };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkForChart's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -284,6 +291,7 @@ const checkForChart = async (
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
@@ -321,6 +329,7 @@ const buildResponseMessage = ({
 
   return message;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executePythonInSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -391,6 +400,7 @@ export const executePythonInSandbox = async ({
     message: message.trim(),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

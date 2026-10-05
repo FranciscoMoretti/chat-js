@@ -27,6 +27,7 @@ const ConnectorsSettingsHeader = () => (
   </SettingsPageHeader>
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorsSettingsContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
@@ -47,6 +48,7 @@ const ConnectorsSettingsContent = async () => {
     </HydrationBoundary>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 

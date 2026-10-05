@@ -57,6 +57,7 @@ const catalog: ModelData[] = [
 
 beforeEach(() => vi.mocked(fetchModels).mockResolvedValue(catalog));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("chat catalogs preserve reasoning variants, disabled filtering, and provider order", async () => {
   const models = await fetchChatModels();
   expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
@@ -80,7 +81,8 @@ test("chat catalogs preserve reasoning variants, disabled filtering, and provide
     )
   ).toMatchObject({ reasoning: true });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("readonly catalogs enable curated reasoning variants and newly discovered IDs", async () => {
   const models = Object.freeze(await fetchChatModels());
   const enabled = getDefaultEnabledModels(models);
@@ -91,3 +93,4 @@ test("readonly catalogs enable curated reasoning variants and newly discovered I
     "fixture/last",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */

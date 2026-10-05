@@ -10,6 +10,7 @@ type ImageModelSelection =
       >["id"];
     }
   | { modelId: string; multimodal: false; usageModelId?: never };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findMultimodalModel's awaited sequencing and rejected-Promise behavior. */
 const findMultimodalModel = async (
   provider: Readonly<ToolModelProvider>,
   modelId: unknown
@@ -33,6 +34,8 @@ const findMultimodalModel = async (
   }
   return { multimodal: false };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveImageModel's awaited sequencing and rejected-Promise behavior. */
 const resolveImageModel = async (
   provider: Readonly<ToolModelProvider>,
   selectedModel: unknown
@@ -52,5 +55,6 @@ const resolveImageModel = async (
     ? fallback
     : { modelId: defaultId, multimodal: false };
 };
+/* oxlint-enable oxc/no-async-await */
 export { resolveImageModel };
 export type { ImageModelSelection };

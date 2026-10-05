@@ -28,6 +28,7 @@ const SettingsLayoutShell = ({
     </div>
   </div>
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve SettingsLayoutContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsLayoutContent: ; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, }: { children: React.ReactNode; }). */
 
@@ -44,6 +45,7 @@ const SettingsLayoutContent = async ({
 
   return <SettingsLayoutShell>{children}</SettingsLayoutShell>;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsLayout: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: React.ReactNode }). */

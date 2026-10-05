@@ -18,6 +18,7 @@ vi.mock("@/lib/config", () => ({
   config: { appPrefix: "file-response-test" },
 }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./storage-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -27,6 +28,7 @@ vi.mock("./storage-provider", async () => {
     createStorageAdapter: () => memory(),
   };
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/strict-boolean-expressions --
@@ -35,6 +37,7 @@ vi.mock("./storage-provider", async () => {
  * typescript/strict-boolean-expressions (#610): describe("file content response") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("file content response", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("serves uploaded files when Next Image adds a deployment ID", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -54,7 +57,8 @@ describe("file content response", () => {
     assert.equal(response.status, 200);
     assert.equal(await response.text(), "hello");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("serves byte ranges", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -84,7 +88,8 @@ describe("file content response", () => {
     assert.equal(suffixResponse.status, 206);
     assert.equal(await suffixResponse.text(), "lo");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["bytes=2-", "bytes=2-99"])'s awaited sequencing and rejected-Promise behavior. */
   it.each(["bytes=2-", "bytes=2-99"])(
     "clamps range %s to the stored file",
     async (range) => {
@@ -108,7 +113,8 @@ describe("file content response", () => {
       assert.equal(await response.text(), "llo");
     }
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("rejects unsatisfiable ranges", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -129,6 +135,7 @@ describe("file content response", () => {
     assert.equal(response.status, 416);
     assert.equal(response.headers.get("content-range"), "bytes */2");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/strict-boolean-expressions */
 

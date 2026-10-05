@@ -45,6 +45,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep it("retains paid usage when structured output cannot be read")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -67,6 +68,8 @@ it("retains paid usage when structured output cannot be read", async () => {
     expect.objectContaining({ maxOutputTokens: 512, maxRetries: 0 })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 it("returns valid suggestions and records the configured auxiliary model", async () => {
@@ -81,14 +84,16 @@ it("returns valid suggestions and records the configured auxiliary model", async
   });
   expect(mocks.model).toHaveBeenCalledWith(mocks.feature.default);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("records a failed attempt without turning an optional feature error into answer failure", async () => {
   mocks.generate.mockRejectedValue(new Error("Provider unavailable"));
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
     modelCalls: [{ failed: true, modelId: mocks.feature.default }],
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not spend when disabled, without an answer, or before model resolution succeeds", async () => {
   mocks.feature.enabled = false;
   expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();
@@ -102,3 +107,4 @@ it("does not spend when disabled, without an answer, or before model resolution 
   });
   expect(mocks.generate).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

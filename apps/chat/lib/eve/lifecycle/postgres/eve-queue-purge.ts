@@ -6,6 +6,7 @@ import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeUnlockedJobs's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -44,6 +45,8 @@ const removeUnlockedJobs = async (
   }
   return removed.map((job) => job.id).toSorted();
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresQueue's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -152,4 +155,5 @@ export const purgeEvePostgresQueue = async (
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

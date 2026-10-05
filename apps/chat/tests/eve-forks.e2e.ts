@@ -29,6 +29,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const modelId = "openai/gpt-5-nano";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("fork API preserves native history in ChatJS and rejects changed retries and for assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("fork API preserves native history in ChatJS and rejects changed retries and for keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -245,4 +246,5 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     throw cleanupFailure.error;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */

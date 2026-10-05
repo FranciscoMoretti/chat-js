@@ -44,6 +44,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const conversationUrl = /\/chat\/[^/]+$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): test("real provider, native application tool and replay-safe usage ledger") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("real provider, native application tool and replay-safe usage ledger") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -197,6 +198,8 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     path: "tests/eve-results/screenshots/tool-word-count.png",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -360,6 +363,8 @@ test("the composer selects models for initial and subsequent durable turns", asy
     replayedUsage.reduce((total, row) => total + row.chargedCents, 0)
   ).toBe(chargedCents);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -410,6 +415,7 @@ test("a definitive model rejection unlocks the composer and releases the operati
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(second.modelId).toBe("openai/gpt-4.1-mini-fast");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

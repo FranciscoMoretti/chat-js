@@ -109,6 +109,7 @@ beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.snapshot.mockResolvedValue({ events: [] });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -120,6 +121,8 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.messages).not.toContain("research-call");
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("rejects absent research and text documents before reading the transcript", async () => {
@@ -135,7 +138,8 @@ it("rejects absent research and text documents before reading the transcript", a
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects research without an installed search provider", async () => {
   Reflect.deleteProperty(mocks.tools, "webSearch");
   await expect(prepareResearch(context())).rejects.toThrow(
@@ -143,7 +147,8 @@ it("rejects research without an installed search provider", async () => {
   );
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
@@ -173,7 +178,8 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   ).rejects.toThrow("authenticated owner");
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not save after cancellation and retains the root operation identity on success", async () => {
   const ctx = context();
   const abort = new AbortController();
@@ -201,3 +207,4 @@ it("does not save after cancellation and retains the root operation identity on 
     ctx
   );
 });
+/* oxlint-enable oxc/no-async-await */

@@ -12,6 +12,7 @@ import { eveConversation, eveSearchText } from "./schema";
  * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveSearchText's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
@@ -69,6 +70,8 @@ const writeEveSearchText = async (
       });
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve indexEveSearchText's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
@@ -86,6 +89,7 @@ const indexEveSearchText = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/consistent-type-definitions --
@@ -160,6 +164,7 @@ const highlightSearchExcerpt = (
     return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
   });
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -260,5 +265,6 @@ const searchEveConversations = async (
         : null,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };

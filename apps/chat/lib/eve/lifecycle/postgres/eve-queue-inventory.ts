@@ -1,6 +1,7 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresQueueInventory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): readEvePostgresQueueInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): readEvePostgresQueueInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -78,4 +79,5 @@ export const readEvePostgresQueueInventory = async (
       .map((row) => row.id),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

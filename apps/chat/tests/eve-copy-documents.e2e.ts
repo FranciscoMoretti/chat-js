@@ -124,6 +124,7 @@ await db.insert(eveDocumentHead).values([
     revisionId: hiddenRevision,
   },
 ]);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   for (const table of [
     eveImportedDocumentCheckpointEntry,
@@ -142,11 +143,13 @@ afterAll(async () => {
     .where(inArray(eveConversation.id, [branchId, conversationId]));
   await db.delete(user).where(eq(user.id, ownerId));
 });
+/* oxlint-enable oxc/no-async-await */
 const resources = {
   documentIds: [documentId],
   revisionIds: [rootRevision, visibleRevision],
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("captures all accessible ancestors without private branches, unrelated documents uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("captures all accessible ancestors without private branches, unrelated documents accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -179,6 +182,8 @@ test("captures all accessible ancestors without private branches, unrelated docu
     expect(JSON.stringify(result)).not.toContain(forbidden);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("rejects a referenced private revision or a missing document instead of partially copying", async () => {
@@ -213,7 +218,8 @@ test("rejects a referenced private revision or a missing document instead of par
     )
   ).rejects.toThrow("unavailable");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("requires publication even for an empty resource manifest", async () => {
   await expect(
     snapshotPublicEveCopyDocuments(
@@ -238,7 +244,8 @@ test("requires publication even for an empty resource manifest", async () => {
     )
   ).toEqual({ checkpoints: [], documents: [] });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): test("observes revocation committed while preparation is waiting on the source row") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): test("observes revocation committed while preparation is waiting on the source row") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -270,6 +277,8 @@ test("observes revocation committed while preparation is waiting on the source r
     .set({ visibility: "public" })
     .where(eq(eveConversation.id, conversationId));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -319,4 +328,5 @@ test("snapshots native and imported boundaries independently of later document h
     ])
   ).rejects.toThrow("boundary is unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

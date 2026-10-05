@@ -140,6 +140,7 @@ describe("Eve command recovery", () => {
     );
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("surfaces callback-only failures and catches up after cancellation", async () => {
     let replayed = 0;
     await expect(
@@ -167,7 +168,9 @@ describe("Eve command recovery", () => {
     );
     expect(replayed).toBe(1);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -195,6 +198,7 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   expect(submissions).toBe(1);
   expect(snapshots).toBe(2);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {

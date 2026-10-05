@@ -161,6 +161,7 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -275,6 +276,8 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await act((): void => root.unmount());
   container.remove();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
@@ -325,3 +328,4 @@ test("weather and retrieved URL renderer states", async (): Promise<void> => {
   await act((): void => root.unmount());
   container.remove();
 });
+/* oxlint-enable oxc/no-async-await */

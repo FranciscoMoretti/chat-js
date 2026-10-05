@@ -88,6 +88,7 @@ const hasProviderKind = (
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareAdd's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Resolve selections, validate replacement permissions, and calculate configuration edits before the installation can write source. */
 /* oxlint-disable eslint/max-lines-per-function -- Prepare provider selections and replacement edits together; later installation consumes this complete AddSetup snapshot. */
 const prepareAdd = async (
@@ -184,6 +185,7 @@ const prepareAdd = async (
     selectedStorage,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -212,6 +214,7 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve add's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- The command confirms replacement, installs transactionally with rollback, regenerates registrations, and prints requirements only after success. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep confirmation, transactional provider registration, package installation, and success reporting in their existing execution order. */
 export const add = new Command("add")
@@ -348,5 +351,5 @@ export const add = new Command("add")
       }
     }
   );
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

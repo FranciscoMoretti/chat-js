@@ -21,10 +21,12 @@ const mocks = vi.hoisted(() => ({
   model: vi.fn(),
   upload: vi.fn(),
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("ai", async (original) => ({
   ...(await original<typeof AI>()),
   experimental_generateVideo: mocks.generate,
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -62,6 +64,7 @@ beforeEach(() => {
     url: "/api/files/generated",
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("uses the native selected model, provider options, authorized storage and cost receipt", async () => {
   mocks.definition.mockResolvedValue({
     apiModelId: "selected",
@@ -101,6 +104,8 @@ it("uses the native selected model, provider options, authorized storage and cos
     usage: { costUsd: 0.5 },
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("uses configured defaults", async () => {
   await generateVideoTool.execute(input, testToolContext());
   expect(mocks.model).toHaveBeenCalledWith("default-video");
@@ -108,6 +113,8 @@ it("uses configured defaults", async () => {
     expect.objectContaining({ aspectRatio: "16:9", duration: 5 })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("does not invent a charge when no video is returned") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -118,6 +125,8 @@ it("does not invent a charge when no video is returned", async () => {
   ).rejects.toThrow("No video generated");
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 it("retains provider cost when storage fails", async () => {
   mocks.upload.mockRejectedValue(new Error("Storage unavailable"));
@@ -125,6 +134,7 @@ it("retains provider cost when storage fails", async () => {
     await generateVideoTool.execute(input, testToolContext())
   ).toMatchObject({ status: "error", usage: { costUsd: 0.5 } });
 });
+/* oxlint-enable oxc/no-async-await */
 it("accepts saved results without file IDs", () => {
   const saved = {
     prompt: "Example",

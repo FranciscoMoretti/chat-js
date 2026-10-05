@@ -9,6 +9,7 @@ import { session, user } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve serializeSignedCookie's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): serializeSignedCookie keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -61,6 +62,8 @@ const serializeSignedCookie = async (
   }
   return cookie;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -135,4 +138,5 @@ export const GET = async (): Promise<Response> => {
     status: 302,
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-process-env, typescript/strict-boolean-expressions, unicorn/no-null */

@@ -15,6 +15,7 @@ const localEveSandboxOwnerSchema = z.strictObject({
   version: z.literal(1),
   writeAheadResources: z.literal(true).optional(),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalEveSandboxInventory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
@@ -123,5 +124,6 @@ const readLocalEveSandboxInventory = async (
   }
   return { owned, unattributedDirectories };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export { localEveSandboxOwnerSchema, readLocalEveSandboxInventory };

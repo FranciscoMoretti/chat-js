@@ -73,6 +73,7 @@ beforeEach(() => {
   mocks.snapshot.mockResolvedValue({ events: [{ type: "session.completed" }] });
   mocks.usage.mockResolvedValue(undefined);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -93,6 +94,8 @@ it("retires before reading and settling the final snapshot, including retries", 
     retireEveSessionForDeletion("owner", "session")
   ).resolves.toMatchObject({ events: [{ type: "session.completed" }] });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-undefined --
@@ -105,6 +108,8 @@ it("rejects non-deleting or foreign sessions before native access", async () => 
   );
   expect(mocks.reset).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-undefined, typescript/promise-function-async --
@@ -128,6 +133,8 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     "Usage must be reconciled"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/promise-function-async */
 
 /* oxlint-disable no-undefined, unicorn/no-null --
@@ -149,6 +156,8 @@ it("does not enter native family cleanup for an inaccessible family or a missing
   );
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, unicorn/no-null */
 
 it("rejects PostgreSQL retirement on Vercel before changing application access", async () => {
@@ -170,7 +179,8 @@ it("rejects PostgreSQL retirement on Vercel before changing application access",
   expect(mocks.begin).not.toHaveBeenCalled();
   expect(mocks.retireMany).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("checks provider compatibility before revoking family access", async () => {
   mocks.check.mockRejectedValueOnce(new Error("workflow fences missing"));
   await expect(retireEveFamilyForDeletion("owner", "root")).rejects.toThrow(
@@ -180,3 +190,4 @@ it("checks provider compatibility before revoking family access", async () => {
   expect(mocks.retireMany).not.toHaveBeenCalled();
   expect(mocks.reset).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

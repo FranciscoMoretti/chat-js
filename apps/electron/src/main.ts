@@ -116,6 +116,7 @@ const broadcastAuthState = (): void => {
   mainWindow.webContents.send("chatjs:auth-state-changed", currentAuthState);
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setAuthOverlay's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- setAuthOverlay: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable unicorn/no-null -- setAuthOverlay: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- setAuthOverlay: This command or desktop boundary reports startup, progress and failures to its operator. */
@@ -208,6 +209,8 @@ const setAuthOverlay = async (
     console.warn("[electron-main] failed to update auth overlay", error);
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setAuthState's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
@@ -241,6 +244,8 @@ const setAuthState = async (nextState: AuthRendererState): Promise<void> => {
 
   await setAuthOverlay(mainWindow, { visible: false });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resetAuthFlow's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
@@ -260,6 +265,7 @@ const resetAuthFlow = async (): Promise<void> => {
     status: "idle",
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -276,6 +282,7 @@ registerProtocolClient();
 // Better Auth should register these bridges in setupMain(), but we also
 // register them explicitly so the preload bridge stays reliable in dev builds.
 ipcMain.removeHandler("better-auth:requestAuth");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- better-auth:requestAuth: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/no-magic-numbers -- better-auth:requestAuth: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- better-auth:requestAuth: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -310,6 +317,8 @@ ipcMain.handle(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -317,7 +326,8 @@ ipcMain.handle(
 ipcMain.handle("chatjs:cancel-auth-flow", async (): Promise<void> => {
   await resetAuthFlow();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAuthSessionCookies's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- syncAuthSessionCookies: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- syncAuthSessionCookies: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable eslint/no-magic-numbers -- syncAuthSessionCookies: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
@@ -383,6 +393,7 @@ const syncAuthSessionCookies = async (
     )
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
@@ -391,23 +402,27 @@ const syncAuthSessionCookies = async (
 /* oxlint-enable eslint/max-statements */
 
 ipcMain.removeHandler("better-auth:signOut");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 ipcMain.handle("better-auth:signOut", async () => {
   const result = await electronAuthClient.signOut();
   await syncAuthSessionCookies();
   return result;
 });
-
+/* oxlint-enable oxc/no-async-await */
 ipcMain.removeHandler("better-auth:getUser");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- better-auth:getUser: The SDK/wire/OS contract uses null as an explicit absence value. */
 ipcMain.handle("better-auth:getUser", async () => {
   const sessionResult = await electronAuthClient.getSession();
   return sessionResult.data?.user ?? null;
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 
 const getAppAssetPath = (...segments: readonly string[]): string =>
   path.join(app.getAppPath(), ...segments);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateFromDeepLink's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- authenticateFromDeepLink: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- authenticateFromDeepLink: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- authenticateFromDeepLink: This command or desktop boundary reports startup, progress and failures to its operator. */
@@ -444,6 +459,8 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     return false;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForElectronSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
@@ -477,6 +494,7 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
 
   return false;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -503,6 +521,7 @@ const scheduleAuthRefresh = (): void => {
   targetWindow.focus();
 
   pendingAuthRefreshTimer = setTimeout((): void => {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     void (async (): Promise<void> => {
       try {
         const ready = await waitForElectronSession();
@@ -540,6 +559,7 @@ const scheduleAuthRefresh = (): void => {
         });
       }
     })();
+    /* oxlint-enable oxc/no-async-await */
     pendingAuthRefreshTimer = null;
   }, 250);
 };
@@ -689,6 +709,7 @@ const setupApplicationMenu = (): void => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setupAutoUpdater's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-console -- setupAutoUpdater: This command or desktop boundary reports startup, progress and failures to its operator. */
 const setupAutoUpdater = async (): Promise<void> => {
   if (!app.isPackaged) {
@@ -710,14 +731,17 @@ const setupAutoUpdater = async (): Promise<void> => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ipcMain.handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-console */
 
 ipcMain.handle("chatjs:sync-auth-session", async (): Promise<void> => {
   await syncAuthSessionCookies();
 });
-
+/* oxlint-enable oxc/no-async-await */
 ipcMain.handle("chatjs:get-auth-state", () => currentAuthState);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- main.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: Start readiness asynchronously so deep-link and second-instance handlers below register immediately.
 void (async (): Promise<void> => {
@@ -736,16 +760,19 @@ void (async (): Promise<void> => {
     }
   });
 })();
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- open-url: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 app.on("open-url", (_event, url): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
   void (async (): Promise<void> => {
     const didAuthenticate = await authenticateFromDeepLink(url);
     if (didAuthenticate) {
       scheduleAuthRefresh();
     }
   })();
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -757,12 +784,14 @@ app.on("second-instance", (_event, commandLine): void => {
   );
 
   if (deepLinkUrl) {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     void (async (): Promise<void> => {
       const didAuthenticate = await authenticateFromDeepLink(deepLinkUrl);
       if (didAuthenticate) {
         scheduleAuthRefresh();
       }
     })();
+    /* oxlint-enable oxc/no-async-await */
   }
 });
 /* oxlint-enable typescript/strict-boolean-expressions */

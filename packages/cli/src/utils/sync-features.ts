@@ -65,6 +65,7 @@ const assertSupportedFeatureInstallation = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve exists's awaited sequencing and rejected-Promise behavior. */
 const exists = async (file: string): Promise<boolean> => {
   try {
     await access(file);
@@ -76,7 +77,7 @@ const exists = async (file: string): Promise<boolean> => {
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 interface ContributionBinding {
   binding: string;
   bindings: ts.NamedImportBindings | undefined;
@@ -119,6 +120,7 @@ const LAST_ELEMENT = -1;
 const CLOSING_DELIMITER_WIDTH = 1;
 const SOURCE_START = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve planContribution's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
@@ -247,6 +249,8 @@ const planContribution = async (
   }
   return { content, file };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAttachmentUploads's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -294,6 +298,8 @@ const validateAttachmentUploads = async (
   }
   return uploads;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcp's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
@@ -333,6 +339,8 @@ const validateMcp = async (
   }
   return mcp;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncFeatures's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
@@ -439,6 +447,8 @@ const syncFeatures = async (
     ...ui.map(({ file, content }): Promise<void> => writeFile(file, content)),
   ]);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeFeatureUi's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -555,6 +565,7 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
   }
   await syncFeatures(cwd);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-continue */

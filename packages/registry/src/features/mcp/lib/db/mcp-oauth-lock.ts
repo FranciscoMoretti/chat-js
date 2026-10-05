@@ -78,6 +78,7 @@ type LockQuery = (
   template: ReadonlyNativeSurface<TemplateStringsArray>,
   ...parameters: readonly string[]
 ) => ReturnType<postgres.TransactionSql>;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createLockedRefresh's awaited sequencing and rejected-Promise behavior. */
 const createLockedRefresh =
   <Result>(
     options: Readonly<{
@@ -102,7 +103,8 @@ const createLockedRefresh =
     options.cancellation.markStarted();
     return { value: await options.run() };
   };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withMcpOAuthRefreshLock's awaited sequencing and rejected-Promise behavior. */
 /** Bound refresh lock waiters separately from the app pool used by the refresh callback.
  * @param {string} connectorId - Connector whose refresh is serialized.
  * @param {() => Promise<Result>} run - Refresh operation performed after acquiring the database lock.
@@ -127,3 +129,4 @@ export const withMcpOAuthRefreshLock = async <Result>(
     cancellation.dispose();
   }
 };
+/* oxlint-enable oxc/no-async-await */

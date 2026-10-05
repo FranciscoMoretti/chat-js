@@ -46,6 +46,7 @@ vi.mock("../config", () => ({
   },
 }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -66,4 +67,5 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
   expect(result?.modelCalls?.[0].failed).toBeUndefined();
   expect(model.doGenerateCalls).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

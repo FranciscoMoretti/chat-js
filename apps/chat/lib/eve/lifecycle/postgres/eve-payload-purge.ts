@@ -11,6 +11,7 @@ const receiptSchema = z.object({
   streamIds: z.array(z.string()),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPayloadPurgeReady's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): assertPayloadPurgeReady uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): assertPayloadPurgeReady accepts query: TransactionSql; inventory: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -45,6 +46,8 @@ const assertPayloadPurgeReady = async (
     throw new Error("Clear queued payloads before purging native runs.");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresSessionPayloads's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -124,4 +127,5 @@ export const purgeEvePostgresSessionPayloads = async (
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

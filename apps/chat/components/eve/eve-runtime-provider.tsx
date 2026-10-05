@@ -206,6 +206,7 @@ const EveRuntimeProvider = ({
   // The registry is a stable runtime owner, not render state.
   // oxlint-disable-next-line react/hook-use-state -- Controllers must retain identity for the owner lifetime.
   const [registry] = useState(() => new Map<string, Runtime>());
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve open's awaited sequencing and rejected-Promise behavior. */
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
       // Query resolves the requested chat identity before looking up its owning runtime.
@@ -246,6 +247,7 @@ const EveRuntimeProvider = ({
     },
     [queryClient, trpc, registry]
   );
+  /* oxlint-enable oxc/no-async-await */
   const active = runtimes.find(
     (runtime) =>
       runtime.ownerId === ownerId && pathname === `/chat/${runtime.chatId}`

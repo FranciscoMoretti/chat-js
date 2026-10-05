@@ -7,6 +7,7 @@ import type { ToolModelProvider } from "@/lib/ai/tool-context";
 
 import { loadEveModelDefinition } from "./model-selection";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveToolModelProvider's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): eveToolModelProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/strict-boolean-expressions (#610): eveToolModelProvider intentionally keeps the existing falsy-value behavior of model; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -54,4 +55,5 @@ export const eveToolModelProvider: ToolModelProvider = {
     };
   },
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */

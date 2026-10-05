@@ -79,6 +79,7 @@ class VercelGateway
       : this.env.VERCEL_OIDC_TOKEN;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -145,6 +146,7 @@ class VercelGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

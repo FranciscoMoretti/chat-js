@@ -12,6 +12,7 @@ import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
 
 const headers = { "cache-control": "no-store" };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCopyBody's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-statements (#512): readCopyBody keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): readCopyBody uses 2048 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -50,6 +51,8 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
     reader.releaseLock();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -111,4 +114,5 @@ export const POST = async (request: Request): Promise<Response> => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

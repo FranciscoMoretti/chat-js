@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Playwright owns the mutable page fixture. */
 test("retired agent links render the unmatched-route page", async ({
   page,
@@ -19,4 +20,5 @@ test("retired agent links render the unmatched-route page", async ({
     path: testInfo.outputPath("retired-agent-route.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -61,6 +61,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("keeps a terminal creation response ambiguous when its refund is refused") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -86,6 +87,8 @@ test("keeps a terminal creation response ambiguous when its refund is refused", 
     "reservation"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -112,6 +115,8 @@ test("preserves authoritative deletion when its committed quota cannot be refund
     creationRejected: true,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -138,4 +143,5 @@ test("defers root title generation until after the creation response", async () 
     ownerId: "guest",
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

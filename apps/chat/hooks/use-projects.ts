@@ -13,6 +13,7 @@ export const useRenameProject = () => {
   const queryClient = useQueryClient();
   const trpc = useTRPC();
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return useMutation(
     trpc.project.update.mutationOptions<{
       previous?: Project[];
@@ -65,5 +66,6 @@ export const useRenameProject = () => {
       onSuccess: () => toast.success("Project renamed"),
     })
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable max-lines-per-function, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

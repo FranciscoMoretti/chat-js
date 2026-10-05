@@ -3,6 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "./client";
 import { eveStoredFile } from "./schema";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storageKeyForFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): storageKeyForFile intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -21,6 +22,8 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
   }
   return file.storageKey;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fileIdsForStorageKeys's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
@@ -38,6 +41,7 @@ const fileIdsForStorageKeys = async (
     .where(inArray(eveStoredFile.storageKey, storageKeys));
   return new Map(files.map((file) => [file.storageKey, file.fileId]));
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 export { storageKeyForFile, fileIdsForStorageKeys };

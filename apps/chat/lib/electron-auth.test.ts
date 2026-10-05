@@ -63,6 +63,7 @@ it("keeps desktop social callbacks on the session transfer page", () => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("transfers a browser login through PKCE and accepts only the current desktop origin", async () => {
   const auth = createTestAuth();
   const login = await auth.handler(
@@ -133,12 +134,13 @@ it("transfers a browser login through PKCE and accepts only the current desktop 
   });
   expect((await exchange(`${ELECTRON_APP_SCHEME}:/`)).status).toBe(404);
 });
-
+/* oxlint-enable oxc/no-async-await */
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the inferred browser client delivers the transfer cookie to the current desktop callback", async () => {
   vi.useFakeTimers();
   const replace = vi.fn();
@@ -154,3 +156,4 @@ it("the inferred browser client delivers the transfer cookie to the current desk
   await vi.advanceTimersByTimeAsync(100);
   expect(replace).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */

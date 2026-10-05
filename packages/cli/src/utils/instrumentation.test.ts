@@ -22,6 +22,7 @@ const compiled = ts.transpileModule(source, {
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
     test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
       const events: string[] = [];
       const received: unknown[] = [];
@@ -67,6 +68,7 @@ for (const runtime of ["nodejs", "edge"]) {
         ...(fail ? ["optional"] : []),
       ]);
     });
+    /* oxlint-enable oxc/no-async-await */
   }
 }
 /* oxlint-enable typescript/explicit-function-return-type */

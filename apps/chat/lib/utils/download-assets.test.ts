@@ -36,6 +36,7 @@ vi.mock("@/lib/file-storage", () => ({ downloadFile }));
  * unicorn/no-null (#570): describe("replaceFilePartUrlByBinaryDataInMessages") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 describe("replaceFilePartUrlByBinaryDataInMessages", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("preserves SDK 7 inline data and provider references without downloading", async () => {
     const messages: ModelMessage[] = [
       {
@@ -71,7 +72,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     );
     assert.equal(download.mock.calls.length, 0);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("downloads structured HTTP FileData URLs", async () => {
     const url = new URL("https://files.example/document.pdf");
     const download = vi.fn().mockResolvedValue({
@@ -107,12 +109,13 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
   afterEach(() => {
     downloadFile.mockReset();
     vi.unstubAllGlobals();
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("downloads managed files directly from storage", async () => {
     downloadFile.mockResolvedValue({
       arrayBuffer: () => Promise.resolve(new Uint8Array([1, 2, 3]).buffer),
@@ -145,7 +148,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     assert.ok(file.data instanceof Uint8Array);
     assert.deepEqual([...file.data], [1, 2, 3]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits unavailable managed files from model messages", async () => {
     downloadFile.mockRejectedValue(
       new FilesError("NotFound", "File does not exist")
@@ -172,7 +176,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits unavailable legacy HTTP files from model messages", async () => {
     vi.stubGlobal(
       "fetch",
@@ -200,7 +205,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits user messages containing only an unavailable file", async () => {
     downloadFile.mockRejectedValue(
       new FilesError("NotFound", "File does not exist")
@@ -221,7 +227,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
 
     assert.deepEqual(result, []);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits assistant messages exposed by an unavailable user turn", async () => {
     downloadFile.mockRejectedValue(
       new FilesError("NotFound", "File does not exist")
@@ -255,7 +262,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits unavailable image parts from model messages", async () => {
     vi.stubGlobal(
       "fetch",
@@ -284,7 +292,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("preserves provider failures", async () => {
     const providerError = new FilesError(
       "Provider",
@@ -308,7 +317,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       providerError
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("preserves non-404 HTTP failures", async () => {
     vi.stubGlobal(
       "fetch",
@@ -333,7 +343,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       )
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("downloads managed-looking URLs on other origins over HTTP", async () => {
     const fetchImplementation = vi.fn(() =>
       Promise.resolve(
@@ -362,7 +373,8 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
       [new URL("https://files.example/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png")],
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("resolves stable application file paths against the current app URL", async () => {
     const messages: ModelMessage[] = [
       {
@@ -407,6 +419,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     assert.ok(inlineFile?.type === "file");
     assert.equal(inlineFile.data, "aGVsbG8=");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 

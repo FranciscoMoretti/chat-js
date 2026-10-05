@@ -8,6 +8,7 @@ import { keyFromFileUrl } from "@/lib/file-url";
  * no-magic-numbers (#517): FileContext uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchEveChannelFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -38,4 +39,5 @@ export const fetchEveChannelFile = async (
     mediaType: file.type,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

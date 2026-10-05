@@ -14,6 +14,7 @@ import {
  * typescript/explicit-function-return-type (#560): Keep context's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const context = () => ({ abortSignal: new AbortController().signal });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
@@ -33,6 +34,8 @@ test("distinguishes explicitly free work from unreported usage", async () => {
     free
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -53,6 +56,8 @@ test("retains reported costs only for explicitly reported domain failures", asyn
   });
   expect(JSON.stringify(result)).not.toContain("credentials");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   new Error("Unexpected provider failure"),   { authorization: "required" }, ])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
@@ -77,6 +82,8 @@ test.each([
     )
   ).rejects.toBe(failure);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -100,6 +107,8 @@ test("cancellation propagates before and during execution", async () => {
     })
   ).rejects.toBe(running.signal.reason);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -118,6 +127,8 @@ test.each([-1, Number.NaN, Number.POSITIVE_INFINITY])(
     ).rejects.toThrow("Tool cost must be finite and nonnegative");
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -129,13 +140,16 @@ test("an unresolved provider cost prevents a known subtotal from becoming a fina
   usage.markUnknown();
   expect(await usage.totalUsd()).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 test("invalid durable output is rejected by both types and runtime validation", async () => {
   // @ts-expect-error A Date is not a durable JSON tool output.
   const result = executeWithToolUsage(context(), () => new Date());
   await expect(result).rejects.toThrow();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("streaming cancellation remains native even when the provider returns a result") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -150,4 +164,5 @@ test("streaming cancellation remains native even when the provider returns a res
     )
   ).rejects.toBe(controller.signal.reason);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

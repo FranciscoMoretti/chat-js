@@ -171,6 +171,7 @@ export const useEveFork = (
     }
   }, [conversationId, ownerId, setAttachments]);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve execute's awaited sequencing and rejected-Promise behavior. */
   const execute = async (operation: Operation): Promise<void> => {
     const binding = await resolveCreationRequest(
       sessionStorage,
@@ -203,7 +204,8 @@ export const useEveFork = (
       setAttachments([]);
     });
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (action: () => Promise<void>): Promise<void> => {
     if (lock.current) {
       return;
@@ -227,7 +229,8 @@ export const useEveFork = (
       setBusy(false);
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve begin's awaited sequencing and rejected-Promise behavior. */
   const begin = (
     message: EveMessage,
     regeneration?: {
@@ -305,7 +308,8 @@ export const useEveFork = (
         setEditingMessageId(message.id);
       }
     });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     begin,
     busy,
@@ -424,6 +428,7 @@ export const useEveFork = (
         await execute(operation);
       }),
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 

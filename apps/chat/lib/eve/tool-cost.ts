@@ -55,6 +55,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
     _usage: UsageInfo,
     _source: string
   ): void {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve usage.addDeferredCost's awaited sequencing and rejected-Promise behavior. */
     usage.addDeferredCost(async () => {
       if (!Number.isInteger(count) || count < 0) {
         throw new Error("Invalid generated image count.");
@@ -69,8 +70,10 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
       }
       return count * rate;
     });
+    /* oxlint-enable oxc/no-async-await */
   },
   addLLMCost(modelId: string, tokens: UsageInfo, _source: string): void {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve usage.addDeferredCost's awaited sequencing and rejected-Promise behavior. */
     usage.addDeferredCost(async () => {
       if (
         tokens.inputTokens === undefined ||
@@ -86,6 +89,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
         tokenCost(tokens.outputTokens, pricing?.output)
       );
     });
+    /* oxlint-enable oxc/no-async-await */
   },
   totalUsd: usage.totalUsd.bind(usage),
 });

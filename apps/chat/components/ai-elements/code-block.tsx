@@ -52,6 +52,7 @@ const lineNumberTransformer: ShikiTransformer = {
   },
   name: "line-numbers",
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve highlightCode's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
@@ -77,6 +78,7 @@ const highlightCode = async (
     }),
   ]);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- CodeBlock: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children). */
@@ -94,6 +96,7 @@ const CodeBlock = ({
 
   useEffect(() => {
     let cancelled = false;
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateHighlightedCode's awaited sequencing and rejected-Promise behavior. */
     const updateHighlightedCode = async (): Promise<void> => {
       const [light, dark] = await highlightCode(
         code,
@@ -105,7 +108,7 @@ const CodeBlock = ({
         setDarkHtml(dark);
       }
     };
-
+    /* oxlint-enable oxc/no-async-await */
     void updateHighlightedCode();
 
     return (): void => {
@@ -171,6 +174,7 @@ const CodeBlockCopyButton = ({
   const [isCopied, setIsCopied] = useState(false);
   const { code } = useContext(CodeBlockContext);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyToClipboard's awaited sequencing and rejected-Promise behavior. */
   const copyToClipboard = async (): Promise<void> => {
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
@@ -187,7 +191,7 @@ const CodeBlockCopyButton = ({
       onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const Icon = isCopied ? CheckIcon : CopyIcon;
 
   return (

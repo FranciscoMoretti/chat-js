@@ -62,6 +62,7 @@ const cliDirectory = join(import.meta.dir, "..");
 const cliEntry = join(root, "cli/node_modules/@chat-js/cli/dist/index.js");
 const archive = join(root, `chat-js-gateways-${gatewayPackage.version}.tgz`);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterAll(async () => {
@@ -80,6 +81,7 @@ afterAll(async () => {
     clearTimeout(timeout);
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
 
@@ -107,6 +109,7 @@ const external = externalGatewayFixture();
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const registryServer = Bun.serve({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
   async fetch(request): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (path === "/paid-counter.json") {
@@ -372,9 +375,11 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
     }
     return new Response("Not found", { status: 404 });
   },
+  /* oxlint-enable oxc/no-async-await */
   hostname: "127.0.0.1",
   port: 0,
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -418,6 +423,8 @@ beforeAll(async () => {
   await run(join(root, "cli"), ["bun", "install"]);
   process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/max-statements */
@@ -432,6 +439,7 @@ afterAll(async () => {
     process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 
@@ -460,6 +468,7 @@ const storageArguments = (gateway: string): string[] => {
   return [];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   [     "unsupported-video",     "openai",     "--video-generation-tool",     "generate-vi's awaited sequencing and rejected-Promise behavior. */
 it.each([
   [
     "unsupported-video",
@@ -505,7 +514,7 @@ it.each([
     );
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
 const toolArguments = (gateway: string): string[] => {
   if (gateway === "vercel") {
     return [
@@ -542,6 +551,7 @@ const toolArguments = (gateway: string): string[] => {
   return [];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyResearchInstallation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -643,6 +653,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -653,6 +664,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const gateway of [...GATEWAYS, "acme"]) {
   const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
@@ -1200,7 +1212,9 @@ ${originalSearch}`
       ).exists()
     ).toBe(false);
   }, 180_000);
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -1240,12 +1254,14 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
   await run(cwd, ["bun", "run", "test:types"]);
   await verifyNativeToolRuntime(cwd);
 }, 240_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 for (const installAtCreation of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it(`MCP: create ${installAtCreation ? "with" : "without"} MCP and add preserve core, UI order and setup errors`, async () => {
     const name = `mcp-${installAtCreation ? "installed" : "omitted"}`;
     const cwd = join(root, name);
@@ -1384,6 +1400,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
       computedSettings
     );
   }, 180_000);
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -1393,6 +1410,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
 
 /* oxlint-disable eslint/max-lines-per-function, eslint/max-statements -- The packed CLI case proves fresh installation and both replacement directions before checking the resulting generated source. */
 const DAYTONA_INSTALL_TEST_TIMEOUT_MS = 180_000;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it(
   "Daytona installs and replaces Vercel through the packed CLI",
   async () => {
@@ -1454,4 +1472,5 @@ it(
   },
   DAYTONA_INSTALL_TEST_TIMEOUT_MS
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function, eslint/max-statements */

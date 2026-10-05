@@ -30,6 +30,7 @@ interface ImageModalProps {
   readonly showActions?: boolean;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleCopyImage's awaited sequencing and rejected-Promise behavior. */
 const handleCopyImage = async (
   event: Readonly<Pick<React.MouseEvent, "stopPropagation">>,
   imageUrl: string | undefined
@@ -48,7 +49,8 @@ const handleCopyImage = async (
     toast.error("Failed to copy image to clipboard");
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleDownload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements -- handleDownload: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation. */
 
 const handleDownload = async (
@@ -75,6 +77,7 @@ const handleDownload = async (
     toast.error("Failed to download image");
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- ImageActions: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract;  */
 

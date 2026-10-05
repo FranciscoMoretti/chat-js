@@ -100,6 +100,7 @@ const buildChatModels = (
       }
     );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchAllAppModels's awaited sequencing and rejected-Promise behavior. */
 const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const models = await fetchModels();
@@ -108,7 +109,8 @@ const fetchAllAppModels = cache(
   ["all-app-models"],
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchChatModels's awaited sequencing and rejected-Promise behavior. */
 const fetchChatModels = cache(
   async (): Promise<AppModelDefinition[]> => {
     const appModels = await fetchAllAppModels();
@@ -117,7 +119,8 @@ const fetchChatModels = cache(
   ["chat-models"],
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAppModelDefinition's awaited sequencing and rejected-Promise behavior. */
 const getAppModelDefinition = async (
   modelId: AppModelId
 ): Promise<AppModelDefinition> => {
@@ -131,7 +134,7 @@ const getAppModelDefinition = async (
   }
   return model;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /**
  * Whether the generated catalog belongs to the selected gateway.
  * @param {string} gateway - Gateway identity from application configuration.

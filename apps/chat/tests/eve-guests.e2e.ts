@@ -53,6 +53,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
 const ips: string[] = [];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findEveGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
  * no-undefined (#519): findEveGuest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep findEveGuest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -65,6 +66,8 @@ async function findEveGuest(tokenHash: string) {
     .where(eq(eveGuest.tokenHash, tokenHash));
   return row && row.expiresAt > new Date() ? row : undefined;
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve guest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
@@ -81,6 +84,7 @@ async function guest(messageLimit = 10) {
   owners.push(row.ownerId);
   return row;
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -98,6 +102,7 @@ function request(ownerId: string) {
     requestsPerMonth: 100,
   };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
@@ -115,6 +120,8 @@ afterAll(async () => {
     await db.delete(eveGuestRate).where(inArray(eveGuestRate.ipHash, ips));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -142,6 +149,8 @@ test("guest identity is server-owned, expires and grants no BetterAuth session o
     status: "unavailable",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -175,6 +184,8 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     })
   ).toEqual({ status: "conflict" });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -198,6 +209,8 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
   expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -225,6 +238,8 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
     .where(eq(eveGuestRate.ipHash, input.ipHash));
   expect(ipQuotaRowsAfterLimit.map((rate) => rate.requests)).toEqual([1, 1]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("simultaneous guests share one IP admission limit", async () => {
@@ -244,7 +259,8 @@ test("simultaneous guests share one IP admission limit", async () => {
     "reserved",
   ]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("refund is once-only, owner-scoped, and a stale attempt cannot refund its retry" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -307,6 +323,8 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
   expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -329,6 +347,8 @@ test("committing and releasing the same attempt are mutually exclusive", async (
     results[0] ? 0 : 1
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -364,6 +384,8 @@ test("guest provider accounting survives expiry and replay without creating mone
     await db.select().from(userCredit).where(eq(userCredit.userId, row.ownerId))
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -405,6 +427,8 @@ test("first admission creates one guest and reserves once across different IPs",
     await db.select().from(userCredit).where(eq(userCredit.userId, ownerId))
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -442,6 +466,8 @@ test("denied first admission creates no account or quota rows", async () => {
     ).toEqual([]);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
@@ -475,6 +501,8 @@ test("bootstrap cannot replace an expired identity or reset its balance", async 
     reserveEveGuestMessage(request(crypto.randomUUID()), bootstrap)
   ).rejects.toThrow("Invalid guest admission");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
 /* oxlint-disable no-magic-numbers --
@@ -508,6 +536,8 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -545,6 +575,8 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     1, 1,
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -586,6 +618,8 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     2, 2,
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -618,6 +652,8 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
     ])
   ).rejects.toThrow("unique operations");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
@@ -670,6 +706,8 @@ test("comparison persistence failure rolls back guest identity and every quota r
       .where(eq(eveGuestRate.ipHash, first.ipHash))
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -723,6 +761,8 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
   expect(guestAfterCreationRefund?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-race-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -765,6 +805,8 @@ test("creation claims and refunds serialize without a free native dispatch", asy
     }
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves `native-${input.operationId}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -790,6 +832,7 @@ test("committed quota without a creation journal cannot authorize a new dispatch
   ).rejects.toThrow("Committed guest admission has no creation journal");
   expect(dispatch).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-guests.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

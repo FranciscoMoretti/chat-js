@@ -47,6 +47,7 @@ const operationLookupPath = /^\/eve\/v1\/operation\/[A-Za-z0-9_-]+$/u;
 const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authorizeDeletionRequest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const authorizeDeletionRequest = async (
   request: ReadonlyNativeSurface<Request>,
@@ -80,6 +81,7 @@ const authorizeDeletionRequest = async (
     sessionId
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
@@ -103,6 +105,7 @@ const gatewaySessionPolicy = (path: string, method: string) => {
     ? { sessionId: checkpointSession }
     : parseSessionRequest(path, method);
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCreationReservation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null -- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -136,6 +139,8 @@ const readCreationReservation = async (
   }
   return reservation.id;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readGatewayAttributes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -178,6 +183,7 @@ const readGatewayAttributes = async (
   }
   return attributes;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const guestAttributesAllowed = (
@@ -196,6 +202,7 @@ const guestAttributesAllowed = (
       (tool) => tool === attributes.selectedTool
     ));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownsGatewaySession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params --
  * max-params (#511): ownsGatewaySession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -214,6 +221,8 @@ const ownsGatewaySession = async (
   }
   return Boolean(await getEveSubagent(owner, sessionId));
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateEveGateway's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -291,4 +300,5 @@ export const authenticateEveGateway = async (
     subject: owner,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

@@ -119,6 +119,7 @@ beforeEach(() => {
     ownerId: "owner",
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-console --
  * no-console (#514): it("defers inherited history until binding and retains it if indexing fails") emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  */
@@ -134,6 +135,8 @@ it("defers inherited history until binding and retains it if indexing fails", as
   ]);
   expect(mocks.state).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-console */
 it("never indexes subagent-private text into the parent chat", async () => {
   await dispatch(restored, {
@@ -151,13 +154,15 @@ it("never indexes subagent-private text into the parent chat", async () => {
   expect(mocks.state).toEqual([]);
   expect(mocks.resolve).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does no scope or database work on a turn with no pending text", async () => {
   await dispatch(started);
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.index).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("retains newly received text when scope resolution fails and retries it", async () => {
   mocks.resolve.mockRejectedValueOnce(new Error("mapping unavailable"));
   await expect(
@@ -174,7 +179,8 @@ it("retains newly received text when scope resolution fails and retries it", asy
   ]);
   expect(mocks.state).toEqual([]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-console, no-magic-numbers, no-undefined --
  * max-statements (#512): it("bounds failed retries by entry count and records how omitted events can be recove keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): it("bounds failed retries by entry count and records how omitted events can be recove emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -204,6 +210,8 @@ it("bounds failed retries by entry count and records how omitted events can be r
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-console, no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-console, no-magic-numbers --
@@ -233,6 +241,8 @@ it("bounds pending text size and deduplicates replayed history", async () => {
   await dispatch(restored);
   expect(mocks.state).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-console, no-magic-numbers */
 
 /* oxlint-disable id-length, no-magic-numbers --
@@ -265,4 +275,5 @@ it("automatically recovers a large restored history and the next message on a he
   expect(mocks.state).toEqual([]);
   expect(mocks.recovery).toBe(false);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, no-magic-numbers */

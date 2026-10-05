@@ -24,6 +24,7 @@ type ReadonlyNative<Value> = Value extends (
     ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
     : Value;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve customToolsFileExists's awaited sequencing and rejected-Promise behavior. */
 const customToolsFileExists = async (filename: string): Promise<boolean> => {
   try {
     await stat(filename);
@@ -33,7 +34,8 @@ const customToolsFileExists = async (filename: string): Promise<boolean> => {
     return false;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateCustomToolKeys's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 export const validateCustomToolKeys = async (
@@ -132,5 +134,6 @@ export const validateCustomToolKeys = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

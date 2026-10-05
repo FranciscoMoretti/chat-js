@@ -43,6 +43,7 @@ type Binding = z.infer<typeof bindingSchema> & {
   firstMessage: string;
   modelId: string;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- retireGuest: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including binding: Binding). */
 
 const retireGuest = async (binding: Binding): Promise<void> => {
@@ -60,6 +61,8 @@ const retireGuest = async (binding: Binding): Promise<void> => {
     // Unload delivery is best effort. EVE's session timeout handles abandonment.
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createGuestSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type -- createGuestSession: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
@@ -75,6 +78,7 @@ const createGuestSession = async (modelId: string) => {
   }
   return bindingSchema.parse(await response.json());
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -198,6 +202,7 @@ const GuestConversation = ({
     agent.status === "submitted" ||
     agent.status === "streaming" ||
     agent.status === "resuming";
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve send's awaited sequencing and rejected-Promise behavior. */
   const send = async (text: string): Promise<void> => {
     if (pending.current) {
       return;
@@ -219,6 +224,7 @@ const GuestConversation = ({
     }
     pending.current = false;
   };
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     // EVE attaches its observer on the next task. Defer the initial send too,
     // so React Strict Mode's probe cleanup cannot abort the first message.
@@ -244,6 +250,7 @@ const GuestConversation = ({
     window.addEventListener("pagehide", retire);
     return (): void => window.removeEventListener("pagehide", retire);
   }, [binding]);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stop's awaited sequencing and rejected-Promise behavior. */
   const stop = async (): Promise<void> => {
     try {
       await agent.cancel();
@@ -251,6 +258,7 @@ const GuestConversation = ({
       setCommandError("Could not stop the response.");
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -295,6 +303,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
   const [commandError, setCommandError] = useState("");
   const pending = useRef(false);
   const generation = useRef(0);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submit's awaited sequencing and rejected-Promise behavior. */
   const submit = async (): Promise<void> => {
     if (pending.current || !draft.trim()) {
       return;
@@ -328,6 +337,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
       setBusy(false);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     const reset = (): void => {
       generation.current += 1;

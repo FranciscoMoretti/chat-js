@@ -27,6 +27,7 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
 
 const log = createModuleLogger("mcp-oauth-callback");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -173,4 +174,5 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     });
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

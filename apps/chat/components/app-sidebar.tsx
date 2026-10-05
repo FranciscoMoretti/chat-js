@@ -38,6 +38,7 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { SidebarUserNav } from "./sidebar-user-nav";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ScopedEveSearch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
@@ -49,7 +50,7 @@ const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
     />
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable react/no-multi-comp -- HistorySkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/forbid-component-props -- Skeleton accept the supplied styling props; preserve this composition's layout and appearance. */
@@ -63,6 +64,7 @@ const HistorySkeleton = (): React.JSX.Element => (
     </div>
   </SidebarGroup>
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve RegisteredEveProjects's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/no-multi-comp */
 
@@ -80,6 +82,7 @@ const RegisteredEveProjects = async () => {
     </SidebarGroup>
   ) : null;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- AppSidebar: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */

@@ -45,6 +45,7 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve configureStorageProvider's awaited sequencing and rejected-Promise behavior. */
 /**
  * Configure the installed source without evaluating it or editing dependencies.
  * @param {string} destination Project root receiving storage-options.ts and its env block.
@@ -75,6 +76,7 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
     ...definition.optionalEnv,
   ]);
 };
+/* oxlint-enable oxc/no-async-await */
 export {
   configureStorageProvider,
   INSTALLABLE_STORAGE_PROVIDERS,

@@ -54,6 +54,11 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
       echarts: createRequire(import.meta.url).resolve("echarts"),
+      // Browser optimization wraps the explicit CommonJS subpath as an object;
+      // use the package's equivalent published ESM component in this Vite fixture.
+      "echarts-for-react/lib/index": createRequire(import.meta.url).resolve(
+        "echarts-for-react/esm/index.js"
+      ),
       "next/image": fileURLToPath(new URL("next-image.ts", import.meta.url)),
       react: path.dirname(appRequire.resolve("react/package.json")),
       "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),

@@ -21,6 +21,7 @@ interface NativePurgeInventory {
   streamIds: string[];
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withRetiredNativeSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * id-length (#506): withRetiredNativeSession uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * max-params (#511): withRetiredNativeSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -57,6 +58,8 @@ const withRetiredNativeSession = async <T>(
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withNativeSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -82,6 +85,8 @@ const withNativeSession = async <T>(
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareNativeSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -126,6 +131,8 @@ const prepareNativeSession = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveNativeSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --typescript/prefer-readonly-parameter-types (#565): purgeEveNativeSession accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -154,6 +161,8 @@ const purgeEveNativeSession = async (
       return await purgeEvePostgresSessionPayloads(connection, scope);
     }
   );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveNativeSessionPurge's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --typescript/prefer-readonly-parameter-types (#565): prepareEveNativeSessionPurge accepts scope: { sessionId: string; taskIdentifier: string; }; connection; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -177,6 +186,8 @@ const prepareEveNativeSessionPurge = async (
   await withNativeSession(databaseUrl, scope.sessionId, retire, (connection) =>
     prepareNativeSession(connection, scope)
   );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveNativeSessions's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --typescript/promise-function-async (#606): retireEveNativeSessions preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -207,6 +218,7 @@ const retireEveNativeSessions = async (
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 export {
   prepareEveNativeSessionPurge,

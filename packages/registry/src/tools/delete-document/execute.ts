@@ -23,6 +23,7 @@ type Context = Readonly<
   }
 >;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scopeFor's awaited sequencing and rejected-Promise behavior. */
 const scopeFor = async (
   context: Context
 ): ReturnType<typeof resolveEveConversationScope> => {
@@ -35,7 +36,8 @@ const scopeFor = async (
     context.abortSignal
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestDocumentDeletion's awaited sequencing and rejected-Promise behavior. */
 const requestDocumentDeletion = async (
   value: unknown,
   context: Context
@@ -61,7 +63,8 @@ const requestDocumentDeletion = async (
   context.abortSignal.throwIfAborted();
   return "user-approval" as const;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeDocumentDeletion's awaited sequencing and rejected-Promise behavior. */
 const executeDocumentDeletion = async (
   input: Readonly<z.infer<typeof deleteDocumentInput>>,
   context: Context
@@ -84,4 +87,5 @@ const executeDocumentDeletion = async (
     context.abortSignal
   );
 };
+/* oxlint-enable oxc/no-async-await */
 export { executeDocumentDeletion, requestDocumentDeletion };

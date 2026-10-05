@@ -8,6 +8,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-queries");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorsByUserId's awaited sequencing and rejected-Promise behavior. */
 // MCP Connector queries
 
 const getMcpConnectorsByUserId = async ({
@@ -26,7 +27,8 @@ const getMcpConnectorsByUserId = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorById's awaited sequencing and rejected-Promise behavior. */
 const getMcpConnectorById = async ({
   id,
 }: Readonly<{
@@ -46,7 +48,8 @@ const getMcpConnectorById = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorByNameId's awaited sequencing and rejected-Promise behavior. */
 const getMcpConnectorByNameId = async ({
   userId,
   nameId,
@@ -79,7 +82,8 @@ const getMcpConnectorByNameId = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const createMcpConnector = async ({
   userId,
   name,
@@ -118,7 +122,8 @@ const createMcpConnector = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const updateMcpConnector = async ({
   id,
   updates,
@@ -150,7 +155,8 @@ const updateMcpConnector = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteMcpConnector's awaited sequencing and rejected-Promise behavior. */
 const deleteMcpConnector = async ({
   id,
 }: Readonly<{ id: string }>): Promise<void> => {
@@ -161,7 +167,7 @@ const deleteMcpConnector = async ({
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 export {
   createMcpConnector,
   deleteMcpConnector,

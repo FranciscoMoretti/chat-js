@@ -13,6 +13,7 @@ const isAsyncIterable = <Output>(
   Symbol.asyncIterator in value &&
   typeof value[Symbol.asyncIterator] === "function";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve describeMcpTool's awaited sequencing and rejected-Promise behavior. */
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration.
  * @param {Tool<TInput, TOutput>} definition - Tool whose JSON schema is described.
  * @returns {Promise<{ description: string; inputSchema: Record<string, z.infer<ReturnType<typeof z.json>>>; }>} A serializable description and validated JSON input schema.
@@ -50,7 +51,8 @@ const describeMcpTool = async <TInput, TOutput>(
     inputSchema,
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeMcpTool's asynchronous iteration and rejection behavior. */
 /**
  * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
  * @param {Tool<TInput, TOutput>} definition - SDK tool resolved for execution.
@@ -92,4 +94,5 @@ const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
     yield output;
   }
 };
+/* oxlint-enable oxc/no-async-await */
 export { describeMcpTool, executeMcpTool };

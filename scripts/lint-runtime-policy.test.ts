@@ -40,6 +40,7 @@ const standaloneProtected = [
   "components/probe.ts",
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeFixture's awaited sequencing and rejected-Promise behavior. */
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
@@ -51,7 +52,7 @@ const writeFixture = async (temporary: string, file: string): Promise<void> => {
     `${annotation}import fs from "node:fs";\nexport const exists = fs.existsSync;\n`
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 const childDeadlineMs = 10_000;
 const testDeadlineMs = 30_000;
 const diagnosticFailureExit = 1;
@@ -85,6 +86,7 @@ const assertDiagnostics = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkBoundary's awaited sequencing and rejected-Promise behavior. */
 const checkBoundary = async (
   temporary: string,
   cwd: string,
@@ -121,7 +123,8 @@ const checkBoundary = async (
     await result.exited;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleChecks's awaited sequencing and rejected-Promise behavior. */
 const settleChecks = async (
   checks: readonly (() => Promise<void>)[]
 ): Promise<void> => {
@@ -134,7 +137,8 @@ const settleChecks = async (
     }
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeConfig's awaited sequencing and rejected-Promise behavior. */
 const writeConfig = async (
   temporary: string,
   source: string
@@ -144,7 +148,8 @@ const writeConfig = async (
     `import config from ${JSON.stringify(path.join(root, source))};\nexport default { ...config, options: { typeAware: false } };\n`
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test(
   "Node imports require source exceptions in every runtime and working directory",
   async (): Promise<void> => {
@@ -194,3 +199,4 @@ test(
   },
   testDeadlineMs
 );
+/* oxlint-enable oxc/no-async-await */

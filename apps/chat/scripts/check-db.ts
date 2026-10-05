@@ -17,6 +17,7 @@ const CONNECT_TIMEOUT_SECONDS = 10;
 const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkDatabase's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * max-lines-per-function (#510): checkDatabase keeps runtime and migration connection checks with their deadline and cleanup; explicit Promise return annotations put this cohesive operation at 51 lines.
  * max-statements (#512): checkDatabase keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -80,6 +81,8 @@ const checkDatabase = async (): Promise<void> => {
   await checkPurpose("runtime");
   await checkPurpose("migration");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
@@ -97,4 +100,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, typescript/explicit-function-return-type */

@@ -20,6 +20,7 @@ interface SandboxOwnership {
   release: () => Promise<void>;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
 const observeCleanup = async (pending: Promise<void>): Promise<void> => {
   try {
     await pending;
@@ -27,7 +28,8 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
     // The owner awaits the same promise in finally and propagates this failure.
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeInDaytona's awaited sequencing and rejected-Promise behavior. */
 const executeInDaytona = async (
   input: CodeExecutionInput,
   selected: ReturnType<typeof createDaytonaProvider>,
@@ -70,5 +72,5 @@ const executeInDaytona = async (
     await ownership.release();
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 export { executeInDaytona };

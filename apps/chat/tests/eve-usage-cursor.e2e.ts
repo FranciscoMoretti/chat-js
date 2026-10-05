@@ -55,15 +55,18 @@ const owner = crypto.randomUUID();
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(userCredit).where(eq(userCredit.userId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
+/* oxlint-enable oxc/no-async-await */
 beforeEach(() => {
   transport.stream.mockReset();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve session's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 async function session(): Promise<string> {
   const row = await createEveConversation(
     owner,
@@ -76,6 +79,7 @@ async function session(): Promise<string> {
   }
   return row.sessionId;
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep step's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -86,6 +90,7 @@ function step(costUsd: number | undefined) {
     type: "step.completed",
   };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -119,6 +124,8 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
     .where(eq(eveUsage.sessionId, id));
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(7);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -152,6 +159,8 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows).toHaveLength(1);
   expect(rows[0].chargedCents).toBe(5);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["step.completed", "compaction.usage"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
@@ -184,6 +193,8 @@ test.each(["step.completed", "compaction.usage"])(
     expect(await getEveUsageCursor(owner, id)).toBe(1);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -210,6 +221,8 @@ test("compaction attempts share per-turn rounding and replay does not double-cha
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(2);
   expect(await getEveUsageCursor(owner, id)).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -238,6 +251,8 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
     "Conversation not found"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -274,4 +289,5 @@ test("unpriced auxiliary usage retains the unread cursor until its exact attempt
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

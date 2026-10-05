@@ -22,6 +22,7 @@ import { expect, test } from "vitest";
 /* oxlint-enable sort-imports */
 
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-statements, no-magic-numbers, unicorn/max-nested-calls --
@@ -65,4 +66,5 @@ test("fences every member before checking pending operations and never expires u
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/max-nested-calls */

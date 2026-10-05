@@ -10,6 +10,7 @@ import path from "node:path";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { initializeObservability } from "./sync-observability";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve manifestFixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 const manifestFixture = async (manifest: string): Promise<string> => {
@@ -17,7 +18,7 @@ const manifestFixture = async (manifest: string): Promise<string> => {
   await writeFile(path.join(root, "package.json"), manifest);
   return root;
 };
-
+/* oxlint-enable oxc/no-async-await */
 const originalManifest =
   '{"extension":{"nested":["keep"]},"dependencies":{"retain":{"unusual":"metadata"},"@vercel/analytics":"^1","@vercel/speed-insights":"^1","@vercel/otel":"^1","langfuse-vercel":"^1","langfuse":"^1"},"scripts":{"keep":"command"}}';
 const expectedManifest = `{
@@ -37,6 +38,7 @@ const expectedManifest = `{
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("observability initialization preserves unknown metadata and field order while deleting only demo dependencies", async () => {
   const root = await manifestFixture(originalManifest);
   try {
@@ -48,7 +50,8 @@ test("observability initialization preserves unknown metadata and field order wh
     await rm(root, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("observability initialization preserves the existing null dependency sentinel", async () => {
   const root = await manifestFixture(
     '{"extension":"keep","dependencies":null}'
@@ -64,7 +67,8 @@ test("observability initialization preserves the existing null dependency sentin
     await rm(root, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["[]", "null", '{"dependencies":[]}', '{"dependencies":"bad"}'])'s awaited sequencing and rejected-Promise behavior. */
 test.each(["[]", "null", '{"dependencies":[]}', '{"dependencies":"bad"}'])(
   "observability initialization rejects malformed manifest %s before writing it",
   async (manifest) => {
@@ -79,3 +83,4 @@ test.each(["[]", "null", '{"dependencies":[]}', '{"dependencies":"bad"}'])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */

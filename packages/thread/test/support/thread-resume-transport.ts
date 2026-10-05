@@ -16,6 +16,7 @@ export class ResumeTransport extends ControlledTransport {
       >
     | undefined;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconnectToStream's awaited sequencing and rejected-Promise behavior. */
   public override reconnectToStream = async (
     options: ReadonlyDeep<
       Parameters<
@@ -42,4 +43,5 @@ export class ResumeTransport extends ControlledTransport {
       })
     );
   };
+  /* oxlint-enable oxc/no-async-await */
 }

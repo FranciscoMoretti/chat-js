@@ -77,9 +77,12 @@ export const EveProjectHome = ({
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve refresh's awaited sequencing and rejected-Promise behavior. */
   const refresh = async (): Promise<void> => {
     await cache.invalidateQueries({ queryKey: trpc.project.pathKey() });
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = useMutation(
     trpc.project.setInstructions.mutationOptions({
       onSuccess: async () => {
@@ -88,6 +91,7 @@ export const EveProjectHome = ({
       },
     })
   );
+  /* oxlint-enable oxc/no-async-await */
   const rename = useRenameProject();
   const contentPosition = shouldCenter ? "row-start-2" : "mt-4";
   const current = project.data;
@@ -97,6 +101,7 @@ export const EveProjectHome = ({
   const color =
     PROJECT_COLORS.find((value) => value.name === current.iconColor)?.name ??
     DEFAULT_PROJECT_COLOR;
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <section className="@container flex h-full min-h-0 flex-col">
       <ChatHeaderView breadcrumb={null} />
@@ -197,5 +202,6 @@ export const EveProjectHome = ({
       </div>
     </section>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

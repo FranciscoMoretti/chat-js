@@ -54,6 +54,7 @@ const receiptSchema = z.record(z.string(), z.string());
 const hash = (content: ReadonlyNative<Buffer>): string =>
   createHash("sha256").update(content).digest("hex");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optionalFile's awaited sequencing and rejected-Promise behavior. */
 const optionalFile = async (file: string): Promise<Buffer | null> => {
   try {
     return await readFile(file);
@@ -65,7 +66,8 @@ const optionalFile = async (file: string): Promise<Buffer | null> => {
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readReceipt's awaited sequencing and rejected-Promise behavior. */
 const readReceipt = async (
   cwd: string
 ): Promise<z.infer<typeof receiptSchema>> => {
@@ -73,7 +75,7 @@ const readReceipt = async (
   const source = await optionalFile(path.join(cwd, receiptFile));
   return source ? receiptSchema.parse(JSON.parse(source.toString())) : {};
 };
-
+/* oxlint-enable oxc/no-async-await */
 const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ...new Set(
     plan.items.flatMap((item: ReadonlyNative<Plan["items"][number]>) =>
@@ -91,6 +93,7 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
   ),
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve directoryFiles's awaited sequencing and rejected-Promise behavior. */
 const directoryFiles = async (
   cwd: string,
   directory: string
@@ -109,7 +112,8 @@ const directoryFiles = async (
   );
   return files.flat();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordInstalledSource's awaited sequencing and rejected-Promise behavior. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
  * @param {string} cwd Project containing the receipt and installed source files.
@@ -135,7 +139,7 @@ const recordInstalledSource = async (
     `${JSON.stringify(receipt, null, RECEIPT_INDENTATION_SPACES)}\n`
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 const plannedSourceTargets = sourceTargets;
 
 const hasProviderKind = (
@@ -147,6 +151,7 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installPlan's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Protection checks, snapshots, staged retired providers, registration, finalization, and rollback share the same transaction state. */
 /* oxlint-disable eslint/max-lines-per-function -- The complete installation transaction keeps protected source snapshots and staged provider rollback in one failure boundary. */
 /* oxlint-disable eslint/max-params -- The existing installation API separates project, resolved plan, overwrite/rollback options, and the deferred registration callback. */
@@ -331,6 +336,7 @@ const installPlan = async (
     })
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

@@ -46,6 +46,7 @@ afterEach(() => {
   stop = undefined;
   vi.useRealTimers();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -77,6 +78,8 @@ test("startup is singleton and sweeps never overlap", async () => {
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { NODE_ENV: "production" },    { EVE_GATEWAY_SECRET: "" },   { DATABASE_URL: "postgres's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -99,6 +102,8 @@ test.each([
     expect(stop).toBeUndefined();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -113,6 +118,8 @@ test("remote worker or World and a config disabled after startup cannot sweep", 
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -141,4 +148,5 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
   expect(mocks.cleanup).toHaveBeenCalledTimes(3);
   error.mockRestore();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */

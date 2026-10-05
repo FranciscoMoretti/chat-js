@@ -42,6 +42,7 @@ const EveCopyButton = ({
   const [destination, setDestination] = useState<string>();
   const ownerId = session.data?.user.id;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = async (): Promise<void> => {
     if (lock.current || !ownerId) {
       return;
@@ -74,6 +75,7 @@ const EveCopyButton = ({
       setBusy(false);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const showFailure = (
     cause: unknown,
     input: EveCopyInput | undefined,

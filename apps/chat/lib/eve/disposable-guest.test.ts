@@ -60,6 +60,7 @@ test("credentials are signed, expire, and cannot be edited to name another sessi
   vi.setSystemTime(original.expiresAt);
   expect(readGuestCredential(token)).toBeNull();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("every read, send, cancel and retirement is restricted to the signed session", async () => {
@@ -107,7 +108,8 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
     )
   ).toBeNull();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("browser credentials cannot create, fork, read checkpoints or submit tools, files or privileged context", async () => {
   const token = issueGuestCredential(claims());
   expect(
@@ -134,7 +136,8 @@ test("browser credentials cannot create, fork, read checkpoints or submit tools,
     ).toBeNull();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("server-only bootstrap credentials authorize empty creation, never session access", async () => {
   const token = issueGuestCredential(newGuestClaims("test-model"));
   expect(
@@ -151,3 +154,4 @@ test("server-only bootstrap credentials authorize empty creation, never session 
     )
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */

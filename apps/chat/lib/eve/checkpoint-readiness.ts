@@ -8,6 +8,7 @@ import {
 /* oxlint-enable sort-imports */
 import { eveRequest } from "./server";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): readEveCheckpoint uses 15_000, 409, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -64,6 +65,8 @@ const readEveCheckpoint = async (
   }
   throw new Error("Source checkpoint lookup is unavailable.");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForEveCheckpoint's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params, no-magic-numbers, unicorn/max-nested-calls -- max-params (#511): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -109,5 +112,6 @@ const waitForEveCheckpoint = async (
     "Source checkpoint is not ready. Retry the same operation shortly."
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, unicorn/max-nested-calls */
 export { readEveCheckpoint, waitForEveCheckpoint };

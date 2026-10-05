@@ -11,6 +11,7 @@ import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
 const FIRST_ROW_INDEX = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isEveFileUnavailable's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined -- no-undefined (#519): isEveFileUnavailable uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Legacy keys have no EVE row; only EVE deletion fences deny an existing URL.
@@ -24,6 +25,8 @@ const isEveFileUnavailable = async (key: string): Promise<boolean> => {
     .where(eq(eveStoredFile.key, key));
   return file !== undefined && file.state !== "active";
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve canReadEveFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null, typescript/strict-boolean-expressions -- no-magic-numbers (#517): canReadEveFile uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -69,6 +72,8 @@ const canReadEveFile = async (
     .limit(1);
   return { allowed: Boolean(reference), managed: true };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveUpload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null, typescript/strict-boolean-expressions */
 
 /**
@@ -85,7 +90,8 @@ const reserveEveUpload = async (
   }
   await db.insert(eveStoredFile).values({ key, ownerId });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveUpload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): writeEveUpload uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 typescript/prefer-readonly-parameter-types (#565): writeEveUpload accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
@@ -120,6 +126,8 @@ const writeEveUpload = async <T>(
     }
     return await write();
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveStoredFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
 /**
@@ -143,7 +151,8 @@ const registerEveStoredFile = async (
     throw new Error("File ownership cannot be reassigned.");
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve referenceEveFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): referenceEveFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): referenceEveFiles uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): referenceEveFiles accepts keys: string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -211,6 +220,8 @@ const referenceEveFiles = async (
       .onConflictDoNothing();
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertEveFilesOwned's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): assertEveFilesOwned uses 0, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -248,6 +259,8 @@ const assertEveFilesOwned = async (
     throw new Error("Attachment is not owned by this user.");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGeneratedFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): reserveEveGeneratedFile accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -287,6 +300,8 @@ const reserveEveGeneratedFile = async (
     await tx.insert(eveFileReference).values({ conversationId, key, ownerId });
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveGeneratedFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable id-length, max-params, typescript/prefer-readonly-parameter-types -- id-length (#506): writeEveGeneratedFile uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
@@ -333,6 +348,8 @@ const writeEveGeneratedFile = async <T>(
     }
     return await write();
   });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retainEveDocumentFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -376,6 +393,7 @@ const retainEveDocumentFiles = async (
     .values(files.map(({ key }) => ({ conversationId, key, ownerId })))
     .onConflictDoNothing();
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export {
   assertEveFilesOwned,

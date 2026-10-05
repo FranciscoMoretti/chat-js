@@ -1,6 +1,7 @@
 const HEALTH_CHECK_TIMEOUT_MS = 6000;
 const EMPTY_URL_LENGTH = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkHealth's awaited sequencing and rejected-Promise behavior. */
 const checkHealth = async (origin: string): Promise<void> => {
   const signal = AbortSignal.timeout(HEALTH_CHECK_TIMEOUT_MS);
   await Promise.all([
@@ -40,7 +41,7 @@ const checkHealth = async (origin: string): Promise<void> => {
     })(),
   ]);
 };
-
+/* oxlint-enable oxc/no-async-await */
 if (import.meta.main) {
   try {
     // oxlint-disable-next-line node/no-process-env -- Read the configured readiness origin at this CLI boundary.

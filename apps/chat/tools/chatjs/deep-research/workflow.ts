@@ -48,6 +48,7 @@ const structuredMessage = (message: string): string =>
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const outputSchema = (schema: z.ZodType) =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
+/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveResearch's asynchronous iteration and rejection behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -233,6 +234,7 @@ export async function* executeEveResearch(
     ...searchUpdates,
   ]);
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */

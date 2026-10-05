@@ -29,6 +29,7 @@ import {
 const hash = (value: string): string =>
   new Bun.CryptoHasher("sha256").update(value).digest("hex");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectFileOrder's awaited sequencing and rejected-Promise behavior. */
 const collectFileOrder = async (
   dir: string,
   prefix = ""
@@ -54,7 +55,8 @@ const collectFileOrder = async (
   );
   return paths.flat();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -119,6 +121,7 @@ it("collects ordered hashes with bounded nested filesystem concurrency", async (
     await rm(root, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */

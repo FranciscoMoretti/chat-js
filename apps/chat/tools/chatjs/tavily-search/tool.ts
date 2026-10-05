@@ -43,6 +43,7 @@ type ResearchExecution = Readonly<{
 
 const FIRST_TOPIC_INDEX = 0;
 const NEWS_LOOKBACK_DAYS = 7;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTavilySearch's awaited sequencing and rejected-Promise behavior. */
 const createTavilySearch =
   (
     options: Readonly<{
@@ -86,7 +87,8 @@ const createTavilySearch =
       })
     );
   };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve webSearch's awaited sequencing and rejected-Promise behavior. */
 export const webSearch = defineTool({
   description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
 
@@ -151,3 +153,4 @@ Avoid:
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable oxc/no-async-await */

@@ -18,6 +18,7 @@ const preview = {
 const lockQuery =
   "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectRejection's awaited sequencing and rejected-Promise behavior. */
 const expectRejection = async (
   operation: Readonly<Promise<unknown>>,
   messageFragment: string
@@ -32,7 +33,7 @@ const expectRejection = async (
   }
   throw new Error("Expected the operation to reject.");
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
@@ -81,6 +82,7 @@ const harness = (
     },
   };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
@@ -103,7 +105,8 @@ it("locks before migration, releases before build, and passes direct credentials
   }
   expect(preview.DATABASE_MIGRATION_URL).toBe("postgres://wrong/db");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["production", "development"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- only runs the normal build in %s: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it.each(["production", "development"])(
   "only runs the normal build in %s",
@@ -115,6 +118,8 @@ it.each(["production", "development"])(
     expect(test.commands[0].env).toEqual(source);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
@@ -128,7 +133,8 @@ it("rejects invalid configuration before opening a connection or invoking a comm
   );
   expect(test.events).toEqual([]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["open", "connection", false],   ["SELECT 1", "connection", true],   ["SET lock_timeout 's awaited sequencing and rejected-Promise behavior. */
 it.each([
   ["open", "connection", false],
   ["SELECT 1", "connection", true],
@@ -158,7 +164,8 @@ it.each([
     expect(test.events.includes("build")).toBe(step === "build");
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
@@ -180,6 +187,8 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
     )
   ).toEqual(["db:migrate", "build"]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["ECONNREFUSED", " (ECONNREFUSED)"],   ["55P03", " (55P03)"],   ["SUBPROCESS_EXIT_1", " 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 
@@ -198,3 +207,4 @@ it.each([
     );
   }
 );
+/* oxlint-enable oxc/no-async-await */

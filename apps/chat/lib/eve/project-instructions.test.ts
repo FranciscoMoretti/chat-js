@@ -142,6 +142,7 @@ beforeEach(() => {
     ownerId: "owner",
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
@@ -172,6 +173,8 @@ test("refreshes project instructions for each turn and clears them after detachm
   await startTurn(2);
   expect(readInstructions()).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -187,6 +190,8 @@ test("propagates required context failures and removes the previous turn's instr
   await expect(startTurn(2)).rejects.toThrow("Unbound session");
   expect(mocks.project).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
@@ -215,6 +220,8 @@ test("loads root project context for descendants without writing child checkpoin
   });
   expect(mocks.checkpoint).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -245,6 +252,8 @@ test("does not project a child's waiting checkpoint into the root branch", async
   expect(mocks.resolve).not.toHaveBeenCalled();
   expect(mocks.namedCheckpoint).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -275,4 +284,5 @@ test("generates user follow-up suggestions only for the root session", async () 
   );
   expect(mocks.followups).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

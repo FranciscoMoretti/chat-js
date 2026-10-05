@@ -80,6 +80,7 @@ const literalValue = (input: ts.Expression): unknown => {
   );
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderLiteral's awaited sequencing and rejected-Promise behavior. */
 const readProviderLiteral = async (
   cwd: string,
   file: string,
@@ -105,6 +106,7 @@ const readProviderLiteral = async (
   }
   return literalValue(declaration.initializer);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 // Object properties apply in order. A later spread or computed key can override
 // a named property; only a subsequent explicit assignment makes it safe again.
@@ -133,6 +135,7 @@ const activeProperty = (
   }
   return selected;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderId's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/max-statements -- File absence, provider-specific discriminator selection and literal AST validation determine one installed-provider lookup result. */
@@ -186,6 +189,8 @@ const readProviderId = async (
   // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return value.text;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve gatewayConfigEdit's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The gateway edit resolves one const/export chain against a shared declaration list and cycle/reference tracking before replacing only the verified discriminator span. */
@@ -299,6 +304,7 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };

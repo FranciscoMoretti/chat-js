@@ -12,6 +12,7 @@ import type { SnapshotProvider } from "./model";
  * @returns {SnapshotProvider} A replay-safe snapshot provider for the branching prototype.
  */
 export const mockProvider = (sql: Sql): SnapshotProvider => ({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
   async capture(key, sandbox) {
     await sql.begin(async (tx) => {
       const [vm] = await tx<
@@ -33,6 +34,8 @@ export const mockProvider = (sql: Sql): SnapshotProvider => ({
       await tx`update provider_vm set stopped=true where id=${sandbox}`;
     });
   },
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restore's awaited sequencing and rejected-Promise behavior. */
   async restore(key, sandbox) {
     await sql.begin(async (tx) => {
       const [snapshot] = await tx<
@@ -44,6 +47,7 @@ export const mockProvider = (sql: Sql): SnapshotProvider => ({
       await tx`insert into provider_vm (id,files) values (${sandbox},${tx.json(snapshot.files)}) on conflict do nothing`;
     });
   },
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

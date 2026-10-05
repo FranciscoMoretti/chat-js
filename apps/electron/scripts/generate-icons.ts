@@ -18,6 +18,7 @@ const src = path.join(root, "icon.png");
 const buildDir = path.join(root, "build");
 const outputBase = path.join(buildDir, "icon");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readIconFormats's awaited sequencing and rejected-Promise behavior. */
 const readIconFormats = async (): Promise<{
   icns: Buffer;
   ico: Buffer;
@@ -36,7 +37,8 @@ const readIconFormats = async (): Promise<{
 
   return { icns, ico };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateIcons's awaited sequencing and rejected-Promise behavior. */
 const generateIcons = async (): Promise<void> => {
   await mkdir(buildDir, { recursive: true });
   const { icns, ico } = await readIconFormats();
@@ -50,7 +52,7 @@ const generateIcons = async (): Promise<void> => {
   console.log("Generated build/icon.{png,icns,ico}");
   /* oxlint-enable eslint/no-console */
 };
-
+/* oxlint-enable oxc/no-async-await */
 // oxlint-disable-next-line unicorn/prefer-top-level-await, promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- Generated Node/tsx prebuilds run in CommonJS; handle rejection here because that transform cannot support top-level await.
 generateIcons().catch((error: unknown): void => {
   // oxlint-disable-next-line no-console -- Report an icon-generation failure to the invoking package manager.

@@ -22,6 +22,7 @@ const savedSchema = z.object({
   sessionIds: z.array(z.string()),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyEveSandboxCoverage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): verifyEveSandboxCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -112,6 +113,8 @@ const verifyEveSandboxCoverage = async (
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isFencedEveDescendant's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): isFencedEveDescendant uses 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -161,5 +164,6 @@ const isFencedEveDescendant = async (
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { isFencedEveDescendant, verifyEveSandboxCoverage };

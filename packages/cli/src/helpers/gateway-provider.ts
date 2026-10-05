@@ -84,6 +84,7 @@ export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirement
 export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definition))};
 `);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve configureGatewayProvider's awaited sequencing and rejected-Promise behavior. */
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
  * @param {string} destination Project receiving gateway defaults, model snapshot and env keys.
@@ -136,3 +137,4 @@ export const models: readonly AiGatewayModel[] = [];
     ...definition.optionalEnv,
   ]);
 };
+/* oxlint-enable oxc/no-async-await */

@@ -15,6 +15,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { token: "server-secret" },   { oidcToken: "oidc-secret", storeId: "store_fixture" }, 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep credential, capability and signed-read assertions together for each authentication mode. */
 /* oxlint-disable eslint/no-magic-numbers -- These values assert the credential-scoped five-minute download contract. */
 test.each([
@@ -61,7 +62,8 @@ test.each([
     });
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("the Files SDK honors a caller's shorter expiry and cancellation signal", async () => {
   const { signal } = new AbortController();
   vi.useFakeTimers();
@@ -86,4 +88,5 @@ test("the Files SDK honors a caller's shorter expiry and cancellation signal", a
     })
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */

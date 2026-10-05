@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveSharedPage } from "@/components/eve/eve-shared-page";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve SharedChatPageContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- SharedChatPageContent: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { params, }: { params: Promise<{ id: string }>; }). */
 
 const SharedChatPageContent = async ({
@@ -15,6 +16,7 @@ const SharedChatPageContent = async ({
   const { id } = await params;
   return <EveSharedPage id={id} />;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SharedChatPageRoute: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { params, }: { params: Promise<{ id: string }>; }). */
 

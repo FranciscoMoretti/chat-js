@@ -45,6 +45,7 @@ const rollbackFields = <Value extends Metadata>(
     : {}),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optimisticEveMetadata's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): optimisticEveMetadata keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): optimisticEveMetadata accepts cache: QueryClient; page; item; current; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -113,5 +114,6 @@ const optimisticEveMetadata = async (
     }
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-params, typescript/prefer-readonly-parameter-types */
 export { optimisticEveMetadata, pendingEveMetadataMutations };

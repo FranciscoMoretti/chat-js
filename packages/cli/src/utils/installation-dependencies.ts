@@ -24,13 +24,14 @@ const receiptSchema = z.object({
   owned: dependencyMap,
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readManifest's awaited sequencing and rejected-Promise behavior. */
 const readManifest = async (
   cwd: string
 ): Promise<z.infer<typeof manifestSchema>> => {
   const source = await readFile(path.join(cwd, "package.json"), "utf-8");
   return manifestSchema.parse(JSON.parse(source));
 };
-
+/* oxlint-enable oxc/no-async-await */
 const dependencyName = (specifier: string): string =>
   specifier.replace(/(?<!^)@[^/]*$/u, "");
 
@@ -77,6 +78,7 @@ const binaryAssets = new Set([
 ]);
 const maxSourceBytes = 1_048_576;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sourceUses's awaited sequencing and rejected-Promise behavior. */
 // Conservative protection for dependencies used by source outside registry items.
 // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
@@ -118,7 +120,8 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
   }
   return false;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareDependencyUpdate's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
 export const prepareDependencyUpdate = async (
   cwd: string,
@@ -203,3 +206,4 @@ export const prepareDependencyUpdate = async (
     );
   };
 };
+/* oxlint-enable oxc/no-async-await */

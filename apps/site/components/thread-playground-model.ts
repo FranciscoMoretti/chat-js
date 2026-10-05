@@ -127,6 +127,7 @@ const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   version: 1,
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve delay's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
@@ -147,6 +148,7 @@ const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
   });
   await promise;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
@@ -181,6 +183,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
 
     return Promise.resolve(
       new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
+        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve start's awaited sequencing and rejected-Promise behavior. */
         async start(controller): Promise<void> {
           try {
             controller.enqueue({
@@ -231,6 +234,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             controller.error(error);
           }
         },
+        /* oxlint-enable oxc/no-async-await */
       })
     );
   },

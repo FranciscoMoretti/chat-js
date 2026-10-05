@@ -89,6 +89,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     const responseMessageId = host.generateMessageId();
     const state = new ThreadRunState(host, spec);
     const transport = ThreadRunChat.createTransport(host, spec, state);
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve super's awaited sequencing and rejected-Promise behavior. */
     super({
       dataPartSchemas: host.dataPartSchemas,
       generateId: (): string => responseMessageId,
@@ -115,6 +116,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       state,
       transport,
     });
+    /* oxlint-enable oxc/no-async-await */
     this.#state = state;
   }
 
@@ -166,6 +168,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The transport owns resetting the resume prefix and preserving the reconnect error on this live run state; readonly properties prohibit these required writes.
     state: ThreadRunState<TMessage>
   ): ChatTransport<TMessage> {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return {
       reconnectToStream: async (
         options: ReconnectReader<TMessage>
@@ -199,6 +202,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         });
       },
     };
+    /* oxlint-enable oxc/no-async-await */
   }
 
   protected override setStatus(
@@ -218,10 +222,12 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     this.#state.refreshPath();
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve start's awaited sequencing and rejected-Promise behavior. */
   public async start(options?: RequestReader): Promise<void> {
     await this.sendMessage(NO_VALUE, options);
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startWithMessage's awaited sequencing and rejected-Promise behavior. */
   public async startWithMessage(
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AbstractChat.sendMessage accepts mutable parts arrays and native FileList input; readonly parts cannot be passed to that SDK method.
     message: NonNullable<
@@ -233,13 +239,15 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
   ): Promise<void> {
     await this.sendMessage(message, options);
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve regenerateMessage's awaited sequencing and rejected-Promise behavior. */
   public async regenerateMessage(
     messageId: string,
     options?: RequestReader
   ): Promise<void> {
     await this.regenerate({ ...options, messageId });
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 
 export { ThreadRunChat };

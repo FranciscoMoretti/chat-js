@@ -28,6 +28,7 @@ config({
   path: ".env.local",
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMigrate's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -144,6 +145,8 @@ const runMigrate = async (): Promise<void> => {
 
   console.log("✅ Migrations completed in", end - start, "ms");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
@@ -160,4 +163,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, typescript/explicit-function-return-type */

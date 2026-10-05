@@ -42,6 +42,7 @@ const emitRichResponse = (
   transport.finish();
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitFor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
@@ -56,12 +57,14 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("ThreadRunChat", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
     const standardTransport = new ControlledTransport();
@@ -93,7 +96,8 @@ describe("ThreadRunChat", (): void => {
     );
     expect(host.status).toBe("ready");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("adopts the server response identity from the start chunk", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -116,7 +120,8 @@ describe("ThreadRunChat", (): void => {
     expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
     expect(spec.messageId).toBe("server-id");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("reports a failed stream exactly once without adding a response", async (): Promise<void> => {
     const error = new Error("stream failed");
     const callbackErrors: Error[] = [];
@@ -138,7 +143,8 @@ describe("ThreadRunChat", (): void => {
     expect(host.status).toBe("error");
     expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues one response after an automatic tool follow-up", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -199,6 +205,7 @@ describe("ThreadRunChat", (): void => {
     ]);
     expect(host.status).toBe("ready");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

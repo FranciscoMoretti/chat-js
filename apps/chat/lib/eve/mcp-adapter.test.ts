@@ -14,6 +14,7 @@ import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
  * unicorn/max-nested-calls (#568): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
 describe("Eve tool contract", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("removes executable schema metadata from the advertised JSON schema", async () => {
     const adapted = await describeMcpTool(
       tool({
@@ -28,6 +29,8 @@ describe("Eve tool contract", () => {
     });
     expect(JSON.stringify(adapted.inputSchema)).not.toContain("~standard");
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("executes a discovered MCP tool with its native invocation identity", async () => {
     const services = { selectedModel: "selected/model" };
     const definition = tool({
@@ -53,5 +56,6 @@ describe("Eve tool contract", () => {
 
     expect(output).toEqual(["context-test"]);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

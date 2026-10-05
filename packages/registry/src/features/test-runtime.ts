@@ -4,6 +4,7 @@ interface TestProcessResult {
   readonly stderr: string;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runTestProcess's awaited sequencing and rejected-Promise behavior. */
 const runTestProcess = async (
   command: readonly string[],
   options: {
@@ -29,5 +30,5 @@ const runTestProcess = async (
   ]);
   return { exitCode, stderr, stdout };
 };
-
+/* oxlint-enable oxc/no-async-await */
 export { runTestProcess };

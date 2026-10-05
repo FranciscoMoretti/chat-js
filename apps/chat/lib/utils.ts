@@ -14,6 +14,7 @@ import type { ReadonlyNativeSurface } from "./readonly-native-surface";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchWithErrorHandlers's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): fetchWithErrorHandlers accepts ...[input, init]: Parameters<typeof fetch>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -39,6 +40,7 @@ const fetchWithErrorHandlers = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const generateUUID = (): string => uuidv7();

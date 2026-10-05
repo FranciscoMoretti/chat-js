@@ -21,6 +21,7 @@ const EveShareDialogContent = ({
   const cache = useQueryClient();
   const query = useQuery(trpc.eve.get.queryOptions({ id: chatId }));
   const mutation = useMutation(trpc.eve.setVisibility.mutationOptions());
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <>
       <ShareDialogView
@@ -38,6 +39,7 @@ const EveShareDialogContent = ({
       {query.error && <p role="alert">{query.error.message}</p>}
     </>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 

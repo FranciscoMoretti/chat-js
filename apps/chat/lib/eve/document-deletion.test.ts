@@ -67,6 +67,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("requests native approval only for the current owned title and revision") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -93,6 +94,8 @@ it("requests native approval only for the current owned title and revision", asy
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 it("requires an owner receipt before performing the conditional deletion", async () => {
@@ -119,7 +122,8 @@ it("requires an owner receipt before performing the conditional deletion", async
     context.abortSignal
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects absent document implementations before requesting approval or executing", async () => {
   mocks.kinds.clear();
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
@@ -130,7 +134,8 @@ it("rejects absent document implementations before requesting approval or execut
   );
   expect(mocks.remove).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rechecks kind availability after approval", async () => {
   mocks.kinds.delete("text");
   await expect(requestDocumentDeletion(input, context)).rejects.toThrow(
@@ -144,3 +149,4 @@ it("rechecks kind availability after approval", async () => {
   ).rejects.toThrow("disabled for this kind");
   expect(mocks.remove).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

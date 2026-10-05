@@ -120,6 +120,7 @@ export const NewEveConversation = ({
     setOptimisticComparison("modelIds" in operation ? operation : undefined);
     setRetainedOperationId(operation.operationId);
   };
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submit's awaited sequencing and rejected-Promise behavior. */
   const submit = async (): Promise<void> => {
     if (lock.current) {
       return;
@@ -176,6 +177,7 @@ export const NewEveConversation = ({
     }
     /* oxlint-enable react/todo */
   };
+  /* oxlint-enable oxc/no-async-await */
   if (projectRejected || (retained && !busy)) {
     return (
       <EveCreationRecovery
@@ -187,6 +189,7 @@ export const NewEveConversation = ({
       />
     );
   }
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve composer's awaited sequencing and rejected-Promise behavior. */
   const composer = (
     <>
       <EveComposer
@@ -224,6 +227,7 @@ export const NewEveConversation = ({
       {failure && <p role="alert">{failure}</p>}
     </>
   );
+  /* oxlint-enable oxc/no-async-await */
   if (busy) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">

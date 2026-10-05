@@ -20,6 +20,7 @@ const message = z
 const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateDisposableGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null -- * init-declarations (#507): authenticateDisposableGuest assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -94,4 +95,5 @@ export const authenticateDisposableGuest = async (
     subject: claims.ownerId,
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */

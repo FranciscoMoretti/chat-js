@@ -203,6 +203,7 @@ const isRepositoryOnlyDependency = (name: string): boolean =>
     "echarts-for-react",
   ].includes(name);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizePackageManifest's awaited sequencing and rejected-Promise behavior. */
 const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   const manifest = parseScaffoldPackageManifest(
     await readFile(packagePath, "utf-8")
@@ -235,14 +236,16 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   delete manifest.overrides?.evalite;
   await writeFile(packagePath, formattedScaffoldJson(manifest));
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeTsConfig's awaited sequencing and rejected-Promise behavior. */
 const normalizeTsConfig = async (tsconfigPath: string): Promise<void> => {
   const tsconfig = parseScaffoldTsConfig(await readFile(tsconfigPath, "utf-8"));
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
   await writeFile(tsconfigPath, formattedScaffoldJson(tsconfig));
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeReferenceVisualProject's awaited sequencing and rejected-Promise behavior. */
 const removeReferenceVisualProject = async (
   destination: string
 ): Promise<void> => {
@@ -253,7 +256,8 @@ const removeReferenceVisualProject = async (
     playwright.replace(REFERENCE_VISUAL_PROJECT, "")
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeStandaloneLintConfig's awaited sequencing and rejected-Promise behavior. */
 const normalizeStandaloneLintConfig = async (
   destination: string
 ): Promise<void> => {
@@ -275,13 +279,15 @@ const normalizeStandaloneLintConfig = async (
     )
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeScaffoldContent's awaited sequencing and rejected-Promise behavior. */
 const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   await normalizePackageManifest(path.join(destination, "package.json"));
   await normalizeTsConfig(path.join(destination, "tsconfig.json"));
   await removeReferenceVisualProject(destination);
   await normalizeStandaloneLintConfig(destination);
 };
+/* oxlint-enable oxc/no-async-await */
 export {
   normalizeScaffoldContent,
   researchTestFiles,

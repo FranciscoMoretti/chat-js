@@ -67,6 +67,7 @@ const retainResponseGroupDraft = (
     finishCreation(storage, ownerId, scope);
   }
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params */
 
 const requestResponseGroup = async (
@@ -99,7 +100,7 @@ const requestResponseGroup = async (
   }
   return result;
 };
-
+/* oxlint-enable oxc/no-async-await */
 export {
   readResponseGroupDraft,
   requestResponseGroup,

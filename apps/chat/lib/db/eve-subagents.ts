@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "./client";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveSubagentSession } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveSubagent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -34,6 +35,8 @@ const getEveSubagent = async (ownerId: string, sessionId: string) => {
     );
   return binding;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveSubagent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -86,6 +89,8 @@ const registerEveSubagent = async (
   }
   return bound;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveSubagents's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -114,6 +119,8 @@ const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
         rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveSubagentUsageCursor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
@@ -137,6 +144,7 @@ const advanceEveSubagentUsageCursor = async (
       )
     );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 export {
   advanceEveSubagentUsageCursor,

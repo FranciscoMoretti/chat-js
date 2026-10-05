@@ -57,6 +57,7 @@ export const SidebarProjects = (): ReactJSX.Element => {
     })
   );
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleCreateProject's awaited sequencing and rejected-Promise behavior. */
   const handleCreateProject = async (
     data: ProjectDetailsData
   ): Promise<void> => {
@@ -66,7 +67,7 @@ export const SidebarProjects = (): ReactJSX.Element => {
       name: data.name,
     });
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <>
       <SidebarMenuItem>

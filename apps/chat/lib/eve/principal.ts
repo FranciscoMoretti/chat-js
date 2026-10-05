@@ -13,6 +13,7 @@ export type EvePrincipal =
       remainingMessages?: number;
     };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEvePrincipal's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): resolveEvePrincipal preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** Disposable guests never enter application ownership, billing, or history routes.
  * Old guest cookies grant no access.
@@ -27,4 +28,5 @@ export const resolveEvePrincipal = async (
     ? { kind: "registered", ownerId: session.user.id }
     : null;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

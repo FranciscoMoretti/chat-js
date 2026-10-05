@@ -21,6 +21,7 @@ vi.mock("./mcp-tools", () => ({
   executeEveMcpTool: mocks.execute,
 }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("discovers for the session owner and preserves namespaced tool definitions") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -60,10 +61,12 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
   });
   expect(JSON.stringify(definitions)).not.toContain("connectorId");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 
 afterEach(() => vi.restoreAllMocks());
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("continues ordinary chat when MCP discovery times out") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -85,6 +88,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
     )
   ).resolves.toEqual({});
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
@@ -95,6 +99,7 @@ vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: (): boolean => mocks.guest },
   eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable unicorn/no-null --
@@ -120,6 +125,8 @@ it("does not discover remote tools for an explicitly selected local capability",
     mocks.selected = false;
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable unicorn/no-null --
@@ -148,4 +155,5 @@ it("never discovers registered account connectors for a guest", async () => {
     mocks.guest = false;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

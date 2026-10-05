@@ -8,6 +8,7 @@ import path from "node:path";
 
 import ts from "typescript";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 test("public configuration snippets typecheck against the installed application contract", async () => {
   const app = path.resolve(import.meta.dir, "../../../../apps/chat");
@@ -54,3 +55,4 @@ test("public configuration snippets typecheck against the installed application 
   expect(errors).toEqual([]);
   // oxlint-disable-next-line eslint/no-magic-numbers -- These local values specify JSON indentation, source offsets or bounded test fixtures.
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */

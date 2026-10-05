@@ -30,6 +30,7 @@ const pinnedManifest = `{
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFixture's awaited sequencing and rejected-Promise behavior. */
 const createFixture = async (
   installed = installedSource
 ): Promise<{
@@ -54,7 +55,8 @@ const createFixture = async (
   ]);
   return { destination, packageDir, patchPath, root };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retains template and published package metadata while pinning the maintained archive", async () => {
   const fixture = await createFixture();
   try {
@@ -83,12 +85,13 @@ test("retains template and published package metadata while pinning the maintain
     await rm(fixture.root, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const installed of [
   "[]",
   '{"name":"maintained","version":"different"}',
   '{"name":"maintained","version":true}',
 ]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`retains the version guard before publishing malformed or mismatched metadata ${installed}`, async () => {
     const fixture = await createFixture(installed);
     try {
@@ -113,4 +116,5 @@ for (const installed of [
       await rm(fixture.root, { force: true, recursive: true });
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }

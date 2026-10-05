@@ -9,6 +9,7 @@ const isEveAdmissionBusy = (error: unknown): boolean =>
   error instanceof EveUsageReconciliationBusyError ||
   (error instanceof ClientError && error.code === "usage_reconciliation_busy");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retryEveAdmission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length -- id-length (#506): retryEveAdmission uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 /**
  * Replay only a server-certified undispatched admission, retaining its closure/ID.
@@ -19,7 +20,7 @@ const retryEveAdmission = async <T>(admit: () => Promise<T>): Promise<T> => {
   const deadline = Date.now() + ADMISSION_RETRY_WINDOW_MS;
   for (;;) {
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Retry only explicit admission backpressure, never an ambiguous send.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Await each admission inside this catch so only certified busy failures can trigger another attempt.
       return await admit();
     } catch (error) {
       if (
@@ -35,5 +36,6 @@ const retryEveAdmission = async <T>(admit: () => Promise<T>): Promise<T> => {
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length */
 export { isEveAdmissionBusy, retryEveAdmission };

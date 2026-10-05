@@ -104,6 +104,7 @@ await db.insert(user).values(
     name: "Save copy fixture",
   }))
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   for (const table of [
     eveConversationCopyFile,
@@ -120,6 +121,7 @@ afterAll(async () => {
   }
   await db.delete(user).where(inArray(user.id, owners));
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-statements (#512): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): beforeEach uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -151,6 +153,7 @@ beforeEach(() => {
     mocks.files.set(key, file);
     return Promise.resolve();
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mocks.request.mockImplementation's awaited sequencing and rejected-Promise behavior. */
   mocks.request.mockImplementation(
     async (owner: string, path: string, init?: RequestInit) => {
       if (path.startsWith("/eve/chat/v1/operation/")) {
@@ -176,7 +179,9 @@ beforeEach(() => {
       return Response.json({ sessionId: native.sessionId });
     }
   );
+  /* oxlint-enable oxc/no-async-await */
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
@@ -302,6 +307,8 @@ async function fixture() {
     source,
   };
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -366,6 +373,8 @@ test("saves a complete independent copy, including inline bytes and files only i
   expect(mocks.upload).toHaveBeenCalledTimes(2);
   expect(mocks.request.mock.calls.at(-1)?.[3]).toBe(modelId);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -418,6 +427,8 @@ test("a lost native reply recovers without reopening or reading a revoked source
     )
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 test("unrelated private file references are denied before any bytes or destination resources are written", async () => {
@@ -435,7 +446,8 @@ test("unrelated private file references are denied before any bytes or destinati
     await getEveCopyOperation(ownerId, fixtureData.input.operationId)
   ).toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): test("uncertain storage writes retry persisted keys without taking another snapshot o uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("uncertain storage writes retry persisted keys without taking another snapshot o accepts file: Blob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -473,6 +485,8 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     )
   ).rejects.toThrow("different source or model");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -494,6 +508,8 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -527,6 +543,8 @@ test("concurrent requests converge on the persisted allocation and one native co
     )
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
@@ -570,6 +588,8 @@ test("revocation before acceptance purges only the rejected destination and keep
   ).rejects.toThrow();
   expect(mocks.source).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -615,6 +635,8 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.files.size).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("deletion of an unwritten source file rejects preparation before another storage read", async () => {
@@ -641,7 +663,8 @@ test("deletion of an unwritten source file rejects preparation before another st
   });
   expect(mocks.request).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): test("a definitive model rejection tombstones the operation but transient catalog fai uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -672,6 +695,7 @@ test("a definitive model rejection tombstones the operation but transient catalo
   ).rejects.toThrow();
   expect(mocks.source).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable max-lines -- #509: This eve-save-copy.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

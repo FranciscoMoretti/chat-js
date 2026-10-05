@@ -57,6 +57,7 @@ for (const { runtime, playwright } of [
   { playwright: false, runtime: "edge" },
   { playwright: true, runtime: "nodejs" },
 ]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`Langfuse validates credentials only in its Node runtime: ${runtime}, Playwright ${playwright}`, async () => {
     const child = await runTestProcess(
       [
@@ -87,8 +88,10 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
         : "registered"
     );
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("successful Node registration configures one exporter with application identity and explicit options", async () => {
   const child = await runTestProcess(
     [
@@ -133,3 +136,4 @@ console.log("registered once");`,
   expect(child.stdout.trim()).toBe("registered once");
   expect(child.stderr).toBe("");
 });
+/* oxlint-enable oxc/no-async-await */

@@ -73,6 +73,7 @@ function fixture() {
   });
   return { ctx, state };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -104,6 +105,7 @@ test("native executor receives only its exact authorized session/call/tool/input
     ).toBeUndefined();
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -145,6 +147,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     ).toBeUndefined();
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["owner", "stranger"])'s awaited sequencing and rejected-Promise behavior. resolveModel resolves MockLanguageModelV4 to the native tool-loop harness model resolver. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -265,4 +268,5 @@ test.each(["owner", "stranger"])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

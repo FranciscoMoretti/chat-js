@@ -33,6 +33,7 @@ test("model text extraction accepts readonly content and preserves part separato
 
 afterEach(() => vi.unstubAllGlobals());
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["constructor", "toString"])'s awaited sequencing and rejected-Promise behavior. */
 test.each(["constructor", "toString"])(
   "malformed server error code %s uses generic error copy",
   async (code) => {
@@ -56,3 +57,4 @@ test.each(["constructor", "toString"])(
     });
   }
 );
+/* oxlint-enable oxc/no-async-await */

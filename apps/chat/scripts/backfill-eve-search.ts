@@ -11,6 +11,7 @@ import { backfillEveSearchConversation } from "../lib/eve/search-backfill";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "../lib/eve/server";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve main's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -73,6 +74,8 @@ const main = async () => {
   // oxlint-disable-next-line unicorn/no-process-exit -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.
   process.exit(failed ? 1 : 0);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
  * no-console (#514): void (async () => { try { await main(); } catch (error) emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -90,4 +93,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, typescript/explicit-function-return-type */

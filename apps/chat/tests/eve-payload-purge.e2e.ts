@@ -53,6 +53,7 @@ const tables = [
 await installEvePostgresResourceFence(query);
 // oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs the queue fence before testing payload purges.
 await installEvePostgresQueueFence(query, task);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -70,6 +71,8 @@ afterAll(async () => {
   await query`delete from workflow.eve_resource_fences where resource in ${query(runIds.flatMap((id) => [`run:${id}`, `stream:${id}`]))}`;
   await query.end();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 /* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): fixture intentionally keeps the existing falsy-value behavior of parent; distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -86,6 +89,8 @@ async function fixture(parent?: string): Promise<string> {
   await query`insert into workflow.workflow_waits(wait_id, run_id, status) values (${crypto.randomUUID()}, ${id}, 'completed')`;
   return id;
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -121,6 +126,8 @@ test("purge requires fences, removes every native payload table, isolates other 
     query`insert into workflow.workflow_events(id, run_id, type) values (${crypto.randomUUID()}, ${root}, 'step_completed')`
   ).rejects.toMatchObject({ code: "55000" });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -149,6 +156,8 @@ test("queued payloads prevent removal until queue cleanup completes", async () =
   await purgeEvePostgresQueue(query, { ...input, runIds: inventory.runIds });
   await purgeEvePostgresSessionPayloads(query, input);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -186,6 +195,8 @@ test("queue-discovered native runs remain in the payload inventory after queue r
     await query`select id from workflow.workflow_runs where id = ${detached}`
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async --
@@ -233,6 +244,8 @@ test("native coordinator retains retirement across failure and retries after pay
   ).toEqual(receipt);
   expect(retirements).toBe(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -255,6 +268,8 @@ test("concurrent native cleanup attempts retire once and share the completed rec
   expect(receipts[0]).toEqual(receipts[1]);
   expect(receipts[0].runIds).toEqual([root]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -293,6 +308,8 @@ test("family retirement persists partial progress without erasing another member
     await query`select id from workflow.workflow_runs where id in ${query([first, second])}`
   ).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -348,6 +365,8 @@ test("preparation keeps native payloads for inventory and recovers the same iden
   ).toEqual(inventory);
   expect(retirements).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -385,6 +404,8 @@ test("missing queue-discovered runs stop preparation before payload erasure", as
     )
   ).rejects.toThrow("Resolve missing runs");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -447,6 +468,8 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
     verifyEveSandboxCoverage(query, { ...input, runIds: [root] }, verify)
   ).rejects.toThrow("scope changed");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("unknown workflow coverage never calls the ownership verifier") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -467,6 +490,7 @@ test("unknown workflow coverage never calls the ownership verifier", async () =>
   ).rejects.toThrow("incomplete sandbox workflow coverage");
   expect(called).toBe(false);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-payload-purge.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

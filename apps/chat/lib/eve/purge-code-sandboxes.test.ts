@@ -60,6 +60,7 @@ beforeEach(() => {
 
   mocks.cleanup.mockResolvedValue(undefined);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 test("cleans confirmed ownership and releases its durable record", async () => {
@@ -67,13 +68,15 @@ test("cleans confirmed ownership and releases its durable record", async () => {
   expect(mocks.cleanup).toHaveBeenCalledWith(name);
   expect(mocks.record).toHaveBeenCalledWith("owner", "conversation", name);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a retry accepts provider-confirmed absence", async () => {
   await purgeEveFamilyCodeSandboxes("owner", "root");
   expect(mocks.cleanup).toHaveBeenCalledOnce();
   expect(mocks.record).toHaveBeenCalledOnce();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unknown creation never uses absence to declare deletion complete", async () => {
   mocks.list.mockResolvedValue([{ ...resource, creationConfirmed: false }]);
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -82,7 +85,8 @@ test("unknown creation never uses absence to declare deletion complete", async (
   expect(mocks.createCleanupSession).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("provider failures retain ownership", async () => {
   mocks.list.mockRejectedValueOnce(new Error("family is active"));
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -95,7 +99,8 @@ test("provider failures retain ownership", async () => {
   );
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("changed provider scope cannot release a resource", async () => {
   mocks.createCleanupSession.mockReturnValue({
     deleteAndConfirmAbsent: mocks.cleanup,
@@ -107,7 +112,8 @@ test("changed provider scope cannot release a resource", async () => {
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("zero resources need no installed provider capability", async () => {
   mocks.capabilityInstalled = false;
   mocks.list.mockResolvedValue([]);
@@ -115,7 +121,8 @@ test("zero resources need no installed provider capability", async () => {
     purgeEveFamilyCodeSandboxes("owner", "root")
   ).resolves.toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("durable resources cannot be released without their provider capability", async () => {
   mocks.capabilityInstalled = false;
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
@@ -124,3 +131,4 @@ test("durable resources cannot be released without their provider capability", a
   expect(mocks.cleanup).not.toHaveBeenCalled();
   expect(mocks.record).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

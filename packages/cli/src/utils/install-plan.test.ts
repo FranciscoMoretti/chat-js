@@ -22,6 +22,7 @@ import { syncTools, toolRegistrationTargets } from "./sync-tools";
 /* oxlint-enable sort-imports */
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
@@ -31,6 +32,7 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -83,6 +85,7 @@ const server = () =>
     hostname: "127.0.0.1",
     port: 0,
   });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -92,6 +95,8 @@ const fixture = async (): Promise<string> => {
   await scaffoldFromTemplate(root);
   return root;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -152,6 +157,8 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["registration", "finalization"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -271,6 +278,8 @@ test.each(["registration", "finalization"] as const)(
   },
   30_000
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -313,6 +322,8 @@ test("native shadcn source can be composed without overwriting or blessing user 
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -414,6 +425,8 @@ test("registration refreshes untouched rollback baselines without blessing user 
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -518,6 +531,7 @@ test("provider installation refuses inferred native dependency destinations befo
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

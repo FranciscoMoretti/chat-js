@@ -93,6 +93,7 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresResourceFence's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const installEvePostgresResourceFence = async (
   connection: Sql
@@ -101,6 +102,8 @@ const installEvePostgresResourceFence = async (
     await query.unsafe(installSql);
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResourcesInTransaction's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResourcesInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -156,6 +159,8 @@ const fenceEvePostgresResourcesInTransaction = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -176,6 +181,7 @@ const fenceEvePostgresResources = async (
     await fenceEvePostgresResourcesInTransaction(query, input);
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */
 export {
   fenceEvePostgresResources,

@@ -84,6 +84,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     >
   ): void => this.#callbacks.onFinish?.(event);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onToolCall's awaited sequencing and rejected-Promise behavior. */
   public readonly onToolCall = async (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK static/dynamic tool-call union into the current callback; deep readonly generic tool inputs cannot satisfy its original conditional tool specialization.
     event: Readonly<
@@ -94,7 +95,8 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
   ): Promise<void> => {
     await this.#callbacks.onToolCall?.(event);
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendAutomaticallyWhen's awaited sequencing and rejected-Promise behavior. */
   public readonly sendAutomaticallyWhen = async (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK auto-send callback receives its original mutable message array; readonly array forwarding rejects existing callback implementations.
     event: Readonly<
@@ -104,7 +106,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     >
   ): Promise<boolean> =>
     await (this.#callbacks.sendAutomaticallyWhen?.(event) ?? false);
-
+  /* oxlint-enable oxc/no-async-await */
   public readonly setMessages = (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK setter accepts mutable message arrays and synchronous updater callbacks that may mutate/return their provided array; readonly collections reject that existing updater contract.
     messages: Parameters<

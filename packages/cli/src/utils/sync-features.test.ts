@@ -31,6 +31,7 @@ import { initializeFeatureUi, syncFeatures } from "./sync-features";
 
 const roots: string[] = [];
 const demo = path.resolve(import.meta.dir, "../../../../apps/chat");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
@@ -40,6 +41,8 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -53,6 +56,8 @@ const fixture = async (): Promise<string> => {
   );
   return root;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve install's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 const install = async (root: string): Promise<void> => {
   await Promise.all(
@@ -76,7 +81,8 @@ const install = async (root: string): Promise<void> => {
     )
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -138,6 +144,8 @@ test("new core UI has no MCP imports; installing MCP registers its router and pr
   );
   expect(settings.match(/mcpSettingsItem,/gu)).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -154,6 +162,8 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
     await readFile(path.join(root, "features/installed-routers.ts"), "utf-8")
   ).not.toContain("mcpRouter");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -239,6 +249,7 @@ test("MCP installation requires the approval schema before changing an older sca
     await server.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
@@ -260,6 +271,7 @@ for (const [importText, entry] of [
     "connectors.ConnectorsControl",
   ],
 ] as const) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`restores a removed UI entry using ${entry} without duplicate imports`, async (): Promise<void> => {
     const root = await fixture();
     await initializeFeatureUi(root);
@@ -280,7 +292,9 @@ for (const [importText, entry] of [
       await readFile(path.join(root, "composer-controls.ts"), "utf-8")
     ).toBe(content);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 test("preserves an existing contribution with a custom import", async (): Promise<void> => {
@@ -295,9 +309,10 @@ test("preserves an existing contribution with a custom import", async (): Promis
     content
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const file of ["composer-controls.ts", "settings-items.ts"]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`an unsupported ${file} leaves both UI files and registrations unchanged`, async (): Promise<void> => {
     const root = await fixture();
     await initializeFeatureUi(root);
@@ -330,7 +345,9 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
       )
     ).toEqual(before);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 test("missing descriptors report partial MCP source and how to recover", async (): Promise<void> => {
@@ -340,7 +357,8 @@ test("missing descriptors report partial MCP source and how to recover", async (
   await rm(path.join(root, "features/mcp/chatjs.json"));
   expect(syncFeatures(root)).rejects.toThrow("chat-js add mcp");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("empty feature registration uses a zero-argument Set constructor", async (): Promise<void> => {
   const root = await fixture();
   await initializeFeatureUi(root);
@@ -348,7 +366,8 @@ test("empty feature registration uses a zero-argument Set constructor", async ()
     await readFile(path.join(root, "features/installed.ts"), "utf-8")
   ).toContain("new Set()");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test("adds the requested binding when the module already has another named import", async (): Promise<void> => {
   const root = await fixture();
@@ -373,6 +392,8 @@ test("adds the requested binding when the module already has another named impor
     await readFile(path.join(root, "settings-items.ts"), "utf-8")
   ).toContain("  connectors,");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -488,6 +509,8 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     await server.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -512,6 +535,7 @@ test("unrelated additions preserve computed feature UI; requesting MCP still req
   );
   expect(syncFeatures(root, { addUi: ["mcp"] })).rejects.toThrow("manually");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -13,6 +13,7 @@ import type { ImageRequestContext } from "./image-request";
 /* oxlint-enable sort-imports */
 import { generateImageInput } from "./schemas";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateImageTool's awaited sequencing and rejected-Promise behavior. */
 export const generateImageTool = defineTool({
   description: `Generate an image from a user-provided prompt.
 
@@ -27,3 +28,4 @@ The assistant must not add new subjects, claims, branding, or alter the tone or 
   inputSchema: generateImageInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable oxc/no-async-await */

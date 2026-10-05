@@ -9,6 +9,7 @@ import ts from "typescript";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { preflight } from "./preflight";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertMcpApprovalSchema's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
@@ -52,5 +53,5 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
     'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run your db:generate script, review the generated migration, and run your db:migrate script against the intended database using your package manager before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 export { assertMcpApprovalSchema };

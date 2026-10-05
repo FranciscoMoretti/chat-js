@@ -25,6 +25,7 @@ import { ZodError } from "zod";
 /* oxlint-enable sort-imports */
 
 import { auth } from "@/lib/auth";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTRPCContext's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /**
@@ -45,7 +46,7 @@ const createTRPCContext = cache(async () => {
     user: session?.user,
   };
 });
-
+/* oxlint-enable oxc/no-async-await */
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -96,6 +97,7 @@ const { createCallerFactory } = trpc;
  */
 const createTRPCRouter = trpc.router;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve timingMiddleware's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): timingMiddleware uses 400, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -124,6 +126,7 @@ const timingMiddleware = trpc.middleware(async ({ next: runNext, path }) => {
 
   return result;
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types */
 
 /**

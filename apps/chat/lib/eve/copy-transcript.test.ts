@@ -275,6 +275,7 @@ it("canonicalizes file links so a copied private key is never sent to the source
   );
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps MCP document identifiers separate from native ChatJS artifacts", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -306,7 +307,8 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
   );
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("materializes only allocated destination attachments and remaps case-insensitive n preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -358,6 +360,7 @@ it("materializes only allocated destination attachments and remaps case-insensit
   expect(JSON.stringify(result)).not.toContain(sourceFile);
   expect(JSON.stringify(prepared.seed)).toContain(sourceFile);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
@@ -365,6 +368,7 @@ it("does not mutate frozen inputs while collecting copy resources", () => {
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("keeps attachment bytes out of the seed and reads destination metadata once per fi uses 1, 1024, 0, 6, 2048 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/promise-function-async (#606): it("keeps attachment bytes out of the seed and reads destination metadata once per fi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -398,6 +402,8 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -447,6 +453,8 @@ it("externalizes six distinct inline images through durable destination allocati
     expect(file.bytes[0]).toBe(index);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -489,6 +497,7 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     )
   ).rejects.toThrow("metadata changed");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it.each([
@@ -552,6 +561,7 @@ it("does not inject destination keys into a foreign URL's query string", () => {
   expect(rewriteEveCopyResources(url, allocations)).toBe(url);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["not-a-valid-document-id", documentId])'s awaited sequencing and rejected-Promise behavior. */
 it.each(["not-a-valid-document-id", documentId])(
   "preserves failed document arguments that do not denote copied artifacts: %s",
   async (id) => {
@@ -589,7 +599,7 @@ it.each(["not-a-valid-document-id", documentId])(
     expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("retains model provenance in copies of copies without carrying private metadata") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */

@@ -46,6 +46,7 @@ beforeEach(() => {
   mocks.native.mockResolvedValue(undefined);
   mocks.complete.mockResolvedValue(undefined);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
@@ -84,6 +85,8 @@ test("all resources and native family payloads finish before the application tom
   expect(await deletion).toEqual({ rootId: "root" });
   expect(mocks.complete).toHaveBeenCalledWith("owner", "root");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
 test("resource uncertainty prevents any native payload erasure", async () => {
@@ -94,7 +97,8 @@ test("resource uncertainty prevents any native payload erasure", async () => {
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): test("partial native purge retains pending state and retry runs the full ordering aga uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("partial native purge retains pending state and retry runs the full ordering aga uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -120,6 +124,8 @@ test("partial native purge retains pending state and retry runs the full orderin
     "session-branch",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
@@ -133,6 +139,8 @@ test("foreign or missing families cannot erase native or application data", asyn
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 test("an already deleted family is idempotent without resetting native sessions", async () => {
@@ -143,7 +151,8 @@ test("an already deleted family is idempotent without resetting native sessions"
   expect(mocks.native).not.toHaveBeenCalled();
   expect(mocks.retire).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unsupported native lifecycle cannot enter the local resource coordinator", async () => {
   mocks.provider.mockReturnValue({
     reason: "unverified erasure",
@@ -156,3 +165,4 @@ test("unsupported native lifecycle cannot enter the local resource coordinator",
   expect(mocks.resources).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

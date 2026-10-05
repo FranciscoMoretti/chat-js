@@ -18,6 +18,7 @@ import ts from "typescript";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { scaffoldFromTemplate } from "./scaffold";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -98,6 +99,7 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
     await rm(destination, { force: true, recursive: true });
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/max-nested-calls */

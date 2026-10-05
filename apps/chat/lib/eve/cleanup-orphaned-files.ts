@@ -5,6 +5,7 @@ import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupEveOrphanedFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -66,4 +67,5 @@ export const cleanupEveOrphanedFiles = async (
   }
   return { deletedCount, skipped: false };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

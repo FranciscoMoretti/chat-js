@@ -291,6 +291,7 @@ export const EveMessages = ({
       .map((part) => part.text)
       .join("\n");
     const modelId = modelForMessage?.(message);
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve actions's awaited sequencing and rejected-Promise behavior. */
     const actions = (
       <MessageActionsView
         editDisabled={
@@ -359,6 +360,7 @@ export const EveMessages = ({
         }
       />
     );
+    /* oxlint-enable oxc/no-async-await */
     if (message.role === "user") {
       return (
         <UserMessageView

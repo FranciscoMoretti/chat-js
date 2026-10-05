@@ -3,6 +3,7 @@ import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
 import { db } from "./client";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveOrphanedFilePurge's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
@@ -70,4 +71,5 @@ export const prepareEveOrphanedFilePurge = async (
   }
   return files;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

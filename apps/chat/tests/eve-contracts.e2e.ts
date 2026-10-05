@@ -60,12 +60,14 @@ const owner = crypto.randomUUID();
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-lines-per-function (#510): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -126,6 +128,8 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   await recordEveUsage(precise);
   await recordEveUsage(precise);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
  * max-statements (#512): test("concurrent retry reserves once and cannot cross owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -164,6 +168,8 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("a lost create reply is recovered through the same native operation") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -195,6 +201,8 @@ test("a lost create reply is recovered through the same native operation", async
   ).toEqual(recovered);
   expect(dispatched).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -218,6 +226,8 @@ test("a stopped creator's reservation can be resumed without changing its identi
     sessionId: `test-${reservation.id}`,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -265,6 +275,8 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
   );
   expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -340,6 +352,8 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   ).rejects.toThrow("source conversation");
   expect(starts).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -384,6 +398,8 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["codeExecution", "webSearch"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -455,6 +471,8 @@ test.each(["codeExecution", "webSearch"])(
     expect(unpriced.chargedCents).toBe(0);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["deleting", "deleted"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -548,6 +566,8 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -582,6 +602,8 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
   expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -639,6 +661,8 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     await deletion;
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -665,6 +689,8 @@ test("unresolved creation prevents a partial family deletion", async () => {
   );
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -774,6 +800,7 @@ test("final application deletion erases family content, preserves accounting and
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
@@ -781,6 +808,7 @@ const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "uncertain",
   "bound",
 ];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(copyReservationStates)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async, unicorn/no-null --
  * typescript/promise-function-async (#606): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -811,6 +839,8 @@ test.each(copyReservationStates)(
     });
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -843,6 +873,8 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     creationKind: "message",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -877,6 +909,7 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
   );
   expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-contracts.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

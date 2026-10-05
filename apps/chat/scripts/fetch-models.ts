@@ -6,6 +6,7 @@ import { writeFileSync } from "node:fs";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getActiveGateway } from "../lib/ai/active-gateway";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchAndSaveModels's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
@@ -38,6 +39,7 @@ export const models = ${JSON.stringify(models, null, 2)} as const satisfies read
     `Wrote ${models.length} models from '${gateway.type}' gateway to lib/ai/models.generated.ts`
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, no-magic-numbers, node/no-sync, typescript/strict-boolean-expressions, unicorn/no-null */
 
 // oxlint-disable-next-line node/no-top-level-await -- This executable completes model fetching and file publication before the command finishes.

@@ -48,6 +48,7 @@ interface EveCopyOperation {
   copy: typeof eveConversationCopy.$inferSelect;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve hasEveResponseGroupOperation's awaited sequencing and rejected-Promise behavior. */
 const hasEveResponseGroupOperation = async (
   tx: Readonly<Pick<CopyTransaction, "select">>,
   ownerId: string,
@@ -65,7 +66,7 @@ const hasEveResponseGroupOperation = async (
     .limit(SINGLE_ROW_LIMIT);
   return rows.length === SINGLE_ROW_LIMIT;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
 typescript/prefer-readonly-parameter-types (#565): EveCopySourceChangedError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class EveCopySourceChangedError extends CreationConflictError {
@@ -74,6 +75,7 @@ class EveCopySourceChangedError extends CreationConflictError {
     this.name = "EveCopySourceChangedError";
   }
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve lockEveCopyOwners's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const lockEveCopyOwners = async (
@@ -88,7 +90,8 @@ const lockEveCopyOwners = async (
     );
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectEveCopyPreflight's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements -- moving it below executable initialization can obscure ordering and API ownership.
 max-statements (#512): rejectEveCopyPreflight keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Durable rejection prevents a concurrent request from later reserving the discarded operation.
@@ -137,6 +140,8 @@ const rejectEveCopyPreflight = async (
     });
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
 const isUnacceptedEveCopy = async (
@@ -156,7 +161,8 @@ const isUnacceptedEveCopy = async (
   const copy = copyRows.at(FIRST_ROW_INDEX);
   return Boolean(copy);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertEveCopySourceAvailable's awaited sequencing and rejected-Promise behavior. */
 /** Caller holds source/destination family locks; the shared row lock serializes revocation.
  * @param {CopyTransaction} tx Transaction holding the family locks and source sharing lock.
  * @param {{ readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; }} source Published conversation and session identities expected by the copy.
@@ -191,7 +197,8 @@ const assertEveCopySourceAvailable = async (
     );
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCopy's awaited sequencing and rejected-Promise behavior. */
 const readEveCopy = async (
   tx: Pick<CopyTransaction, "select">,
   ownerId: string,
@@ -220,7 +227,8 @@ const readEveCopy = async (
   }
   return row;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 const getEveCopyOperation = async (
   ownerId: string,
   operationId: string
@@ -246,7 +254,7 @@ const getEveCopyOperation = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveCopyOperation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readEveCopy(db, ownerId, conversation.id);
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): validateCopyDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): validateCopyDocumentCheckpoints accepts plan: EveCopyPlan; checkpoint; message; document; revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -374,6 +382,7 @@ const validateCopyPlan = (plan: EveCopyPlan): void => {
   }
   validateCopyDocumentCheckpoints(plan);
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertSourceFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -421,6 +430,8 @@ const assertSourceFiles = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -570,6 +581,7 @@ const reserveEveCopyOperation = async (
     return await readEveCopy(tx, ownerId, conversation.id);
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-journal.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

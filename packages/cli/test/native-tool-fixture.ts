@@ -65,6 +65,7 @@ export const PaidCounterRenderer = defineToolRenderer({
   type: "registry:item",
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyNativeToolRuntime's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -164,6 +165,7 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
     180_000
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */

@@ -10,6 +10,7 @@ import { assertEveConfigured } from "./server";
 /* oxlint-enable sort-imports */
 import { sharedEveMessages } from "./shared-messages";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getPublicEveTranscript's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * no-magic-numbers (#517): getPublicEveTranscript uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/explicit-function-return-type (#560): Keep getPublicEveTranscript's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -37,4 +38,5 @@ export const getPublicEveTranscript = async (id: string) => {
     title: row.title ?? row.firstMessage.slice(0, 100),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */

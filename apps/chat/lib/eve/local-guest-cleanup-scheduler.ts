@@ -49,6 +49,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
     return;
   }
   const appRoot = process.cwd();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (): Promise<void> => {
     if (!enabled()) {
       return;
@@ -60,6 +61,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       console.info("Local EVE guest cleanup", result);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   if (schedulerGlobal.chatjsEveGuestCleanup) {
     // Instrumentation can be reloaded during development. Refresh the callback
     // without adding another timer or overlapping an in-flight sweep.
@@ -84,6 +86,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       timer = undefined;
     },
   };
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
   const tick = async (): Promise<void> => {
     timer = undefined;
     running = true;
@@ -99,6 +102,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
       schedule();
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const schedule = (): void => {
     if (stopped || running || timer) {
       return;

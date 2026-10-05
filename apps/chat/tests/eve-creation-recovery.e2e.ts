@@ -65,6 +65,7 @@ vi.mock("@/lib/eve/lifecycle/postgres/eve-stream-positions", () => ({
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owners: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db
     .delete(eveConversation)
@@ -72,7 +73,8 @@ afterAll(async () => {
   await db.delete(eveChat).where(inArray(eveChat.ownerId, owners));
   await db.delete(user).where(inArray(user.id, owners));
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["before-dispatch", "lost-response"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each(["before-dispatch", "lost-response"])("a new tab recovers %s before admitti keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -183,6 +185,8 @@ test.each(["before-dispatch", "lost-response"])(
     expect(allocations).toHaveLength(2);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
@@ -233,6 +237,8 @@ test("a verified native hook binds while dispatch is in flight without conflicti
     bindAcceptedEveConversation(owner, binding.id, "different-native")
   ).rejects.toThrow("binding_conflict");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -267,6 +273,8 @@ test("concurrent bindings cannot claim one native session for two branches", asy
     }
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -327,4 +335,5 @@ test("mapping rejects deletion, foreign ownership and inherited subagent identit
     bindAcceptedEveConversation(owner, crypto.randomUUID(), sessionId)
   ).rejects.toMatchObject({ code: "identity_missing" });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

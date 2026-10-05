@@ -51,6 +51,7 @@ export const SidebarProjectItem = ({
 
   const projectHref = `/project/${project.id}` as const;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleRename's awaited sequencing and rejected-Promise behavior. */
   const handleRename = async (data: ProjectDetailsData): Promise<void> => {
     await renameProject({
       id: project.id,
@@ -61,7 +62,7 @@ export const SidebarProjectItem = ({
       },
     });
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <SidebarMenuItem>
       <SidebarMenuButton

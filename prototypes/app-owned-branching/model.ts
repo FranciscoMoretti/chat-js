@@ -81,6 +81,7 @@ type ReadonlySqlTag = <
 const hasBarrier = (barrier: string | null): boolean =>
   barrier !== null && barrier !== "";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownedBranch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions -- ownedBranch: The database result may be empty; this existing guard preserves its missing-row error. */
 const ownedBranch = async (
   sql: ReadonlySqlTag,
@@ -95,6 +96,8 @@ const ownedBranch = async (
   }
   return row;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve history's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
 const history = async (
@@ -117,7 +120,7 @@ const history = async (
     message.parse(row.payload)
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/max-statements -- validatePrefix: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/no-magic-numbers -- validatePrefix: These bounded prototype limits, ordinals and fixture identities are part of the exercised storage protocol. */
 // A bounded neutral prototype format, NOT a claimed public EVE seed schema.
@@ -151,6 +154,7 @@ const validatePrefix = (messages: readonly DeepReadonly<Message>[]): void => {
     throw new Error("unresolved tool boundary");
   }
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requireResources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -172,6 +176,8 @@ const requireResources = async (
     throw new Error("resource not owned");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve append's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
@@ -212,6 +218,8 @@ const append = async (
     await tx`update branch set head=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve editDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-params -- editDocument: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
@@ -231,6 +239,8 @@ const editDocument = async (
     await tx`update branch set documents=${tx.json(revisions)} where id=${ownedBranchRecord.id}`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beginWriter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
@@ -251,6 +261,8 @@ const beginWriter = async (
     await tx`insert into writer (id,branch,kind) values (${id},${branch},${kind})`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve endWriter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
@@ -267,6 +279,8 @@ const endWriter = async (
     await tx`delete from writer where id=${id} and branch=${branch}`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserve's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 
@@ -309,6 +323,7 @@ const reserve = async (
     await tx`update branch set barrier=${input.id} where id=${ownedBranchRecord.id}`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -319,6 +334,7 @@ interface SnapshotProvider {
   restore: (key: string, sandbox: string) => Promise<void>;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve complete's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- complete: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-params -- complete: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- complete: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
@@ -367,6 +383,8 @@ const complete = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fork's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-statements */
@@ -421,6 +439,8 @@ const fork = async (
     }
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeBranch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -449,6 +469,8 @@ const removeBranch = async (
     await tx`delete from branch where id=${ownedBranchRecord.id}`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -483,6 +505,8 @@ const writeFile = async (
     }
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve modelHistory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -502,6 +526,7 @@ const modelHistory = async (
   const messages = await history(sql, owner, head);
   return messages.map(({ parts, role }) => ({ parts, role }));
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- modelHistory: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */

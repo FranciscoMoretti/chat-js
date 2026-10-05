@@ -54,6 +54,7 @@ const createImageRequest = (
 ): ImageRequest => {
   const costAccumulator = createEveToolCost(usage);
   const uploadFile = eveGeneratedFileUploader(context);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeFile's awaited sequencing and rejected-Promise behavior. */
   // A provider generation followed by storage failure is an explicit domain result.
   const storeFile: ImageStoreFile = async (filename, body, mediaType) => {
     try {
@@ -62,6 +63,7 @@ const createImageRequest = (
       return usage.fail();
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const selected = context.session.auth.current?.attributes.modelId;
   const selectedModel =
     typeof selected === "string" ? selected : ABSENT_DIAGNOSTIC_VALUE;
@@ -89,6 +91,7 @@ const createImageRequest = (
     selectedModel,
   };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeImageRequest's awaited sequencing and rejected-Promise behavior. */
 const executeImageRequest = async (
   request: Readonly<ImageRequest>
 ): Promise<GeneratedImageResult> => {
@@ -126,6 +129,8 @@ const executeImageRequest = async (
     throw resolvedError;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runImageRequest's awaited sequencing and rejected-Promise behavior. */
 const runImageRequest = async (
   prompt: string,
   context: Readonly<ImageRequestContext>
@@ -137,5 +142,6 @@ const runImageRequest = async (
     async (usage: Readonly<ToolUsage>) =>
       await executeImageRequest(createImageRequest(prompt, context, usage))
   );
+/* oxlint-enable oxc/no-async-await */
 export { runImageRequest };
 export type { ImageRequestContext };

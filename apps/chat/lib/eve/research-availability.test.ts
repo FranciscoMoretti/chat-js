@@ -60,6 +60,7 @@ beforeEach(() => {
   mocks.research = true;
   mocks.text = true;
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "automatic",   "selected",   "other-tool",   "disabled",   "no-documents",   "no-text", 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -135,6 +136,8 @@ it.each([
     );
   })
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
@@ -168,3 +171,4 @@ it("preserves the turn restriction when approval/reconnect auth omits selectedTo
     expect(researchAvailable(session)).toBe(false);
   });
 });
+/* oxlint-enable oxc/no-async-await */

@@ -10,6 +10,7 @@ import { featureDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { observabilityItems } from "../../../registry/src/features/observability";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve exists's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const exists = async (file: string): Promise<boolean> => {
@@ -23,7 +24,7 @@ const exists = async (file: string): Promise<boolean> => {
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 type ObservabilityId = ReturnType<typeof featureDefinitionSchema.parse>["id"];
 
 const NO_INSTALLED_FILES = 0;
@@ -63,6 +64,7 @@ const formattedManifest = (value: unknown): string =>
   // oxlint-disable-next-line unicorn/no-null -- JSON.stringify's null replacer retains unknown template metadata; its third argument preserves deterministic two-space formatting.
   `${JSON.stringify(value, null, JSON_INDENTATION_SPACES)}\n`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve locateObservabilityFile's awaited sequencing and rejected-Promise behavior. */
 const locateObservabilityFile = async (
   cwd: string,
   file: ObservabilityFile
@@ -75,7 +77,8 @@ const locateObservabilityFile = async (
   }
   return { present: await exists(path.join(cwd, target)), target };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeObservabilitySource's awaited sequencing and rejected-Promise behavior. */
 const completeObservabilitySource = async (
   item: ObservabilitySource,
   descriptor: string,
@@ -97,7 +100,8 @@ const completeObservabilitySource = async (
   }
   return [item.name];
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installedObservabilityIds's awaited sequencing and rejected-Promise behavior. */
 // Finish validating each implementation before its ID contributes to output.
 const installedObservabilityIds = async (
   cwd: string,
@@ -121,7 +125,8 @@ const installedObservabilityIds = async (
   }
   return await completeObservabilitySource(item, descriptor, files);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve planObservability's awaited sequencing and rejected-Promise behavior. */
 // Validate every installed implementation before sync writes any registrations.
 const planObservability = async (
   cwd: string
@@ -160,6 +165,8 @@ const planObservability = async (
     ids,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve initializeObservability's awaited sequencing and rejected-Promise behavior. */
 // Creation only: reset demo selections. Sync/add never remove implementations.
 const initializeObservability = async (cwd: string): Promise<void> => {
   await Promise.all(
@@ -193,4 +200,5 @@ const initializeObservability = async (cwd: string): Promise<void> => {
   }
   await writeFile(manifestPath, formattedManifest(manifest));
 };
+/* oxlint-enable oxc/no-async-await */
 export { initializeObservability, planObservability };

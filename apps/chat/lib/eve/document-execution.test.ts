@@ -86,6 +86,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("executes only the owned saved revision and preserves its billing receipt", async () => {
   const result = await executeEveCodeDocument(
     { ...input, code: "malicious replacement", ownerId: "other" },
@@ -115,7 +116,8 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     usage: { costUsd: 0.05 },
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   undefined,   { ...revision, kind: "text" },   { ...revision, title: "unsupported.ts" }, 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): it.each([ undefined, { ...revision, kind: "text" }, { ...revision, title: "unsupporte accepts value; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -134,6 +136,8 @@ it.each([
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
 it("does not execute when cancelled during revision lookup", async () => {
@@ -150,7 +154,8 @@ it("does not execute when cancelled during revision lookup", async () => {
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("retains a charged receipt when sandbox chart output is malformed", async () => {
   mocks.execute.mockResolvedValue({
     kind: "chatjs.tool-result",
@@ -169,7 +174,8 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
     usage: { costUsd: 0.05 },
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["code", "execution"])'s awaited sequencing and rejected-Promise behavior. */
 it.each(["code", "execution"])(
   "enforces the %s installation requirement before accessing documents",
   async (gate) => {
@@ -186,3 +192,4 @@ it.each(["code", "execution"])(
     expect(mocks.execute).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */

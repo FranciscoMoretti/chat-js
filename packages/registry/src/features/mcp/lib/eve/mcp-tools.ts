@@ -71,6 +71,7 @@ const modelToolName = (name: string): string =>
     ? name
     : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withAbort's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 const withAbort = async <T>(
   operation: () => Promise<T>,
@@ -86,6 +87,7 @@ const withAbort = async <T>(
     signal.removeEventListener("abort", cancel);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/id-length */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -106,6 +108,7 @@ const assertConnector = (
   requireMcpCredentials();
   return connector;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withConnector's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -153,6 +156,8 @@ const withConnector = async <T>(
     await close();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve discoverEveMcpTools's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-undefined */
@@ -270,6 +275,8 @@ const discoverEveMcpTools = async (
   }
   return descriptions;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcpTool's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -314,6 +321,8 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
     }),
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateMcpInput's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -326,6 +335,8 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
       : new Error("Invalid tool input.");
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveMcpTool's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -393,6 +404,8 @@ const executeEveMcpTool = async (
     });
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveMcpApproval's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
@@ -440,6 +453,7 @@ const requestEveMcpApproval = async (
     return connector.requireApproval ? "user-approval" : "not-applicable";
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

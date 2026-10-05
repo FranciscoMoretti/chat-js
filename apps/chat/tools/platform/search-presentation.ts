@@ -29,6 +29,7 @@ const searchQueriesSchema = z
   )
   .max(MAX_SEARCH_QUERIES)
   .describe(`Array of search queries. Maximum ${MAX_SEARCH_QUERIES} queries.`);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeMultiQuerySearch's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function (#510): executeMultiQuerySearch keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -110,5 +111,6 @@ const executeMultiQuerySearch = async ({
   );
   return { searches: searchResults, ...(error ? { error } : {}) };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema };

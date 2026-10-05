@@ -10,6 +10,7 @@ import type { EveSearchText } from "./search-text";
 /* oxlint-enable sort-imports */
 import { eveEventSearchText } from "./search-text";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve backfillEveSearchConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
  * jsdoc/require-param (#534): backfillEveSearchConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * no-magic-numbers (#517): backfillEveSearchConversation uses 30_000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -37,4 +38,5 @@ export const backfillEveSearchConversation = async (
   }
   await indexEveSearchText(ownerId, conversationId, batch);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, no-magic-numbers */

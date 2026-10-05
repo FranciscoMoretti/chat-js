@@ -102,6 +102,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const avatarImageSrc = user.image || `https://avatar.vercel.sh/${user.email}`;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -246,5 +247,6 @@ export const SidebarUserNav = (): ReactJSX.Element => {
       </SidebarMenuItem>
     </SidebarMenu>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return */

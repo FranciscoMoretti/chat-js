@@ -17,6 +17,7 @@ const fencedTables = [
   "workflow_stream_chunks",
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPostgresLifecycleCompatibility's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- postgres.Sql is a callable connection API whose transactions remain mutable. */
 export const assertPostgresLifecycleCompatibility = async (
   connection: Sql
@@ -67,3 +68,4 @@ export const assertPostgresLifecycleCompatibility = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */

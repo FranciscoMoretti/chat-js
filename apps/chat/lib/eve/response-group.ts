@@ -20,6 +20,7 @@ import { eveResponseGroupInput } from "./response-group-input";
 
 type CandidateResult = EveResponseGroupResult["candidates"][number];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): createEveResponseGroup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * jsdoc/require-param (#534): createEveResponseGroup's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -192,4 +193,5 @@ export const createEveResponseGroup = async (
   );
   return { candidates: [primary, ...candidates], id: group.id };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */

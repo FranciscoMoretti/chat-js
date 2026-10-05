@@ -41,6 +41,7 @@ export const EveMoveProjectDialog = ({
   const fieldId = useId();
   const [projectId, setProjectId] = useState(conversation.projectId ?? "");
   const projects = useQuery(trpc.project.list.queryOptions());
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve move's awaited sequencing and rejected-Promise behavior. */
   const move = useMutation(
     trpc.eve.assignProject.mutationOptions({
       onSuccess: async () => {
@@ -53,6 +54,7 @@ export const EveMoveProjectDialog = ({
       },
     })
   );
+  /* oxlint-enable oxc/no-async-await */
   const available =
     !projectId || projects.data?.some((project) => project.id === projectId);
   return (

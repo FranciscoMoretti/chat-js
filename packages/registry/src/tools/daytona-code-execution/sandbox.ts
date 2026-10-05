@@ -42,6 +42,7 @@ type Credentials = Readonly<{ apiKey: string; organizationId: string }>;
 const shellArgument = (value: string): string =>
   `'${value.replaceAll("'", String.raw`'\''`)}'`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForCommand's awaited sequencing and rejected-Promise behavior. */
 const waitForCommand = async <Result>(
   operation: Promise<Result>,
   signal: AbortSignal
@@ -60,11 +61,12 @@ const waitForCommand = async <Result>(
     signal.removeEventListener("abort", stop);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 const commandSandbox = (
   resource: DaytonaResource,
   signal: AbortSignal
 ): ExecutionSandbox => ({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runCommand's awaited sequencing and rejected-Promise behavior. */
   async runCommand({ cmd, args }) {
     signal.throwIfAborted();
     const result = await waitForCommand(
@@ -84,6 +86,7 @@ const commandSandbox = (
       stdout: async () => await Promise.resolve(result.result),
     };
   },
+  /* oxlint-enable oxc/no-async-await */
 });
 
 const assertIdentity = (
@@ -98,6 +101,7 @@ const assertIdentity = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findResource's awaited sequencing and rejected-Promise behavior. */
 const findResource = async (
   client: DaytonaClient,
   identity: Readonly<{ name: string; organizationId: string }>
@@ -114,11 +118,12 @@ const findResource = async (
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 const cleanupSession = (
   client: DaytonaClient,
   credentials: Credentials
 ): CodeSandboxCleanupSession => ({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteAndConfirmAbsent's awaited sequencing and rejected-Promise behavior. */
   async deleteAndConfirmAbsent(name) {
     const identity = { name, organizationId: credentials.organizationId };
     const resource = await findResource(client, identity);
@@ -131,6 +136,7 @@ const cleanupSession = (
       throw new Error("Daytona sandbox remains available after deletion.");
     }
   },
+  /* oxlint-enable oxc/no-async-await */
   provider: {
     // API-key auth ignores organizationId in the SDK. Pin the credential scope
     // so replacing it cannot turn a foreign 404 into proof of prior deletion.
@@ -162,6 +168,7 @@ const createDaytonaProvider = (
     });
   return {
     cleanup: cleanupSession(selectedClient, credentials),
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
     async create(name, language): Promise<DaytonaResource> {
       const resource = await selectedClient.create(
         {
@@ -178,6 +185,7 @@ const createDaytonaProvider = (
       assertIdentity(resource, name, credentials.organizationId);
       return resource;
     },
+    /* oxlint-enable oxc/no-async-await */
   };
 };
 

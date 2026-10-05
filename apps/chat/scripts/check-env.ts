@@ -159,6 +159,7 @@ const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
 
   return errors;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -213,6 +214,7 @@ const validateInstalledItems = async (
 
   return toolErrors.flat();
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -251,6 +253,7 @@ const checkGatewaySnapshot = (): string | null => {
   // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Matching configured/generated gateway literals narrow this mismatch branch to never; keep its diagnostic for scaffolded configurations with a stale model snapshot.
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -334,6 +337,7 @@ const checkEnv = async (): Promise<void> => {
 
   console.log("✅ Environment validation passed");
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-console, no-magic-numbers --

@@ -30,6 +30,7 @@ export const EveLogicalGroupRecovery = ({
   const trpc = useTRPC();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string>();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recover's awaited sequencing and rejected-Promise behavior. */
   const recover = async (): Promise<void> => {
     if (busy) {
       return;
@@ -58,6 +59,7 @@ export const EveLogicalGroupRecovery = ({
       setBusy(false);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   return (
     <section aria-label="Comparison recovery">
       <p>This response is not confirmed.</p>

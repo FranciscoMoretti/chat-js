@@ -15,6 +15,7 @@ import { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 /* oxlint-enable sort-imports */
 import { executeEveConversationCreation } from "./execute-conversation-creation";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForConcurrentBinding's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
@@ -49,6 +50,8 @@ const waitForConcurrentBinding = async (
   }
   return false;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recoverEveCreations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-continue, no-magic-numbers --
@@ -95,4 +98,5 @@ export const recoverEveCreations = async (ownerId: string): Promise<void> => {
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-continue, no-magic-numbers */

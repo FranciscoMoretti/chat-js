@@ -16,6 +16,7 @@ import { useTRPC } from "@/trpc/react";
 export const useEveMetadataMutations = () => {
   const cache = useQueryClient();
   const trpc = useTRPC();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settle's awaited sequencing and rejected-Promise behavior. */
   const settle = async (): Promise<void> => {
     if (pendingEveMetadataMutations(cache) > 1) {
       return;
@@ -25,6 +26,7 @@ export const useEveMetadataMutations = () => {
       cache.invalidateQueries({ queryKey: trpc.eve.get.pathKey() }),
     ]);
   };
+  /* oxlint-enable oxc/no-async-await */
   const optimistic = (
     id: string,
     patch: { readonly title?: string; readonly isPinned?: boolean }

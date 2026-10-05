@@ -29,6 +29,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("EVE deployment authentication", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("authenticates internal requests to this project's protected preview", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
@@ -40,7 +41,8 @@ describe("EVE deployment authentication", () => {
     expect(headers.get("authorization")).toBe("Bearer eve-secret");
     expect(headers.get("x-chatjs-owner")).toBe("owner");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not send the project deployment credential to a separate worker", async () => {
     mocks.env.EVE_INTERNAL_ORIGIN = "https://worker.example.com";
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
@@ -51,8 +53,10 @@ describe("EVE deployment authentication", () => {
     );
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
@@ -66,7 +70,8 @@ it("sends protocol requests directly to the named chat worker", async () => {
     "error"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("routes the real SDK directly to the named chat worker", async () => {
   const { Client } = await import("eve/client");
   const { getEveConnectionOptions } = await import("./connection-options");
@@ -84,7 +89,7 @@ it("routes the real SDK directly to the named chat worker", async () => {
     "error"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
 it("requires a workflow database locally but not on managed Vercel", () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "";
   expect(assertEveConfigured).toThrow("local workflow database");

@@ -23,6 +23,7 @@ const makeTempDir = (name: string): string => {
   return dir;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async () => {
@@ -30,6 +31,8 @@ afterEach(async () => {
     tempDirs.splice(0).map((dir) => rm(dir, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -101,6 +104,7 @@ it.each([false, true])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */

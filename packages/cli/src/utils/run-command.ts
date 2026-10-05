@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 
 const EXIT_SUCCESS = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runCommand's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- The completion-only child-process promise uses Promise.withResolvers<undefined> and resolves its close event with that exact value. */
 export const runCommand = async (
   command: string,
@@ -29,4 +30,5 @@ export const runCommand = async (
   });
   await promise;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */

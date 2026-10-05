@@ -30,6 +30,7 @@ const requireSecure = (url: string, redirect = false): void => {
     "Registry requests must use HTTPS (HTTP is allowed only on loopback, without redirects)."
   );
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withRegistryTransport's awaited sequencing and rejected-Promise behavior. */
 export const withRegistryTransport = async <Result>(
   operation: () => Promise<Result>
 ): Promise<Result> => {
@@ -81,3 +82,4 @@ export const withRegistryTransport = async <Result>(
   })();
   return await result;
 };
+/* oxlint-enable oxc/no-async-await */

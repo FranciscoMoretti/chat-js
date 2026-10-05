@@ -42,13 +42,16 @@ const database = drizzle(pool, {
 });
 const streamer = createStreamer(pool, database);
 const runId = `resume-fixture-${crypto.randomUUID()}`;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await streamer.close();
   await database.delete(Schema.streams).where(eq(Schema.streams.runId, runId));
   await pool.end();
   await positionConnection.end();
 });
+/* oxlint-enable oxc/no-async-await */
 const encoder = new TextEncoder();
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): fixture accepts values: string[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -65,6 +68,8 @@ async function fixture(
   }
   return name;
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -102,6 +107,8 @@ test("batched default-stream positions match the provider without counting EOF o
     new Map()
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve read's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep read's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -122,6 +129,8 @@ async function read(name: string, index: number) {
     await reader.cancel();
   }
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
@@ -148,6 +157,8 @@ test("resume excludes consumed payloads in SQL, including an at-tail read", asyn
   expect(payloadReads.every((query) => query.includes('"id" >'))).toBe(true);
   expect(await read(name, 3)).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -160,6 +171,8 @@ test("zero, relative-tail, and empty streams preserve their sequences", async ()
   expect(await read(name, -20)).toEqual(["one", "two", "three"]);
   expect(await read(await fixture([]), 0)).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -179,6 +192,8 @@ test("a resumed live stream delivers appended chunks once and terminates at EOF"
     await reader.cancel();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -201,4 +216,5 @@ test("a future cursor skips new chunks until its absolute index is reached", asy
     await reader.cancel();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

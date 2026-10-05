@@ -9,6 +9,7 @@ import { getBaseUrl } from "@/lib/url";
 const INLINE_IMAGE =
   /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchImageBuffer's awaited sequencing and rejected-Promise behavior. */
 const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   // Inline images do not initiate a network request.
   const inline = INLINE_IMAGE.exec(value);
@@ -35,7 +36,8 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   const file = await downloadFile(key);
   return Buffer.from(await file.arrayBuffer());
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectEditImages's awaited sequencing and rejected-Promise behavior. */
 const collectEditImages = async ({
   imageParts,
   lastGeneratedImage,
@@ -51,5 +53,5 @@ const collectEditImages = async ({
       async (imagePart) => await fetchImageBuffer(imagePart.url)
     ),
   ]);
-
+/* oxlint-enable oxc/no-async-await */
 export { collectEditImages };

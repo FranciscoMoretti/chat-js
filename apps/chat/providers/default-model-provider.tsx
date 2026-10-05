@@ -40,6 +40,7 @@ const DefaultModelProvider = ({
 }: DefaultModelClientProviderProps): React.JSX.Element => {
   const [currentModel, setCurrentModel] = useState<AppModelId>(initialModel);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve changeModel's awaited sequencing and rejected-Promise behavior. */
   const changeModel = useCallback(
     async (modelId: AppModelId) => {
       // Update local state immediately
@@ -63,7 +64,7 @@ const DefaultModelProvider = ({
     },
     [initialModel]
   );
-
+  /* oxlint-enable oxc/no-async-await */
   const value = useMemo(
     () => ({
       changeModel,

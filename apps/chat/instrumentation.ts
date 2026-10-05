@@ -1,6 +1,7 @@
 import { installedInstrumentation } from "@/features/installed-instrumentation";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve register's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -21,4 +22,5 @@ export const register = async (): Promise<void> => {
     });
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */

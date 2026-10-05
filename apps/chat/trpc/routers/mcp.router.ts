@@ -69,6 +69,7 @@ const assertMcpReady = (): void => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAndGenerateNameId's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -112,12 +113,14 @@ const validateAndGenerateNameId = async ({
 
   return result.nameId;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
 
 type Permission = "own" | "own-or-global";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getConnectorWithPermission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -155,6 +158,7 @@ const getConnectorWithPermission = async ({
 
   return connector;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -188,6 +192,7 @@ const publicConnector = (
   url: displayConnectorUrl(connector.url),
   userId: connector.userId,
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -710,6 +715,7 @@ export const mcpRouter = createTRPCRouter({
       return { success: true };
     }),
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 

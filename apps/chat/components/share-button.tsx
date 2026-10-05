@@ -50,6 +50,7 @@ const ShareDialogView = ({
   readonly setVisibility: (visibility: "private" | "public") => Promise<void>;
 }): React.JSX.Element => {
   const [step, setStep] = useState<ShareStep>("info");
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleShare's awaited sequencing and rejected-Promise behavior. */
   const handleShare = async (): Promise<void> => {
     try {
       await setVisibility("public");
@@ -60,6 +61,8 @@ const ShareDialogView = ({
       );
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleUnshare's awaited sequencing and rejected-Promise behavior. */
   const handleUnshare = async (): Promise<void> => {
     try {
       await setVisibility("private");
@@ -71,7 +74,8 @@ const ShareDialogView = ({
       );
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleCopyLink's awaited sequencing and rejected-Promise behavior. */
   const handleCopyLink = async (): Promise<void> => {
     const shareUrl = `${globalThis.location.origin}/share/${chatId}`;
     try {
@@ -81,7 +85,7 @@ const ShareDialogView = ({
       toast.error("Unable to copy share link.");
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <>
       {step === "info" && (

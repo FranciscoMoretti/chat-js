@@ -14,6 +14,7 @@ import { toolDefinitionSchema } from "../../../registry/metadata";
 import { validateCustomToolKeys } from "./custom-tool-keys";
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async () => {
   await Promise.all(
@@ -22,6 +23,7 @@ afterEach(async () => {
       .map(async (root) => await rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 const definition = toolDefinitionSchema.parse({
   contractVersion: 1,
@@ -30,6 +32,7 @@ const definition = toolDefinitionSchema.parse({
   tools: [{ toolExport: "research", workflow: true }],
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validationFailure's awaited sequencing and rejected-Promise behavior. */
 const validationFailure = async (root: string): Promise<string> => {
   try {
     await validateCustomToolKeys(root, [definition]);
@@ -38,7 +41,8 @@ const validationFailure = async (root: string): Promise<string> => {
     return error instanceof Error ? error.message : String(error);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preflight finds imported and spread keys without executing source", async () => {
   const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
@@ -55,7 +59,8 @@ test("preflight finds imported and spread keys without executing source", async 
   expect(await validationFailure(root)).toContain("Custom tools conflict");
   await validateCustomToolKeys(root, []);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preflight rejects dynamic keys it cannot verify", async () => {
   const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
@@ -69,3 +74,4 @@ test("preflight rejects dynamic keys it cannot verify", async () => {
     "Cannot determine customTools keys"
   );
 });
+/* oxlint-enable oxc/no-async-await */

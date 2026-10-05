@@ -16,6 +16,7 @@ import { scaffoldElectron } from "./scaffold";
 
 const electronOptions = { projectName: "json-contract" };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("Electron scaffolding preserves missing and syntactically invalid project manifest errors", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "scaffold-json-errors-"));
   try {
@@ -37,7 +38,8 @@ test("Electron scaffolding preserves missing and syntactically invalid project m
     await rm(directory, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("Electron scaffolding rejects malformed exclusions without rewriting tsconfig", async () => {
   const directory = await mkdtemp(
     path.join(tmpdir(), "scaffold-json-exclusions-")
@@ -57,3 +59,4 @@ test("Electron scaffolding rejects malformed exclusions without rewriting tsconf
     await rm(directory, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */

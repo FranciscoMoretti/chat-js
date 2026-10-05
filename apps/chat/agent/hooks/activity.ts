@@ -4,6 +4,7 @@
 import { defineHook } from "eve/hooks";
 
 import { ingestEveActivity } from "../../lib/eve/activity";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -21,4 +22,5 @@ export default defineHook({
     },
   },
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

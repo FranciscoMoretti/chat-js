@@ -88,6 +88,7 @@ const verifyExcludedFiles = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test(
   "demo stays aligned with full canonical installation source",
   async () => {
@@ -106,3 +107,4 @@ test(
   },
   GENERATION_TIMEOUT_MS
 );
+/* oxlint-enable oxc/no-async-await */

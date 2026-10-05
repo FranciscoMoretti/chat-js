@@ -13,6 +13,7 @@ type ReadonlyNativeSurface<Value> = Value extends (
     : Value;
 const MCP_NETWORK_TIMEOUT_MS = 30_000;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpFetch's awaited sequencing and rejected-Promise behavior. */
 /** Covers transport, discovery and OAuth requests with the same network policy.
  * @param {string | ReadonlyNativeSurface<URL | Request>} input - Native URL or request to protect with the MCP network policy.
  * @param {Readonly<RequestInit> | undefined} init - Native request overrides applied by the Request constructor.
@@ -33,3 +34,4 @@ export const mcpFetch = async (
     timeoutMs: MCP_NETWORK_TIMEOUT_MS,
   });
 };
+/* oxlint-enable oxc/no-async-await */

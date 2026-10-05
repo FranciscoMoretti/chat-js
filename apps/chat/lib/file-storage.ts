@@ -49,6 +49,7 @@ const sanitizeFilename = (filename: string): string => {
 
 const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve uploadFileAtKey's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-params, typescript/prefer-readonly-parameter-types --
  * max-params (#511): uploadFileAtKey keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): uploadFileAtKey accepts body: Body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -87,6 +88,7 @@ const uploadFileAtKey = async (
     url: createFileUrl(key),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -97,6 +99,7 @@ type FileUploader = (
   body: Body,
   contentType?: string
 ) => ReturnType<typeof uploadFileAtKey>;
+/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve iterateStoredFiles's asynchronous iteration and rejection behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations -- The first inventory page has no cursor; subsequent pages use the cursor supplied by the preceding response. */
@@ -130,6 +133,8 @@ const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
     ({ cursor } = page);
   } while (typeof cursor === "string" && cursor !== "");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations */
 
 const listFiles = async (): Promise<{
@@ -137,7 +142,8 @@ const listFiles = async (): Promise<{
 }> => ({
   files: await Array.fromAsync(iterateStoredFiles()),
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteFilesByUrls's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers -- Zero in explicit empty-array checks is required by unicorn/explicit-length-check. */
 const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const keys = [
@@ -162,6 +168,8 @@ const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve downloadFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-undefined -- The SDK receives no options when no byte range was requested, preserving its default download behavior. */
@@ -173,13 +181,16 @@ const downloadFile = async (
     await storageKeyForFile(key),
     range ? { range } : undefined
   );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getFileMetadata's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 const getFileMetadata = async (key: string): Promise<StoredFile> =>
   await getFiles().head(await storageKeyForFile(key));
-
+/* oxlint-enable oxc/no-async-await */
 const storageSupportsRange = (): boolean => getFiles().capabilities.rangeRead;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getFileProviderUrl's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): getFileProviderUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -194,6 +205,7 @@ const getFileProviderUrl = async (key: string): Promise<string | null> => {
   const url = new URL(value);
   return url.protocol === "http:" || url.protocol === "https:" ? value : null;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 
 export {

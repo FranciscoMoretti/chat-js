@@ -4,6 +4,7 @@ import imageCompression from "browser-image-compression";
 
 const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve compressImageIfNeeded's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -73,6 +74,8 @@ const compressImageIfNeeded = async (
     return file;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve processFilesForUpload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -123,6 +126,7 @@ export const processFilesForUpload = async (
 
   return { files: prepared, stillOversized, unsupportedFiles };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-statements */

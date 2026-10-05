@@ -5,6 +5,7 @@ import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
 /* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; { params, }: { params: Promise<{ id: string; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -34,4 +35,5 @@ export const GET = async (
       })
     : new Response(null, { status: 404 });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

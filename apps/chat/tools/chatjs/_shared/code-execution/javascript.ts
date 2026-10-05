@@ -130,6 +130,7 @@ const findExecutionTrailer = (
       };
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve parseExecutionOutput's awaited sequencing and rejected-Promise behavior. */
 const parseExecutionOutput = async (
   execResult: Readonly<{
     stdout: () => Promise<string>;
@@ -164,7 +165,7 @@ const parseExecutionOutput = async (
     outputText: lines.join("\n").trim(),
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const formatExecutionMessage = (
   parts: Readonly<{
     outputText: string;
@@ -194,6 +195,7 @@ const formatExecutionMessage = (
     .trim();
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeJavaScriptInSandbox's awaited sequencing and rejected-Promise behavior. */
 export const executeJavaScriptInSandbox = async ({
   sandbox,
   code,
@@ -220,3 +222,4 @@ export const executeJavaScriptInSandbox = async ({
     ),
   };
 };
+/* oxlint-enable oxc/no-async-await */

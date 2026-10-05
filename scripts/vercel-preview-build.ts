@@ -50,6 +50,7 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     );
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMaintainerBuild's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
@@ -109,6 +110,7 @@ const runMaintainerBuild = async (
     throw new Error(failureMessage);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */
@@ -126,6 +128,7 @@ if (import.meta.main) {
     const { default: postgres }: { default: typeof postgresType } =
       // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint resolves its workspace Postgres driver before opening the preview database.
       await import(require.resolve("postgres"));
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint awaits migration/build completion so its existing catch reports failures.
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
@@ -159,6 +162,7 @@ if (import.meta.main) {
         }
       },
     });
+    /* oxlint-enable oxc/no-async-await */
   } catch (error) {
     console.error(
       error instanceof Error &&

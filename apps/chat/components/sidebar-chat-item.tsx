@@ -69,6 +69,7 @@ const PureSidebarChatItem = ({
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleRename's awaited sequencing and rejected-Promise behavior. */
   const handleRename = async (): Promise<void> => {
     if (editTitle.trim() === "" || editTitle === chat.title) {
       setIsEditing(false);
@@ -85,7 +86,7 @@ const PureSidebarChatItem = ({
       setIsEditing(false);
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const handleKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === "Enter") {
       void handleRename();

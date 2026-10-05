@@ -30,6 +30,7 @@ type MessageView = Readonly<{
   role: string;
 }>;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareResearch's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires top-level async function declarations so this durable prepareResearch step keeps its stable name and replay boundary.
 async function prepareResearch(context: Context): Promise<{
   config: ReturnType<typeof getDeepResearchConfig>;
@@ -75,7 +76,8 @@ async function prepareResearch(context: Context): Promise<{
     timestamp: Date.now(),
   };
 }
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveResearchReport's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires a top-level async function declaration for the durable saveResearchReport step.
 async function saveResearchReport(
   context: Context,
@@ -95,11 +97,12 @@ async function saveResearchReport(
     )
   );
 }
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve researchCompletionTime's required Promise and rejection contract. researchCompletionTime is a named durable use-step function returning Promise<number>; the directive compiler requires async even though the clock read is synchronous. */
 // oxlint-disable-next-line eslint/func-style, eslint/require-await -- EVE requires this clock read to remain a named async durable step; a synchronous or arrow function is rejected by its directive compiler.
 async function researchCompletionTime(): Promise<number> {
   "use step";
   return Date.now();
 }
-
+/* oxlint-enable oxc/no-async-await */
 export { prepareResearch, saveResearchReport, researchCompletionTime };

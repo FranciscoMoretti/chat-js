@@ -71,6 +71,7 @@ let catalog: { expires: number; models: ModelData[] } | undefined;
  * init-declarations (#507): loading assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  */
 let loading: Promise<ModelData[]> | undefined;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadEveModelDefinition's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -96,6 +97,8 @@ const loadEveModelDefinition = async (
   }
   return getEveModelDefinition(requestedId, catalog.models);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveModel's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/max-nested-calls -- typescript/explicit-function-return-type (#560): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -123,6 +126,7 @@ const resolveEveModel = async (
     },
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/max-nested-calls */
 export {
   EveModelUnavailableError,

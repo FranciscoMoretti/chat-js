@@ -31,6 +31,7 @@ const { ingestEveUsage } = await import("../eve/usage");
 /* oxlint-enable import/no-relative-parent-imports */
 const conversationId = "00000000-0000-4000-8000-000000000001";
 const otherId = "00000000-0000-4000-8000-000000000002";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): beforeAll uses 30_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -70,11 +71,13 @@ beforeAll(async () => {
     );
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 afterAll(() => postgres.close());
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 it("binds descendants idempotently and rejects foreign parents or identity changes", async () => {
@@ -101,7 +104,8 @@ it("binds descendants idempotently and rejects foreign parents or identity chang
     registerEveSubagent("owner", "root", "child", "turn_2")
   ).rejects.toThrow("fresh child");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it("advances child cursors monotonically and revokes stream access when the root is d keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("advances child cursors monotonically and revokes stream access when the root is d uses 20, 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -127,6 +131,8 @@ it("advances child cursors monotonically and revokes stream access when the root
     "update \"EveConversation\" set state='bound' where \"sessionId\"='root'"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -176,4 +182,5 @@ it("charges native child receipts once and rounds their combined cost on the roo
     total: "0.002000000000",
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

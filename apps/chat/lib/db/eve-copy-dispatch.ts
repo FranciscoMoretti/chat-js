@@ -12,6 +12,7 @@ import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAcceptedEveCopySeed's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /**
@@ -36,7 +37,8 @@ const resolveAcceptedEveCopySeed = async (
   }
   return copy.seed;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve dispatchEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): dispatchEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -131,6 +133,8 @@ const dispatchEveCopy = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): rejectUnacceptedEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -175,5 +179,6 @@ const rejectUnacceptedEveCopy = async (
     }
     return { id: conversationId, neverDispatched: true };
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };

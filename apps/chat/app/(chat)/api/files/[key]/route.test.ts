@@ -30,6 +30,7 @@ describe("file route", () => {
   const getFile = () =>
     getPathFile(request, { params: Promise.resolve({ key }) });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("a deletion fence denies storage redirects and bytes", async () => {
     mocks.access.mockResolvedValue({ allowed: false, managed: true });
     const response = await getFile();
@@ -38,7 +39,8 @@ describe("file route", () => {
     expect(mocks.access).toHaveBeenCalledWith(key, "owner");
     expect(mocks.serve).not.toHaveBeenCalled();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([true, false])'s awaited sequencing and rejected-Promise behavior. */
   test.each([true, false])(
     "authorized managed=%s files use the correct storage access",
     async (managed) => {
@@ -55,7 +57,9 @@ describe("file route", () => {
       });
     }
   );
+  /* oxlint-enable oxc/no-async-await */
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400);  */
@@ -71,4 +75,5 @@ test("invalid path keys are rejected before authorization", async () => {
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.serve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

@@ -20,6 +20,7 @@ import { expect, test } from "vitest";
 
 import { fenceLocalEveSandboxMutations } from "../lib/eve/local-sandbox-fence";
 import { purgeLocalEveSandboxes } from "../lib/eve/purge-local-sandbox";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined --
@@ -183,6 +184,8 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     await rm(root, { force: true, recursive: true });
   }
 }, 120_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -344,6 +347,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await rm(appRoot, { force: true, recursive: true });
   }
 }, 60_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-local-snapshots.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

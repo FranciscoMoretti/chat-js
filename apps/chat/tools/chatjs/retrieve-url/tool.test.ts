@@ -30,6 +30,7 @@ beforeEach(() => {
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -51,6 +52,8 @@ test.each(["missing configuration", "invalid URL"])(
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test.each([false, true])(
@@ -74,3 +77,4 @@ test.each([false, true])(
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
+/* oxlint-enable oxc/no-async-await */

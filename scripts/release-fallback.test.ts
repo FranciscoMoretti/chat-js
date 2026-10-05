@@ -123,6 +123,7 @@ gh() {
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runFallback's awaited sequencing and rejected-Promise behavior. */
 const runFallback = async (cwd: string): Promise<number> => {
   const child = Bun.spawn(
     ["bash", "-euo", "pipefail", "-c", services + fallback],
@@ -133,7 +134,8 @@ const runFallback = async (cwd: string): Promise<number> => {
   // spawnSync behavior where a signal-terminated child does not count as zero.
   return child.signalCode ? NON_SUCCESS_EXIT_CODE : exitCode;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withReleaseDirectory's awaited sequencing and rejected-Promise behavior. */
 const withReleaseDirectory = async (
   assertRelease: ReleaseAssertion
 ): Promise<void> => {
@@ -144,7 +146,8 @@ const withReleaseDirectory = async (
     await rm(directory, { force: true, recursive: true });
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectReleaseFiles's awaited sequencing and rejected-Promise behavior. */
 const expectReleaseFiles = async (
   directory: string,
   expected: ReleaseFileState
@@ -156,7 +159,8 @@ const expectReleaseFiles = async (
   };
   expect(actual).toEqual(expected);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectCallCounts's awaited sequencing and rejected-Promise behavior. */
 const expectCallCounts = async (
   directory: string,
   expected: readonly Readonly<{ count: number; pattern: string }>[]
@@ -166,7 +170,8 @@ const expectCallCounts = async (
     expect(calls.match(new RegExp(pattern, "gmu"))).toHaveLength(count);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retry repairs release metadata without republishing after verification fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "fail-verification"), "");
@@ -191,7 +196,8 @@ test("retry repairs release metadata without republishing after verification fai
     ]);
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retry pushes an existing local tag after the first push fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "published"), "");
@@ -216,8 +222,9 @@ test("retry pushes an existing local tag after the first push fails", async (): 
     expect(calls).not.toContain("npm publish");
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const lookupFails of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(
     lookupFails
       ? "registry authentication failure never triggers publication"
@@ -243,4 +250,5 @@ for (const lookupFails of [false, true]) {
       }
     }
   );
+  /* oxlint-enable oxc/no-async-await */
 }

@@ -16,6 +16,7 @@ import { planInstallation } from "./installation-plan";
 /* oxlint-enable sort-imports */
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
@@ -25,6 +26,7 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -46,6 +48,7 @@ const definition = (id: string) =>
     slot: "codeExecution",
     tools: [{ toolExport: "executeCode" }],
   });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -107,6 +110,8 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     server.stop(true);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -171,5 +176,6 @@ test("replaces an older executor descriptor but rejects newly requested provider
     await server.stop(true);
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function, eslint/max-statements */
 /* oxlint-enable typescript/await-thenable, typescript/no-confusing-void-expression */

@@ -35,6 +35,7 @@ const child = (callId: string, turnId = "turn", name = "researcher") => ({
   data: { callId, childSessionId: callId, name, turnId },
   type: "subagent.called",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, unicorn/no-null --
@@ -106,4 +107,5 @@ it("restores actual search evidence only from researchers owned by this call and
   await expect(researchSearchUpdates(context)).resolves.toEqual([update]);
   expect(mocks.attach.mock.calls).toEqual([["root"], ["research:one"]]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, unicorn/no-null */

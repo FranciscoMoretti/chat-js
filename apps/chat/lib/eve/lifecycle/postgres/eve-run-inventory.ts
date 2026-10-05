@@ -19,6 +19,7 @@ const runRow = z.object({
 /* oxlint-enable no-magic-numbers */
 const inventoryLimit = 10_000;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventoryInTransaction's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): readEvePostgresRunInventoryInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 jsdoc/require-returns (#535): readEvePostgresRunInventoryInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): readEvePostgresRunInventoryInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -114,6 +115,8 @@ const readEvePostgresRunInventoryInTransaction = async (
     streamIds: streams.map((stream) => stream.id),
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): readEvePostgresRunInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -136,6 +139,7 @@ const readEvePostgresRunInventory = async (
     async (query) =>
       await readEvePostgresRunInventoryInTransaction(query, sessionId)
   );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 export {
   readEvePostgresRunInventory,

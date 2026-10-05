@@ -314,6 +314,7 @@ test("function metrics cover every declaration sharing the waived line", () => {
   ).not.toEqual([]);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The isolated CLI scenario owns Git setup, baseline writes, failure/readback assertions and cleanup in one fixture lifetime. */
 test(
   "CLI baseline growth requires explicit opt-in",
@@ -379,6 +380,7 @@ test(
   },
   CLI_TEST_TIMEOUT_MS
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 
 test("multiline inline waivers distinguish identical repeated regions", () => {

@@ -15,6 +15,7 @@ let pending: Promise<void> | undefined;
  * typescript/promise-function-async (#606): checkDatabase preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 export const checkDatabase = (): Promise<void> => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
   // An unavailable database must not accumulate another query on every probe.
   pending ??= (async () => {
     try {
@@ -23,6 +24,7 @@ export const checkDatabase = (): Promise<void> => {
       pending = undefined;
     }
   })();
+  /* oxlint-enable oxc/no-async-await */
   return pending;
 };
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */

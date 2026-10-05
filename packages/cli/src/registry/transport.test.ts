@@ -13,6 +13,7 @@ import { installItems } from "./shadcn";
 /* oxlint-enable sort-imports */
 import { withRegistryTransport } from "./transport";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("shadcn transitive registry requests retain transport policy and restore host fetch", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-transport-"));
   const original = globalThis.fetch;
@@ -43,3 +44,4 @@ test("shadcn transitive registry requests retain transport policy and restore ho
     await rm(cwd, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */

@@ -22,6 +22,7 @@ export const EveAttachment = ({
     }
     let disposed = false;
     let objectUrl: string | undefined;
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAttachment's awaited sequencing and rejected-Promise behavior. */
     // Browsers block top-level data URLs. Give the shared Open action a Blob URL.
     const resolveAttachment = async (): Promise<void> => {
       try {
@@ -35,6 +36,7 @@ export const EveAttachment = ({
         setResolved(undefined);
       }
     };
+    /* oxlint-enable oxc/no-async-await */
     void resolveAttachment();
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => {

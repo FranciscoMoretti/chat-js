@@ -18,6 +18,7 @@ export interface StorageSelection {
   options: Record<string, unknown>;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveStorage's awaited sequencing and rejected-Promise behavior. */
 export const resolveStorage = async (
   source: string,
   cwd = process.cwd()
@@ -40,3 +41,4 @@ export const resolveStorage = async (
   }
   return { definition, options: {}, source: address };
 };
+/* oxlint-enable oxc/no-async-await */

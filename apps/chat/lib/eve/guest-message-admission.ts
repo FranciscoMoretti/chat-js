@@ -29,6 +29,7 @@ import { guestRequestIpHash } from "./guest-admission";
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 /* oxlint-enable sort-imports */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -106,6 +107,8 @@ const admitGuestMessage = async (
     429
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
@@ -142,5 +145,6 @@ const settleGuestMessage = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 export { admitGuestMessage, settleGuestMessage };

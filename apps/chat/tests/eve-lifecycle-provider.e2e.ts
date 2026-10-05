@@ -30,6 +30,7 @@ const world = createWorld({
   connectionString: env.DATABASE_URL,
 });
 const fixtureIds: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await world.close?.();
   await connection`delete from workflow.workflow_events where run_id = any(${fixtureIds})`;
@@ -41,11 +42,13 @@ afterAll(async () => {
   await connection`delete from workflow.eve_resource_fences where resource = any(${fixtureIds.map((sessionId) => `run:${sessionId}`)})`;
   await connection.end();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("setup installs the supported native lifecycle contract", async () => {
   await expect(lifecycle.check()).resolves.toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a provider schema upgrade refuses retirement before side effects", async () => {
   const retire = vi
     .fn<() => Promise<void>>()
@@ -61,7 +64,8 @@ test("a provider schema upgrade refuses retirement before side effects", async (
     await connection`delete from workflow_drizzle.workflow_migrations where hash = 'unsupported-test' and created_at = ${future}`;
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("disabled queue fences refuse cleanup before retirement", async () => {
   const retire = vi
     .fn<() => Promise<void>>()
@@ -76,7 +80,8 @@ test("disabled queue fences refuse cleanup before retirement", async () => {
     await connection`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("always-enabled fences are accepted, replica-only fences are rejected", async () => {
   await connection`alter table graphile_worker._private_jobs enable always trigger eve_queue_fence`;
   try {
@@ -89,7 +94,8 @@ test("always-enabled fences are accepted, replica-only fences are rejected", asy
     await connection`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "create or replace trigger eve_resource_fence after insert or update on workflow.workf's awaited sequencing and rejected-Promise behavior. */
 test.each([
   "create or replace trigger eve_resource_fence after insert or update on workflow.workflow_events for each row execute function workflow.eve_guard_run_payload()",
   "create or replace trigger eve_resource_fence before insert on workflow.workflow_events for each row execute function workflow.eve_guard_run_payload()",
@@ -109,7 +115,8 @@ test.each([
     await installEvePostgresQueueFence(connection, "workflow_flows");
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createRun's awaited sequencing and rejected-Promise behavior. */
 const createRun = async (started: boolean): Promise<string> => {
   // The provider's create-run API requires null to allocate a native run ID.
   // oxlint-disable-next-line unicorn/no-null -- null is the provider's documented server-generated run ID input.
@@ -128,7 +135,8 @@ const createRun = async (started: boolean): Promise<string> => {
   }
   return sessionId;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 // Keep this ordered public-contract scenario together: retirement, fencing,
 // payload removal, and retry must share the same native run and receipt.
 /* oxlint-disable eslint/max-statements -- This integration scenario verifies the persisted lifecycle across sequential provider operations. */
@@ -184,5 +192,5 @@ test.each([false, true])(
     expect(retire).toHaveBeenCalledExactlyOnceWith(sessionId);
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

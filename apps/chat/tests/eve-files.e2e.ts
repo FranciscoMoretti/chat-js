@@ -63,6 +63,7 @@ await db.insert(user).values(
     name: "File ownership fixture",
   }))
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db
     .delete(eveFileReference)
@@ -75,7 +76,8 @@ afterAll(async () => {
     .where(inArray(eveStoredFile.ownerId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("server-created file ownership is retryable but cannot be reassigned") uses 0, 24 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -93,6 +95,8 @@ test("server-created file ownership is retryable but cannot be reassigned", asyn
       .where(eq(eveStoredFile.key, key))
   ).toEqual([{ ownerId: owner }]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -110,6 +114,8 @@ test("registration rejects URLs and invalid storage keys", async () => {
     );
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -154,6 +160,8 @@ test("references reject foreign files and become immutable behind the deletion f
     "unavailable"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -194,6 +202,8 @@ test("fork reservation retains the source file references before dispatch", asyn
       .where(eq(eveFileReference.conversationId, fork.id))
   ).toEqual([{ key }]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -224,6 +234,8 @@ test("attachment creation commits references before dispatch with a single appli
     await worker.end();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -263,6 +275,8 @@ test("generated file reservations survive storage failure and cannot write after
     reserveEveGeneratedFile(owner, conversation.id, "abcdefghijklmnopqrstuvwx")
   ).rejects.toThrow("unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -313,6 +327,8 @@ test("deletion waits for an admitted generated-file write before fencing the fam
     .where(eq(eveConversation.id, conversation.id));
   expect(saved.state).toBe("deleting");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -367,6 +383,8 @@ test("file purge preserves outside references and keeps durable progress across 
     .where(eq(eveStoredFile.key, shared));
   expect(preserved.state).toBe("active");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -446,6 +464,8 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
       .where(eq(eveFileReference.key, key))
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -469,6 +489,8 @@ test("upload reservations are durable and reject existing identities even for th
     "Invalid upload ownership"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -526,6 +548,8 @@ test("orphan cleanup retains references and young uploads and retries reappearin
     { key: orphan, ownerId: owner },
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -569,6 +593,8 @@ test("orphan cleanup waits for an admitted upload before committing its fence", 
     .where(eq(eveStoredFile.key, key));
   expect(file.state).toBe("deleting");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -619,6 +645,7 @@ test("file downloads follow ownership and current share visibility", async () =>
     managed: false,
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-files.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

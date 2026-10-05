@@ -60,6 +60,7 @@ const EveDeletionProvider = ({
     },
     [setOpenMobile]
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve changed's awaited sequencing and rejected-Promise behavior. */
   const changed = async (rootId: string): Promise<void> => {
     /* oxlint-disable react/todo -- Preserve cache invalidation in finally after route changes. */
     try {
@@ -91,6 +92,7 @@ const EveDeletionProvider = ({
     }
     /* oxlint-enable react/todo */
   };
+  /* oxlint-enable oxc/no-async-await */
   return (
     <DeletionContext.Provider value={openConversation}>
       {children}

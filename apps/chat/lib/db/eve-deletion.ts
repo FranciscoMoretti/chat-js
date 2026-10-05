@@ -23,6 +23,7 @@ import {
   eveSubagentSession,
   eveVote,
 } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- jsdoc/require-param (#534): completeEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -157,6 +158,8 @@ const completeEveConversationDeletion = async (
       );
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDeletionState's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- jsdoc/require-param (#534): getEveDeletionState's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -213,5 +216,6 @@ const getEveDeletionState = async (ownerId: string, conversationId: string) => {
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return member ? { rootId: row.chatId, state: member.state } : undefined;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 export { completeEveConversationDeletion, getEveDeletionState };

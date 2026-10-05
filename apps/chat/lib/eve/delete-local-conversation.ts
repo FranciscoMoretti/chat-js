@@ -6,6 +6,7 @@ import { purgeLocalEveFamilyResources } from "./purge-local-resources";
 /* oxlint-enable sort-imports */
 import { retireEveSessionForDeletion } from "./retire-session";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteLocalEveConversationFamily's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): deleteLocalEveConversationFamily's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): deleteLocalEveConversationFamily's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -44,4 +45,5 @@ export const deleteLocalEveConversationFamily = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: deleteLocalEveConversationFamily has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { rootId: family.rootId };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

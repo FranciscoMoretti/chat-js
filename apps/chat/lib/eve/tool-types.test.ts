@@ -35,10 +35,12 @@ test("declared EVE generics preserve schema and output types across overloads", 
   });
   const streamed = defineTool({
     description: "Stream",
+    /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve execute's asynchronous iteration and rejection behavior. The async *execute fixture deliberately exercises defineTool async-generator overload and inferred streaming result, not its synchronous overload. */
     // oxlint-disable-next-line typescript/require-await -- This fixture exercises the async-generator overload and its inferred streamed output type.
     async *execute({ count }) {
       yield { count };
     },
+    /* oxlint-enable oxc/no-async-await */
     inputSchema: z.object({ count: z.number() }),
   });
   const declared = defineTool({

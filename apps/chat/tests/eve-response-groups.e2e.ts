@@ -52,6 +52,7 @@ await db.insert(user).values({
   id: owner,
   name: "Response group test",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): afterAll accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): afterAll intentionally keeps the existing falsy-value behavior of rows.filter((row) => row.parentConversationId); distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -69,6 +70,8 @@ afterAll(async () => {
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -143,6 +146,8 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
     expect(child?.forkTurnId).toBe("turn_0");
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -164,6 +169,8 @@ test("unconfirmed initial creation never starts independent secondary roots", as
   ]);
   expect(createEveConversationOperation).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -215,6 +222,8 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
     })
   ).rejects.toThrow("Source conversation not found");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -253,6 +262,8 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
       .every((candidate) => candidate.state === "waiting")
   ).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. Native-session fixture resolves "must-not-create" for createEveConversation; synchronous return would fail its create callback contract. Native-session fixture resolves "must-not-create-root" for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -328,6 +339,8 @@ test("deleting a partial family erases group payloads and fences unstarted candi
   expect(untouched.deleted).toBe(false);
   expect(untouched.inputHash).toBe(unrelated.inputHash);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -366,6 +379,8 @@ test("group reservation racing retirement cannot leave an active unstarted group
     })
   ).rejects.toThrow("unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/no-null --
@@ -404,6 +419,8 @@ test("pre-contract groups block erasure until an exact replay recovers their sou
     sourceIdentityKnown: true,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -462,6 +479,8 @@ test("owner-only group reads preserve order and rejection recovery without expos
     )
   ).rejects.toThrow("unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
@@ -508,6 +527,7 @@ test("an in-flight candidate prevents family erasure until its binding resolves"
     await getEveCreation(owner, group.candidates[1].operationId)
   ).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-response-groups.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

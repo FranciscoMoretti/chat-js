@@ -29,6 +29,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve openSidebar's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): openSidebar accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -53,6 +54,7 @@ async function openSidebar(page: Page): Promise<void> {
       .click();
   }
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -64,6 +66,7 @@ async function openSidebar(page: Page): Promise<void> {
  * typescript/strict-boolean-expressions (#610): for (const width of [1280, 390]) { test(`sidebar deleti intentionally keeps the existing falsy-value behavior of owner; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 for (const width of [1280, 390]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`sidebar deletion at ${width}px survives reload and checks uncertain results`, async ({
     page,
   }, testInfo) => {
@@ -198,5 +201,6 @@ for (const width of [1280, 390]) {
       await db.delete(eveConversation).where(eq(eveConversation.id, id));
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

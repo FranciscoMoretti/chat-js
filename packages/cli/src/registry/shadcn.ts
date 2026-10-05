@@ -10,6 +10,7 @@ import { withRegistryTransport } from "./transport";
 
 const registryUrl = "https://unpkg.com/@chat-js/registry@1/dist/r/{name}.json";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registryConfig's awaited sequencing and rejected-Promise behavior. */
 const registryConfig = async (
   cwd: string
 ): Promise<Awaited<ReturnType<typeof getRegistriesConfig>>> => {
@@ -22,7 +23,7 @@ const registryConfig = async (
     },
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const itemAddress = (
   source: string,
   kind: "gateway" | "tool" | "storage"
@@ -37,6 +38,7 @@ const itemAddress = (
   return source;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readItem's awaited sequencing and rejected-Promise behavior. */
 const readItem = async (
   source: string,
   cwd: string
@@ -47,7 +49,8 @@ const readItem = async (
   );
   return registryItemSchema.parse(item);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listTools's awaited sequencing and rejected-Promise behavior. */
 const listTools = async (
   cwd: string
 ): Promise<Awaited<ReturnType<typeof getRegistry>>["items"]> => {
@@ -67,7 +70,8 @@ const listTools = async (
     }
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installItems's awaited sequencing and rejected-Promise behavior. */
 const installItems = async (
   sources: readonly string[],
   cwd: string,
@@ -85,6 +89,7 @@ const installItems = async (
     });
   });
 };
+/* oxlint-enable oxc/no-async-await */
 export {
   installItems,
   itemAddress,

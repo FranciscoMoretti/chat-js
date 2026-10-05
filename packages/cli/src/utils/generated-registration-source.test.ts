@@ -5,6 +5,7 @@ import { generatedRegistrationSource } from "./generated-registration-source";
 const registrationReason =
   "Generated registrations expose separate named contracts";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("groups registration values without changing literal data or initializer order", async () => {
   const literal = 'export const fake = "use step";\nundefined;';
   const generated = generatedRegistrationSource(
@@ -29,7 +30,7 @@ test("groups registration values without changing literal data or initializer or
   expect(generated.startsWith('"use client";')).toBe(true);
   expect(generated).not.toContain("import/group-exports");
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("keeps type exports separate and preserves optional capability exceptions", () => {
   const generated = generatedRegistrationSource(
     "export type WorkflowTools = { tool: string };\nexport const composerTools: Readonly<Record<string, { icon: string } | undefined>> = {};\nexport const DocumentRun: (() => void) | undefined = InstalledDocumentRun;\nexport const codeExecutor: (() => void) | undefined = undefined;\n"
@@ -78,6 +79,7 @@ test("rejects unsupported mixed exports rather than narrowing their public API",
   ).toThrow("Unsupported generated registration export");
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("preserves trailing dollar signs in public registration bindings", async () => {
   const generated = generatedRegistrationSource(
     'export const item$ = "first";\nexport const second = "second";\n'
@@ -100,3 +102,4 @@ test("preserves trailing dollar signs in public registration bindings", async ()
   expect(loaded.second).toBe("second");
   expect(Object.keys(loaded).toSorted()).toEqual(["item$", "second"]);
 });
+/* oxlint-enable oxc/no-async-await */

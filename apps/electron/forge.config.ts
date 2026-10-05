@@ -118,6 +118,7 @@ const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's required Promise and rejection contract. generateAssets adapts synchronous ensurePrebuild failures into the Forge hook promise. prePackage adapts synchronous production build failures into the Forge hook promise. preStart adapts synchronous development build failures into the Forge hook promise. */
   return {
     hooks: {
       // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
@@ -204,6 +205,7 @@ const createForgeConfig = (): ForgeConfig => {
       ],
     },
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable eslint/max-lines-per-function */
 

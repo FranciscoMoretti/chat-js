@@ -65,6 +65,7 @@ import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
@@ -147,4 +148,5 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db.delete(user).where(eq(user.id, owner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */

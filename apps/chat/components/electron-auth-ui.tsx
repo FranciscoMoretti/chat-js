@@ -46,6 +46,7 @@ const ElectronBrowserSignIn = ({
           if (typeof requestAuth !== "function") {
             return;
           }
+          /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve launchBrowserSignIn's awaited sequencing and rejected-Promise behavior. */
           const launchBrowserSignIn = async (): Promise<void> => {
             try {
               await Promise.resolve();
@@ -54,6 +55,7 @@ const ElectronBrowserSignIn = ({
               console.error("Failed to launch browser sign-in", error);
             }
           };
+          /* oxlint-enable oxc/no-async-await */
           void launchBrowserSignIn();
           globalThis.setTimeout(() => setOpened(true), 300);
         }}
@@ -107,10 +109,12 @@ const ElectronTransferUser = ({
     }
     hasStartedTransferRef.current = true;
 
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startTransition's awaited sequencing and rejected-Promise behavior. */
     startTransition(async () => {
       await authClient.electron.transferUser({ fetchOptions: { query } });
       router.refresh();
     });
+    /* oxlint-enable oxc/no-async-await */
   }, [query, router]);
 
   return (
@@ -125,10 +129,12 @@ const ElectronTransferUser = ({
         className="w-full"
         disabled={isPending}
         onClick={() => {
+          /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startTransition's awaited sequencing and rejected-Promise behavior. */
           startTransition(async () => {
             await authClient.electron.transferUser({ fetchOptions: { query } });
             router.refresh();
           });
+          /* oxlint-enable oxc/no-async-await */
         }}
         type="button"
       >

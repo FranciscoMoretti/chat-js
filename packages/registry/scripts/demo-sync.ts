@@ -90,6 +90,7 @@ const demoRoot = path.resolve(registryRoot, "../../apps/chat");
 
 const baselinePath = path.join(registryRoot, "demo-baseline.json");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve formatted's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const formatted = async (file: string, content: string): Promise<string> => {
   if (
@@ -104,9 +105,11 @@ const formatted = async (file: string, content: string): Promise<string> => {
   }
   return result.code;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 const digest = (content: string): string =>
   createHash("sha256").update(content).digest("hex");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve optionalRead's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const optionalRead = async (file: string): Promise<string | null> => {
   try {
@@ -118,6 +121,8 @@ const optionalRead = async (file: string): Promise<string | null> => {
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve filesBelow's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -136,6 +141,8 @@ const filesBelow = async (
   );
   return nested.flat();
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateDemo's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -286,6 +293,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     await fs.rm(temporary, { force: true, recursive: true });
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
@@ -300,6 +308,7 @@ const baselineSchema = z.strictObject({
   version: z.literal(DEMO_BASELINE_VERSION),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceDemoFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -381,6 +390,8 @@ const replaceDemoFiles = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncDemo's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -473,6 +484,7 @@ const syncDemo = async (options: {
     { content: baselineContent, exists: previous !== null, target: baseline },
   ]);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */

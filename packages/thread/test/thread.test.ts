@@ -54,6 +54,7 @@ const requireMessage = <TMessage extends ReadonlyMessageValue<UIMessage>>(
   return message;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitFor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
@@ -68,6 +69,7 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -143,6 +145,7 @@ describe("Thread", (): void => {
     );
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("streams concurrent responses into separate assistant siblings", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -167,7 +170,8 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-1");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("keeps a submitted response out of the tree until streaming starts", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -200,7 +204,8 @@ describe("Thread", (): void => {
       )?.message;
     expect(getMessageText(requireMessage(snapshotMessage))).toBe("claimed");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("uses AI SDK's client response ID when the stream omits one", async (): Promise<void> => {
     const generatedIds = ["run-1", "client-response"];
     const transport = new ControlledTransport();
@@ -225,7 +230,8 @@ describe("Thread", (): void => {
     expect(run.id).toBe("run-1");
     expect(chat.getMessage("client-response")?.id).toBe("client-response");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("attaches streamed output without requiring a user parent", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -244,7 +250,7 @@ describe("Thread", (): void => {
     expect(chat.getMessage("context-1")?.role).toBe("system");
     expect(chat.getParent("response-1")?.id).toBe("context-1");
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("rejects a bare run from an assistant before transport", (): void => {
     const transport = new ControlledTransport();
     const parent: UIMessage = {
@@ -262,6 +268,7 @@ describe("Thread", (): void => {
     expect(chat.getSnapshot().runs).toHaveLength(0);
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues an explicit assistant input in the same tree node", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ messages: [user("user-1")], transport });
@@ -295,7 +302,8 @@ describe("Thread", (): void => {
       getMessageText(requireMessage(chat.getMessage("assistant-input")))
     ).toBe("prebuilt responsecontinued");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues the selected assistant without creating a sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const assistant = {
@@ -324,7 +332,7 @@ describe("Thread", (): void => {
       "assistant-1 continued"
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("keeps hidden branches when reconciling the selected path", (): void => {
     const chat = new Thread({
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
@@ -346,6 +354,7 @@ describe("Thread", (): void => {
     ).toEqual(["user-1", "assistant-1", "user-3"]);
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("does not follow a delayed run after the active path changes", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -359,7 +368,8 @@ describe("Thread", (): void => {
     expect(chat.getMessage("assistant-1")?.id).toBe("assistant-1");
     expect(chat.getSnapshot().cursorId).toBe("user-1");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("reports the completed run path to onFinish after navigation", async (): Promise<void> => {
     const transport = new ControlledTransport();
     let finishedMessages:
@@ -389,7 +399,8 @@ describe("Thread", (): void => {
       )
     ).toEqual(["user-1", "assistant-1"]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("rejects concurrency before adding another user message", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -407,7 +418,8 @@ describe("Thread", (): void => {
     ).rejects.toThrow("max active runs");
     expect(chat.getMessage("user-2")).toBeUndefined();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("rejects assistant continuation without creating a phantom run", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -440,7 +452,8 @@ describe("Thread", (): void => {
     transport.finish(0);
     await active.finished;
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("stopping one run does not abort another", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -459,7 +472,8 @@ describe("Thread", (): void => {
     transport.emitText(1, "assistant-2", "complete");
     await second.finished;
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("selects and follows a pending run before its response exists", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ messages: [user("user-1")], transport });
@@ -492,7 +506,7 @@ describe("Thread", (): void => {
     transport.finish(0);
     await Promise.all([first.finished, second.finished]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("rejects selecting an unknown run", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
@@ -501,6 +515,7 @@ describe("Thread", (): void => {
     );
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("preserves the selected run when its target path is missing", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ messages: [user("user-1")], transport });
@@ -518,7 +533,8 @@ describe("Thread", (): void => {
     transport.finish(1);
     await Promise.all([first.finished, second.finished]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("keeps creation order after an earlier run fails without a message", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -540,7 +556,8 @@ describe("Thread", (): void => {
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-2", "assistant-3"]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("preserves an error when resume finds no stream", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -559,7 +576,8 @@ describe("Thread", (): void => {
       status: "ready",
     });
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("run handles expose the current resumed request", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -583,7 +601,8 @@ describe("Thread", (): void => {
     reconnect.close();
     await Promise.all([resumed, run.finished]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("refreshes the canonical message path before resuming", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -614,7 +633,8 @@ describe("Thread", (): void => {
       "edited resumed"
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("replays a v7 resume from start without duplicating canonical content", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -650,7 +670,8 @@ describe("Thread", (): void => {
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("keeps canonical identity and metadata when a replay start omits them", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -678,7 +699,8 @@ describe("Thread", (): void => {
     expect(message.metadata).toEqual({ model: "saved" });
     expect(chat.getChildren("user-1")).toHaveLength(1);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("updates restored tools after a continuation without duplicating the prefix", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -729,7 +751,8 @@ describe("Thread", (): void => {
       }),
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("aggregate status ignores historical run errors", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -750,7 +773,8 @@ describe("Thread", (): void => {
     expect(chat.getSnapshot().treeStatus).toBe("ready");
     expect(failed.getSnapshot()?.status).toBe("error");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("unexpected application errors reject the run promise", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const state = new RecordingThreadState([]);
@@ -771,7 +795,8 @@ describe("Thread", (): void => {
     expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
     unsubscribe();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("regenerates an assistant as a sibling response", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -801,7 +826,8 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("regenerates a root assistant as a root sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -825,7 +851,8 @@ describe("Thread", (): void => {
     ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("does not follow regeneration after navigating to another branch", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -848,7 +875,7 @@ describe("Thread", (): void => {
         .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["other-root"]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -863,6 +890,7 @@ describe("Thread", (): void => {
     expect(chat.getSnapshot().cursorId).toBe("assistant-1");
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("regenerates an assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const assistantParent = {
@@ -900,7 +928,7 @@ describe("Thread", (): void => {
     expect(chat.getMessage(assistantChild.id)).toEqual(assistantChild);
     expect(chat.getSnapshot().cursorId).toBe("assistant-replacement");
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("restores assistant-to-assistant edges as tree data", (): void => {
     const assistantParent = {
       ...user("assistant-parent"),
@@ -929,6 +957,7 @@ describe("Thread", (): void => {
     ).toEqual([assistantParent.id, assistantChild.id]);
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("routes tool output and approval to their owning runs", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({ transport });
@@ -1001,7 +1030,8 @@ describe("Thread", (): void => {
       })
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("reconstructs tool and approval ownership after restoring a tree", async (): Promise<void> => {
     const source = new Thread();
     source.addMessage(user("user-1"), null);
@@ -1049,7 +1079,7 @@ describe("Thread", (): void => {
       })
     );
   });
-
+  /* oxlint-enable oxc/no-async-await */
   test("rejects missing restored tool and approval ownership", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
@@ -1099,6 +1129,7 @@ describe("Thread", (): void => {
     );
   });
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("enforces the global concurrency limit before resuming", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -1121,7 +1152,8 @@ describe("Thread", (): void => {
     transport.finish(1);
     await active.finished;
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("enforces the per-message concurrency limit before resuming", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
@@ -1145,7 +1177,8 @@ describe("Thread", (): void => {
     transport.finish(1);
     await active.finished;
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("resumes a restored assistant through its reconstructed run", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1163,7 +1196,8 @@ describe("Thread", (): void => {
     );
     expect(transport.lastReconnectOptions?.body).toBeUndefined();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("resumes a restored root assistant", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1190,7 +1224,8 @@ describe("Thread", (): void => {
       getMessageText(requireMessage(chat.getMessage("assistant-root")))
     ).toBe("resumed");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("resumes a restored assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ResumeTransport();
     const chat = new Thread({
@@ -1228,6 +1263,7 @@ describe("Thread", (): void => {
       getMessageText(requireMessage(chat.getMessage("assistant-child")))
     ).toBe("resumed");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */

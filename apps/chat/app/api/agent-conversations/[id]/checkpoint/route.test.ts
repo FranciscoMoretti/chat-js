@@ -47,6 +47,7 @@ beforeEach(() => {
     Response.json({ status: "accepted" }, { status: 202 })
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
  * max-statements (#512): it("requires authentication, same origin and bound ownership before native access") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("requires authentication, same origin and bound ownership before native access") uses 401, 403, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -69,6 +70,8 @@ it("requires authentication, same origin and bound ownership before native acces
   expect(mocks.source).toHaveBeenCalledWith("owner", id);
   expect(mocks.capture).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, unicorn/no-null */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("rejects malformed coordinates before looking up the source") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -83,6 +86,8 @@ it("rejects malformed coordinates before looking up the source", async () => {
   expect(mocks.source).not.toHaveBeenCalled();
   expect(mocks.capture).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("returns readiness only after the matching immutable checkpoint is available") uses 200, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -109,6 +114,8 @@ it("returns readiness only after the matching immutable checkpoint is available"
     input.checkpointId
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("keeps uncertain capture retryable using the exact same coordinates") uses 409, 200, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -125,6 +132,8 @@ it("keeps uncertain capture retryable using the exact same coordinates", async (
     mocks.capture.mock.calls.map((call) => JSON.parse(call[2].body))
   ).toEqual([input, input]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -137,6 +146,8 @@ it("recovers an existing receipt without sending another native command", async 
   expect(mocks.capture).not.toHaveBeenCalled();
   expect(mocks.ready).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { stage: "read", target: () => mocks.read },   { stage: "ready", target: () => mocks.rea's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
@@ -168,4 +179,5 @@ it.each([
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */

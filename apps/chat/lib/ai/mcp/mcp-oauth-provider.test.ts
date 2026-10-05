@@ -42,6 +42,7 @@ vi.mock("@/lib/db/mcp-queries", () => ({
   setOAuthClientInfoOnceByState: mocks.setClientInfo,
   setOAuthCodeVerifierOnceByState: mocks.setCodeVerifier,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/db/mcp-oauth-lock")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -49,6 +50,7 @@ vi.mock("@/lib/db/mcp-oauth-lock", () => ({
   withMcpOAuthRefreshLock: async (_id: string, run: () => Promise<unknown>) =>
     await run(),
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable init-declarations --
  * init-declarations (#507): stored assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -123,13 +125,15 @@ beforeEach(() => {
     }
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("absent stored credentials return undefined", async () => {
   stored = { ...stored, clientInfo: null, tokens: null };
   const client = provider();
   await expect(client.clientInformation()).resolves.toBeUndefined();
   await expect(client.tokens()).resolves.toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("credentials saved by the pinned SDK can be read by a fresh provider", async () => {
   stored = { ...stored, tokens: null };
   mocks.fetch
@@ -173,10 +177,11 @@ test("credentials saved by the pinned SDK can be read by a fresh provider", asyn
     token_endpoint: sdkMetadata.token_endpoint,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 afterEach(() => vi.unstubAllGlobals());
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("stored client information retains metadata, credentials, pins and extensions", async () => {
   const clientInfo = {
     authorization_server: "https://auth.example.test",
@@ -191,7 +196,8 @@ test("stored client information retains metadata, credentials, pins and extensio
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("older records without authorization-server pins remain readable", async () => {
   const clientInfo = {
     client_id: "legacy",
@@ -202,7 +208,8 @@ test("older records without authorization-server pins remain readable", async ()
   await expect(client.clientInformation()).resolves.toEqual(clientInfo);
   await expect(client.tokens()).resolves.toEqual(stored.tokens);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   {},   { client_id: "registered" },   { client_id: "registered", redirect_uris: "https:'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   {},
   { client_id: "registered" },
@@ -220,7 +227,8 @@ test.each([
     expect(mocks.setClientInfo).not.toHaveBeenCalled();
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   {},   { access_token: "secret" },   { access_token: false, token_type: "Bearer" },   {'s awaited sequencing and rejected-Promise behavior. */
 test.each([
   {},
   { access_token: "secret" },
@@ -244,7 +252,8 @@ test.each([
     expect(mocks.save).not.toHaveBeenCalled();
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("tokens read under the refresh lock are decoded before reuse", async () => {
   const client = provider();
   await client.tokens();
@@ -255,7 +264,8 @@ test("tokens read under the refresh lock are decoded before reuse", async () => 
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a repaired stored credential can replace a stale malformed cache", async () => {
   stored = { ...stored, tokens: { access_token: false } };
   const client = provider();
@@ -274,13 +284,15 @@ test("a repaired stored credential can replace a stale malformed cache", async (
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("an empty redirect list remains supported for an authenticated SDK-shaped record", async () => {
   const clientInfo = { client_id: "registered", redirect_uris: [] };
   stored = { ...stored, clientInfo };
   await expect(provider().clientInformation()).resolves.toEqual(clientInfo);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("an access-token winner is reused even when its refresh token did not change", async () => {
   const client = provider();
   await client.tokens();
@@ -290,7 +302,8 @@ test("an access-token winner is reused even when its refresh token did not chang
   expect(mocks.fetch).not.toHaveBeenCalled();
   expect(mocks.save).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("multiple completed refreshes cannot overwrite a later rotation in delayed SDK s uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -328,6 +341,8 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
   expect(mocks.save).toHaveBeenCalledTimes(2);
   expect(await client.tokens()).toMatchObject({ access_token: "third" });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -369,6 +384,8 @@ test("refresh responses cannot replace the saved authorization-server pins", asy
   expect(stored.tokens).toMatchObject(pins);
   expect(mocks.save).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 test("callback states cannot be adopted after a connector changes server URL", async () => {
@@ -377,7 +394,8 @@ test("callback states cannot be adopted after a connector changes server URL", a
     "different MCP server"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("configured OAuth client information preserves credentials") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -400,6 +418,8 @@ test("configured OAuth client information preserves credentials", async () => {
     token_endpoint_auth_method: "client_secret_basic",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -420,6 +440,8 @@ test("failed client registration persistence can be retried without an optimisti
   await client.saveClientInformation(clientInfo);
   expect(mocks.setClientInfo).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("a successful rotated refresh persists its credentials even after caller cancellation", async () => {
@@ -443,5 +465,5 @@ test("a successful rotated refresh persists its credentials even after caller ca
     refresh_token: "rotated",
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep the persisted OAuth credential contract, SDK round-trip and refresh-race cases together with their shared session fixture. */

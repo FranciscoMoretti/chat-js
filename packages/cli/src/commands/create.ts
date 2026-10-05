@@ -193,6 +193,7 @@ interface ProjectTarget {
   targetDir: string;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectToolSources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -269,6 +270,8 @@ const collectToolSources = async (
   await addSelection(0);
   return toolSources;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptProjectTarget's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -304,6 +307,8 @@ const promptProjectTarget = async (
     targetDir,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadInstallableTools's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 const loadInstallableTools = async (
@@ -329,7 +334,8 @@ const loadInstallableTools = async (
     return [];
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCreateSetup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -458,6 +464,8 @@ const promptCreateSetup = async (
     withElectron,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -476,7 +484,8 @@ const scaffoldProject = async (
     });
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeConfiguration's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const writeConfiguration = async (
@@ -514,6 +523,7 @@ const writeConfiguration = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -527,6 +537,7 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
   return commands[packageManager];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installRegistryItems's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 const installRegistryItems = async (
@@ -594,6 +605,7 @@ const installRegistryItems = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -659,6 +671,7 @@ const printNextSteps = (
     `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
   );
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -705,6 +718,8 @@ const createProject = async (
   );
   printNextSteps(packageManager, project, setup, installedTools);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */
@@ -776,5 +791,5 @@ export const create = new Command()
       }
     }
   );
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

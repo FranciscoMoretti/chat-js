@@ -52,6 +52,14 @@ Form markup matches in 12 before/after cases. Six chart cases have matching comp
 
 The sixth batch passes full `bun lint` and all seven `bun test:types` tasks. The suppression total is **13,448**, down eight from 13,456. All 201 CLI unit tests pass on Node 24 (1,091 assertions), and `bun template:check` passes. Seven globally disabled rule policies and broader source-exception reviews remain unfinished.
 
+The seventh batch enables `oxc/no-async-await`. The pinned rule reports 2,728 async functions across 649 files. Of those, 2,632 contain their own await/for-await; all 96 other functions were individually reviewed against Promise-based fixtures/hooks, durable `"use step"` compilation and async-generator contracts. None could lose async without changing its contract or introducing an opposing Promise-rule exception. The native runtime policy now lives in 2,054 bounded canonical source scopes and 132 generated scopes. All 649 final modules retain identical emitted JavaScript tokens. Independent checks preserve TypeScript parse diagnostics and JSDoc attachment for all 599 canonical proposals. No new unused directives were reported; six existing cross-environment assertion warnings retain their previously verified contracts.
+
+Eight original backend async-related scopes were separately reviewed: seven narrowed to concrete retry, reconciliation or promise-forwarding sites, and one already precise native-fetch adapter retained. These changes preserve byte-identical emitted JavaScript and pass five existing suites with 26 tests. Other suppressions in those modules remain pending review.
+
+The maintained renderer browser fixture now resolves the chart library's published ESM entry through a fixture-only Vite alias. This fixes the CommonJS optimizer wrapper that previously rendered an object instead of a component. Both Chromium renderer tests pass with real chart rendering; the original and current chart implementations yield byte-identical captured PNGs. This resolves the sixth-batch local fixture limitation. No production chart implementation or test assertion was weakened; no remote fleet comparison is claimed.
+
+The seventh batch passes full `bun lint` and all seven `bun test:types` tasks. The source-exception total is **15,634**, up 2,186 because native async exceptions now replace the global exclusion. Six globally disabled rule policies remain. All 201 CLI unit tests pass on Node 24 (1,091 assertions), and `bun template:check` passes. No PR has been opened.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

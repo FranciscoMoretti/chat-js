@@ -26,6 +26,7 @@ export const EveFeedbackActions = ({
   // All messages share one cached query and one request per conversation.
   const options = trpc.eve.votes.queryOptions({ conversationId });
   const votes = useQuery(options);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mutation's awaited sequencing and rejected-Promise behavior. */
   const mutation = useMutation(
     trpc.eve.vote.mutationOptions({
       onMutate: async () => {
@@ -44,7 +45,9 @@ export const EveFeedbackActions = ({
       },
     })
   );
+  /* oxlint-enable oxc/no-async-await */
   if (votes.isError) {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return (
       <MessageAction
         disabled={votes.isFetching}
@@ -58,6 +61,7 @@ export const EveFeedbackActions = ({
         <RefreshCw size={14} />
       </MessageAction>
     );
+    /* oxlint-enable oxc/no-async-await */
   }
   return (
     <MessageVoteActions

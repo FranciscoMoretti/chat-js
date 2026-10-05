@@ -123,6 +123,7 @@ export const useDocumentDraft = ({
     [enabled, ready, revision, update]
   );
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = useCallback(async () => {
     const { current } = latest;
     if (!(enabled && ready && current) || busy.current) {
@@ -181,7 +182,7 @@ export const useDocumentDraft = ({
     update,
     onSaved,
   ]);
-
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     if (!(enabled && ready && draft) || failure || isPending) {
       return;

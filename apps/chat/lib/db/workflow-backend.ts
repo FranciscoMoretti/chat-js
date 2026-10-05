@@ -1,5 +1,6 @@
 import type { Sql } from "postgres";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureWorkflowBackend's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): ensureWorkflowBackend's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/prefer-readonly-parameter-types (#565): ensureWorkflowBackend accepts connection: Sql; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -23,4 +24,5 @@ export const ensureWorkflowBackend = async (
     await tx`insert into "EveWorkflowBackend" (id, world) values (1, ${world}) on conflict do nothing`;
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

@@ -36,6 +36,7 @@ import { jsonObject, parseJsonObject } from "./test-json";
 
 const FIRST_DIRECTORY_INDEX = 0;
 const directories: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async () => {
   await Promise.all(
     directories.splice(FIRST_DIRECTORY_INDEX).map(async (directory) => {
@@ -43,6 +44,8 @@ afterEach(async () => {
     })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 const fixture = async (): Promise<{
   baseline: string;
   expected: Map<string, string>;
@@ -57,7 +60,8 @@ const fixture = async (): Promise<{
   await syncDemo({ baseline, expected, root });
   return { baseline, expected, root };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyCanonicalChange's awaited sequencing and rejected-Promise behavior. */
 const verifyCanonicalChange = async (
   original: ReadonlyNativeSurface<Awaited<ReturnType<typeof fixture>>>,
   source: string
@@ -72,7 +76,8 @@ const verifyCanonicalChange = async (
   await syncDemo(options);
   await syncDemo({ ...options, check: true });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("types and comments drift; canonical changes sync and repeated sync is deterministic", async () => {
   const fixtureOptions = await fixture();
   const before = await readFile(fixtureOptions.baseline, "utf-8");
@@ -87,7 +92,8 @@ test("types and comments drift; canonical changes sync and repeated sync is dete
     "// canonical\nexport type Result = number;\n"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("local edits stop all writes; explicit discard restores canonical source", async () => {
   const options = await fixture();
   await writeFile(
@@ -108,7 +114,8 @@ test("local edits stop all writes; explicit discard restores canonical source", 
   );
   expect(options.expected.get("implementation.ts")).toBe(actual);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("missing tracked files are edits and an untracked existing file is protected", async () => {
   const options = await fixture();
   await rm(path.join(options.root, "implementation.ts"));
@@ -118,7 +125,8 @@ test("missing tracked files are edits and an untracked existing file is protecte
   options.expected.set("new.ts", "// canonical file\n");
   expect(syncDemo(options)).rejects.toThrow("new.ts");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("sync preserves app-owned UI order and extensions and rejects removed ownership", async () => {
   const options = await fixture();
   const files = [
@@ -151,7 +159,8 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
     "removal is outside demo sync scope"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("symlink destinations are rejected before writes", async () => {
   const options = await fixture();
   await symlink(
@@ -168,7 +177,8 @@ test("symlink destinations are rejected before writes", async () => {
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(before);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("edits moved upstream can advance the baseline without discarding", async () => {
   const options = await fixture();
   const source =
@@ -184,7 +194,8 @@ test("edits moved upstream can advance the baseline without discarding", async (
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(source);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("baseline key ordering uses locale-independent code-unit order", async () => {
   const options = await fixture();
   const names = ["z.ts", "é.ts", "a.ts", "Z.ts", "_a.ts"];
@@ -206,7 +217,8 @@ test("baseline key ordering uses locale-independent code-unit order", async () =
     [...options.expected.keys()].toSorted()
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["source", "baseline"])'s awaited sequencing and rejected-Promise behavior. */
 test.each(["source", "baseline"])(
   "a failed %s replacement restores prior source and baseline, permitting retry",
   async (failure) => {
@@ -226,7 +238,8 @@ test.each(["source", "baseline"])(
     await syncDemo({ ...options, check: true });
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a symlinked baseline is rejected before source or external target writes", async () => {
   const options = await fixture();
   const external = path.join(options.root, "external.json");
@@ -241,7 +254,7 @@ test("a symlinked baseline is rejected before source or external target writes",
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe("// canonical\nexport type Result = string;\n");
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("generator setup failure removes its temporary installation directory", () => {
   const observed = observeGeneratorFailure();
   try {

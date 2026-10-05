@@ -16,6 +16,7 @@ import { z } from "zod";
 const searchBatchSchema = z.object({
   "0": z.object({ json: z.object({ search: z.string() }) }),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -63,6 +64,8 @@ test("search states", async ({ page }, testInfo) => {
     path: testInfo.outputPath("search-states.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -141,6 +144,8 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
     /\/chat\/00000000-0000-4000-8000-000000000002$/u
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -243,6 +248,8 @@ test("does not publish a response for text superseded during the debounce window
   await expect(page.getByRole("listbox")).toHaveAttribute("aria-busy", "false");
   expect(requests).toEqual(["original", "intermediate", "latest", "original"]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -353,6 +360,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     },
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-search.visual.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

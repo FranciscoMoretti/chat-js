@@ -29,6 +29,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 
 vi.mock("server-only", () => ({}));
 const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): vi.mock("../lib/eve/server") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): vi.mock("../lib/eve/server") uses 1, 25_000, 100 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -69,6 +70,7 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
     },
   };
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -78,6 +80,7 @@ if (!new URL(env.DATABASE_URL).pathname.includes("identity_test")) {
   );
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
  * max-statements (#512): test("real native hook binds before a lost response, and retry keeps the accepted ses keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("real native hook binds before a lost response, and retry keeps the accepted ses uses 409, 200, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -109,6 +112,8 @@ test("real native hook binds before a lost response, and retry keeps the accepte
   });
   expect(probe.dispatches).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -192,4 +197,5 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
     state: "bound",
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

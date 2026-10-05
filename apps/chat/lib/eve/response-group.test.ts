@@ -51,6 +51,7 @@ beforeEach(() => {
   mocks.refund.mockResolvedValue(true);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("refunds undispatched siblings after a proven primary rejection") uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -71,6 +72,8 @@ it("refunds undispatched siblings after a proven primary rejection", async () =>
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("retains recovery if a sibling has concurrently claimed its creation", async () => {
@@ -79,7 +82,8 @@ it("retains recovery if a sibling has concurrently claimed its creation", async 
     createEveResponseGroup("guest", input, admission)
   ).rejects.toThrow("Retain comparison recovery");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not declare terminal rejection when the primary refund cannot prove non-admission", async () => {
   mocks.settle.mockResolvedValue(false);
   const result = await createEveResponseGroup("guest", input, admission);
@@ -89,7 +93,8 @@ it("does not declare terminal rejection when the primary refund cannot prove non
   ]);
   expect(mocks.refund).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("marks every multi-model edited candidate with the shared user intent") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("marks every multi-model edited candidate with the shared user intent") accepts call; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -108,4 +113,5 @@ it("marks every multi-model edited candidate with the shared user intent", async
     "edit",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

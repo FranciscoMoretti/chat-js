@@ -13,6 +13,7 @@ const eveHealth = z.object({
   status: z.literal("ready"),
   workflowId: z.string().min(1),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable init-declarations, no-magic-numbers --
@@ -63,4 +64,5 @@ export const GET = async (): Promise<Response> => {
     clearTimeout(timeout);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, no-magic-numbers */

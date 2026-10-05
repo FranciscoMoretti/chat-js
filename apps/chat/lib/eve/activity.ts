@@ -2,6 +2,7 @@ import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveConversationActivity } from "@/lib/db/eve-queries";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ingestEveActivity's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): ingestEveActivity's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * typescript/prefer-readonly-parameter-types (#565): ingestEveActivity accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -20,4 +21,5 @@ export const ingestEveActivity = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */

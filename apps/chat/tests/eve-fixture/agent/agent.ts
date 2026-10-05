@@ -4,6 +4,7 @@
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -53,4 +54,5 @@ export default defineAgent({
   }),
   modelContextWindowTokens: 128_000,
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return */

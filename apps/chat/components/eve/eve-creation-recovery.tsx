@@ -61,6 +61,7 @@ export const EveCreationRecovery = ({
     setLoaded(true);
   }, [ownerId, operationId, scope, initiallyRejected]);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retry's awaited sequencing and rejected-Promise behavior. */
   const retry = async (): Promise<void> => {
     if (!pending || lock.current) {
       return;
@@ -91,7 +92,7 @@ export const EveCreationRecovery = ({
     }
     /* oxlint-enable react/todo */
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const continueWithoutProject = (): void => {
     if (!(rejected && pending && scope?.projectId)) {
       return;

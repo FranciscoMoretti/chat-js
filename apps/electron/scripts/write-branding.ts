@@ -18,12 +18,13 @@ const brandingJson = JSON.stringify(
   null,
   JSON_INDENTATION_SPACES
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeBranding's awaited sequencing and rejected-Promise behavior. */
 const writeBranding = async (): Promise<void> => {
   await writeFile(new URL("../branding.json", import.meta.url), brandingJson);
   // oxlint-disable-next-line eslint/no-console -- Preserve its established command-line completion message and argument formatting.
   console.log("branding.json written:", { appName, appPrefix, appUrl });
 };
-
+/* oxlint-enable oxc/no-async-await */
 // The generated Node/tsx prebuild runs this file in a CommonJS package, which
 // cannot use top-level await. Handle the entry promise and report write failures.
 // oxlint-disable-next-line unicorn/prefer-top-level-await, promise/prefer-await-to-then, promise/prefer-await-to-callbacks -- CommonJS requires this handled asynchronous entry point; top-level await fails the Node/tsx prebuild transform.

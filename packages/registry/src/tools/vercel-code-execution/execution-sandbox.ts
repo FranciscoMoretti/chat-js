@@ -165,6 +165,7 @@ const createSandbox = (
     timeout: 5 * 60 * 1000,
     ...(auth ?? getTokenAuth()),
   });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -194,6 +195,8 @@ const cleanupSandbox = async (
     throw closeError;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findSandboxForCleanup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -215,6 +218,7 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -224,6 +228,7 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
     const auth = resolveSandboxAuth();
     const log = createModuleLogger("eve-code-sandbox-cleanup");
     return {
+      /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteAndConfirmAbsent's awaited sequencing and rejected-Promise behavior. */
       async deleteAndConfirmAbsent(name): Promise<void> {
         const sandbox = await findSandboxForCleanup(name, auth);
         if (sandbox) {
@@ -238,6 +243,7 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
           }
         }
       },
+      /* oxlint-enable oxc/no-async-await */
       provider: auth,
     };
   },

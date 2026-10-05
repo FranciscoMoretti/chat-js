@@ -149,6 +149,7 @@ const deferred = <T,>() => {
   const { promise, reject, resolve } = Promise.withResolvers<T>();
   return { promise, reject, resolve };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve flushEffects's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 const flushEffects = async (): Promise<void> => {
@@ -157,7 +158,7 @@ const flushEffects = async (): Promise<void> => {
     await Promise.resolve();
   });
 };
-
+/* oxlint-enable oxc/no-async-await */
 afterEach(() => {
   mocks.resolveCreationRequest.mockReset();
   mocks.restoreAttachments.mockReset();
@@ -167,6 +168,7 @@ afterEach(() => {
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- use-eve-fork.test route: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value). */
 
 describe("useEveFork", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("opens an inline edit with the original response model and tool", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReturnType<typeof useEveFork> | undefined;
@@ -207,7 +209,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("restores a saved edit's multi-model selection", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
@@ -250,7 +253,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a restored edit associated with its message after rejection", async () => {
     const pendingStorage = storage();
     pendingStorage.setItem(
@@ -300,7 +304,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a rejected edit open after releasing its saved operation", async () => {
     vi.stubGlobal("sessionStorage", storage());
     mocks.resolveCreationRequest.mockRejectedValue(
@@ -341,7 +346,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReturnType<typeof useEveFork> | undefined;
@@ -384,7 +390,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("clears fulfilled edit state in the client navigation transition", async () => {
     const pendingStorage = storage();
     let fork: ReturnType<typeof useEveFork> | undefined;
@@ -449,7 +456,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("does not replace an unconfirmed edit with another saved operation", async () => {
     vi.stubGlobal("sessionStorage", storage());
     mocks.resolveCreationRequest.mockRejectedValue(
@@ -493,7 +501,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("keeps a delayed comparison's exact operation available for recovery", async () => {
     const pendingStorage = storage();
     const delayed = deferred<string>();
@@ -563,7 +572,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("retries an unconfirmed comparison with its original operation identity", async () => {
     const pendingStorage = storage();
     vi.stubGlobal("sessionStorage", pendingStorage);
@@ -614,7 +624,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("restores historical attachments by message identity without uploads installed", async () => {
     vi.stubGlobal("sessionStorage", storage());
     const attachment = {
@@ -665,7 +676,8 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("locks an inline edit when an original attachment cannot be restored", async () => {
     vi.stubGlobal("sessionStorage", storage());
     vi.stubGlobal("window", { location: { origin: "https://chatjs.example" } });
@@ -716,6 +728,7 @@ describe("useEveFork", () => {
       act(() => renderer?.unmount());
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
 

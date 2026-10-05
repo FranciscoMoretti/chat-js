@@ -17,6 +17,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("aborts a stalled creation without resending or changing its operation") uses 30_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("aborts a stalled creation without resending or changing its operation") accepts init: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -45,6 +46,8 @@ it("aborts a stalled creation without resending or changing its operation", asyn
   expect(fetchMock).toHaveBeenCalledTimes(1);
   expect(fetchMock.mock.calls[0]?.[1].body).toBe(JSON.stringify(operation));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -57,6 +60,8 @@ it("returns the existing binding on retry and clears its deadline", async () => 
   await expect(requestConversation(operation)).resolves.toEqual(binding);
   expect(vi.getTimerCount()).toBe(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([400, 404])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -92,6 +97,8 @@ it.each([400, 404])(
     );
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("identifies a missing project only on a definitive rejection", async () => {
@@ -126,7 +133,8 @@ it("identifies a missing project only on a definitive rejection", async () => {
     projectUnavailable: false,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("automatically retries busy creation with the same operation identity") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("automatically retries busy creation with the same operation identity") accepts [, init]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -155,4 +163,5 @@ it("automatically retries busy creation with the same operation identity", async
     JSON.stringify(operation),
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

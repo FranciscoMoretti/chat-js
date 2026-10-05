@@ -137,6 +137,7 @@ export class MCPClient {
     return this.client?.serverInfo;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connect's awaited sequencing and rejected-Promise behavior. */
   public async connect(
     oauthState?: string,
     abortSignal?: AbortSignal
@@ -166,7 +167,8 @@ export class MCPClient {
       abortSignal.removeEventListener("abort", cancel);
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connectOnce's awaited sequencing and rejected-Promise behavior. */
   private async connectOnce(
     oauthState?: string
   ): Promise<McpClientInstance | undefined> {
@@ -233,7 +235,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve attemptConnection's awaited sequencing and rejected-Promise behavior. */
   /**
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
@@ -291,7 +294,8 @@ export class MCPClient {
       return { error: errorMessage, needsAuth: false, status: "disconnected" };
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve finishAuth's awaited sequencing and rejected-Promise behavior. */
   /**
    * Called after callback receives code to complete the OAuth flow.
    */
@@ -314,7 +318,8 @@ export class MCPClient {
     this.authorizationUrl = undefined;
     // Don't set to connected - tokens are saved, next connect() will use them
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tools's awaited sequencing and rejected-Promise behavior. */
   /**
    * Get tools from the MCP server, already in AI SDK format.
    */
@@ -332,7 +337,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listResources's awaited sequencing and rejected-Promise behavior. */
   /**
    * List resources from the MCP server.
    */
@@ -348,7 +354,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listPrompts's awaited sequencing and rejected-Promise behavior. */
   /**
    * List prompts from the MCP server.
    */
@@ -364,7 +371,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve close's awaited sequencing and rejected-Promise behavior. */
   /**
    * Close the connection to the MCP server.
    */
@@ -384,7 +392,8 @@ export class MCPClient {
     }
     this.invalidateCache?.();
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handlePotentialAuthError's awaited sequencing and rejected-Promise behavior. */
   /**
    * Check if an error is an auth error (401/403) and invalidate caches if so.
    */
@@ -410,6 +419,7 @@ export class MCPClient {
       await this.close();
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

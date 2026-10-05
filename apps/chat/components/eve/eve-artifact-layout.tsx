@@ -161,6 +161,7 @@ const EveArtifactPanel = ({
   const previewing =
     artifact.status === "streaming" && artifact.followLive !== false;
   const owned = !readOnly && document.data?.canEdit;
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onSaved's awaited sequencing and rejected-Promise behavior. */
   const onSaved = useCallback(async () => {
     // Hydrate the destination query before switching the view: an empty latest query would unmount the focused editor.
 
@@ -185,6 +186,7 @@ const EveArtifactPanel = ({
     artifact.documentId,
     setSelectedRevisionId,
   ]);
+  /* oxlint-enable oxc/no-async-await */
   const editing = useDocumentDraft({
     conversationId,
     documentId: artifact.documentId,

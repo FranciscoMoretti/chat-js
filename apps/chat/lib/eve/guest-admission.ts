@@ -98,6 +98,7 @@ const guestRequestIpHash = (
     : canonical;
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -179,6 +180,8 @@ const validateGuestCreation = async (
   }
   return ipHash;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -263,6 +266,8 @@ const admitGuestCreation = async (
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params -- max-params (#511): settleGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
@@ -291,6 +296,7 @@ const settleGuestCreation = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params */
 export {
   admitGuestCreation,

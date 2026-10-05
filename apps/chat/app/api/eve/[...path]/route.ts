@@ -69,6 +69,7 @@ const rejectRequest = (
   request.method === "POST"
     ? rejectEveCommand(message, status)
     : Response.json({ error: message }, { status });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
@@ -101,6 +102,7 @@ const checkTurnAdmission = async (
     return rejectEveCommand("Insufficient credits", 402);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
@@ -124,6 +126,7 @@ const parseToolSelection = (
     .optional()
     .refine(() => header === null || body === undefined || header === body)
     .safeParse(header ?? body);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -200,6 +203,8 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -307,6 +312,7 @@ const handle = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const GET = handle;

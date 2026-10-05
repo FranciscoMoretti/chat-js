@@ -11,10 +11,9 @@ import type { ToolOutput, ToolResult } from "./tool-result";
 import type { ToolUsage } from "./tool-usage";
 import { executeWithToolProgress } from "./tool-usage";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 
  * typescript/prefer-readonly-parameter-types (#565): executeWithResearchProgress accepts context: Pick<ToolContext, "abortSignal">; options: { abortSignal: AbortSignal; usage: ToolUsage; dataStream: ToolProgressWriter; { abortSignal, usage, publish }; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): executeWithResearchProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
   */
 export const executeWithResearchProgress = <Output extends ToolOutput>(
   context: Pick<ToolContext, "abortSignal">,
@@ -26,6 +25,7 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
 ): AsyncGenerator<ToolResult<Output | { searches: [] }>> =>
   executeWithToolProgress<Output | { searches: [] }>(
     context,
+    // oxlint-disable-next-line typescript/promise-function-async -- Forward the research executor promise and its synchronous throw to executeWithToolProgress without an async wrapper.
     ({ abortSignal, usage, publish }) => {
       const updates = new Map<string, ResearchUpdate>();
       return execute({
@@ -40,4 +40,4 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
       });
     }
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

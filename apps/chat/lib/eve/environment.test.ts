@@ -226,6 +226,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-relative-parent-imports, max-statements --
  * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
  * max-statements (#512): it("the application env resolves defaults with an explicit gateway secret") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -250,6 +251,8 @@ it("the application env resolves defaults with an explicit gateway secret", asyn
   expect(env.EVE_INTERNAL_ORIGIN).toBe("https://deployment.vercel.app");
   expect(env.WORKFLOW_POSTGRES_URL).toBe(base.DATABASE_URL);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports, max-statements */
 
 /* oxlint-disable import/no-relative-parent-imports --
@@ -264,6 +267,8 @@ it("does not expose server credentials to client components", async () => {
   expect(() => env.EVE_GATEWAY_SECRET).toThrow();
   expect(() => env.WORKFLOW_POSTGRES_URL).toThrow();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports, no-undefined --
@@ -279,4 +284,5 @@ it("normalizes the schema's Playwright fallback URL", async () => {
     "http://[::1]:3110"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-relative-parent-imports, no-undefined */

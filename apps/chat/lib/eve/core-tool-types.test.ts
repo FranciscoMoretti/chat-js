@@ -59,6 +59,7 @@ test("document definitions retain distinct create, edit, and read contracts", ()
   >().toEqualTypeOf<string>();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("document output is validated before crossing the native result boundary", async () => {
   mocks.execute.mockResolvedValue({ revisionId: "invalid", status: "success" });
   await expect(
@@ -68,7 +69,7 @@ test("document output is validated before crossing the native result boundary", 
     )
   ).rejects.toThrow();
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("native workflow outputs retain the report revision and clarification contracts", () => {
   type Research = NativeToolUI<typeof research>;
   expectTypeOf<

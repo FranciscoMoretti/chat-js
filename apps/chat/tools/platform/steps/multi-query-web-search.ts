@@ -28,6 +28,7 @@ type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/consistent-type-definitions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
@@ -127,6 +128,7 @@ const multiQueryWebSearchStep = async ({
     };
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 export { multiQueryWebSearchStep };
 export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };

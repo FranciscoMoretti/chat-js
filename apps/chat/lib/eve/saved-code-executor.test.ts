@@ -82,6 +82,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("executes owned saved source once, exposing only execution context and preservin uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -110,6 +111,8 @@ test("executes owned saved source once, exposing only execution context and pres
     usage: { costUsd: 0.05 },
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "allowed",   "documentInstalled",   "installed",   "toolInstalled", ] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/max-nested-calls --
@@ -127,6 +130,8 @@ test.each([
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable no-undefined, unicorn/max-nested-calls --
@@ -140,6 +145,8 @@ test("never executes a revision outside the resolved conversation", async () => 
   ).rejects.toThrow("Code document not found");
   expect(mocks.execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, unicorn/max-nested-calls */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
@@ -171,4 +178,5 @@ test("cancellation prevents execution and an error receipt is forwarded once", a
     await Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
   ).toEqual([receipt]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */

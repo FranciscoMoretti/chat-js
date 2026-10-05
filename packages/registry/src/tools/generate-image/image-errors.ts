@@ -20,6 +20,7 @@ const serializeError = (
   }
   return { message: String(error), raw: error };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveError's awaited sequencing and rejected-Promise behavior. */
 const resolveError = async (thrownValue: unknown): Promise<unknown> => {
   if (
     typeof thrownValue === "object" &&
@@ -34,6 +35,7 @@ const resolveError = async (thrownValue: unknown): Promise<unknown> => {
   }
   return thrownValue;
 };
+/* oxlint-enable oxc/no-async-await */
 const constructorName = (value: unknown): unknown => {
   if (value === null || value === ABSENT_DIAGNOSTIC_VALUE) {
     return ABSENT_DIAGNOSTIC_VALUE;

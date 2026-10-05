@@ -46,10 +46,11 @@ export const ProjectChatItem = ({
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const chatHref: `/project/${string}/chat/${string}` = `/project/${chat.projectId}/chat/${chat.id}`;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleRename's awaited sequencing and rejected-Promise behavior. */
   const handleRename = async (title: string): Promise<void> => {
     await onRename(chat.id, title);
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const lastMessageText = chat.updatedAt
     ? formatDistance(new Date(chat.updatedAt), new Date(), {
         addSuffix: true,

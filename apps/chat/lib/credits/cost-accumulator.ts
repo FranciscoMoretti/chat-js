@@ -119,6 +119,7 @@ class CostAccumulator {
       this.entries.push({ apiName, cost, type: "api" });
     }
   }
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getTotalCost's awaited sequencing and rejected-Promise behavior. */
   /**
    * Resolve known catalog prices and total the recorded charges.
    * @returns {Promise<number>} Total cents rounded up after summation; unavailable LLM/image prices contribute no charge.
@@ -178,6 +179,7 @@ class CostAccumulator {
     }
     return Math.ceil(total);
   }
+  /* oxlint-enable oxc/no-async-await */
   /**
    * Inspect the recorded cost breakdown.
    * @returns {CostEntry[]} A new array containing the original recorded entry objects.

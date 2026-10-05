@@ -21,6 +21,7 @@ afterEach(() => {
   vi.resetModules();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve routes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep routes's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -31,6 +32,8 @@ const routes = async () => {
   });
   return await config.rewrites?.();
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 test("keeps EVE named-agent routing without an external deployment alias", async () => {
@@ -45,3 +48,4 @@ test("keeps EVE named-agent routing without an external deployment alias", async
     ],
   });
 });
+/* oxlint-enable oxc/no-async-await */

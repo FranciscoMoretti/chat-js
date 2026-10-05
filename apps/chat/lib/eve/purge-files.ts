@@ -6,6 +6,7 @@ import {
 import { deleteFilesByUrls } from "@/lib/file-storage";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl } from "@/lib/file-url";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
@@ -24,4 +25,5 @@ export const purgeEveFamilyFiles = async (
   }
   await releaseEveFamilyFileReferences(ownerId, rootId);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, no-magic-numbers */

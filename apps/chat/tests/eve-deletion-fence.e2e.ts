@@ -28,6 +28,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
  * typescript/promise-function-async (#606): for (const state of ["deleting", "deleted"] as const) { preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 for (const state of ["deleting", "deleted"] as const) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`${state} conversation rejects browser access and old creation requests`, async ({
     page,
     browser,
@@ -87,5 +88,6 @@ for (const state of ["deleting", "deleted"] as const) {
       await db.delete(eveConversation).where(eq(eveConversation.id, id));
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -73,6 +73,7 @@ beforeEach(() => {
   mocks.searches.mockResolvedValue([]);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("lets the supervisor request follow-up after receiving findings and synthesizes al uses 4, 1, 7, 8, -1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("lets the supervisor request follow-up after receiving findings and synthesizes al accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -127,6 +128,8 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     title: "Report",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -158,6 +161,8 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   ).toHaveLength(3);
   expect(mocks.save).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -185,6 +190,8 @@ it("returns clarification without starting research or saving a document", async
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -206,6 +213,8 @@ it("runs topics sequentially and stops before new work or saving after cancellat
   expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 it("validates native outputs and propagates failures without a successful report receipt", async () => {
@@ -224,7 +233,8 @@ it("validates native outputs and propagates failures without a successful report
     Array.fromAsync(executeEveResearch({}, context))
   ).rejects.toThrow("Storage unavailable");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects oversized topic batches before starting researchers") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -245,6 +255,8 @@ it("rejects oversized topic batches before starting researchers", async () => {
   );
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -274,4 +286,5 @@ it("publishes completed searches when a researcher fails without masking the fai
   expect(outputs.at(-1)?.updates).toContainEqual(search);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

@@ -33,6 +33,7 @@ import {
 
 const FIRST_ROW_INDEX = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types --
 max-lines-per-function (#510): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -128,6 +129,8 @@ const writeEveCopyFile = async (
     return written;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -214,6 +217,8 @@ const writeEveCopyDocuments = async (
       .where(eq(eveConversationCopy.conversationId, conversationId));
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve acceptEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -334,5 +339,6 @@ const acceptEveCopy = async (
     return "accepted";
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 export { acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile };

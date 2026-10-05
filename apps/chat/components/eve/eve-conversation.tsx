@@ -190,6 +190,7 @@ const EveConversation = ({
         part.type === "dynamic-tool" && part.state === "approval-requested"
     )
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (action: () => Promise<unknown>): Promise<void> => {
     if (!controller.commands.claim(conversationId)) {
       return;
@@ -209,6 +210,8 @@ const EveConversation = ({
       controller.commands.update(conversationId, { pending: false });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve send's awaited sequencing and rejected-Promise behavior. */
   const send = async (
     action: () => Promise<void>,
     operationId?: string
@@ -225,6 +228,8 @@ const EveConversation = ({
       controller.commands.update(conversationId, { cancellation: 0 });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendPendingMessage's awaited sequencing and rejected-Promise behavior. */
   const sendPendingMessage = async (
     pending: ActivePendingEveMessage
   ): Promise<void> => {
@@ -251,6 +256,8 @@ const EveConversation = ({
       throw error;
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitMessage's awaited sequencing and rejected-Promise behavior. */
   const submitMessage = async (
     message: string,
     attachments: DraftAttachment[],
@@ -272,6 +279,8 @@ const EveConversation = ({
     }
     await sendPendingMessage(pending);
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cancelExecution's awaited sequencing and rejected-Promise behavior. */
   const cancelExecution = async (executionId: string): Promise<void> => {
     const execution = controller.getSnapshot().agents.get(executionId);
     if (!execution || controller.commands.get(executionId).cancelling) {
@@ -294,6 +303,7 @@ const EveConversation = ({
       controller.commands.update(executionId, { cancelling: false });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const cancel = (): Promise<void> => cancelExecution(conversationId);
   // Retain the selected tool across a pending or comparison recovery flow.
   // oxlint-disable-next-line eslint/no-use-before-define -- Review debt #620: retainedToolSelection is a hoisted function; review declaration placement without changing selection recovery behavior.
@@ -483,6 +493,7 @@ const EveConversation = ({
                 }}
 
                 onSuggestion={(suggestion) => {
+                  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                   void run(async () => {
                     // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                     if (modelIds.length > 1) {
@@ -504,6 +515,7 @@ const EveConversation = ({
                       );
                     }
                   });
+                  /* oxlint-enable oxc/no-async-await */
                 }}
 
                 // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
@@ -544,12 +556,14 @@ const EveConversation = ({
                   {pendingMessage.retryable && pendingMessage.operationId && (
                     <Button
                       onClick={() => {
+                        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                         void run(async () => {
                           const retried = delivery.retry(pendingMessage);
                           if (retried) {
                             await sendPendingMessage(retried);
                           }
                         });
+                        /* oxlint-enable oxc/no-async-await */
                       }}
                       size="sm"
                       type="button"
@@ -615,6 +629,7 @@ const EveConversation = ({
               onStop={cancel}
 
               onSubmit={() => {
+                /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                 void run(async () => {
                   // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                   if (modelIds.length > 1) {
@@ -635,6 +650,7 @@ const EveConversation = ({
                     );
                   }
                 });
+                /* oxlint-enable oxc/no-async-await */
               }}
               onToolChange={handleSelectedToolChange}
               readOnly={Boolean(comparison)}
@@ -735,6 +751,7 @@ const useConversationInput = (
   const comparison =
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     comparison,
     composerDraft,
@@ -752,6 +769,7 @@ const useConversationInput = (
       value: selection ?? selectedModel,
     },
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 

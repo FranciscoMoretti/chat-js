@@ -46,6 +46,7 @@ const ElectronAuthOverlay = ({
     return null;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <div className="bg-background/90 pointer-events-auto fixed inset-0 z-[999999] flex items-center justify-center px-4 backdrop-blur-sm">
       <div className="bg-background w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
@@ -104,6 +105,7 @@ const ElectronAuthOverlay = ({
       </div>
     </div>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-console, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ElectronAuthHandler: ; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including ctx: ElectronAuthErrorContext); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ctx.message); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -157,6 +159,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       return;
     }
 
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadAuthState's awaited sequencing and rejected-Promise behavior. */
     const loadAuthState = async (): Promise<void> => {
       try {
         // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
@@ -168,17 +171,19 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
         console.error("Failed to read Electron auth state", error);
       }
     };
-
+    /* oxlint-enable oxc/no-async-await */
     void loadAuthState();
 
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAndRefresh's awaited sequencing and rejected-Promise behavior. */
     const syncAndRefresh = async (): Promise<void> => {
       // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
     };
-
+    /* oxlint-enable oxc/no-async-await */
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeAuthenticated = window.onAuthenticated(() => {
+      /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAuthenticatedSession's awaited sequencing and rejected-Promise behavior. */
       const syncAuthenticatedSession = async (): Promise<void> => {
         try {
           await syncAndRefresh();
@@ -189,10 +194,12 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
           );
         }
       };
+      /* oxlint-enable oxc/no-async-await */
       void syncAuthenticatedSession();
     });
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
     const unsubscribeUserUpdated = window.onUserUpdated(() => {
+      /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncUpdatedUser's awaited sequencing and rejected-Promise behavior. */
       const syncUpdatedUser = async (): Promise<void> => {
         try {
           await syncAndRefresh();
@@ -200,6 +207,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
           console.error("Failed to sync auth session after user update", error);
         }
       };
+      /* oxlint-enable oxc/no-async-await */
       void syncUpdatedUser();
     });
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.

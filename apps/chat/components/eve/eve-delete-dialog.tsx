@@ -49,6 +49,7 @@ const EveDeleteDialog = ({
   const [phase, setPhase] = useState<EveDeletionPhase>(
     conversation.state === "deleting" ? "pending" : "confirm"
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve request's awaited sequencing and rejected-Promise behavior. */
   const request = async (method: "GET" | "DELETE"): Promise<void> => {
     setPhase(method === "GET" ? "checking" : "deleting");
     /* oxlint-disable react/todo -- Preserve the unconfirmed deletion recovery catch. */
@@ -86,6 +87,7 @@ const EveDeleteDialog = ({
     }
     /* oxlint-enable react/todo */
   };
+  /* oxlint-enable oxc/no-async-await */
   return (
     <>
       {/* oxlint-disable-next-line eslint/no-use-before-define -- The controller stays above the reusable presentational view. */}

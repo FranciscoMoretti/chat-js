@@ -75,6 +75,7 @@ const TEMPLATE_STRIPPED_IMPORTS = [
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyTemplateTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- applyTemplateTransforms: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- applyTemplateTransforms: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable unicorn/no-null -- applyTemplateTransforms: The SDK/wire/OS contract uses null as an explicit absence value. */
@@ -141,6 +142,8 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyElectronTemplateTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -170,7 +173,8 @@ const applyElectronTemplateTransforms = async (
   );
   await writeFile(packageJsonPath, packageJson);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyElectronTemplate's awaited sequencing and rejected-Promise behavior. */
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
@@ -180,7 +184,8 @@ const copyElectronTemplate = async (destination: string): Promise<void> => {
   });
   await applyElectronTemplateTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyTemplate's awaited sequencing and rejected-Promise behavior. */
 const copyTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
@@ -189,7 +194,8 @@ const copyTemplate = async (destination: string): Promise<void> => {
   });
   await applyTemplateTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertSynced's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
@@ -239,6 +245,7 @@ const assertSynced = async (
   console.log(`${label}: template is synced.`);
   return true;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */

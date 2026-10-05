@@ -21,6 +21,7 @@ const createHookDom = (): { close: () => Promise<void> } => {
     });
   }
   return {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve close's awaited sequencing and rejected-Promise behavior. */
     async close(): Promise<void> {
       try {
         await window.happyDOM.abort();
@@ -34,6 +35,7 @@ const createHookDom = (): { close: () => Promise<void> } => {
         }
       }
     },
+    /* oxlint-enable oxc/no-async-await */
   };
 };
 

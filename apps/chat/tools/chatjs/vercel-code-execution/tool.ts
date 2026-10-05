@@ -33,6 +33,7 @@ import { codeExecutionInput, codeExecutionResult } from "./schemas";
 // Vercel Sandbox execution.
 const COST_CENTS = 5;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const observeCleanup = async (pending: Promise<void>): Promise<void> => {
   try {
@@ -41,6 +42,8 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
     // The tool's finally block observes and propagates this cleanup failure.
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -119,6 +122,7 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
       await cleanup;
     }
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

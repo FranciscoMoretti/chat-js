@@ -21,6 +21,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     | ReadableStream<UIMessageChunk>
     | typeof NO_RECONNECT_STREAM = NO_RECONNECT_STREAM;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessages's awaited sequencing and rejected-Promise behavior. */
   public sendMessages: ChatTransport<UIMessage>["sendMessages"] = async (
     options: ReadonlyDeep<
       Parameters<
@@ -49,7 +50,8 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         },
       })
     );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reconnectToStream's awaited sequencing and rejected-Promise behavior. */
   public async reconnectToStream(
     _options: ReadonlyDeep<
       Parameters<
@@ -61,7 +63,7 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
     this.#reconnectStream = NO_RECONNECT_STREAM;
     return await Promise.resolve(stream);
   }
-
+  /* oxlint-enable oxc/no-async-await */
   public prepareReconnect(): ReadableStreamDefaultController<UIMessageChunk> {
     const holder: {
       controller?: Readonly<ReadableStreamDefaultController<UIMessageChunk>>;

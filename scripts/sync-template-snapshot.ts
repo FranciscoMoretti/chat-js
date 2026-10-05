@@ -48,6 +48,7 @@ class SnapshotIoLimiter {
     this.onActiveOperationsChange = onActiveOperationsChange;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   public async run<T>(operation: () => Promise<T>): Promise<T> {
     if (
       this.activeOperations >= this.concurrency ||
@@ -75,7 +76,9 @@ class SnapshotIoLimiter {
       }
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectSnapshotWithLimiter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/id-length */
@@ -114,6 +117,7 @@ const collectSnapshotWithLimiter = async (
   }
   return output;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

@@ -4,6 +4,7 @@ import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "./retire-session";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
@@ -56,4 +57,5 @@ export const prepareEveFamilyDeletion = async (
     streamIds: [...streamIds].toSorted(),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */

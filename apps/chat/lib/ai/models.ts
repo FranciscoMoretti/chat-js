@@ -14,6 +14,7 @@ import { toModelData } from "./to-model-data";
 
 const log = createModuleLogger("ai/models");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModelsRaw's awaited sequencing and rejected-Promise behavior. */
 const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
   const activeGateway = getActiveGateway();
 
@@ -34,7 +35,8 @@ const fetchModelsRaw = async (): Promise<AiGatewayModel[]> => {
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): fetchModels accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -49,4 +51,5 @@ export const fetchModels = unstable_cache(
     tags: ["ai-gateway-models"],
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

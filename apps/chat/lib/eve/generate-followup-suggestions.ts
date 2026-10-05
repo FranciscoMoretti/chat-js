@@ -11,6 +11,7 @@ import type { FollowupContext } from "./followup-context";
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateEveFollowupSuggestions's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): generateEveFollowupSuggestions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * jsdoc/require-returns (#535): generateEveFollowupSuggestions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -73,4 +74,5 @@ export const generateEveFollowupSuggestions = async (
     return { modelCalls };
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

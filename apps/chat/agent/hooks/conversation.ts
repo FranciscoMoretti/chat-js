@@ -13,6 +13,7 @@ import { getEveConversationProject } from "../../lib/db/eve-queries";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { projectInstructions } from "../../lib/eve/project-instructions";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -72,4 +73,5 @@ export default defineHook({
     },
   },
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

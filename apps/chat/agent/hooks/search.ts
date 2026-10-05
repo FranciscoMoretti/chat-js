@@ -23,6 +23,7 @@ const maxPendingCharacters = 256_000;
 const needsRecovery = defineState("chatjs.search-recovery", () => false);
 const pending = defineState<EveSearchText[]>("chatjs.search-prefix", () => []);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-lines-per-function (#510): default export keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -128,4 +129,5 @@ export default defineHook({
     },
   },
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, max-lines-per-function, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

@@ -64,6 +64,7 @@ const draftMessage = (
   ]);
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve attachmentDigest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): attachmentDigest accepts bytes: ArrayBuffer; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
@@ -71,6 +72,7 @@ const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
     (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")
   ).join("");
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { attachmentDigest, draftAttachment, draftMessage, restoreDraft };
 export type { DraftAttachment };

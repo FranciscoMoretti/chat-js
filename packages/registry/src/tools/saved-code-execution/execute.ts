@@ -21,6 +21,7 @@ import {
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./schemas";
+/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveCodeDocument's asynchronous iteration and rejection behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -95,6 +96,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     },
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */

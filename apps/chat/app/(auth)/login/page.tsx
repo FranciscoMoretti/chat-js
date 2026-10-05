@@ -30,6 +30,7 @@ const metadata: Metadata = {
   title: "Login",
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve LoginPageContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPageContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * typescript/explicit-function-return-type (#560): Keep LoginPageContent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): LoginPageContent accepts { searchParams, }: { searchParams: Promise<Record<string, string | string[] | undefin; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -67,6 +68,7 @@ const LoginPageContent = async ({
     </Suspense>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- * react-perf/jsx-no-jsx-as-prop (#555): LoginPage creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.

@@ -20,6 +20,7 @@ import type { EvePrincipal } from "./principal";
 /* oxlint-enable sort-imports */
 import { eveResponseGroupCandidates } from "./response-group-candidates";
 import type { eveResponseGroupInput } from "./response-group-input";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -96,4 +97,5 @@ export const admitGuestResponseGroup = async (
     { status: result.status === "conflict" ? 409 : 429 }
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

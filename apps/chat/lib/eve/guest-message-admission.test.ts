@@ -48,6 +48,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("requires an explicit operation and allowed model before charging", async () => {
   const missing = await admitGuestMessage(
     new Request(request.url),
@@ -65,7 +66,8 @@ it("requires an explicit operation and allowed model before charging", async () 
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("permits dispatch only for the first reservation and never marks replays as unsent uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -91,6 +93,8 @@ it("permits dispatch only for the first reservation and never marks replays as u
     });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -110,6 +114,8 @@ it("distinguishes content and destination in quota identity", async () => {
   }
   expect(new Set(hashes).size).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/no-null --
@@ -148,4 +154,5 @@ it("retains quota on timeout/server failure and refunds only explicit native non
     admission.reservationId
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

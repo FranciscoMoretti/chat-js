@@ -4,6 +4,7 @@ import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopyFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -61,4 +62,5 @@ export const readPublicEveCopyFile = async (
     const file = await read(reference.key);
     return new Blob([await file.arrayBuffer()], { type: file.type });
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

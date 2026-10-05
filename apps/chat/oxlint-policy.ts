@@ -36,8 +36,8 @@ export const auditedRestrictionRules = {
   "node/no-sync": "error",
   // ESM command and test initialization exceptions are documented at their source.
   "node/no-top-level-await": "error",
-  // Node 24 and modern browsers support await; promise safety rules enforce correct usage.
-  "oxc/no-async-await": "off",
+  // Reviewed native async and iterator contracts are explained at their source.
+  "oxc/no-async-await": "error",
   // Optional chaining is required by the application coding guidance and supported by the target runtimes.
   "oxc/no-optional-chaining": "off",
   // Modern targets support typed object composition; no-map-spread still prevents accumulator copying.

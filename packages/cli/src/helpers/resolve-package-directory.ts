@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolvePackageDirectory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
@@ -54,4 +55,5 @@ export const resolvePackageDirectory = async (
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

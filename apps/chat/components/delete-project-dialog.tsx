@@ -39,6 +39,7 @@ export const DeleteProjectDialog = ({
   const pathname = usePathname();
   const queryClient = useQueryClient();
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteMutation's awaited sequencing and rejected-Promise behavior. */
   const deleteMutation = useMutation(
     trpc.project.remove.mutationOptions({
       onError: () => {
@@ -55,7 +56,8 @@ export const DeleteProjectDialog = ({
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleDelete's awaited sequencing and rejected-Promise behavior. */
   const handleDelete = useCallback(async () => {
     if (!(typeof deleteId === "string" && deleteId !== "")) {
       return;
@@ -78,7 +80,7 @@ export const DeleteProjectDialog = ({
       router.push("/");
     }
   }, [deleteId, deleteMutation, pathname, router, setShowDeleteDialog]);
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <AlertDialog
       onOpenChange={(open) => {

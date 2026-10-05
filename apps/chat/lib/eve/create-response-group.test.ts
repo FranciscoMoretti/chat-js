@@ -61,6 +61,7 @@ const fixture = () => {
   };
   return { operation, result, storage };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -85,6 +86,8 @@ test("lost creation replies retain the exact ordered operation across changed co
     "saved comparison"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements --
@@ -115,6 +118,7 @@ test("partial binding moves recovery before releasing the composer and preserves
   expect(readResponseGroupDraft(storage, "owner", result.id)).toBeUndefined();
   expect(readCreationRequest(storage, "owner")).toEqual(next);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */
 
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -133,6 +137,7 @@ test("storage failure cannot release an unresolved request", () => {
   ).toThrow("Storage full");
   expect(readCreationRequest(storage, "owner")).toEqual(operation);
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
@@ -163,6 +168,7 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(mixed)));
   await expect(requestResponseGroup(operation)).resolves.toEqual(mixed);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 test("rejected secondary candidates retain the original request for their retry", () => {
@@ -208,6 +214,7 @@ test("moving a definitively rejected project comparison preserves all repeated m
   ).toBeUndefined();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("follow-up retries recover the saved checkpoint before dispatch") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -270,6 +277,8 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     operation
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -304,6 +313,8 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
     operation
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -358,6 +369,7 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
   // The UI owns releasing the matching pending request; the original draft is never erased here.
   expect(readCreationRequest(storage, "owner", scope)).toEqual(operation);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This create-response-group.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

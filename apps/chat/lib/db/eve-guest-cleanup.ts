@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 import { db } from "./client";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveGuest } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve claimExpiredEveGuestFamilies's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
@@ -53,4 +54,5 @@ export const claimExpiredEveGuestFamilies = async () =>
     }
     return rows;
   });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

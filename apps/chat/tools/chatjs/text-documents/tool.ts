@@ -11,6 +11,7 @@ import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 
 import { textGuidelines } from "./guidelines";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTextDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const createTextDocument = defineTool({
   description: `Create a new text document in this conversation. Supply the complete content and a descriptive title. ${textGuidelines}`,
@@ -21,6 +22,8 @@ const createTextDocument = defineTool({
   inputSchema: eveDocumentCreateInput,
   outputSchema: eveDocumentWriteResult,
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve editTextDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -33,5 +36,6 @@ const editTextDocument = defineTool({
   inputSchema: eveDocumentEditInput,
   outputSchema: eveDocumentWriteResult,
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { createTextDocument, editTextDocument };

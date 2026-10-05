@@ -20,6 +20,7 @@ class CreationRejectedError extends Error {
   }
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
 max-lines-per-function (#510): requestConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): requestConversation uses 30_000, 503, 400, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -81,5 +82,6 @@ const requestConversation = async (
     clearTimeout(deadline);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { CreationRejectedError, requestConversation };

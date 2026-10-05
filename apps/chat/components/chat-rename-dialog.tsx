@@ -41,6 +41,7 @@ export const ChatRenameDialog = ({
     }
   }, [open, currentTitle]);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleSubmit's awaited sequencing and rejected-Promise behavior. */
   const handleSubmit = async (): Promise<void> => {
     const trimmedValue = chatTitle.trim();
     if (trimmedValue && trimmedValue !== currentTitle) {
@@ -48,7 +49,7 @@ export const ChatRenameDialog = ({
     }
     onOpenChange(false);
   };
-
+  /* oxlint-enable oxc/no-async-await */
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
       setChatTitle(currentTitle);

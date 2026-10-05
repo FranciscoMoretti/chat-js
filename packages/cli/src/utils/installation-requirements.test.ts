@@ -20,6 +20,7 @@ import { externalGatewayFixture } from "../../test/external-gateway";
 import { validateProviderRequirements } from "./installation-requirements";
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async () => {
   await Promise.all(
     // oxlint-disable-next-line eslint/no-magic-numbers -- These local values specify JSON indentation, source offsets or bounded test fixtures.
@@ -28,7 +29,7 @@ afterEach(async () => {
     })
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
 const media = (
   kind: "image" | "video"
 ): ReturnType<typeof toolDefinitionSchema.parse> =>
@@ -41,6 +42,7 @@ const media = (
     tools: [{ toolExport: "generateMedia" }],
   });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("legacy built-in descriptors retain mandatory media and storage requirements", async () => {
   const gateway = externalGatewayFixture().root.meta.chatjs;
   const video = media("video");
@@ -74,7 +76,8 @@ test("legacy built-in descriptors retain mandatory media and storage requirement
     })
   ).rejects.toThrow("persistent storage");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["image", "video"] as const)'s awaited sequencing and rejected-Promise behavior. */
 test.each(["image", "video"] as const)(
   "rejects %s without gateway capability or model, including external gateways",
   async (kind) => {
@@ -100,7 +103,8 @@ test.each(["image", "video"] as const)(
     await validateProviderRequirements(tmpdir(), target);
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("uploads and media reject memory storage, while a minimal installation accepts it", async () => {
   const uploads = featureDefinitionSchema.parse({
     contractVersion: 1,
@@ -130,7 +134,8 @@ test("uploads and media reject memory storage, while a minimal installation acce
     tools: [],
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
 test("add validates installed provider literals without executing user source", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-requirements-"));
@@ -162,3 +167,4 @@ test("add validates installed provider literals without executing user source", 
     validateProviderRequirements(cwd, { features: [], tools: [media("image")] })
   ).rejects.toThrow("literal values");
 });
+/* oxlint-enable oxc/no-async-await */

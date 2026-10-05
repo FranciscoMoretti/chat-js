@@ -23,6 +23,7 @@ const taskIdentifier = "workflow_flows";
 export const createPostgresLifecycle = (
   databaseUrl: string
 ): SupportedLifecycleProvider => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
   const check = async (): Promise<void> => {
     const connection = postgres(databaseUrl, { max: 1 });
     try {
@@ -31,6 +32,8 @@ export const createPostgresLifecycle = (
       await connection.end();
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     capabilities: {
       durableRetirement: true,
@@ -87,4 +90,5 @@ export const createPostgresLifecycle = (
     supported: true,
     world: "@workflow/world-postgres",
   };
+  /* oxlint-enable oxc/no-async-await */
 };

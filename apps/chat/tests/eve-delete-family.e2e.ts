@@ -81,6 +81,7 @@ await db.insert(user).values({
   id: owner,
   name: "Deletion fixture",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -98,6 +99,8 @@ afterAll(async () => {
   }
   await native.end();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -123,6 +126,8 @@ async function fixture(parentId?: string) {
   );
   return { ...conversation, sessionId };
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -197,6 +202,8 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     .where(eq(eveConversation.id, unrelated.id));
   expect(survivor.state).toBe("bound");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 test("compatibility failure blocks the complete coordinator before revoking access", async () => {
@@ -218,3 +225,4 @@ test("compatibility failure blocks the complete coordinator before revoking acce
     await native`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
+/* oxlint-enable oxc/no-async-await */

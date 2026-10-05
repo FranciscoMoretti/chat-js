@@ -18,6 +18,7 @@ import { observabilityItems } from "../../../registry/src/features/observability
 import { syncFeatures } from "./sync-features";
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
@@ -27,6 +28,8 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 const fixture = async (): Promise<string> => {
@@ -34,6 +37,8 @@ const fixture = async (): Promise<string> => {
   roots.push(root);
   return root;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve itemFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const itemFiles = async (item: (typeof observabilityItems)[number]) => [
@@ -53,6 +58,7 @@ const itemFiles = async (item: (typeof observabilityItems)[number]) => [
     type: "registry:file" as const,
   },
 ];
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -65,6 +71,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   const selected = observabilityItems.filter(
     (_, index): number => Math.floor(mask / 2 ** index) % 2
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`generates only installed observability imports: ${selected.map((item): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
     const root = await fixture();
     await Promise.all(
@@ -109,6 +116,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
       await readFile(path.join(root, "features/installed-layout.ts"), "utf-8")
     ).toBe(layout);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
@@ -121,6 +129,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const item of observabilityItems) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`shadcn installs ${item.name} independently into an omitted scaffold`, async (): Promise<void> => {
     const root = await fixture();
     await scaffoldFromTemplate(root);
@@ -196,7 +205,8 @@ for (const item of observabilityItems) {
       await server.stop(true);
     }
   }, 30_000);
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`rejects orphaned and mismatched ${item.name} source before writing registrations`, async (): Promise<void> => {
     const root = await fixture();
     const files = await itemFiles(item);
@@ -219,6 +229,7 @@ for (const item of observabilityItems) {
       await Bun.file(path.join(root, "features/installed-layout.ts")).exists()
     ).toBe(false);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

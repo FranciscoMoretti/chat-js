@@ -47,6 +47,7 @@ const metadataSchema = z.object({
   version: z.literal(SANDBOX_METADATA_VERSION),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readResourceRecords's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-continue, unicorn/max-nested-calls --
  * max-statements (#512): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readResourceRecords skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -94,6 +95,8 @@ const readResourceRecords = async (
   }
   return records;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalSandboxResources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -186,6 +189,8 @@ const readLocalSandboxResources = async (
     snapshotNames: [...new Set(snapshots)],
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeRecordedSnapshots's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable max-statements --
@@ -226,6 +231,8 @@ const removeRecordedSnapshots = async (
     }
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -288,4 +295,5 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/promise-function-async */

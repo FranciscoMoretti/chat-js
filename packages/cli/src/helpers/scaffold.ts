@@ -99,6 +99,7 @@ const shouldCopyChatAppFilePath = (
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceInFile's awaited sequencing and rejected-Promise behavior. */
 const replaceInFile = async (
   filePath: string,
   replacements: readonly (readonly [string, string])[]
@@ -114,14 +115,16 @@ const replaceInFile = async (
   }
   await writeFile(filePath, content);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resetInstallableTools's awaited sequencing and rejected-Promise behavior. */
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await syncTools(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writePnpmWorkspaceConfig's awaited sequencing and rejected-Promise behavior. */
 const writePnpmWorkspaceConfig = async (
   destination: string,
   options?: { readonly blockExoticSubdeps?: boolean }
@@ -150,7 +153,8 @@ const writePnpmWorkspaceConfig = async (
     ].join("\n")}\n`
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyChatTemplateSourceTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -213,6 +217,8 @@ const applyChatTemplateSourceTransforms = async (
     ),
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyElectronTemplateSourceTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -238,7 +244,8 @@ const applyElectronTemplateSourceTransforms = async (
     ],
   ]);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyChatTemplateFromRepoSource's awaited sequencing and rejected-Promise behavior. */
 const copyChatTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -249,7 +256,8 @@ const copyChatTemplateFromRepoSource = async (
   });
   await applyChatTemplateSourceTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyElectronTemplateFromRepoSource's awaited sequencing and rejected-Promise behavior. */
 const copyElectronTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -261,7 +269,8 @@ const copyElectronTemplateFromRepoSource = async (
   });
   await applyElectronTemplateSourceTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeChatAppFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -308,6 +317,8 @@ const normalizeChatAppFiles = async (
 
   await resetInstallableTools(destination);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeElectronFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -347,7 +358,8 @@ const normalizeElectronFiles = async (
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve excludeElectronFromRootTypecheck's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const excludeElectronFromRootTypecheck = async (
@@ -367,6 +379,8 @@ const excludeElectronFromRootTypecheck = async (
   tsconfig.exclude = [...new Set([...exclusions, "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromTemplate's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -501,6 +515,7 @@ const scaffoldFromTemplate = async (
   await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -512,6 +527,7 @@ interface ElectronScaffoldOptions {
   readonly packageManager?: PackageManager;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldElectron's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -563,6 +579,8 @@ const scaffoldElectron = async (
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromGit's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -581,6 +599,6 @@ const scaffoldFromGit = async (
     recursive: true,
   });
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export { scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate };

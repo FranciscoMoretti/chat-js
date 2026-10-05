@@ -57,6 +57,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
 
   const queryKey = trpc.mcp.listConnected.queryKey();
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: toggleEnabled }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
@@ -87,7 +88,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
   if (!installedFeatures.has("mcp")) {
     return null;
   }

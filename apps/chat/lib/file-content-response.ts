@@ -52,6 +52,7 @@ const parseRange = (
     ? { end, start }
     : null;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveRequestRange's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 const resolveRequestRange = async (
@@ -80,7 +81,8 @@ const resolveRequestRange = async (
   }
   return { fullSize: metadata.size, range };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createDownloadResponse's awaited sequencing and rejected-Promise behavior. */
 const createDownloadResponse = async (
   key: string,
   supportsRange: boolean,
@@ -112,7 +114,8 @@ const createDownloadResponse = async (
     status: range ? 206 : 200,
   });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFileContentResponse's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line max-statements -- Keep redirect selection, range rejection, streaming, and storage-error translation in one ordered request boundary; the range parser and response builder are separate helpers.
 export const createFileContentResponse = async (
   request: ReadonlyNativeSurface<Request>,
@@ -147,3 +150,4 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
+/* oxlint-enable oxc/no-async-await */

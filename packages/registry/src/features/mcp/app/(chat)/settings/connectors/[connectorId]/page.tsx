@@ -52,6 +52,7 @@ const ConnectorDetailsBodyFallback = () => (
   </div>
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorDetailsContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
@@ -82,6 +83,7 @@ const ConnectorDetailsContent = async ({
     </HydrationBoundary>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */

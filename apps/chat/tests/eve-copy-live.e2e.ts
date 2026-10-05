@@ -39,6 +39,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash-lite";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -283,6 +284,7 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -316,6 +318,7 @@ for (const attachment of [
       "What is the verification code in the document attached earlier? Reply only with the code. Do not call tools.",
   },
 ]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
     page,
   }, testInfo) => {
@@ -583,6 +586,7 @@ for (const attachment of [
     expect(originalCopyFile.status()).toBe(200);
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 

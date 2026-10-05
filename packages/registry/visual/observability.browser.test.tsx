@@ -23,6 +23,7 @@ vi.mock("next/navigation", () => ({
   usePathname: (): string => "/chat",
   useSearchParams: () => new URLSearchParams(),
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -74,6 +75,7 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     container.remove();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 

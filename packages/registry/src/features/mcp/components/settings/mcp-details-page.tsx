@@ -318,6 +318,7 @@ export const McpDetailsPage = ({
 
   const canEdit = connector?.userId !== null;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: toggleEnabled }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
@@ -348,7 +349,8 @@ export const McpDetailsPage = ({
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: updateApproval, isPending: isUpdatingApproval }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: updateApproval, isPending: isUpdatingApproval } = useMutation(
     trpc.mcp.update.mutationOptions({
       onError: (): void => {
@@ -359,7 +361,8 @@ export const McpDetailsPage = ({
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: deleteConnector }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
@@ -395,7 +398,7 @@ export const McpDetailsPage = ({
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
   const {
     data: discovery,
     isLoading: isLoadingDiscovery,

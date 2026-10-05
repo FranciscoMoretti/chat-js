@@ -32,6 +32,7 @@ beforeEach(() => {
     Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
@@ -65,6 +66,8 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.remove).toHaveBeenCalledWith([`/api/files/${key}`]);
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * id-length (#506): test("a failed batch retains its deletion fence without starving subsequent batches") uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * no-magic-numbers (#517): test("a failed batch retains its deletion fence without starving subsequent batches") uses 24, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -90,4 +93,5 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   );
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

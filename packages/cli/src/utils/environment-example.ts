@@ -8,6 +8,7 @@ import { preflight } from "./preflight";
 const notFound = -1;
 const startOfFile = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateEnvironmentExample's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Preserve the owned section boundary and verify unrelated user configuration in the same ordered operation.
 export const updateEnvironmentExample = async (
   cwd: string,
@@ -44,3 +45,4 @@ export const updateEnvironmentExample = async (
       : `${original}\n${block}\n`;
   await writeFile(file, result);
 };
+/* oxlint-enable oxc/no-async-await */

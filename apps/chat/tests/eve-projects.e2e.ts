@@ -68,6 +68,7 @@ await db.insert(project).values([
     userId: stranger,
   },
 ]);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db
     .delete(eveConversation)
@@ -75,6 +76,8 @@ afterAll(async () => {
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve conversation's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -86,6 +89,8 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -117,6 +122,8 @@ test("assignment, filtered history and removal retain native identity", async ()
     row.sessionId
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
@@ -158,6 +165,8 @@ test("both application checks and database constraints reject cross-owner assign
   ).rejects.toThrow();
   expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -185,6 +194,8 @@ test("deleting a project detaches its Eve conversations without erasing their se
     await assignEveConversationProject(owner, row.id, projectId)
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
@@ -220,6 +231,8 @@ test("conversation deletion fences assignment and removes metadata without touch
     await db.select().from(project).where(eq(project.id, ownProject))
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
@@ -265,6 +278,8 @@ test("fork paths share their chat project and retry cannot restore an old assign
       )
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -297,6 +312,8 @@ test("an unresolved fork retains its project route for creation recovery", async
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
@@ -339,6 +356,8 @@ test("project creation binds before dispatch and preserves its initial intent th
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
@@ -358,3 +377,4 @@ test("missing and foreign projects reject creation without leaving a reservation
   }
   expect(dispatch).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

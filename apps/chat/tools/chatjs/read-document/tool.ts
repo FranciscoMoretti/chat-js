@@ -8,6 +8,7 @@ import {
 /* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const readDocument = defineTool({
   description:
@@ -19,4 +20,5 @@ export const readDocument = defineTool({
   inputSchema: eveDocumentReadInput,
   outputSchema: eveDocumentReadResult,
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

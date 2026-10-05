@@ -125,6 +125,7 @@ const NO_RUN_SNAPSHOT = undefined;
 // oxlint-disable-next-line eslint/no-undefined -- RunRecord requires an error property even for a newly ready run; its exact no-error value is undefined, not a nullable error or omitted field.
 const NO_RUN_ERROR = undefined;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createMessageFromInput's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- The SDK input supplies mutable parts and metadata to the constructed message without cloning their identity; recursively readonly parts cannot satisfy the SDK message result. */
 const createMessageFromInput = async <
   Metadata,
@@ -164,6 +165,7 @@ const createMessageFromInput = async <
     role: input.role ?? "user",
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 abstract class ThreadCore<
@@ -265,6 +267,7 @@ abstract class ThreadCore<
     this.upsertMessage(message, parentId);
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve addToolApprovalResponse's awaited sequencing and rejected-Promise behavior. */
   public addToolApprovalResponse: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["addToolApprovalResponse"] = async (
@@ -282,7 +285,8 @@ abstract class ThreadCore<
     const run = this.getOrCreateRunForApproval(response.id);
     await run.chat.addToolApprovalResponse(response);
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve addToolOutput's awaited sequencing and rejected-Promise behavior. */
   public addToolOutput: AbstractChat<
     UIMessage<Metadata, Data, Tools>
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK addToolOutput callback is generic in the tool name and native output type; a deeply readonly extracted input fails both its callback assignment and SDK receiver.
@@ -290,7 +294,7 @@ abstract class ThreadCore<
     const run = this.getOrCreateRunForToolCall(output.toolCallId);
     await run.chat.addToolOutput(output);
   };
-
+  /* oxlint-enable oxc/no-async-await */
   public addToolResult: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["addToolResult"] = this.addToolOutput;
@@ -424,6 +428,7 @@ abstract class ThreadCore<
     }
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve regenerate's awaited sequencing and rejected-Promise behavior. */
   public regenerate: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["regenerate"] = async ({
@@ -460,7 +465,7 @@ abstract class ThreadCore<
     );
     await run.finished;
   };
-
+  /* oxlint-enable oxc/no-async-await */
   private getRegenerationTarget(messageId?: string): Readonly<{
     parentMessageId: string | null;
     target: UIMessage<Metadata, Data, Tools>;
@@ -508,6 +513,7 @@ abstract class ThreadCore<
     this.updateTree((tree): void => tree.updatePath(messages));
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeStream's awaited sequencing and rejected-Promise behavior. */
   public resumeStream: AbstractChat<
     UIMessage<Metadata, Data, Tools>
   >["resumeStream"] = async (options: RequestReader = {}): Promise<void> => {
@@ -518,14 +524,15 @@ abstract class ThreadCore<
     }
     await this.resumeRunRequest(run, options);
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeRun's awaited sequencing and rejected-Promise behavior. */
   public resumeRun = async (
     runId: string,
     options: RequestReader = {}
   ): Promise<void> => {
     await this.resumeRunRequest(this.#runs.require(runId), options);
   };
-
+  /* oxlint-enable oxc/no-async-await */
   public restore(
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- MessageTree.restore requires nodes containing canonical SDK messages; the snapshot and node containers are already readonly.
     snapshot: SnapshotInput<Readonly<UIMessage<Metadata, Data, Tools>>>
@@ -552,6 +559,7 @@ abstract class ThreadCore<
     this.updateTree((tree): void => tree.setPath(nextMessages));
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessage's awaited sequencing and rejected-Promise behavior. */
   public sendMessage = async (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed SDK send input includes canonical parts or FileList; deeply readonly input cannot satisfy message construction and SDK forwarding.
     input?: SendMessageInput<UIMessage<Metadata, Data, Tools>>,
@@ -588,7 +596,8 @@ abstract class ThreadCore<
     });
     await run.finished;
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startRun's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The start input forwards canonical SDK parts and metadata into message construction; a deeply readonly message changes its inferred metadata and fails the SDK input receiver.
   public startRun = async ({
     follow: requestedFollow,
@@ -627,7 +636,7 @@ abstract class ThreadCore<
       parentMessageId: message.id,
     });
   };
-
+  /* oxlint-enable oxc/no-async-await */
   private resolveFollow(
     requestedFollow: boolean | undefined,
     cursorId: string | null
@@ -698,9 +707,11 @@ abstract class ThreadCore<
     }
   };
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stop's awaited sequencing and rejected-Promise behavior. */
   public stop = async (): Promise<void> =>
     await (this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve());
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopAll's awaited sequencing and rejected-Promise behavior. */
   public async stopAll(): Promise<void> {
     await Promise.all(
       this.#runs.getActive().map(
@@ -714,11 +725,12 @@ abstract class ThreadCore<
       )
     );
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopRun's awaited sequencing and rejected-Promise behavior. */
   public async stopRun(runId: string): Promise<void> {
     await (this.#runs.get(runId)?.chat.stop() ?? Promise.resolve());
   }
-
+  /* oxlint-enable oxc/no-async-await */
   // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
   public stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
@@ -1071,10 +1083,12 @@ abstract class ThreadCore<
       this.#runs.select(id);
       this.updateTree((tree): void => tree.setCursor(parentMessageId));
     }
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return this.startRunRequest(
       spec,
       async (chat): Promise<void> => await chat.start(options)
     );
+    /* oxlint-enable oxc/no-async-await */
   }
 
   private startRunRequest(
@@ -1106,6 +1120,7 @@ abstract class ThreadCore<
     this.#runs.add(record);
     this.publish();
     const finished = this.publishWhenFinished(start(chat));
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
     // Callers can still await detached startRun calls through the finished promise.
     void (async (): Promise<void> => {
       try {
@@ -1114,6 +1129,7 @@ abstract class ThreadCore<
         // The original finished promise retains the rejection for callers.
       }
     })();
+    /* oxlint-enable oxc/no-async-await */
     record.finished = finished;
     return this.createRunHandle(record);
   }
@@ -1189,11 +1205,13 @@ abstract class ThreadCore<
     if (follow) {
       this.#runs.select(spec.id);
     }
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return this.startRunRequest(
       spec,
       async (chat): Promise<void> =>
         await chat.startWithMessage(message, options)
     );
+    /* oxlint-enable oxc/no-async-await */
   }
 
   private createRunHandle(
@@ -1205,6 +1223,7 @@ abstract class ThreadCore<
       spec: Readonly<Pick<ThreadRunSpec, "id">>;
     }>
   ): ThreadRunHandle {
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
     return {
       get finished(): Promise<void> {
         return run.finished;
@@ -1213,8 +1232,10 @@ abstract class ThreadCore<
       id: run.spec.id,
       stop: async (): Promise<void> => await run.chat.stop(),
     };
+    /* oxlint-enable oxc/no-async-await */
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve publishWhenFinished's awaited sequencing and rejected-Promise behavior. */
   private async publishWhenFinished<TValue>(
     promise: Readonly<Promise<TValue>>
   ): Promise<TValue> {
@@ -1224,7 +1245,8 @@ abstract class ThreadCore<
       this.publish();
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resumeRunRequest's awaited sequencing and rejected-Promise behavior. */
   private async resumeRunRequest(
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Resuming writes the new completion promise to the existing run record; readonly finished forbids this required live update.
     run: ResumableRun<UIMessage<Metadata, Data, Tools>>,
@@ -1237,6 +1259,7 @@ abstract class ThreadCore<
     this.publish();
     await finished;
   }
+  /* oxlint-enable oxc/no-async-await */
 }
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -42,6 +42,7 @@ const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveFork's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
 
  * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -76,6 +77,7 @@ const resolveFork = async (
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
 
 const creationFailure = (cause: unknown): Response => {
@@ -101,6 +103,7 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveConversationCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
 
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -249,4 +252,5 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

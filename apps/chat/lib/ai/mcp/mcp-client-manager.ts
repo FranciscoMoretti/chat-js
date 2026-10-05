@@ -37,6 +37,7 @@ const getOrCreateMcpClient = (
   return client;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeMcpClient's awaited sequencing and rejected-Promise behavior. */
 /**
  * Remove an MCP client from the cache and close it.
  * @param {string} id - Connector whose client should close.
@@ -60,7 +61,7 @@ const removeMcpClient = async (
     await client.close();
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 /**
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.

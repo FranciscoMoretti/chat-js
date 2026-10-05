@@ -55,6 +55,7 @@ const resolveVideoExtension = (mediaType?: string): string => {
   return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveVideoModel's awaited sequencing and rejected-Promise behavior. */
 const resolveVideoModel = async (
   modelProvider: Readonly<typeof eveToolModelProvider>,
   selectedModel?: string
@@ -77,7 +78,7 @@ const resolveVideoModel = async (
   }
   return modelId;
 };
-
+/* oxlint-enable oxc/no-async-await */
 type Context = Readonly<
   Pick<ToolContext, "session"> & { abortSignal: Readonly<AbortSignal> }
 >;
@@ -125,6 +126,7 @@ const videoRequest = (
     }),
   },
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeWithDomainFailure's awaited sequencing and rejected-Promise behavior. */
 // A completed generation followed by a storage failure is an explicit domain result.
 const storeWithDomainFailure = async (
   upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
@@ -136,6 +138,8 @@ const storeWithDomainFailure = async (
     return usage.fail();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storeGeneratedResult's awaited sequencing and rejected-Promise behavior. */
 const storeGeneratedResult = async (
   upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
   summary: Readonly<{ modelId: string; prompt: string; startMs: number }>,
@@ -156,6 +160,8 @@ const storeGeneratedResult = async (
     videoUrl: uploaded.url,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateAndStoreVideo's awaited sequencing and rejected-Promise behavior. */
 const generateAndStoreVideo = async (
   modelId: string,
   options: GenerationOptions,
@@ -185,6 +191,7 @@ const generateAndStoreVideo = async (
     integration.usage
   );
 };
+/* oxlint-enable oxc/no-async-await */
 const prepareGeneration = (
   input: Input,
   context: Context,
@@ -244,6 +251,7 @@ const throwVideoFailure = (
   throw error;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateVideoTool's awaited sequencing and rejected-Promise behavior. */
 export const generateVideoTool = defineTool({
   description:
     "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
@@ -291,3 +299,4 @@ export const generateVideoTool = defineTool({
   inputSchema: generateVideoInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable oxc/no-async-await */

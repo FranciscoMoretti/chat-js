@@ -28,6 +28,7 @@ const selectedModel = defineState<{ modelId?: string }>(
   () => ({})
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * typescript/prefer-readonly-parameter-types (#565): default export accepts context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -56,4 +57,5 @@ export default defineAgent({
     },
   }),
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */

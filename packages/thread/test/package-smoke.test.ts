@@ -42,6 +42,7 @@ const run = (command: readonly string[], cwd: string): void => {
     );
   }
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 
@@ -284,6 +285,7 @@ function checkNormalizedHook() {
   },
   smokeTimeout
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */

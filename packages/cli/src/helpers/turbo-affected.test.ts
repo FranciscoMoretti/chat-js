@@ -41,6 +41,7 @@ const git = (...args: string[]): string => {
   }
   return result.stdout.toString().trim();
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -80,13 +81,15 @@ beforeAll(async (): Promise<void> => {
   git("add", ".");
   git("commit", "-m", "Fixture baseline");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async (): Promise<void> => {
   if (fixture) {
     await rm(fixture, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ["apps/docs/index.mdx", false],   ["apps/site/app/page.tsx", false],   ["README.md", f's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -186,6 +189,7 @@ test.each([
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */

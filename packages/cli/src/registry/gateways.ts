@@ -16,6 +16,7 @@ export interface GatewaySelection {
   source: string;
   definition: GatewayDefinition;
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveGateway's awaited sequencing and rejected-Promise behavior. */
 export const resolveGateway = async (
   source: string,
   cwd = process.cwd()
@@ -37,3 +38,4 @@ export const resolveGateway = async (
   }
   return { definition, source: address };
 };
+/* oxlint-enable oxc/no-async-await */
