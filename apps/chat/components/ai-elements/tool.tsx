@@ -9,8 +9,8 @@ import {
   WrenchIcon,
   XCircleIcon,
 } from "lucide-react";
+import type { JSX as ReactJSX, ComponentProps, ReactNode } from "react";
 import React, { isValidElement } from "react";
-import type { ComponentProps, ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,9 +41,7 @@ interface ToolHeaderProps {
   className?: string;
 }
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
-
-const getStatusBadge = (status: ToolUIPart["state"]) => {
+const getStatusBadge = (status: ToolUIPart["state"]): ReactJSX.Element => {
   const labels: Record<ToolUIPart["state"], string> = {
     "approval-requested": "Awaiting Approval",
     "approval-responded": "Responded",
@@ -71,7 +69,6 @@ const getStatusBadge = (status: ToolUIPart["state"]) => {
     </Badge>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 

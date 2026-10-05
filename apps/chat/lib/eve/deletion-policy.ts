@@ -1,22 +1,27 @@
 const deletionSessionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/(?<operation>reset|stream|sandbox-identity)$/u;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null --
- * jsdoc/require-param (#534): parseDeletionSessionRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): parseDeletionSessionRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): parseDeletionSessionRequest uses 2, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep parseDeletionSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep parseDeletionSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/no-null (#570): parseDeletionSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+const SESSION_ID_GROUP_INDEX = 1;
+const OPERATION_GROUP_INDEX = 2;
+
+/* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): parseDeletionSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/**
+ * Internal deletion may retire and inspect; it must never start new work.
+ * @param path Native session endpoint requested under deletion authorization.
+ * @param method HTTP method that must match reset or read-only stream/sandbox inspection.
+ * @returns The matched native session ID for an allowed request, or null for any other path/method.
  */
-/** Internal deletion may retire and inspect; it must never start new work. */
-export const parseDeletionSessionRequest = (path: string, method: string) => {
+export const parseDeletionSessionRequest = (
+  path: string,
+  method: string
+): string | null => {
   const match = deletionSessionPath.exec(path);
   return match &&
-    ((match[2] === "reset" && method === "POST") ||
-      ((match[2] === "stream" || match[2] === "sandbox-identity") &&
+    ((match[OPERATION_GROUP_INDEX] === "reset" && method === "POST") ||
+      ((match[OPERATION_GROUP_INDEX] === "stream" ||
+        match[OPERATION_GROUP_INDEX] === "sandbox-identity") &&
         method === "GET"))
-    ? match[1]
+    ? match[SESSION_ID_GROUP_INDEX]
     : null;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

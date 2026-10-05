@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";
 
@@ -116,10 +118,11 @@ const sourceUses = async (cwd: string, name: string): Promise<boolean> => {
 // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. Keep this installation operation and its rollback or test assertions together.
 export const prepareDependencyUpdate = async (
   cwd: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-  plan: Pick<
-    Awaited<ReturnType<typeof planInstallation>>,
-    "items" | "replacements" | "providerChanges"
+  plan: ReadonlyInput<
+    Pick<
+      Awaited<ReturnType<typeof planInstallation>>,
+      "items" | "replacements" | "providerChanges"
+    >
   >
 ): Promise<() => Promise<void>> => {
   await preflight(cwd, [dependencyReceipt, "package.json"]);

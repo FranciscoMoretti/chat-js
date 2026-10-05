@@ -14,7 +14,7 @@ import { useTRPC } from "@/trpc/react";
 export const useEveMetadataMutations = () => {
   const cache = useQueryClient();
   const trpc = useTRPC();
-  const settle = async () => {
+  const settle = async (): Promise<void> => {
     if (pendingEveMetadataMutations(cache) > 1) {
       return;
     }
@@ -25,7 +25,7 @@ export const useEveMetadataMutations = () => {
   };
   const optimistic = (
     id: string,
-    patch: { title?: string; isPinned?: boolean }
+    patch: { readonly title?: string; readonly isPinned?: boolean }
   ) =>
     optimisticEveMetadata(
       cache,

@@ -9,51 +9,54 @@ import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 import { z } from "zod";
 
+const MODEL_DISCOVERY_TIMEOUT_MS = 10_000;
 const TRAILING_SLASHES_REGEX = /\/+$/u;
 
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-const litellmModelsResponseSchema = z.object({
-  data: z.array(
-    z.object({
-      created: z.number().optional(),
-      id: z.string(),
-      object: z.string().optional(),
-      owned_by: z.string().optional(),
-    })
-  ),
+const litellmModelSchema = z.object({
+  created: z.number().optional(),
+  id: z.string(),
+  object: z.string().optional(),
+  owned_by: z.string().optional(),
 });
-/* oxlint-enable unicorn/max-nested-calls */
+const litellmModelsResponseSchema = z.object({
+  data: z.array(litellmModelSchema),
+});
 
 type LiteLLMModelResponse = z.infer<
   typeof litellmModelsResponseSchema
 >["data"][number];
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const getModelsUrl = (baseURL: string): string => {
+  const normalizedBaseURL = baseURL.replace(TRAILING_SLASHES_REGEX, "");
+  if (normalizedBaseURL.endsWith("/v1")) {
+    return `${normalizedBaseURL}/models`;
+  }
+  return `${normalizedBaseURL}/v1/models`;
+};
+
+const UNKNOWN_MODEL_LIMIT = 0;
 const toAiGatewayModel = (model: LiteLLMModelResponse): AiGatewayModel => ({
-  context_window: 0,
-  created: model.created ?? 0,
+  context_window: UNKNOWN_MODEL_LIMIT,
+  created: model.created ?? UNKNOWN_MODEL_LIMIT,
   description: "",
   id: model.id,
-  max_tokens: 0,
+  max_tokens: UNKNOWN_MODEL_LIMIT,
   name: model.id,
   object: "model",
   owned_by: model.owned_by ?? "litellm",
   pricing: {},
   type: "language",
 });
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 class LiteLLMGateway
   extends GatewayRuntime
   implements GatewayProvider<"litellm", string, string, never>
 {
   public readonly type = "litellm" as const;
 
-  private getProvider() {
+  private getProvider(): ReturnType<typeof createOpenAICompatible> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
     if (!(typeof baseURL === "string" && baseURL !== "")) {
@@ -90,16 +93,6 @@ class LiteLLMGateway
     return this.env.LITELLM_BASE_URL;
   }
 
-  // The URL shape is provider-defined and independent of instance state.
-  // eslint-disable-next-line class-methods-use-this -- Review debt #623: this provider URL helper is independent of instance state; review conversion to a static or module helper.
-  private getModelsUrl(baseURL: string): string {
-    const normalizedBaseURL = baseURL.replace(TRAILING_SLASHES_REGEX, "");
-    if (normalizedBaseURL.endsWith("/v1")) {
-      return `${normalizedBaseURL}/models`;
-    }
-    return `${normalizedBaseURL}/v1/models`;
-  }
-
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
@@ -109,7 +102,7 @@ class LiteLLMGateway
       return [...this.getFallbackModels(this.type)];
     }
 
-    const url = this.getModelsUrl(baseURL);
+    const url = getModelsUrl(baseURL);
     this.log.debug({ url }, "Fetching models from LiteLLM proxy");
 
     try {
@@ -122,7 +115,7 @@ class LiteLLMGateway
 
       const response = await this.fetch(url, {
         headers,
-        signal: AbortSignal.timeout(10_000),
+        signal: AbortSignal.timeout(MODEL_DISCOVERY_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -151,8 +144,6 @@ class LiteLLMGateway
     }
   }
 }
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 export { LiteLLMGateway as Gateway, LiteLLMGateway };

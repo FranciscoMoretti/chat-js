@@ -32,6 +32,22 @@ import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
 
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+
+const EMPTY_DEPENDENCY_COUNT = 0;
+
+const registryMetadataKind = (metadata: unknown): unknown =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "kind" in metadata &&
+  metadata.kind;
+
 const validateRequestedKind = (
   source: string,
   kind: string | undefined,
@@ -45,22 +61,28 @@ const validateRequestedKind = (
 };
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/** Resolve the complete target installation before any source files are written. */
+/**
+ * Resolve the complete target installation before any source files are written.
+ * @param cwd Project directory used for provider, feature and tool preflight.
+ * @param input Requested registry selections validated before dependency resolution.
+ * @param options Whether this is a fresh installation and replacements are permitted.
+ * @returns Resolved items, validated selections, target changes and registry sources.
+ */
 export const planInstallation = async (
   cwd: string,
-  input: InstallationSelection,
-  options: { fresh?: boolean; replace?: boolean; documents?: boolean } = {}
+  input: ReadonlyNative<InstallationSelection>,
+  options: {
+    readonly fresh?: boolean;
+    readonly replace?: boolean;
+    readonly documents?: boolean;
+  } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
@@ -88,16 +110,15 @@ export const planInstallation = async (
     const pending = items.get(source) ?? readItem(source, cwd);
     items.set(source, pending);
     const item = await pending;
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    validateRequestedKind(source, kind, item.meta?.chatjs?.kind);
+    const metadata: unknown = item.meta?.chatjs;
+    validateRequestedKind(source, kind, registryMetadataKind(metadata));
     if (sources.has(source)) {
       return;
     }
     sources.add(source);
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    switch (item.meta?.chatjs?.kind) {
+    switch (registryMetadataKind(metadata)) {
       case "feature": {
-        const definition = featureDefinitionSchema.parse(item.meta.chatjs);
+        const definition = featureDefinitionSchema.parse(metadata);
         const previous = features.get(definition.id);
         if (
           previous &&
@@ -111,7 +132,7 @@ export const planInstallation = async (
         break;
       }
       case "tool": {
-        const definition = toolDefinitionSchema.parse(item.meta.chatjs);
+        const definition = toolDefinitionSchema.parse(metadata);
         const previous = expected.get(definition.id);
         if (
           previous &&
@@ -125,12 +146,12 @@ export const planInstallation = async (
         break;
       }
       case "gateway": {
-        gateway = gatewayDefinitionSchema.parse(item.meta.chatjs);
+        gateway = gatewayDefinitionSchema.parse(metadata);
         selectProvider(gateway);
         break;
       }
       case "storage": {
-        selectProvider(storageDefinitionSchema.parse(item.meta.chatjs));
+        selectProvider(storageDefinitionSchema.parse(metadata));
         break;
       }
       default: {
@@ -138,17 +159,18 @@ export const planInstallation = async (
       }
     }
     await Promise.all(
-      (item.registryDependencies ?? []).map((dependency): Promise<void> =>
-        visit(dependency)
+      (item.registryDependencies ?? []).map(
+        async (dependency): Promise<void> => await visit(dependency)
       )
     );
   };
   await Promise.all([
-    ...selection.tools.map((source): Promise<void> =>
-      visit(itemAddress(source, "tool"))
+    ...selection.tools.map(
+      async (source): Promise<void> => await visit(itemAddress(source, "tool"))
     ),
-    ...selection.features.map((source): Promise<void> =>
-      visit(itemAddress(source, "tool"), "feature")
+    ...selection.features.map(
+      async (source): Promise<void> =>
+        await visit(itemAddress(source, "tool"), "feature")
     ),
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
@@ -230,7 +252,7 @@ export const planInstallation = async (
       "The selected tools require documents. Omit --no-documents or omit document-dependent tools."
     );
   }
-  validateToolInstallation(cwd, target());
+  await validateToolInstallation(cwd, target());
   const installedFeatures =
     options.fresh === true
       ? []
@@ -276,7 +298,7 @@ export const planInstallation = async (
     const missing =
       feature.requiresFeatures?.filter((id): boolean => !featureIds.has(id)) ??
       [];
-    if (missing.length > 0) {
+    if (missing.length > EMPTY_DEPENDENCY_COUNT) {
       throw new Error(
         `${feature.id} requires installed features: ${missing.join(", ")}`
       );
@@ -305,14 +327,10 @@ export const planInstallation = async (
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */

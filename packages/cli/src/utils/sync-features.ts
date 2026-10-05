@@ -24,27 +24,36 @@ import {
   planObservability,
 } from "./sync-observability";
 
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Extend only when an implementation has complete installer/sync integration. */
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+const NO_UNSUPPORTED_FEATURES = 0;
+
+/**
+ * Extend only when an implementation has complete installer/sync integration.
+ * @param features Resolved feature metadata to validate without mutation.
+ */
 const assertSupportedFeatureInstallation = (
-  features: readonly FeatureDefinition[]
+  features: readonly ReadonlyNative<FeatureDefinition>[]
 ): void => {
   const unsupported = features.filter(
-    (feature): boolean =>
+    (feature: ReadonlyNative<FeatureDefinition>): boolean =>
       !["mcp", "attachment-uploads"].includes(feature.id) &&
-      !observabilityItems.some((item): boolean => item.name === feature.id)
+      !observabilityItems.some(
+        (item: ReadonlyNative<(typeof observabilityItems)[number]>): boolean =>
+          item.name === feature.id
+      )
   );
-  if (unsupported.length > 0) {
+  if (unsupported.length > NO_UNSUPPORTED_FEATURES) {
     throw new Error(
-      `Feature installation is not supported yet: ${unsupported.map((feature) => feature.id).join(", ")}. Supported features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.`
+      `Feature installation is not supported yet: ${unsupported.map((feature: ReadonlyNative<FeatureDefinition>) => feature.id).join(", ")}. Supported features: MCP, attachment uploads, Vercel Analytics, Vercel Speed Insights and Langfuse.`
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
 
 const exists = async (file: string): Promise<boolean> => {
   try {
@@ -58,48 +67,53 @@ const exists = async (file: string): Promise<boolean> => {
   }
 };
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+interface ContributionBinding {
+  binding: string;
+  bindings: ts.NamedImportBindings | undefined;
+  specifier: ts.ImportSpecifier | undefined;
+}
+
 const contributionBinding = (
-  parsed: ts.SourceFile,
+  parsed: ReadonlyNative<ts.SourceFile>,
   marker: string,
   symbol: string
-) => {
+): ContributionBinding => {
   const imports = parsed.statements.filter(ts.isImportDeclaration);
   const imported = imports.find(
-    (node): boolean =>
+    (node: ReadonlyNative<ts.ImportDeclaration>): boolean =>
       ts.isStringLiteral(node.moduleSpecifier) &&
       node.moduleSpecifier.text === marker &&
       // oxlint-disable-next-line typescript/no-deprecated -- The installer reads the existing TypeScript import-clause flag to preserve type-only imports across supported templates.
-      !node.importClause?.isTypeOnly
+      node.importClause?.isTypeOnly !== true
   );
   const bindings = imported?.importClause?.namedBindings;
-  const specifier =
-    bindings && ts.isNamedImports(bindings)
-      ? bindings.elements.find(
-          (item): boolean =>
-            !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
-        )
-      : undefined;
+  const namedBindings =
+    bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
+  const specifier = namedBindings.find(
+    (item: ReadonlyNative<ts.ImportSpecifier>): boolean =>
+      !item.isTypeOnly && (item.propertyName ?? item.name).text === symbol
+  );
   const binding =
     bindings && ts.isNamespaceImport(bindings)
       ? `${bindings.name.text}.${symbol}`
       : (specifier?.name.text ?? symbol);
   return { binding, bindings, specifier };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
+interface PlannedContribution {
+  content: string;
+  file: string;
+}
+interface SourceEdit {
+  readonly start: number;
+  readonly text: string;
+}
+const LAST_ELEMENT = -1;
+const CLOSING_DELIMITER_WIDTH = 1;
+const SOURCE_START = 0;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Plan both application-owned UI edits before writing any registrations.
 const planContribution = async (
   file: string,
@@ -109,7 +123,7 @@ const planContribution = async (
   id: string | readonly string[],
   entry: (binding: string) => string,
   sourceOverride?: string
-) => {
+): Promise<PlannedContribution> => {
   const source = sourceOverride ?? (await readFile(file, "utf-8"));
   const parsed = ts.createSourceFile(
     file,
@@ -119,8 +133,14 @@ const planContribution = async (
   );
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    .flatMap((statement) => statement.declarationList.declarations)
-    .find((item): boolean => item.name.getText(parsed) === name);
+    .flatMap(
+      (statement: ReadonlyNative<ts.VariableStatement>) =>
+        statement.declarationList.declarations
+    )
+    .find(
+      (item: ReadonlyNative<ts.VariableDeclaration>): boolean =>
+        item.name.getText(parsed) === name
+    );
   if (
     !declaration?.initializer ||
     !ts.isArrayLiteralExpression(declaration.initializer)
@@ -139,13 +159,13 @@ const planContribution = async (
   // The array determines presence; an unused import is not a contribution.
   if (
     array.elements.some(
-      (item): boolean =>
+      (item: ReadonlyNative<ts.Expression>): boolean =>
         item.getText(parsed) === binding ||
         (ts.isSpreadElement(item) &&
           item.expression.getText(parsed) === `${binding}.controls`) ||
         (ts.isObjectLiteralExpression(item) &&
           item.properties.some(
-            (prop): boolean =>
+            (prop: ReadonlyNative<ts.ObjectLiteralElementLike>): boolean =>
               ts.isPropertyAssignment(prop) &&
               ((prop.name
                 .getText(parsed)
@@ -160,11 +180,11 @@ const planContribution = async (
   ) {
     return { content: source, file };
   }
-  const edits: { start: number; text: string }[] = [];
+  const edits: SourceEdit[] = [];
   if (!specifier && !(bindings && ts.isNamespaceImport(bindings))) {
     // Avoid overwriting a user binding with the same name from another module.
     const identifiers = new Set<string>();
-    const collect = (node: ts.Node): void => {
+    const collect = (node: ReadonlyNative<ts.Node>): void => {
       if (ts.isIdentifier(node)) {
         identifiers.add(node.text);
       }
@@ -177,42 +197,48 @@ const planContribution = async (
       );
     }
     if (bindings && ts.isNamedImports(bindings)) {
-      const last = bindings.elements.at(-1);
+      const last = bindings.elements.at(LAST_ELEMENT);
       if (last && !bindings.elements.hasTrailingComma) {
         edits.push({ start: last.end, text: "," });
       }
-      edits.push({ start: bindings.end - 1, text: ` ${symbol} ` });
+      edits.push({
+        start: bindings.end - CLOSING_DELIMITER_WIDTH,
+        text: ` ${symbol} `,
+      });
     } else {
       const importEnd =
         parsed.statements.findLast(
-          (node): boolean =>
+          (node: ReadonlyNative<ts.Statement>): boolean =>
             ts.isImportDeclaration(node) ||
             (ts.isExpressionStatement(node) &&
               ts.isStringLiteral(node.expression))
-        )?.end ?? 0;
+        )?.end ?? SOURCE_START;
       edits.push({
         start: importEnd,
         text: `\nimport { ${symbol} } from "${marker}";\n`,
       });
     }
   }
-  edits.push({ start: array.end - 1, text: `\n  ${entry(binding)},\n` });
-  const last = array.elements.at(-1);
+  edits.push({
+    start: array.end - CLOSING_DELIMITER_WIDTH,
+    text: `\n  ${entry(binding)},\n`,
+  });
+  const last = array.elements.at(LAST_ELEMENT);
   if (last && !array.elements.hasTrailingComma) {
     edits.push({ start: last.end, text: "," });
   }
   let content = source;
   for (const edit of edits.toSorted(
-    (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+    (leftEdit: SourceEdit, rightEdit: SourceEdit): number =>
+      rightEdit.start - leftEdit.start
   )) {
     content =
-      content.slice(0, edit.start) + edit.text + content.slice(edit.start);
+      content.slice(SOURCE_START, edit.start) +
+      edit.text +
+      content.slice(edit.start);
   }
   return { content, file };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

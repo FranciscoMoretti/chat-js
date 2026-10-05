@@ -2,6 +2,7 @@
 
 import { LogIn, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import type { JSX as ReactJSX } from "react";
 import React, { useState } from "react";
 
 import { InternalLink } from "@/components/internal-link";
@@ -15,7 +16,7 @@ interface LoginCtaBannerProps {
   message: string;
   variant?: "default" | "amber" | "red";
 }
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- LoginCtaBanner: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- LoginCtaBanner: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const LoginCtaBanner = ({
   message,
@@ -23,7 +24,7 @@ export const LoginCtaBanner = ({
   variant = "default",
   dismissible = false,
   compact = false,
-}: LoginCtaBannerProps) => {
+}: LoginCtaBannerProps): ReactJSX.Element | null => {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) {
@@ -101,4 +102,4 @@ export const LoginCtaBanner = ({
     </AnimatePresence>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

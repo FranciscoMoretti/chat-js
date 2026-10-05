@@ -12,11 +12,16 @@ const environment = {
   vercel: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]],
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const isGatewayType = (id: string): id is keyof typeof environment =>
+  Object.hasOwn(environment, id);
+
 export const builtInGateways = Object.entries(gatewayMetadata).map(
-  ([id, metadata]) => {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    const name = id as keyof typeof environment;
+  ([id, metadata]: Readonly<
+    [string, (typeof gatewayMetadata)[keyof typeof gatewayMetadata]]
+  >) => {
+    if (!isGatewayType(id)) {
+      throw new Error(`Unexpected gateway metadata key: ${id}`);
+    }
     let optionalEnv: string[] = [];
     if (id === "litellm") {
       optionalEnv = ["LITELLM_API_KEY"];
@@ -43,8 +48,8 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
             video: metadata.supportsVideo,
           },
           contractVersion: 1,
-          defaults: GATEWAY_MODEL_DEFAULTS[name],
-          envRequirements: [{ options: environment[name] }],
+          defaults: GATEWAY_MODEL_DEFAULTS[id],
+          envRequirements: [{ options: environment[id] }],
           id,
           kind: "gateway",
           optionalEnv,
@@ -56,4 +61,3 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
     };
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

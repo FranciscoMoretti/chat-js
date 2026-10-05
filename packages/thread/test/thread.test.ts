@@ -2,21 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import type { UIMessage } from "ai";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { getMessageText } from "../src/message-utils";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { Thread } from "../src/thread";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { getMessageText } from "#thread-source/message-utils";
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import { Thread } from "#thread-source/thread";
 import {
   createThreadStateSnapshot,
   MemoryThreadState,
-} from "../src/thread-state";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { ThreadState } from "../src/types";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#thread-source/thread-state";
+import type { ThreadState } from "#thread-source/types";
+
 import { RecordingThreadState } from "./support/recording-thread-state";
 import { StateBackedThread } from "./support/state-backed-thread";
 import { ControlledTransport } from "./support/thread-controlled-transport";
@@ -43,16 +37,14 @@ const assistantWithTool = (id: string): UIMessage => ({
   role: "assistant",
 });
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const requireMessage = (message: UIMessage | undefined) => {
+const requireMessage = <TMessage extends ReadonlyMessageValue<UIMessage>>(
+  message: TMessage | undefined
+): TMessage => {
   if (!message) {
     throw new Error("Expected message to exist");
   }
   return message;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
@@ -77,8 +69,6 @@ const waitFor = async (
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("Thread", (): void => {
   test("creates a complete initial snapshot for custom state adapters", (): void => {
     const snapshot = createThreadStateSnapshot({
@@ -86,7 +76,11 @@ describe("Thread", (): void => {
     });
 
     expect(snapshot.cursorId).toBe("user-1");
-    expect(snapshot.messages.map(({ id }): string => id)).toEqual(["user-1"]);
+    expect(
+      snapshot.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-1"]);
     expect(snapshot.messagesById["user-1"]?.id).toBe("user-1");
     expect(snapshot.parentById["user-1"]).toBeNull();
     expect(snapshot.rootIds).toEqual(["user-1"]);
@@ -107,9 +101,11 @@ describe("Thread", (): void => {
     thread.setCursor("user-1");
 
     expect(state.getSnapshot().cursorId).toBe("user-1");
-    expect(state.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "user-1",
-    ]);
+    expect(
+      state
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-1"]);
     expect(state.updateCount).toBe(3);
     expect(notifications).toBe(2);
     unsubscribe();
@@ -156,9 +152,11 @@ describe("Thread", (): void => {
     transport.emitText(0, "assistant-1", "first");
     await Promise.all([primary.finished, alternative.finished]);
 
-    expect(chat.getSiblings("assistant-1").map(({ id }): string => id)).toEqual(
-      ["assistant-1", "assistant-2"]
-    );
+    expect(
+      chat
+        .getSiblings("assistant-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-1");
   });
 
@@ -172,9 +170,11 @@ describe("Thread", (): void => {
 
     const runId = run.id;
     expect(chat.getChildren("user-1")).toEqual([]);
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "user-1",
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-1"]);
     expect(run.getSnapshot()?.status).toBe("submitted");
     transport.emitText(0, "server-assistant", "claimed");
     await run.finished;
@@ -185,7 +185,10 @@ describe("Thread", (): void => {
     const snapshotMessage = chat
       .getSnapshot()
       .nodes.find(
-        ({ message }): boolean => message.id === "server-assistant"
+        ({
+          message,
+        }: Readonly<{ message: Readonly<Pick<UIMessage, "id">> }>): boolean =>
+          message.id === "server-assistant"
       )?.message;
     expect(getMessageText(requireMessage(snapshotMessage))).toBe("claimed");
   });
@@ -234,7 +237,7 @@ describe("Thread", (): void => {
     expect(chat.getParent("response-1")?.id).toBe("context-1");
   });
 
-  test("rejects a bare run from an assistant before transport", async (): Promise<void> => {
+  test("rejects a bare run from an assistant before transport", (): void => {
     const transport = new ControlledTransport();
     const parent: UIMessage = {
       id: "assistant-parent",
@@ -243,8 +246,7 @@ describe("Thread", (): void => {
     };
     const chat = new Thread({ messages: [parent], transport });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.startRun({ from: parent.id })).rejects.toThrow(
+    expect(chat.startRun({ from: parent.id })).rejects.toThrow(
       "Cannot start a new run directly from assistant message assistant-parent; attach an input message first"
     );
     expect(transport.requests).toHaveLength(0);
@@ -266,7 +268,9 @@ describe("Thread", (): void => {
     expect(transport.requests[0]?.options.trigger).toBe("submit-message");
     expect(transport.requests[0]?.options.messageId).toBeUndefined();
     expect(
-      transport.requests[0]?.options.messages.map(({ id }): string => id)
+      transport.requests[0]?.options.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
     ).toEqual(["user-1", "assistant-input"]);
     expect(chat.getParent("assistant-input")?.id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("assistant-input");
@@ -274,9 +278,11 @@ describe("Thread", (): void => {
     transport.emitText(0, "assistant-input", "continued");
     await sending;
 
-    expect(chat.getChildren("user-1").map(({ id }): string => id)).toEqual([
-      "assistant-input",
-    ]);
+    expect(
+      chat
+        .getChildren("user-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-input"]);
     expect(
       getMessageText(requireMessage(chat.getMessage("assistant-input")))
     ).toBe("prebuilt responsecontinued");
@@ -301,9 +307,11 @@ describe("Thread", (): void => {
     transport.emitText(0, "assistant-1", " continued");
     await sending;
 
-    expect(chat.getChildren("user-1").map(({ id }): string => id)).toEqual([
-      "assistant-1",
-    ]);
+    expect(
+      chat
+        .getChildren("user-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-1"]);
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
       "assistant-1 continued"
     );
@@ -323,11 +331,11 @@ describe("Thread", (): void => {
     ]);
 
     expect(chat.getMessage("assistant-2")?.id).toBe("assistant-2");
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "user-1",
-      "assistant-1",
-      "user-3",
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-1", "assistant-1", "user-3"]);
   });
 
   test("does not follow a delayed run after the active path changes", async (): Promise<void> => {
@@ -346,9 +354,15 @@ describe("Thread", (): void => {
 
   test("reports the completed run path to onFinish after navigation", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    let finishedMessages: UIMessage[] | undefined;
+    let finishedMessages:
+      | readonly ReadonlyMessageValue<UIMessage>[]
+      | undefined;
     const chat = new Thread({
-      onFinish: ({ messages }): void => {
+      onFinish: ({
+        messages,
+      }: Readonly<{
+        messages: readonly ReadonlyMessageValue<UIMessage>[];
+      }>): void => {
         finishedMessages = messages;
       },
       transport,
@@ -361,10 +375,11 @@ describe("Thread", (): void => {
     transport.emitText(0, "assistant-1", "complete");
     await run.finished;
 
-    expect(finishedMessages?.map(({ id }): string => id)).toEqual([
-      "user-1",
-      "assistant-1",
-    ]);
+    expect(
+      finishedMessages?.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
+    ).toEqual(["user-1", "assistant-1"]);
   });
 
   test("rejects concurrency before adding another user message", async (): Promise<void> => {
@@ -377,8 +392,7 @@ describe("Thread", (): void => {
       message: user("user-1"),
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.startRun({
         message: user("user-2"),
       })
@@ -407,8 +421,7 @@ describe("Thread", (): void => {
     await waitFor((): boolean => transport.requests.length === 1);
     const runCount = chat.getSnapshot().runs.length;
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.sendMessage(undefined, {
         tree: { follow: false, from: "assistant-ready" },
       })
@@ -450,17 +463,20 @@ describe("Thread", (): void => {
 
     expect(chat.getSnapshot().status).toBe("submitted");
     expect(chat.getSnapshot().cursorId).toBe("user-1");
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "user-1",
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-1"]);
 
     transport.emit(1, { messageId: "assistant-2", type: "start" });
     await waitFor((): boolean => chat.getSnapshot().cursorId === "assistant-2");
 
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "user-1",
-      "assistant-2",
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["user-1", "assistant-2"]);
     await chat.stop();
     expect(transport.requests[1]?.abortSignal?.aborted).toBeTrue();
     expect(transport.requests[0]?.abortSignal?.aborted).toBeFalse();
@@ -510,10 +526,11 @@ describe("Thread", (): void => {
     transport.emitText(1, "assistant-2", "second");
     await Promise.all([second.finished, third.finished]);
 
-    expect(chat.getChildren("user-1").map(({ id }): string => id)).toEqual([
-      "assistant-2",
-      "assistant-3",
-    ]);
+    expect(
+      chat
+        .getChildren("user-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-2", "assistant-3"]);
   });
 
   test("preserves an error when resume finds no stream", async (): Promise<void> => {
@@ -619,9 +636,11 @@ describe("Thread", (): void => {
     expect(getMessageText(requireMessage(chat.getMessage("assistant-1")))).toBe(
       "complete replay"
     );
-    expect(chat.getChildren("user-1").map(({ id }): string => id)).toEqual([
-      "assistant-1",
-    ]);
+    expect(
+      chat
+        .getChildren("user-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-1"]);
   });
 
   test("keeps canonical identity and metadata when a replay start omits them", async (): Promise<void> => {
@@ -689,7 +708,10 @@ describe("Thread", (): void => {
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
     expect(
-      message.parts.filter((part) => part.type === "dynamic-tool")
+      message.parts.filter(
+        (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
+          part.type === "dynamic-tool"
+      )
       // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     ).toEqual([
       expect.objectContaining({
@@ -725,7 +747,7 @@ describe("Thread", (): void => {
     const transport = new ControlledTransport();
     const state = new RecordingThreadState([]);
     const chat = new StateBackedThread(state, transport);
-    chat.sendAutomaticallyWhen = () => {
+    chat.sendAutomaticallyWhen = (): never => {
       throw new Error("application callback failed");
     };
     let publishes = 0;
@@ -737,8 +759,7 @@ describe("Thread", (): void => {
     const publishesBeforeCompletion = publishes;
     transport.emitText(0, "assistant-1", "complete");
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(run.finished).rejects.toThrow("application callback failed");
+    expect(run.finished).rejects.toThrow("application callback failed");
     expect(publishes).toBeGreaterThan(publishesBeforeCompletion);
     unsubscribe();
   });
@@ -758,14 +779,18 @@ describe("Thread", (): void => {
     expect(transport.requests[1]?.options.trigger).toBe("regenerate-message");
     expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
     expect(
-      transport.requests[1]?.options.messages.map(({ id }): string => id)
+      transport.requests[1]?.options.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
     ).toEqual(["user-1"]);
     transport.emitText(1, "assistant-2", "second");
     await regeneration;
 
-    expect(chat.getSiblings("assistant-1").map(({ id }): string => id)).toEqual(
-      ["assistant-1", "assistant-2"]
-    );
+    expect(
+      chat
+        .getSiblings("assistant-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
 
@@ -785,9 +810,11 @@ describe("Thread", (): void => {
     transport.emitText(0, "assistant-2", "second");
     await regeneration;
 
-    expect(chat.getSiblings("assistant-1").map(({ id }): string => id)).toEqual(
-      ["assistant-1", "assistant-2"]
-    );
+    expect(
+      chat
+        .getSiblings("assistant-1")
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["assistant-1", "assistant-2"]);
     expect(chat.getSnapshot().cursorId).toBe("assistant-2");
   });
 
@@ -807,20 +834,21 @@ describe("Thread", (): void => {
 
     expect(chat.getParent("assistant-2")?.id).toBe("user-1");
     expect(chat.getSnapshot().cursorId).toBe("other-root");
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      "other-root",
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual(["other-root"]);
   });
 
-  test("rejects an unknown explicit regeneration target", async (): Promise<void> => {
+  test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
       transport,
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.regenerate({ messageId: "missing" })).rejects.toThrow(
+    expect(chat.regenerate({ messageId: "missing" })).rejects.toThrow(
       "message missing not found"
     );
     expect(transport.requests).toHaveLength(0);
@@ -847,14 +875,18 @@ describe("Thread", (): void => {
     expect(transport.requests[0]?.options.trigger).toBe("regenerate-message");
     expect(transport.requests[0]?.options.messageId).toBe(assistantChild.id);
     expect(
-      transport.requests[0]?.options.messages.map(({ id }): string => id)
+      transport.requests[0]?.options.messages.map(
+        ({ id }: Readonly<Pick<UIMessage, "id">>): string => id
+      )
     ).toEqual([assistantParent.id]);
 
     transport.emitText(0, "assistant-replacement", "replacement");
     await regeneration;
 
     expect(
-      chat.getChildren(assistantParent.id).map(({ id }): string => id)
+      chat
+        .getChildren(assistantParent.id)
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual([assistantChild.id, "assistant-replacement"]);
     expect(chat.getMessage(assistantParent.id)).toEqual(assistantParent);
     expect(chat.getMessage(assistantChild.id)).toEqual(assistantChild);
@@ -882,10 +914,11 @@ describe("Thread", (): void => {
     });
 
     expect(chat.getParent(assistantChild.id)?.id).toBe(assistantParent.id);
-    expect(chat.getSnapshot().messages.map(({ id }): string => id)).toEqual([
-      assistantParent.id,
-      assistantChild.id,
-    ]);
+    expect(
+      chat
+        .getSnapshot()
+        .messages.map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
+    ).toEqual([assistantParent.id, assistantChild.id]);
   });
 
   test("routes tool output and approval to their owning runs", async (): Promise<void> => {
@@ -1009,19 +1042,17 @@ describe("Thread", (): void => {
     );
   });
 
-  test("rejects missing restored tool and approval ownership", async (): Promise<void> => {
+  test("rejects missing restored tool and approval ownership", (): void => {
     const chat = new Thread({ messages: [user("user-1")] });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolOutput({
         output: "missing",
         tool: "test-tool",
         toolCallId: "missing-tool",
       })
     ).rejects.toThrow("No run owns tool call missing-tool");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolApprovalResponse({
         approved: true,
         id: "missing-approval",
@@ -1029,7 +1060,7 @@ describe("Thread", (): void => {
     ).rejects.toThrow("No run owns tool approval missing-approval");
   });
 
-  test("rejects duplicate restored tool and approval ownership", async (): Promise<void> => {
+  test("rejects duplicate restored tool and approval ownership", (): void => {
     const chat = new Thread({
       initialTree: {
         cursorId: "assistant-a",
@@ -1041,8 +1072,7 @@ describe("Thread", (): void => {
       },
     });
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolOutput({
         output: "duplicate",
         tool: "test-tool",
@@ -1051,8 +1081,7 @@ describe("Thread", (): void => {
     ).rejects.toThrow(
       "Tool call shared-tool appears in more than one assistant message"
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       chat.addToolApprovalResponse({
         approved: true,
         id: "shared-approval",
@@ -1080,10 +1109,7 @@ describe("Thread", (): void => {
     });
     await waitFor((): boolean => transport.requests.length === 2);
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.resumeRun(completed.id)).rejects.toThrow(
-      "max active runs"
-    );
+    expect(chat.resumeRun(completed.id)).rejects.toThrow("max active runs");
     transport.finish(1);
     await active.finished;
   });
@@ -1105,8 +1131,7 @@ describe("Thread", (): void => {
     });
     await waitFor((): boolean => transport.requests.length === 2);
 
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(chat.resumeRun(completed.id)).rejects.toThrow(
+    expect(chat.resumeRun(completed.id)).rejects.toThrow(
       "Cannot start another run from user-1"
     );
     transport.finish(1);
@@ -1196,8 +1221,6 @@ describe("Thread", (): void => {
     ).toBe("resumed");
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */

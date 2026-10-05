@@ -3,12 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { ThreadRunChat } from "../src/ai-sdk-run-chat";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { ThreadRunSpec } from "../src/ai-sdk-run-chat";
-/* oxlint-enable import/no-relative-parent-imports */
+import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
+
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
 import { TestRunHost } from "./support/test-run-host";
 
@@ -25,8 +22,9 @@ const createSpec = (): ThreadRunSpec => ({
   siblingOrder: 0,
 });
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const emitRichResponse = (transport: ControlledTransport): void => {
+const emitRichResponse = (
+  transport: Readonly<Pick<ControlledTransport, "emit" | "finish">>
+): void => {
   transport.emit(
     { messageId: "assistant-1", type: "start" },
     { id: "reasoning-1", type: "reasoning-start" },
@@ -39,7 +37,6 @@ const emitRichResponse = (transport: ControlledTransport): void => {
   );
   transport.finish();
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
@@ -60,7 +57,6 @@ const waitFor = async (
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("ThreadRunChat", (): void => {
   test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
@@ -123,7 +119,7 @@ describe("ThreadRunChat", (): void => {
     const spec = createSpec();
     const transport = new ControlledTransport();
     const host = new TestRunHost(transport, userMessage(), spec);
-    host.onError = (callbackError): void => {
+    host.onError = (callbackError: Readonly<Error>): void => {
       callbackErrors.push(callbackError);
     };
     const chat = new ThreadRunChat(host, spec);
@@ -181,7 +177,9 @@ describe("ThreadRunChat", (): void => {
 
     expect(transport.requests).toHaveLength(2);
     expect(
-      host.tree.getChildren(spec.parentMessageId).map(({ id }): string => id)
+      host.tree
+        .getChildren(spec.parentMessageId)
+        .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
     expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
       expect.objectContaining({
@@ -198,7 +196,6 @@ describe("ThreadRunChat", (): void => {
     expect(host.status).toBe("ready");
   });
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

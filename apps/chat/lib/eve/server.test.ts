@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { assertEveConfigured, eveRequest } from "./server";
 
+const FIRST_CALL = 0;
+const URL_ARGUMENT = 0;
+const INIT_ARGUMENT = 1;
+
 const mocks = vi.hoisted(() => ({
   env: {
     EVE_GATEWAY_SECRET: "eve-secret",
@@ -24,15 +28,14 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): describe("EVE deployment authentication") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 describe("EVE deployment authentication", () => {
   it("authenticates internal requests to this project's protected preview", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/operation/operation");
-    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers);
+    const headers = new Headers(
+      fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.headers
+    );
     expect(headers.get("x-vercel-protection-bypass")).toBe("deployment-secret");
     expect(headers.get("authorization")).toBe("Bearer eve-secret");
     expect(headers.get("x-chatjs-owner")).toBe("owner");
@@ -43,30 +46,27 @@ describe("EVE deployment authentication", () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/health");
-    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers);
+    const headers = new Headers(
+      fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.headers
+    );
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
   });
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("sends protocol requests directly to the named chat worker") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
   await eveRequest("owner", "/eve/chat/v1/operation/recovery?kind=seed");
-  // oxlint-disable-next-line typescript/no-base-to-string -- #581: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
-  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
-    "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
+  expect(fetcher.mock.calls[FIRST_CALL]?.[URL_ARGUMENT]).toEqual(
+    new URL(
+      "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
+    )
   );
-  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+  expect(fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.redirect).toBe(
+    "error"
+  );
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("routes the real SDK directly to the named chat worker") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("routes the real SDK directly to the named chat worker", async () => {
   const { Client } = await import("eve/client");
   const { getEveConnectionOptions } = await import("./connection-options");
@@ -77,13 +77,13 @@ it("routes the real SDK directly to the named chat worker", async () => {
     );
   vi.stubGlobal("fetch", fetcher);
   await new Client(getEveConnectionOptions("owner")).health();
-  // oxlint-disable-next-line typescript/no-base-to-string -- #581: This controlled fixture models the mocked boundary explicitly; changing its widening or coercion requires preserving the exercised failure scenario.
-  expect(String(fetcher.mock.calls[0]?.[0])).toBe(
+  expect(fetcher.mock.calls[FIRST_CALL]?.[URL_ARGUMENT]).toBe(
     "https://preview.example.com/eve/chat/v1/health"
   );
-  expect(fetcher.mock.calls[0]?.[1]?.redirect).toBe("error");
+  expect(fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.redirect).toBe(
+    "error"
+  );
 });
-/* oxlint-enable no-magic-numbers */
 
 it("requires a workflow database locally but not on managed Vercel", () => {
   mocks.env.WORKFLOW_POSTGRES_URL = "";

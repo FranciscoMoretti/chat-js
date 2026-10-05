@@ -2,7 +2,7 @@ import type { UIMessage } from "ai";
 
 import { AbstractThread } from "./abstract-thread";
 import { MemoryThreadState } from "./thread-state";
-import type { ThreadInit } from "./types";
+import type { CanonicalMessage, ThreadInit } from "./types";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadInit carries SDK message arrays and callbacks into AbstractThread and MemoryThreadState; readonly conversion must preserve those constructor contracts. */
 class Thread<
@@ -15,7 +15,10 @@ class Thread<
   }: ThreadInit<TMessage> = {}) {
     super({
       ...options,
-      state: new MemoryThreadState({ initialTree, messages }),
+      state: new MemoryThreadState<CanonicalMessage<TMessage>>({
+        initialTree,
+        messages,
+      }),
     });
   }
 }

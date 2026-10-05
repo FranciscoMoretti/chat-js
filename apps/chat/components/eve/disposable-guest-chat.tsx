@@ -2,6 +2,7 @@
 
 import type { EveMessage } from "eve/client";
 import { useEveAgent } from "eve/react";
+import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -65,7 +66,7 @@ const createGuestSession = async (modelId: string) => {
   return bindingSchema.parse(await response.json());
 };
 /* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** Shared guest presentation, also exercised with deterministic visual fixtures. */
 const GuestConversationView = ({
@@ -88,7 +89,7 @@ const GuestConversationView = ({
   onDraftChange: (draft: string) => void;
   onSend: (text: string) => void;
   onStop: () => void;
-}) => {
+}): ReactJSX.Element => {
   const files = useEveAttachments();
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   return (
@@ -147,7 +148,7 @@ const GuestConversationView = ({
           }}
           onStop={
             busy && !expired
-              ? () => {
+              ? (): void => {
                   onStop();
                 }
               : undefined
@@ -157,11 +158,15 @@ const GuestConversationView = ({
     </>
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- GuestConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { binding }: { binding: Binding }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including agent.error?.message). */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- GuestConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { binding }: { binding: Binding }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including agent.error?.message). */
 
-const GuestConversation = ({ binding }: { binding: Binding }) => {
+const GuestConversation = ({
+  binding,
+}: {
+  binding: Binding;
+}): ReactJSX.Element => {
   const agent = useEveAgent({
     agent: "guest",
     auth: { bearer: binding.credential },
@@ -177,7 +182,7 @@ const GuestConversation = ({ binding }: { binding: Binding }) => {
     agent.status === "submitted" ||
     agent.status === "streaming" ||
     agent.status === "resuming";
-  const send = async (text: string) => {
+  const send = async (text: string): Promise<void> => {
     if (pending.current) {
       return;
     }
@@ -207,23 +212,23 @@ const GuestConversation = ({ binding }: { binding: Binding }) => {
         void send(binding.firstMessage);
       }
     }, 0);
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   });
   useEffect(() => {
     const timer = setTimeout(
       () => setExpired(true),
       Math.max(0, binding.expiresAt - Date.now())
     );
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [binding.expiresAt]);
   useEffect(() => {
-    const retire = () => {
+    const retire = (): void => {
       void retireGuest(binding);
     };
     window.addEventListener("pagehide", retire);
-    return () => window.removeEventListener("pagehide", retire);
+    return (): void => window.removeEventListener("pagehide", retire);
   }, [binding]);
-  const stop = async () => {
+  const stop = async (): Promise<void> => {
     try {
       await agent.cancel();
     } catch {
@@ -260,11 +265,11 @@ const GuestConversation = ({ binding }: { binding: Binding }) => {
     />
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- DisposableGuestChat: jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: PageTransitionEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- DisposableGuestChat: jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: PageTransitionEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 /** No URL, cookie, storage, or persisted application identity owns this chat. */
-const DisposableGuestChat = () => {
+const DisposableGuestChat = (): ReactJSX.Element => {
   const [binding, setBinding] = useState<Binding>();
   const [draft, setDraft] = useState("");
   const files = useEveAttachments();
@@ -274,7 +279,7 @@ const DisposableGuestChat = () => {
   const [commandError, setCommandError] = useState("");
   const pending = useRef(false);
   const generation = useRef(0);
-  const submit = async () => {
+  const submit = async (): Promise<void> => {
     if (pending.current || !draft.trim()) {
       return;
     }
@@ -308,7 +313,7 @@ const DisposableGuestChat = () => {
     }
   };
   useEffect(() => {
-    const reset = () => {
+    const reset = (): void => {
       generation.current += 1;
       pending.current = false;
       setBusy(false);
@@ -319,14 +324,14 @@ const DisposableGuestChat = () => {
       setDraft("");
       setCommandError("");
     };
-    const restore = (event: PageTransitionEvent) => {
+    const restore = (event: PageTransitionEvent): void => {
       if (event.persisted) {
         reset();
       }
     };
     globalThis.addEventListener("chatjs:new-chat", reset);
     window.addEventListener("pageshow", restore);
-    return () => {
+    return (): void => {
       globalThis.removeEventListener("chatjs:new-chat", reset);
       window.removeEventListener("pageshow", restore);
     };
@@ -366,7 +371,7 @@ const DisposableGuestChat = () => {
     </ChatLayout>
   );
 };
-/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- disposable-guest-chat keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { DisposableGuestChat, GuestConversationView };

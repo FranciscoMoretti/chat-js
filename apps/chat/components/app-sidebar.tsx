@@ -1,5 +1,6 @@
 import { Cpu } from "lucide-react";
 import { headers } from "next/headers";
+import type { JSX as ReactJSX } from "react";
 import React, { Suspense } from "react";
 
 import { EveHistory } from "@/components/eve/eve-history";
@@ -29,9 +30,7 @@ import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 import { SidebarUserNav } from "./sidebar-user-nav";
 
-/* oxlint-disable typescript/explicit-function-return-type -- ScopedEveSearch: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const ScopedEveSearch = async () => {
+const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   return (
     <EveSearchChats
@@ -40,7 +39,7 @@ const ScopedEveSearch = async () => {
     />
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-disable react/no-multi-comp -- HistorySkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 const HistorySkeleton = (): React.JSX.Element => (

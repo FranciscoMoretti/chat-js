@@ -34,7 +34,5 @@ const ProjectChatPageRoute = async ({
   redirect(`/chat/${chatId}`);
 };
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ProjectChatPageRoute.
 export default ProjectChatPageRoute;
-/* oxlint-enable import/no-default-export */

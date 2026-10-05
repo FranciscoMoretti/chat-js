@@ -28,6 +28,9 @@
     "templates"
   ],
   "type": "module",
+  "imports": {
+    "#cli/*": "./src/*.ts"
+  },
   "publishConfig": {
     "access": "public"
   },

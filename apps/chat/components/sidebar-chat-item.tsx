@@ -1,8 +1,8 @@
 "use client";
 
 import { MoreHorizontal } from "lucide-react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import React, { memo, useState } from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { ChatMenuItems } from "@/components/chat-menu-items";
@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.KeyboardEvent); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- PureSidebarChatItem: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: React.KeyboardEvent); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including chat.projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const PureSidebarChatItem = ({
   chat,
@@ -34,22 +34,25 @@ const PureSidebarChatItem = ({
   showShare = true,
   renderShareContent,
 }: {
-  chat: {
+  readonly chat: {
     id: string;
     title: string;
     isPinned: boolean;
     projectId: string | null;
   };
-  isActive: boolean;
-  onDelete?: (chatId: string) => void;
-  onMoveProject?: () => void;
-  onRename: (chatId: string, title: string) => void | Promise<void>;
-  onPin: (chatId: string, isPinned: boolean) => void;
-  setOpenMobile: (open: boolean) => void;
-  prefetch?: boolean;
-  showShare?: boolean;
-  renderShareContent: (chatId: string, onClose: () => void) => ReactNode;
-}) => {
+  readonly isActive: boolean;
+  readonly onDelete?: (chatId: string) => void;
+  readonly onMoveProject?: () => void;
+  readonly onRename: (chatId: string, title: string) => void | Promise<void>;
+  readonly onPin: (chatId: string, isPinned: boolean) => void;
+  readonly setOpenMobile: (open: boolean) => void;
+  readonly prefetch?: boolean;
+  readonly showShare?: boolean;
+  readonly renderShareContent: (
+    chatId: string,
+    onClose: () => void
+  ) => ReactNode;
+}): ReactJSX.Element => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     chat.projectId
       ? `/project/${chat.projectId}/chat/${chat.id}`
@@ -58,7 +61,7 @@ const PureSidebarChatItem = ({
   const [editTitle, setEditTitle] = useState(chat.title);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const handleRename = async () => {
+  const handleRename = async (): Promise<void> => {
     if (editTitle.trim() === "" || editTitle === chat.title) {
       setIsEditing(false);
       setEditTitle(chat.title);
@@ -75,7 +78,7 @@ const PureSidebarChatItem = ({
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  const handleKeyDown = (event: React.KeyboardEvent): void => {
     if (event.key === "Enter") {
       void handleRename();
     } else if (event.key === "Escape") {
@@ -129,7 +132,7 @@ const PureSidebarChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
             isPinned={chat.isPinned}
-            onDelete={onDelete ? () => onDelete(chat.id) : undefined}
+            onDelete={onDelete ? (): void => onDelete(chat.id) : undefined}
             onMoveProject={onMoveProject}
             onRename={() => {
               setIsEditing(true);
@@ -152,7 +155,7 @@ const PureSidebarChatItem = ({
     </SidebarMenuItem>
   );
 };
-/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
 
 export const SidebarChatItem = memo(

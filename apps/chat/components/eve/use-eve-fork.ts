@@ -157,7 +157,7 @@ export const useEveFork = (
     }
   }, [conversationId, ownerId, setAttachments]);
 
-  const execute = async (operation: Operation) => {
+  const execute = async (operation: Operation): Promise<void> => {
     const binding = await resolveCreationRequest(
       sessionStorage,
       ownerId,
@@ -190,7 +190,7 @@ export const useEveFork = (
     });
   };
 
-  const run = async (action: () => Promise<void>) => {
+  const run = async (action: () => Promise<void>): Promise<void> => {
     if (lock.current) {
       return;
     }
@@ -221,7 +221,7 @@ export const useEveFork = (
       events: readonly MessageStreamEvent[];
     },
     editContext?: EditContext
-  ) =>
+  ): Promise<void> =>
     run(async () => {
       const boundary = eveUserForkBoundary(message);
       if (pending || editingMessageId || !family.data || !boundary) {

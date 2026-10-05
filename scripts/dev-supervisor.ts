@@ -4,14 +4,27 @@ import { setTimeout as delay } from "node:timers/promises";
 import { checkHealth } from "./dev-health";
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
+const INITIAL_RESTART_BACKOFF_MS = 5000;
+const BACKOFF_MULTIPLIER = 2;
+const READINESS_POLL_INTERVAL_MS = 10_000;
+const GRACEFUL_SHUTDOWN_DELAY_MS = 2000;
+const MAX_RESTART_BACKOFF_MS = 60_000;
+const MILLISECONDS_PER_SECOND = 1000;
+const NO_READINESS_FAILURES = 0;
+const FAILED_STARTUP_INCREMENT = 1;
+const EMPTY_VALUE_LENGTH = 0;
+const NO_CHILD_PID = 0;
+
 /* oxlint-disable node/no-process-env -- origin: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const origin = process.env.APP_URL;
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable typescript/strict-boolean-expressions -- dev-supervisor.ts: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-if (!origin || !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)) {
+if (
+  typeof origin !== "string" ||
+  origin.length === EMPTY_VALUE_LENGTH ||
+  !["localhost", "127.0.0.1"].includes(new URL(origin).hostname)
+) {
   throw new Error("Run through bun dev:supervise with a local worktree URL.");
 }
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 let stopping = false;
 /* oxlint-disable eslint/init-declarations -- child: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
@@ -23,12 +36,14 @@ const sleep = (ms: number): Promise<void> => delay(ms);
 // Eve's development runtime detaches its child process. Track descendants
 // while the launcher is alive so shutdown also cleans up detached workers.
 let descendants = new Map<number, string>();
+const hasChildProcessId = (pid: number | undefined): pid is number =>
+  typeof pid === "number" && pid !== NO_CHILD_PID && !Number.isNaN(pid);
 /* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/strict-boolean-expressions -- trackChildren: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const trackChildren = (): void => {
-  if (!child?.pid) {
+  const childPid = child?.pid;
+  if (!hasChildProcessId(childPid)) {
     return;
   }
   const rows = execFileSync("ps", ["-axo", "pid=,ppid=,lstart="], {
@@ -50,12 +65,17 @@ const trackChildren = (): void => {
       descendants.delete(pid);
     }
   }
-  const found = new Set([child.pid]);
+  const found = new Set([childPid]);
   let changed = true;
   while (changed) {
     changed = false;
     for (const { pid, parent } of rows) {
-      if (pid && parent && found.has(parent) && !found.has(pid)) {
+      if (
+        Boolean(pid) &&
+        Boolean(parent) &&
+        found.has(parent) &&
+        !found.has(pid)
+      ) {
         found.add(pid);
         changed = true;
       }
@@ -63,13 +83,12 @@ const trackChildren = (): void => {
   }
   for (const pid of found) {
     const started = alive.get(pid);
-    if (started) {
+    if (typeof started === "string" && started.length > EMPTY_VALUE_LENGTH) {
       descendants.set(pid, started);
     }
   }
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
 const terminate = (signal: NodeJS.Signals): void => {
@@ -90,12 +109,10 @@ for (const signal of signals) {
     terminate("SIGTERM");
   });
 }
-let backoff = 5000;
-let failedStartups = 0;
+let backoff = INITIAL_RESTART_BACKOFF_MS;
+let failedStartups = NO_READINESS_FAILURES;
 /* oxlint-disable eslint/no-console -- dev-supervisor.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable node/no-process-env -- dev-supervisor.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-/* oxlint-disable eslint/no-magic-numbers -- dev-supervisor.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable eslint/no-undefined -- dev-supervisor.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
 while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
@@ -112,7 +129,7 @@ while (!stopping) {
     exited = true;
   });
   const started = Date.now();
-  let failures = 0;
+  let failures = NO_READINESS_FAILURES;
   let wasReady = false;
   let lastReadyAt = started;
   // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
@@ -125,12 +142,12 @@ while (!stopping) {
         console.info("ChatJS, Eve and database are ready");
       }
       wasReady = true;
-      failedStartups = 0;
+      failedStartups = NO_READINESS_FAILURES;
       lastReadyAt = Date.now();
-      failures = 0;
-      backoff = 5000;
+      failures = NO_READINESS_FAILURES;
+      backoff = INITIAL_RESTART_BACKOFF_MS;
     } catch {
-      failures += 1;
+      failures += FAILED_STARTUP_INCREMENT;
       if (
         shouldRestartAfterReadinessFailures(
           failures,
@@ -146,25 +163,25 @@ while (!stopping) {
       }
     }
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-    await sleep(10_000);
+    await sleep(READINESS_POLL_INTERVAL_MS);
   }
   if (!wasReady) {
-    failedStartups += 1;
+    failedStartups += FAILED_STARTUP_INCREMENT;
   }
   terminate("SIGTERM");
   // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
-  await sleep(2000);
+  await sleep(GRACEFUL_SHUTDOWN_DELAY_MS);
   terminate("SIGKILL");
+  // Clearing the process handle releases the exited ChildProcess between restarts.
+  // oxlint-disable-next-line eslint/no-undefined -- Node's optional ChildProcess handle uses undefined to mean no active child.
   child = undefined;
   descendants = new Map();
   if (!stopping) {
-    console.info(`Restarting in ${backoff / 1000}s`);
+    console.info(`Restarting in ${backoff / MILLISECONDS_PER_SECOND}s`);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(backoff);
-    backoff = Math.min(backoff * 2, 60_000);
+    backoff = Math.min(backoff * BACKOFF_MULTIPLIER, MAX_RESTART_BACKOFF_MS);
   }
 }
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-console */

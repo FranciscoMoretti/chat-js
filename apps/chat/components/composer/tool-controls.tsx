@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 import { toast } from "sonner";
 
@@ -19,7 +20,7 @@ const loginPrompt = (
     description="Sign in to use this feature in your conversation."
   />
 );
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ToolControl = ({
   tool,
@@ -27,7 +28,7 @@ const ToolControl = ({
   selectedModelId,
   selectedTool,
   onToolChange,
-}: ComposerControlProps & { tool: UiToolName }) => {
+}: ComposerControlProps & { tool: UiToolName }): ReactJSX.Element | null => {
   const { data: session } = useSession();
   const { getModelById } = useChatModels();
   const definition = getToolDisplay(tool);
@@ -71,7 +72,7 @@ const ToolControl = ({
     </DropdownMenuCheckboxItem>
   );
 };
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const canvasTools = {
   code: "createCodeDocument",
@@ -121,26 +122,19 @@ const VideoControl = (props: ComposerControlProps): React.JSX.Element => (
 );
 /* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type -- tool-controls route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+CanvasControl.isAvailable = (): boolean => Boolean(getCanvasTool());
 
-CanvasControl.isAvailable = () => Boolean(getCanvasTool());
-/* oxlint-enable typescript/explicit-function-return-type */
+SearchControl.isAvailable = (): boolean => installedToolNames.has("webSearch");
 
-/* oxlint-disable typescript/explicit-function-return-type -- tool-controls route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-SearchControl.isAvailable = () => installedToolNames.has("webSearch");
-/* oxlint-enable typescript/explicit-function-return-type */
+ResearchControl.isAvailable = (): boolean =>
+  installedToolNames.has("deepResearch");
 
-/* oxlint-disable typescript/explicit-function-return-type -- tool-controls route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-ResearchControl.isAvailable = () => installedToolNames.has("deepResearch");
-/* oxlint-enable typescript/explicit-function-return-type */
+ImageControl.isAvailable = (): boolean =>
+  installedToolNames.has("generateImage");
 
-/* oxlint-disable typescript/explicit-function-return-type -- tool-controls route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-ImageControl.isAvailable = () => installedToolNames.has("generateImage");
-/* oxlint-enable typescript/explicit-function-return-type */
+VideoControl.isAvailable = (): boolean =>
+  installedToolNames.has("generateVideo");
 
-/* oxlint-disable typescript/explicit-function-return-type -- tool-controls route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-VideoControl.isAvailable = () => installedToolNames.has("generateVideo");
-/* oxlint-enable typescript/explicit-function-return-type */
 export {
   CanvasControl,
   ImageControl,

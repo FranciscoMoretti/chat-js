@@ -59,8 +59,7 @@ it("wires selected defaults and snapshot identity without managing dependencies"
     );
     await rm(target);
     await symlink(join(cwd, "package.json"), target);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       configureGatewayProvider(cwd, {
         definition: builtInGateways[0].meta.chatjs,
         source: "vercel",

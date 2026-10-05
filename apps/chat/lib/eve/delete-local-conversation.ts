@@ -1,11 +1,8 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-deletion" dependency within this package instead of introducing an alias or barrel API.
- */
-import { completeEveConversationDeletion } from "../db/eve-deletion";
+import { completeEveConversationDeletion } from "@/lib/db/eve-deletion";
+
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
 import { retireEveSessionForDeletion } from "./retire-session";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): deleteLocalEveConversationFamily's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

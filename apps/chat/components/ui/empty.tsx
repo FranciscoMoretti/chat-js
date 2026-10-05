@@ -1,8 +1,9 @@
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Empty: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
@@ -10,7 +11,7 @@ import { cn } from "@/lib/utils";
 const Empty = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 rounded-lg border-dashed p-6 text-center text-balance md:p-12",
@@ -26,7 +27,7 @@ const Empty = ({
 const EmptyHeader = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "flex max-w-sm flex-col items-center gap-2 text-center",
@@ -58,8 +59,8 @@ const EmptyMedia = ({
   className,
   variant = "default",
   ...props
-}: React.ComponentProps<"div"> &
-  VariantProps<typeof emptyMediaVariants>): React.JSX.Element => (
+}: ReactComponentProps<"div"> &
+  VariantProps<typeof emptyMediaVariants>): ReactJSX.Element => (
   <div
     className={cn(emptyMediaVariants({ className, variant }))}
     data-slot="empty-icon"
@@ -74,7 +75,7 @@ const EmptyMedia = ({
 const EmptyTitle = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("text-lg font-medium tracking-tight", className)}
     data-slot="empty-title"
@@ -88,7 +89,7 @@ const EmptyTitle = ({
 const EmptyDescription = ({
   className,
   ...props
-}: React.ComponentProps<"p">): React.JSX.Element => (
+}: ReactComponentProps<"p">): ReactJSX.Element => (
   <div
     className={cn(
       "text-muted-foreground [&>a:hover]:text-primary text-sm/relaxed [&>a]:underline [&>a]:underline-offset-4",
@@ -105,7 +106,7 @@ const EmptyDescription = ({
 const EmptyContent = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "flex w-full max-w-sm min-w-0 flex-col items-center gap-4 text-sm text-balance",

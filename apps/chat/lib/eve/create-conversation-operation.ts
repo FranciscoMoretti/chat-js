@@ -1,14 +1,14 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/credits"; "../db/eve-files"; "../db/eve-guests"; "../db/eve-queries"; "../logger" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { z } from "zod";
 
-import { canSpend } from "../db/credits";
-import { assertEveFilesOwned } from "../db/eve-files";
-import { readEveGuestOwner } from "../db/eve-guests";
-import { getEveCreation } from "../db/eve-queries";
-import { createModuleLogger } from "../logger";
+import { canSpend } from "@/lib/db/credits";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
+import { readEveGuestOwner } from "@/lib/db/eve-guests";
+import { getEveCreation } from "@/lib/db/eve-queries";
+import { createModuleLogger } from "@/lib/logger";
+
 import type { createConversationInput } from "./contracts";
 import { EveCreationRecoveryError } from "./creation-recovery-error";
 import { executeEveConversationCreation } from "./execute-conversation-creation";
@@ -21,7 +21,7 @@ import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "./usage-reconciliation-busy";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/admission");
 

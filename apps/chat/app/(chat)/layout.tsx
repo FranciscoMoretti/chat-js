@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import type { JSX as ReactJSX } from "react";
 import React, { Suspense } from "react";
 
 import { getChatModels } from "@/app/actions/get-chat-models";
@@ -18,6 +19,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+import { preloadQuery } from "@/trpc/preload-query";
 import { TRPCReactProvider } from "@/trpc/react";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 /* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
@@ -26,13 +28,13 @@ import { auth } from "../../lib/auth";
 /* oxlint-enable import/no-relative-parent-imports */
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, }: { children: React.ReactNode; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including session?.user?.id); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, }: { children: React.ReactNode; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including session?.user?.id); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ChatLayoutDynamic = async ({
   children,
 }: {
   children: React.ReactNode;
-}) => {
+}): Promise<ReactJSX.Element> => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -80,12 +82,14 @@ const ChatLayoutDynamic = async ({
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-    void queryClient.prefetchQuery(
-      trpc.settings.getModelPreferences.queryOptions()
+
+    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
+    void preloadQuery(
+      queryClient.query(trpc.settings.getModelPreferences.queryOptions())
     );
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-    void queryClient.prefetchQuery(trpc.project.list.queryOptions());
+
+    // Preloading must swallow preload errors while pending queries are dehydrated and streamed.
+    void preloadQuery(queryClient.query(trpc.project.list.queryOptions()));
   }
 
   return (
@@ -106,11 +110,15 @@ const ChatLayoutDynamic = async ({
     </HydrateClient>
   );
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ChatLayout: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: React.ReactNode }). */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatLayout: ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: React.ReactNode }). */
 
-const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
+const ChatLayout = async ({
+  children,
+}: {
+  children: React.ReactNode;
+}): Promise<ReactJSX.Element> => {
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
@@ -134,8 +142,6 @@ const ChatLayout = async ({ children }: { children: React.ReactNode }) => {
     </TRPCReactProvider>
   );
 };
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable import/no-default-export -- layout route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this layout module and create-component-tree selects its default component ChatLayout.
 export default ChatLayout;
-/* oxlint-enable import/no-default-export */

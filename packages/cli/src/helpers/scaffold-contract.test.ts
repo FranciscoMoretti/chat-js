@@ -1,11 +1,8 @@
 import { describe, expect, it } from "bun:test";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { GATEWAYS } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { Gateway } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
+import { GATEWAYS } from "#cli/types";
+import type { Gateway } from "#cli/types";
+
 import { buildConfigTs } from "./config-builder";
 
 const buildConfigFor = (gateway: Gateway): string =>

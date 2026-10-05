@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { JSX as ReactJSX } from "react";
 import React, { useRef, useState } from "react";
 
 import { CloneChatButtonView } from "@/components/clone-chat-button-view";
@@ -15,7 +16,7 @@ import {
 } from "@/lib/eve/request-copy";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveCopyButton: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveCopyButton: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const EveCopyButton = ({
   sourceConversationId,
@@ -23,7 +24,7 @@ const EveCopyButton = ({
 }: {
   sourceConversationId: string;
   recovery?: EveCopyInput;
-}) => {
+}): ReactJSX.Element => {
   const session = useSession();
   const model = useDefaultModel();
   const lock = useRef(false);
@@ -33,7 +34,7 @@ const EveCopyButton = ({
   const [destination, setDestination] = useState<string>();
   const ownerId = session.data?.user.id;
 
-  const save = async () => {
+  const save = async (): Promise<void> => {
     if (lock.current || !ownerId) {
       return;
     }
@@ -69,7 +70,7 @@ const EveCopyButton = ({
     cause: unknown,
     input: EveCopyInput | undefined,
     accountOwnerId: string
-  ) => {
+  ): void => {
     if (cause instanceof EveCopyRequestError) {
       if (!cause.retryable && input) {
         // oxlint-disable-next-line eslint/no-use-before-define -- Failed copies must clear their durable request.
@@ -138,7 +139,7 @@ const EveCopyButton = ({
     </section>
   );
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
   try {

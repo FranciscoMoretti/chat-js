@@ -1,7 +1,12 @@
 "use client";
 
+import type {
+  JSX as ReactJSX,
+  ComponentProps,
+  Dispatch,
+  SetStateAction,
+} from "react";
 import React from "react";
-import type { ComponentProps, Dispatch, SetStateAction } from "react";
 
 import { ActiveTool } from "@/components/composer/active-tool";
 import { ComposerMenu } from "@/components/composer/composer-menu";
@@ -52,7 +57,7 @@ const unsupportedAttachments = (
 const isUnavailableTool = (tool: UiToolName | null): boolean =>
   Boolean(tool && !installedToolNames.has(tool));
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveComposer: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including attachment: { url: string }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including props.readOnly); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveComposer: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including attachment: { url: string }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including props.readOnly); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveComposer = ({
   files,
@@ -72,7 +77,7 @@ export const EveComposer = ({
   retainedModelId?: string;
   retainedModelIds?: string[];
   modelSelection?: ComponentProps<typeof EveModelPicker>["modelSelection"];
-}) => {
+}): ReactJSX.Element => {
   const selected = useDefaultModel();
   const { getModelById } = useChatModels();
   const models = modelSelectionIds(
@@ -85,7 +90,7 @@ export const EveComposer = ({
   const unavailableTool = isUnavailableTool(selectedTool);
   const locked = props.disabled || files.uploadQueue.length > 0;
   const uploadLocked = locked || props.readOnly;
-  const removeAttachment = (attachment: { url: string }) => {
+  const removeAttachment = (attachment: { readonly url: string }): void => {
     files.setAttachments((current) =>
       current.filter((file) => file.url !== attachment.url)
     );
@@ -150,4 +155,4 @@ export const EveComposer = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

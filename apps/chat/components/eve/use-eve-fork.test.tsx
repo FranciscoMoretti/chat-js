@@ -119,17 +119,17 @@ const responseMessage = (): EveMessage => ({
   parts: [{ text: "The answer", type: "text" }],
   role: "assistant",
 });
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ForkProbe: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value: ReturnType<typeof useEveFork>); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- ForkProbe: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including value: ReturnType<typeof useEveFork>); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ForkProbe = ({
   onValue,
 }: {
-  onValue: (value: ReturnType<typeof useEveFork>) => void;
-}) => {
+  readonly onValue: (value: ReturnType<typeof useEveFork>) => void;
+}): null => {
   onValue(useEveFork(ownerId, conversationId));
   return null;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable id-length, no-undefined, typescript/explicit-function-return-type -- required: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 

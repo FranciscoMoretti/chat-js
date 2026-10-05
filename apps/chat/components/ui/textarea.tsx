@@ -1,24 +1,27 @@
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Textarea: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const Textarea = React.forwardRef<
+const Textarea = reactForwardRef<
   HTMLTextAreaElement,
-  React.ComponentProps<"textarea">
->(({ className, ...props }, ref): React.JSX.Element => (
-  <textarea
-    className={cn(
-      "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-      className
-    )}
-    ref={ref}
-    {...props}
-  />
-));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ReactComponentProps<"textarea">
+>(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- forwardRef supplies the native textarea ref: projecting ref.current fails the textarea JSX receiver. Props preserve React/CSS scalar string & {} aliases, which remain flagged even with recursively readonly data and unchanged callable/constructor signatures.
+  ({ className, ...props }, ref): ReactJSX.Element => (
+    <textarea
+      className={cn(
+        "border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-base focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        className
+      )}
+      ref={ref}
+      {...props}
+    />
+  )
+);
 Textarea.displayName = "Textarea";
 
 export { Textarea };

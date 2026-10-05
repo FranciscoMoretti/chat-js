@@ -120,29 +120,26 @@ beforeEach(async () => {
   await sql`insert into branch (id,owner,sandbox,documents) values ('root','alice','original','{"doc":"revision-1"}')`;
 });
 
+type AppendInput =
+  Parameters<typeof append> extends [unknown, infer Input] ? Input : never;
+
 /* oxlint-disable eslint/max-params -- add: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
-/* oxlint-disable typescript/explicit-function-return-type -- add: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- add: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- add: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const add = (
   id: string,
   expectedHead: string | null,
   branch = "root",
-  value = text(id)
-) => append(sql, { branch, expectedHead, id, message: value, owner });
+  value: AppendInput["message"] = text(id)
+): Promise<void> =>
+  append(sql, { branch, expectedHead, id, message: value, owner });
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
-/* oxlint-disable typescript/explicit-function-return-type -- checkpoint: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-const checkpoint = async () => {
+const checkpoint = async (): Promise<void> => {
   await reserve(sql, capture);
   await complete(sql, mockProvider(sql), owner, capture.id);
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type -- write: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-const write = async (branch: string, bytes: string) => {
+const write = async (branch: string, bytes: string): Promise<void> => {
   await beginWriter(sql, owner, branch, "file-writer", "sandbox-process");
   await writeFile(sql, {
     branch,
@@ -153,7 +150,6 @@ const write = async (branch: string, bytes: string) => {
   });
   await endWriter(sql, owner, branch, "file-writer");
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- shared immutable prefix, attachment references and annotations survive nested branches ...: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
 /* oxlint-disable unicorn/no-null -- shared immutable prefix, attachment references and annotations survive nested branches ...: The fixture explicitly exercises the null state required by the API. */

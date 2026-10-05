@@ -6,53 +6,53 @@ import nodePath from "node:path";
 
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
 /* oxlint-enable import/no-nodejs-modules */
 
+const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
+const FORK_MANIFEST_VERSION = 1;
+const RESOURCE_RECORD_VERSION = 1;
+const SANDBOX_METADATA_VERSION = 2;
+const EMPTY_RESOURCE_COUNT = 0;
+interface SessionResourceInput {
+  readonly sessionDirectory: string;
+  readonly sessionKey: string;
+}
+
 const sandboxNamePattern = /^eve-sbx-ses-[a-f0-9]{32}$/u;
 const stateSnapshotPattern = /^eve-sbx-state-[a-f0-9]{32}$/u;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): manifestSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const manifestSchema = z.strictObject({
-  optionsHash: z.string().min(1),
-  sessionKey: z.string().min(1),
+  optionsHash: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+  sessionKey: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   snapshotName: z.string().regex(/^eve-sbx-fork-[a-f0-9]{32}$/u),
-  version: z.literal(1),
+  version: z.literal(FORK_MANIFEST_VERSION),
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): resourceSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const resourceSchema = z.strictObject({
   kind: z.enum(["sandbox", "snapshot"]),
   name: z.string(),
-  sessionKey: z.string().min(1),
-  version: z.literal(1),
+  sessionKey: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
+  version: z.literal(RESOURCE_RECORD_VERSION),
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): metadataSchema uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const metadataSchema = z.object({
-  optionsHash: z.string().min(1),
+  optionsHash: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
   sandboxName: z.string().regex(sandboxNamePattern),
   stateSnapshotName: z.string().regex(stateSnapshotPattern).optional(),
-  version: z.literal(2),
+  version: z.literal(SANDBOX_METADATA_VERSION),
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
+/* oxlint-disable max-statements, no-continue, unicorn/max-nested-calls --
  * max-statements (#512): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readResourceRecords skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/explicit-function-return-type (#560): Keep readResourceRecords's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readResourceRecords accepts input: { sessionDirectory: string; sessionKey: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-const readResourceRecords = async (input: {
-  sessionDirectory: string;
-  sessionKey: string;
-}) => {
+const readResourceRecords = async (
+  input: SessionResourceInput
+): Promise<z.output<typeof resourceSchema>[]> => {
   const resourceDirectory = nodePath.join(input.sessionDirectory, "resources");
   const resourceEntries = await readdir(resourceDirectory).catch(
     (error: unknown) => {
@@ -92,23 +92,19 @@ const readResourceRecords = async (input: {
   }
   return records;
 };
-/* oxlint-enable max-statements, no-continue, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-statements, no-continue, unicorn/max-nested-calls */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
+/* oxlint-disable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * max-lines-per-function (#510): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readLocalSandboxResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * no-magic-numbers (#517): readLocalSandboxResources uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): readLocalSandboxResources uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep readLocalSandboxResources's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readLocalSandboxResources accepts input: { sessionDirectory: string; sessionKey: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): readLocalSandboxResources intentionally keeps the existing falsy-value behavior of metadata?.stateSnapshotName; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/max-nested-calls (#568): readLocalSandboxResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-const readLocalSandboxResources = async (input: {
-  sessionDirectory: string;
-  sessionKey: string;
-}) => {
+const readLocalSandboxResources = async (
+  input: SessionResourceInput
+): Promise<{ sandboxNames: string[]; snapshotNames: string[] }> => {
   if (nodePath.basename(input.sessionDirectory) !== input.sessionKey) {
     throw new Error("Sandbox directory does not match its session key.");
   }
@@ -162,7 +158,7 @@ const readLocalSandboxResources = async (input: {
     }
     snapshots.push(record.snapshotName);
   }
-  if (sandboxNames.size === 0) {
+  if (sandboxNames.size === EMPTY_RESOURCE_COUNT) {
     // The maintained backend publishes owner.json before entering creation and
     // writes every resource identity before provider I/O. An owner-only directory
     // can therefore be left by a failed admission/setup without a VM to remove.
@@ -178,7 +174,7 @@ const readLocalSandboxResources = async (input: {
     if (
       owner.writeAheadResources !== true ||
       owner.sessionKey !== input.sessionKey ||
-      snapshots.length > 0
+      snapshots.length > EMPTY_RESOURCE_COUNT
     ) {
       throw new Error("Sandbox resource inventory is incomplete.");
     }
@@ -188,22 +184,20 @@ const readLocalSandboxResources = async (input: {
     snapshotNames: [...new Set(snapshots)],
   };
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-statements --
  * max-statements (#512): removeRecordedSnapshots keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): removeRecordedSnapshots uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): removeRecordedSnapshots accepts snapshotNames: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const removeRecordedSnapshots = async (
-  snapshotNames: string[]
+  snapshotNames: readonly string[]
 ): Promise<void> => {
   const { Snapshot } = await import("microsandbox");
   // Snapshot dependencies may not follow family input order. Complete one pass,
   // then retry blocked parents only if another recorded snapshot was removed.
   // Never force deletion or enumerate resources outside this inventory.
   const pending = new Set(snapshotNames);
-  while (pending.size > 0) {
+  while (pending.size > EMPTY_RESOURCE_COUNT) {
     const before = pending.size;
     const errors: unknown[] = [];
     for (const snapshot of pending) {
@@ -230,35 +224,36 @@ const removeRecordedSnapshots = async (
     }
   }
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * jsdoc/require-param (#534): purgeLocalEveSandboxes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): purgeLocalEveSandboxes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): purgeLocalEveSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): purgeLocalEveSandboxes uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep purgeLocalEveSandboxes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep purgeLocalEveSandboxes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): purgeLocalEveSandboxes accepts inputs: { sessionDirectory: string; sessionKey: string; }[]; input; resource; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): purgeLocalEveSandboxes preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
-/** Internal local-provider stage. Caller must retire every supplied family member first. */
+/**
+ * Purges only validated local-provider resources after every supplied family member is retired.
+ * @param inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
+ * @returns Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
+ */
 export const purgeLocalEveSandboxes = async (
-  inputs: {
-    sessionDirectory: string;
-    sessionKey: string;
-  }[]
-) => {
+  inputs: readonly SessionResourceInput[]
+): Promise<Awaited<ReturnType<typeof readLocalSandboxResources>>[]> => {
   // Validate every member before any provider side effect.
   const resources = await Promise.all(
     inputs.map((input) => readLocalSandboxResources(input))
   );
-  if (resources.length === 0) {
+  if (resources.length === EMPTY_RESOURCE_COUNT) {
     return resources;
   }
   const { Sandbox } = await import("microsandbox");
   for (const name of new Set(
-    resources.flatMap((resource) => resource.sandboxNames)
+    resources.flatMap(
+      (
+        resource: ReadonlyNativeSurface<
+          Awaited<ReturnType<typeof readLocalSandboxResources>>
+        >
+      ) => resource.sandboxNames
+    )
   )) {
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
@@ -280,9 +275,15 @@ export const purgeLocalEveSandboxes = async (
     }
   }
   await removeRecordedSnapshots(
-    resources.flatMap((resource) => resource.snapshotNames)
+    resources.flatMap(
+      (
+        resource: ReadonlyNativeSurface<
+          Awaited<ReturnType<typeof readLocalSandboxResources>>
+        >
+      ) => resource.snapshotNames
+    )
   );
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */

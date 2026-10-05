@@ -15,71 +15,101 @@ import {
 } from "./src/tools/documents";
 import { researchItem } from "./src/tools/research";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const toolItems = [
-  {
-    dependencies: ["ai", "zod"],
-    description: "Generate videos using the selected gateway and storage",
-    id: "generate-video",
-    requiresGateway: ["video"],
-    requiresStorage: true,
-    slot: "generateVideo",
-    tools: [
-      {
-        composer: { icon: "Video", name: "Create a video", shortName: "Video" },
-        rendererExport: "GenerateVideoRenderer",
-        toolExport: "generateVideoTool",
-      },
-    ],
-  },
-  {
-    dependencies: ["ai", "zod", "lucide-react"],
-    description:
-      "Generate and edit images using the selected gateway and storage",
-    id: "generate-image",
-    requiresGateway: ["image"],
-    requiresStorage: true,
-    slot: "generateImage",
-    tools: [
-      {
-        composer: {
-          icon: "Images",
-          name: "Create an image",
-          shortName: "Image",
+const toolItems = (
+  [
+    {
+      dependencies: ["ai", "zod"],
+      description: "Generate videos using the selected gateway and storage",
+      id: "generate-video",
+      requiresGateway: ["video"],
+      requiresStorage: true,
+      slot: "generateVideo",
+      tools: [
+        {
+          composer: {
+            icon: "Video",
+            name: "Create a video",
+            shortName: "Video",
+          },
+          rendererExport: "GenerateVideoRenderer",
+          toolExport: "generateVideoTool",
         },
-        rendererExport: "GenerateImageRenderer",
-        toolExport: "generateImageTool",
-      },
-    ],
-  },
-  {
-    dependencies: ["ai", "zod"],
-    description: "Count words, characters, and sentences in text",
-    id: "word-count",
-    tools: [{ rendererExport: "WordCountRenderer", toolExport: "wordCount" }],
-  },
-  {
-    dependencies: ["ai", "zod", "date-fns"],
-    description: "Get the current weather at a location",
-    id: "get-weather",
-    tools: [{ rendererExport: "GetWeatherRenderer", toolExport: "getWeather" }],
-  },
-  {
-    dependencies: ["ai", "zod", "@mendable/firecrawl-js"],
-    description: "Fetch structured information from a single URL",
-    envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
-    id: "retrieve-url",
-    slot: "retrieveUrl",
-    tools: [
-      { rendererExport: "RetrieveUrlRenderer", toolExport: "retrieveUrl" },
-    ],
-  },
-].map(
-  ({ description, dependencies, ...definition }) =>
+      ],
+    },
+    {
+      dependencies: ["ai", "zod", "lucide-react"],
+      description:
+        "Generate and edit images using the selected gateway and storage",
+      id: "generate-image",
+      requiresGateway: ["image"],
+      requiresStorage: true,
+      slot: "generateImage",
+      tools: [
+        {
+          composer: {
+            icon: "Images",
+            name: "Create an image",
+            shortName: "Image",
+          },
+          rendererExport: "GenerateImageRenderer",
+          toolExport: "generateImageTool",
+        },
+      ],
+    },
+    {
+      dependencies: ["ai", "zod"],
+      description: "Count words, characters, and sentences in text",
+      id: "word-count",
+      tools: [{ rendererExport: "WordCountRenderer", toolExport: "wordCount" }],
+    },
+    {
+      dependencies: ["ai", "zod", "date-fns"],
+      description: "Get the current weather at a location",
+      id: "get-weather",
+      tools: [
+        { rendererExport: "GetWeatherRenderer", toolExport: "getWeather" },
+      ],
+    },
+    {
+      dependencies: ["ai", "zod", "@mendable/firecrawl-js"],
+      description: "Fetch structured information from a single URL",
+      envRequirements: [{ options: [["FIRECRAWL_API_KEY"]] }],
+      id: "retrieve-url",
+      slot: "retrieveUrl",
+      tools: [
+        { rendererExport: "RetrieveUrlRenderer", toolExport: "retrieveUrl" },
+      ],
+    },
+  ] as const
+).map(
+  ({
+    description,
+    dependencies,
+    ...definition
+  }: Readonly<{
+    dependencies: readonly string[];
+    description: string;
+    id: string;
+    slot?: string;
+    tools: readonly unknown[];
+  }>) =>
     ({
-      dependencies,
+      dependencies: [...dependencies],
       description,
-      files: ["tool.ts", "renderer.tsx", "schemas.ts"].map((file) => ({
+      files: [
+        "tool.ts",
+        "renderer.tsx",
+        "schemas.ts",
+        ...(definition.id === "generate-image"
+          ? [
+              "image-model.ts",
+              "image-input.ts",
+              "image-errors.ts",
+              "image-generation.ts",
+              "image-request.ts",
+            ]
+          : []),
+      ].map((file) => ({
         path: `src/tools/${definition.id}/${file}`,
         target: `~/tools/chatjs/${definition.id}/${file}`,
         type: "registry:file",
@@ -95,22 +125,21 @@ const toolItems = [
       type: "registry:item",
     }) satisfies RegistryItem
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const searchToolItems = [
-  { dependency: "@tavily/core", id: "tavily-search", key: "TAVILY_API_KEY" },
-  {
-    dependency: "@mendable/firecrawl-js",
-    id: "firecrawl-search",
-    key: "FIRECRAWL_API_KEY",
-  },
-].map(({ id, dependency, key }) => ({
+const searchToolItems = (
+  [
+    { dependency: "@tavily/core", id: "tavily-search", key: "TAVILY_API_KEY" },
+    {
+      dependency: "@mendable/firecrawl-js",
+      id: "firecrawl-search",
+      key: "FIRECRAWL_API_KEY",
+    },
+  ] as const
+).map(({ id, dependency, key }) => ({
   dependencies: [
     "ai",
     "zod",
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These dependency names come from the registry package catalog; the indexed access preserves their pinned versions.
-    `${dependency}@${registryPackage.devDependencies[dependency as "@tavily/core" | "@mendable/firecrawl-js"]}`,
+    `${dependency}@${registryPackage.devDependencies[dependency]}`,
   ],
   description: `Use ${id} for chat and deep research`,
   files: [
@@ -150,10 +179,9 @@ const searchToolItems = [
       ],
     }),
   },
-  name: id,
+  name: id as string,
   type: "registry:item" as const,
 }));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const codeExecutionItem = {
   dependencies: [

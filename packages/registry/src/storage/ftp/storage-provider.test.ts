@@ -4,40 +4,51 @@ import { Client } from "basic-ftp";
 
 import { createStorageAdapter } from "./storage-provider";
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-it("uses TLS for default FTP connections and preserves implicit TLS selection", async () => {
+const connectStorage = async (
+  secure: "implicit" | undefined
+): Promise<Client> => {
+  const { raw } = createStorageAdapter({ host: "storage.example", secure });
+  if (raw instanceof Client) {
+    throw new TypeError("Expected a connection factory");
+  }
+  const client = await raw.connect();
+  return client;
+};
+
+/* oxlint-disable node/no-process-env -- This environment fixture clears FTP_SECURE and returns ownership of restoring its exact previous presence/value. */
+const isolateSecureEnvironment = (): (() => void) => {
+  const previous = process.env.FTP_SECURE;
+  delete process.env.FTP_SECURE;
+  return () => {
+    if (typeof previous === "string") {
+      process.env.FTP_SECURE = previous;
+    } else {
+      delete process.env.FTP_SECURE;
+    }
+  };
+};
+
+/* oxlint-enable node/no-process-env */
+
+const variants: { readonly label: string; readonly secure?: "implicit" }[] = [
+  { label: "default TLS" },
+  { label: "implicit TLS", secure: "implicit" },
+];
+
+it.each(variants)("uses $label for FTP connections", async ({ secure }) => {
   const access = spyOn(Client.prototype, "access").mockResolvedValue({
     code: 220,
     message: "ready",
   });
-  const previousSecure = process.env.FTP_SECURE;
-  delete process.env.FTP_SECURE;
+  const restoreEnvironment = isolateSecureEnvironment();
   try {
-    for (const secure of [undefined, "implicit"] as const) {
-      const adapter = createStorageAdapter({ host: "storage.example", secure });
-      const { raw } = adapter;
-      if (raw instanceof Client) {
-        throw new TypeError("Expected a connection factory");
-      }
-      // Each connection mutates the same environment-backed adapter configuration.
-      // eslint-disable-next-line no-await-in-loop -- Each connect mutates the same environment-backed adapter configuration; complete and close one connection before the next variant.
-      const client = await raw.connect();
-      expect(access).toHaveBeenLastCalledWith(
-        expect.objectContaining({ secure: secure ?? true })
-      );
-      client.close();
-    }
+    const client = await connectStorage(secure);
+    expect(access).toHaveBeenLastCalledWith(
+      expect.objectContaining({ secure: secure ?? true })
+    );
+    client.close();
   } finally {
     access.mockRestore();
-    if (previousSecure === undefined) {
-      delete process.env.FTP_SECURE;
-    } else {
-      process.env.FTP_SECURE = previousSecure;
-    }
+    restoreEnvironment();
   }
 });
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/max-statements */

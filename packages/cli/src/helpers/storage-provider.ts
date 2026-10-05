@@ -16,12 +16,20 @@ import { generatedRegistrationSource } from "../utils/generated-registration-sou
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { preflight } from "../utils/preflight";
 /* oxlint-enable import/no-relative-parent-imports */
+import type { ReadonlyInput } from "./readonly-input";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const CONFIG_JSON_INDENTATION_SPACES = 2;
+
+const serializedConfigValue = (
+  value: unknown
+): ReturnType<typeof JSON.stringify> =>
+  // oxlint-disable-next-line unicorn/no-null -- The native JSON null replacer preserves every storage option/environment field while two-space formatting keeps generated source bytes stable.
+  JSON.stringify(value, null, CONFIG_JSON_INDENTATION_SPACES);
+
 const INSTALLABLE_STORAGE_PROVIDERS = builtInStorage.filter(
-  (item) => item.meta.chatjs.id !== "memory"
+  (item: ReadonlyInput<(typeof builtInStorage)[number]>) =>
+    item.meta.chatjs.id !== "memory"
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const parseStorageOptions = (value: string): Record<string, unknown> => {
   try {
@@ -31,15 +39,14 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Configure the installed source without evaluating it or editing dependencies. */
+/**
+ * Configure the installed source without evaluating it or editing dependencies.
+ * @param destination Project root receiving storage-options.ts and its env block.
+ * @param selection Resolved descriptor and non-secret native storage options.
+ */
 const configureStorageProvider = async (
   destination: string,
-  selection: StorageSelection
+  selection: ReadonlyInput<StorageSelection>
 ): Promise<void> => {
   await preflight(destination, ["lib/storage-options.ts", ".env.example"]);
   const { definition, options } = selection;
@@ -49,10 +56,10 @@ const configureStorageProvider = async (
 import type { createStorageAdapter } from "./storage-provider";
 
 /* oxlint-disable no-magic-numbers -- Tuple index zero selects the storage factory options parameter. */
-export const storageOptions = ${JSON.stringify(options, null, 2)} satisfies Parameters<typeof createStorageAdapter>[0];
+export const storageOptions = ${serializedConfigValue(options)} satisfies Parameters<typeof createStorageAdapter>[0];
 /* oxlint-enable no-magic-numbers */
-export const storageId = ${JSON.stringify(definition.id)};
-export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definition.envRequirements, null, 2)};
+export const storageId = ${serializedConfigValue(definition.id)};
+export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(definition.envRequirements)};
 `)
   );
   await updateEnvironmentExample(destination, "storage-provider", [
@@ -62,11 +69,6 @@ export const storageEnvRequirements: EnvRequirement[] = ${JSON.stringify(definit
     ...definition.optionalEnv,
   ]);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-statements */
 export {
   configureStorageProvider,
   INSTALLABLE_STORAGE_PROVIDERS,

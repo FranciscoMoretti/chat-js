@@ -6,8 +6,8 @@ import type {
   EveMessagePart,
   InputResponse,
 } from "eve/client";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import React, { useState } from "react";
-import type { ReactNode } from "react";
 import { toast } from "sonner";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
@@ -35,7 +35,7 @@ import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
 import { EveToolResult } from "./eve-tool-result";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PendingInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including request.allowFreeform). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- PendingInput: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including request.allowFreeform). */
 
 const PendingInput = ({
   request,
@@ -45,7 +45,7 @@ const PendingInput = ({
   request: EveMessageInputRequest;
   disabled: boolean;
   respond: (response: InputResponse) => void;
-}) => {
+}): ReactJSX.Element => {
   const [text, setText] = useState("");
   return (
     <div className="space-y-3">
@@ -90,7 +90,7 @@ const PendingInput = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const toolStatus = (
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>
@@ -285,7 +285,9 @@ export const EveMessages = ({
         isEditing={Boolean(editing)}
         isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
         onCancelEdit={editing?.onCancel}
-        onStartEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
+        onStartEdit={
+          !isReadonly && onEdit ? (): void => onEdit(message) : undefined
+        }
         role={message.role}
         siblings={renderVersions?.(message, userMessage)}
 
@@ -354,7 +356,9 @@ export const EveMessages = ({
           key={messageKey?.(message) ?? message.id}
           messageId={message.id}
           responses={renderResponses?.(message)}
-          onEdit={!isReadonly && onEdit ? () => onEdit(message) : undefined}
+          onEdit={
+            !isReadonly && onEdit ? (): void => onEdit(message) : undefined
+          }
           text={text}
         />
       );

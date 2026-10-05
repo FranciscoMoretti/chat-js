@@ -17,15 +17,29 @@ const preview = {
 const lockQuery =
   "SELECT pg_advisory_lock(hashtextextended('chatjs-preview-migrations', 0))";
 
+const expectRejection = async (
+  operation: Readonly<Promise<unknown>>,
+  messageFragment: string
+): Promise<void> => {
+  try {
+    await operation;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes(messageFragment)) {
+      return;
+    }
+    throw new Error(`Unexpected rejection: ${String(error)}`, { cause: error });
+  }
+  throw new Error("Expected the operation to reject.");
+};
+
 /* oxlint-disable eslint/max-params -- harness: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /* oxlint-disable typescript/explicit-function-return-type -- harness: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- harness: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- harness: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const harness = (
   failAt?: string,
   cleanupFails = false,
   code = "53000",
-  lockWait = Promise.resolve()
+  lockWait: Readonly<Promise<void>> = Promise.resolve()
 ) => {
   const events: string[] = [];
   const commands: { command: string; env: NodeJS.ProcessEnv }[] = [];
@@ -57,7 +71,7 @@ const harness = (
       },
       run: (
         command: "db:migrate" | "build",
-        env: NodeJS.ProcessEnv
+        env: Readonly<NodeJS.ProcessEnv>
       ): Promise<void> => {
         commands.push({ command, env });
         step(command);
@@ -67,7 +81,6 @@ const harness = (
   };
 };
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 
@@ -105,13 +118,13 @@ it.each(["production", "development"])(
 
 it("rejects invalid configuration before opening a connection or invoking a command", async (): Promise<void> => {
   const test = harness();
-  // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-  await expect(
+  await expectRejection(
     runMaintainerBuild(
       { ...preview, CHATJS_PREVIEW_PARENT_HOST: "EP-CHILD.EU.NEON.TECH" },
       test.operations
-    )
-  ).rejects.toThrow("during validation");
+    ),
+    "during validation"
+  );
   expect(test.events).toEqual([]);
 });
 
@@ -147,7 +160,6 @@ it.each([
 
 /* oxlint-disable eslint/no-undefined -- does not start migration until the advisory lock is acquired: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable eslint/no-magic-numbers -- does not start migration until the advisory lock is acquired: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- does not start migration until the advisory lock is acquired: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 it("does not start migration until the advisory lock is acquired", async (): Promise<void> => {
   const { promise: pending, resolve: acquired } =
     Promise.withResolvers<undefined>();
@@ -158,12 +170,15 @@ it("does not start migration until the advisory lock is acquired", async (): Pro
   expect(test.commands).toEqual([]);
   acquired(undefined);
   await build;
-  expect(test.commands.map(({ command }): string => command)).toEqual([
-    "db:migrate",
-    "build",
-  ]);
+  expect(
+    test.commands.map(
+      ({
+        command,
+      }: Readonly<Pick<(typeof test.commands)[number], "command">>): string =>
+        command
+    )
+  ).toEqual(["db:migrate", "build"]);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 
@@ -176,8 +191,8 @@ it.each([
   "only includes safe error codes: %s",
   async (code, suffix): Promise<void> => {
     const test = harness("SELECT 1", false, code);
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(runMaintainerBuild(preview, test.operations)).rejects.toThrow(
+    await expectRejection(
+      runMaintainerBuild(preview, test.operations),
       `Maintainer build failed during connection${suffix}.`
     );
   }

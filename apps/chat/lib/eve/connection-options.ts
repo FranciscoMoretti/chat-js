@@ -1,15 +1,14 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
- */
-import { env } from "../env";
-/* oxlint-enable import/no-relative-parent-imports */
+import { env } from "@/lib/env";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): getEveConnectionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): getEveConnectionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): getEveConnectionOptions intentionally keeps the existing falsy-value behavior of [env.VERCEL_URL, env.VERCEL_BRANCH_URL].some( (hostname) => hostname && new URL(host); hostname; sameDeployment; env.VERCEL_AUTOMATION_BYPASS_SECRET; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients. */
+/**
+ * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
+ * @param ownerId Owner identity sent to the trusted EVE gateway.
+ * @param host Gateway URL whose origin determines eligibility for deployment protection bypass.
+ * @returns Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
+ */
 export const getEveConnectionOptions = (
   ownerId: string,
   host = new URL("/eve/chat", env.EVE_INTERNAL_ORIGIN).href
@@ -36,4 +35,4 @@ export const getEveConnectionOptions = (
     redirect: "error" as const,
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */

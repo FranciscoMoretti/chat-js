@@ -1,11 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import type { FileUIPart, ModelMessage } from "ai";
 import { z } from "zod";
 
-import { keyFromFileUrl } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+import { keyFromFileUrl } from "@/lib/file-url";
 
 const imageResult = z.object({
   imageUrl: z.string(),
