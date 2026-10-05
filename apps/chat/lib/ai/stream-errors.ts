@@ -11,10 +11,17 @@ const genericErrorMessages = new Set([
 ]);
 
 /* oxlint-disable unicorn/no-null -- Null means no nonempty error text was extracted; callers use it to select fallback copy. */
+const normalizeErrorText = (value: string): string | null => {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    return null;
+  }
+  return trimmed;
+};
+
 const getErrorText = (error: unknown): string | null => {
   if (typeof error === "string") {
-    const trimmed = error.trim();
-    return trimmed === "" ? null : trimmed;
+    return normalizeErrorText(error);
   }
 
   if (
@@ -23,8 +30,7 @@ const getErrorText = (error: unknown): string | null => {
     "message" in error &&
     typeof error.message === "string"
   ) {
-    const trimmed = error.message.trim();
-    return trimmed === "" ? null : trimmed;
+    return normalizeErrorText(error.message);
   }
 
   return null;

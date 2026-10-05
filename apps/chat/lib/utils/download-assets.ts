@@ -71,10 +71,22 @@ const defaultDownload = async ({
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/strict-boolean-expressions (#610): toHttpUrl intentionally keeps the existing falsy-value behavior of keyFromFileUrl(value); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): toHttpUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable unicorn/no-null -- URL normalization returns the existing null sentinel for unsupported protocols, invalid text and unsupported wrapper values; callers use it to reject unavailable downloads. */
+const parseHttpUrl = (value: string): URL | null => {
+  try {
+    const url =
+      keyFromFileUrl(value) === null
+        ? new URL(value)
+        : new URL(value, getBaseUrl());
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 const toHttpUrl = (value: unknown): URL | null => {
   if (
     typeof value === "object" &&
@@ -87,24 +99,18 @@ const toHttpUrl = (value: unknown): URL | null => {
     return toHttpUrl(value.url);
   }
   if (value instanceof URL) {
-    return value.protocol === "http:" || value.protocol === "https:"
-      ? value
-      : null;
+    if (value.protocol === "http:" || value.protocol === "https:") {
+      return value;
+    }
+    return null;
   }
   if (typeof value === "string") {
-    try {
-      const url = keyFromFileUrl(value)
-        ? new URL(value, getBaseUrl())
-        : new URL(value);
-      return url.protocol === "http:" || url.protocol === "https:" ? url : null;
-    } catch {
-      return null;
-    }
+    return parseHttpUrl(value);
   }
   return null;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve downloadAssetsFromModelMessages's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): downloadAssetsFromModelMessages accepts messages: ModelMessage[]; url; { url, data }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

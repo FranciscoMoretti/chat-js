@@ -6,9 +6,8 @@ class EveUsageReconciliationBusyError extends Error {
   }
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): eveUsageBusyResponse accepts error: EveUsageReconciliationBusyError; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const eveUsageBusyResponse = (
-  error: EveUsageReconciliationBusyError
+  error: Readonly<EveUsageReconciliationBusyError>
 ): Response =>
   Response.json(
     {
@@ -19,6 +18,5 @@ const eveUsageBusyResponse = (
     { headers: { "Retry-After": "2" }, status: 503 }
   );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveUsageBusyResponse, EveUsageReconciliationBusyError); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { eveUsageBusyResponse, EveUsageReconciliationBusyError };
 /* oxlint-enable import/no-named-export */

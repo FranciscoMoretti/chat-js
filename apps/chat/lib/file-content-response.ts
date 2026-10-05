@@ -19,13 +19,37 @@ const parseSuffixRange = (
   size: number
 ): { end: number; start: number } | null => {
   const length = Number(suffix);
-  return Number.isSafeInteger(length) && length > 0 && size > 0
-    ? { end: size - 1, start: Math.max(size - length, 0) }
-    : null;
+  if (Number.isSafeInteger(length) && length > 0 && size > 0) {
+    return { end: size - 1, start: Math.max(size - length, 0) };
+  }
+  return null;
 };
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null -- Byte offsets are zero-based and inclusive; null is the existing invalid-range sentinel. */
+const parseExplicitRange = (
+  rangeStart: string | undefined,
+  rangeEnd: string | undefined,
+  size: number
+): { end: number; start: number } | null => {
+  const start = Number(rangeStart);
+  const requestedEnd =
+    typeof rangeEnd === "string" && rangeEnd !== ""
+      ? Number(rangeEnd)
+      : size - 1;
+  const end = Math.min(requestedEnd, size - 1);
+  if (
+    Number.isSafeInteger(start) &&
+    Number.isSafeInteger(end) &&
+    start >= 0 &&
+    start <= end &&
+    start < size
+  ) {
+    return { end, start };
+  }
+  return null;
+};
+
 const parseRange = (
   value: string,
   size: number
@@ -38,19 +62,7 @@ const parseRange = (
   if (typeof suffix === "string") {
     return parseSuffixRange(suffix, size);
   }
-  const start = Number(rangeStart);
-  const requestedEnd =
-    typeof rangeEnd === "string" && rangeEnd !== ""
-      ? Number(rangeEnd)
-      : size - 1;
-  const end = Math.min(requestedEnd, size - 1);
-  return Number.isSafeInteger(start) &&
-    Number.isSafeInteger(end) &&
-    start >= 0 &&
-    start <= end &&
-    start < size
-    ? { end, start }
-    : null;
+  return parseExplicitRange(rangeStart, rangeEnd, size);
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveRequestRange's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */

@@ -124,6 +124,14 @@ Full lint, all seven type-check tasks, all 203 CLI unit tests (1,102 assertions)
 
 The exception total is **20,002**, up three from narrower native callback/parameter scopes and the explicit zero-value explanation. `no-ternary` remains the sole globally disabled rule, and original exception review continues. No PR has been opened.
 
+The sixteenth batch removes six further parsing/normalization ternaries through meaningful private boundaries: explicit byte-range parsing, HTTP URL text parsing, and reused error-text normalization. Seventy-eight actual-function comparisons preserve results, getter order and error behavior; five mutated normalizer cases are detected. Existing public and private inferred signatures remain unchanged. URL selection now compares the actual file-key producer's result with null: that producer returns only a regex-validated nonempty key or null. This removes a stale boolean exception without repeated calls or changed fallback evaluation.
+
+Four stream-position/model/error modules receive complete review of sixteen original scopes and 33 rule entries. Fourteen entries are fixed and eight narrowed; precise return types, authored documentation and readonly ID readers flow through the complete PostgreSQL reader chain. Native callable connection and recursive event exceptions remain parameter-local. The existing environment alias resolves to the same module. A repeated 500-entry query bound becomes a meaningful batching constant; three artificial model-index aliases become direct protocol offsets. Normalized emitted code remains equivalent, including zero positions for existing EOF-only stream groups and sequential connection cleanup. Environment/world selection also narrows its process access, mutable initializer, absent-value and empty-string fallback exceptions with byte-identical emitted JavaScript.
+
+The attachment component adds one guarded return with unchanged inferred signatures. Four actual React rendering cases and native Chromium PDF/text/empty/data-URL states preserve output; the Blob path verifies content and URL revocation on unmount. Its inspected capture pair is identical, and an inverted actual guard fails the native fixture. This is local fixture coverage, not full authenticated application verification.
+
+Full lint, all seven type-check tasks, all 203 CLI unit tests (1,102 assertions), template parity and 65 focused app tests pass. Serial native lint reports only the six established cross-environment assertion warnings. The exception total is **19,992**, down ten. The final globally disabled rule and broader original exception review remain open; no PR has been opened.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

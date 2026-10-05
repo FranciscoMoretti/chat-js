@@ -54,19 +54,20 @@ export const EveAttachment = ({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from resolved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     url = resolved?.source === source ? resolved.url : undefined;
   }
-  return typeof url === "string" && url !== "" ? (
-    <AttachmentList
-      attachments={[
-        {
-          contentType: part.mediaType,
-          name: part.filename ?? "Attachment",
-          url,
-        },
-      ]}
-    />
-  ) : (
-    <p>{part.filename ?? "Attachment"}</p>
-  );
+  if (typeof url === "string" && url !== "") {
+    return (
+      <AttachmentList
+        attachments={[
+          {
+            contentType: part.mediaType,
+            name: part.filename ?? "Attachment",
+            url,
+          },
+        ]}
+      />
+    );
+  }
+  return <p>{part.filename ?? "Attachment"}</p>;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable init-declarations, max-lines-per-function, no-undefined, react-perf/jsx-no-new-array-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
