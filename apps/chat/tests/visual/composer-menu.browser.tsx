@@ -62,7 +62,10 @@ vi.mock("@/features/installed-uploads", async () => {
     await import("@/features/attachment-uploads/integration");
   const useFixtureUploads = (files: AttachmentUploadInput) => {
     const behavior = attachmentUploads.useUploads(files);
-    return state.uploadsInstalled ? behavior : { uploadQueue: [] };
+    if (state.uploadsInstalled) {
+      return behavior;
+    }
+    return { uploadQueue: [] };
   };
   return {
     attachmentUploads: {

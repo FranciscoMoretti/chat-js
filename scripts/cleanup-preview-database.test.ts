@@ -92,9 +92,17 @@ const run = async ({
           repo: "repo",
           state: "open",
         });
-        return Promise.resolve(
-          ((listCount += 1) === 1 ? open : openBeforeDelete) ? [{}] : []
-        );
+        listCount += 1;
+        if (listCount === 1) {
+          if (open) {
+            return Promise.resolve([{}]);
+          }
+          return Promise.resolve([]);
+        }
+        if (openBeforeDelete) {
+          return Promise.resolve([{}]);
+        }
+        return Promise.resolve([]);
       },
       rest: {
         pulls: {

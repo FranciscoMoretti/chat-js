@@ -77,13 +77,14 @@ const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   },
 } as const;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): getEnabledFeatures accepts feature; left; right; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Get only enabled features
 const getEnabledFeatures = (): FeatureConfig[] =>
   Object.values(AVAILABLE_FEATURES)
-    .filter((feature) => feature.enabled)
-    .toSorted((left, right) => left.order - right.order);
+    .filter((feature: { readonly enabled: boolean }) => feature.enabled)
+    .toSorted(
+      (left: { readonly order: number }, right: { readonly order: number }) =>
+        left.order - right.order
+    );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AVAILABLE_FEATURES, getEnabledFeatures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { AVAILABLE_FEATURES, getEnabledFeatures };
 /* oxlint-enable import/no-named-export */

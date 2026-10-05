@@ -90,15 +90,17 @@ const canvasTools = {
   sheet: "createSheetDocument",
   text: "createTextDocument",
 } as const;
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type -- getCanvasTool: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const getCanvasTool = () => {
+const getCanvasTool = ():
+  | (typeof canvasTools)[keyof typeof canvasTools]
+  | undefined => {
   const kind = (["text", "code", "sheet"] as const).find((entry) =>
     installedToolNames.has(canvasTools[entry])
   );
-  return kind ? canvasTools[kind] : undefined;
+  if (kind) {
+    return canvasTools[kind];
+  }
+  return kind;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 /* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- CanvasControl: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: ComposerControlProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const CanvasControl = (

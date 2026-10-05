@@ -40,16 +40,15 @@ const latestImageAttachments = (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): eveImageContext keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): eveImageContext skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  * typescript/prefer-readonly-parameter-types (#565): eveImageContext accepts messages: readonly ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveImageContext intentionally keeps the existing falsy-value behavior of keyFromFileUrl(parsed.data.imageUrl); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): eveImageContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Derive image references from the native branch, without another image-history store. */
+/** Derive image references from the native branch, without another image-history store.
+ * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
+ * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
+ */
 export const eveImageContext = (
   messages: readonly ModelMessage[]
 ): {
@@ -57,10 +56,12 @@ export const eveImageContext = (
   lastGeneratedImage: { imageUrl: string; name: string } | null;
 } => {
   const attachments = latestImageAttachments(messages);
+  /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
   let lastGeneratedImage: {
     imageUrl: string;
     name: string;
   } | null = null;
+  /* oxlint-enable unicorn/no-null */
   for (const message of messages) {
     if (message.role !== "tool") {
       continue;
@@ -77,7 +78,7 @@ export const eveImageContext = (
       if (
         parsed.success &&
         parsed.data.imageUrl.startsWith("/api/files/") &&
-        keyFromFileUrl(parsed.data.imageUrl)
+        keyFromFileUrl(parsed.data.imageUrl) !== null
       ) {
         lastGeneratedImage = {
           imageUrl: parsed.data.imageUrl,
@@ -89,4 +90,4 @@ export const eveImageContext = (
   return { attachments, lastGeneratedImage };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types */

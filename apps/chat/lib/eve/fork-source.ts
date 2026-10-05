@@ -7,8 +7,7 @@ import type { EveForkInput, EveForkKind } from "./contracts";
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
 const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --
- no-undefined (#519): eveUserForkBoundary uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+/* oxlint-disable typescript/strict-boolean-expressions --
 typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally keeps the existing falsy-value behavior of message.metadata?.turnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 const eveUserForkBoundary = (
   message: Pick<EveMessage, "id" | "role" | "metadata">
@@ -25,10 +24,12 @@ const eveUserForkBoundary = (
     // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return message.metadata.turnId;
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-  return importedBoundary.test(message.id) ? message.id : undefined;
+  if (importedBoundary.test(message.id)) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: eveUserForkBoundary has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+    return message.id;
+  }
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 interface EveBranchReference {
   forkKind?: EveForkKind | null;
