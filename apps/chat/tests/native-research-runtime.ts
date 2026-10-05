@@ -292,6 +292,7 @@ export default [defineEval({ description: "adaptive native research", async test
  * no-console (#514): try { await main(); } catch (error) { console.error(err emits fixture diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  */
 try {
+  // oxlint-disable-next-line node/no-top-level-await -- This executable awaits the native research scenario so its existing catch reports failures and sets the exit status.
   await main();
 } catch (error) {
   console.error(error);

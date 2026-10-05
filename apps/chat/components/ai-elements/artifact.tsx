@@ -27,6 +27,7 @@ const Artifact = ({
       "bg-background flex flex-col overflow-hidden rounded-lg border shadow-sm",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Artifact's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -45,6 +46,7 @@ const ArtifactHeader = ({
       "bg-muted/50 flex items-center justify-between border-b px-4 py-3",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -69,6 +71,7 @@ const ArtifactClose = ({
     size={size}
     type="button"
     variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactClose's Button prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     {children ?? <XIcon className="size-4" />}
@@ -87,6 +90,7 @@ const ArtifactTitle = ({
 }: ArtifactTitleProps): React.JSX.Element => (
   <p
     className={cn("text-foreground text-sm font-medium", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactTitle's native p attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -100,7 +104,11 @@ const ArtifactDescription = ({
   className,
   ...props
 }: ArtifactDescriptionProps): React.JSX.Element => (
-  <p className={cn("text-muted-foreground text-sm", className)} {...props} />
+  <p
+    className={cn("text-muted-foreground text-sm", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactDescription's native p attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -112,7 +120,11 @@ const ArtifactActions = ({
   className,
   ...props
 }: ArtifactActionsProps): React.JSX.Element => (
-  <div className={cn("flex items-center gap-1", className)} {...props} />
+  <div
+    className={cn("flex items-center gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactActions's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -143,6 +155,7 @@ const ArtifactAction = ({
       size={size}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactAction's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {Icon ? <Icon className="size-4" /> : children}
@@ -176,7 +189,11 @@ const ArtifactContent = ({
   className,
   ...props
 }: ArtifactContentProps): React.JSX.Element => (
-  <div className={cn("flex-1 overflow-auto p-4", className)} {...props} />
+  <div
+    className={cn("flex-1 overflow-auto p-4", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactContent's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {

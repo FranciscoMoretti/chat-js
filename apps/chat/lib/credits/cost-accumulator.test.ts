@@ -23,6 +23,7 @@ beforeEach(() => {
   });
 });
 
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest suite loads the accumulator after installing the controlled model-pricing dependency.
 const { CostAccumulator } = await import("./cost-accumulator");
 /* oxlint-disable max-lines-per-function, no-magic-numbers --
  * max-lines-per-function (#510): describe("CostAccumulator") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

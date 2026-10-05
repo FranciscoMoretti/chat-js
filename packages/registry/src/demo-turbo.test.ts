@@ -108,6 +108,7 @@ const createFixture = async (): Promise<string> => {
   }
 };
 
+// oxlint-disable-next-line node/no-top-level-await -- This Bun suite prepares its shared temporary Git fixture before registering command scenarios.
 const fixture = await createFixture();
 
 const git = async (...args: readonly string[]): Promise<string> => {

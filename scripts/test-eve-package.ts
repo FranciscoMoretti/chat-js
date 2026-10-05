@@ -34,6 +34,7 @@ const manifestPaths = [
   "apps/chat/package.json",
   "apps/chat/tests/eve-fixture/package.json",
 ];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable saves manifests and lockfile contents before temporary edits.
 const originals = await Promise.all(
   [...manifestPaths, "bun.lock"].map(async (file) => ({
     content: await readFile(path.join(root, file), "utf-8"),
@@ -49,6 +50,7 @@ const run = (args: readonly string[], cwd = root): Buffer =>
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- test-eve-package.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/promise-function-async -- test-eve-package.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable finishes temporary manifest rewrites before installing the local package.
   await Promise.all(
     originals
       .filter(({ file }): boolean => manifestPaths.includes(file))
@@ -71,6 +73,7 @@ try {
       })
   );
   run(["install", "--ignore-scripts"]);
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable restores manifest declarations after dependency installation.
   await Promise.all(
     originals
       .filter(({ file }): boolean => manifestPaths.includes(file))
@@ -104,6 +107,7 @@ try {
   ]);
 } finally {
   // Local tarball paths and their lockfile entries must never leak into a PR.
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable awaits restoration of manifests and lockfile even when validation fails.
   await Promise.all(
     originals.map(({ content, file }): Promise<void> =>
       writeFile(path.join(root, file), content)

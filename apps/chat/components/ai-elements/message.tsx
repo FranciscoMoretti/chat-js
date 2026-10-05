@@ -60,6 +60,7 @@ const Message = ({
       from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Message's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -81,6 +82,7 @@ const MessageContent = ({
       "group-[.is-assistant]:text-foreground",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageContent's native div attributes, preserving caller events and accessibility props.
     {...props}
   >
     {children}
@@ -97,7 +99,11 @@ const MessageActions = ({
   children,
   ...props
 }: MessageActionsProps): React.JSX.Element => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
+  <div
+    className={cn("flex items-center gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageActions's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  >
     {children}
   </div>
 );
@@ -119,7 +125,13 @@ const MessageAction = ({
   ...props
 }: MessageActionProps): React.JSX.Element => {
   const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
+    <Button
+      size={size}
+      type="button"
+      variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageAction's Button prop contract, preserving caller options, children and callbacks.
+      {...props}
+    >
       {children}
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       <span className="sr-only">{label || tooltip}</span>
@@ -225,6 +237,7 @@ const MessageBranch = ({
     <MessageBranchContext.Provider value={contextValue}>
       <div
         className={cn("grid w-full gap-2 [&>div]:pb-0", className)}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranch's native div attributes, preserving caller events and accessibility props.
         {...props}
       />
     </MessageBranchContext.Provider>
@@ -264,6 +277,7 @@ const MessageBranchContent = ({
 
       // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract. #597: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
       key={branch.key}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchContent's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       {branch}
@@ -294,6 +308,7 @@ const MessageBranchSelector = ({
     <ButtonGroup
       className="[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md"
       orientation="horizontal"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchSelector's ButtonGroup prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -318,6 +333,7 @@ const MessageBranchPrevious = ({
       size="icon-sm"
       type="button"
       variant="ghost"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchPrevious's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children ?? <ChevronLeftIcon size={14} />}
@@ -345,6 +361,7 @@ const MessageBranchNext = ({
       size="icon-sm"
       type="button"
       variant="ghost"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchNext's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children ?? <ChevronRightIcon size={14} />}
@@ -369,6 +386,7 @@ const MessageBranchPage = ({
         "text-muted-foreground border-none bg-transparent shadow-none",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchPage's ButtonGroupText prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {currentBranch + 1} of {totalBranches}
@@ -389,6 +407,7 @@ const MessageResponse = memo(
         className
       )}
       plugins={plugins}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageResponse's Streamdown prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   ),
@@ -425,6 +444,7 @@ const MessageAttachment = ({
         "group relative size-24 overflow-hidden rounded-lg",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageAttachment's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       {isImage ? (
@@ -506,6 +526,7 @@ const MessageAttachments = ({
         "ml-auto flex w-fit flex-wrap items-start gap-2",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageAttachments's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       {children}
@@ -528,6 +549,7 @@ const MessageToolbar = ({
       "mt-4 flex w-full items-center justify-between gap-4",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageToolbar's native div attributes, preserving caller events and accessibility props.
     {...props}
   >
     {children}

@@ -16,6 +16,14 @@ Directory-wide Node import exemptions have been removed. Native CLI, Electron an
 
 The second batch passes full `bun lint`, all seven `bun test:types` tasks, `bun template:check`, and all 200 CLI unit tests on Node 24 (1,074 assertions). Canonical MCP files were regenerated into their installed copies. Independent review checked the documentation contracts and native-import rationale; documentation-only app changes retain identical runtime syntax.
 
+The third batch enables `node/no-top-level-await`: 150 findings were reviewed, one redundant dynamic import was removed, and 149 command/test initialization findings now have 84 local exceptions. Forty-seven annotation-only files produce byte-identical JavaScript after formatting. The token tests also lose unused mock scaffolding and three unnecessary type assertions.
+
+Both primitive/AI-element JSX-spread directory exemptions are removed. All 276 findings across 51 files were reviewed: 274 real forwarding expressions carry individual comments, while two singleton HTML spreads become explicit attributes. All 51 modules retain equivalent emitted JavaScript; four streaming/completed sandbox captures across light/dark themes match before and after. The evidence covers that local fixture, not a fleet comparison or full authenticated application.
+
+Practical backend fixes remove unsafe configuration-merge casts before the existing Zod validation, document schema-derived tool-validation results, use existing named request-path captures, and make readonly readers explicit. CLI fixes replace a synchronous existence probe in an async operation, clarify provider-selection truthiness, safely type native event tuples and narrow retained SDK/mutation scopes. Independent reviews found no behavior/API regressions in these changes. The current suppression count is **10,546**, up from 10,220 mainly because previously global/directory exceptions are now explicit local contracts. Ten globally disabled rules remain.
+
+The third batch passes full `bun lint`, all seven `bun test:types` tasks, `bun template:check`, all 200 CLI unit tests (1,074 assertions), 79 focused app tests, and 57 policy/tooling tests (256 assertions). Template drift after the final comment cleanup was resolved through regeneration and the check reran successfully. No PR has been opened for this branch.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

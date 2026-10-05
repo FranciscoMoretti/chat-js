@@ -53,6 +53,7 @@ const invalidBoundaryError = /boundaries must match imported user messages/u;
 const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates both owners before registering copy-journal scenarios.
 await db.insert(user).values(
   owners.map((id) => ({
     email: `${id}@test.invalid`,

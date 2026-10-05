@@ -27,6 +27,7 @@ const AccordionItem = reactForwardRef<
   <AccordionPrimitiveItem
     className={cn("border-b", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AccordionItem's AccordionPrimitiveItem prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -45,6 +46,7 @@ const AccordionTrigger = reactForwardRef<
         className
       )}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AccordionTrigger's AccordionPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children}
@@ -63,6 +65,7 @@ const AccordionContent = reactForwardRef<
   <AccordionPrimitiveContent
     className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm transition-all"
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AccordionContent's AccordionPrimitiveContent prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <div className={cn("pt-0 pb-4", className)}>{children}</div>

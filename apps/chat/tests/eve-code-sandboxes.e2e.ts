@@ -27,6 +27,7 @@ vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the sandbox owner before registering ownership scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,

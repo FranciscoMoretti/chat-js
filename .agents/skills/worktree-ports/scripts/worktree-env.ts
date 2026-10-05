@@ -15,6 +15,7 @@ const SUCCESS_EXIT_CODE = 0;
 const FAILURE_EXIT_CODE = 1;
 const args = process.argv.slice(ARGUMENT_START_INDEX);
 const configFile = ".worktree-env.json";
+// oxlint-disable-next-line node/no-top-level-await -- This Bun executable loads its worktree configuration before spawning the requested command.
 const config = await loadWorktreeConfig(configFile);
 // This CLI resolves the ambient slot setting before forwarding its validated app environment.
 // oxlint-disable-next-line node/no-process-env -- The CLI boundary reads the configured slot from this process environment.
@@ -90,4 +91,5 @@ const child = spawnChild(args, childEnvironment);
 
 process.on("SIGTERM", () => child.kill("SIGTERM"));
 
+// oxlint-disable-next-line node/no-top-level-await -- This Bun executable forwards the child exit status only after that process has exited.
 process.exit(await child.exited);

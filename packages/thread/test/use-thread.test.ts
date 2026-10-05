@@ -37,6 +37,7 @@ declare global {
 // Install the DOM before loading the hook so its isomorphic effect uses the
 // browser commit lifecycle. Restore globals after this suite, including act.
 const dom = createHookDom();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun hook suite loads useThread after installing its browser globals and DOM lifecycle fixture.
 const { useThread } = await import("#thread-source/use-thread");
 const roots = new Set<Root>();
 const NO_ERRORS = 0;

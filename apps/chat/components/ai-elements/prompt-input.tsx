@@ -63,7 +63,12 @@ const PromptInputHoverCard = ({
   closeDelay = 0,
   ...props
 }: PromptInputHoverCardProps): React.JSX.Element => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
+  <HoverCard
+    closeDelay={closeDelay}
+    openDelay={openDelay}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputHoverCard's HoverCard prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
@@ -73,7 +78,11 @@ const PromptInputHoverCardContent = ({
   align = "start",
   ...props
 }: PromptInputHoverCardContentProps): React.JSX.Element => (
-  <HoverCardContent align={align} {...props} />
+  <HoverCardContent
+    align={align}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputHoverCardContent's HoverCardContent prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -90,7 +99,11 @@ const PromptInput = ({
   children,
   ...props
 }: PromptInputProps): React.JSX.Element => (
-  <form className={cn("w-full", className)} {...props}>
+  <form
+    className={cn("w-full", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInput's native form attributes, preserving caller events and accessibility props.
+    {...props}
+  >
     <InputGroup className={cn("overflow-hidden", inputGroupClassName)}>
       {children}
     </InputGroup>
@@ -112,6 +125,7 @@ const PromptInputHeader = ({
   <InputGroupAddon
     align="block-end"
     className={cn("order-first flex-wrap gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputHeader's InputGroupAddon prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -131,6 +145,7 @@ const PromptInputFooter = ({
   <InputGroupAddon
     align="block-end"
     className={cn("justify-between gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputFooter's InputGroupAddon prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -144,7 +159,11 @@ const PromptInputTools = ({
   className,
   ...props
 }: PromptInputToolsProps): React.JSX.Element => (
-  <div className={cn("flex items-center gap-1", className)} {...props} />
+  <div
+    className={cn("flex items-center gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTools's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -168,6 +187,7 @@ const PromptInputButton = ({
       size={newSize}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputButton's InputGroupButton prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -179,7 +199,12 @@ type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputActionMenuProps). */
 const PromptInputActionMenu = (
   props: PromptInputActionMenuProps
-): React.JSX.Element => <DropdownMenu {...props} />;
+): React.JSX.Element => (
+  <DropdownMenu
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenu's DropdownMenu prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
+);
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
@@ -192,7 +217,11 @@ const PromptInputActionMenuTrigger = ({
   ...props
 }: PromptInputActionMenuTriggerProps): React.JSX.Element => (
   <DropdownMenuTrigger asChild>
-    <PromptInputButton className={className} {...props}>
+    <PromptInputButton
+      className={className}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuTrigger's PromptInputButton prop contract, preserving caller options, children and callbacks.
+      {...props}
+    >
       {children ?? <PlusIcon className="size-4" />}
     </PromptInputButton>
   </DropdownMenuTrigger>
@@ -208,7 +237,12 @@ const PromptInputActionMenuContent = ({
   className,
   ...props
 }: PromptInputActionMenuContentProps): React.JSX.Element => (
-  <DropdownMenuContent align="start" className={cn(className)} {...props} />
+  <DropdownMenuContent
+    align="start"
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuContent's DropdownMenuContent prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -219,7 +253,11 @@ const PromptInputActionMenuItem = ({
   className,
   ...props
 }: PromptInputActionMenuItemProps): React.JSX.Element => (
-  <DropdownMenuItem className={cn(className)} {...props} />
+  <DropdownMenuItem
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuItem's DropdownMenuItem prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -257,6 +295,7 @@ const PromptInputSubmit = ({
       size={size}
       type="submit"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSubmit's InputGroupButton prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children ?? Icon}
@@ -425,6 +464,7 @@ const PromptInputSpeechButton = ({
       )}
       disabled={!recognition}
       onClick={toggleListening}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSpeechButton's PromptInputButton prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <MicIcon className="size-4" />
@@ -439,7 +479,12 @@ type PromptInputSelectProps = ComponentProps<typeof Select>;
 
 const PromptInputSelect = (
   props: PromptInputSelectProps
-): React.JSX.Element => <Select {...props} />;
+): React.JSX.Element => (
+  <Select
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelect's Select prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
+);
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
@@ -456,6 +501,7 @@ const PromptInputSelectTrigger = ({
       "hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectTrigger's SelectTrigger prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -469,7 +515,11 @@ const PromptInputSelectContent = ({
   className,
   ...props
 }: PromptInputSelectContentProps): React.JSX.Element => (
-  <SelectContent className={cn(className)} {...props} />
+  <SelectContent
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectContent's SelectContent prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -481,7 +531,11 @@ const PromptInputSelectItem = ({
   className,
   ...props
 }: PromptInputSelectItemProps): React.JSX.Element => (
-  <SelectItem className={cn(className)} {...props} />
+  <SelectItem
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectItem's SelectItem prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -493,7 +547,11 @@ const PromptInputSelectValue = ({
   className,
   ...props
 }: PromptInputSelectValueProps): React.JSX.Element => (
-  <SelectValue className={cn(className)} {...props} />
+  <SelectValue
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectValue's SelectValue prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -505,7 +563,12 @@ type PromptInputHoverCardTriggerProps = ComponentProps<typeof HoverCardTrigger>;
 
 const PromptInputHoverCardTrigger = (
   props: PromptInputHoverCardTriggerProps
-): React.JSX.Element => <HoverCardTrigger {...props} />;
+): React.JSX.Element => (
+  <HoverCardTrigger
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputHoverCardTrigger's HoverCardTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
+);
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type PromptInputHoverCardContentProps = ComponentProps<typeof HoverCardContent>;
@@ -518,7 +581,11 @@ const PromptInputTabsList = ({
   className,
   ...props
 }: PromptInputTabsListProps): React.JSX.Element => (
-  <div className={cn(className)} {...props} />
+  <div
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabsList's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -530,7 +597,11 @@ const PromptInputTab = ({
   className,
   ...props
 }: PromptInputTabProps): React.JSX.Element => (
-  <div className={cn(className)} {...props} />
+  <div
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTab's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -549,6 +620,7 @@ const PromptInputTabLabel = ({
         "text-muted-foreground mb-2 px-3 text-xs font-medium",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabLabel's native h3 attributes, preserving caller events and accessibility props.
       {...props}
     />
   </>
@@ -563,7 +635,11 @@ const PromptInputTabBody = ({
   className,
   ...props
 }: PromptInputTabBodyProps): React.JSX.Element => (
-  <div className={cn("space-y-1", className)} {...props} />
+  <div
+    className={cn("space-y-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabBody's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -580,6 +656,7 @@ const PromptInputTabItem = ({
       "hover:bg-accent flex items-center gap-2 px-3 py-2 text-xs",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabItem's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -593,7 +670,11 @@ const PromptInputCommand = ({
   className,
   ...props
 }: PromptInputCommandProps): React.JSX.Element => (
-  <Command className={cn(className)} {...props} />
+  <Command
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommand's Command prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -605,7 +686,11 @@ const PromptInputCommandInput = ({
   className,
   ...props
 }: PromptInputCommandInputProps): React.JSX.Element => (
-  <CommandInput className={cn(className)} {...props} />
+  <CommandInput
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandInput's CommandInput prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -617,7 +702,11 @@ const PromptInputCommandList = ({
   className,
   ...props
 }: PromptInputCommandListProps): React.JSX.Element => (
-  <CommandList className={cn(className)} {...props} />
+  <CommandList
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandList's CommandList prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -629,7 +718,11 @@ const PromptInputCommandEmpty = ({
   className,
   ...props
 }: PromptInputCommandEmptyProps): React.JSX.Element => (
-  <CommandEmpty className={cn(className)} {...props} />
+  <CommandEmpty
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandEmpty's CommandEmpty prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -641,7 +734,11 @@ const PromptInputCommandGroup = ({
   className,
   ...props
 }: PromptInputCommandGroupProps): React.JSX.Element => (
-  <CommandGroup className={cn(className)} {...props} />
+  <CommandGroup
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandGroup's CommandGroup prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -653,7 +750,11 @@ const PromptInputCommandItem = ({
   className,
   ...props
 }: PromptInputCommandItemProps): React.JSX.Element => (
-  <CommandItem className={cn(className)} {...props} />
+  <CommandItem
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandItem's CommandItem prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -665,7 +766,11 @@ const PromptInputCommandSeparator = ({
   className,
   ...props
 }: PromptInputCommandSeparatorProps): React.JSX.Element => (
-  <CommandSeparator className={cn(className)} {...props} />
+  <CommandSeparator
+    className={cn(className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandSeparator's CommandSeparator prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 

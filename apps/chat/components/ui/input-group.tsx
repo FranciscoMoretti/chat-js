@@ -37,6 +37,7 @@ const InputGroup = ({
       className
     )}
     data-slot="input-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroup's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -89,6 +90,7 @@ const InputGroupAddon = ({
         )
         ?.focus();
     }}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupAddon's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -126,6 +128,7 @@ const InputGroupButton = ({
     data-size={size}
     type={type}
     variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupButton's Button prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -142,6 +145,7 @@ const InputGroupText = ({
       "text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupText's native span attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -159,6 +163,7 @@ const InputGroupInput = ({
       className
     )}
     data-slot="input-group-control"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupInput's Input prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -176,6 +181,7 @@ const InputGroupTextarea = ({
       className
     )}
     data-slot="input-group-control"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupTextarea's Textarea prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

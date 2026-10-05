@@ -7,7 +7,6 @@ import ts from "typescript";
 
 import { preflight } from "./preflight";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- TypeScript owns the mutable AST nodes passed to these read-only inspection callbacks. */
 const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
   const file = "lib/db/schema.ts";
   await preflight(cwd, [file]);
@@ -20,8 +19,10 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
   );
   const connector = parsed.statements
     .filter(ts.isVariableStatement)
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript supplies its native VariableStatement; the declaration list contains SDK-owned mutable AST nodes.
     .flatMap((statement) => statement.declarationList.declarations)
     .find(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native declaration names expose getText(parsed) through the TypeScript AST contract.
       (declaration): boolean =>
         declaration.name.getText(parsed) === "mcpConnector"
     );
@@ -34,6 +35,7 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
     columns !== undefined &&
     ts.isObjectLiteralExpression(columns) &&
     columns.properties.some(
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript property predicates consume native mutable Node shapes; a recursive readonly projection would not satisfy those SDK parameters.
       (property): boolean =>
         ts.isPropertyAssignment(property) &&
         (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) &&
@@ -46,6 +48,5 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
     'MCP requires mcpConnector.requireApproval in lib/db/schema.ts. Add requireApproval: boolean("requireApproval").notNull().default(false) to the connector columns, then run your db:generate script, review the generated migration, and run your db:migrate script against the intended database using your package manager before retrying chat-js add mcp. No source was installed. See https://chatjs.dev/docs/features/mcp for the existing-app upgrade steps.'
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { assertMcpApprovalSchema };

@@ -22,6 +22,7 @@ const query = postgres(env.DATABASE_URL, { max: 4 });
 const rejectedWriteCode = /^(?<code>40001|55000)$/u;
 const runIds: string[] = [];
 const streamIds: string[] = [];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs the resource fence before registering its concurrency scenarios.
 await installEvePostgresResourceFence(query);
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

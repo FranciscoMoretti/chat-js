@@ -34,8 +34,8 @@ export const auditedRestrictionRules = {
   "no-underscore-dangle": "error",
   "node/no-process-env": "error",
   "node/no-sync": "error",
-  // ESM tooling uses top-level await, also required by unicorn/prefer-top-level-await.
-  "node/no-top-level-await": "off",
+  // ESM command and test initialization exceptions are documented at their source.
+  "node/no-top-level-await": "error",
   // Node 24 and modern browsers support await; promise safety rules enforce correct usage.
   "oxc/no-async-await": "off",
   // Optional chaining is required by the application coding guidance and supported by the target runtimes.

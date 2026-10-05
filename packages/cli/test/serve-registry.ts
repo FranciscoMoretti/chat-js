@@ -47,8 +47,10 @@ const server = Bun.serve({
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 const temporaryAddressFile = `${addressFile}.tmp`;
+// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture server writes its bound address before advertising readiness to the integration process.
 await writeFile(
   temporaryAddressFile,
   `http://127.0.0.1:${server.port}/{name}.json`
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture server atomically publishes its completed address file for integration consumers.
 await rename(temporaryAddressFile, addressFile);

@@ -44,6 +44,7 @@ const Slider = ({
       max={max}
       min={min}
       value={value}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Slider's SliderPrimitiveRoot prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <SliderPrimitiveTrack

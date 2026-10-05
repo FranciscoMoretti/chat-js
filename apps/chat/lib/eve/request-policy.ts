@@ -51,33 +51,34 @@ const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * no-magic-numbers (#517): parseSessionRequest uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep parseSessionRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): parseSessionRequest intentionally keeps the existing falsy-value behavior of match?.[1]; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): parseSessionRequest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
-const parseSessionRequest = (path: string, method: string) => {
-  const match = sessionPath.exec(path);
-  if (!match?.[1]) {
+/* oxlint-disable unicorn/no-null -- Unsupported path/method combinations return the existing null policy sentinel. */
+const parseSessionRequest = (
+  path: string,
+  method: string
+): {
+  sessionId: string;
+  schema: typeof cancel | z.ZodUnion<[typeof message, typeof respond]>;
+} | null => {
+  const groups = sessionPath.exec(path)?.groups;
+  const sessionId = groups?.sessionId;
+  if (typeof sessionId !== "string") {
     return null;
   }
-  const { 2: action } = match;
+  const action = groups?.operation;
   if (
     !(
       (method === "GET" && action === "stream") ||
-      (method === "POST" && (!action || action === "cancel"))
+      (method === "POST" && (typeof action !== "string" || action === "cancel"))
     )
   ) {
     return null;
   }
   return {
-    sessionId: match[1],
+    sessionId,
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): safeStreamQuery preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const safeStreamQuery = (
   params: ReadonlyNativeSurface<URLSearchParams>
@@ -102,17 +103,15 @@ const safeStreamQuery = (
   return result;
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): sameOrigin intentionally keeps the existing falsy-value behavior of supplied; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const sameOrigin = (
   request: ReadonlyNativeSurface<Request>,
   origin: string
 ): boolean => {
   const supplied = request.headers.get("origin");
-  return supplied
+  return supplied !== null && supplied !== ""
     ? supplied === origin
     : request.method === "GET" &&
         request.headers.get("sec-fetch-site") !== "cross-site";
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 export { parseSessionRequest, safeStreamQuery, sameOrigin };

@@ -19,6 +19,7 @@ const Drawer = ({
 }: ReactComponentProps<typeof DrawerPrimitive.Root>): ReactJSX.Element => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Drawer's DrawerPrimitive.Root prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -39,6 +40,7 @@ const DrawerOverlay = reactForwardRef<
   <DrawerPrimitive.Overlay
     className={cn("fixed inset-0 z-50 bg-black/80", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerOverlay's DrawerPrimitive.Overlay prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -58,6 +60,7 @@ const DrawerContent = reactForwardRef<
         className
       )}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerContent's DrawerPrimitive.Content prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <div className="bg-muted mx-auto mt-4 h-2 w-[100px] rounded-full" />
@@ -75,6 +78,7 @@ const DrawerHeader = ({
 }: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
     className={cn("grid gap-1.5 p-4 text-center sm:text-left", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -88,6 +92,7 @@ const DrawerFooter = ({
 }: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
     className={cn("mt-auto flex flex-col gap-2 p-4", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -105,6 +110,7 @@ const DrawerTitle = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerTitle's DrawerPrimitive.Title prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -119,6 +125,7 @@ const DrawerDescription = reactForwardRef<
   <DrawerPrimitive.Description
     className={cn("text-muted-foreground text-sm", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerDescription's DrawerPrimitive.Description prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));

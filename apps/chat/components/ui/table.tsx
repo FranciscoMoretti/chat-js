@@ -17,6 +17,7 @@ const Table = reactForwardRef<
     <table
       className={cn("w-full caption-bottom text-sm", className)}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Table's native table attributes, preserving caller events and accessibility props.
       {...props}
     />
   </div>
@@ -29,7 +30,12 @@ const TableHeader = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref): ReactJSX.Element => (
-  <thead className={cn("[&_tr]:border-b", className)} ref={ref} {...props} />
+  <thead
+    className={cn("[&_tr]:border-b", className)}
+    ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableHeader's native thead attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TableHeader.displayName = "TableHeader";
@@ -42,6 +48,7 @@ const TableBody = reactForwardRef<
   <tbody
     className={cn("[&_tr:last-child]:border-0", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableBody's native tbody attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -59,6 +66,7 @@ const TableFooter = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableFooter's native tfoot attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -76,6 +84,7 @@ const TableRow = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableRow's native tr attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -93,6 +102,7 @@ const TableHead = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableHead's native th attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -107,6 +117,7 @@ const TableCell = reactForwardRef<
   <td
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableCell's native td attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -121,6 +132,7 @@ const TableCaption = reactForwardRef<
   <caption
     className={cn("text-muted-foreground mt-4 text-sm", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TableCaption's native caption attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));

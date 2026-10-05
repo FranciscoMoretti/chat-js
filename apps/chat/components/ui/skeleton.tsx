@@ -10,6 +10,7 @@ const Skeleton = ({
   <div
     className={cn("bg-muted animate-pulse rounded-md", className)}
     data-slot="skeleton"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Skeleton's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );

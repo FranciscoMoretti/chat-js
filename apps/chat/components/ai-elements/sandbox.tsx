@@ -27,6 +27,7 @@ const Sandbox = ({
   <Collapsible
     className={cn("not-prose group mb-4 w-full rounded-md border", className)}
     defaultOpen
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sandbox's Collapsible prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -51,6 +52,7 @@ const SandboxHeader = ({
       "flex w-full items-center justify-between gap-4 p-3",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- SandboxHeader forwards extra caller object properties to CollapsibleTrigger; removing the rest spread would drop existing events and data attributes.
     {...props}
   >
     <div className="flex items-center gap-2">
@@ -76,6 +78,7 @@ const SandboxContent = ({
       "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxContent's CollapsibleContent prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -89,7 +92,11 @@ const SandboxTabs = ({
   className,
   ...props
 }: SandboxTabsProps): React.JSX.Element => (
-  <Tabs className={cn("w-full", className)} {...props} />
+  <Tabs
+    className={cn("w-full", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxTabs's Tabs prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -106,6 +113,7 @@ const SandboxTabsBar = ({
       "border-border flex w-full items-center border-t border-b",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxTabsBar's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -121,6 +129,7 @@ const SandboxTabsList = ({
 }: SandboxTabsListProps): React.JSX.Element => (
   <TabsList
     className={cn("h-auto rounded-none border-0 bg-transparent p-0", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxTabsList's TabsList prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -139,6 +148,7 @@ const SandboxTabsTrigger = ({
       "text-muted-foreground data-[state=active]:border-primary data-[state=active]:text-foreground rounded-none border-0 border-b-2 border-transparent px-4 py-2 text-sm font-medium transition-colors data-[state=active]:bg-transparent data-[state=active]:shadow-none",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxTabsTrigger's TabsTrigger prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -152,7 +162,11 @@ const SandboxTabContent = ({
   className,
   ...props
 }: SandboxTabContentProps): React.JSX.Element => (
-  <TabsContent className={cn("mt-0 text-sm", className)} {...props} />
+  <TabsContent
+    className={cn("mt-0 text-sm", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxTabContent's TabsContent prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -164,7 +178,11 @@ const SandboxCode = ({
   className,
   ...props
 }: SandboxCodeProps): React.JSX.Element => (
-  <CodeBlock className={cn("min-h-10 border-0", className)} {...props}>
+  <CodeBlock
+    className={cn("min-h-10 border-0", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxCode's CodeBlock prop contract, preserving caller options, children and callbacks.
+    {...props}
+  >
     <CodeBlockCopyButton
       className="opacity-0 transition-opacity duration-200 group-hover:opacity-100"
       size="sm"
@@ -184,6 +202,7 @@ const SandboxOutput = ({
   <CodeBlock
     className={cn("min-h-10 border-0", className)}
     language="log"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SandboxOutput's CodeBlock prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <CodeBlockCopyButton

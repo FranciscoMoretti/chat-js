@@ -36,6 +36,7 @@ vi.mock("eve/client", async (original) => ({
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates its owner before registering feedback scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,

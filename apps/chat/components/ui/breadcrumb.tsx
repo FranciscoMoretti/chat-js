@@ -17,7 +17,12 @@ const Breadcrumb = reactForwardRef<
     separator?: ReactReactNode;
   }
 >(({ ...props }, ref): ReactJSX.Element => (
-  <nav aria-label="breadcrumb" ref={ref} {...props} />
+  <nav
+    aria-label="breadcrumb"
+    ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Breadcrumb's native nav attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Breadcrumb.displayName = "Breadcrumb";
@@ -33,6 +38,7 @@ const BreadcrumbList = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbList's native ol attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -47,6 +53,7 @@ const BreadcrumbItem = reactForwardRef<
   <li
     className={cn("inline-flex items-center gap-1.5", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbItem's native li attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -66,6 +73,7 @@ const BreadcrumbLink = reactForwardRef<
     <Comp
       className={cn("hover:text-foreground transition-colors", className)}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbLink's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -83,6 +91,7 @@ const BreadcrumbPage = reactForwardRef<
     aria-disabled="true"
     className={cn("text-foreground font-normal", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbPage's native span attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -99,6 +108,7 @@ const BreadcrumbSeparator = ({
     aria-hidden="true"
     className={cn("[&>svg]:h-3.5 [&>svg]:w-3.5", className)}
     role="presentation"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbSeparator's native li attributes, preserving caller events and accessibility props.
     {...props}
   >
     {children ?? <ChevronRight />}
@@ -116,6 +126,7 @@ const BreadcrumbEllipsis = ({
     aria-hidden="true"
     className={cn("flex h-9 w-9 items-center justify-center", className)}
     role="presentation"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbEllipsis's native span attributes, preserving caller events and accessibility props.
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />

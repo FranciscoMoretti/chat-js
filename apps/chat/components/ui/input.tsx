@@ -20,6 +20,7 @@ const Input = ({
     )}
     data-slot="input"
     type={type}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Input's native input attributes, preserving caller events and accessibility props.
     {...props}
   />
 );

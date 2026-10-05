@@ -76,6 +76,7 @@ const runHostedCleanup = async (
 if (import.meta.main) {
   try {
     /* oxlint-disable node/no-process-env -- Scheduler entrypoint validates its two environment inputs here. */
+    // oxlint-disable-next-line node/no-top-level-await -- This scheduler executable awaits cleanup so its existing catch reports network or authorization failures.
     await runHostedCleanup(
       process.env.APP_URL ?? "",
       process.env.CRON_SECRET ?? ""

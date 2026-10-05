@@ -19,6 +19,7 @@ const Label = ({
       className
     )}
     data-slot="label"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Label's LabelPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

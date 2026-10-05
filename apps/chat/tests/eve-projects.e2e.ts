@@ -35,6 +35,7 @@ const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
 const ownProject = crypto.randomUUID();
 const foreignProject = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the owner and stranger before their project fixtures.
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -42,6 +43,7 @@ await db.insert(user).values(
     name: "Project test",
   }))
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates owned and foreign projects before registering authorization scenarios.
 await db.insert(project).values([
   {
     id: ownProject,

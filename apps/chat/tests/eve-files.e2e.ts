@@ -45,6 +45,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
 }
 const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the owner and stranger before registering file-access scenarios.
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,

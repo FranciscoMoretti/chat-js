@@ -123,6 +123,7 @@ const Reasoning = memo(
           className={cn("not-prose mb-4", className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
+          // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Reasoning's Collapsible prop contract, preserving caller options, children and callbacks.
           {...props}
         >
           {children}
@@ -162,6 +163,7 @@ const ReasoningTrigger = memo(
           "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
           className
         )}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ReasoningTrigger's CollapsibleTrigger prop contract, preserving caller options, children and callbacks.
         {...props}
       >
         {children ?? (
@@ -200,6 +202,7 @@ const ReasoningContent = memo(
         "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ReasoningContent's CollapsibleContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <Response className="grid gap-2">{children}</Response>

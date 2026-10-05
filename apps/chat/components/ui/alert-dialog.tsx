@@ -23,7 +23,11 @@ import { cn } from "@/lib/utils";
 const AlertDialog = ({
   ...props
 }: ReactComponentProps<typeof AlertDialogPrimitiveRoot>): ReactJSX.Element => (
-  <AlertDialogPrimitiveRoot data-slot="alert-dialog" {...props} />
+  <AlertDialogPrimitiveRoot
+    data-slot="alert-dialog"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialog's AlertDialogPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AlertDialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -33,7 +37,11 @@ const AlertDialogTrigger = ({
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveTrigger
 >): ReactJSX.Element => (
-  <AlertDialogPrimitiveTrigger data-slot="alert-dialog-trigger" {...props} />
+  <AlertDialogPrimitiveTrigger
+    data-slot="alert-dialog-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogTrigger's AlertDialogPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -44,7 +52,11 @@ const AlertDialogPortal = ({
 }: ReactComponentProps<
   typeof AlertDialogPrimitivePortal
 >): ReactJSX.Element => (
-  <AlertDialogPrimitivePortal data-slot="alert-dialog-portal" {...props} />
+  <AlertDialogPrimitivePortal
+    data-slot="alert-dialog-portal"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogPortal's AlertDialogPrimitivePortal prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -62,6 +74,7 @@ const AlertDialogOverlay = ({
       className
     )}
     data-slot="alert-dialog-overlay"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogOverlay's AlertDialogPrimitiveOverlay prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -83,6 +96,7 @@ const AlertDialogContent = ({
         className
       )}
       data-slot="alert-dialog-content"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogContent's AlertDialogPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </AlertDialogPortal>
@@ -98,6 +112,7 @@ const AlertDialogHeader = ({
   <div
     className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
     data-slot="alert-dialog-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -115,6 +130,7 @@ const AlertDialogFooter = ({
       className
     )}
     data-slot="alert-dialog-footer"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -129,6 +145,7 @@ const AlertDialogTitle = ({
   <AlertDialogPrimitiveTitle
     className={cn("text-lg font-semibold", className)}
     data-slot="alert-dialog-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogTitle's AlertDialogPrimitiveTitle prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -145,6 +162,7 @@ const AlertDialogDescription = ({
   <AlertDialogPrimitiveDescription
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="alert-dialog-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogDescription's AlertDialogPrimitiveDescription prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -160,6 +178,7 @@ const AlertDialogAction = ({
 >): ReactJSX.Element => (
   <AlertDialogPrimitiveAction
     className={cn(buttonVariants(), className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogAction's AlertDialogPrimitiveAction prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -175,6 +194,7 @@ const AlertDialogCancel = ({
 >): ReactJSX.Element => (
   <AlertDialogPrimitiveCancel
     className={cn(buttonVariants({ variant: "outline" }), className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDialogCancel's AlertDialogPrimitiveCancel prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

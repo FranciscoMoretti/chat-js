@@ -16,7 +16,11 @@ const Suggestions = ({
   children,
   ...props
 }: SuggestionsProps): React.JSX.Element => (
-  <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
+  <ScrollArea
+    className="w-full overflow-x-auto whitespace-nowrap"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestions's ScrollArea prop contract, preserving caller options, children and callbacks.
+    {...props}
+  >
     <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
       {children}
     </div>
@@ -52,6 +56,7 @@ const Suggestion = ({
       size={size}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestion's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}

@@ -38,4 +38,5 @@ export const models = ${JSON.stringify(models, null, 2)} as const satisfies read
 };
 /* oxlint-enable no-console, no-magic-numbers, node/no-sync, typescript/strict-boolean-expressions, unicorn/no-null */
 
+// oxlint-disable-next-line node/no-top-level-await -- This executable completes model fetching and file publication before the command finishes.
 await fetchAndSaveModels();

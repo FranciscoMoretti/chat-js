@@ -18,6 +18,7 @@ const Empty = ({
       className
     )}
     data-slot="empty"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Empty's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -34,6 +35,7 @@ const EmptyHeader = ({
       className
     )}
     data-slot="empty-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -65,6 +67,7 @@ const EmptyMedia = ({
     className={cn(emptyMediaVariants({ className, variant }))}
     data-slot="empty-icon"
     data-variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyMedia's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -79,6 +82,7 @@ const EmptyTitle = ({
   <div
     className={cn("text-lg font-medium tracking-tight", className)}
     data-slot="empty-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyTitle's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -96,6 +100,7 @@ const EmptyDescription = ({
       className
     )}
     data-slot="empty-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyDescription's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -113,6 +118,7 @@ const EmptyContent = ({
       className
     )}
     data-slot="empty-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyContent's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );

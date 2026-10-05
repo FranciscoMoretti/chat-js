@@ -21,6 +21,7 @@ const Conversation = ({
     initial="smooth"
     resize="smooth"
     role="log"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Conversation's StickToBottom prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -36,6 +37,7 @@ const ConversationContent = ({
 }: ConversationContentProps): React.JSX.Element => (
   <StickToBottom.Content
     className={cn("flex flex-col gap-8 p-4", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ConversationContent's StickToBottom.Content prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -62,6 +64,7 @@ const ConversationEmptyState = ({
       "flex size-full flex-col items-center justify-center gap-3 p-8 text-center",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ConversationEmptyState's native div attributes, preserving caller events and accessibility props.
     {...props}
   >
     {children ?? (
@@ -104,6 +107,7 @@ const ConversationScrollButton = ({
         size="icon"
         type="button"
         variant="outline"
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ConversationScrollButton's Button prop contract, preserving caller options, children and callbacks.
         {...props}
       >
         <ArrowDownIcon className="size-4" />

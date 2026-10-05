@@ -43,6 +43,7 @@ const { dirname, join } = pathModule;
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
 /* oxlint-enable node/no-process-env */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun integration suite creates the shared temporary root before registering its gateway setup and cleanup hooks.
 const root = await mkdtemp(join(tmpdir(), "chatjs-gateway-integration-"));
 const packageDirectory = dirname(
   fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))

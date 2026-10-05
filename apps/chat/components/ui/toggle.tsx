@@ -40,6 +40,7 @@ const Toggle = ({
   <TogglePrimitiveRoot
     className={cn(toggleVariants({ className, size, variant }))}
     data-slot="toggle"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Toggle's TogglePrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

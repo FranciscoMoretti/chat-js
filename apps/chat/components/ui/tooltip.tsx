@@ -23,6 +23,7 @@ const TooltipProvider = ({
   <TooltipPrimitiveProvider
     data-slot="tooltip-provider"
     delayDuration={delayDuration}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TooltipProvider's TooltipPrimitiveProvider prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -33,7 +34,11 @@ const Tooltip = ({
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveRoot>): ReactJSX.Element => (
   <TooltipProvider>
-    <TooltipPrimitiveRoot data-slot="tooltip" {...props} />
+    <TooltipPrimitiveRoot
+      data-slot="tooltip"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Tooltip's TooltipPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+      {...props}
+    />
   </TooltipProvider>
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
@@ -43,7 +48,11 @@ const Tooltip = ({
 const TooltipTrigger = ({
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveTrigger>): ReactJSX.Element => (
-  <TooltipPrimitiveTrigger data-slot="tooltip-trigger" {...props} />
+  <TooltipPrimitiveTrigger
+    data-slot="tooltip-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TooltipTrigger's TooltipPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -68,6 +77,7 @@ const TooltipContent = ({
       )}
       data-slot="tooltip-content"
       sideOffset={sideOffset}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TooltipContent's TooltipPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children}

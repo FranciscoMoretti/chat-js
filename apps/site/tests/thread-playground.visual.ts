@@ -13,10 +13,12 @@ import type { Page } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
+// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable launches Chromium before creating its ordered browser scenario.
 const browser = await chromium.launch();
 const output = fileURLToPath(
   new URL("../uiverify-screenshots/", import.meta.url)
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable prepares its screenshot directory before capturing the scenario.
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
@@ -36,6 +38,7 @@ const capture = async (page: Page, name: string): Promise<void> => {
 /* oxlint-disable eslint/no-console -- thread-playground.visual.ts: Console output is the observable diagnostic exercised by this fixture. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- thread-playground.visual.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable node/no-top-level-await -- This Bun visual-test executable runs one ordered Playwright scenario and awaits browser disposal in finally; it is not a require(esm) library entrypoint. */
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
@@ -275,6 +278,7 @@ try {
 } finally {
   await browser.close();
 }
+/* oxlint-enable node/no-top-level-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-console */

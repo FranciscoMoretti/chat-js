@@ -34,6 +34,7 @@ const ButtonGroup = ({
     className={cn(buttonGroupVariants({ orientation }), className)}
     data-orientation={orientation}
     data-slot="button-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ButtonGroup's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -55,6 +56,7 @@ const ButtonGroupText = ({
         "bg-muted flex items-center gap-2 rounded-md border px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ButtonGroupText's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -75,6 +77,7 @@ const ButtonGroupSeparator = ({
     )}
     data-slot="button-group-separator"
     orientation={orientation}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ButtonGroupSeparator's Separator prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

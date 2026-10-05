@@ -25,6 +25,7 @@ const Avatar = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Avatar's AvatarPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -39,6 +40,7 @@ const AvatarImage = reactForwardRef<
   <AvatarPrimitiveImage
     className={cn("aspect-square h-full w-full", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AvatarImage's AvatarPrimitiveImage prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -56,6 +58,7 @@ const AvatarFallback = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AvatarFallback's AvatarPrimitiveFallback prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));

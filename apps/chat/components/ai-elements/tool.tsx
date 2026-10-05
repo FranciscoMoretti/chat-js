@@ -29,6 +29,7 @@ type ToolProps = ComponentProps<typeof Collapsible>;
 const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   <Collapsible
     className={cn("not-prose mb-4 w-full rounded-md border", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Tool's Collapsible prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -84,6 +85,7 @@ const ToolHeader = ({
       "flex w-full items-center justify-between gap-4 p-3",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- ToolHeader forwards extra caller object properties to CollapsibleTrigger; removing the rest spread would drop existing events and data attributes.
     {...props}
   >
     <div className="flex items-center gap-2">
@@ -111,6 +113,7 @@ const ToolContent = ({
       "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ToolContent's CollapsibleContent prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -127,7 +130,11 @@ const ToolInput = ({
   input,
   ...props
 }: ToolInputProps): React.JSX.Element => (
-  <div className={cn("space-y-2 overflow-hidden p-4", className)} {...props}>
+  <div
+    className={cn("space-y-2 overflow-hidden p-4", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ToolInput's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  >
     <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
       Parameters
     </h4>
@@ -171,7 +178,11 @@ const ToolOutput = ({
   }
 
   return (
-    <div className={cn("space-y-2 p-4", className)} {...props}>
+    <div
+      className={cn("space-y-2 p-4", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ToolOutput's native div attributes, preserving caller events and accessibility props.
+      {...props}
+    >
       <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
         {typeof errorText === "string" && errorText !== "" ? "Error" : "Result"}
       </h4>

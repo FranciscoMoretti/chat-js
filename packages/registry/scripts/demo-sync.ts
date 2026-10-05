@@ -475,10 +475,12 @@ if (import.meta.main) {
   ) {
     throw new Error("Usage: bun demo:sync [--discard] | bun demo:check");
   }
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun entrypoint completes demo synchronization before reporting command completion.
   await syncDemo({
     baseline: baselinePath,
     check: args.includes("--check"),
     discard: args.includes("--discard"),
+    // oxlint-disable-next-line node/no-top-level-await -- This Bun entrypoint generates the canonical demo before synchronizing or checking its installed files.
     expected: await generateDemo(),
     root: demoRoot,
   });

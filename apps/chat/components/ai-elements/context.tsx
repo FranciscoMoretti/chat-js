@@ -62,7 +62,12 @@ const Context = ({
 
   return (
     <ContextContext.Provider value={contextValue}>
-      <HoverCard closeDelay={0} openDelay={0} {...props} />
+      <HoverCard
+        closeDelay={0}
+        openDelay={0}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Context's HoverCard prop contract, preserving caller options, children and callbacks.
+        {...props}
+      />
     </ContextContext.Provider>
   );
 };
@@ -129,7 +134,12 @@ const ContextTrigger = ({
   return (
     <HoverCardTrigger asChild>
       {children ?? (
-        <Button type="button" variant="ghost" {...props}>
+        <Button
+          type="button"
+          variant="ghost"
+          // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextTrigger's Button prop contract, preserving caller options, children and callbacks.
+          {...props}
+        >
           <span className="text-muted-foreground font-medium">
             {renderedPercent}
           </span>
@@ -151,6 +161,7 @@ const ContextContent = ({
 }: ContextContentProps): React.JSX.Element => (
   <HoverCardContent
     className={cn("min-w-60 divide-y overflow-hidden p-0", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContent's HoverCardContent prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -179,7 +190,11 @@ const ContextContentHeader = ({
   }).format(maxTokens);
 
   return (
-    <div className={cn("w-full space-y-2 p-3", className)} {...props}>
+    <div
+      className={cn("w-full space-y-2 p-3", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContentHeader's native div attributes, preserving caller events and accessibility props.
+      {...props}
+    >
       {children ?? (
         <>
           <div className="flex items-center justify-between gap-3 text-xs">
@@ -207,7 +222,11 @@ const ContextContentBody = ({
   className,
   ...props
 }: ContextContentBodyProps): React.JSX.Element => (
-  <div className={cn("w-full p-3", className)} {...props}>
+  <div
+    className={cn("w-full p-3", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContentBody's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  >
     {children}
   </div>
 );
@@ -244,6 +263,7 @@ const ContextContentFooter = ({
         "bg-secondary flex w-full items-center justify-between gap-3 p-3 text-xs",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContentFooter's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       {children ?? (
@@ -312,6 +332,7 @@ const ContextInputUsage = ({
   return (
     <div
       className={cn("flex items-center justify-between text-xs", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextInputUsage's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       <span className="text-muted-foreground">Input</span>
@@ -355,6 +376,7 @@ const ContextOutputUsage = ({
   return (
     <div
       className={cn("flex items-center justify-between text-xs", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextOutputUsage's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       <span className="text-muted-foreground">Output</span>
@@ -398,6 +420,7 @@ const ContextReasoningUsage = ({
   return (
     <div
       className={cn("flex items-center justify-between text-xs", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextReasoningUsage's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       <span className="text-muted-foreground">Reasoning</span>
@@ -441,6 +464,7 @@ const ContextCacheUsage = ({
   return (
     <div
       className={cn("flex items-center justify-between text-xs", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextCacheUsage's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
       <span className="text-muted-foreground">Cache</span>

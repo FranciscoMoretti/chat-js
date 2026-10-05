@@ -1,4 +1,3 @@
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
@@ -16,6 +15,7 @@ import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
 import { inferPackageManager } from "#cli/utils/get-package-manager";
 import { handleError } from "#cli/utils/handle-error";
+// oxlint-disable-next-line import/max-dependencies -- Adding an installation composes provider resolution, source rollback, registration, dependency installation, configuration edits, and prompts directly.
 import { installPlan } from "#cli/utils/install-plan";
 import { planInstallation } from "#cli/utils/installation-plan";
 import { gatewayConfigEdit } from "#cli/utils/provider-config";
@@ -73,15 +73,11 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-enable import/max-dependencies */
-
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+/* oxlint-disable eslint/max-statements -- Resolve selections, validate replacement permissions, and calculate configuration edits before the installation can write source. */
+/* oxlint-disable eslint/max-lines-per-function -- Prepare provider selections and replacement edits together; later installation consumes this complete AddSetup snapshot. */
 const prepareAdd = async (
   cwd: string,
   items: readonly string[],
@@ -104,10 +100,12 @@ const prepareAdd = async (
   }
   const gateway = hasNonEmptyValue(options.gateway)
     ? await resolveGateway(options.gateway, cwd)
-    : undefined;
+    : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+      undefined;
   const storage = hasNonEmptyValue(options.storageProvider)
     ? await resolveStorage(options.storageProvider, cwd)
-    : undefined;
+    : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+      undefined;
   if (storage && hasNonEmptyValue(options.storageConfig)) {
     storage.options = parseStorageOptions(options.storageConfig);
   }
@@ -118,7 +116,8 @@ const prepareAdd = async (
       gateway: gateway?.source,
       storage: storage
         ? { options: storage.options, source: storage.source }
-        : undefined,
+        : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+          undefined,
       tools: items,
     },
     { replace: options.replace }
@@ -135,15 +134,17 @@ const prepareAdd = async (
     gateway ??
     (gatewayItem
       ? await resolveGateway(plan.sources[plan.items.indexOf(gatewayItem)], cwd)
-      : undefined);
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined);
   const selectedStorage =
     storage ??
     (storageItem
       ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
-      : undefined);
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined);
   const gatewayChange = plan.providerChanges.some(
     ({ kind, previous, next }: ProviderChangeInput) =>
-      kind === "gateway" && previous && previous !== next
+      kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
   );
   const keepStorageOptions =
     !hasNonEmptyValue(options.storageConfig) &&
@@ -159,7 +160,8 @@ const prepareAdd = async (
   const configEdit =
     gatewayChange && selectedGateway
       ? await gatewayConfigEdit(cwd, selectedGateway)
-      : undefined;
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined;
 
   return {
     configEdit,
@@ -170,8 +172,6 @@ const prepareAdd = async (
     selectedStorage,
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -200,8 +200,8 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-statements -- The command confirms replacement, installs transactionally with rollback, regenerates registrations, and prints requirements only after success. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep confirmation, transactional provider registration, package installation, and success reporting in their existing execution order. */
 export const add = new Command("add")
   .description(
     "install registry tools/features/providers and compose their ChatJS registrations"

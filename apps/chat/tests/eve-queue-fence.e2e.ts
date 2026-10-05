@@ -23,7 +23,9 @@ const query = postgres(env.DATABASE_URL, { max: 1 });
 const task = `eve-queue-fence-${crypto.randomUUID()}`;
 const ids: string[] = [];
 const runIds: string[] = [];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs resource fencing before registering queue scenarios.
 await installEvePostgresResourceFence(query);
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs queue fencing before registering queue scenarios.
 await installEvePostgresQueueFence(query, task);
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

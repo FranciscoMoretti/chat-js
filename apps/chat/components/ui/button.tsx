@@ -54,6 +54,7 @@ const Button = ({
     <Comp
       className={cn(buttonVariants({ className, size, variant }))}
       data-slot="button"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Button's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );

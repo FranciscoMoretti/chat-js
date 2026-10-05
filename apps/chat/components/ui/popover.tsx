@@ -18,7 +18,11 @@ import { cn } from "@/lib/utils";
 const Popover = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveRoot>): ReactJSX.Element => (
-  <PopoverPrimitiveRoot data-slot="popover" {...props} />
+  <PopoverPrimitiveRoot
+    data-slot="popover"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Popover's PopoverPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PopoverTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -26,7 +30,11 @@ const Popover = ({
 const PopoverTrigger = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveTrigger>): ReactJSX.Element => (
-  <PopoverPrimitiveTrigger data-slot="popover-trigger" {...props} />
+  <PopoverPrimitiveTrigger
+    data-slot="popover-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PopoverTrigger's PopoverPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -47,6 +55,7 @@ const PopoverContent = ({
       )}
       data-slot="popover-content"
       sideOffset={sideOffset}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PopoverContent's PopoverPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </PopoverPrimitivePortal>
@@ -58,7 +67,11 @@ const PopoverContent = ({
 const PopoverAnchor = ({
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveAnchor>): ReactJSX.Element => (
-  <PopoverPrimitiveAnchor data-slot="popover-anchor" {...props} />
+  <PopoverPrimitiveAnchor
+    data-slot="popover-anchor"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PopoverAnchor's PopoverPrimitiveAnchor prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 

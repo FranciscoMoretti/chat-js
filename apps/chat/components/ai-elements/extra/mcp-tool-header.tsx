@@ -31,6 +31,7 @@ export const McpToolHeader = ({
       "flex w-full items-center justify-between gap-4 p-3",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- McpToolHeader forwards extra caller object properties to CollapsibleTrigger; removing the rest spread would drop existing events and data attributes.
     {...props}
   >
     <div className="flex items-center gap-2">

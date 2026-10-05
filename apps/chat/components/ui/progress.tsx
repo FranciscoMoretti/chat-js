@@ -23,6 +23,7 @@ const Progress = ({
       className
     )}
     data-slot="progress"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Progress's ProgressPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <ProgressPrimitiveIndicator

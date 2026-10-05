@@ -239,6 +239,7 @@ const assertSynced = async (
 
 /* oxlint-disable eslint/no-console -- sync-template.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 if (isCheck) {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits both template comparisons before setting its check exit status.
   const results = await Promise.all([
     assertSynced("chat-app", templateDir, copyTemplate),
     assertSynced("electron", electronTemplateDir, copyElectronTemplate),
@@ -247,8 +248,10 @@ if (isCheck) {
     process.exit(FAILURE_EXIT_STATUS);
   }
 } else {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command completes chat template copying before reporting synchronization.
   await copyTemplate(templateDir);
   console.log("Synced templates/chat-app from apps/chat.");
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command completes Electron template copying before reporting synchronization.
   await copyElectronTemplate(electronTemplateDir);
   console.log("Synced templates/electron from apps/electron.");
 }

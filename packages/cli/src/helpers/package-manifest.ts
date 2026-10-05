@@ -50,7 +50,7 @@ const resolveBetterAuthVersion = (
   return "";
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper writes matching dependency versions into the caller-owned dependency map; readonly entries would prohibit those updates. */
 const pinBetterAuthVersions = (
   dependencyGroup: DependencyMap | undefined,
   version: string
@@ -68,7 +68,7 @@ const pinBetterAuthVersions = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform replaces and removes entries in the supplied scripts map before the original manifest is serialized. */
 const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
@@ -101,7 +101,7 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform edits the supplied scripts map in place, including Forge commands and removal of obsolete distribution aliases. */
 const normalizeElectronScripts = (scripts: ScriptMap): void => {
   const prebuild =
     "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
@@ -136,7 +136,7 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map. */
 const normalizeElectronDevDependencies = (
   devDependencies: DependencyMap | undefined,
   tsxVersion?: string
@@ -157,7 +157,7 @@ const normalizeElectronDevDependencies = (
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This exported normalizer returns the original manifest after updating its dependency, script, override, type, and packageManager fields; callers rely on in-place normalization. */
 export const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: Readonly<{

@@ -15,11 +15,14 @@ import { renderStill, selectComposition } from "@remotion/renderer";
 import { webpackOverride } from "../webpack";
 /* oxlint-enable import/no-relative-parent-imports */
 
+// oxlint-disable-next-line node/no-top-level-await -- This rendering executable builds its Remotion bundle before selecting the composition.
 const serveUrl = await bundle({
   entryPoint: path.resolve("src/index.tsx"),
   webpackOverride,
 });
+// oxlint-disable-next-line node/no-top-level-await -- This rendering executable resolves the bundled composition before rendering stills.
 const composition = await selectComposition({ id: "ThreadsLaunch", serveUrl });
+// oxlint-disable-next-line node/no-top-level-await -- This rendering executable prepares the output directory before rendering stills.
 await mkdir("out/stills", { recursive: true });
 // One representative capture per meaningful state, plus an out-of-order seek.
 const seen = new Set<number>();
@@ -30,7 +33,7 @@ for (const second of [
   36.7, 37, 38, 39, 40, 42.5, 45, 7,
 ]) {
   const output = `out/stills/${second}${seen.has(second) ? "-seek" : ""}.png`;
-  // oxlint-disable-next-line no-await-in-loop -- Preserve seek order and avoid concurrent browser renderers consuming unbounded memory.
+  // oxlint-disable-next-line no-await-in-loop, node/no-top-level-await -- This rendering executable preserves sequential frame rendering and its out-of-order seek check. Preserve seek order and avoid concurrent browser renderers consuming unbounded memory.
   await renderStill({
     composition,
     frame: Math.round(second * composition.fps),
@@ -38,7 +41,7 @@ for (const second of [
     serveUrl,
   });
   if (seen.has(second)) {
-    // oxlint-disable-next-line no-await-in-loop -- Compare the repeated frame only after this sequential render has completed.
+    // oxlint-disable-next-line no-await-in-loop, node/no-top-level-await -- This rendering executable reads completed stills before comparing the repeated frame. Compare the repeated frame only after this sequential render has completed.
     const [actual, expected] = await Promise.all([
       readFile(output),
       readFile(`out/stills/${second}.png`),

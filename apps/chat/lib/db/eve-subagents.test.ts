@@ -17,10 +17,12 @@ const {
   getEveSubagent,
   advanceEveSubagentUsageCursor,
   listEveSubagents,
+  // oxlint-disable-next-line node/no-top-level-await -- This Vitest suite loads subagent queries after installing its PGlite database mock.
 } = await import("./eve-subagents");
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/usage" dependency within this package instead of introducing an alias or barrel API.
  */
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest suite loads usage ingestion after installing the same PGlite database mock.
 const { ingestEveUsage } = await import("../eve/usage");
 /* oxlint-enable import/no-relative-parent-imports */
 const conversationId = "00000000-0000-4000-8000-000000000001";

@@ -29,7 +29,11 @@ import { cn } from "@/lib/utils";
 const DropdownMenu = ({
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveRoot>): ReactJSX.Element => (
-  <DropdownMenuPrimitiveRoot data-slot="dropdown-menu" {...props} />
+  <DropdownMenuPrimitiveRoot
+    data-slot="dropdown-menu"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenu's DropdownMenuPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -39,7 +43,11 @@ const DropdownMenuPortal = ({
 }: ReactComponentProps<
   typeof DropdownMenuPrimitivePortal
 >): ReactJSX.Element => (
-  <DropdownMenuPrimitivePortal data-slot="dropdown-menu-portal" {...props} />
+  <DropdownMenuPrimitivePortal
+    data-slot="dropdown-menu-portal"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuPortal's DropdownMenuPrimitivePortal prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -50,7 +58,11 @@ const DropdownMenuTrigger = ({
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveTrigger
 >): ReactJSX.Element => (
-  <DropdownMenuPrimitiveTrigger data-slot="dropdown-menu-trigger" {...props} />
+  <DropdownMenuPrimitiveTrigger
+    data-slot="dropdown-menu-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuTrigger's DropdownMenuPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -71,6 +83,7 @@ const DropdownMenuContent = ({
       )}
       data-slot="dropdown-menu-content"
       sideOffset={sideOffset}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuContent's DropdownMenuPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </DropdownMenuPrimitivePortal>
@@ -84,7 +97,11 @@ const DropdownMenuGroup = ({
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveGroup
 >): ReactJSX.Element => (
-  <DropdownMenuPrimitiveGroup data-slot="dropdown-menu-group" {...props} />
+  <DropdownMenuPrimitiveGroup
+    data-slot="dropdown-menu-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuGroup's DropdownMenuPrimitiveGroup prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -107,6 +124,7 @@ const DropdownMenuItem = ({
     data-inset={inset}
     data-slot="dropdown-menu-item"
     data-variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuItem's DropdownMenuPrimitiveItem prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -129,6 +147,7 @@ const DropdownMenuCheckboxItem = ({
       className
     )}
     data-slot="dropdown-menu-checkbox-item"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuCheckboxItem's DropdownMenuPrimitiveCheckboxItem prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
@@ -150,6 +169,7 @@ const DropdownMenuRadioGroup = ({
 >): ReactJSX.Element => (
   <DropdownMenuPrimitiveRadioGroup
     data-slot="dropdown-menu-radio-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuRadioGroup's DropdownMenuPrimitiveRadioGroup prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -170,6 +190,7 @@ const DropdownMenuRadioItem = ({
       className
     )}
     data-slot="dropdown-menu-radio-item"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuRadioItem's DropdownMenuPrimitiveRadioItem prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
@@ -198,6 +219,7 @@ const DropdownMenuLabel = ({
     )}
     data-inset={inset}
     data-slot="dropdown-menu-label"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuLabel's DropdownMenuPrimitiveLabel prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -214,6 +236,7 @@ const DropdownMenuSeparator = ({
   <DropdownMenuPrimitiveSeparator
     className={cn("bg-border -mx-1 my-1 h-px", className)}
     data-slot="dropdown-menu-separator"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSeparator's DropdownMenuPrimitiveSeparator prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -231,6 +254,7 @@ const DropdownMenuShortcut = ({
       className
     )}
     data-slot="dropdown-menu-shortcut"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuShortcut's native span attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -241,7 +265,11 @@ const DropdownMenuShortcut = ({
 const DropdownMenuSub = ({
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveSub>): ReactJSX.Element => (
-  <DropdownMenuPrimitiveSub data-slot="dropdown-menu-sub" {...props} />
+  <DropdownMenuPrimitiveSub
+    data-slot="dropdown-menu-sub"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSub's DropdownMenuPrimitiveSub prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -262,6 +290,7 @@ const DropdownMenuSubTrigger = ({
     )}
     data-inset={inset}
     data-slot="dropdown-menu-sub-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSubTrigger's DropdownMenuPrimitiveSubTrigger prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     {children}
@@ -284,6 +313,7 @@ const DropdownMenuSubContent = ({
       className
     )}
     data-slot="dropdown-menu-sub-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSubContent's DropdownMenuPrimitiveSubContent prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

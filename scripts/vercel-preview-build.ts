@@ -122,7 +122,9 @@ if (import.meta.main) {
     );
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Resolve the chat workspace postgres package explicitly; its exported default has the imported postgres type.
     const { default: postgres }: { default: typeof postgresType } =
+      // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint resolves its workspace Postgres driver before opening the preview database.
       await import(require.resolve("postgres"));
+    // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint awaits migration/build completion so its existing catch reports failures.
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {

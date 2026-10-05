@@ -327,6 +327,7 @@ const checkEnv = async (): Promise<void> => {
  * no-magic-numbers (#517): try { await checkEnv(); } catch (error) { console.error uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 try {
+  // oxlint-disable-next-line node/no-top-level-await -- This setup executable awaits environment validation so its existing catch supplies the failure exit status.
   await checkEnv();
 } catch (error) {
   console.error(error);

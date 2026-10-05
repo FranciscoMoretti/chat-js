@@ -2,7 +2,7 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The eleven rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+The ten rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
 ## Rules awaiting source-scoped adoption
 
@@ -14,7 +14,6 @@ The eleven rules below remain temporarily disabled during adoption. Their ration
 | `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
 | `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
-| `node/no-top-level-await` | The [rule bans top-level await](https://oxc.rs/docs/guide/usage/linter/rules/node/no-top-level-await), while both lint configs enforce `unicorn/prefer-top-level-await`. Modern ESM tooling supports the retained convention. |
 | `react/react-in-jsx-scope` | The [rule addresses React-in-scope JSX transforms](https://oxc.rs/docs/guide/usage/linter/rules/react/react-in-jsx-scope). `apps/chat/tsconfig.json` uses the automatic `react-jsx` runtime. |
 | `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; `button.tsx` uses its module-path/type import order. One formatter convention avoids rewrite cycles. |
 | `react/forbid-component-props` | Tailwind styling and typed primitive APIs intentionally accept `className` and `style` on custom components. The [default restriction](https://oxc.rs/docs/guide/usage/linter/rules/react/forbid-component-props) forbids those supported props; `button.tsx`, `SidebarInset` and registry chart components demonstrate the contract. |
@@ -32,20 +31,15 @@ The runtime-policy test loads the actual repository and standalone configuration
 
 ## UI scopes and performance options
 
-`react/jsx-props-no-spreading` remains an error in feature components and canonical registry features. It is off only in `apps/chat/components/ui/**` and `apps/chat/components/ai-elements/**`, mirrored as `components/ui/**` and `components/ai-elements/**` in the standalone config. This reusable wrapper layer includes typed compositions of custom renderers, not only native elements: `SandboxCode` forwards `ComponentProps<typeof CodeBlock>`, while `Response` and `MessageResponse` forward `ComponentProps<typeof Streamdown>`. Those supported prop contracts intentionally pass through to custom components. Application orchestration belongs outside these wrapper directories and remains checked. Other wrappers expose native/Radix/React Hook Form prop contracts: `FormField` forwards typed `ControllerProps`, `FormControl` forwards Slot accessibility/event bindings, and `Actions` forwards native attributes. Enumerating a subset would narrow their supported APIs. The registry currently has no equivalent primitive wrapper directory; `src/ui/code-execution/**` and `src/tools/**` remain checked. See [Oxlint options](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-props-no-spreading).
+`react/jsx-props-no-spreading` is enforced in every directory. The former primitive and AI-element directory exemptions have been removed from both configurations. Each retained forwarding expression explains the typed native, Radix, React Hook Form, Streamdown or other component contract that requires it. A finite TypeScript prop interface does not alone justify dropping unknown runtime keys: structurally assignable callers can still supply event handlers or data attributes. Singleton object spreads that did not forward a prop contract were replaced with explicit attributes.
 
 The three `react-perf/jsx-no-new-{function,object,array}-as-prop` rules remain errors with `nativeAllowList: "all"`. Native DOM props do not establish custom component memoization boundaries. Custom component callbacks, arrays and objects remain checked; this batch adds no memoization and does not relax `jsx-no-jsx-as-prop`. Options are documented for [functions](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-function-as-prop), [objects](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-object-as-prop) and [arrays](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-array-as-prop).
 
-The UI batch removes 759 suppression rule entries from canonical source: 291 styling-prop entries, 182 literal-text entries, 271 primitive spread entries and 15 newly unused native performance entries. Generated mirrors account for 56 additional removals, for 815 total. These count one rule per disable directive, not diagnostics or bugs. The 15 native performance removals were checked against the previous default options; pre-existing SDK/Query compatibility directives remain untouched.
+The earlier UI totals recorded removals achieved partly through directory exemptions; those totals are historical and do not describe the current source adoption. Current reviewed counts and validation are recorded in `docs/oxlint-cleanup-progress.md`.
 
-| Retained UI rule | Canonical entries before | Canonical entries after |
-| --- | --: | --: |
-| `react/jsx-props-no-spreading` | 302 | 31 |
-| `react-perf/jsx-no-new-function-as-prop` | 127 | 118 |
-| `react-perf/jsx-no-new-object-as-prop` | 66 | 60 |
-| `react-perf/jsx-no-new-array-as-prop` | 16 | 16 |
+## Module initialization
 
-Component source changes are comments only: all 254 changed code files have identical comment-free ASTs, including regenerated mirrors. The exception baseline requires a separately reviewed update during integration; these counts do not endorse the remaining waivers.
+`node/no-top-level-await` is enabled. Reviewed Bun/ESM command entrypoints and test initialization statements explain why they await configuration, mocks, fixture data, build output or child completion before continuing. They do not expose a synchronous `require(esm)` contract. The ordered Playwright executable retains one bounded scenario exception, including its `finally` browser disposal; browser launch and output initialization have separate line exceptions. A redundant dynamic test import and unused mock scaffolding were removed instead of annotated.
 
 ## Acceptance criteria
 
@@ -128,7 +122,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `no-underscore-dangle` | Enforced | [#520](https://github.com/FranciscoMoretti/chat-js/issues/520) |
 | `node/no-process-env` | Enforced | [#537](https://github.com/FranciscoMoretti/chat-js/issues/537) |
 | `node/no-sync` | Enforced | [#538](https://github.com/FranciscoMoretti/chat-js/issues/538) |
-| `node/no-top-level-await` | Off — policy | [#539](https://github.com/FranciscoMoretti/chat-js/issues/539) |
+| `node/no-top-level-await` | Enforced; reviewed ESM command/test exceptions | [#539](https://github.com/FranciscoMoretti/chat-js/issues/539) |
 | `oxc/no-async-await` | Off — policy | [#540](https://github.com/FranciscoMoretti/chat-js/issues/540) |
 | `oxc/no-map-spread` | Enforced | [#541](https://github.com/FranciscoMoretti/chat-js/issues/541) |
 | `oxc/no-optional-chaining` | Off — policy | [#542](https://github.com/FranciscoMoretti/chat-js/issues/542) |
@@ -144,7 +138,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `react/jsx-filename-extension` | Enforced | [#547](https://github.com/FranciscoMoretti/chat-js/issues/547) |
 | `react/jsx-max-depth` | Enforced | [#548](https://github.com/FranciscoMoretti/chat-js/issues/548) |
 | `react/jsx-no-literals` | Off — policy | [#549](https://github.com/FranciscoMoretti/chat-js/issues/549) |
-| `react/jsx-props-no-spreading` | Enforced in features; off in primitive wrapper scopes | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
+| `react/jsx-props-no-spreading` | Enforced; reviewed forwarding expressions | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
 | `react/no-array-index-key` | Enforced | [#551](https://github.com/FranciscoMoretti/chat-js/issues/551) |
 | `react/no-multi-comp` | Enforced | [#552](https://github.com/FranciscoMoretti/chat-js/issues/552) |
 | `react/only-export-components` | Enforced | [#553](https://github.com/FranciscoMoretti/chat-js/issues/553) |

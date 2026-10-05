@@ -187,6 +187,7 @@ const SidebarProvider = ({
               ...style,
             } as ReactCSSProperties
           }
+          // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarProvider's native div attributes, preserving caller events and accessibility props.
           {...props}
         >
           {children}
@@ -220,6 +221,7 @@ const Sidebar = ({
           className
         )}
         data-slot="sidebar"
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sidebar's native div attributes, preserving caller events and accessibility props.
         {...props}
       >
         {children}
@@ -229,7 +231,12 @@ const Sidebar = ({
 
   if (isMobile) {
     return (
-      <Sheet onOpenChange={setOpenMobile} open={openMobile} {...props}>
+      <Sheet
+        onOpenChange={setOpenMobile}
+        open={openMobile}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sidebar's Sheet prop contract, preserving caller options, children and callbacks.
+        {...props}
+      >
         <SheetContent
           className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
           data-mobile="true"
@@ -283,6 +290,7 @@ const Sidebar = ({
           className
         )}
         data-slot="sidebar-container"
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sidebar's native div attributes, preserving caller events and accessibility props.
         {...props}
       >
         <div
@@ -318,6 +326,7 @@ const SidebarTrigger = ({
       }}
       size="icon"
       variant="ghost"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarTrigger's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <PanelLeftIcon />
@@ -353,6 +362,7 @@ const SidebarRail = ({
       onClick={toggleSidebar}
       tabIndex={-1}
       title="Toggle Sidebar"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarRail's native button attributes, preserving caller events and accessibility props.
       {...props}
     />
   );
@@ -372,6 +382,7 @@ const SidebarInset = ({
       className
     )}
     data-slot="sidebar-inset"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarInset's native main attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -387,6 +398,7 @@ const SidebarInput = ({
     className={cn("bg-background h-8 w-full shadow-none", className)}
     data-sidebar="input"
     data-slot="sidebar-input"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarInput's Input prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -402,6 +414,7 @@ const SidebarHeader = ({
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="header"
     data-slot="sidebar-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -417,6 +430,7 @@ const SidebarFooter = ({
     className={cn("flex flex-col gap-2 p-2", className)}
     data-sidebar="footer"
     data-slot="sidebar-footer"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -435,6 +449,7 @@ const SidebarSeparator = ({
     )}
     data-sidebar="separator"
     data-slot="sidebar-separator"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarSeparator's Separator prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -453,6 +468,7 @@ const SidebarContent = ({
     )}
     data-sidebar="content"
     data-slot="sidebar-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarContent's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -468,6 +484,7 @@ const SidebarGroup = ({
     className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
     data-sidebar="group"
     data-slot="sidebar-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarGroup's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -491,6 +508,7 @@ const SidebarGroupLabel = ({
       )}
       data-sidebar="group-label"
       data-slot="sidebar-group-label"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarGroupLabel's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -519,6 +537,7 @@ const SidebarGroupAction = ({
       )}
       data-sidebar="group-action"
       data-slot="sidebar-group-action"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarGroupAction's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -535,6 +554,7 @@ const SidebarGroupContent = ({
     className={cn("w-full text-sm", className)}
     data-sidebar="group-content"
     data-slot="sidebar-group-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarGroupContent's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -550,6 +570,7 @@ const SidebarMenu = ({
     className={cn("flex w-full min-w-0 flex-col gap-1", className)}
     data-sidebar="menu"
     data-slot="sidebar-menu"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenu's native ul attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -565,6 +586,7 @@ const SidebarMenuItem = ({
     className={cn("group/menu-item relative", className)}
     data-sidebar="menu-item"
     data-slot="sidebar-menu-item"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuItem's native li attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -613,6 +635,7 @@ const SidebarMenuButton = ({
       data-sidebar="menu-button"
       data-size={size}
       data-slot="sidebar-menu-button"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuButton's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -631,6 +654,7 @@ const SidebarMenuButton = ({
         align="center"
         hidden={state !== "collapsed" || isMobile}
         side="right"
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Preserve caller tooltip content and options after the sidebar align, visibility and side defaults.
         {...normalizedTooltip}
       />
     </Tooltip>
@@ -667,6 +691,7 @@ const SidebarMenuAction = ({
       )}
       data-sidebar="menu-action"
       data-slot="sidebar-menu-action"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuAction's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -691,6 +716,7 @@ const SidebarMenuBadge = ({
     )}
     data-sidebar="menu-badge"
     data-slot="sidebar-menu-badge"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuBadge's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -709,6 +735,7 @@ const SidebarMenuSkeleton = ({
     className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
     data-sidebar="menu-skeleton"
     data-slot="sidebar-menu-skeleton"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuSkeleton's native div attributes, preserving caller events and accessibility props.
     {...props}
   >
     {showIcon && (
@@ -741,6 +768,7 @@ const SidebarMenuSub = ({
     )}
     data-sidebar="menu-sub"
     data-slot="sidebar-menu-sub"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuSub's native ul attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -756,6 +784,7 @@ const SidebarMenuSubItem = ({
     className={cn("group/menu-sub-item relative", className)}
     data-sidebar="menu-sub-item"
     data-slot="sidebar-menu-sub-item"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuSubItem's native li attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -790,6 +819,7 @@ const SidebarMenuSubButton = ({
       data-sidebar="menu-sub-button"
       data-size={size}
       data-slot="sidebar-menu-sub-button"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarMenuSubButton's Comp prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );

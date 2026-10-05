@@ -33,6 +33,7 @@ const Alert = reactForwardRef<
     className={cn(alertVariants({ variant }), className)}
     ref={ref}
     role="alert"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Alert's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));
@@ -49,6 +50,7 @@ const AlertTitle = reactForwardRef<
     <h5
       className={cn("mb-1 leading-none font-medium tracking-tight", className)}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertTitle's native h5 attributes, preserving caller events and accessibility props.
       {...props}
     />
   </>
@@ -64,6 +66,7 @@ const AlertDescription = reactForwardRef<
   <div
     className={cn("text-sm [&_p]:leading-relaxed", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AlertDescription's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 ));

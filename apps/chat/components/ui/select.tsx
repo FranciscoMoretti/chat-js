@@ -44,6 +44,7 @@ const SelectTrigger = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectTrigger's SelectPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     {children}
@@ -66,6 +67,7 @@ const SelectScrollUpButton = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectScrollUpButton's SelectPrimitiveScrollUpButton prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <ChevronUp className="h-4 w-4" />
@@ -85,6 +87,7 @@ const SelectScrollDownButton = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectScrollDownButton's SelectPrimitiveScrollDownButton prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <ChevronDown className="h-4 w-4" />
@@ -113,6 +116,7 @@ const SelectContent = reactForwardRef<
         )}
         position={position}
         ref={ref}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectContent's SelectPrimitiveContent prop contract, preserving caller options, children and callbacks.
         {...props}
       >
         <SelectScrollUpButton />
@@ -141,6 +145,7 @@ const SelectLabel = reactForwardRef<
   <SelectPrimitiveLabel
     className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectLabel's SelectPrimitiveLabel prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -158,6 +163,7 @@ const SelectItem = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectItem's SelectPrimitiveItem prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
@@ -180,6 +186,7 @@ const SelectSeparator = reactForwardRef<
   <SelectPrimitiveSeparator
     className={cn("bg-muted -mx-1 my-1 h-px", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectSeparator's SelectPrimitiveSeparator prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));

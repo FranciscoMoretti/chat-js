@@ -24,6 +24,7 @@ const Response = memo(
         className
       )}
       plugins={plugins}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Response's Streamdown prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   ),

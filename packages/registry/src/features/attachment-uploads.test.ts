@@ -9,10 +9,12 @@ const compression = mock<
     options: Readonly<{ maxWidthOrHeight: number }>
   ) => Promise<Blob>
 >().mockResolvedValue(new Blob([COMPRESSED_IMAGE_TEXT], { type: "image/png" }));
+// oxlint-disable-next-line node/no-top-level-await -- Bun must install the compression mock before loading the upload implementation.
 await mock.module("browser-image-compression", () => ({
   default: compression,
 }));
 const { processFilesForUpload } =
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun test loads upload preparation only after the compression mock is installed.
   await import("./attachment-uploads/features/attachment-uploads/upload-prep");
 
 const options = {

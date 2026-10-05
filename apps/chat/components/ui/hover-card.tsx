@@ -17,7 +17,11 @@ import { cn } from "@/lib/utils";
 const HoverCard = ({
   ...props
 }: ReactComponentProps<typeof HoverCardPrimitiveRoot>): ReactJSX.Element => (
-  <HoverCardPrimitiveRoot data-slot="hover-card" {...props} />
+  <HoverCardPrimitiveRoot
+    data-slot="hover-card"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward HoverCard's HoverCardPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -25,7 +29,11 @@ const HoverCard = ({
 const HoverCardTrigger = ({
   ...props
 }: ReactComponentProps<typeof HoverCardPrimitiveTrigger>): ReactJSX.Element => (
-  <HoverCardPrimitiveTrigger data-slot="hover-card-trigger" {...props} />
+  <HoverCardPrimitiveTrigger
+    data-slot="hover-card-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward HoverCardTrigger's HoverCardPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -46,6 +54,7 @@ const HoverCardContent = ({
       )}
       data-slot="hover-card-content"
       sideOffset={sideOffset}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward HoverCardContent's HoverCardPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </HoverCardPrimitivePortal>

@@ -76,6 +76,7 @@ const ownerId = crypto.randomUUID();
 const sourceOwnerId = crypto.randomUUID();
 const owners = [ownerId, sourceOwnerId];
 const modelId = "google/gemini-2.5-flash-lite";
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates both owners before registering save-copy scenarios.
 await db.insert(user).values(
   owners.map((id) => ({
     email: `${id}@test.invalid`,

@@ -13,6 +13,7 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
 
+// oxlint-disable-next-line node/no-top-level-await -- Vitest awaits hoisted tool definitions before applying the tool-registry mocks that consume them.
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
   const { z: zod } = await import("zod");

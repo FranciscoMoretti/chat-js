@@ -48,6 +48,7 @@ if (import.meta.main) {
     if (typeof appUrl !== "string" || appUrl.length === EMPTY_URL_LENGTH) {
       throw new Error("Run bun dev:health from the repository root.");
     }
+    // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits readiness checks before printing success or handling their failure.
     await checkHealth(appUrl);
     // oxlint-disable-next-line eslint/no-console -- Preserve the command's successful readiness message.
     console.info("Healthy: ChatJS, Eve and database are ready.");

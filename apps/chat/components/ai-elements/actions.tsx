@@ -21,7 +21,11 @@ const Actions = ({
   children,
   ...props
 }: ActionsProps): React.JSX.Element => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
+  <div
+    className={cn("flex items-center gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Actions's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  >
     {children}
   </div>
 );
@@ -52,6 +56,7 @@ const Action = ({
       size={size}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Action's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children}

@@ -23,6 +23,7 @@ const Separator = ({
     data-slot="separator"
     decorative={decorative}
     orientation={orientation}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Separator's SeparatorPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

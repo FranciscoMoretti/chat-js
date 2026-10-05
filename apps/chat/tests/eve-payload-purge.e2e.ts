@@ -39,7 +39,9 @@ const tables = [
   "workflow_hooks",
   "workflow_waits",
 ];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs the resource fence before testing payload purges.
 await installEvePostgresResourceFence(query);
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs the queue fence before testing payload purges.
 await installEvePostgresQueueFence(query, task);
 /* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

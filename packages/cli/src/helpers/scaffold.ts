@@ -1,7 +1,15 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
+import {
+  access,
+  cp,
+  mkdir,
+  readFile,
+  rm,
+  rmdir,
+  writeFile,
+} from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
@@ -77,12 +85,13 @@ const shouldCopyChatAppFilePath = (
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 const replaceInFile = async (
   filePath: string,
   replacements: readonly (readonly [string, string])[]
 ): Promise<void> => {
-  if (!existsSync(filePath)) {
+  try {
+    await access(filePath);
+  } catch {
     return;
   }
   let content = await readFile(filePath, "utf-8");
@@ -91,7 +100,6 @@ const replaceInFile = async (
   }
   await writeFile(filePath, content);
 };
-/* oxlint-enable node/no-sync */
 
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");

@@ -35,10 +35,13 @@ vi.mock("@/lib/env", () => ({ env: {} }));
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  */
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search-text helpers after installing the test environment mocks.
 const { eveEventSearchText } = await import("../eve/search-text");
 /* oxlint-enable import/no-relative-parent-imports */
 const { indexEveSearchText, searchEveConversations } =
+  // oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search queries after installing the PGlite adapter mock.
   await import("./eve-search");
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads deletion helpers against the same mocked database used by search.
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chat = "00000000-0000-4000-8000-000000000001";
 const branch = "00000000-0000-4000-8000-000000000002";

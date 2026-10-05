@@ -234,6 +234,7 @@ const runDevService = async (
 
 if (import.meta.main) {
   const action = process.argv[COMMAND_ARGUMENT_INDEX] ?? "status";
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits the requested service action; it exposes no CommonJS loading contract.
   await runDevService(action);
 }
 

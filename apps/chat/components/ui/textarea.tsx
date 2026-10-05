@@ -18,6 +18,7 @@ const Textarea = reactForwardRef<
         className
       )}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Textarea's native textarea attributes, preserving caller events and accessibility props.
       {...props}
     />
   )

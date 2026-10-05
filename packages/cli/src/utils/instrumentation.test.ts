@@ -6,6 +6,7 @@ import { runInNewContext } from "node:vm";
 
 import ts from "typescript";
 
+// oxlint-disable-next-line node/no-top-level-await -- This Bun suite reads the instrumentation source before registering its source-contract assertions.
 const source = await readFile(
   new URL("../../../../apps/chat/instrumentation.ts", import.meta.url),
   "utf-8"

@@ -138,7 +138,7 @@ while (!stopping) {
   while (!stopping && !exited) {
     trackChildren();
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+      // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor awaits each readiness probe before deciding whether startup succeeded. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
       await checkHealth(origin);
       if (!wasReady) {
         console.info("ChatJS, Eve and database are ready");
@@ -164,14 +164,14 @@ while (!stopping) {
         break;
       }
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor spaces readiness probes within the current startup attempt. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(READINESS_POLL_INTERVAL_MS);
   }
   if (!wasReady) {
     failedStartups += FAILED_STARTUP_INCREMENT;
   }
   terminate("SIGTERM");
-  // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+  // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor allows graceful shutdown before escalating to SIGKILL. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
   await sleep(GRACEFUL_SHUTDOWN_DELAY_MS);
   terminate("SIGKILL");
   // Clearing the process handle releases the exited ChildProcess between restarts.
@@ -180,7 +180,7 @@ while (!stopping) {
   descendants = new Map();
   if (!stopping) {
     console.info(`Restarting in ${backoff / MILLISECONDS_PER_SECOND}s`);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor waits for its bounded restart backoff before launching another child. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(backoff);
     backoff = Math.min(backoff * BACKOFF_MULTIPLIER, MAX_RESTART_BACKOFF_MS);
   }

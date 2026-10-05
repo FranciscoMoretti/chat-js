@@ -33,11 +33,13 @@ const rootRevision = crypto.randomUUID();
 const visibleRevision = crypto.randomUUID();
 const privateRevision = crypto.randomUUID();
 const hiddenRevision = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the document owner before dependent conversation fixtures.
 await db.insert(user).values({
   email: `${ownerId}@test.invalid`,
   id: ownerId,
   name: "Copy documents fixture",
 });
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates source and branch conversations before inserting their document revisions.
 await insertEveConversationFixtures([
   {
     firstMessage: "Published",
@@ -68,12 +70,14 @@ const revision = {
   title: "Published artifact",
   turnIndex: 3,
 } satisfies Partial<typeof eveDocumentRevision.$inferInsert>;
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the root document revision before dependent branch revisions.
 await db.insert(eveDocumentRevision).values({
   ...revision,
   content: "First published version",
   id: rootRevision,
   operationId: "root",
 });
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts published and hidden revisions before assigning visible heads.
 await db.insert(eveDocumentRevision).values([
   {
     ...revision,
@@ -98,6 +102,7 @@ await db.insert(eveDocumentRevision).values([
     operationId: "hidden",
   },
 ]);
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite assigns document heads before registering the copy assertions.
 await db.insert(eveDocumentHead).values([
   { conversationId, documentId, ownerId, revisionId: visibleRevision },
   {

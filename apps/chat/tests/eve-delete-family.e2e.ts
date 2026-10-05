@@ -65,6 +65,7 @@ const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the deletion-fixture owner before registering family-deletion scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,

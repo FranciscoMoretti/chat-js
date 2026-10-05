@@ -537,6 +537,7 @@ const main = async (): Promise<void> => {
 };
 
 if (import.meta.main) {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits the exception audit and optional baseline write before exiting.
   await main();
 }
 

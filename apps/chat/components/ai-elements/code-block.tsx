@@ -120,18 +120,21 @@ const CodeBlock = ({
           "group bg-background text-foreground relative w-full overflow-hidden rounded-md border",
           className
         )}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CodeBlock's native div attributes, preserving caller events and accessibility props.
         {...props}
       >
         <div className="relative">
           {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            {...{ dangerouslySetInnerHTML: { __html: html } }}
+            // oxlint-disable-next-line react/no-danger -- Shiki codeToHtml escapes source text and supplies the trusted syntax-highlighting markup.
+            dangerouslySetInnerHTML={{ __html: html }}
           />
           {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            {...{ dangerouslySetInnerHTML: { __html: darkHtml } }}
+            // oxlint-disable-next-line react/no-danger -- Shiki codeToHtml escapes source text and supplies the trusted syntax-highlighting markup.
+            dangerouslySetInnerHTML={{ __html: darkHtml }}
           />
           {children && (
             <div className="absolute top-2 right-2 flex items-center gap-2">
@@ -193,6 +196,7 @@ const CodeBlockCopyButton = ({
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CodeBlockCopyButton's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children ?? <Icon size={14} />}

@@ -25,6 +25,7 @@ const Checkbox = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Checkbox's CheckboxPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <CheckboxPrimitiveIndicator

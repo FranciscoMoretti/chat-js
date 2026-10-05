@@ -22,7 +22,11 @@ import { cn } from "@/lib/utils";
 const Sheet = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveRoot>): ReactJSX.Element => (
-  <SheetPrimitiveRoot data-slot="sheet" {...props} />
+  <SheetPrimitiveRoot
+    data-slot="sheet"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Sheet's SheetPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -30,7 +34,11 @@ const Sheet = ({
 const SheetTrigger = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveTrigger>): ReactJSX.Element => (
-  <SheetPrimitiveTrigger data-slot="sheet-trigger" {...props} />
+  <SheetPrimitiveTrigger
+    data-slot="sheet-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetTrigger's SheetPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -39,7 +47,11 @@ const SheetTrigger = ({
 const SheetClose = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveClose>): ReactJSX.Element => (
-  <SheetPrimitiveClose data-slot="sheet-close" {...props} />
+  <SheetPrimitiveClose
+    data-slot="sheet-close"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetClose's SheetPrimitiveClose prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -48,7 +60,11 @@ const SheetClose = ({
 const SheetPortal = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitivePortal>): ReactJSX.Element => (
-  <SheetPrimitivePortal data-slot="sheet-portal" {...props} />
+  <SheetPrimitivePortal
+    data-slot="sheet-portal"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetPortal's SheetPrimitivePortal prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -64,6 +80,7 @@ const SheetOverlay = ({
       className
     )}
     data-slot="sheet-overlay"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetOverlay's SheetPrimitiveOverlay prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -95,6 +112,7 @@ const SheetContent = ({
         className
       )}
       data-slot="sheet-content"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetContent's SheetPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children}
@@ -116,6 +134,7 @@ const SheetHeader = ({
   <div
     className={cn("flex flex-col gap-1.5 p-4", className)}
     data-slot="sheet-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -130,6 +149,7 @@ const SheetFooter = ({
   <div
     className={cn("mt-auto flex flex-col gap-2 p-4", className)}
     data-slot="sheet-footer"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -144,6 +164,7 @@ const SheetTitle = ({
   <SheetPrimitiveTitle
     className={cn("text-foreground font-semibold", className)}
     data-slot="sheet-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetTitle's SheetPrimitiveTitle prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -158,6 +179,7 @@ const SheetDescription = ({
   <SheetPrimitiveDescription
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="sheet-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetDescription's SheetPrimitiveDescription prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

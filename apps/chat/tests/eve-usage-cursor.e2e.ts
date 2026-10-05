@@ -43,6 +43,7 @@ vi.mock("eve/client", () => ({
 /* oxlint-enable typescript/explicit-function-return-type */
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the usage owner before registering cursor scenarios.
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });

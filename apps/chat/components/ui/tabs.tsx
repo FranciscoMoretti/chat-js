@@ -28,6 +28,7 @@ const TabsList = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TabsList's TabsPrimitiveList prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -45,6 +46,7 @@ const TabsTrigger = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TabsTrigger's TabsPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));
@@ -62,6 +64,7 @@ const TabsContent = reactForwardRef<
       className
     )}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward TabsContent's TabsPrimitiveContent prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 ));

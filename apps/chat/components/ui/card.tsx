@@ -16,6 +16,7 @@ const Card = ({
       className
     )}
     data-slot="card"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Card's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -32,6 +33,7 @@ const CardHeader = ({
       className
     )}
     data-slot="card-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -46,6 +48,7 @@ const CardTitle = ({
   <div
     className={cn("leading-none font-semibold", className)}
     data-slot="card-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardTitle's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -60,6 +63,7 @@ const CardDescription = ({
   <div
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="card-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardDescription's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -77,6 +81,7 @@ const CardAction = ({
       className
     )}
     data-slot="card-action"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardAction's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -88,7 +93,12 @@ const CardContent = ({
   className,
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
-  <div className={cn("px-6", className)} data-slot="card-content" {...props} />
+  <div
+    className={cn("px-6", className)}
+    data-slot="card-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardContent's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -101,6 +111,7 @@ const CardFooter = ({
   <div
     className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
     data-slot="card-footer"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CardFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );

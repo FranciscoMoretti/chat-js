@@ -22,7 +22,11 @@ import { cn } from "@/lib/utils";
 const Dialog = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveRoot>): ReactJSX.Element => (
-  <DialogPrimitiveRoot data-slot="dialog" {...props} />
+  <DialogPrimitiveRoot
+    data-slot="dialog"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Dialog's DialogPrimitiveRoot prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DialogTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -30,7 +34,11 @@ const Dialog = ({
 const DialogTrigger = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveTrigger>): ReactJSX.Element => (
-  <DialogPrimitiveTrigger data-slot="dialog-trigger" {...props} />
+  <DialogPrimitiveTrigger
+    data-slot="dialog-trigger"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogTrigger's DialogPrimitiveTrigger prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -39,7 +47,11 @@ const DialogTrigger = ({
 const DialogPortal = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitivePortal>): ReactJSX.Element => (
-  <DialogPrimitivePortal data-slot="dialog-portal" {...props} />
+  <DialogPrimitivePortal
+    data-slot="dialog-portal"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogPortal's DialogPrimitivePortal prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -48,7 +60,11 @@ const DialogPortal = ({
 const DialogClose = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveClose>): ReactJSX.Element => (
-  <DialogPrimitiveClose data-slot="dialog-close" {...props} />
+  <DialogPrimitiveClose
+    data-slot="dialog-close"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogClose's DialogPrimitiveClose prop contract, preserving caller options, children and callbacks.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -64,6 +80,7 @@ const DialogOverlay = ({
       className
     )}
     data-slot="dialog-overlay"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogOverlay's DialogPrimitiveOverlay prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -87,6 +104,7 @@ const DialogContent = ({
         className
       )}
       data-slot="dialog-content"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogContent's DialogPrimitiveContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {children}
@@ -113,6 +131,7 @@ const DialogHeader = ({
   <div
     className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
     data-slot="dialog-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -130,6 +149,7 @@ const DialogFooter = ({
       className
     )}
     data-slot="dialog-footer"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogFooter's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -144,6 +164,7 @@ const DialogTitle = ({
   <DialogPrimitiveTitle
     className={cn("text-lg leading-none font-semibold", className)}
     data-slot="dialog-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogTitle's DialogPrimitiveTitle prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -160,6 +181,7 @@ const DialogDescription = ({
   <DialogPrimitiveDescription
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="dialog-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogDescription's DialogPrimitiveDescription prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );

@@ -53,7 +53,10 @@ const FormField = <
 
   return (
     <FormFieldContext.Provider value={contextValue}>
-      <Controller {...props} />
+      <Controller
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormField's Controller prop contract, preserving caller options, children and callbacks.
+        {...props}
+      />
     </FormFieldContext.Provider>
   );
 };
@@ -114,6 +117,7 @@ const FormItem = ({
       <div
         className={cn("grid gap-2", className)}
         data-slot="form-item"
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormItem's native div attributes, preserving caller events and accessibility props.
         {...props}
       />
     </FormItemContext.Provider>
@@ -135,6 +139,7 @@ const FormLabel = ({
       data-error={Boolean(error)}
       data-slot="form-label"
       htmlFor={formItemId}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormLabel's Label prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -157,6 +162,7 @@ const FormControl = ({
       aria-invalid={Boolean(error)}
       data-slot="form-control"
       id={formItemId}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormControl's Slot prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   );
@@ -176,6 +182,7 @@ const FormDescription = ({
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="form-description"
       id={formDescriptionId}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormDescription's native p attributes, preserving caller events and accessibility props.
       {...props}
     />
   );
@@ -200,6 +207,7 @@ const FormMessage = ({
       className={cn("text-destructive text-sm", className)}
       data-slot="form-message"
       id={formMessageId}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward FormMessage's native p attributes, preserving caller events and accessibility props.
       {...props}
     >
       {body}

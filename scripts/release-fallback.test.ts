@@ -24,6 +24,7 @@ type ReleaseAssertion = (directory: string) => Promise<void>;
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
 const parsedWorkflow: unknown = Bun.YAML.parse(
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun suite reads the release workflow before registering publication-fallback contract assertions.
   await Bun.file(
     new URL("../.github/workflows/release.yml", import.meta.url)
   ).text()

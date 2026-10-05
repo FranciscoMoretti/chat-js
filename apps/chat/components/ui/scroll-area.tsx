@@ -36,6 +36,7 @@ const ScrollBar = reactForwardRef<
       )}
       orientation={orientation}
       ref={ref}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ScrollBar's ScrollAreaPrimitiveScrollAreaScrollbar prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       <ScrollAreaPrimitiveScrollAreaThumb className="bg-border relative flex-1 rounded-full" />
@@ -53,6 +54,7 @@ const ScrollArea = reactForwardRef<
   <ScrollAreaPrimitiveRoot
     className={cn("relative overflow-hidden", className)}
     ref={ref}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ScrollArea's ScrollAreaPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   >
     <ScrollAreaPrimitiveViewport className="h-full w-full rounded-[inherit]">

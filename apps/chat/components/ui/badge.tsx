@@ -39,7 +39,11 @@ const Badge = ({
   variant,
   ...props
 }: BadgeProps): ReactJSX.Element => (
-  <div className={cn(badgeVariants({ variant }), className)} {...props} />
+  <div
+    className={cn(badgeVariants({ variant }), className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Badge's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

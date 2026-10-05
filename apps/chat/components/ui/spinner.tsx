@@ -14,6 +14,7 @@ const Spinner = ({
     <Loader2Icon
       aria-hidden="true"
       className={cn("size-4 animate-spin", className)}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Spinner's Loader2Icon prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </output>

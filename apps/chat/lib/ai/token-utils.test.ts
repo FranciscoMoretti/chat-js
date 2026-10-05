@@ -3,24 +3,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { calculateMessagesTokens, truncateMessages } from "./token-utils";
 
-/* oxlint-disable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type --
- * no-magic-numbers (#517): _mockEncoder uses 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-underscore-dangle (#520): _mockEncoder accesses the established _mockEncoder field convention; renaming requires changing the owning SDK or backing-field contract.
- * typescript/explicit-function-return-type (#560): Keep _mockEncoder's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-// Mock js-tiktoken encoder for consistent testing.
-const _mockEncoder = {
-  encode: (text: string) => Array.from({ length: Math.ceil(text.length / 4) }),
-};
-/* oxlint-enable no-magic-numbers, no-underscore-dangle, typescript/explicit-function-return-type */
-
-/* oxlint-disable no-underscore-dangle --
- * no-underscore-dangle (#520): _originalModule accesses the established _originalModule field convention; renaming requires changing the owning SDK or backing-field contract.
- */
-// Mock the module.
-const _originalModule = await import("./token-utils");
-/* oxlint-enable no-underscore-dangle */
-
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * init-declarations (#507): describe("truncateMessages") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("truncateMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -117,9 +99,7 @@ describe("truncateMessages", () => {
     expect(result[1].role).toBe("user");
 
     // Content should remain unchanged when under limit
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    const content = result[1].content as string;
-    expect(content).toBe(longMessages[1].content);
+    expect(result[1].content).toBe(longMessages[1].content);
   });
 
   it("should handle array content in messages", () => {
@@ -196,9 +176,7 @@ describe("truncateMessages", () => {
     expect(result[0].role).toBe("system");
 
     // Content should remain unchanged when it fits
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    const content = result[0].content as string;
-    expect(content).toBe(systemMessages[0].content);
+    expect(result[0].content).toBe(systemMessages[0].content);
   });
 
   it("should actually truncate content when forced by very low limits", () => {
@@ -219,9 +197,7 @@ describe("truncateMessages", () => {
 
     // If we get a result, it should be truncated or the message should be removed
     if (result.length > 0) {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This token-utils fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      const content = result[0].content as string;
-      expect(typeof content).toBe("string");
+      expect(typeof result[0].content).toBe("string");
     }
   });
 

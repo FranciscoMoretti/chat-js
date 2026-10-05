@@ -27,6 +27,7 @@ const Command = ({
       className
     )}
     data-slot="command"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Command's CommandPrimitive prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -46,7 +47,10 @@ const CommandDialog = ({
   className?: string;
   showCloseButton?: boolean;
 }): ReactJSX.Element => (
-  <Dialog {...props}>
+  <Dialog
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandDialog's Dialog prop contract, preserving caller options, children and callbacks.
+    {...props}
+  >
     <DialogHeader className="sr-only">
       <DialogTitle>{title}</DialogTitle>
       <DialogDescription>{description}</DialogDescription>
@@ -83,6 +87,7 @@ const CommandInput = ({
         className
       )}
       data-slot="command-input"
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandInput's CommandPrimitive.Input prop contract, preserving caller options, children and callbacks.
       {...props}
     />
   </div>
@@ -101,6 +106,7 @@ const CommandList = ({
       className
     )}
     data-slot="command-list"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandList's CommandPrimitive.List prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -114,6 +120,7 @@ const CommandEmpty = ({
   <CommandPrimitive.Empty
     className="py-6 text-center text-sm"
     data-slot="command-empty"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandEmpty's CommandPrimitive.Empty prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -131,6 +138,7 @@ const CommandGroup = ({
       className
     )}
     data-slot="command-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandGroup's CommandPrimitive.Group prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -147,6 +155,7 @@ const CommandSeparator = ({
   <CommandPrimitive.Separator
     className={cn("bg-border -mx-1 h-px", className)}
     data-slot="command-separator"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandSeparator's CommandPrimitive.Separator prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -164,6 +173,7 @@ const CommandItem = ({
       className
     )}
     data-slot="command-item"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandItem's CommandPrimitive.Item prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -181,6 +191,7 @@ const CommandShortcut = ({
       className
     )}
     data-slot="command-shortcut"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandShortcut's native span attributes, preserving caller events and accessibility props.
     {...props}
   />
 );

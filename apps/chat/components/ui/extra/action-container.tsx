@@ -20,6 +20,7 @@ const ActionContainer = ({
       "group border-border/60 bg-muted/20 hover:border-primary/25 relative rounded-xl border px-4 py-3 transition-all duration-200",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ActionContainer's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -36,6 +37,7 @@ const ActionContainerLink = ({
   <InternalLink
     className={cn("absolute inset-0 z-10", className)}
     tabIndex={tabIndex ?? -1}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ActionContainerLink's InternalLink prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
@@ -48,7 +50,11 @@ const ActionContainerTop = ({
   className,
   ...props
 }: ActionContainerTopProps): ReactJSX.Element => (
-  <div className={cn("z-20", className)} {...props} />
+  <div
+    className={cn("z-20", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ActionContainerTop's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
