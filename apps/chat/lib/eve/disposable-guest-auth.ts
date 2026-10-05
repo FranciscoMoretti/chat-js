@@ -28,8 +28,8 @@ const cancel = z
  * unicorn/no-null (#570): authenticateDisposableGuest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** EVE's stream route delegates ownership checks to channel auth. Bind every
  * permitted operation to the exact server-issued session credential.
- * @param request - Native operation request whose credential, path and body are checked.
- * @returns Session-bound channel identity, or no identity for an invalid credential or operation.
+ * @param {ReadonlyNativeSurface<Request>} request - Native operation request whose credential, path and body are checked.
+ * @returns {Promise<{ attributes: { modelId: string }; authenticator: string; issuer: string; principalId: string; principalType: "user"; subject: string; } | null>} Session-bound channel identity, or no identity for an invalid credential or operation.
  */
 export const authenticateDisposableGuest = async (
   request: ReadonlyNativeSurface<Request>

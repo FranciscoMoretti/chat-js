@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 import type { PackageManager } from "#cli/types";

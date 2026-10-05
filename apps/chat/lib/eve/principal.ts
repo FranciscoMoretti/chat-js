@@ -14,8 +14,8 @@ export type EvePrincipal =
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): resolveEvePrincipal preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** Disposable guests never enter application ownership, billing, or history routes.
  * Old guest cookies grant no access.
- * @param headers - Request headers passed to the registered-session lookup.
- * @returns Registered session ownership, or no principal when the session is absent.
+ * @param {ReadonlyNativeSurface<Headers>} headers - Request headers passed to the registered-session lookup.
+ * @returns {Promise<EvePrincipal | null>} Registered session ownership, or no principal when the session is absent.
  */
 export const resolveEvePrincipal = async (
   headers: ReadonlyNativeSurface<Headers>

@@ -6,8 +6,8 @@ const clientsMap = new Map<string, MCPClient>();
 
 /**
  * Get or create an MCP client for a connector.
- * @param options - Connector identity and transport configuration.
- * @returns The cached client, creating it when absent.
+ * @param {Readonly<{ id: string; name: string; url: string; type: "http" | "sse"; headers?: Readonly<Record<string, string>>; oauthClientId?: string | null; oauthClientSecret?: string | null; }>} options - Connector identity and transport configuration.
+ * @returns {MCPClient} The cached client, creating it when absent.
  */
 const getOrCreateMcpClient = (
   options: Readonly<{
@@ -37,8 +37,8 @@ const getOrCreateMcpClient = (
 
 /**
  * Remove an MCP client from the cache and close it.
- * @param id - Connector whose client should close.
- * @param expectedOAuthState - When supplied, only close the matching authorizing client.
+ * @param {string} id - Connector whose client should close.
+ * @param {string | undefined} expectedOAuthState - When supplied, only close the matching authorizing client.
  */
 const removeMcpClient = async (
   id: string,
@@ -62,8 +62,8 @@ const removeMcpClient = async (
 /**
  * Create a fresh MCP client for OAuth callback handling.
  * Does NOT use the cache - creates a new instance to avoid state conflicts.
- * @param options - Connector identity and transport configuration.
- * @returns A fresh client independent of the active client cache.
+ * @param {Readonly<{ id: string; name: string; url: string; type: "http" | "sse"; headers?: Readonly<Record<string, string>>; oauthClientId?: string | null; oauthClientSecret?: string | null; }>} options - Connector identity and transport configuration.
+ * @returns {MCPClient} A fresh client independent of the active client cache.
  */
 const createMcpClientForCallback = (
   options: Readonly<{

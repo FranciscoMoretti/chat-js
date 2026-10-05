@@ -76,9 +76,9 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
  */
 /**
  * Copy trusted native history for editing after validating every historical attachment.
- * @param ownerId Owner whose conversation and file access authorize each copy.
- * @param input Conversation and user message identifying the native history to restore.
- * @returns Owned attachment references copied sequentially from the validated history.
+ * @param {string} ownerId Owner whose conversation and file access authorize each copy.
+ * @param {Readonly<{ conversationId: string; messageId: string }>} input Conversation and user message identifying the native history to restore.
+ * @returns {Promise<z.output<typeof draftAttachment>[]>} Owned attachment references copied sequentially from the validated history.
  */
 export const restoreMessageAttachments = async (
   ownerId: string,

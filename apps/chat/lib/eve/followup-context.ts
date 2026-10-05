@@ -6,12 +6,15 @@ export interface FollowupContext {
   assistant: string;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): followupContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): followupContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): followupContext accepts current: FollowupContext; event: HookEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Only the current exchange is retained; the native event log owns history. */
+/**
+ * Retain only the current exchange; the native event log owns history.
+ * @param {FollowupContext} current Previously retained user and assistant text.
+ * @param {HookEvent} event Native turn or message event used to reset or replace the exchange.
+ * @returns {FollowupContext} Current exchange with messages bounded to the context limit, or the original object for unrelated events.
+ */
 export const followupContext = (
   current: FollowupContext,
   event: HookEvent
@@ -36,4 +39,4 @@ export const followupContext = (
   }
   return current;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -34,9 +34,9 @@ type ComposerDraftState = Draft & {
 
 /**
  * Persist unsent input synchronously, before response navigation can unmount it.
- * @param ownerId The owner whose drafts remain isolated in this tab.
- * @param scopeId The conversation or response scope that owns this input.
- * @returns Draft fields, restore and save status, and React-compatible setters.
+ * @param {string} ownerId The owner whose drafts remain isolated in this tab.
+ * @param {string} scopeId The conversation or response scope that owns this input.
+ * @returns {ComposerDraftState} Draft fields, restore and save status, and React-compatible setters.
  */
 export const useEveComposerDraft = (
   ownerId: string,

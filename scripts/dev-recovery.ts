@@ -9,11 +9,11 @@ const NO_PREVIOUS_START_FAILURES = 0;
 /* oxlint-disable eslint/max-params -- shouldRestartAfterReadinessFailures: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
 /**
  * Allow cold compilation and brief resource contention before replacing a runtime.
- * @param consecutiveFailures - Number of consecutive failed readiness probes.
- * @param unreadyForMs - Time since readiness was lost or startup began.
- * @param hasBeenReady - Whether this runtime has ever completed startup.
- * @param failedStartups - Earlier failed starts used to increase startup grace.
- * @returns Whether the failure count and applicable grace period require restart.
+ * @param {number} consecutiveFailures - Number of consecutive failed readiness probes.
+ * @param {number} unreadyForMs - Time since readiness was lost or startup began.
+ * @param {boolean} hasBeenReady - Whether this runtime has ever completed startup.
+ * @param {number} failedStartups - Earlier failed starts used to increase startup grace.
+ * @returns {boolean} Whether the failure count and applicable grace period require restart.
  */
 export const shouldRestartAfterReadinessFailures = (
   consecutiveFailures: number,

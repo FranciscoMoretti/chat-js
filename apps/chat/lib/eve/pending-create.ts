@@ -179,11 +179,11 @@ const finishCreation = (
 no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.*/
 /**
  * Moves a definitively rejected project request into New Chat under a fresh operation.
- * @param storage Browser storage holding the original project draft and any New Chat draft.
- * @param ownerId Owner whose pending draft namespace must be preserved.
- * @param projectId Project scope containing the rejected request.
- * @param operationId Original operation checked before moving or deleting its stored draft.
- * @returns A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
+ * @param {string} ownerId Owner whose pending draft namespace must be preserved.
+ * @param {string} projectId Project scope containing the rejected request.
+ * @param {string} operationId Original operation checked before moving or deleting its stored draft.
+ * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
  */
 const moveRejectedProjectCreation = (
   storage: StorageAccess,

@@ -57,11 +57,11 @@ const assertNativeReceipt = async (
  * typescript/strict-boolean-expressions (#610): resolveEveConversationScope intentionally keeps the existing falsy-value behavior of ownerId; identity.data; row; row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Auth attributes locate a reservation; only its exact native receipt authorizes binding.
- * @param ownerId - Authenticated owner; absence raises an authentication error.
- * @param sessionId - Native session identity that must match the durable binding or receipt.
- * @param abortSignal - Cancellation checked before lookup and after native receipt failures.
- * @param reservationId - Optional creation UUID from auth attributes, validated before lookup.
- * @returns Durable conversation identity and the authenticated owner after receipt reconciliation.
+ * @param {string | undefined} ownerId - Authenticated owner; absence raises an authentication error.
+ * @param {string} sessionId - Native session identity that must match the durable binding or receipt.
+ * @param {ReadonlyNativeSurface<AbortSignal>} abortSignal - Cancellation checked before lookup and after native receipt failures.
+ * @param {unknown | undefined} reservationId - Optional creation UUID from auth attributes, validated before lookup.
+ * @returns {Promise<{ conversationId: string; ownerId: string }>} Durable conversation identity and the authenticated owner after receipt reconciliation.
  */
 export const resolveEveConversationScope = async (
   ownerId: string | undefined,

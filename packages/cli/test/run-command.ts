@@ -1,3 +1,4 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */

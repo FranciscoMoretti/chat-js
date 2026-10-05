@@ -156,9 +156,9 @@ const eveMessageDelivery = {
 
 /**
  * The proxy owns this metadata so caller input cannot forge an acknowledgement.
- * @param operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
- * @param selectedTool App UI tool selection, normalized to null when no tool is selected.
- * @returns The app namespace containing the operation acknowledgement and display-safe tool selection.
+ * @param {string} operationId Proxy-owned delivery operation UUID, validated before it enters message metadata.
+ * @param {UiToolName | null | undefined} selectedTool App UI tool selection, normalized to null when no tool is selected.
+ * @returns {{ chatjs: ReturnType<typeof eveToolMetadata>["chatjs"] & { operationId: string; }; }} The app namespace containing the operation acknowledgement and display-safe tool selection.
  */
 const eveMessageDeliveryMetadata = (
   operationId: string,

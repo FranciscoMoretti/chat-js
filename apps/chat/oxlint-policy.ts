@@ -17,7 +17,9 @@ export const auditedRestrictionRules = {
   "import/prefer-default-export": "off",
   "init-declarations": "error",
   "jsdoc/require-param": "error",
+  "jsdoc/require-param-type": "error",
   "jsdoc/require-returns": "error",
+  "jsdoc/require-returns-type": "error",
   "max-lines": ["error", { skipComments: true }],
   "max-lines-per-function": ["error", { skipComments: true }],
   "max-params": "error",
@@ -25,6 +27,7 @@ export const auditedRestrictionRules = {
   "no-console": "error",
   "no-continue": "error",
   "no-magic-numbers": "error",
+  "no-restricted-properties": "error",
   // Value-selecting ternaries are allowed; no-nested-ternary still limits nesting.
   "no-ternary": "off",
   "no-undefined": "error",

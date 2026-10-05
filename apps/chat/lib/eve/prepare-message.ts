@@ -13,9 +13,9 @@ import type { ReadonlyEveMessageInput } from "./readonly-message-types";
  */
 /**
  * Resolve application storage directly, never fetch a client-supplied host.
- * @param message Validated user text or attachment references owned by application storage.
- * @param modelId Model whose PDF/image capabilities must permit each attachment.
- * @returns The original text, or ordered model content with checked files embedded as data URLs.
+ * @param {ReadonlyEveMessageInput} message Validated user text or attachment references owned by application storage.
+ * @param {string | undefined} modelId Model whose PDF/image capabilities must permit each attachment.
+ * @returns {Promise<string | UserContent>} The original text, or ordered model content with checked files embedded as data URLs.
  */
 export const prepareEveMessage = async (
   message: ReadonlyEveMessageInput,

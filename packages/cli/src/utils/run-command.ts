@@ -1,3 +1,4 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
 
 const EXIT_SUCCESS = 0;

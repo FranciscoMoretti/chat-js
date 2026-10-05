@@ -1,8 +1,13 @@
 import { expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import nodePath from "node:path";
 
 import { vendorPatchedPackage } from "./vendor-patched-package";

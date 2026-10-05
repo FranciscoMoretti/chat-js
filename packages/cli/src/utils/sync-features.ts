@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import ts from "typescript";
@@ -35,7 +37,7 @@ const NO_UNSUPPORTED_FEATURES = 0;
 
 /**
  * Extend only when an implementation has complete installer/sync integration.
- * @param features Resolved feature metadata to validate without mutation.
+ * @param {readonly ReadonlyNative<FeatureDefinition>[]} features Resolved feature metadata to validate without mutation.
  */
 const assertSupportedFeatureInstallation = (
   features: readonly ReadonlyNative<FeatureDefinition>[]

@@ -54,12 +54,12 @@ const removeUnlockedJobs = async (
  * Remove queued payloads for an authorized resource set already fenced by the
  * session coordinator. Returns newly discovered queued run IDs for the caller's
  * deletion inventory. Never force-unlocks workers or claims full session purge.
- * @param connection PostgreSQL connection used for an atomic inventory/fence/removal transaction.
- * @param input Authorized session root, fenced run inventory, and configured queue task identifier.
- * @param input.sessionId Session root required in the cleanup inventory.
- * @param input.runIds Authorized run identities whose queue payloads may be removed.
- * @param input.taskIdentifier Installed queue task whose fence governs these payloads.
- * @returns Removed unlocked job identities and the durably retained discovered run inventory.
+ * @param {Sql} connection PostgreSQL connection used for an atomic inventory/fence/removal transaction.
+ * @param {{ sessionId: string; runIds: string[]; taskIdentifier: string; }} input Authorized session root, fenced run inventory, and configured queue task identifier.
+ * @param {string} input.sessionId Session root required in the cleanup inventory.
+ * @param {string[]} input.runIds Authorized run identities whose queue payloads may be removed.
+ * @param {string} input.taskIdentifier Installed queue task whose fence governs these payloads.
+ * @returns {Promise<{ removedJobIds: string[]; runIds: string[] }>} Removed unlocked job identities and the durably retained discovered run inventory.
  */
 export const purgeEvePostgresQueue = async (
   connection: Sql,

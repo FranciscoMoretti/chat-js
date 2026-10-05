@@ -1,8 +1,8 @@
 /* oxlint-disable node/no-process-env -- * node/no-process-env (#537): resolveWorkflowWorld reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
 /**
  * Shared by agent compilation, runtime validation and setup; no user backend switch.
- * @param environment Deployment flags, defaulting to the current process environment.
- * @returns The managed world only for a deployed nondevelopment Vercel environment; otherwise the PostgreSQL world.
+ * @param {{ readonly VERCEL?: string; readonly VERCEL_ENV?: string; readonly NODE_ENV?: string; }} environment Deployment flags, defaulting to the current process environment.
+ * @returns {"vercel" | "@workflow/world-postgres"} The managed world only for a deployed nondevelopment Vercel environment; otherwise the PostgreSQL world.
  */
 export const resolveWorkflowWorld = (
   environment: {

@@ -28,8 +28,8 @@ export interface EveCopyBoundary {
  */
 /**
  * Private provenance used only to snapshot application resources, never copied into native history.
- * @param events Native EVE events reduced in their original order to locate user-message checkpoints.
- * @returns One source turn or imported-message boundary for each user message; malformed provenance throws.
+ * @param {readonly MessageStreamEvent[]} events Native EVE events reduced in their original order to locate user-message checkpoints.
+ * @returns {EveCopyBoundary[]} One source turn or imported-message boundary for each user message; malformed provenance throws.
  */
 export const eveCopyBoundaries = (
   events: readonly MessageStreamEvent[]

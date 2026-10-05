@@ -1,6 +1,9 @@
 #!/usr/bin/env bun
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */

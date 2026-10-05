@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   mkdtemp,
@@ -7,8 +8,11 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture converts module URLs into filesystem paths using native URL semantics.
 import { fileURLToPath } from "node:url";
 
 import gatewayPackage from "@chat-js/gateways/package.json";

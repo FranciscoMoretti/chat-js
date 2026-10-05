@@ -1,13 +1,16 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
- * @param packageName Package identifier to resolve through workspace dependencies.
- * @param resolveFrom Workspace directory whose package.json anchors module resolution.
- * @returns The ancestor directory with that package's matching manifest name.
+ * @param {string} packageName Package identifier to resolve through workspace dependencies.
+ * @param {string} resolveFrom Workspace directory whose package.json anchors module resolution.
+ * @returns {Promise<string>} The ancestor directory with that package's matching manifest name.
  */
 export const resolvePackageDirectory = async (
   packageName: string,

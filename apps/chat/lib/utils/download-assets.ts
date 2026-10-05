@@ -108,9 +108,9 @@ const toHttpUrl = (value: unknown): URL | null => {
  */
 /**
  * Collects all http(s) URLs from file/image parts in the provided messages and downloads them.
- * @param messages Model messages whose file/image parts are inspected without changing their content.
- * @param downloadImplementation URL reader invoked once per unique normalized HTTP(S) asset.
- * @returns Downloaded binary payloads and media types keyed by normalized URL; absent assets retain null results.
+ * @param {ModelMessage[]} messages Model messages whose file/image parts are inspected without changing their content.
+ * @param {DownloadImplementation} downloadImplementation URL reader invoked once per unique normalized HTTP(S) asset.
+ * @returns {Promise<Record<string, AssetDownloadResult>>} Downloaded binary payloads and media types keyed by normalized URL; absent assets retain null results.
  */
 const downloadAssetsFromModelMessages = async (
   messages: ModelMessage[],

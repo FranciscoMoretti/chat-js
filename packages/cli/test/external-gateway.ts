@@ -1,3 +1,4 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { readFileSync } from "node:fs";
 
 import { builtInGateways } from "#cli/registry/gateways";

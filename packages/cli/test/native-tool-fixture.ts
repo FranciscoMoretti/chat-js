@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { run } from "./run-command";

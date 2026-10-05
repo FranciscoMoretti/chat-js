@@ -1,5 +1,7 @@
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { confirm, isCancel, log } from "@clack/prompts";

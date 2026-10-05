@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { lstat } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { isSafeTarget } from "./is-safe-target";
@@ -22,8 +24,8 @@ const assertSafeTarget = (target: string, resolvedCwd: string): void => {
 
 /**
  * Protect ChatJS-managed outputs before generating integration files.
- * @param cwd Project destination, resolved relative to the current directory.
- * @param targets Managed file paths whose existing parents and leaf must be safe.
+ * @param {string} cwd Project destination, resolved relative to the current directory.
+ * @param {readonly string[]} targets Managed file paths whose existing parents and leaf must be safe.
  */
 export const preflight = async (
   cwd: string,

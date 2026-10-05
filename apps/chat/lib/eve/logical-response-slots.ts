@@ -118,9 +118,9 @@ const selectedSlotAttempt = (
  */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
- * @param snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
- * @param userId Logical group user-message identity used to locate its admitted response group.
- * @returns Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
+ * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
+ * @param {string} userId Logical group user-message identity used to locate its admitted response group.
+ * @returns {{ groupId: string; slots: LogicalResponseSlot[] } | undefined} Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
  */
 export const logicalResponseSlots = (
   snapshot: LogicalChatSnapshot,

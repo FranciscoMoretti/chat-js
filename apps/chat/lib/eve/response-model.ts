@@ -7,8 +7,8 @@ const MODEL_SEPARATOR_LENGTH = 1;
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): responseModelReferences accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 /** First native model reference per turn, including inherited history.
- * @param events Native stream events whose live and inherited steps carry model provenance.
- * @returns The first recorded model reference for each native turn.
+ * @param {readonly MessageStreamEvent[]} events Native stream events whose live and inherited steps carry model provenance.
+ * @returns {Map<string, string>} The first recorded model reference for each native turn.
  */
 const responseModelReferences = (
   events: readonly MessageStreamEvent[]
@@ -33,10 +33,10 @@ const responseModelReferences = (
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): responseModel accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Native responses require runtime evidence; imported responses retain provenance.
- * @param events Native stream evidence used to resolve the turn's model reference.
- * @param turnId Native turn identity, or an empty identity for an imported response.
- * @param importedModelId Original model reference retained by an imported response.
- * @returns The provider model ID after removing its gateway prefix.
+ * @param {readonly MessageStreamEvent[]} events Native stream evidence used to resolve the turn's model reference.
+ * @param {string} turnId Native turn identity, or an empty identity for an imported response.
+ * @param {string | undefined} importedModelId Original model reference retained by an imported response.
+ * @returns {string} The provider model ID after removing its gateway prefix.
  */
 const responseModel = (
   events: readonly MessageStreamEvent[],

@@ -1,5 +1,7 @@
 // Serve the built registry against the locally packed, not-yet-published contracts.
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { rename, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */

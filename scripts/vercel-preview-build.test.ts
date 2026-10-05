@@ -1,4 +1,5 @@
 import { expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build test yields the Node event loop to observe advisory-lock sequencing.
 import { setTimeout as delay } from "node:timers/promises";
 
 import { runMaintainerBuild } from "./vercel-preview-build";

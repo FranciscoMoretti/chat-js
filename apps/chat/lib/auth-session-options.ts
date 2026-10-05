@@ -4,13 +4,17 @@
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers --
- * jsdoc/require-param (#534): authSessionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): authSessionOptions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): authSessionOptions uses 0, 16, 60, 5 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
-/** Localhost cookies span ports. Isolate local app/database pairs, and check
- * the database on every development request so resets cannot leave ghost users. */
+/**
+ * Localhost cookies span ports; isolate local app/database pairs and bypass cached development sessions.
+ * @param {{ readonly baseUrl: string; readonly databaseUrl: string; readonly development: boolean; }} options Deployment inputs used to isolate the session cookie namespace.
+ * @param {string} options.baseUrl Application URL whose origin contributes to the development scope.
+ * @param {string} options.databaseUrl Database URL whose password is removed before hashing the development scope.
+ * @param {boolean} options.development Whether each request must recheck the database instead of trusting cookie cache.
+ * @returns {{ advanced: { cookiePrefix: string }; session: { cookieCache: { enabled: boolean; maxAge: number } }; }} Cookie prefix and five-minute cache policy; development scopes the prefix and disables the cache.
+ */
 export const authSessionOptions = ({
   baseUrl,
   databaseUrl,
@@ -42,4 +46,4 @@ export const authSessionOptions = ({
     },
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */

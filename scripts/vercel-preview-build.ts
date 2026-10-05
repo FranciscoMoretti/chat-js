@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
 import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
 import { fileURLToPath } from "node:url";
 
 import type postgresType from "postgres";

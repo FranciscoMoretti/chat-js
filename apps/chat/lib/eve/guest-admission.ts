@@ -45,8 +45,8 @@ const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 typescript/strict-boolean-expressions (#610): guestRequestIpHash intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; header; address; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Hashes a trusted canonical client address; development uses the local address.
- * @param request Request whose configured proxy header supplies the client address outside development.
- * @returns The keyed guest IP hash after mapped IPv6 normalization; unavailable or invalid addresses throw.
+ * @param {ReadonlyNativeSurface<Request>} request Request whose configured proxy header supplies the client address outside development.
+ * @returns {string} The keyed guest IP hash after mapped IPv6 normalization; unavailable or invalid addresses throw.
  */
 const guestRequestIpHash = (
   request: ReadonlyNativeSurface<Request>
@@ -92,10 +92,10 @@ max-statements (#512): validateGuestCreation keeps its ordered workflow and inpu
 typescript/strict-boolean-expressions (#610): validateGuestCreation intentionally keeps the existing falsy-value behavior of input.projectId; source.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Checks guest policy, source ownership, and model/file availability before quota reservation.
- * @param request Request used to resolve the trusted client-address hash.
- * @param principal Guest ownership and credential identity used for source/file checks.
- * @param input Creation request whose model, tool, project, fork, and attachments are validated.
- * @returns The trusted IP hash, or a response rejecting the request before quota is reserved.
+ * @param {ReadonlyNativeSurface<Request>} request Request used to resolve the trusted client-address hash.
+ * @param {Readonly< Extract< EvePrincipal, { kind: "guest"; } > >} principal Guest ownership and credential identity used for source/file checks.
+ * @param {ReadonlyGuestCreationInput} input Creation request whose model, tool, project, fork, and attachments are validated.
+ * @returns {Promise<string | Response>} The trusted IP hash, or a response rejecting the request before quota is reserved.
  */
 const validateGuestCreation = async (
   request: ReadonlyNativeSurface<Request>,
@@ -172,10 +172,10 @@ max-statements (#512): admitGuestCreation keeps its ordered workflow and input c
 typescript/strict-boolean-expressions (#610): admitGuestCreation intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Admits a creation under its native operation identity, preserving quota on matching replays.
- * @param request Request used to resolve trusted admission evidence for a new reservation.
- * @param principal Guest identity whose operation content and session quota are checked.
- * @param input Original creation request hashed to prevent replaying different operation content.
- * @returns A reserved/replayed quota identity or an admission error response; follow-up sends use a separate path.
+ * @param {ReadonlyNativeSurface<Request>} request Request used to resolve trusted admission evidence for a new reservation.
+ * @param {Readonly< Extract< EvePrincipal, { kind: "guest"; } > >} principal Guest identity whose operation content and session quota are checked.
+ * @param {ReadonlyGuestCreationInput} input Original creation request hashed to prevent replaying different operation content.
+ * @returns {Promise< | Response | Extract< Awaited<ReturnType<typeof reserveEveGuestMessage>>, { status: "reserved" | "replay" } > >} A reserved/replayed quota identity or an admission error response; follow-up sends use a separate path.
  */
 const admitGuestCreation = async (
   request: ReadonlyNativeSurface<Request>,

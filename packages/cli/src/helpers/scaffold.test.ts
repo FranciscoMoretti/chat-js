@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync, readFileSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   readFile,
@@ -8,9 +10,13 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
 import { runInNewContext } from "node:vm";
 
 import ts from "typescript";

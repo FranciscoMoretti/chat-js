@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { inferPackageManager } from "./get-package-manager";

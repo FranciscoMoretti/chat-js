@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { execFileSync, spawn } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { setTimeout as delay } from "node:timers/promises";
 
 import { checkHealth } from "./dev-health";

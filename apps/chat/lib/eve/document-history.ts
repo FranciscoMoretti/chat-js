@@ -7,8 +7,8 @@ const nativeTurnId = /^turn_\d+$/u;
  */
 /**
  * Include inherited turns: restored history does not replay turn.started.
- * @param events Native history events, including restored prefixes and their before-turn boundary.
- * @returns Unique native turn sequences in first-seen order; invalid inherited turn IDs fail validation.
+ * @param {readonly MessageStreamEvent[]} events Native history events, including restored prefixes and their before-turn boundary.
+ * @returns {number[]} Unique native turn sequences in first-seen order; invalid inherited turn IDs fail validation.
  */
 export const documentHistoryTurns = (
   events: readonly MessageStreamEvent[]

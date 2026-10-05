@@ -19,9 +19,9 @@ export interface ResponseChoiceSlot {
 
 /**
  * Layout only: controllers own ordering, lifecycle, and selection.
- * @param props Response-card layout inputs.
- * @param props.slots Controller-owned ordered choices and selection callbacks.
- * @returns Choice buttons, or null when the controller provides no slots.
+ * @param {{ readonly slots: readonly Readonly<ResponseChoiceSlot>[]; }} props Response-card layout inputs.
+ * @param {readonly Readonly<ResponseChoiceSlot>[]} props.slots Controller-owned ordered choices and selection callbacks.
+ * @returns {React.JSX.Element | null} Choice buttons, or null when the controller provides no slots.
  */
 export const ResponseChoiceCards = ({
   slots,

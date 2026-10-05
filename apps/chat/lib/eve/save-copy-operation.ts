@@ -88,10 +88,10 @@ const prepareCopyReservation = async (
  */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
- * @param ownerId Owner whose reservation, attachments, and copied conversation are used.
- * @param input Source/model request checked against any previous reservation for this operation.
- * @param origin Origin used to resolve public source resources while preparing the copy plan.
- * @returns The dispatched copy binding after owned files/documents have been accepted.
+ * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
+ * @param {EveCopyInput} input Source/model request checked against any previous reservation for this operation.
+ * @param {string} origin Origin used to resolve public source resources while preparing the copy plan.
+ * @returns {Promise<Awaited<ReturnType<typeof dispatchEveCopy>>>} The dispatched copy binding after owned files/documents have been accepted.
  */
 export const saveEveCopyOperation = async (
   ownerId: string,

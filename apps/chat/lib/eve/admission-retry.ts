@@ -12,8 +12,8 @@ const isEveAdmissionBusy = (error: unknown): boolean =>
 /* oxlint-disable id-length -- id-length (#506): retryEveAdmission uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 /**
  * Replay only a server-certified undispatched admission, retaining its closure/ID.
- * @param admit Replays the caller's admission closure after certified backpressure.
- * @returns The first successful admission result.
+ * @param {() => Promise<T>} admit Replays the caller's admission closure after certified backpressure.
+ * @returns {Promise<T>} The first successful admission result.
  */
 const retryEveAdmission = async <T>(admit: () => Promise<T>): Promise<T> => {
   const deadline = Date.now() + ADMISSION_RETRY_WINDOW_MS;

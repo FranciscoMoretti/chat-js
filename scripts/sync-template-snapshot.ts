@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import { createHash } from "node:crypto";
+// oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import { readdir, readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import path from "node:path";
 
 const join = (...segments: readonly string[]): string => path.join(...segments);

@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import fs from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import type { PackageManager } from "#cli/types";
@@ -23,12 +25,12 @@ const launcherPackageManager = (): PackageManager => {
 };
 
 /* oxlint-disable node/no-sync -- These private manifest probes preserve inferPackageManager's synchronous PackageManager API: commands/config.ts uses that value immediately to build install arguments. The paired existence check and parse keep file errors and declaration precedence unchanged. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const readManifest = (manifestPath: string): unknown => {
   try {
     return JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
   } catch (error) {
     if (error instanceof SyntaxError) {
+      // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
       return undefined;
     }
     throw error;
@@ -39,6 +41,7 @@ const readDeclaredPackageManager = (
   manifestPath: string
 ): PackageManager | undefined => {
   if (!fs.existsSync(manifestPath)) {
+    // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
     return undefined;
   }
 
@@ -50,6 +53,7 @@ const readDeclaredPackageManager = (
     !("packageManager" in manifest) ||
     typeof manifest.packageManager !== "string"
   ) {
+    // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
     return undefined;
   }
 
@@ -59,9 +63,9 @@ const readDeclaredPackageManager = (
     declared === "pnpm" ||
     declared === "yarn"
     ? declared
-    : undefined;
+    : // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
+      undefined;
 };
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable node/no-sync */
 
 interface LockfileDefinition {

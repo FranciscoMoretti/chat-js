@@ -232,8 +232,8 @@ const removeRecordedSnapshots = async (
  */
 /**
  * Purges only validated local-provider resources after every supplied family member is retired.
- * @param inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
- * @returns Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
+ * @param {readonly SessionResourceInput[]} inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
+ * @returns {Promise<Awaited<ReturnType<typeof readLocalSandboxResources>>[]>} Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
  */
 export const purgeLocalEveSandboxes = async (
   inputs: readonly SessionResourceInput[]

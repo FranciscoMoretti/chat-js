@@ -12,8 +12,8 @@ const isAsyncIterable = <Output>(
   typeof value[Symbol.asyncIterator] === "function";
 
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration.
- * @param definition - Tool whose JSON schema is described.
- * @returns A serializable description and validated JSON input schema.
+ * @param {Tool<TInput, TOutput>} definition - Tool whose JSON schema is described.
+ * @returns {Promise<{ description: string; inputSchema: Record<string, z.infer<ReturnType<typeof z.json>>>; }>} A serializable description and validated JSON input schema.
  */
 const describeMcpTool = async <TInput, TOutput>(
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- asSchema receives the existing FlexibleSchema<Input> instance; recursive readonly changes its generic _type and fails that actual native SDK receiver.
@@ -51,10 +51,10 @@ const describeMcpTool = async <TInput, TOutput>(
 
 /**
  * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
- * @param definition - SDK tool resolved for execution.
- * @param input - Untrusted input validated by the SDK schema.
- * @param context - Call identity and cancellation.
- * @param messages - Prior model messages.
+ * @param {Tool<TInput, TOutput>} definition - SDK tool resolved for execution.
+ * @param {unknown} input - Untrusted input validated by the SDK schema.
+ * @param {Readonly<{ callId: ToolContext["callId"]; abortSignal: Readonly<AbortSignal>; }>} context - Call identity and cancellation.
+ * @param {readonly ModelMessage[]} messages - Prior model messages.
  * @yields {unknown} Each output emitted by the installed AI SDK tool.
  */
 // oxlint-disable-next-line max-params -- Preserve the exported four-argument SDK adapter contract used by discovered-tool execution and the independent native-invocation contract test; grouping context/messages into a DTO changes existing callers.

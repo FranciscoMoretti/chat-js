@@ -428,9 +428,9 @@ const fork = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- removeBranch: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /** Retention proof only: keep immutable nodes/resources/checkpoints for children.
  * Production needs reachability GC + per-owner retention/deletion policy.
- * @param sql - Connection owning the deletion transaction.
- * @param owner - Tenant whose branch may be removed.
- * @param branch - Branch identity to remove without deleting retained resources.
+ * @param {Sql} sql - Connection owning the deletion transaction.
+ * @param {string} owner - Tenant whose branch may be removed.
+ * @param {string} branch - Branch identity to remove without deleting retained resources.
  */
 const removeBranch = async (
   sql: Sql,
@@ -456,8 +456,8 @@ const removeBranch = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- writeFile: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Write through an admitted writer token that outlives the OS process/job.
- * @param sql - Connection owning the writer validation and update transaction.
- * @param input - Owner, branch, writer token, and file contents for the update.
+ * @param {Sql} sql - Connection owning the writer validation and update transaction.
+ * @param {Readonly<{ owner: string; branch: string; writer: string; path: string; bytes: string; }>} input - Owner, branch, writer token, and file contents for the update.
  */
 const writeFile = async (
   sql: Sql,
@@ -489,10 +489,10 @@ const writeFile = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- modelHistory: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /**
  * Produce a model transcript without application annotations.
- * @param sql - Connection used to read the immutable message prefix.
- * @param owner - Tenant whose message nodes may be read.
- * @param head - Last node in the prefix, or null for an empty history.
- * @returns Ordered message roles and parts without application annotations.
+ * @param {DB} sql - Connection used to read the immutable message prefix.
+ * @param {string} owner - Tenant whose message nodes may be read.
+ * @param {string | null} head - Last node in the prefix, or null for an empty history.
+ * @returns {Promise<Pick<Message, "parts" | "role">[]>} Ordered message roles and parts without application annotations.
  */
 const modelHistory = async (
   sql: DB,

@@ -83,8 +83,8 @@ const completeInlineCode = (value: string): string => {
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
- * @param text Streamed Markdown text.
- * @returns Text with unfinished links removed and unmatched delimiters closed.
+ * @param {string} text Streamed Markdown text.
+ * @returns {string} Text with unfinished links removed and unmatched delimiters closed.
  */
 export const parseIncompleteMarkdown = (text: string): string => {
   if (text === "" || typeof text !== "string") {

@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { z } from "zod";
@@ -35,8 +37,8 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
 
 /**
  * Configure the installed source without evaluating it or editing dependencies.
- * @param destination Project root receiving storage-options.ts and its env block.
- * @param selection Resolved descriptor and non-secret native storage options.
+ * @param {string} destination Project root receiving storage-options.ts and its env block.
+ * @param {ReadonlyInput<StorageSelection>} selection Resolved descriptor and non-secret native storage options.
  */
 const configureStorageProvider = async (
   destination: string,

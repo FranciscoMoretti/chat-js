@@ -41,10 +41,10 @@ max-statements (#512): resolveForkSource keeps its ordered workflow and input co
 no-magic-numbers (#517): resolveForkSource uses 5 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/strict-boolean-expressions (#610): resolveForkSource intentionally keeps the existing falsy-value behavior of current.parentConversationId; current.forkTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 /** Resolve native checkpoint ancestry while keeping imported seed boundaries local.
- * @param conversationId Conversation version from which the edit or fork starts.
- * @param boundaryId Imported message or native turn checkpoint immediately before the fork.
- * @param branches Known ancestry used to find the conversation owning the native checkpoint.
- * @returns The source conversation and its local message or native turn boundary.
+ * @param {string} conversationId Conversation version from which the edit or fork starts.
+ * @param {string} boundaryId Imported message or native turn checkpoint immediately before the fork.
+ * @param {readonly Readonly<EveBranchReference>[]} branches Known ancestry used to find the conversation owning the native checkpoint.
+ * @returns {EveForkInput} The source conversation and its local message or native turn boundary.
  */
 const resolveForkSource = (
   conversationId: string,

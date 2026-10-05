@@ -20,9 +20,9 @@ typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion a
 typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retires a deletion-pending session and settles its usage before erasure is allowed.
- * @param ownerId Owner authorized by the conversation's deletion state.
- * @param sessionId Bound native session to reset and inspect for terminal evidence.
- * @returns The terminal snapshot after direct and subagent usage are reconciled; incomplete retirement throws.
+ * @param {string} ownerId Owner authorized by the conversation's deletion state.
+ * @param {string} sessionId Bound native session to reset and inspect for terminal evidence.
+ * @returns {Promise<SessionSnapshot>} The terminal snapshot after direct and subagent usage are reconciled; incomplete retirement throws.
  */
 const retireEveSessionForDeletion = async (
   ownerId: string,
@@ -75,9 +75,9 @@ const retireEveSessionForDeletion = async (
 /* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Revokes family access and settles every bound session before resource erasure starts.
- * @param ownerId Owner whose conversation family is placed into deletion state.
- * @param conversationId Conversation identifying the family whose bound sessions are retired.
- * @returns The deletion family after session retirement, or no result when no family is available.
+ * @param {string} ownerId Owner whose conversation family is placed into deletion state.
+ * @param {string} conversationId Conversation identifying the family whose bound sessions are retired.
+ * @returns {Promise< | NonNullable<Awaited<ReturnType<typeof beginEveConversationDeletion>>> | undefined >} The deletion family after session retirement, or no result when no family is available.
  */
 const retireEveFamilyForDeletion = async (
   ownerId: string,

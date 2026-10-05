@@ -6,14 +6,20 @@ import {
 } from "./checkpoint-rejection";
 import { eveRequest } from "./server";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): readEveCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readEveCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): readEveCheckpoint uses 15_000, 409, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): readEveCheckpoint accepts signal: AbortSignal = AbortSignal.timeout(15_000); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): readEveCheckpoint intentionally keeps the existing falsy-value behavior of checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** A missing checkpoint is pending; every other lookup failure stays unresolved. */
+/**
+ * A missing checkpoint is pending; every other lookup failure stays unresolved.
+ * @param {string} ownerId Authenticated owner sent to the native checkpoint endpoint.
+ * @param {string} sessionId Source session whose checkpoint receipt must match.
+ * @param {string} beforeTurnId Turn boundary that must appear in the receipt.
+ * @param {string | undefined} checkpointId Optional named checkpoint whose rejection raises CheckpointRejectedError.
+ * @param {AbortSignal} signal Request cancellation, defaulting to a fifteen-second timeout.
+ * @returns {Promise<boolean>} True for a validated ready receipt and false only for checkpoint_not_ready; other responses throw.
+ */
 const readEveCheckpoint = async (
   ownerId: string,
   sessionId: string,
@@ -56,13 +62,19 @@ const readEveCheckpoint = async (
   }
   throw new Error("Source checkpoint lookup is unavailable.");
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, max-params, no-magic-numbers, unicorn/max-nested-calls -- jsdoc/require-param (#534): waitForEveCheckpoint's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-params (#511): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-params, no-magic-numbers, unicorn/max-nested-calls -- max-params (#511): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): waitForEveCheckpoint uses 15_000, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 unicorn/max-nested-calls (#568): waitForEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-/** Check before allocating a native child: a bound source may not have checkpointed yet. */
+/**
+ * Check before allocating a native child: a bound source may not have checkpointed yet.
+ * @param {string} ownerId Authenticated owner of the source session.
+ * @param {string} sessionId Source session that must finish checkpointing.
+ * @param {string} beforeTurnId Required native turn boundary.
+ * @param {string | undefined} checkpointId Optional named checkpoint to await.
+ * @returns {Promise<void>} Completion after a validated ready receipt; unresolved checkpoints throw after the bounded wait.
+ */
 const waitForEveCheckpoint = async (
   ownerId: string,
   sessionId: string,
@@ -95,5 +107,5 @@ const waitForEveCheckpoint = async (
     "Source checkpoint is not ready. Retry the same operation shortly."
   );
 };
-/* oxlint-enable jsdoc/require-param, max-params, no-magic-numbers, unicorn/max-nested-calls */
+/* oxlint-enable max-params, no-magic-numbers, unicorn/max-nested-calls */
 export { readEveCheckpoint, waitForEveCheckpoint };

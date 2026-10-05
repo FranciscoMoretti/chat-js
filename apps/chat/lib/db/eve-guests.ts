@@ -357,9 +357,9 @@ typescript/promise-function-async (#606): reserveEveGuestMessage preserves the r
  */
 /**
  * Reserve before native admission. Ambiguous admission keeps its reservation.
- * @param input Validated owner, operation, request digest and address quota policy to reserve.
- * @param bootstrap Optional first-guest identity and expiry, created only when admission succeeds.
- * @returns The new or replayed reservation, or the exact identity/quota admission rejection.
+ * @param {GuestReservationInput} input Validated owner, operation, request digest and address quota policy to reserve.
+ * @param {GuestBootstrap | undefined} bootstrap Optional first-guest identity and expiry, created only when admission succeeds.
+ * @returns {Promise<GuestReservationResult>} The new or replayed reservation, or the exact identity/quota admission rejection.
  */
 const reserveEveGuestMessage = async (
   input: GuestReservationInput,
@@ -391,10 +391,10 @@ typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentiona
  */
 /**
  * Comparisons admit every candidate or none, including first-guest account creation.
- * @param inputs Candidate operations sharing one owner, address and quota policy.
- * @param bootstrap Optional first-guest identity admitted atomically with all candidates.
- * @param persistAdmission Optional transaction callback storing comparison intent after every reservation succeeds.
- * @returns All reservations and the callback result on atomic admission, or the rejecting candidate status after rollback.
+ * @param {GuestReservationInput[]} inputs Candidate operations sharing one owner, address and quota policy.
+ * @param {GuestBootstrap | undefined} bootstrap Optional first-guest identity admitted atomically with all candidates.
+ * @param {((tx: GuestTransaction) => Promise<T>) | undefined} persistAdmission Optional transaction callback storing comparison intent after every reservation succeeds.
+ * @returns {Promise<GuestBatchResult<T>>} All reservations and the callback result on atomic admission, or the rejecting candidate status after rollback.
  */
 const reserveEveGuestMessages = async <T = undefined>(
   inputs: GuestReservationInput[],
@@ -554,10 +554,10 @@ const releaseMessage = async (
 
 /**
  * Only a proven unaccepted request can be refunded; never use this on a timeout.
- * @param ownerId Owner whose exact reservation can be refunded.
- * @param operationId Operation proved unaccepted by native admission.
- * @param reservationId Exact reservation receipt to fence stale refunds.
- * @returns Whether the matching reserved message was released and its quota refunded.
+ * @param {string} ownerId Owner whose exact reservation can be refunded.
+ * @param {string} operationId Operation proved unaccepted by native admission.
+ * @param {string} reservationId Exact reservation receipt to fence stale refunds.
+ * @returns {Promise<boolean>} Whether the matching reserved message was released and its quota refunded.
  */
 const releaseEveGuestMessage = async (
   ownerId: string,
@@ -568,10 +568,10 @@ const releaseEveGuestMessage = async (
 
 /**
  * Serialize proof of no creation with the same family lock used before native dispatch.
- * @param ownerId Owner whose guest and conversation family locks fence the refund.
- * @param operationId Operation whose conversation creation must still be absent.
- * @param reservationId Exact reservation receipt to fence stale refunds.
- * @returns Whether no creation existed and the matching reservation was atomically released.
+ * @param {string} ownerId Owner whose guest and conversation family locks fence the refund.
+ * @param {string} operationId Operation whose conversation creation must still be absent.
+ * @param {string} reservationId Exact reservation receipt to fence stale refunds.
+ * @returns {Promise<boolean>} Whether no creation existed and the matching reservation was atomically released.
  */
 const releaseEveGuestCreation = async (
   ownerId: string,
@@ -582,8 +582,8 @@ const releaseEveGuestCreation = async (
 
 /**
  * Includes expired identities so cleanup and policy never reclassify a guest as a user.
- * @param ownerId Durable guest owner identity inspected by cleanup or policy.
- * @returns The stored expiry, including expired identities, from the existing row lookup.
+ * @param {string} ownerId Durable guest owner identity inspected by cleanup or policy.
+ * @returns {Promise<Pick<typeof eveGuest.$inferSelect, "expiresAt">>} The stored expiry, including expired identities, from the existing row lookup.
  */
 const readEveGuestOwner = async (
   ownerId: string

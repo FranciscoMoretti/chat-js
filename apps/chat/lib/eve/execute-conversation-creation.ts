@@ -105,11 +105,11 @@ const creationFailure = (cause: unknown): Response => {
   */
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
- * @param ownerId Owner used to resolve source conversations and reserve the creation.
- * @param input Original creation request reused when an uncertain dispatch is retried.
- * @param guestReservationId Optional admission reservation attached to the created conversation.
- * @param initialPreparedMessage Optional prepared message reused without preparing it again.
- * @returns The bound conversation, or an error response that leaves unresolved creation recoverable.
+ * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
+ * @param {z.infer<typeof createConversationInput>} input Original creation request reused when an uncertain dispatch is retried.
+ * @param {string | undefined} guestReservationId Optional admission reservation attached to the created conversation.
+ * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
+ * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
 export const executeEveConversationCreation = async (
   ownerId: string,

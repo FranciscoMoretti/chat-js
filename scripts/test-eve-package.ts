@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import { readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import path from "node:path";
 
 const COMMAND_ARGUMENTS_START_INDEX = 2;

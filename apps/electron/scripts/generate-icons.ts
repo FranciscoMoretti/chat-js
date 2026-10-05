@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The build-time icon generator reads the source image and writes platform icon files on disk.
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The build-time icon generator reads the source image and writes platform icon files on disk.
 import path from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- The build-time icon generator reads the source image and writes platform icon files on disk.
 import { fileURLToPath } from "node:url";
 
 import { BICUBIC2, clearCache, createICNS, createICO } from "png2icons";

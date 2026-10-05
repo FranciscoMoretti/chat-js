@@ -6,8 +6,8 @@ import type { SnapshotProvider } from "./model";
 /* oxlint-disable typescript/strict-boolean-expressions -- mockProvider: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 /**
  * Simulate the provider contract with deterministic database-backed snapshots.
- * @param sql - Connection used to persist mock VM and snapshot state.
- * @returns A replay-safe snapshot provider for the branching prototype.
+ * @param {Sql} sql - Connection used to persist mock VM and snapshot state.
+ * @returns {SnapshotProvider} A replay-safe snapshot provider for the branching prototype.
  */
 export const mockProvider = (sql: Sql): SnapshotProvider => ({
   async capture(key, sandbox) {

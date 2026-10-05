@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
@@ -52,10 +54,10 @@ const EMPTY_DEPENDENCY_COUNT = 0;
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * Resolve the complete target installation before any source files are written.
- * @param cwd Project directory used for provider, feature and tool preflight.
- * @param input Requested registry selections validated before dependency resolution.
- * @param options Whether this is a fresh installation and replacements are permitted.
- * @returns Resolved items, validated selections, target changes and registry sources.
+ * @param {string} cwd Project directory used for provider, feature and tool preflight.
+ * @param {ReadonlyNative<InstallationSelection>} input Requested registry selections validated before dependency resolution.
+ * @param {{ readonly fresh?: boolean; readonly replace?: boolean; readonly documents?: boolean; }} options Whether this is a fresh installation and replacements are permitted.
+ * @returns {ReturnType<typeof planInstallation>} Resolved items, validated selections, target changes and registry sources.
  */
 export const planInstallation = async (
   cwd: string,

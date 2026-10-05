@@ -10,7 +10,15 @@ Stale workspace dependency links resolved older Ultracite and AI SDK versions de
 
 Full `bun lint`, all seven `bun test:types` tasks and `bun template:check` pass for this batch. The prescribed CLI `test:unit` command passes all 200 tests on Node 24, matching CI; this includes generated CommonJS/tsx Electron prebuilds. Focused backend tests pass 29 cases; preview build/environment tests pass 45 cases; Electron icon tests pass two cases. All 29 changed app components have identical emitted JavaScript syntax trees; 28 also have byte-identical emitted text. The existing MCP Chromium fixture passes 18 tests. Local MCP captures were inspected; UI Verify fleet comparison and full authenticated screens are not claimed because the required service key and application environment are unavailable.
 
-The goal remains open. Fourteen effective globally disabled rules still need adoption; broad existing suppressions remain pending individual review. The old all-110 diagnostic totals below are historical measurements, not measurements of the current checkout or the new full-preset scope.
+The second batch enables `jsdoc/require-param-type`, `jsdoc/require-returns-type` and `no-restricted-properties`. JSDoc types now match the declared TypeScript contracts, including optional callback parameters; no broad placeholder types were added. The property rule has no custom restriction list. Eleven globally disabled rules still need adoption.
+
+Directory-wide Node import exemptions have been removed. Native CLI, Electron and repository scripts now explain their platform dependency at each import: 211 statement-level exceptions replace the directory exemptions. Runtime policy fixtures check both rejected unannotated imports and accepted locally explained imports across repository and generated-app paths. The combined policy/exception tests pass 22 cases with 152 assertions. Four CLI readonly input exceptions and 19 missing-documentation exceptions were also removed. The current suppression total is **10,220**; the increase from 10,030 reflects the newly explicit native-import exceptions and narrower absence-value exceptions, rather than wider suppression scopes.
+
+The second batch passes full `bun lint`, all seven `bun test:types` tasks, `bun template:check`, and all 200 CLI unit tests on Node 24 (1,074 assertions). Canonical MCP files were regenerated into their installed copies. Independent review checked the documentation contracts and native-import rationale; documentation-only app changes retain identical runtime syntax.
+
+The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
+
+## Historical cleanup records
 
 Tracking: [#503](https://github.com/FranciscoMoretti/chat-js/issues/503). Integration PR: [#646](https://github.com/FranciscoMoretti/chat-js/pull/646).
 

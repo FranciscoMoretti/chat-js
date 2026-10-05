@@ -41,9 +41,9 @@ const deletingFamilyIds = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): prepareEveFamilyFilePurge accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Fence exclusively referenced files before external deletion; retain references for retries.
- * @param ownerId Owner whose deleting conversation family authorizes the cleanup.
- * @param rootId Shared family root; every family member must already be pending deletion.
- * @returns Sorted storage keys fenced for removal, excluding files still referenced outside the family.
+ * @param {string} ownerId Owner whose deleting conversation family authorizes the cleanup.
+ * @param {string} rootId Shared family root; every family member must already be pending deletion.
+ * @returns {Promise<string[]>} Sorted storage keys fenced for removal, excluding files still referenced outside the family.
  */
 const prepareEveFamilyFilePurge = async (
   ownerId: string,
@@ -86,8 +86,8 @@ const prepareEveFamilyFilePurge = async (
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): completeEveFilePurge accepts keys: readonly string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Call only after the provider confirms removal; no file identity is recycled.
- * @param ownerId Owner used to scope the stored-file state update and family lock.
- * @param keys Provider-confirmed removed keys; only deleting rows are marked permanently deleted.
+ * @param {string} ownerId Owner used to scope the stored-file state update and family lock.
+ * @param {readonly string[]} keys Provider-confirmed removed keys; only deleting rows are marked permanently deleted.
  */
 const completeEveFilePurge = async (
   ownerId: string,
@@ -119,8 +119,8 @@ typescript/prefer-readonly-parameter-types (#565): releaseEveFamilyFileReference
 unicorn/max-nested-calls (#568): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Release references only after file cleanup; retry cleanup if another family released first.
- * @param ownerId Owner whose deleting family is locked while file cleanup is checked.
- * @param rootId Family root whose references are released only after all exclusive files are removed.
+ * @param {string} ownerId Owner whose deleting family is locked while file cleanup is checked.
+ * @param {string} rootId Family root whose references are released only after all exclusive files are removed.
  */
 const releaseEveFamilyFileReferences = async (
   ownerId: string,

@@ -82,8 +82,8 @@ const lockEveCopyOwners = async (
 /* oxlint-disable max-statements -- moving it below executable initialization can obscure ordering and API ownership.
 max-statements (#512): rejectEveCopyPreflight keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Durable rejection prevents a concurrent request from later reserving the discarded operation.
- * @param ownerId Owner whose operation is being discarded.
- * @param operationId Immutable creation operation to mark as rejected.
+ * @param {string} ownerId Owner whose operation is being discarded.
+ * @param {string} operationId Immutable creation operation to mark as rejected.
  */
 const rejectEveCopyPreflight = async (
   ownerId: string,
@@ -148,8 +148,8 @@ const isUnacceptedEveCopy = async (
 };
 
 /** Caller holds source/destination family locks; the shared row lock serializes revocation.
- * @param tx Transaction holding the family locks and source sharing lock.
- * @param source Published conversation and session identities expected by the copy.
+ * @param {CopyTransaction} tx Transaction holding the family locks and source sharing lock.
+ * @param {{ readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; }} source Published conversation and session identities expected by the copy.
  */
 
 const assertEveCopySourceAvailable = async (
@@ -418,9 +418,9 @@ max-statements (#512): reserveEveCopyOperation keeps its ordered workflow and in
 no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): reserveEveCopyOperation accepts input: { operationId: string; sourceConversationId: string; sourceSessionId: string; tx; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Allocation and source authorization are committed before any destination storage I/O.
- * @param ownerId Owner of the fresh destination conversation.
- * @param input Immutable source identity, projection and prepared resources for the copy.
- * @returns The persisted preparation, including an identical prior reservation on retry.
+ * @param {string} ownerId Owner of the fresh destination conversation.
+ * @param {{ operationId: string; readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; projectionHash: string; title: string; modelId: string; plan: EveCopyPlan; }} input Immutable source identity, projection and prepared resources for the copy.
+ * @returns {Promise<EveCopyOperation>} The persisted preparation, including an identical prior reservation on retry.
  */
 const reserveEveCopyOperation = async (
   ownerId: string,

@@ -184,9 +184,9 @@ const transformFileReferences = (
 typescript/strict-boolean-expressions (#610): eveCopyResources intentionally keeps the existing falsy-value behavior of field; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Scans copy content before destination keys are reserved.
- * @param value Transcript or authorized document revision content to inspect.
- * @param documentReferences Whether explicit document and revision fields are collected.
- * @returns Sorted unique file keys, document IDs, and revision IDs found in supported references.
+ * @param {unknown} value Transcript or authorized document revision content to inspect.
+ * @param {boolean} documentReferences Whether explicit document and revision fields are collected.
+ * @returns {{ fileKeys: string[]; documentIds: string[]; revisionIds: string[] }} Sorted unique file keys, document IDs, and revision IDs found in supported references.
  */
 const eveCopyResources = (
   value: unknown,
@@ -261,8 +261,8 @@ typescript/prefer-readonly-parameter-types (#565): prepareEveCopyTranscript acce
 typescript/strict-boolean-expressions (#610): prepareEveCopyTranscript intentionally keeps the existing falsy-value behavior of message.metadata?.modelId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
- * @param events Ordered native events whose latest copy boundary must be waiting or completed.
- * @returns The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
+ * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
+ * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
   events: readonly MessageStreamEvent[]
@@ -348,10 +348,10 @@ typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accep
 typescript/strict-boolean-expressions (#610): rewriteEveCopyResources intentionally keeps the existing falsy-value behavior of fileId; key; field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Rewrites a cloned value using durable, ownership-checked destination allocations.
- * @param value Transcript or document content whose source references are replaced in a clone.
- * @param allocations Reserved destination files, documents, revisions, and inline attachment keys.
- * @param documentReferences Whether explicit document/revision fields must be rewritten.
- * @returns A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
+ * @param {T} value Transcript or document content whose source references are replaced in a clone.
+ * @param {CopyAllocations} allocations Reserved destination files, documents, revisions, and inline attachment keys.
+ * @param {boolean} documentReferences Whether explicit document/revision fields must be rewritten.
+ * @returns {T} A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
  */
 const rewriteEveCopyResources = <T>(
   value: T,
@@ -489,8 +489,8 @@ no-continue (#515): eveCopyInlineAttachments skips inapplicable loop entries exp
 typescript/prefer-readonly-parameter-types (#565): eveCopyInlineAttachments accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Decodes published inline attachments, binding identity to MIME type and exact bytes.
- * @param seed Prepared seed whose file parts may contain base64 data URLs.
- * @returns Unique inline attachments with validated media types, byte buffers, and content-bound IDs.
+ * @param {Seed} seed Prepared seed whose file parts may contain base64 data URLs.
+ * @returns {{ id: string; mediaType: string; bytes: Buffer }[]} Unique inline attachments with validated media types, byte buffers, and content-bound IDs.
  */
 const eveCopyInlineAttachments = (
   seed: Seed
@@ -618,11 +618,11 @@ no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existi
 typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript accepts seed: Seed; allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Materializes reserved destination attachments and document references in a copied seed.
- * @param seed Prepared transcript cloned before destination URLs and metadata are written.
- * @param allocations Durable destination allocations validated against source resource identities.
- * @param loadDestinationFile Reads committed destination MIME type and size for receipt checks.
- * @param origin HTTP(S) origin used to construct copied file URLs without credentials.
- * @returns A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
+ * @param {Seed} seed Prepared transcript cloned before destination URLs and metadata are written.
+ * @param {CopyAllocations} allocations Durable destination allocations validated against source resource identities.
+ * @param {(key: string) => Promise<Pick<Blob, "type" | "size">>} loadDestinationFile Reads committed destination MIME type and size for receipt checks.
+ * @param {string} origin HTTP(S) origin used to construct copied file URLs without credentials.
+ * @returns {Promise<Seed>} A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
  */
 const materializeEveCopyTranscript = async (
   seed: Seed,

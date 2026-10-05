@@ -18,8 +18,8 @@ interface Metadata {
 
 /**
  * Background title refreshes defer to the last metadata mutation's reconciliation.
- * @param cache Query client whose active mutations share the chat metadata flag.
- * @returns Number of active mutations tagged with eveMetadata, across chat branches.
+ * @param {Readonly<Pick<QueryClient, "isMutating">>} cache Query client whose active mutations share the chat metadata flag.
+ * @returns {number} Number of active mutations tagged with eveMetadata, across chat branches.
  */
 const pendingEveMetadataMutations = (
   cache: Readonly<Pick<QueryClient, "isMutating">>

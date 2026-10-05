@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
 import { runInNewContext } from "node:vm";
 
 import ts from "typescript";

@@ -24,13 +24,13 @@ no-magic-numbers (#517): verifyEveSandboxCoverage uses 0 in its existing protoco
 typescript/prefer-readonly-parameter-types (#565): verifyEveSandboxCoverage accepts connection: Sql; input: { sessionId: string; runIds: string[]; appRoot: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Internal: caller authorizes the deleting family and canonical worker root.
- * @param connection Native workflow database connection used to retain proof under the purge lock.
- * @param input Authorized root, canonical worker app root, and exact run inventory to cover.
- * @param input.sessionId Root session included in the authorized run inventory.
- * @param input.runIds Run identities whose writers must be fenced and workflow coverage complete.
- * @param input.appRoot Canonical worker root bound into the retained coverage proof.
- * @param verifyIdentity Checks each sandbox-owning session against the authorized native identity.
- * @returns Sandbox-owning session IDs from matching retained proof or newly verified coverage.
+ * @param {Sql} connection Native workflow database connection used to retain proof under the purge lock.
+ * @param {{ sessionId: string; runIds: string[]; appRoot: string; }} input Authorized root, canonical worker app root, and exact run inventory to cover.
+ * @param {string} input.sessionId Root session included in the authorized run inventory.
+ * @param {string[]} input.runIds Run identities whose writers must be fenced and workflow coverage complete.
+ * @param {string} input.appRoot Canonical worker root bound into the retained coverage proof.
+ * @param {(sessionId: string) => Promise<void>} verifyIdentity Checks each sandbox-owning session against the authorized native identity.
+ * @returns {Promise<string[]>} Sandbox-owning session IDs from matching retained proof or newly verified coverage.
  */
 const verifyEveSandboxCoverage = async (
   connection: Sql,
@@ -114,10 +114,10 @@ const verifyEveSandboxCoverage = async (
 typescript/prefer-readonly-parameter-types (#565): isFencedEveDescendant accepts query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Only call after authorizing the owner of rootSessionId's deleting binding.
- * @param databaseUrl Native workflow database used to inspect the retained cleanup inventory.
- * @param rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
- * @param sessionId Candidate descendant whose native run and resource fences must be present.
- * @returns Whether the candidate is in the native inventory and both root and candidate writers are fenced.
+ * @param {string} databaseUrl Native workflow database used to inspect the retained cleanup inventory.
+ * @param {string} rootSessionId Authorized deleting binding whose retained queue inventory defines the family.
+ * @param {string} sessionId Candidate descendant whose native run and resource fences must be present.
+ * @returns {Promise<boolean>} Whether the candidate is in the native inventory and both root and candidate writers are fenced.
  */
 const isFencedEveDescendant = async (
   databaseUrl: string,

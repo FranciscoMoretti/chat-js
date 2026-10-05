@@ -1,7 +1,12 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFile } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import nodePath from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI adapts native callback APIs for asynchronous process operations.
 import { promisify } from "node:util";
 
 // oxlint-disable-next-line typescript/strict-void-return -- Node documents promisify(execFile): execFile immediately returns ChildProcess, and its native custom promisifier owns the stdout/stderr promise and rejection details rather than consuming that immediate return.
@@ -101,7 +106,7 @@ const packMaintainedArchive = async (
 
 /**
  * Ship a checked maintained runtime consistently through Bun, npm, pnpm and Yarn.
- * @param input The installed package, maintained patch and template destination.
+ * @param {VendorInput} input The installed package, maintained patch and template destination.
  */
 export const vendorPatchedPackage = async (
   input: VendorInput

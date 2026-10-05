@@ -31,11 +31,11 @@ const readResponseGroupDraft = (
 /* oxlint-disable max-params --max-params (#511): retainResponseGroupDraft keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 /**
  * Moves unresolved request recovery to its bound group before a new composer request is allowed.
- * @param storage Browser storage holding composer requests and group-specific recovery drafts.
- * @param ownerId Owner whose request/recovery namespaces are checked and updated.
- * @param operation Original comparison request retained when any candidate remains unresolved.
- * @param result Current group candidate states deciding whether recovery remains necessary.
- * @param scope Composer scope cleared only when it still holds this same operation.
+ * @param {StorageAccess} storage Browser storage holding composer requests and group-specific recovery drafts.
+ * @param {string} ownerId Owner whose request/recovery namespaces are checked and updated.
+ * @param {ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>} operation Original comparison request retained when any candidate remains unresolved.
+ * @param {ReadonlyNativeSurface<z.infer<typeof eveResponseGroupResult>>} result Current group candidate states deciding whether recovery remains necessary.
+ * @param {Readonly<CreationScope> | undefined} scope Composer scope cleared only when it still holds this same operation.
  */
 const retainResponseGroupDraft = (
   storage: StorageAccess,

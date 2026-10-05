@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { spawnSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { existsSync, readFileSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import path from "node:path";
 
 import { MakerDeb } from "@electron-forge/maker-deb";

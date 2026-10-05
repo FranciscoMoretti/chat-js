@@ -103,8 +103,8 @@ typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts
  */
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
- * @param identity Exact reservation or native session whose durable mapping is inspected.
- * @returns The durable identity and state, including tombstones, from the existing row lookup.
+ * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
+ * @returns {Promise< Pick< ConversationRow, "creationKind" | "id" | "ownerId" | "sessionId" | "state" > >} The durable identity and state, including tombstones, from the existing row lookup.
  */
 const readEveSessionMapping = async (
   identity: Readonly<{ reservationId: string } | { sessionId: string }>
@@ -305,9 +305,9 @@ typescript/strict-boolean-expressions (#610): getEveChatPageConversation intenti
  */
 /**
  * Resolve either a logical chat route or an exact private session route.
- * @param ownerId Owner used to scope both exact and logical route lookups.
- * @param routeId Exact conversation or logical chat route to resolve.
- * @returns The visible owned conversation, preferring the logical active member, or no result.
+ * @param {string} ownerId Owner used to scope both exact and logical route lookups.
+ * @param {string} routeId Exact conversation or logical chat route to resolve.
+ * @returns {ReturnType<typeof getEveConversation>} The visible owned conversation, preferring the logical active member, or no result.
  */
 const getEveChatPageConversation = async (
   ownerId: string,
@@ -1342,9 +1342,9 @@ const listEveConversationBranches = async (
  */
 /**
  * Internal cleanup only; does not grant browser or conversation access.
- * @param ownerId Owner whose deleting session mapping is inspected.
- * @param sessionId Native session being removed by internal cleanup.
- * @returns The deleting conversation identity from the existing row lookup.
+ * @param {string} ownerId Owner whose deleting session mapping is inspected.
+ * @param {string} sessionId Native session being removed by internal cleanup.
+ * @returns {Promise<Pick<ConversationRow, "id">>} The deleting conversation identity from the existing row lookup.
  */
 const getDeletingEveConversationForSession = async (
   ownerId: string,
@@ -1417,8 +1417,8 @@ const getEveConversationProject = async (
  */
 /**
  * Only interrupted message commands are replayable here; copies and deletion have separate journals.
- * @param ownerId Owner whose creating and uncertain message commands need recovery.
- * @returns Durable message reservations eligible for replay; copies and deletion are excluded.
+ * @param {string} ownerId Owner whose creating and uncertain message commands need recovery.
+ * @returns {Promise<ConversationRow[]>} Durable message reservations eligible for replay; copies and deletion are excluded.
  */
 const listPendingEveCreations = async (
   ownerId: string
@@ -1443,10 +1443,10 @@ typescript/promise-function-async (#606): bindAcceptedEveConversation preserves 
  */
 /**
  * Caller must verify a native operation receipt for this reservation and exact session.
- * @param ownerId Owner whose reservation is bound under its transaction lock.
- * @param reservationId Durable reservation whose accepted native operation has been verified.
- * @param sessionId Exact native session named by the verified operation receipt.
- * @returns The reservation and session identities after transactional binding.
+ * @param {string} ownerId Owner whose reservation is bound under its transaction lock.
+ * @param {string} reservationId Durable reservation whose accepted native operation has been verified.
+ * @param {string} sessionId Exact native session named by the verified operation receipt.
+ * @returns {Promise<BoundConversation>} The reservation and session identities after transactional binding.
  */
 const bindAcceptedEveConversation = async (
   ownerId: string,

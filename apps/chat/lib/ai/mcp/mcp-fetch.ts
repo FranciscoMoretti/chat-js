@@ -14,9 +14,9 @@ type ReadonlyNativeSurface<Value> = Value extends (
 const MCP_NETWORK_TIMEOUT_MS = 30_000;
 
 /** Covers transport, discovery and OAuth requests with the same network policy.
- * @param input - Native URL or request to protect with the MCP network policy.
- * @param init - Native request overrides applied by the Request constructor.
- * @returns The response from the guarded transport.
+ * @param {string | ReadonlyNativeSurface<URL | Request>} input - Native URL or request to protect with the MCP network policy.
+ * @param {Readonly<RequestInit> | undefined} init - Native request overrides applied by the Request constructor.
+ * @returns {Promise<Response>} The response from the guarded transport.
  */
 export const mcpFetch = async (
   input: string | ReadonlyNativeSurface<URL | Request>,

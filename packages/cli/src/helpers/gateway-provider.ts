@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import type { GatewaySelection } from "#cli/registry/gateways";
@@ -74,8 +76,8 @@ export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definiti
 
 /**
  * Wire the installed gateway; source and dependencies are installed by shadcn.
- * @param destination Project receiving gateway defaults, model snapshot and env keys.
- * @param selection Resolved descriptor with defaults, capabilities and credentials.
+ * @param {string} destination Project receiving gateway defaults, model snapshot and env keys.
+ * @param {ReadonlyInput<GatewaySelection>} selection Resolved descriptor with defaults, capabilities and credentials.
  */
 export const configureGatewayProvider = async (
   destination: string,

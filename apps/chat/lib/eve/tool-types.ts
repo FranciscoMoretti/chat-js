@@ -22,8 +22,8 @@ export type NativeToolUI<Definition> =
 
 /** Validate each declared EVE definition without widening its input/output types.
  * The pinned EVE DynamicToolSet erases generics and incorrectly fixes approval input to Record<string, unknown>.
- * @param tools EVE tool definitions whose successful outputs satisfy the application ToolOutput contract.
- * @returns The same definition set, retaining each tool's exact input and output types.
+ * @param {Definitions & { [Name in keyof Definitions]: Definitions[Name] extends ToolDefinition< infer Input, infer Output > ? [Output] extends [ToolOutput] ? ToolDefinition<Input, Output> : never : never; }} tools EVE tool definitions whose successful outputs satisfy the application ToolOutput contract.
+ * @returns {Definitions} The same definition set, retaining each tool's exact input and output types.
  */
 export const defineToolSet = <Definitions>(
   tools: Definitions & {

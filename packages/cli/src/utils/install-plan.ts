@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
 import { createHash, randomUUID } from "node:crypto";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import type { Dirent } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   readFile,
@@ -8,6 +11,7 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { z } from "zod";
@@ -101,8 +105,8 @@ const directoryFiles = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /**
  * Capture only source we actually installed. Never bless a skipped user file.
- * @param cwd Project containing the receipt and installed source files.
- * @param targets Ordered installed paths to hash without modifying the caller list.
+ * @param {string} cwd Project containing the receipt and installed source files.
+ * @param {readonly string[]} targets Ordered installed paths to hash without modifying the caller list.
  */
 const recordInstalledSource = async (
   cwd: string,
@@ -141,10 +145,10 @@ const hasProviderKind = (
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /**
  * Validate protection before mutation; stage retired exclusive sources until registration succeeds.
- * @param cwd Project whose installed source and receipts are protected.
- * @param plan Resolved items and exclusive provider replacements to install.
- * @param options Authorization and extra paths for protection and rollback.
- * @param register Registration operation awaited before retired source is removed.
+ * @param {string} cwd Project whose installed source and receipts are protected.
+ * @param {ReadonlyNative<Plan>} plan Resolved items and exclusive provider replacements to install.
+ * @param {{ readonly overwrite?: boolean; readonly fresh?: boolean; readonly managedTargets?: readonly string[]; readonly rollbackTargets?: readonly string[]; readonly finalize?: () => Promise<void>; }} options Authorization and extra paths for protection and rollback.
+ * @param {() => Promise<void>} register Registration operation awaited before retired source is removed.
  */
 const installPlan = async (
   cwd: string,

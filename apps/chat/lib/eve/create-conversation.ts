@@ -19,8 +19,8 @@ max-lines-per-function (#510): requestConversation keeps its ordered workflow an
 no-magic-numbers (#517): requestConversation uses 30_000, 503, 400, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): requestConversation accepts operation: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 /** A timeout is ambiguous: callers must retain the operation until it is bound.
- * @param operation Immutable creation intent reused for admission and recovery retries.
- * @returns The conversation and native session identities accepted for this operation.
+ * @param {z.infer<typeof createConversationInput>} operation Immutable creation intent reused for admission and recovery retries.
+ * @returns {Promise<z.infer<typeof conversationBinding>>} The conversation and native session identities accepted for this operation.
  */
 const requestConversation = async (
   operation: z.infer<typeof createConversationInput>

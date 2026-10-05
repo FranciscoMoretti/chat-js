@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- Electron main resolves its preload and desktop asset paths with native platform semantics.
 import path from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- Electron main backs off between native-cookie and server-session readiness polls.
 import { setTimeout as sleep } from "node:timers/promises";
 
 import {

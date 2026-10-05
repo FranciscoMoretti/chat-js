@@ -9,8 +9,8 @@ interface EveSearchText {
 
 /**
  * Index display text only: never reasoning, tool payloads, files, or auth metadata.
- * @param messages Seeded message parts and roles whose visible text may enter the search index.
- * @returns Nonempty user/assistant text indexed by its original seed position.
+ * @param {readonly { readonly role: string; readonly parts: readonly { readonly type: string; readonly text?: string; }[]; }[]} messages Seeded message parts and roles whose visible text may enter the search index.
+ * @returns {EveSearchText[]} Nonempty user/assistant text indexed by its original seed position.
  */
 const eveSeedSearchText = (
   messages: readonly {
@@ -37,8 +37,8 @@ typescript/prefer-readonly-parameter-types (#565): eveEventSearchText accepts ev
  */
 /**
  * Immutable event identities make live delivery, restored prefixes and backfills idempotent.
- * @param event Native history or live event that may contain visible user/assistant text.
- * @returns Display text with stable event/seed keys, including restored history and excluding empty content.
+ * @param {MessageStreamEvent} event Native history or live event that may contain visible user/assistant text.
+ * @returns {EveSearchText[]} Display text with stable event/seed keys, including restored history and excluding empty content.
  */
 const eveEventSearchText = (event: MessageStreamEvent): EveSearchText[] => {
   if (event.type === "history.seeded") {

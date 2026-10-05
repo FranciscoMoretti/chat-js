@@ -59,10 +59,10 @@ const laterConversation = (
  */
 /**
  * Resolve comparison ownership without treating edits or later turns as cards.
- * @param selectedConversationId Selected conversation whose ancestry determines comparison ownership.
- * @param conversations Family ancestry and retry conversations available to validate regeneration lineage.
- * @param groups Comparison groups with their original candidate operation identities.
- * @returns The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
+ * @param {string} selectedConversationId Selected conversation whose ancestry determines comparison ownership.
+ * @param {readonly LineageConversation[]} conversations Family ancestry and retry conversations available to validate regeneration lineage.
+ * @param {readonly { readonly candidateOperationIds: readonly string[]; readonly id: string; }[]} groups Comparison groups with their original candidate operation identities.
+ * @returns {EveResponseGroupLineage | undefined} The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
  */
 // oxlint-disable-next-line eslint/complexity -- Candidate discovery, lineage validation, and retry selection form one fail-closed projection.
 const resolveEveResponseGroupLineage = (

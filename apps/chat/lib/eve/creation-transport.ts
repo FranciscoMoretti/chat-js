@@ -15,10 +15,13 @@ class EveCreationTransportError extends Error {
 }
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): requestEveCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): requestEveCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/prefer-readonly-parameter-types (#565): requestEveCreation accepts ...args: Parameters<typeof eveRequest>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Record the failing boundary without logging bearer tokens, signed URLs or message bodies. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): requestEveCreation accepts ...args: Parameters<typeof eveRequest>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Record the failing boundary without logging credentials or message bodies.
+ * @param {"lookup" | "dispatch"} stage Boundary reported when the native request fails.
+ * @param {Parameters<typeof eveRequest>} args Owner, native path, request options and optional model/tool header inputs forwarded unchanged.
+ * @returns {Promise<Response>} Native response; transport failures throw EveCreationTransportError for the specified stage.
+ */
 const requestEveCreation = async (
   stage: "lookup" | "dispatch",
   ...args: Parameters<typeof eveRequest>
@@ -29,5 +32,5 @@ const requestEveCreation = async (
     throw new EveCreationTransportError(stage);
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { EveCreationTransportError, requestEveCreation };

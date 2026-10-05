@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun integration fixtures create and clean temporary source files on the host filesystem.
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun integration fixtures create and clean temporary source files on the host filesystem.
 import { tmpdir } from "node:os";
 
 import {

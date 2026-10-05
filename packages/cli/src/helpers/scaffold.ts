@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
 import { registryUrl } from "#cli/registry/shadcn";
@@ -38,13 +41,12 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "sharp",
 ] as const;
 
-/* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 const getCliPackageRoot = (): string => {
-  const __dir = import.meta.dirname;
+  const directory = import.meta.dirname;
 
   for (const relativePath of ["..", "../.."]) {
-    const candidate = pathModule.resolve(__dir, relativePath);
+    const candidate = pathModule.resolve(directory, relativePath);
     if (existsSync(pathModule.join(candidate, "package.json"))) {
       return candidate;
     }
@@ -53,7 +55,6 @@ const getCliPackageRoot = (): string => {
   throw new Error("Could not locate the @chat-js/cli package root.");
 };
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/no-underscore-dangle */
 
 const getRepoRoot = (): string =>
   pathModule.resolve(getCliPackageRoot(), "../..");
@@ -77,10 +78,9 @@ const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const replaceInFile = async (
   filePath: string,
-  replacements: [string, string][]
+  replacements: readonly (readonly [string, string])[]
 ): Promise<void> => {
   if (!existsSync(filePath)) {
     return;
@@ -91,7 +91,6 @@ const replaceInFile = async (
   }
   await writeFile(filePath, content);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 
 const resetInstallableTools = async (destination: string): Promise<void> => {
@@ -101,10 +100,9 @@ const resetInstallableTools = async (destination: string): Promise<void> => {
   await syncTools(destination);
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const writePnpmWorkspaceConfig = async (
   destination: string,
-  options?: { blockExoticSubdeps?: boolean }
+  options?: { readonly blockExoticSubdeps?: boolean }
 ): Promise<void> => {
   const packageLines = ["packages:", "  - ."];
   const pnpm10Lines = [
@@ -130,7 +128,6 @@ const writePnpmWorkspaceConfig = async (
     ].join("\n")}\n`
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -357,12 +354,11 @@ const excludeElectronFromRootTypecheck = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const scaffoldFromTemplate = async (
   destination: string,
   options?: {
-    packageManager?: PackageManager;
+    readonly packageManager?: PackageManager;
   }
 ): Promise<void> => {
   const packageManager = options?.packageManager ?? "bun";
@@ -485,20 +481,23 @@ const scaffoldFromTemplate = async (
   await normalizeChatAppFiles(destination, packageManager);
 };
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
+interface ElectronScaffoldOptions {
+  readonly projectName: string;
+  readonly packageManager?: PackageManager;
+}
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const scaffoldElectron = async (
   projectDir: string,
-  opts: { projectName: string; packageManager?: PackageManager }
+  opts: ElectronScaffoldOptions
 ): Promise<void> => {
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = pathModule.join(projectDir, "package.json");
@@ -544,7 +543,6 @@ const scaffoldElectron = async (
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */

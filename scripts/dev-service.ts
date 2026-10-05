@@ -1,9 +1,16 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { execFile } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { createHash } from "node:crypto";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { mkdir, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { homedir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import nodePath from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { setTimeout as delay } from "node:timers/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { promisify } from "node:util";
 
 const SERVICE_ID_LENGTH = 12;

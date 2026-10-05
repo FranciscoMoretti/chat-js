@@ -1,8 +1,10 @@
 # Practical lint policy
 
-This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, 11 are deliberately disabled below and 99 remain enforced, with the runtime/UI scopes and options described below. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
+The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-## Deliberately disabled rules
+The eleven rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+
+## Rules awaiting source-scoped adoption
 
 | Rule | Rationale and evidence |
 | --- | --- |
@@ -18,17 +20,15 @@ This policy replaces enable-all adoption as the completion criterion for the [Ox
 | `react/forbid-component-props` | Tailwind styling and typed primitive APIs intentionally accept `className` and `style` on custom components. The [default restriction](https://oxc.rs/docs/guide/usage/linter/rules/react/forbid-component-props) forbids those supported props; `button.tsx`, `SidebarInset` and registry chart components demonstrate the contract. |
 | `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
 
-These are policy decisions, not deferred violations. Broader relaxations require their own evidence and decision.
+These conflicts remain part of the unfinished adoption work. Do not replace them with indiscriminate source waivers or distort code merely to satisfy opposing rules.
 
 ## Node runtime boundaries
 
-`import/no-nodejs-modules` remains enforced outside the Node/Bun boundaries reviewed in [#529](https://github.com/FranciscoMoretti/chat-js/issues/529). The root config permits built-in imports only in `packages/cli/src/**`, `packages/cli/test/**`, `packages/cli/scripts/**`, root `scripts/**`, `apps/electron/src/main.ts`, `apps/electron/scripts/**`, and `apps/electron/forge.config.ts`. This scoped decision does not add a globally disabled rule.
+`import/no-nodejs-modules` is enforced in every directory, including CLI code, repository scripts, and Electron main/packaging. The previous directory-wide overrides have been removed from both the repository and standalone-app configurations.
 
-The CLI package publishes the `chat-js` executable, builds it with `--target=node`, and verifies its published entrypoint with `node ./dist/index.js --help`. Its tests and utilities own filesystem, subprocess and package-resolution work. Root scripts run Bun/Node development, deployment and repository tooling. Electron's package entrypoint is `dist/main.js`, built for Node; Forge and packaging scripts also run in Node/Bun. These are supported runtime capabilities rather than import-by-import exceptions.
+Reviewed Node/Bun imports have statement-level comments explaining the filesystem, process, package-resolution or desktop contract they serve. New native imports in those same files remain checked. Browser code, renderer/preload code and generated app payloads receive no directory-wide permission. Scaffolded Electron files carry the reviewed source comments into the generated application.
 
-Electron preload remains protected: it is built with `--target=browser`, exposes a restricted `contextBridge`, and belongs to a BrowserWindow with `nodeIntegration: false`. Renderer files, browser app/template payloads, shared packages and mixed app directories receive no relaxation; only the explicitly named Electron paths below are permitted in copied desktop templates. Scaffolding copies Electron into `electron/` beneath the standalone app. Its Chat config therefore mirrors the Node permissions as `electron/src/main.ts`, `electron/scripts/**`, and `electron/forge.config.ts`, while retaining error severity for preload, renderer and components. New browser exports, template directories or desktop entrypoints require a separate boundary review.
-
-At merged baseline `cf629c56`, this rule has 292 suppression entries: 290 canonical and two generated mirrors. The reviewed boundaries cover 170 canonical entries (CLI 130, Electron 15, root scripts 25); 122 outside entries (120 canonical and two mirrors) retain their existing review requirements. These counts describe rule entries, not unique imports. The isolated positive/negative import probes load the actual root config and pass from root, CLI and Electron working directories: all seven allowed patterns permit Node imports, while preload, renderer, CLI templates, Chat components and registry sources still report the rule. Effective-config checks from those working directories agree; standalone probes from the app root and nested Electron working directory confirm the three permitted paths and protected preload/renderer/components. The non-typed import probes disable type-aware execution only in their temporary harness. Required repository lint/type/test checks verify the implementation batch separately.
+The runtime-policy test loads the actual repository and standalone configurations from multiple working directories. Unannotated imports report errors in every tested path, including formerly exempt CLI and Electron paths. Separate annotated probes verify that local comments suppress their intended imports. The probes disable type-aware execution only for their temporary fixture projects; repository lint and type checks verify the real sources separately.
 
 ## UI scopes and performance options
 
@@ -50,15 +50,15 @@ Component source changes are comments only: all 254 changed code files have iden
 ## Acceptance criteria
 
 1. Resolve contradictory policies in shared root and standalone-app configuration.
-2. Give every audited rule an explicit disposition: enforced, deliberately disabled with rationale, or an enforced rule with narrow, justified exceptions.
+2. Enable every rule in the pinned presets. Give each remaining violation an individually reviewed source exception, allowing a minimal file-specific configuration exception only for a verified directive limitation.
 3. Fix mechanical findings and remove obsolete waiver names without changing runtime/API contracts.
 4. Link genuinely nontrivial deferred work to concrete ownership, affected contracts and verification; do not describe general preservation comments as completed reviews.
 5. Record a baseline of retained exceptions and reject silent additions or widened scopes. A passing lint run alone does not satisfy this criterion.
-6. Synchronize registry/templates and generated applications, run repository lint, types and relevant tests, and verify the merged result before claiming completion.
+6. Synchronize registry/templates and generated applications, run repository lint, types and relevant tests, and verify the integrated checkout before claiming completion.
 
 ## Exception review and baseline
 
-Keep policy-off rules out of the exception baseline. For an enforced rule, a valid contract exception names the exact framework, external API or intentional test behavior and covers the smallest relevant line/declaration. A waiver that merely says “preserve existing behavior,” “keep inference,” or “avoid migration” remains unreviewed. Link deferred refactoring or bug work when that is the real reason.
+During adoption, globally disabled rules remain unfinished work and are not source-exception entries. For an enforced rule, a valid contract exception names the exact framework, external API or intentional test behavior and covers the smallest relevant line/declaration. A waiver that merely says “preserve existing behavior,” “keep inference,” or “avoid migration” remains unreviewed. Link deferred refactoring or bug work when that is the real reason.
 
 Count original diagnostics, current unsuppressed diagnostics, suppression directives and reviewed exceptions separately. Multiple rules can report one expression, and one block waiver can cover many findings; none is a bug count. The audit tables are historical evidence, not the current backlog. The inventory's enforced status describes configuration, not exception acceptance or absence of defects.
 

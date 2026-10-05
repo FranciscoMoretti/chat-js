@@ -10,9 +10,9 @@ import { eveChat, eveConversation, eveConversationCopy } from "./schema";
 
 /**
  * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.
- * @param ownerId Owner whose accepted destination copy is authorized.
- * @param operationId Destination reservation identity used by the authenticated seed resolver.
- * @returns The preserved native seed while accepted creation is pending; unavailable or dispatched copies throw.
+ * @param {string} ownerId Owner whose accepted destination copy is authorized.
+ * @param {string} operationId Destination reservation identity used by the authenticated seed resolver.
+ * @returns {Promise<NonNullable<typeof eveConversationCopy.$inferSelect.seed>>} The preserved native seed while accepted creation is pending; unavailable or dispatched copies throw.
  */
 const resolveAcceptedEveCopySeed = async (
   ownerId: string,
@@ -39,10 +39,10 @@ unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/A
  */
 /**
  * The callback must use the seed operation namespace with this destination reservation ID.
- * @param ownerId Owner whose accepted copy is dispatched under the creation lock.
- * @param conversationId Exact accepted destination reservation, also used for native idempotency.
- * @param create Native seed creation callback returning the accepted session identity.
- * @returns Existing or newly bound destination/session identities after atomic metadata and search updates.
+ * @param {string} ownerId Owner whose accepted copy is dispatched under the creation lock.
+ * @param {string} conversationId Exact accepted destination reservation, also used for native idempotency.
+ * @param {(operationId: string) => Promise<string>} create Native seed creation callback returning the accepted session identity.
+ * @returns {Promise<{ id: string; sessionId: string }>} Existing or newly bound destination/session identities after atomic metadata and search updates.
  */
 const dispatchEveCopy = async (
   ownerId: string,
@@ -133,9 +133,9 @@ unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its s
  */
 /**
  * Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement.
- * @param ownerId Owner whose copy family lock fences rejection.
- * @param conversationId Unaccepted destination preparation whose metadata is cleared.
- * @returns The destination identity and never-dispatched marker after transactional rejection; accepted or native-bound copies throw.
+ * @param {string} ownerId Owner whose copy family lock fences rejection.
+ * @param {string} conversationId Unaccepted destination preparation whose metadata is cleared.
+ * @returns {Promise<{ id: string; neverDispatched: boolean }>} The destination identity and never-dispatched marker after transactional rejection; accepted or native-bound copies throw.
  */
 const rejectUnacceptedEveCopy = async (
   ownerId: string,

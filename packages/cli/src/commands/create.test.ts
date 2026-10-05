@@ -1,6 +1,9 @@
 import { afterEach, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, readFile, rm } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { create } from "./create";
@@ -33,6 +36,7 @@ afterEach(async () => {
 it.each([false, true])(
   "preserves cloned source without registry access (ChatJS: %s)",
   async (chatjs) => {
+    // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
     const { writeFile } = await import("node:fs/promises");
     const source = makeTempDir("plain-source");
     const destination = makeTempDir("plain-clone");

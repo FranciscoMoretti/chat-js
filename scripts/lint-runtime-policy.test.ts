@@ -1,15 +1,20 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import { tmpdir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import path from "node:path";
 
 const root = path.resolve(import.meta.dir, "..");
-const permitted = [
+const runtimePaths = [
   "packages/cli/src/probe.ts",
+  "packages/cli/src/annotated-probe.ts",
   "packages/cli/test/probe.ts",
   "packages/cli/scripts/probe.ts",
   "scripts/probe.ts",
   "apps/electron/src/main.ts",
+  "apps/electron/src/annotated-probe.ts",
   "apps/electron/scripts/probe.ts",
   "apps/electron/forge.config.ts",
 ];
@@ -21,8 +26,9 @@ const protectedPaths = [
   "packages/registry/src/probe.ts",
 ];
 
-const standalonePermitted = [
+const standaloneRuntimePaths = [
   "electron/src/main.ts",
+  "electron/src/annotated-probe.ts",
   "electron/scripts/probe.ts",
   "electron/forge.config.ts",
 ];
@@ -35,9 +41,12 @@ const standaloneProtected = [
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
+  const annotation = file.endsWith("annotated-probe.ts")
+    ? "// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n"
+    : "";
   await writeFile(
     destination,
-    'import fs from "node:fs";\nexport const exists = fs.existsSync;\n'
+    `${annotation}import fs from "node:fs";\nexport const exists = fs.existsSync;\n`
   );
 };
 
@@ -59,13 +68,12 @@ const assertDiagnostics = (
         filename?.endsWith(`/${file}`) === true
       );
     });
-    expect(diagnostics, `${cwd}: ${file}`).not.toEqual([]);
     expect(
       diagnostics.some((line): boolean =>
         line.includes("[Error/import(no-nodejs-modules)]")
       ),
       `${cwd}: ${file}`
-    ).toBe(protectedPaths.includes(file) || standaloneProtected.includes(file));
+    ).toBe(!file.endsWith("annotated-probe.ts"));
     expect(
       diagnostics.some((line): boolean =>
         line.includes("[Warning/import(no-nodejs-modules)]")
@@ -136,16 +144,16 @@ const writeConfig = async (
 };
 
 test(
-  "Node import policy preserves browser boundaries across working directories",
+  "Node imports require source exceptions in every runtime and working directory",
   async (): Promise<void> => {
     const temporary = await mkdtemp(
       path.join(tmpdir(), "chatjs-lint-runtime-")
     );
     try {
       await writeConfig(temporary, "oxlint.config.ts");
-      const files = [...permitted, ...protectedPaths];
+      const files = [...runtimePaths, ...protectedPaths];
       await settleChecks(
-        [...files, ...standalonePermitted, ...standaloneProtected].map(
+        [...files, ...standaloneRuntimePaths, ...standaloneProtected].map(
           (file): (() => Promise<void>) =>
             async (): Promise<void> =>
               await writeFixture(temporary, file)
@@ -172,7 +180,7 @@ test(
               await checkBoundary(
                 temporary,
                 cwd,
-                [...standalonePermitted, ...standaloneProtected].filter(
+                [...standaloneRuntimePaths, ...standaloneProtected].filter(
                   (file): boolean => cwd === "." || file.startsWith(`${cwd}/`)
                 )
               )

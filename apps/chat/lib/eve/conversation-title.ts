@@ -50,8 +50,8 @@ const compactTitle = (value: string): string => {
 
 /**
  * A short visible title is available even when the title provider is unavailable.
- * @param message First user message whose text or attachments provide the fallback title.
- * @returns A compact visible title, or the default title when the message has no usable label.
+ * @param {ReadonlyEveMessageInput} message First user message whose text or attachments provide the fallback title.
+ * @returns {string} A compact visible title, or the default title when the message has no usable label.
  */
 const eveConversationTitleFallback = (
   message: ReadonlyEveMessageInput
@@ -62,8 +62,8 @@ const normalizeGeneratedTitle = (title: string): string =>
 
 /**
  * Auxiliary title generation must never prevent a conversation from starting.
- * @param message First user message supplied to the auxiliary title model.
- * @returns A normalized generated title, or its message-derived fallback if generation fails or is empty.
+ * @param {ReadonlyEveMessageInput} message First user message supplied to the auxiliary title model.
+ * @returns {Promise<EveTitleResult>} A normalized generated title, or its message-derived fallback if generation fails or is empty.
  */
 const generateEveConversationTitleResult = async (
   message: ReadonlyEveMessageInput

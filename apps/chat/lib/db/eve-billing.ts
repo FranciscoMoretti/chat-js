@@ -82,14 +82,14 @@ unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/AP
  */
 /**
  * A replay can arrive concurrently with the hook. Both use the same durable event ID.
- * @param input Native usage event identity and optional provider cost evidence.
- * @param input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
- * @param input.sessionId Native session whose turn cost is recorded.
- * @param input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param input.ownerId Owner whose credit or guest quota identity scopes the record.
- * @param input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
- * @param input.generationId Optional provider generation identifier used for later reconciliation.
- * @returns Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
+ * @param {{ eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd?: number; generationId?: string; }} input Native usage event identity and optional provider cost evidence.
+ * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
+ * @param {string} input.sessionId Native session whose turn cost is recorded.
+ * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
+ * @param {string} input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
+ * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
+ * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
  */
 const recordEveUsage = async (input: {
   eventId: string;
@@ -192,9 +192,9 @@ const recordEveUsage = async (input: {
  */
 /**
  * This cursor is billing progress, never a second copy of the transcript.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose durable billing cursor is read.
- * @returns The current ingestion stream index; missing owned bindings throw.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose durable billing cursor is read.
+ * @returns {Promise<number>} The current ingestion stream index; missing owned bindings throw.
  */
 const getEveUsageCursor = async (
   ownerId: string,
@@ -221,9 +221,9 @@ const getEveUsageCursor = async (
  */
 /**
  * Advance only after durable ingestion; concurrent older readers cannot rewind it.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose billing cursor advances.
- * @param streamIndex Nonnegative safe ingestion index committed after durable usage recording.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose billing cursor advances.
+ * @param {number} streamIndex Nonnegative safe ingestion index committed after durable usage recording.
  */
 const advanceEveUsageCursor = async (
   ownerId: string,
@@ -262,8 +262,8 @@ typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation int
  */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
- * @param ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
- * @param reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
+ * @param {string} ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
+ * @param {(sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>} reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
  */
 const withManagedUsageReconciliation = async (
   ownerId: string,

@@ -47,8 +47,8 @@ interface EnvChecklistInput {
 /**
  * Expand an EnvRequirement into one or more EnvVarEntries, pulling
  * descriptions from the Zod schema.
- * @param requirement The alternatives to expand without modifying their catalog.
- * @returns One checklist entry per credential alternative.
+ * @param {EnvRequirementLike} requirement The alternatives to expand without modifying their catalog.
+ * @returns {EnvVarEntry[]} One checklist entry per credential alternative.
  */
 const requirementToEntries = (
   requirement: EnvRequirementLike

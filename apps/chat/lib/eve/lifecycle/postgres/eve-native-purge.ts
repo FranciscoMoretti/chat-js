@@ -126,10 +126,10 @@ const prepareNativeSession = async (
  */
 /**
  * Internal provider stage. Caller authorizes a deleting binding; retirement must settle usage.
- * @param databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
- * @param scope Authorized deleting session and task identifier whose payloads are erased.
- * @param retire Idempotent retirement callback that settles usage before native write fencing.
- * @returns The purged run and stream inventory after ordered retirement, fencing and payload removal.
+ * @param {string} databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
+ * @param {{ sessionId: string; taskIdentifier: string; }} scope Authorized deleting session and task identifier whose payloads are erased.
+ * @param {() => Promise<void>} retire Idempotent retirement callback that settles usage before native write fencing.
+ * @returns {ReturnType<typeof purgeEvePostgresSessionPayloads>} The purged run and stream inventory after ordered retirement, fencing and payload removal.
  */
 const purgeEveNativeSession = async (
   databaseUrl: string,
@@ -155,10 +155,10 @@ typescript/promise-function-async (#606): prepareEveNativeSessionPurge preserves
  */
 /**
  * Fence native work and clear its queued deliveries while retaining transcript payloads for resource inventory.
- * @param databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
- * @param scope Authorized deleting session and task identifier whose queue and write fence are prepared.
- * @param retire Idempotent retirement callback that settles usage before native write fencing.
- * @returns The stabilized run and stream inventory while transcript payloads remain available for resource cleanup.
+ * @param {string} databaseUrl Native PostgreSQL store whose dedicated pool holds the session lock across stage commits.
+ * @param {{ sessionId: string; taskIdentifier: string; }} scope Authorized deleting session and task identifier whose queue and write fence are prepared.
+ * @param {() => Promise<void>} retire Idempotent retirement callback that settles usage before native write fencing.
+ * @returns {Promise<NativePurgeInventory>} The stabilized run and stream inventory while transcript payloads remain available for resource cleanup.
  */
 const prepareEveNativeSessionPurge = async (
   databaseUrl: string,
@@ -177,9 +177,9 @@ const prepareEveNativeSessionPurge = async (
  */
 /**
  * Retire and settle every authorized member without erasing any native payloads.
- * @param databaseUrl Native PostgreSQL store used for a bounded dedicated retirement pool.
- * @param sessionIds Authorized native sessions, retired sequentially once per distinct identity.
- * @param retire Idempotent callback that retires and settles one session before its retirement marker commits.
+ * @param {string} databaseUrl Native PostgreSQL store used for a bounded dedicated retirement pool.
+ * @param {readonly string[]} sessionIds Authorized native sessions, retired sequentially once per distinct identity.
+ * @param {(sessionId: string) => Promise<void>} retire Idempotent callback that retires and settles one session before its retirement marker commits.
  */
 const retireEveNativeSessions = async (
   databaseUrl: string,

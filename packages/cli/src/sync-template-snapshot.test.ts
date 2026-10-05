@@ -1,5 +1,7 @@
 import { it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test uses native assertions to await rejection and verify integration contracts.
 import assert from "node:assert/strict";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   mkdtemp,
@@ -8,6 +10,7 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */

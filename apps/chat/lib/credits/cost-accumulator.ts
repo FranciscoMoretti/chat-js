@@ -11,14 +11,15 @@ interface UsageInfo {
   outputTokens?: number;
 }
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers --
- * jsdoc/require-param (#534): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): calculateLLMCost's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): calculateLLMCost uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 /**
  * Calculate LLM cost in CENTS from AI SDK usage data and model pricing.
  * Pricing is per-token in dollars (e.g., "0.00000006" = $0.06 per million tokens).
+ * @param {Readonly<UsageInfo>} usage Input and output token counts, with absent counts treated as zero.
+ * @param {{ readonly input: string; readonly output: string; }} pricing Dollar-per-token prices parsed for the two token categories.
+ * @returns {number} Unrounded total cost in cents for the supplied counts and prices.
  */
 const calculateLLMCost = (
   usage: Readonly<UsageInfo>,
@@ -31,7 +32,7 @@ const calculateLLMCost = (
   const outputCost = (usage.outputTokens ?? 0) * Number(pricing.output);
   return (inputCost + outputCost) * 100;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 interface LLMCostEntry {
   modelId: AppModelId;
   source: string;
@@ -51,10 +52,8 @@ interface ImageCostEntry {
   usage: UsageInfo;
 }
 type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
-/* oxlint-disable import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable import/no-relative-parent-imports, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/models" dependency within this package instead of introducing an alias or barrel API.
- * jsdoc/require-param (#534): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): CostAccumulator's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-params (#511): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): CostAccumulator keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): CostAccumulator skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -70,7 +69,12 @@ type CostEntry = LLMCostEntry | APICostEntry | ImageCostEntry;
  */
 class CostAccumulator {
   private readonly entries: CostEntry[] = [];
-  /** Add LLM cost from generateText/streamText usage */
+  /**
+   * Record token usage for later pricing from the application model catalog.
+   * @param {AppModelId} modelId Model identity used to look up per-token prices.
+   * @param {UsageInfo} usage Original usage object retained until total calculation.
+   * @param {string} source Calling operation recorded in the cost breakdown.
+   */
   public addLLMCost(
     modelId: AppModelId,
     usage: UsageInfo,
@@ -78,7 +82,13 @@ class CostAccumulator {
   ): void {
     this.entries.push({ modelId, source, type: "llm", usage });
   }
-  /** Dedicated image models are priced per image, in dollars in the gateway catalog. */
+  /**
+   * Record dedicated image generation for later dollar-per-image catalog pricing.
+   * @param {string} modelId Gateway catalog model whose image price is used.
+   * @param {number} count Generated image count multiplied by the known catalog price.
+   * @param {UsageInfo} usage Original usage metadata retained in the breakdown.
+   * @param {string} source Calling operation recorded in the cost breakdown.
+   */
   public addImageCost(
     modelId: string,
     count: number,
@@ -87,13 +97,20 @@ class CostAccumulator {
   ): void {
     this.entries.push({ count, modelId, source, type: "image", usage });
   }
-  /** Add fixed external API cost (in cents) */
+  /**
+   * Record a positive fixed external API charge in cents; nonpositive charges are ignored.
+   * @param {string} apiName External service identity recorded in the breakdown.
+   * @param {number} cost Fixed charge in cents.
+   */
   public addAPICost(apiName: string, cost: number): void {
     if (cost > 0) {
       this.entries.push({ apiName, cost, type: "api" });
     }
   }
-  /** Get total cost in cents, rounded up */
+  /**
+   * Resolve known catalog prices and total the recorded charges.
+   * @returns {Promise<number>} Total cents rounded up after summation; unavailable LLM/image prices contribute no charge.
+   */
   public async getTotalCost(): Promise<number> {
     let total = 0;
     const llmEntries = this.entries.filter(
@@ -147,15 +164,21 @@ class CostAccumulator {
     }
     return Math.ceil(total);
   }
-  /** Get breakdown of all cost entries */
+  /**
+   * Inspect the recorded cost breakdown.
+   * @returns {CostEntry[]} A new array containing the original recorded entry objects.
+   */
   public getEntries(): CostEntry[] {
     return [...this.entries];
   }
-  /** Check if any costs have been recorded */
+  /**
+   * Inspect whether the accumulator has any recorded entries.
+   * @returns {boolean} Whether at least one LLM, image or positive API charge was recorded.
+   */
   public hasEntries(): boolean {
     return this.entries.length > 0;
   }
 }
-/* oxlint-enable import/no-relative-parent-imports, jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/no-relative-parent-imports, max-params, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 export { CostAccumulator };
 export type { UsageInfo };

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The packaging entry point writes branding.json to the generated desktop project.
 import { writeFile } from "node:fs/promises";
 
 import { config } from "@/lib/config";

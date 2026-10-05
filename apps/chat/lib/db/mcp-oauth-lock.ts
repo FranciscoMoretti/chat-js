@@ -102,10 +102,10 @@ const createLockedRefresh =
   };
 
 /** Bound refresh lock waiters separately from the app pool used by the refresh callback.
- * @param connectorId - Connector whose refresh is serialized.
- * @param run - Refresh operation performed after acquiring the database lock.
- * @param signal - Cancellation observed while waiting and before returning the result.
- * @returns The refresh operation result after lock acquisition.
+ * @param {string} connectorId - Connector whose refresh is serialized.
+ * @param {() => Promise<Result>} run - Refresh operation performed after acquiring the database lock.
+ * @param {ReadonlyNativeSurface<AbortSignal> | undefined} signal - Cancellation observed while waiting and before returning the result.
+ * @returns {Promise<Result>} The refresh operation result after lock acquisition.
  */
 export const withMcpOAuthRefreshLock = async <Result>(
   connectorId: string,

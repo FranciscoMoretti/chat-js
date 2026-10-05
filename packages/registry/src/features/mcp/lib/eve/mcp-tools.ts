@@ -159,9 +159,9 @@ const withConnector = async <T>(
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Discovers serializable MCP descriptions while closing every opened connector client.
- * @param ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
- * @param signal Discovery cancellation boundary combined with each connector's connection timeout.
- * @returns Safe model tool names and serializable remote descriptions/identities for durable use.
+ * @param {string | undefined} ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
+ * @param {AbortSignal} signal Discovery cancellation boundary combined with each connector's connection timeout.
+ * @returns {Promise< (Awaited<ReturnType<typeof describeMcpTool>> & { name: string; connectorId: string; remoteName: string; })[] >} Safe model tool names and serializable remote descriptions/identities for durable use.
  */
 const discoverEveMcpTools = async (
   ownerId: string | undefined,
@@ -400,12 +400,11 @@ const executeEveMcpTool = async (
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Evaluates current MCP approval policy using serializable identifiers and a temporary client.
- * @param connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
- * @param remoteName Exact remote tool name whose availability and schema are rechecked.
- * @param input Tool input validated before its current approval policy is evaluated.
- * @param context Native session authentication, call identity, and cancellation evidence.
- * @param messages Model history supplied to the tool's approval callback.
- * @returns Whether the current tool requires user approval; the temporary client closes on all paths.
+ * @param {string} connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
+ * @param {string} remoteName Exact remote tool name whose availability and schema are rechecked.
+ * @param {unknown} input Tool input validated before its current approval policy is evaluated.
+ * @param {Pick<ToolContext, "session" | "abortSignal">} context Native session authentication, call identity, and cancellation evidence.
+ * @returns {Promise<"user-approval" | "not-applicable">} Whether the current tool requires user approval; the temporary client closes on all paths.
  */
 const requestEveMcpApproval = async (
   connectorId: string,

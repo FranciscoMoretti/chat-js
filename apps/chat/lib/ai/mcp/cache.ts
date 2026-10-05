@@ -92,9 +92,9 @@ const createCachedConnectionStatus = (
 /**
  * Create a cached discovery fetcher for a specific connector.
  * Cache duration: 5 minutes (tools/resources/prompts rarely change)
- * @param connectorId - Connector whose discovery result is cached.
- * @param fetcher - Loads discovery when the cache misses.
- * @returns A cached discovery loader.
+ * @param {string} connectorId - Connector whose discovery result is cached.
+ * @param {() => Promise<DiscoveryResult>} fetcher - Loads discovery when the cache misses.
+ * @returns {(() => Promise<DiscoveryResult>)} A cached discovery loader.
  */
 const createCachedDiscovery = (
   connectorId: string,
@@ -115,7 +115,7 @@ const createCachedDiscovery = (
 /**
  * Invalidate connection status cache for a connector.
  * Call this on: auth errors, disconnect, OAuth completion
- * @param connectorId - Connector whose cached results are invalidated.
+ * @param {string} connectorId - Connector whose cached results are invalidated.
  */
 const invalidateConnectionStatus = (connectorId: string): void => {
   log.debug({ connectorId }, "Invalidating connection status cache");
@@ -125,7 +125,7 @@ const invalidateConnectionStatus = (connectorId: string): void => {
 /**
  * Invalidate discovery cache for a connector.
  * Call this on: disconnect, OAuth completion, refreshClient
- * @param connectorId - Connector whose cached results are invalidated.
+ * @param {string} connectorId - Connector whose cached results are invalidated.
  */
 const invalidateDiscovery = (connectorId: string): void => {
   log.debug({ connectorId }, "Invalidating discovery cache");
@@ -134,7 +134,7 @@ const invalidateDiscovery = (connectorId: string): void => {
 
 /**
  * Invalidate all MCP caches for a connector.
- * @param connectorId - Connector whose cached results are invalidated.
+ * @param {string} connectorId - Connector whose cached results are invalidated.
  */
 const invalidateAllMcpCaches = (connectorId: string): void => {
   invalidateConnectionStatus(connectorId);

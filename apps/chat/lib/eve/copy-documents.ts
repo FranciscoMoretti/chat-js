@@ -22,9 +22,9 @@ typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments retai
 unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Converts an authorized, completely allocated ancestry into idle imported revisions.
- * @param snapshot Accessible document heads and their complete root-to-head revisions.
- * @param allocations Ownership-checked destination document, revision, and file allocations.
- * @returns Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
+ * @param {CopyDocumentSnapshot} snapshot Accessible document heads and their complete root-to-head revisions.
+ * @param {Parameters< typeof rewriteEveCopyResources >[typeof ALLOCATIONS_PARAMETER_INDEX]} allocations Ownership-checked destination document, revision, and file allocations.
+ * @returns {PreparedCopyDocument[]} Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
  */
 const prepareEveCopyDocuments = (
   snapshot: CopyDocumentSnapshot,
@@ -69,8 +69,8 @@ const prepareEveCopyDocuments = (
 
 /**
  * Inventories every accessible revision, including files removed from the current head.
- * @param snapshot Authorized document ancestry whose historical file references must remain available.
- * @returns Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
+ * @param {ReadonlyNativeSurface<CopyDocumentSnapshot>} snapshot Authorized document ancestry whose historical file references must remain available.
+ * @returns {ReturnType<typeof eveCopyResources>} Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
  */
 const eveCopyDocumentResources = (
   snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>

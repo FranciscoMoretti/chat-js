@@ -10,8 +10,8 @@ import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
  * typescript/prefer-readonly-parameter-types (#565): cleanupEveOrphanedFiles accepts cutoff: Date; keys: string[]; { key }; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
   */
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
- * @param cutoff Objects uploaded before this time may enter the fenced orphan purge.
- * @returns The number of deleted stored files and whether the sweep was skipped.
+ * @param {Date} cutoff Objects uploaded before this time may enter the fenced orphan purge.
+ * @returns {Promise<{ deletedCount: number; skipped: boolean }>} The number of deleted stored files and whether the sweep was skipped.
  */
 export const cleanupEveOrphanedFiles = async (
   cutoff: Date

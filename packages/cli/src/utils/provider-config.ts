@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import ts from "typescript";
@@ -185,9 +187,9 @@ const readProviderId = async (
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Change the discriminator; preserve editable model/parameter selections.
- * @param cwd Project directory containing chat.config.ts.
- * @param selection Gateway whose ID replaces the active discriminator.
- * @returns Updated configuration source without writing the file.
+ * @param {string} cwd Project directory containing chat.config.ts.
+ * @param {ReadonlyNative<GatewaySelection>} selection Gateway whose ID replaces the active discriminator.
+ * @returns {Promise<string>} Updated configuration source without writing the file.
  */
 const gatewayConfigEdit = async (
   cwd: string,

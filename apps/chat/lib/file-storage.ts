@@ -47,11 +47,11 @@ const createFileId = (): string => nanoid(FILE_ID_LENGTH);
  */
 /**
  * Upload using a preallocated key recorded by the caller before external storage I/O.
- * @param key - Registered file identity validated before provider access.
- * @param filename - Original filename sanitized for the stored pathname.
- * @param body - Upload content consumed by the storage SDK.
- * @param contentType - Optional MIME override forwarded to storage.
- * @returns Registered identity, provider content type, sanitized pathname and application URL.
+ * @param {string} key - Registered file identity validated before provider access.
+ * @param {string} filename - Original filename sanitized for the stored pathname.
+ * @param {Body} body - Upload content consumed by the storage SDK.
+ * @param {string | undefined} contentType - Optional MIME override forwarded to storage.
+ * @returns {Promise<{ contentType: UploadResult["contentType"]; fileId: string; pathname: string; url: string; }>} Registered identity, provider content type, sanitized pathname and application URL.
  */
 const uploadFileAtKey = async (
   key: string,

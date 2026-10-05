@@ -55,9 +55,9 @@ typescript/prefer-readonly-parameter-types (#565): purgeEveFamilyDocuments accep
  * The deletion coordinator must retain file references before calling this.
  * This does not erase native history, blobs, metadata, or accounting, and never
  * marks the conversation deleted.
- * @param ownerId - Owner whose entire conversation family is already retiring.
- * @param rootId - Chat identity selecting the family pending deletion.
- * @returns Completion after document rows are erased in the locked transaction.
+ * @param {string} ownerId - Owner whose entire conversation family is already retiring.
+ * @param {string} rootId - Chat identity selecting the family pending deletion.
+ * @returns {Promise<void>} Completion after document rows are erased in the locked transaction.
  */
 const purgeEveFamilyDocuments = async (
   ownerId: string,
@@ -206,10 +206,10 @@ const orderRevisionHistory = <
  * typescript/prefer-readonly-parameter-types (#565): backfillDocumentCheckpoints accepts tx: DocumentTransaction; { documentId, history }; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Upgrade pre-checkpoint native history before the first manual write changes its inference.
- * @param tx - Caller transaction retaining the family and document locks.
- * @param ownerId - Owner of the conversation and its historical revisions.
- * @param conversationId - Conversation whose missing turn snapshots are backfilled.
- * @param turns - Nonnegative native turn indexes that need durable snapshots.
+ * @param {DocumentTransaction} tx - Caller transaction retaining the family and document locks.
+ * @param {string} ownerId - Owner of the conversation and its historical revisions.
+ * @param {string} conversationId - Conversation whose missing turn snapshots are backfilled.
+ * @param {readonly number[]} turns - Nonnegative native turn indexes that need durable snapshots.
  */
 const backfillDocumentCheckpoints = async (
   tx: DocumentTransaction,
@@ -338,10 +338,10 @@ typescript/strict-boolean-expressions (#610): saveEveDocumentRevision intentiona
 unicorn/no-null (#570): saveEveDocumentRevision preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Save a revision and move only this conversation's head, atomically and replay-safely.
- * @param value - Revision payload with the expected head and immutable operation ID.
- * @param signal - Cancellation checked before admission and before transaction commit.
- * @param historicalTurns - Native turns to snapshot before a first manual revision.
- * @returns New revision or the persisted revision for an identical operation replay.
+ * @param {z.input<typeof revisionInput>} value - Revision payload with the expected head and immutable operation ID.
+ * @param {AbortSignal | undefined} signal - Cancellation checked before admission and before transaction commit.
+ * @param {readonly number[] | undefined} historicalTurns - Native turns to snapshot before a first manual revision.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect>} New revision or the persisted revision for an identical operation replay.
  */
 const saveEveDocumentRevision = async (
   value: z.input<typeof revisionInput>,
@@ -467,10 +467,10 @@ const saveEveDocumentRevision = async (
 typescript/strict-boolean-expressions (#610): getEveDocumentHistory intentionally keeps the existing falsy-value behavior of head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Traverse the selected revision's ancestry, never all revisions with the same document ID.
- * @param ownerId - Owner authorized to inspect the selected conversation.
- * @param conversationId - Conversation whose current document head selects ancestry.
- * @param documentId - Document identity scoped to that conversation head.
- * @returns Oldest-to-newest revision summaries, or no summaries when no head exists.
+ * @param {string} ownerId - Owner authorized to inspect the selected conversation.
+ * @param {string} conversationId - Conversation whose current document head selects ancestry.
+ * @param {string} documentId - Document identity scoped to that conversation head.
+ * @returns {Promise< Pick< typeof eveDocumentRevision.$inferSelect, "createdAt" | "id" | "kind" | "parentRevisionId" | "title" | "turnIndex" >[] >} Oldest-to-newest revision summaries, or no summaries when no head exists.
  */
 const getEveDocumentHistory = async (
   ownerId: string,
@@ -792,9 +792,9 @@ typescript/prefer-readonly-parameter-types (#565): initializeEveForkDocuments ac
 typescript/strict-boolean-expressions (#610): initializeEveForkDocuments intentionally keeps the existing falsy-value behavior of target?.parentConversationId; target.forkMessageId; target.forkCheckpointId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Call before exposing a newly bound fork; source edits after its boundary stay excluded.
- * @param ownerId - Owner of the newly bound fork and its inherited snapshots.
- * @param conversationId - Fork conversation whose native boundary selects source document heads.
- * @returns Completion after the fork document heads and inherited checkpoints are initialized.
+ * @param {string} ownerId - Owner of the newly bound fork and its inherited snapshots.
+ * @param {string} conversationId - Fork conversation whose native boundary selects source document heads.
+ * @returns {Promise<void>} Completion after the fork document heads and inherited checkpoints are initialized.
  */
 const initializeEveForkDocuments = async (
   ownerId: string,
@@ -942,9 +942,9 @@ typescript/prefer-readonly-parameter-types (#565): captureEveDocumentCheckpoint 
 typescript/strict-boolean-expressions (#610): captureEveDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Capture once before model execution; even an empty manifest is a durable checkpoint.
- * @param ownerId - Owner of the bound conversation whose heads are captured.
- * @param conversationId - Conversation that receives the immutable turn snapshot.
- * @param turnIndex - Native turn boundary captured before model execution.
+ * @param {string} ownerId - Owner of the bound conversation whose heads are captured.
+ * @param {string} conversationId - Conversation that receives the immutable turn snapshot.
+ * @param {number} turnIndex - Native turn boundary captured before model execution.
  */
 const captureEveDocumentCheckpoint = async (
   ownerId: string,
@@ -1005,10 +1005,10 @@ typescript/prefer-readonly-parameter-types (#565): captureEveNamedDocumentCheckp
 typescript/strict-boolean-expressions (#610): captureEveNamedDocumentCheckpoint intentionally keeps the existing falsy-value behavior of conversation; existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Native serialized capture calls this before publishing its named checkpoint.
- * @param ownerId - Owner of the bound conversation and current document heads.
- * @param conversationId - Conversation whose manifest the native checkpoint captures.
- * @param checkpointId - Immutable native checkpoint UUID, reused only for the same turn.
- * @param turnIndex - Native turn boundary associated with that checkpoint UUID.
+ * @param {string} ownerId - Owner of the bound conversation and current document heads.
+ * @param {string} conversationId - Conversation whose manifest the native checkpoint captures.
+ * @param {string} checkpointId - Immutable native checkpoint UUID, reused only for the same turn.
+ * @param {number} turnIndex - Native turn boundary associated with that checkpoint UUID.
  */
 const captureEveNamedDocumentCheckpoint = async (
   ownerId: string,
@@ -1081,10 +1081,10 @@ const captureEveNamedDocumentCheckpoint = async (
 
 /**
  * Internal only: the caller must first prove this revision belongs to the accessible ancestry.
- * @param ownerId - Owner recorded on the authorized revision.
- * @param documentId - Document identity expected by the ancestry lookup.
- * @param revisionId - Selected revision whose content the caller is authorized to read.
- * @returns Persisted revision row, or no row when that exact owned revision is absent.
+ * @param {string} ownerId - Owner recorded on the authorized revision.
+ * @param {string} documentId - Document identity expected by the ancestry lookup.
+ * @param {string} revisionId - Selected revision whose content the caller is authorized to read.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision row, or no row when that exact owned revision is absent.
  */
 const readDocumentRevision = async (
   ownerId: string,
@@ -1109,11 +1109,11 @@ no-magic-numbers (#517): getEveDocumentRevision uses -1 in its existing protocol
 typescript/strict-boolean-expressions (#610): getEveDocumentRevision intentionally keeps the existing falsy-value behavior of revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Content is loaded only for the selected, accessible revision.
- * @param ownerId - Owner authorized to traverse the selected conversation ancestry.
- * @param conversationId - Conversation whose current head scopes the history lookup.
- * @param documentId - Document identity within that conversation.
- * @param revisionId - Requested ancestor revision; omission or empty text selects the latest.
- * @returns Persisted revision content, or no revision when the selected ancestry is unavailable.
+ * @param {string} ownerId - Owner authorized to traverse the selected conversation ancestry.
+ * @param {string} conversationId - Conversation whose current head scopes the history lookup.
+ * @param {string} documentId - Document identity within that conversation.
+ * @param {string | undefined} revisionId - Requested ancestor revision; omission or empty text selects the latest.
+ * @returns {Promise<typeof eveDocumentRevision.$inferSelect | undefined>} Persisted revision content, or no revision when the selected ancestry is unavailable.
  */
 const getEveDocumentRevision = async (
   ownerId: string,
@@ -1148,11 +1148,11 @@ no-undefined (#519): getAccessibleEveDocument uses undefined for absent or optio
 typescript/strict-boolean-expressions (#610): getAccessibleEveDocument intentionally keeps the existing falsy-value behavior of conversation; revisionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Public readers receive document content, never storage ownership or operation metadata.
- * @param viewerId - Authenticated viewer, or no identity for a public reader.
- * @param conversationId - Bound conversation whose visibility is checked before and after reading.
- * @param documentId - Document identity scoped to that conversation ancestry.
- * @param revisionId - Requested ancestor revision; omission or empty text selects the latest.
- * @returns Safe content and history with edit permission, or no result when access is unavailable.
+ * @param {string | undefined} viewerId - Authenticated viewer, or no identity for a public reader.
+ * @param {string} conversationId - Bound conversation whose visibility is checked before and after reading.
+ * @param {string} documentId - Document identity scoped to that conversation ancestry.
+ * @param {string | undefined} revisionId - Requested ancestor revision; omission or empty text selects the latest.
+ * @returns {Promise< | { canEdit: boolean; history: Awaited<ReturnType<typeof getEveDocumentHistory>>; revision: Pick< typeof eveDocumentRevision.$inferSelect, "content" | "createdAt" | "documentId" | "id" | "kind" | "title" >; } | undefined >} Safe content and history with edit permission, or no result when access is unavailable.
  */
 const getAccessibleEveDocument = async (
   viewerId: string | undefined,
@@ -1240,10 +1240,10 @@ typescript/prefer-readonly-parameter-types (#565): removeEveDocumentFromConversa
 typescript/strict-boolean-expressions (#610): removeEveDocumentFromConversation intentionally keeps the existing falsy-value behavior of conversation; revision; head; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Remove only this conversation's current pointer; snapshots and other branches retain their revisions.
- * @param input - Approved document identity, expected revision and title to recheck.
- * @param scope - Authorized conversation and owner receiving the pointer removal.
- * @param signal - Cancellation checked while the deletion transaction is locked.
- * @returns Successful removal metadata, including the revision title that was revalidated.
+ * @param {{ documentId: string; expectedRevisionId: string; title: string }} input - Approved document identity, expected revision and title to recheck.
+ * @param {{ ownerId: string; conversationId: string }} scope - Authorized conversation and owner receiving the pointer removal.
+ * @param {AbortSignal} signal - Cancellation checked while the deletion transaction is locked.
+ * @returns {Promise<{ documentId: string; result: string; status: "success"; title: string; }>} Successful removal metadata, including the revision title that was revalidated.
  */
 const removeEveDocumentFromConversation = async (
   input: { documentId: string; expectedRevisionId: string; title: string },

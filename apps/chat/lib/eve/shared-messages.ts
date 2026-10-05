@@ -49,8 +49,8 @@ const sharedModelId = (
  */
 /**
  * Keep visible tool content, never the owner's approval or runtime identities.
- * @param part Native tool state whose display content may be shared.
- * @returns A display part with approval IDs and receipt-only identities removed.
+ * @param {Extract< ReadonlyMessageData<EveMessagePart>, { type: "dynamic-tool"; } >} part Native tool state whose display content may be shared.
+ * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
  */
 const sharedTool = (
   part: Extract<

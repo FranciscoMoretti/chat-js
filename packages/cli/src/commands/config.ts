@@ -1,5 +1,8 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI observes native process or stream lifecycle events.
 import { once } from "node:events";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { Command } from "commander";

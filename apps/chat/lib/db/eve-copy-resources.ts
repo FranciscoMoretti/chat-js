@@ -34,13 +34,13 @@ max-statements (#512): writeEveCopyFile keeps its ordered workflow and input con
 typescript/prefer-readonly-parameter-types (#565): writeEveCopyFile accepts storage: { readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffe; file: Blob; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * The family lock fences writes against rejection/deletion, including an uncertain storage reply.
- * @param ownerId Owner of the allocated destination copy.
- * @param conversationId Destination conversation whose file inventory is already allocated.
- * @param key Allocated destination file key to verify and write.
- * @param storage Source reader and destination writer used while the copy family is locked.
- * @param storage.readSourceFile Read the source bytes and content type for an allocated file.
- * @param storage.writeDestinationFile Acknowledge the destination write before recording its receipt.
- * @returns The allocated receipt, with writtenAt recorded after content type, size, and digest verification.
+ * @param {string} ownerId Owner of the allocated destination copy.
+ * @param {string} conversationId Destination conversation whose file inventory is already allocated.
+ * @param {string} key Allocated destination file key to verify and write.
+ * @param {{ readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffer">>; writeDestinationFile: (key: string, file: Blob) => Promise<void>; }} storage Source reader and destination writer used while the copy family is locked.
+ * @param {( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffer">>} storage.readSourceFile Read the source bytes and content type for an allocated file.
+ * @param {(key: string, file: Blob) => Promise<void>} storage.writeDestinationFile Acknowledge the destination write before recording its receipt.
+ * @returns {Promise<typeof eveConversationCopyFile.$inferSelect>} The allocated receipt, with writtenAt recorded after content type, size, and digest verification.
  */
 const writeEveCopyFile = async (
   ownerId: string,
@@ -132,8 +132,8 @@ typescript/prefer-readonly-parameter-types (#565): writeEveCopyDocuments accepts
 unicorn/no-null (#570): writeEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * All ancestry and heads commit together, before any copy can be accepted.
- * @param ownerId Owner whose copy family lock authorizes the destination writes.
- * @param conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
+ * @param {string} ownerId Owner whose copy family lock authorizes the destination writes.
+ * @param {string} conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
  */
 const writeEveCopyDocuments = async (
   ownerId: string,
@@ -219,9 +219,9 @@ unicorn/max-nested-calls (#568): acceptEveCopy keeps its ordered workflow and in
 unicorn/no-null (#570): acceptEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * This short transaction is the publication boundary; no native or storage I/O runs inside it.
- * @param ownerId Owner whose copy and source family are locked for publication.
- * @param conversationId Copy whose file receipts, committed documents, and current source heads must match its plan.
- * @returns The accepted phase, or the existing bound phase for an idempotent publication replay.
+ * @param {string} ownerId Owner whose copy and source family are locked for publication.
+ * @param {string} conversationId Copy whose file receipts, committed documents, and current source heads must match its plan.
+ * @returns {Promise<"accepted" | "bound">} The accepted phase, or the existing bound phase for an idempotent publication replay.
  */
 const acceptEveCopy = async (
   ownerId: string,

@@ -144,9 +144,9 @@ typescript/promise-function-async (#606): reserveEveResponseGroup preserves the 
  */
 /**
  * Reserve every candidate under the same owner lock used by family deletion.
- * @param ownerId Owner whose family lock fences the comparison reservation.
- * @param value Comparison input whose complete content hash and ordered candidates define replay identity.
- * @returns The allocated or replayed group with available candidate content, after committing its reservation.
+ * @param {string} ownerId Owner whose family lock fences the comparison reservation.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose complete content hash and ordered candidates define replay identity.
+ * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group with available candidate content, after committing its reservation.
  */
 const reserveEveResponseGroup = async (
   ownerId: string,
@@ -163,10 +163,10 @@ const reserveEveResponseGroup = async (
  */
 /**
  * Must commit with guest quota when admitting an anonymous comparison.
- * @param tx Native transaction shared with the caller's guest quota admission.
- * @param ownerId Owner whose family lock fences the comparison reservation.
- * @param value Comparison input whose hash and candidate order define replay identity.
- * @returns The allocated or replayed group; the caller controls the shared transaction commit.
+ * @param {ResponseGroupTransaction} tx Native transaction shared with the caller's guest quota admission.
+ * @param {string} ownerId Owner whose family lock fences the comparison reservation.
+ * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose hash and candidate order define replay identity.
+ * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group; the caller controls the shared transaction commit.
  */
 const reserveEveResponseGroupInTransaction = async (
   tx: ResponseGroupTransaction,
@@ -183,9 +183,9 @@ unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in it
  */
 /**
  * Caller holds the owner family lock; retain identities but erase request metadata.
- * @param tx Native deletion transaction already holding the owner family lock.
- * @param ownerId Owner whose source and candidate groups are tombstoned.
- * @param family Conversation and operation identities defining the deleted family.
+ * @param {ResponseGroupTransaction} tx Native deletion transaction already holding the owner family lock.
+ * @param {string} ownerId Owner whose source and candidate groups are tombstoned.
+ * @param {{ id: string; operationId: string; }[]} family Conversation and operation identities defining the deleted family.
  */
 const tombstoneEveResponseGroups = async (
   tx: ResponseGroupTransaction,
@@ -239,10 +239,10 @@ typescript/strict-boolean-expressions (#610): recordEveResponseGroupRejection in
  */
 /**
  * Clear an old rejection before retry; only a definitive result may replace it.
- * @param ownerId Owner whose family lock serializes the candidate update.
- * @param groupId Live response group containing the candidate operation.
- * @param operationId Exact candidate operation whose rejection is replaced or cleared.
- * @param rejection Definitive rejection details; absence clears the prior rejection for retry.
+ * @param {string} ownerId Owner whose family lock serializes the candidate update.
+ * @param {string} groupId Live response group containing the candidate operation.
+ * @param {string} operationId Exact candidate operation whose rejection is replaced or cleared.
+ * @param {{ error: string; code?: "project_not_found"; } | undefined} rejection Definitive rejection details; absence clears the prior rejection for retry.
  */
 const recordEveResponseGroupRejection = async (
   ownerId: string,
@@ -290,9 +290,9 @@ typescript/strict-boolean-expressions (#610): getEveResponseGroup intentionally 
  */
 /**
  * Owner-only ordered bindings; transcript content remains in native sessions.
- * @param ownerId Owner used to authorize group and conversation lookups.
- * @param id Live response group whose original candidate order is preserved.
- * @returns Parsed candidate binding or rejection states, or no result for missing or deleting groups.
+ * @param {string} ownerId Owner used to authorize group and conversation lookups.
+ * @param {string} id Live response group whose original candidate order is preserved.
+ * @returns {Promise<z.output<typeof eveResponseGroupResult> | undefined>} Parsed candidate binding or rejection states, or no result for missing or deleting groups.
  */
 const getEveResponseGroup = async (
   ownerId: string,

@@ -5,9 +5,9 @@ import { env } from "@/lib/env";
  */
 /**
  * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
- * @param ownerId Owner identity sent to the trusted EVE gateway.
- * @param host Gateway URL whose origin determines eligibility for deployment protection bypass.
- * @returns Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
+ * @param {string} ownerId Owner identity sent to the trusted EVE gateway.
+ * @param {string} host Gateway URL whose origin determines eligibility for deployment protection bypass.
+ * @returns {{ auth: { bearer: string }; headers: Record<string, string>; host: string; redirect: "error"; }} Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
  */
 export const getEveConnectionOptions = (
   ownerId: string,
