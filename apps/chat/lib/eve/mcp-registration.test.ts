@@ -99,7 +99,14 @@ it("continues ordinary chat when MCP discovery times out", async () => {
  */
 vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: (): boolean => mocks.guest },
-  eveTurnTool: { get: () => (mocks.selected ? "webSearch" : null) },
+  eveTurnTool: {
+    get: () => {
+      if (mocks.selected) {
+        return "webSearch";
+      }
+      return null;
+    },
+  },
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */

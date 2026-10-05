@@ -4,14 +4,16 @@ import type {
 } from "react";
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Card: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
 /* oxlint-disable react/react-in-jsx-scope -- Card uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Card = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const Card = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn(
       "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
@@ -23,15 +25,18 @@ const Card = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+
+/* oxlint-disable react/no-multi-comp -- CardHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardHeader = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardHeader = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn(
       "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
@@ -43,16 +48,19 @@ const CardHeader = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- CardTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardTitle = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardTitle = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn("leading-none font-semibold", className)}
     data-slot="card-title"
@@ -61,16 +69,19 @@ const CardTitle = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- CardDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardDescription = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardDescription = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="card-description"
@@ -79,16 +90,19 @@ const CardDescription = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- CardAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardAction uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardAction = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardAction = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn(
       "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
@@ -100,16 +114,19 @@ const CardAction = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- CardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardContent = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardContent = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn("px-6", className)}
     data-slot="card-content"
@@ -118,16 +135,19 @@ const CardContent = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- CardFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- CardFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- CardFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const CardFooter = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<"div">): ReactJSX.Element => (
+const CardFooter = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<"div">
+): ReactJSX.Element => (
   <div
     className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
     data-slot="card-footer"
@@ -137,7 +157,7 @@ const CardFooter = ({
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 export {
   Card,

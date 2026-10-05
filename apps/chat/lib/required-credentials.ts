@@ -33,12 +33,22 @@ const missingRequirement = (
   if (requirement.allOf) {
     const allOf = requirement.allOf.flatMap((group) => {
       const missing = missingRequirement(group, env);
-      return missing ? [missing] : [];
+      if (missing) {
+        return [missing];
+      }
+      return [];
     });
-    // oxlint-disable-next-line no-magic-numbers, oxc/no-rest-spread-properties -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check. Rest/spread: Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    return allOf.length > 0 ? { ...requirement, allOf } : null;
+    // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
+    if (allOf.length > 0) {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      return { ...requirement, allOf };
+    }
+    return null;
   }
-  return isRequirementSatisfied(requirement, env) ? null : requirement;
+  if (isRequirementSatisfied(requirement, env)) {
+    return null;
+  }
+  return requirement;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -50,7 +60,10 @@ const requireCredentials = (
 ): void => {
   const missing = requirements.flatMap((requirement) => {
     const group = missingRequirement(requirement, env);
-    return group ? [group] : [];
+    if (group) {
+      return [group];
+    }
+    return [];
   });
   // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
   if (missing.length > 0) {

@@ -9,14 +9,16 @@ import type {
 /* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Label: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Label uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
-const Label = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: ReactComponentProps<typeof LabelPrimitiveRoot>): ReactJSX.Element => (
+const Label = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: ReactComponentProps<typeof LabelPrimitiveRoot>
+): ReactJSX.Element => (
   <LabelPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- LabelPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
@@ -30,7 +32,6 @@ const Label = ({
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Label); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Label };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

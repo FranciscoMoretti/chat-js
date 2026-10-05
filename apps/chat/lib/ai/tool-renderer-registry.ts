@@ -1,7 +1,7 @@
 import type { ToolUIPart } from "ai";
 import { createElement } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ComponentType } from "react";
+import type { ComponentType, FunctionComponent, ReactElement } from "react";
 /* oxlint-enable sort-imports */
 
 import { ui } from "@/tools/chatjs/ui";
@@ -19,27 +19,22 @@ type InstalledToolType = `tool-${InstalledToolName}`;
 
 type InstalledToolUIPart = ToolUIPart<InstalledTools>;
 
-/* oxlint-disable id-length -- id-length (#506): InstalledToolPart uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
-type InstalledToolPart<T extends InstalledToolType> = Extract<
+type InstalledToolPart<ToolType extends InstalledToolType> = Extract<
   InstalledToolUIPart,
-  { type: T }
+  { type: ToolType }
 >;
-/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, typescript/consistent-type-definitions -- id-length (#506): ToolRendererProps uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/consistent-type-definitions (#559): ToolRendererProps preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
-type ToolRendererProps<T extends InstalledToolType> = {
-  tool: InstalledToolPart<T>;
+/* oxlint-disable typescript/consistent-type-definitions -- Keep the exported closed-record props alias and its implicit Record<string, unknown> assignability; an augmentable interface changes that contract. */
+type ToolRendererProps<ToolType extends InstalledToolType> = {
+  tool: InstalledToolPart<ToolType>;
   messageId: string;
   isReadonly: boolean;
 };
-/* oxlint-enable id-length, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length -- id-length (#506): ToolRendererRegistry uses K as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 type ToolRendererRegistry = {
-  [K in InstalledToolType]?: ComponentType<ToolRendererProps<K>>;
+  [ToolType in InstalledToolType]?: ComponentType<ToolRendererProps<ToolType>>;
 };
-/* oxlint-enable id-length */
 
 const toolRendererRegistry: ToolRendererRegistry = ui;
 
@@ -48,39 +43,48 @@ const isInstalledToolType = (
 ): type is keyof typeof toolRendererRegistry =>
   Object.hasOwn(toolRendererRegistry, type);
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): getEveInstalledToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveInstalledToolRenderer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-undefined (#519): getEveInstalledToolRenderer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep getEveInstalledToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveInstalledToolRenderer's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** EVE only invokes renderers that validate persisted input and output themselves. */
-const getEveInstalledToolRenderer = (type: string) => {
+/** Resolve only installed function renderers marked as validating their persisted input/output.
+ * @param {string} type Installed tool discriminator used to read the native renderer registry.
+ * @returns {(FunctionComponent<{isReadonly: boolean; messageId: string; tool: unknown}> & {validatedToolRenderer: true}) | undefined} The original marked renderer, or undefined for unknown and unvalidated entries.
+ */
+const getEveInstalledToolRenderer = (
+  type: string
+):
+  | (FunctionComponent<{
+      isReadonly: boolean;
+      messageId: string;
+      tool: unknown;
+    }> & { validatedToolRenderer: true })
+  | undefined => {
   if (!isInstalledToolType(type)) {
     return;
   }
   const renderer = toolRendererRegistry[type];
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveInstalledToolRenderer has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-  return isValidatedToolRenderer(renderer) ? renderer : undefined;
+  if (isValidatedToolRenderer(renderer)) {
+    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveInstalledToolRenderer has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+    return renderer;
+  }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- id-length (#506): renderInstalledTool uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-jsdoc/require-param (#534): renderInstalledTool's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): renderInstalledTool's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep renderInstalledTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep renderInstalledTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): renderInstalledTool accepts props: ToolRendererProps<T>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): renderInstalledTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Keep the installed part discriminator correlated with its renderer props. */
-const renderInstalledTool = <T extends InstalledToolType>(
-  type: T,
-  props: ToolRendererProps<T>
-) => {
+/* oxlint-disable unicorn/no-null -- React renders no installed component when registry lookup is absent; preserve the established null result. */
+/** Create the installed tool element while retaining the selected discriminator's prop correlation.
+ * @param {ToolType} type Installed discriminator selecting the corresponding renderer.
+ * @param {ToolRendererProps<ToolType>} props Original native tool data and display ownership forwarded to React.
+ * @returns {ReactElement<ToolRendererProps<ToolType>> | null} The installed renderer element with its original props, or null when absent.
+ */
+const renderInstalledTool = <ToolType extends InstalledToolType>(
+  type: ToolType,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native tool-part JSON collections and callback props are forwarded directly to React.createElement; preserve the installed component input contract.
+  props: ToolRendererProps<ToolType>
+): ReactElement<ToolRendererProps<ToolType>> | null => {
   const Renderer = toolRendererRegistry[type];
-  return Renderer ? createElement(Renderer, props) : null;
+  if (Renderer) {
+    return createElement(Renderer, props);
+  }
+  return null;
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveInstalledToolRenderer, isInstalledToolType, renderInstalledTool, toolRendererRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 export {
   getEveInstalledToolRenderer,
   isInstalledToolType,

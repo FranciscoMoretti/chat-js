@@ -1,6 +1,8 @@
 import type { ToolContext } from "eve/tools";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import type { ToolOutput, ToolResult } from "./tool-result";
 /* oxlint-enable sort-imports */
 import { createToolError, createToolResult } from "./tool-result";
@@ -10,18 +12,22 @@ class ExpectedToolFailureError extends Error {
   public override name = "ExpectedToolFailureError";
 }
 
-/* oxlint-disable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-returns (#535): createToolUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): createToolUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): createToolUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep createToolUsage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge. */
-const createToolUsage = () => {
+/** Unknown pricing is sticky: a known subtotal must never masquerade as a complete charge.
+ * @returns {ToolUsage} An accounting session whose incomplete/failed charges keep the settled total absent, and whose explicit fail method produces a domain error receipt.
+ */
+const createToolUsage = (): {
+  addCostUsd: (cost: number) => void;
+  addDeferredCost: (resolve: () => Promise<number>) => void;
+  fail: () => never;
+  markUnknown: () => void;
+  totalUsd: () => Promise<number | undefined>;
+} => {
   let reported = false;
   let unknown = false;
   let total = 0;
   const pending: (() => Promise<number>)[] = [];
   const addCostUsd = (cost: number): void => {
+    // oxlint-disable-next-line no-magic-numbers -- Negative charges are invalid; zero remains a valid explicitly reported cost.
     if (!Number.isFinite(cost) || cost < 0 || !Number.isFinite(total + cost)) {
       unknown = true;
       throw new Error("Tool cost must be finite and nonnegative.");
@@ -41,8 +47,9 @@ const createToolUsage = () => {
       unknown = true;
     },
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve totalUsd's awaited sequencing and rejected-Promise behavior. */
-    async totalUsd() {
+    async totalUsd(): Promise<number | undefined> {
       await Promise.all(
+        // oxlint-disable-next-line no-magic-numbers -- Drain all currently queued deferred charges; later additions remain for the next settlement.
         pending.splice(0).map(async (resolve) => {
           try {
             addCostUsd(await resolve());
@@ -51,22 +58,22 @@ const createToolUsage = () => {
           }
         })
       );
+      // oxlint-disable-next-line no-undefined -- Missing or incomplete billing evidence must remain an absent total, never a free charge.
       return reported && !unknown ? total : undefined;
     },
     /* oxlint-enable oxc/no-async-await */
   };
 };
-/* oxlint-enable jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+
 type ToolUsage = ReturnType<typeof createToolUsage>;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeWithToolUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolUsage uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-max-statements (#512): executeWithToolUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): executeWithToolUsage accepts context: Pick<ToolContext, "abortSignal">; usage: ToolUsage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const executeWithToolUsage = async <T extends ToolOutput>(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (usage: ToolUsage) => T | Promise<T>
-): Promise<ToolResult<T>> => {
+/* oxlint-disable max-statements --max-statements (#512): Check cancellation before execution, after cost settlement and again when converting only ExpectedToolFailureError into an error receipt; unknown failures remain rejected. Preserve these billing/cancellation boundaries.*/
+const executeWithToolUsage = async <Output extends ToolOutput>(
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the executor callback's existing mutable accounting facade input; readonly callback parameters would restrict caller-owned method replacement at this public boundary.
+  execute: (usage: ToolUsage) => Output | Promise<Output>
+): Promise<ToolResult<Output>> => {
   context.abortSignal.throwIfAborted();
   const usage = createToolUsage();
   try {
@@ -85,49 +92,53 @@ const executeWithToolUsage = async <T extends ToolOutput>(
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern targets support async iteration and native async callbacks; preserve asynchronous iteration, awaited sequencing, and rejection behavior in executeWithToolProgress. executeWithToolProgress returns AsyncGenerator<ToolResult<T>> and yield-delegates to ReadableStream asynchronous iteration; deleting async yields the wrong iterator protocol. */
-/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable oxc/no-async-await -- Modern targets support async iteration and native async callbacks; preserve asynchronous iteration, awaited sequencing, and rejection behavior in executeWithToolProgress. executeWithToolProgress returns AsyncGenerator<ToolResult<Output>> and yield-delegates to ReadableStream asynchronous iteration; deleting async yields the wrong iterator protocol. */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types -- id-length (#506): executeWithToolProgress uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-init-declarations (#507): executeWithToolProgress assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): executeWithToolProgress's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-undefined (#519): executeWithToolProgress uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): executeWithToolProgress accepts context: Pick<ToolContext, "abortSignal">; options: { usage: ToolUsage; abortSignal: AbortSignal; publish: (output: T, updates?:; updates?: ToolOutput[]; controller; nextUpdates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Streaming alone needs a queue; accounting is shared.
- * @yields {object} Progress snapshots followed by the final usage receipt.
+ * @param {ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>} context Native cancellation capability checked before execution and while settling usage.
+ * @param {(options: {usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: ToolOutput[]) => void}) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
+ * @yields {ToolResult<Output>} Progress snapshots followed by the final settled usage receipt.
  */
 const executeWithToolProgress = async function* executeWithToolProgress<
-  T extends ToolOutput,
+  Output extends ToolOutput,
 >(
-  context: Pick<ToolContext, "abortSignal">,
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the streaming executor callback's mutable options/usage and native AbortSignal contract; caller callbacks retain their existing input capabilities.
   execute: (options: {
     usage: ToolUsage;
     abortSignal: AbortSignal;
-    publish: (output: T, updates?: ToolOutput[]) => void;
-  }) => Promise<T>
-): AsyncGenerator<ToolResult<T>> {
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published update arrays retain exact references in ToolResult and stream receipts; readonly output would require cloning or changing the public result contract.
+    publish: (output: Output, updates?: ToolOutput[]) => void;
+  }) => Promise<Output>
+): AsyncGenerator<ToolResult<Output>> {
   context.abortSignal.throwIfAborted();
   const cancellation = new AbortController();
   const abortSignal = AbortSignal.any([
     context.abortSignal,
     cancellation.signal,
   ]);
+  // oxlint-disable-next-line init-declarations -- Updates are absent until the executor publishes them; explicit undefined initialization conflicts with no-undefined and adds an unnecessary write.
   let updates: ToolOutput[] | undefined;
   let cancelled = false;
-  const stream = new ReadableStream<ToolResult<T>>({
+  const stream = new ReadableStream<ToolResult<Output>>({
     cancel(): void {
       cancelled = true;
       cancellation.abort();
     },
-    async start(controller): Promise<void> {
-      const publish = (output: T, nextUpdates?: ToolOutput[]): void => {
+    async start(
+      controller: Readonly<ReadableStreamDefaultController<ToolResult<Output>>>
+    ): Promise<void> {
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published output/update references pass unchanged into mutable native ToolResult receipts.
+      const publish = (output: Output, nextUpdates?: ToolOutput[]): void => {
         updates = nextUpdates;
         if (!cancelled) {
+          // oxlint-disable-next-line no-undefined -- Progress has no settled cost receipt yet; undefined preserves that existing absence contract.
           controller.enqueue(createToolResult(output, undefined, updates));
         }
       };
       try {
-        // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
+        // oxlint-disable-next-line typescript/promise-function-async, typescript/prefer-readonly-parameter-types -- Preserve the accounting facade instance forwarded to the executor callback.  Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
         const result = await executeWithToolUsage({ abortSignal }, (usage) =>
           execute({ abortSignal, publish, usage })
         );
@@ -147,7 +158,6 @@ const executeWithToolProgress = async function* executeWithToolProgress<
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolUsage, executeWithToolProgress, executeWithToolUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length, init-declarations, jsdoc/require-param, no-undefined, typescript/prefer-readonly-parameter-types */
 export { createToolUsage, executeWithToolProgress, executeWithToolUsage };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ToolUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

@@ -21,7 +21,7 @@ import { cache } from "react";
 /* oxlint-enable sort-imports */
 import superjson from "superjson";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ZodError } from "zod";
+import { ZodError, flattenError } from "zod";
 /* oxlint-enable sort-imports */
 
 import { auth } from "@/lib/auth";
@@ -70,8 +70,7 @@ const trpc = initTRPC.context<typeof createTRPCContext>().create({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...shape.data,
         zodError:
-          // oxlint-disable-next-line typescript/no-deprecated -- #583: The tRPC error payload exposes flat fieldErrors; treeifyError would change the client-visible error contract.
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
+          error.cause instanceof ZodError ? flattenError(error.cause) : null,
       },
     };
   },

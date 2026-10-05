@@ -2276,17 +2276,10 @@
     "[\"apps/chat/components/ui/alert-dialog.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 8,
     "[\"apps/chat/components/ui/alert-dialog.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 6,
     "[\"apps/chat/components/ui/alert-dialog.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/alert.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/alert.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/components/ui/alert.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/components/ui/alert.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 3,
-    "[\"apps/chat/components/ui/alert.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 3,
-    "[\"apps/chat/components/ui/alert.tsx\",\"jsx-a11y/heading-has-content\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/components/ui/alert.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/avatar.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/avatar.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/components/ui/avatar.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 3,
+    "[\"apps/chat/components/ui/avatar.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 6,
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 3,
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 3,
     "[\"apps/chat/components/ui/avatar.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -2323,16 +2316,16 @@
     "[\"apps/chat/components/ui/button.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/button.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/button.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/card.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 7,
     "[\"apps/chat/components/ui/card.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 7,
+    "[\"apps/chat/components/ui/card.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 7,
     "[\"apps/chat/components/ui/card.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 7,
     "[\"apps/chat/components/ui/card.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 7,
     "[\"apps/chat/components/ui/card.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": 6,
     "[\"apps/chat/components/ui/card.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/checkbox.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/ui/checkbox.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 3,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/checkbox.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -2426,8 +2419,8 @@
     "[\"apps/chat/components/ui/input.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/input.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/label.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/label.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/label.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/ui/label.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/label.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/label.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/label.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
@@ -2474,9 +2467,9 @@
     "[\"apps/chat/components/ui/resizable.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/resizable.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/scroll-area.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/components/ui/scroll-area.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -2543,25 +2536,25 @@
     "[\"apps/chat/components/ui/slider.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/slider.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/slider.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/spinner.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/components/ui/spinner.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/spinner.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/spinner.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/spinner.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/spinner.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/spinner.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/switch.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/switch.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/switch.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/switch.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/components/ui/switch.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/components/ui/switch.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/components/ui/switch.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/components/ui/switch.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/switch.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/table.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/components/ui/table.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 8,
-    "[\"apps/chat/components/ui/table.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 8,
-    "[\"apps/chat/components/ui/table.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 8,
-    "[\"apps/chat/components/ui/table.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 8,
+    "[\"apps/chat/components/ui/table.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": 4,
+    "[\"apps/chat/components/ui/table.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/components/ui/table.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 8,
+    "[\"apps/chat/components/ui/table.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/components/ui/table.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/tabs.tsx\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/components/ui/tabs.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
@@ -3055,16 +3048,10 @@
     "[\"apps/chat/lib/ai/tool-context.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/ai/tool-context.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"id-length\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/ai/types.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/types.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 3,
@@ -5048,25 +5035,25 @@
     "[\"apps/chat/lib/eve/tool-cost.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/tool-cost.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-cost.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 5,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"max-params\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"max-params\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-image-context.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-image-context.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-image-context.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-model-output.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-model-output.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-model-output.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-model-output.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/eve/tool-model-output.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -5117,17 +5104,12 @@
     "[\"apps/chat/lib/eve/tool-usage.test.ts\",\"typescript/only-throw-error\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-usage.test.ts\",\"typescript/prefer-promise-reject-errors\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-undefined\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"id-length\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"init-declarations\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 5,
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"init-declarations\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/promise-function-async\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
@@ -7732,7 +7714,6 @@
     "[\"apps/chat/trpc/init.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/trpc/init.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/trpc/init.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 4,
-    "[\"apps/chat/trpc/init.ts\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/trpc/init.ts\",\"no-console\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/trpc/init.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/trpc/init.ts\",\"no-underscore-dangle\",\"oxlint-disable\"]": 1,
@@ -7757,7 +7738,6 @@
     "[\"apps/chat/trpc/react.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/trpc/react.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/trpc/react.tsx\",\"init-declarations\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/trpc/react.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/trpc/react.tsx\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/trpc/react.tsx\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/trpc/react.tsx\",\"unicorn/prefer-global-this\",\"oxlint-disable-next-line\"]": 1,
@@ -19199,62 +19179,36 @@
     "[\"apps/chat/components/ui/alert-dialog.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "963c3234d1a58600e4fde6703ed5cf2ecf36466a57d9c65d494d9b838a9702e7"
     ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
-      "53f7e4ff77fe698c52df3762b4d7542a76e178bd4a428900502b0771883fdb51"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "03cc7e5d62ff77d5922a7a625d4bbac94d4f59e82a0cb73f89abf346cd50a5cf",
-      "f0fa1285f76870872e78ec6245337ddfd97116f41429acab6819a728d6de297b",
-      "2e6217c55a2daefa5e34c9c6ca2b3520141edb19073606e26f6ecb1e0c271d8d"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "50a4fc549a742a7e51d7eb12c0bf7e595908051b94304cbe613f298b9412958e",
-      "9494432027aed44629db9191dbb6f77b76c589986408916dc789ba0502905cdc",
-      "338b05f40da553b598343cba329644d0d26a318d3e5dd3e83feead8f920cffb9"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "4b0f8f0cef9ef487173ed9fbeb9c4e9b5881b65f0e94c5b4b9c6076bc96c12d4",
-      "ef9610fde0b00bb07a59ea62c3c460fa92074f916eca48a76f9c5874870b2740",
-      "31667fdb5d7f810810cfbfb7057f22f82956403488d7503527e8806586165b3d"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "7bb138da2e898fbc0e777a192db77906f4cf381c1083820b26ed7104e0e109a1",
-      "28026e215a16c6c40ace60bb907060bb4ec63f214b37b7ce0c2e26206112f617",
-      "115534980d2d2e55f9644b8e9f502da64f86a8bdd71a72aa7a03ac48a4d26e30"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"jsx-a11y/heading-has-content\",\"oxlint-disable-next-line\"]": [
-      "4f7ce83d07102f8ef87fe2318509f4bd29204d4e4600c705733007ba1781a4c0"
-    ],
-    "[\"apps/chat/components/ui/alert.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b5519dd5bedcdb6d35d2d35ba779f6f056804fb2f6f7198be1ec09f775224c79"
-    ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "77aa1bc41438ae138d9277c2519be5ec24d2e6b84aa86aa256c55b1ead80c0d9"
     ],
-    "[\"apps/chat/components/ui/avatar.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "2377f5654c47d908062d437668f3fa2a678f64c9fd587925efd4c1d701a4b7b6",
-      "0cf4fa1610a505db10a9eb470cf3e3fe75cc96c449439c5d024c51ab0296f628",
-      "6148c22d319367496a34c7b93d9e9720b6cd29868c557592483e5ffbc4465912"
-    ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "764eff3a3b844dd45ee07ebee979bd13733d01ef37762837a93c4f01aed035a8",
-      "45bb0f1cdd9635de7f365c081f96f6e4d11bd398269c80c8460beb4b73c13a22",
-      "c45a5ac4d406e4b91be1241d6d078c785e906c6c418e422f10de094fb8c90a83"
+      "5e089a5bbc92dd3a7ebfecf4bdee003128a6d1dee9b6eac2d47fe5e95cfb35b0",
+      "6a87c3580535bd40d0e2a709202fa802b62752d7f4dda2e694dfd84c8d0e85e9",
+      "aa8df8986403a83bd5c3e8e1ca169431ca1d49229c815a7749eedf114da9c026"
     ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "ef9610fde0b00bb07a59ea62c3c460fa92074f916eca48a76f9c5874870b2740",
-      "31667fdb5d7f810810cfbfb7057f22f82956403488d7503527e8806586165b3d",
-      "286bf7b46becf6965d9312e081b0caf8309514a6b341b1c03a0eccff32cb2865"
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "6856e594ca99da99075430c71c5d2a8b70c3d64f704230d9ae6c286e6fba61cc",
+      "379672d612528c7a32f1fa0d627d1ae4983fb3916ced1f65ecf7152421773882"
+    ],
+    "[\"apps/chat/components/ui/avatar.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "b6cc739750fec41c7a25d4ae0e37e5513959a58fea4b6a98f701e7e1ded1757a",
+      "6856e594ca99da99075430c71c5d2a8b70c3d64f704230d9ae6c286e6fba61cc",
+      "fb7a638ff92ef4d6e66b411df2866b82eb51947211e914c26aedf2ee63866f69",
+      "379672d612528c7a32f1fa0d627d1ae4983fb3916ced1f65ecf7152421773882",
+      "0c247c52bb284251ac7c221d23c1c9fe78144856df9313978aa1276a21e96b52"
     ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
-      "949bf25c0b2a06be84e3756a588f92531e117dbbb79e194b4d54d98edb0a9f5e",
-      "5715a85eef3c6011b7f98a826e3455ea0dfac6e24dd36fc8828c501c33efcad1",
-      "1512c7fe296d1aabd3e648e6da5249e81967766a3e7bddbcdf125ba87fbc20a6"
+      "cf3dcc237b02cb8dbfe7eb4fa5574d285cc1e7254681dc798ac2f0376dd0fb84",
+      "d068735d45525dc0cc0bb47a45820a4aa1a199324111d81fdc473359db0a98a6",
+      "b185397e96094233514042f929161191461240bc04eeb8d92f3fa9659437f420"
     ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "13b43e68ff005e5eb1b5169f137d53e9d929b050cf4309c0333f7ba0eec6b5a3",
-      "be03ef056bbaca21c39368725a84f6664538efaf28fdb05f2f442aca2f23692a",
-      "82e14a4e5de547344178035889a72319ece22839a58e11c0b8f8b0067d7858a9"
+      "59b84b4996b77a5854dbb4b5145ac8c519a453cab7c6ccb3d6cf4973545cc857",
+      "1cc9a755a7bb0388101286f7871465a5276ce960846b2443714184325c94cd90",
+      "49374e3d2f5dd0d142355eeeb3ceeaaa975d11ed59a6c96619f7e03815618c82"
     ],
     "[\"apps/chat/components/ui/avatar.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "efa46cef3a8b5d3a99071bbe9868661eda075eb05a6028a020a20136811b3db6"
@@ -19391,32 +19345,32 @@
     "[\"apps/chat/components/ui/button.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": [
       "0a483247bc6a5719584746c78cae485af7f17b9af5b7f35e50dd72d9684e627d"
     ],
-    "[\"apps/chat/components/ui/card.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "7ec3889c93ef563d811ceab015bd2331415b214b62a037236abef5ecb48aa25a",
-      "aef2ba37047f990375497b36840ae704dc2e233b5fc325e7e8ea95c20ab5ef5a",
-      "1ac11c6e6ec15bb64efcbb0bc31d12c456d8f6f0dad741652b1e6a40f8bd8224",
-      "e16c45d579b67715b9de515b6f8de20eb7b90049f57cc0d208a9665cf44dfec3",
-      "40c4804c1c288f5911d71f09886557e77d1c5c6306bec14d8067c3f7f752bcf8",
-      "ec89c6f19cb5c2698fccacfcd17f0f7461856fbad77966d4f7e35d37325d3473",
-      "d057dd40dc00df4207a504056497f6e032c52271e6a5b45080e16faca1b17205"
-    ],
     "[\"apps/chat/components/ui/card.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "e730dbc08bef4d55a596bf8802257e8fe2ae70c1a575b441f4430f45c1173014",
-      "4abcb70ad2fdc011ecf4957d360e7df96d8d607146548aea8527efd87ac9f5a7",
-      "c2886d97f9f76cb74e0faac4bcca09ee0fec2aa8a0918f317ae3593a04837c2c",
-      "a51b8e9d970daa09be7a15db7980ce95e415778ed5ee28ca4a266e9048a860ba",
-      "bebb2ccdc6b12e4eb345ed04f035bf157d6ace175edb2fb7bc160c243b7aad0e",
-      "7bbbd4f8da7adba5d5277b1ec608a1afe03ce71adbffdcd33523dcf7d751cfda",
-      "d8b6905530a3470dbf9cd171492c847bb2ca045e4e9b57a82a3fe226c4b50ba1"
+      "b7020d982896423432476ce1913c64e8ab0454d7fd5fbf50ccecc0a083b4c685",
+      "d79d27692458dc3024815228b6c29486e681bce9188adf45701f98715fbeb69c",
+      "10cca15ccceb71db80c8426e6821a05ce14e9db9626b01e7faca25dd021be9ae",
+      "fcc65050240aeca2189b4067ab65330f8b926a73a5e8b8ccab35790c5b21d1fe",
+      "de9e3a26911a79a4dfad57210eaac5c292757fb25a4c8406a4fcee1f6decdba3",
+      "8ee0af0b2ebb59bfcb633e3cd6f6bdb4a528488bb35f70e82c01cd042ea5e84a",
+      "f7a072fe926270ca7ff61d2f539f1ec487673ead26b6d7d4c81403f9dbedb45f"
+    ],
+    "[\"apps/chat/components/ui/card.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "788289735793b9a3f09239049c6ffff4320907c177640679b925b2df6a579df9",
+      "941a73c2eae714671ee4f71bf6783473c028f7e7848d0db80da87e80af30bf4b",
+      "0bcc7993019469b8c33e09fd61b56de666892afffb616737c3c289e27910e6e6",
+      "b2a72ee05a1e3737d0f65ec3970280f47e1f02fac3035b5aaaa1067f9ca11dcb",
+      "5b2a954709333e883752b8d0e63a6196e430db19d36fd147d67352fad259de1b",
+      "3dc415ab906a2f890e8abb39100c8ae1b0ad1b00c0fb8cbf54935965eb68fe98",
+      "61bcbf3fd1bd9462661fe4e2c462d69f19c5e0137b6e70618becd58cfe59a2ba"
     ],
     "[\"apps/chat/components/ui/card.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "336aba9ef5d94b72d817d9e92b712db48a73dea874754c35688ebebccec59afe",
-      "a6e800f622b1dcbc0348e74acdfd37f4358f8f046f857190472223cf24e6258c",
-      "9499437c7be5ae8506fcf79c0fac9c72011dfa6a47031a460f1d2aec43e95d16",
-      "c51d97807638a6af8610fcc1d5baca89244d4fc93fb58b1f5f74acb18c543e69",
-      "6e5b41d9acdd26952aa249de6723b1a7d583af24431265d27f3ccc3964c0462c",
-      "4e93a3e7781878df2d18a48aea1a3b71dbc043059a1630ade31d4f9af8511273",
-      "92ab6f42ec96cbd8f5116cea32e25f6a0f168cf57daade796b3cfcf6efc45c44"
+      "e988493f0258388779a212f1a2bf5be464a155b2260d90039514642feb8c4249",
+      "8a83893941d24f4ea7ac7585fe445f6efc9e1edaacd094479ef4032dc7fd7e02",
+      "200c35a1c4c158e17a53d81ab9aa9eb63697a7fde79c3eb51417a883041274aa",
+      "4f8c2eb48358a0149e6d866888eba0b1a9fd65c5b1ef9451b7d19b7d6e1817b2",
+      "5285ea7adca65a30acb044e8ddcd15b57da4b86f906756c3ad7b15ed9b45053d",
+      "05de730d62b285a2f38c7bcdb789f970ea0b97aada5232b521943eac4c28c325",
+      "dad9bda588e05a4d5d4d8274620264edb1d6f058c52a4c0516b3e48d23b5ce0b"
     ],
     "[\"apps/chat/components/ui/card.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
       "e6dc49a18cc14b502c6d653c8af27d60afbbe1fe527e29dc6a788d833e5903ce",
@@ -19428,35 +19382,36 @@
       "7f6bcb4a98d2f432d90a9c5f352bb59032a91036eab417c9744cd833b5c89290"
     ],
     "[\"apps/chat/components/ui/card.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
-      "ea6c4a94f80a2e0390d1482cf5d2ee1aef72147c1348dee009fd7bc4e5690834",
-      "6d285c1116e94fadeeb3d1e0a855866a35da2fdab1cde9fe83bd096c7f312069",
-      "571870bd8f8b73d417c58af56a076aa640f069e78cae258bac064df7f58d10c7",
-      "b47034814f8fd8a35ffcbf1356cecd6a073296eba033f1beb285ba5cd5456739",
-      "a29c65dde81e0681c23f237c551ae607ae2a2e97f9c0bc3234d26f9995902bf0",
-      "6f1424be865edd56f082bd1cb9ed978e6830c9b4848532110f84d2e6a4e17ad3"
+      "1d76412d051025a8e5872164cdd61a3fb2e1b72c51ee20d89765580c709d90d2",
+      "9579ef4ce94d9c7421ac2a64dab78a79158faedb0331d7db8626a67d14719c02",
+      "265e39352d0ef45d1336053dcfde04a3a4e7befe15e505aade01f774bfbeb159",
+      "7a49c11a29d7b38bf155ff492aeb3152e01dbb0156a8b117522993afe09c7827",
+      "c7987c0f51454b17eeade9fa1da7d7c0c0ba84a4124be49f3f03e3e182915f6f",
+      "018631900cd767fd484623337fe827a1ab00e41c4374ad54be8301dafc2e8c4e"
     ],
     "[\"apps/chat/components/ui/card.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "7f774e5cfced2c0261fb3c65aef632a380eecba234e6af7015f5a26d0930f76e"
+      "ddde2bb0f0048b37e00669ac94a3c1172a37db7f9389d48cdba93589dd42927d"
     ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "77aa1bc41438ae138d9277c2519be5ec24d2e6b84aa86aa256c55b1ead80c0d9"
     ],
-    "[\"apps/chat/components/ui/checkbox.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "06d2a8aa6a2474f719ef1e01256f65eb29877a44441507addc5f85cf026f3a78"
-    ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "7eabd73e2058777726028d3f22abe30a44119d9d551ebaf2d099d48881077756"
+      "1cabcfc30f63bb01535111ecfedf4618775e42c9be35574a113a05a2555a9eaf"
     ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "ef9610fde0b00bb07a59ea62c3c460fa92074f916eca48a76f9c5874870b2740"
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf"
+    ],
+    "[\"apps/chat/components/ui/checkbox.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "b6cc739750fec41c7a25d4ae0e37e5513959a58fea4b6a98f701e7e1ded1757a"
     ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
-      "824536b192db9fe555cc13ca8debff4ece47b37c3157be96b06842d3f6c6414c",
-      "b048b87f4954e82f70ac9a6fea20dd388657003ec64a8022e2e2c156b5bfdafd",
-      "1f8e094c57280e738c30a7e11073d982028676ad86821b5f1569fe083eedd508"
+      "602fa3d4054150580e1c02548cbf6f36a0405ff063b8f73f58dbb096a66a4e69",
+      "ef4254eab610432f30b90ffc2a73d5c9f755125b1c66e143bf3ecc01c21e9684",
+      "a1d1dad80d2365fdf8392af528ea293672dc41324ca01a0ad8cc98d12b6d9cc6"
     ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "a704d6ca17950ef07d4670c2e948b7ed2df0fe85c68014ea7d1f6a12e36508c1"
+      "6b22ae9351ea34c53dcadbb80410f4bb841cebb8f52ba32013bd820dd65b3340"
     ],
     "[\"apps/chat/components/ui/checkbox.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "7515bb831f1c04c3f2486558e038c72f75e8b0a0085f6dbc088acb1465d7f48b"
@@ -20017,14 +19972,14 @@
     "[\"apps/chat/components/ui/label.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "79b7abc849e728f2784fea3e0aa0ecd9d4735ee81c968b708ba005f5c8df7ec8"
     ],
-    "[\"apps/chat/components/ui/label.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "0f3f586e488d8659dbd3ea62d3732171d08bc463f5af2489662ef02769d2feef"
-    ],
     "[\"apps/chat/components/ui/label.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "4c03ec1ea798125dd36765980136e7bb9677042af39a89778300effcfb4429bc"
+      "e15da2cfd2532476b00a98a54e1cf2c78a80a388785c0bcbc190b54c5fe01526"
+    ],
+    "[\"apps/chat/components/ui/label.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "788289735793b9a3f09239049c6ffff4320907c177640679b925b2df6a579df9"
     ],
     "[\"apps/chat/components/ui/label.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "336aba9ef5d94b72d817d9e92b712db48a73dea874754c35688ebebccec59afe"
+      "e988493f0258388779a212f1a2bf5be464a155b2260d90039514642feb8c4249"
     ],
     "[\"apps/chat/components/ui/label.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
       "83256a2ef66ba3dc981751bcf08805ed5210d9dc209ab0f310252f22de575b4f"
@@ -20033,10 +19988,10 @@
       "a3e2372e16496cccadb8ffff59900e67430f3263cdd28be3b3149a613d39c53b"
     ],
     "[\"apps/chat/components/ui/label.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "6b3e102a410fd2ef34766a367af46ba3c0e606c86451f0edbf614ff95389ec2a"
+      "4f81b6015127cf8012b409abb73f1e5ceb2efdfc1e0a0f8fce425317685ec300"
     ],
     "[\"apps/chat/components/ui/label.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "6b3e102a410fd2ef34766a367af46ba3c0e606c86451f0edbf614ff95389ec2a"
+      "4f81b6015127cf8012b409abb73f1e5ceb2efdfc1e0a0f8fce425317685ec300"
     ],
     "[\"apps/chat/components/ui/layout-primitives-visual-fixture.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "0aa61640dcde07da7a9fed18dfbfc91be2388ced89dba37ddc96fd1e0134ff45",
@@ -20178,27 +20133,29 @@
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "77aa1bc41438ae138d9277c2519be5ec24d2e6b84aa86aa256c55b1ead80c0d9"
     ],
-    "[\"apps/chat/components/ui/scroll-area.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "4ae0a63426b445239da27de7f4258738c43bc7b77727e88646f7f7ead41a0a84",
-      "ba02d53f79e8fb49df65e4b585086d70740e4ea21f7263a6113ec356d12655c7"
-    ],
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "64b1f65ca7f6ff97fc9276fb98fb00e129400b796ff6c6519c37cfab242e654c",
-      "8d95bfe7d93ed8e965f93c573720a3f4754a748742b1a3a3c229a30ca1e3ceae"
+      "51de843d47cda33be26c7258d6c7651ca321a238c265d32e27c42e566a0de6b6",
+      "6d267896049b08aba4dff1352d9b57f090d583f0d5d7792bcfb785905d7a6d14"
     ],
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "6eff58c3d1f78cec7c812935c84bbc745e1bf2a7ddb894e3e65ecbe57fe60335",
-      "384d14fc5db800687dda0e957b491988e399c150e6a65a1b8f701cf1fc218d84"
+      "8b965d2f82a092f3457d2e1657be55ce1ef6cfbf88dac40b6197c27b6cf38665",
+      "6557ae3266b6a24e865caaffc2408099651ce6e587c07fd4f6b3d271ed4d56e0"
+    ],
+    "[\"apps/chat/components/ui/scroll-area.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "8b965d2f82a092f3457d2e1657be55ce1ef6cfbf88dac40b6197c27b6cf38665",
+      "b6cc739750fec41c7a25d4ae0e37e5513959a58fea4b6a98f701e7e1ded1757a",
+      "6557ae3266b6a24e865caaffc2408099651ce6e587c07fd4f6b3d271ed4d56e0",
+      "fb7a638ff92ef4d6e66b411df2866b82eb51947211e914c26aedf2ee63866f69"
     ],
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
       "6fd694d3d29cf2443d093fed8f46dadaac01746a569d8e2e785cbe68a78a2e37",
       "d9dcc98f15c25dd62d62b488c4001cd90c1a68f583541e36b549fe31c0115f93",
-      "986c410188ca848783485610c03e3f5cbaa511209ca72e7c7b9c871affdbc6ea",
-      "24932d1c0762b8863462c8228dad933743142653ab6e7debbd3b24b85b26e5bb"
+      "4024e08b21da40c0f5c822e89cd4353840bddcfa968cdf38de40cdfb91217535",
+      "5aa369c5fd26654fc5378c05aaa22993a3ed8ab5c3baf2dcab2a5f4ad6be857b"
     ],
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
       "238e57bbd5b14bcaa005236113466b031e785e742ba65b7c6bb3b1c5e8d6291e",
-      "3348a6755292b070c66581ccee8f05d0b4cb117700d29e3986a6788205ff9ab6"
+      "26ff6129d51ff2903233dc20978271bc86677821315c1244b69d1ddd52054607"
     ],
     "[\"apps/chat/components/ui/scroll-area.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "183abd82cc85632bb74d9ae035bbc017b1061d3a52d66ece31ecdbb2a1217c5b"
@@ -20609,11 +20566,11 @@
     "[\"apps/chat/components/ui/slider.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "70c72ffd97896f89f45216e86538ff85590b2430691e23a0c9212abe01894a52"
     ],
-    "[\"apps/chat/components/ui/spinner.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "92fda67f5344d572fd9044b32b96fd16dc7c3b0c8488b1d13b6740f3eb576e4b"
+    "[\"apps/chat/components/ui/spinner.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "788289735793b9a3f09239049c6ffff4320907c177640679b925b2df6a579df9"
     ],
     "[\"apps/chat/components/ui/spinner.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "cbf61fa9a211f2f94c543fb549fc0ecdcfe2f495eb2d69e3e9c05ea4e2518a9b"
+      "1a10f39aa8328ad0fd88fa06fedf0c3a3ad4b973584dcbc3236752f4dbcbf163"
     ],
     "[\"apps/chat/components/ui/spinner.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
       "626f7baf59b6bd22fdf6d776b6dc820d377391c82f40972780bef51f31cfd6f8"
@@ -20622,29 +20579,30 @@
       "ae3c78b671bdad28bb462fccf739940bc926130c0a6cdc0a0eed36674da0f409"
     ],
     "[\"apps/chat/components/ui/spinner.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "06be7e4ca35b1314edca994806509ad210fc99198cf14877f47db217ac31a9e8"
+      "2f7e783ad650951ff7b2f19232b9f0c4b9aa81463e1fcffae9ecabd59e5746df"
     ],
     "[\"apps/chat/components/ui/spinner.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "06be7e4ca35b1314edca994806509ad210fc99198cf14877f47db217ac31a9e8"
+      "2f7e783ad650951ff7b2f19232b9f0c4b9aa81463e1fcffae9ecabd59e5746df"
     ],
     "[\"apps/chat/components/ui/switch.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "77aa1bc41438ae138d9277c2519be5ec24d2e6b84aa86aa256c55b1ead80c0d9"
     ],
-    "[\"apps/chat/components/ui/switch.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "a1cfd1685c0c65d3834665dc95451d43f10539360d56c40620b4d1c194c3833d"
-    ],
     "[\"apps/chat/components/ui/switch.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "c96648b8148070389b2cab49b6c10e69abcd175a525e8ad499f733a44172385b"
+      "791003de43fa78790ba68caab0884e95effdbf4f7ac92a10c08e8975e92b051b"
     ],
     "[\"apps/chat/components/ui/switch.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "ef9610fde0b00bb07a59ea62c3c460fa92074f916eca48a76f9c5874870b2740"
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf"
+    ],
+    "[\"apps/chat/components/ui/switch.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "b6cc739750fec41c7a25d4ae0e37e5513959a58fea4b6a98f701e7e1ded1757a"
     ],
     "[\"apps/chat/components/ui/switch.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
-      "96e5ec2a83c465ecc8822bce12912168f2cf2fc9cf65c2067fcdf67d69c57576",
-      "daf6793cc8a4d084950311ca8d87080403b101ed002dc7babc2d9d3ffc93371b"
+      "bddbd38b8da6e64a9425dbbbdba472ecfaa6fe378ef72c9c2c4d6f728205e2fa",
+      "984e76b8ba6a29f601218609eedc0e795f75c48d4ccf46b0b666e94f48b2c3eb"
     ],
     "[\"apps/chat/components/ui/switch.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "c86f31273e121686c5358407e5565fff78ba00921983f77af8a9cc9d094efcde"
+      "948613dd5262616074c3ba6797aaca6e914cf9f033858920ce1700502cb5feef"
     ],
     "[\"apps/chat/components/ui/switch.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "39ee09cb7a3bc40395d5e8726768057aaefbf0ca5c5c355c8138a1c2d8cb1612"
@@ -20653,50 +20611,38 @@
       "39ee09cb7a3bc40395d5e8726768057aaefbf0ca5c5c355c8138a1c2d8cb1612"
     ],
     "[\"apps/chat/components/ui/table.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
-      "8bcb05a1d84b33c708014383e62bbecd10cbb8d1b10f9a4e8545d30de3a6a6b0"
-    ],
-    "[\"apps/chat/components/ui/table.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "3b05f346a0540f920a092a8dee604728c07d9e387b5a609077541a6f58fac9a6",
-      "fa0f0c72a56d051f4e4b385687fc446bd5bc55b8c120c983c309af0845816477",
-      "4ca8c4e6143653bc831e1d6af8b09dbd92e84b7e135772f9410836a9579af730",
-      "48ea0f1acb2f6e8f066b3601772b121802f254a36e6da0ff3fe45c93bd15fd88",
-      "2f19b4166f213d8307cb0dbf1de365ce9f6e46cc09fb56d9b0c7e86ed175060b",
-      "b6aa54f5d2828c3f79ef2ef8c825290accf5e3d24edd5dbd6547a34d3a4de55c",
-      "e5ec78354c639ad34498d8f1e37851c998643fb14017fa73d2f8cce183c889d4",
-      "b2573c60edbce73ab8af88050a2e41c184cfc6abf46d183e81ba5ca5d20b133a"
+      "b16c93fd4e37588aa219bde5f6923a54153d012d7abfe98fd16e57e5e15072f0"
     ],
     "[\"apps/chat/components/ui/table.tsx\",\"react/react-in-jsx-scope\",\"oxlint-disable\"]": [
-      "63dff634f49bd8d2ccbb869b6a3796d7b5465e6285a61281eae072c57f5d516c",
-      "f4a8ecb7e424dd6e6cdf0ab4f13f5e94416c02af7fe834175bf2911f49f02790",
-      "a6a6d37bed7a73d86c98cdb14a79077c9748cba1b24e1583c7f0803d37cfce78",
-      "75d263a79eec5525e1203050e6c1829914586de79054149a6db47e7b45d7fb0a",
-      "bfd77681fa0fc4dbedbc5f37552b559b9ec595fb4b0cc42980c559ef35c7c7af",
-      "70594d7ebc1f91753af01126a4872be4262f35570db76a43783a4be2a2473f5e",
-      "ba5fb1b2099c89ff5e521a6d12027c386c25107e671ba3efe9b69e459631029d",
-      "ec9fb83e82bb9c693e47d9e1e3e6508da1e36ed136f001a4ed3bdcb25c927230"
+      "e5d103c695aed87579d8e21b71731e9bf5b9cd89d032f59c1cc6e0ce53cdf6d4",
+      "5e1992fc1c299cd7dc73387d1a4dac17bfff7b6fa3bb9455271b7726bcfadc75",
+      "f39e8ff208092a1ca56f27cd1fff6d3d6f09f18e3668aeb07a993a228e84b7a4",
+      "124893db7c33b617018b635b6bc5a61a88ec7af532117447c4df434b850f14b1"
     ],
     "[\"apps/chat/components/ui/table.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "ef9610fde0b00bb07a59ea62c3c460fa92074f916eca48a76f9c5874870b2740",
-      "31667fdb5d7f810810cfbfb7057f22f82956403488d7503527e8806586165b3d",
-      "286bf7b46becf6965d9312e081b0caf8309514a6b341b1c03a0eccff32cb2865",
-      "5e9a0b232c8069e51a74b45f449c277f960b77537d582772b3db44583efe568c",
-      "aabb4d27375898baf5cde6975346b8cb7e2c700c133bef28e681cdb61ed2dde9",
-      "4dd7e37854ef92f82b4d5f086fa28a0e7ad652d6b4f4427d4072d782e5fefe25",
-      "a628b2c321fcc95101cbeea4d688da1dadf4c2609e0dcaca3816249875b32138",
-      "3610226589bf2304486ce48e0d49dd5b16462b8ad4d757403833a5c50447a331"
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "6856e594ca99da99075430c71c5d2a8b70c3d64f704230d9ae6c286e6fba61cc",
+      "379672d612528c7a32f1fa0d627d1ae4983fb3916ced1f65ecf7152421773882",
+      "79dd2e281abb74c67573cc549c42b9dfe4d3a930ffd032c94896336926dd7ec4"
+    ],
+    "[\"apps/chat/components/ui/table.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "6fd1c5258d149085e88b17e2ebdb52c7783852d14918a01db58c2a2cd7640cbf",
+      "b6cc739750fec41c7a25d4ae0e37e5513959a58fea4b6a98f701e7e1ded1757a",
+      "6856e594ca99da99075430c71c5d2a8b70c3d64f704230d9ae6c286e6fba61cc",
+      "fb7a638ff92ef4d6e66b411df2866b82eb51947211e914c26aedf2ee63866f69",
+      "379672d612528c7a32f1fa0d627d1ae4983fb3916ced1f65ecf7152421773882",
+      "0c247c52bb284251ac7c221d23c1c9fe78144856df9313978aa1276a21e96b52",
+      "79dd2e281abb74c67573cc549c42b9dfe4d3a930ffd032c94896336926dd7ec4",
+      "8b419f4986e462fb92b87e2a0d1468e6789fb1ff6f726af8987063dafcd540f3"
     ],
     "[\"apps/chat/components/ui/table.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable-next-line\"]": [
-      "febeece3d68262d7196569692a91e4c11f32c6f1978ca3337684da71a1b69d06",
-      "fb4f9a6ac2558ff1152266f6d2eb356bd114eaa51d1aad79348ccac1322f5e88",
-      "04e41421a0aa85f77848fad4d91b6d3c7f8d54c4a90a141af4b994ab470edead",
-      "bd13b55c667a3651aef75bc5eedeaf0eb0798b005a1e11fc208c9f4ed0f6ec7d",
-      "f45a348243d31b7fde06ba4979c1c6b8c8291c23c4bdfe8c15c511b6345b9e17",
-      "26b12226a3583fe3a965f293259a3dd3f6b735bcf3d47d1160b9140e1787dfa3",
-      "cefdd503d03c9801ea88f5ead95492a9bcb591ffed9847a2b413845544658f43",
-      "3b920a799fa42a7809f0bc120b0a19d7d30f5b45a6a9c039fe8d6990b0882478"
+      "92abf40a4a98595c85ea91fbc16a7b005c76e11d64c2ae64624afce5e44ad0fb",
+      "f31e6c52cf7d2648c7d929482ced371519ea555c4d39fe01e33dbbc1ee889aad",
+      "c40481078a5a9c6a0cb5f9a90cb3d73ba5d0d9a5e70855dd1411258885d9a4ff",
+      "4b6f38a3c88e24c31d0f1f525fb1bbfcf3c899a2dc162da426cb9175506a3b9d"
     ],
     "[\"apps/chat/components/ui/table.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "520a46c4f69827619f6ad59f70c384a710a4085ce17cacc80a3580571d5c24d0"
+      "895b92d002f6343d9c6774590dd66c1c55b49b846a573d02b48069434118b692"
     ],
     "[\"apps/chat/components/ui/tabs.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "77aa1bc41438ae138d9277c2519be5ec24d2e6b84aa86aa256c55b1ead80c0d9"
@@ -22466,49 +22412,24 @@
       "e312f293bad417e227280e28f7c7c2fc4a5df06b8b4b7f33f444209ea1d13fbe"
     ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"sort-imports\",\"oxlint-disable\"]": [
-      "b4001adc7854143d486d6ecbf78d04ff4c4da7372bfc4262293a15b5655e6e4d",
+      "8ddfb7ca3bdb18cbb2cbbeaa359d21935d51ff984a0d6427213664d8d1a46aaf",
       "bbe7767ef3f1575cc3f6a48247ad5e9cfbbe5dae15a9d6bad269c0778416817a",
       "489255e185e1398febe438d01e7505a880bdd207d42ac2f33e1ab1a9a44b6a23"
     ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"id-length\",\"oxlint-disable\"]": [
-      "636066f4bbf09e736a3f140fd387117b0111d7eb5772957a810647182dd5ebb7",
-      "20565076bd238b3c9bf4b95477306e735593a1ec9d9b84ffd35d536f2fd9b046",
-      "514ea7af51316bef8692d61dd0e5fd98987876a56db574d96e0acf51ff78a0b8",
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
-    ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": [
-      "20565076bd238b3c9bf4b95477306e735593a1ec9d9b84ffd35d536f2fd9b046"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "876119d06664ab4cde4af83f99d26575a74f6575dfb947f8e3ed0d6ae07a6f8f",
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "876119d06664ab4cde4af83f99d26575a74f6575dfb947f8e3ed0d6ae07a6f8f",
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "876119d06664ab4cde4af83f99d26575a74f6575dfb947f8e3ed0d6ae07a6f8f"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "876119d06664ab4cde4af83f99d26575a74f6575dfb947f8e3ed0d6ae07a6f8f",
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "876119d06664ab4cde4af83f99d26575a74f6575dfb947f8e3ed0d6ae07a6f8f",
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
+      "a3f930c80af680eea3a7151dcb095c79761e79b37b4a0531cd6d167fc25e521e"
     ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
-      "5e40a7671d02c4241dd7729fea344b763f1467f65fe90214dc49492cfe54ff8f"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
+      "1a8a657639768cd01d7c584b618000d7ea5daab809bf348f60281aa541a7597f"
     ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "c2683c3a621b6e2fb0cf25c94ecee69f319859041ef5b285d24aba0cf80d61ea"
+      "b1c90b6bacc6c96e80bc3f006422ef1ac7faf79259bf207d452f72feac68fc2f"
+    ],
+    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "23366986e098dac5786d391b2fc45b9c85b1c81b6f9d65d40807d3ec892e46d1"
     ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "ac6ffa5115f729fc1900cfc2073c5c77e42bee48b40fc5274b4c8cd02366b7df",
+      "d21ebcfef0a79222c3d1f1025226cc04c5fdf2007ebfca4df65074d4fe7fb4c7",
       "2ca8bfbaace925ddd4b26dff8bdce7a2f8cd54b6e6af61f1da2603faea580ea5"
     ],
     "[\"apps/chat/lib/ai/types.ts\",\"sort-imports\",\"oxlint-disable\"]": [
@@ -27916,7 +27837,7 @@
     "[\"apps/chat/lib/eve/mcp-registration.test.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
       "ff5b0f7642a6cea02f802c2f89c455a99e9af0ad526d6bd6540ebfe9a2b99171",
       "ef78e3a191c41227883a42f789d0d8145fc397fa09803f925f3d9e14df5b6a65",
-      "ae488b0a04c15e079af738f235a6602f9c91a325945e0fa1a51dcf9db1b11144",
+      "b2c08cea2bed48ab19d0dbd6fafd7dfde116c27038f8d9f5653e1f2c34fae522",
       "b040302d03458743719353bc1403382cf003f2c8d7a66134c62ebfae86d5c17d",
       "17fcdc9714b4a70e43d59dadf42762c8deeb434c64e2a19e2a8c7e99285f6145"
     ],
@@ -27927,7 +27848,7 @@
       "fa7664b51c6410d30739b677043c5491d25bd8e6145b3bd009bcbdf3ae5445e4"
     ],
     "[\"apps/chat/lib/eve/mcp-registration.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "ae488b0a04c15e079af738f235a6602f9c91a325945e0fa1a51dcf9db1b11144"
+      "b2c08cea2bed48ab19d0dbd6fafd7dfde116c27038f8d9f5653e1f2c34fae522"
     ],
     "[\"apps/chat/lib/eve/mcp-result.ts\",\"eslint/sort-keys\",\"oxlint-disable\"]": [
       "97ab34c3d29c983cefe9b38a77744e5d22fc08a8f97ecd652540a3d246b06440"
@@ -30315,47 +30236,51 @@
       "96f1efa0fd9c20233222c126b6efaba8cacde3a61fdf0df8c9aa4e8abc853e2c",
       "2c804f894fd5dace489a2efb101c7e94cb1996c04d941bc8acd9216ab78b5785"
     ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "4d26da1894324e556a05e5dd4172cfa7171a8ac2922aa3b7651408127ebca90d",
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "4d26da1894324e556a05e5dd4172cfa7171a8ac2922aa3b7651408127ebca90d",
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "b17f612aa4d9c648a9bbb5da924f81837fc3c7515582b8bc831568959d4b51b2"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b17f612aa4d9c648a9bbb5da924f81837fc3c7515582b8bc831568959d4b51b2"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"max-params\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "0f17ab9b48760dba1cd6d976dc7639fba4cf16e0db473d2ec3c549486d2343f8"
-    ],
-    "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "adfdae2459603871971b254ee289f08b4b223d2debd533d345de1b181374a31c",
-      "a1173d4d98d688e2b1095f6cd4f1ae2ce73d3bcce0db0a26ae9390f47f7a3909"
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "4745cd706208eea22ce9ce2cf3809a1928b04d62f700779bdbbdd6630e4039d9",
+      "d69da1b5e9d4bb7462f8a202091b6947daa37fd65421671f6738c41593a9078b"
     ],
     "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "f02de8d17a442c7705dcbd1cc9a06ccbcff26e03e6b565ae1e88f359c51b6483",
-      "6ddc13622f000599ff7bcec958c72466a96c69ab423c6a6c25188f6a8b69b1ed",
+      "06b38f0577488178cc6c0e7446a6a071c07b761f987ce6c71fab713e6f690c11",
+      "9ed0a053c4db69f4d2d34b9f290c55ffabdee7312946dd3216b96883a975d2d9",
       "68ec954ca98e0d4716d93dad37bdc45bdd9f200ea3f6f2acfbedda9bdc7f44c6",
       "5aa1ede077d492521747bb9d75b93e43d1692e7e13e8ca147d270bf2a0ae1756"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
+      "990bfd1e0859f444d4afff4b268d31ea92d34af4e168f45f4dd61be30355328a",
+      "7c8526642eed60b55e06bb7130d7586af3d89b6a7096eb7881d142f608eeca92"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "990bfd1e0859f444d4afff4b268d31ea92d34af4e168f45f4dd61be30355328a",
+      "b03135f9ab5b3ff057be2c24227c61eefa1a79327ccf4937356a8fa12d9cc446",
+      "c56bf57f57d90b5cfb1bf218642e5ccb55842a373f04cbf3e4978b8c256f39dd",
+      "641b38ee57d80a93b0e22f1e2e1ab67dcf21d66d0c4dd1b6d974deb9a4c4b7bd",
+      "27e9c0fabcf6ef61fdcf08228b688a39c580b47c9214344f128efaeb7a7acc82"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
+      "8ae766c6cae1e9548cabfd55b64992b57f136e3cad7242511e6e121d775ed139"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
+      "0ee95fdcaa44fdd5dc9d2839b3622342193216685d239bece5bae58d682905d7"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
+      "0ee95fdcaa44fdd5dc9d2839b3622342193216685d239bece5bae58d682905d7"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable-next-line\"]": [
+      "a173c1deb8af41de8b218408b53124d20fbc67cd3774ac8cf544a98842ac7a22"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable-next-line\"]": [
+      "a173c1deb8af41de8b218408b53124d20fbc67cd3774ac8cf544a98842ac7a22"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"max-params\",\"oxlint-disable-next-line\"]": [
+      "807c3aaf690c43343a6a43e2a61243bb89dd5052a0d60344b632b1e9a6ff969b"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
+      "80a0feaa0b33352af842092c27b52a37c87fa31e2c34c81a764c4e32ce078431",
+      "a3168a86d410c8d6a2b7fbac412b785866f727b476ec8792ce6ad0c748c1bf31"
+    ],
+    "[\"apps/chat/lib/eve/tool-cost.ts\",\"no-undefined\",\"oxlint-disable\"]": [
+      "1dd84c457deca2d7f2518c604be163bad5b66dac92799e037ae3cc8c557aa70a"
     ],
     "[\"apps/chat/lib/eve/tool-image-context.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "ab3c2edc895efb1bca90bccfb65350e4c60cc60625787e536f2c95459aa2a3f2"
@@ -30370,13 +30295,13 @@
       "c24b4eac9e763cbc230ef961e62453d56807b3888b3c1313a4eb3b6439d67c6a"
     ],
     "[\"apps/chat/lib/eve/tool-model-output.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "98043f4173dfb6a17d5391851f224e4a0522c25c5d3886d10c09dcf713832f04"
+      "9d34f4414ac30930cf4b87f5dfe63ee322e14bb43ae5db8bff937909846299e1"
     ],
     "[\"apps/chat/lib/eve/tool-model-output.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "98043f4173dfb6a17d5391851f224e4a0522c25c5d3886d10c09dcf713832f04"
+      "9d34f4414ac30930cf4b87f5dfe63ee322e14bb43ae5db8bff937909846299e1"
     ],
-    "[\"apps/chat/lib/eve/tool-model-output.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "51a5306262f4097dc67d2767486980335fc43fb14c1af6fb7bba37043e97eacb"
+    "[\"apps/chat/lib/eve/tool-model-output.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "32d6e02bff312fc68b6c7e028053b29bbd5895ce421b8699b88acdd75492866b"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "184aac254acb6e4bc88baf1249ca1ae438881a14be0b05b08da80261c8727bd5"
@@ -30564,54 +30489,42 @@
       "026cfec8866c8ff84bc7174c25fbbc57f5058e5a4231f340126d52ffe2099425"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"sort-imports\",\"oxlint-disable\"]": [
-      "24938a375a994e0d0bc625542541ae806fe994364c05cd01666cb78c0b341b69"
+      "63c338352fbc1196a92f81388a817e31ecf039e385229aba5f0a674c27d005bb"
     ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "1af1c002f50fecb767e6e5880b6fbdb639010dce6804dd5960cf6f34a4c9cad2"
-    ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "1af1c002f50fecb767e6e5880b6fbdb639010dce6804dd5960cf6f34a4c9cad2"
-    ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "1af1c002f50fecb767e6e5880b6fbdb639010dce6804dd5960cf6f34a4c9cad2",
-      "0d21f12d5a476c7f1ead32dfd137b294130d8751bea16d1b78321388bf0f9277"
-    ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "1af1c002f50fecb767e6e5880b6fbdb639010dce6804dd5960cf6f34a4c9cad2"
-    ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "1af1c002f50fecb767e6e5880b6fbdb639010dce6804dd5960cf6f34a4c9cad2"
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "563ce974dd15aa8fbaa64c35d81d7a63cbae7a00ec2a85eae53ad4bac2975a1d",
+      "824f885506ae3764bae839eed9dce8e2b193d782a67680878c9ce07d5f8e3c44"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "ebfb083dbd50ca67366a93639fc631d37f665985a30b49129eae28586ff26e73",
-      "03e72b30832a1eac3bab1d4aae5fce0ef9f6f6cdad5f4a9b13317e4d01efad81",
-      "9105f97ed71cb28c575c35cc5092d635ee4d3ad24f6098a267cc7e1298a87d6e"
+      "e9352f3cc3074f32222d0ef42ab0ae35a2628b860e22ed258813b0f8d52b0bf0",
+      "9bac1374229c59d16ae8fd6ab9e0e131a83a4cc7e6507ce3e855bde075ef6bc6",
+      "8265bef3eb9559b0d33fb114285aa2d712d30a70d9c22b91ed2f3ab3ff186ec4"
     ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"id-length\",\"oxlint-disable\"]": [
-      "39f13882f7e4f95eb14fbeebbbcca70a88c36369988a8897cd9ff229ec690d94",
-      "0d21f12d5a476c7f1ead32dfd137b294130d8751bea16d1b78321388bf0f9277"
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
+      "bd2bda54971b03c2ef14ddfea678e53fa10e16fa5450749bf437fd22fc6acbe5",
+      "6b1a8380089d4d4b5ea252a14832a5e2fba85e71c7b5267bfea0060a204c6265"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "39f13882f7e4f95eb14fbeebbbcca70a88c36369988a8897cd9ff229ec690d94"
+      "859770f98514f3104c3a962e9055414f37fb1090bb90a89cc0d48c06341a6106"
     ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "39f13882f7e4f95eb14fbeebbbcca70a88c36369988a8897cd9ff229ec690d94",
-      "0d21f12d5a476c7f1ead32dfd137b294130d8751bea16d1b78321388bf0f9277"
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "25f189181ed39a754ced5e2d28695ee3c9b6448fb80afa99919a669f3b4f6dac",
+      "fadf0be92a3782b8d515e75799bacc003fb234734a66244bb169aabc7c8c1ee7",
+      "bcf2cd23db087584feebc034e23a08eaf0f21d48c468e17314178a04e4762665",
+      "f4b6dfc5b070fa27d6752710e3bb5bd64bb5af7b370e64f78ed7f461ef1e35fb",
+      "290c4faebb5c0f03133a74c0e964fbdaac55062dbde9d1b43c81bbb875414fef"
     ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "0d21f12d5a476c7f1ead32dfd137b294130d8751bea16d1b78321388bf0f9277"
-    ],
-    "[\"apps/chat/lib/eve/tool-usage.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "0d21f12d5a476c7f1ead32dfd137b294130d8751bea16d1b78321388bf0f9277"
+    "[\"apps/chat/lib/eve/tool-usage.ts\",\"init-declarations\",\"oxlint-disable-next-line\"]": [
+      "80d2a5983c2b7dc181d63a339401eb52701f33ab1cf0990644af188bb2db7741"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"typescript/promise-function-async\",\"oxlint-disable-next-line\"]": [
-      "8c42cd44012c1faec8da9026bb14ecd3583b27316e7a88562595f8672c559495"
+      "290c4faebb5c0f03133a74c0e964fbdaac55062dbde9d1b43c81bbb875414fef"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "6c7746db6b978a80d601f871469f1219836f31e70ac8d292c3e296fd690a1041"
     ],
     "[\"apps/chat/lib/eve/tool-usage.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b9673525c08e84b478e9951e1054bf7bf65168f2210770143b779c4c3e2611ee",
+      "adba7d5eadf6daf97dff945653243dada5af33266d027ad035dea9d016142733",
       "a3ad72a0c91c25ad6104e795b30818d7bb8fb90e5d176f24294fce4504eb96dc"
     ],
     "[\"apps/chat/lib/eve/turn-tools.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
@@ -31156,18 +31069,18 @@
     ],
     "[\"apps/chat/lib/required-credentials.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "ab97d856b61ff511cf613bdd509b6255b19933b39528d1ad5e9d59216130ca31",
-      "fada9e6320e3d516629c4507efdcd768cad6b111c6a751c59f72fb47cc1e5951",
-      "5636748c55556c54f0a03bccb2d6a88d38e03d1e5bc8f0d917207f6302dac472"
+      "3253d45602f57d52db099ff5be7a9ce0310e7cc9ec9833cd5fc172fc38f0bfb4",
+      "a6b2a4b3d4bdb162a11292ada290f172b5b0856e41bb6da4cc7ec15e63cc85cc"
     ],
     "[\"apps/chat/lib/required-credentials.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "fada9e6320e3d516629c4507efdcd768cad6b111c6a751c59f72fb47cc1e5951"
+      "3253d45602f57d52db099ff5be7a9ce0310e7cc9ec9833cd5fc172fc38f0bfb4"
     ],
     "[\"apps/chat/lib/required-credentials.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
-      "4b7b7cf7cc873d3a0aea320e37d2a64d44eca5d93bb9382d733f41058ed9a311",
+      "4431957631034b60de6122bb834d5f64032253b4527c2572cc6e315951528d55",
       "8211446bad9b492e09eb431d712acbc7d7c6c5fb9c28c334fea1ba7b4a04e003"
     ],
     "[\"apps/chat/lib/required-credentials.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
-      "4b7b7cf7cc873d3a0aea320e37d2a64d44eca5d93bb9382d733f41058ed9a311"
+      "8434e9af6cdcb691bad65cd8bebf76066754dc7d40412df517a92f0a1b5e84d9"
     ],
     "[\"apps/chat/lib/required-credentials.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "6da56d48003dbaa1509bfb1551ed9ea9de93bb0f8f13be438665fe10c0ef2347"
@@ -40590,12 +40503,12 @@
       "03225a1c9991568f710ad86af11c0cda164d9ece347e6cb010eb874b79b7674e"
     ],
     "[\"apps/chat/trpc/init.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "4964882d3b1bb0c81246e5fc3a39ffc21ca256e28fec730a62f5d55efc542128"
+      "a5b18ca39f80b4422236fe11d880d6d63ce31d044378338bc4c1e421c7665fd0"
     ],
     "[\"apps/chat/trpc/init.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "a96ab134a0155595922aaa0814ed57c3da5c12df7ca5f9ee6947949af5543392",
       "83c4df5f032ac1a9f7a15b564dff6c12ffb93badc71753dd5d33e5843f940de3",
-      "fa51f1d15172ecbb1d74bd491b52ea8a1fe4baba4924b3acf895ba1aaccf773d"
+      "2f99d981f54331bc827c383105b58c847fba4dbb008ac3d470485472b2c03994"
     ],
     "[\"apps/chat/trpc/init.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "87537308ed675c60045c97a1e8deaf0e0fea9a4909e25ee6aa8b20a049e25f51",
@@ -40605,21 +40518,18 @@
       "6b79480f582331bdd1c7c7d048d3d0ade03d17d4fcd88d59748564e978c10b9f"
     ],
     "[\"apps/chat/trpc/init.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "b27bdee010782d9a956cdd05c3a0082f4252f3795e09cd6857c91d25809d3475",
+      "06625f0d79ff8dbb10179dbf15fc3ce53e29758c1968b70502365ec290c2c166",
       "d569873d577d182b31424c7287bcd3ba4545a0eba762e152a4bb8f063513fcc8",
       "3b614016e8329da028d2bf6d83e027389565dc62611f91977d6388ac6bee4fe6"
     ],
     "[\"apps/chat/trpc/init.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "b27bdee010782d9a956cdd05c3a0082f4252f3795e09cd6857c91d25809d3475"
+      "06625f0d79ff8dbb10179dbf15fc3ce53e29758c1968b70502365ec290c2c166"
     ],
     "[\"apps/chat/trpc/init.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "59d25a3a19a1c63309fe6e6b7119354e84f14bf9ce3233a0bc762725cf8ef799",
       "11e7c1ee95b91d22477384524c1ea4b18451e4e2f62ede1bc658c19896ad1aae",
       "dae3b81e4477258a724663ebf2ea3b227f5047e435120a80b34c1d39552515ea",
       "bc8a141177d6f08932b20acc9b189b3262f4d2fc82b4769d4764875ecb42b5ce"
-    ],
-    "[\"apps/chat/trpc/init.ts\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": [
-      "c592672e366a6edd82ad1f1493e868992ab2471cefe3aee92fcbd3eb4173c864"
     ],
     "[\"apps/chat/trpc/init.ts\",\"no-console\",\"oxlint-disable\"]": [
       "d569873d577d182b31424c7287bcd3ba4545a0eba762e152a4bb8f063513fcc8",
@@ -40687,7 +40597,7 @@
       "2cf7d6e95a03af7e4bbe370661aca355ab028cb44140b4d1e905bbb64edb7f2c"
     ],
     "[\"apps/chat/trpc/react.tsx\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "70b399c93f19a8e7b586617cb4dee12fe51006a988ca1f89375a18d3b1f128b2"
+      "d85c7be5b4728913d113c58a5cb0b77752e666588ee1d188ee88974ee45dbcec"
     ],
     "[\"apps/chat/trpc/react.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "964c8be0cc5c9c25fff2fc607882179df138554589d2ab025c309a1faf790714",
@@ -40697,10 +40607,6 @@
     ],
     "[\"apps/chat/trpc/react.tsx\",\"init-declarations\",\"oxlint-disable\"]": [
       "e2d9c4a84d84efef35afa279d61986c887f7e844cd6ab121222e38bdef8e55df"
-    ],
-    "[\"apps/chat/trpc/react.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "7a6f69ab3e3e2b2c3de11d0b1218348b571811b5dcb50de86b96772f4c87b948",
-      "f6e9ea6f25587fbcb4d8c6d2ff4b2e6191be3257c3a80b2c3683ef7d64bd69b2"
     ],
     "[\"apps/chat/trpc/react.tsx\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": [
       "2bbd0aaabe1e2454d2f440bc7e3f13f7e4cb7314cbc92610133236ea03338da7"

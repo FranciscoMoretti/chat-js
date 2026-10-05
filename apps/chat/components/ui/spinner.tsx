@@ -3,14 +3,15 @@ import React from "react";
 
 import { cn } from "@/lib/utils";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Spinner: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
-
-const Spinner = ({
-  className,
-  "aria-label": label = "Loading",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, "aria-label" from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: React.ComponentProps<"svg">): React.JSX.Element => (
+const Spinner = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the existing native styling, children and React open string & {} prop aliases; Readonly wrapping these aliases does not satisfy this rule.
+  {
+    className,
+    "aria-label": label = "Loading",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, "aria-label" from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: React.ComponentProps<"svg">
+): React.JSX.Element => (
   <output aria-label={label} className="inline-flex">
     <Loader2Icon
       aria-hidden="true"
@@ -22,7 +23,6 @@ const Spinner = ({
   </output>
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Spinner); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export { Spinner };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

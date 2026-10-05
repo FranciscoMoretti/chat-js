@@ -35,10 +35,7 @@ const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient | undefined;
 /* oxlint-enable init-declarations */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep getQueryClient's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const getQueryClient = () => {
+const getQueryClient = (): QueryClient => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve TanStack Query server detection until its SSR and hydration boundary is migrated together.
   if (isServer) {
     // Server: always make a new query client
@@ -54,13 +51,9 @@ const getQueryClient = () => {
   }
   return browserQueryClient;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep getUrl's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
 const getUrl = (): string => {
-  const base = (() => {
+  const base = ((): string => {
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     if (typeof window !== "undefined") {
       return "";
@@ -69,7 +62,6 @@ const getUrl = (): string => {
   })();
   return `${base}/api/trpc`;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null -- node/no-process-env (#537): TRPCReactProvider reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
 typescript/prefer-readonly-parameter-types (#565): TRPCReactProvider accepts props: { children: React.ReactNode }; op; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): TRPCReactProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
