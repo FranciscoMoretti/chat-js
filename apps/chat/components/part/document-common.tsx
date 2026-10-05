@@ -28,28 +28,37 @@ const isArtifactToolResult = (
   hasProp(value, "kind") &&
   typeof value.kind === "string";
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- getActionText: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type DocumentActionText =
+  | "Reading"
+  | "Read"
+  | "Creating"
+  | "Created"
+  | "Updating"
+  | "Updated";
 
+const actionTextByType: ReadonlyMap<
+  "create" | "update" | "read",
+  { readonly past: DocumentActionText; readonly present: DocumentActionText }
+> = new Map([
+  ["read", { past: "Read", present: "Reading" }],
+  ["create", { past: "Created", present: "Creating" }],
+  ["update", { past: "Updated", present: "Updating" }],
+]);
+/* oxlint-disable unicorn/no-null -- Unknown document action kinds retain the existing empty-label sentinel. */
 const getActionText = (
   type: "create" | "update" | "read",
   tense: "present" | "past"
-) => {
-  switch (type) {
-    case "read": {
-      return tense === "present" ? "Reading" : "Read";
-    }
-    case "create": {
-      return tense === "present" ? "Creating" : "Created";
-    }
-    case "update": {
-      return tense === "present" ? "Updating" : "Updated";
-    }
-    default: {
-      return null;
-    }
+): DocumentActionText | null => {
+  const labels = actionTextByType.get(type);
+  if (!labels) {
+    return null;
   }
+  if (tense === "present") {
+    return labels.present;
+  }
+  return labels.past;
 };
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 interface DocumentToolResultProps {
   followLive?: boolean;

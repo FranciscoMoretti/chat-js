@@ -1,25 +1,34 @@
 import { z } from "zod";
 
+/** Normalize empty environment strings before optional/default validation.
+ * @param {unknown} value Raw schema input preserved unchanged unless it is the empty string.
+ * @returns {unknown} The original input value, or undefined for an empty string.
+ */
+const normalizeEmptyEnvironmentValue = (value: unknown): unknown => {
+  if (value === "") {
+    // oxlint-disable-next-line no-undefined -- Normalize an empty environment string to the absent value expected by Zod optional/default handling.
+    return undefined;
+  }
+  return value;
+};
+
 const databaseEnvOptions = {
   DATABASE_MAX_CONNECTIONS: z
     .preprocess(
-      // oxlint-disable-next-line no-undefined -- Normalize an empty environment string to the absent value expected by Zod optional/default handling.
-      (value) => (value === "" ? undefined : value),
+      normalizeEmptyEnvironmentValue,
       z.coerce.number().int().positive().optional()
     )
     .describe("Maximum runtime connections per app process"),
   DATABASE_MIGRATION_URL: z
     .preprocess(
-      // oxlint-disable-next-line no-undefined -- Normalize an empty environment string to the absent value expected by Zod optional/default handling.
-      (value) => (value === "" ? undefined : value),
+      normalizeEmptyEnvironmentValue,
       // oxlint-disable-next-line no-magic-numbers -- A supplied migration URL must contain at least one character; empty values are normalized to absence above.
       z.string().min(1).optional()
     )
     .describe("Optional direct Postgres connection for schema operations"),
   DATABASE_PREPARE: z
     .preprocess(
-      // oxlint-disable-next-line no-undefined -- Normalize an empty environment string to the absent value expected by Zod optional/default handling.
-      (value) => (value === "" ? undefined : value),
+      normalizeEmptyEnvironmentValue,
       z.enum(["true", "false"]).default("true")
     )
     .transform((value) => value === "true")

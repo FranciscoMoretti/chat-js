@@ -23,16 +23,15 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): vi.mock("../../tools/chatjs/code-executor") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../../tools/chatjs/code-executor")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("../../tools/chatjs/code-executor", () => ({
-  get codeExecutor() {
-    return mocks.settings.installed ? mocks.execute : undefined;
+  get codeExecutor(): typeof mocks.execute | undefined {
+    if (mocks.settings.installed) {
+      return mocks.execute;
+    }
+    // oxlint-disable-next-line no-undefined -- The simulated unavailable installed service must return the original absent result.
+    return undefined;
   },
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {

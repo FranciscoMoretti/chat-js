@@ -13,17 +13,17 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../tools/chatjs/tools", () => ({
   tools: { codeExecution: {} },
 }));
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): vi.mock("../ai/installed-tool-capabilities") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/installed-tool-capabilities")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("../ai/installed-tool-capabilities", () => ({
-  getCodeSandboxCleanup: () =>
-    mocks.capabilityInstalled
-      ? { createCleanupSession: mocks.createCleanupSession }
-      : undefined,
+  getCodeSandboxCleanup: ():
+    | { createCleanupSession: typeof mocks.createCleanupSession }
+    | undefined => {
+    if (mocks.capabilityInstalled) {
+      return { createCleanupSession: mocks.createCleanupSession };
+    }
+    // oxlint-disable-next-line no-undefined -- The simulated unavailable installed service must return the original absent result.
+    return undefined;
+  },
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 vi.mock("../db/eve-code-sandboxes", () => ({
   listEveCodeSandboxesForDeletion: mocks.list,
   recordEveCodeSandboxDeletion: mocks.record,

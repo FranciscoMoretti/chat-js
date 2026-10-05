@@ -181,7 +181,10 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from updateSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const value = updateSchema?.safeParse(update);
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        return value?.success ? [value.data] : [];
+        if (value?.success) {
+          return [value.data];
+        }
+        return [];
       }
     );
     return (

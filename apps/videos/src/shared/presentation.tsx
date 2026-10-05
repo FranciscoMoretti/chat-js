@@ -60,18 +60,22 @@ const ClickPulse = ({
   readonly age: number;
   readonly x: number;
   readonly y: number;
-}): React.JSX.Element | null =>
-  age >= 0 && age < 0.5 ? (
-    <div
-      className="clickPulse"
-      style={{
-        left: x,
-        opacity: 1 - age / 0.5,
-        top: y,
-        transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
-      }}
-    />
-  ) : null;
+}): React.JSX.Element | null => {
+  if (age >= 0 && age < 0.5) {
+    return (
+      <div
+        className="clickPulse"
+        style={{
+          left: x,
+          opacity: 1 - age / 0.5,
+          top: y,
+          transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
+        }}
+      />
+    );
+  }
+  return null;
+};
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Caption, ClickPulse, Pointer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 

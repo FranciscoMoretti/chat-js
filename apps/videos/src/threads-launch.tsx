@@ -59,7 +59,10 @@ const Status = ({
       </>
     );
   }
-  return state === "stopped" ? "■ Stopped" : "✓ Complete";
+  if (state === "stopped") {
+    return "■ Stopped";
+  }
+  return "✓ Complete";
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -110,26 +113,30 @@ const VersionActions = ({
   readonly count: number;
   readonly index: number;
   readonly actionTime: number;
-}): React.JSX.Element | null =>
-  count > 1 ? (
-    <>
-      <span
-        className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
-        style={{ opacity: index === 1 ? 0.3 : 1 }}
-      >
-        <ActionIcon name="previous" />
-      </span>
-      <span className="versionCount">
-        {index} / {count}
-      </span>
-      <span
-        className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
-        style={{ opacity: index === count ? 0.3 : 1 }}
-      >
-        <ActionIcon name="next" />
-      </span>
-    </>
-  ) : null;
+}): React.JSX.Element | null => {
+  if (count > 1) {
+    return (
+      <>
+        <span
+          className={`messageAction ${actionTime >= 18.5 && actionTime < 19 ? "highlightAction" : ""}`}
+          style={{ opacity: index === 1 ? 0.3 : 1 }}
+        >
+          <ActionIcon name="previous" />
+        </span>
+        <span className="versionCount">
+          {index} / {count}
+        </span>
+        <span
+          className={`messageAction ${actionTime >= 32.5 && actionTime < 33 ? "highlightAction" : ""}`}
+          style={{ opacity: index === count ? 0.3 : 1 }}
+        >
+          <ActionIcon name="next" />
+        </span>
+      </>
+    );
+  }
+  return null;
+};
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- MessageActions renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/no-null */
@@ -208,7 +215,10 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   if (s.states[id] === "streaming") {
     return `${s.texts[id].trim().split(/\s+/u).filter(Boolean).length} words generated`;
   }
-  return id === "city" ? "Original answer" : "Alternative answer";
+  if (id === "city") {
+    return "Original answer";
+  }
+  return "Alternative answer";
 };
 /* oxlint-disable react/jsx-no-literals -- PromptMessage renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

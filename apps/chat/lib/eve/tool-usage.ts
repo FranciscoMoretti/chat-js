@@ -58,8 +58,11 @@ const createToolUsage = (): {
           }
         })
       );
+      if (reported && !unknown) {
+        return total;
+      }
       // oxlint-disable-next-line no-undefined -- Missing or incomplete billing evidence must remain an absent total, never a free charge.
-      return reported && !unknown ? total : undefined;
+      return undefined;
     },
     /* oxlint-enable oxc/no-async-await */
   };

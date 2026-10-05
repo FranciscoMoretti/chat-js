@@ -18,24 +18,24 @@ const localEveSandboxOwnerSchema = z.strictObject({
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalEveSandboxInventory's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined --
 init-declarations (#507): readLocalEveSandboxInventory assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readLocalEveSandboxInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readLocalEveSandboxInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-continue (#515): readLocalEveSandboxInventory skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
 no-magic-numbers (#517): readLocalEveSandboxInventory uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): readLocalEveSandboxInventory accepts sessionIds: string[]; entry; leftEntry; rightEntry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+no-undefined (#519): readLocalEveSandboxInventory uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Internal local inventory. The caller authorizes and retires the native family
  * before using its session IDs. Unattributed directories prevent proof of full
  * coverage. Only explicit owner records establish resource ownership.
+ * @param {string} appRoot Trusted local worker root containing the native sandbox cache.
+ * @param {readonly string[]} sessionIds Authorized, retired native family session identities; not mutated by inventory.
+ * @returns {Promise<{ owned: { sessionDirectory: string; sessionKey: string }[]; unattributedDirectories: string[] }>} Explicitly owned microsandbox directories and unattributed evidence. Missing caches yield empty lists; unsupported backends and invalid owner records prevent proof of coverage.
  */
 const readLocalEveSandboxInventory = async (
   appRoot: string,
-  sessionIds: string[]
+  sessionIds: readonly string[]
 ): Promise<{
   owned: { sessionDirectory: string; sessionKey: string }[];
   unattributedDirectories: string[];
@@ -56,13 +56,16 @@ const readLocalEveSandboxInventory = async (
   // Default EVE backend selection can change between launches. A local inventory
   // must not silently ignore evidence from a different provider or follow links.
   const unsupported = backends.filter(
-    (entry) => entry.name !== "microsandbox" || !entry.isDirectory()
+    (entry: { readonly name: string; readonly isDirectory: () => boolean }) =>
+      entry.name !== "microsandbox" || !entry.isDirectory()
   );
   if (unsupported.length > 0) {
     return {
       owned: [],
       unattributedDirectories: unsupported
-        .map((entry) => nodePath.join(cacheRoot, entry.name))
+        .map((entry: { readonly name: string }) =>
+          nodePath.join(cacheRoot, entry.name)
+        )
         .toSorted(),
     };
   }
@@ -85,8 +88,11 @@ const readLocalEveSandboxInventory = async (
     sessionKey: string;
   }[] = [];
   const unattributedDirectories: string[] = [];
-  for (const entry of entries.toSorted((leftEntry, rightEntry) =>
-    leftEntry.name.localeCompare(rightEntry.name)
+  for (const entry of entries.toSorted(
+    (
+      leftEntry: { readonly name: string },
+      rightEntry: { readonly name: string }
+    ) => leftEntry.name.localeCompare(rightEntry.name)
   )) {
     const sessionDirectory = nodePath.join(directory, entry.name);
     // Do not traverse symlinks or unexpected files in the provider cache.
@@ -127,6 +133,6 @@ const readLocalEveSandboxInventory = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (localEveSandboxOwnerSchema, readLocalEveSandboxInventory); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined */
 export { localEveSandboxOwnerSchema, readLocalEveSandboxInventory };
 /* oxlint-enable import/no-named-export */

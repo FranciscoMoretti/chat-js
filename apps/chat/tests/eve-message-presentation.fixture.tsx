@@ -189,9 +189,12 @@ const Transcript = ({
         onRegenerate={(user, response) =>
           onLog(`retry:${user.id}->${response.id}`)
         }
-        renderResponses={(message) =>
-          message.id === "user-1" ? inlineResponseCards : null
-        }
+        renderResponses={(message) => {
+          if (message.id === "user-1") {
+            return inlineResponseCards;
+          }
+          return null;
+        }}
         renderVersions={(message) => (
           <VersionControls message={message} onLog={onLog} />
         )}
