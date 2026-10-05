@@ -89,6 +89,7 @@ export const NewEveConversation = ({
     >();
   const lock = useRef(false);
   useEffect(() => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onPendingChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onPendingChange?.(busy || retained);
   }, [busy, retained, onPendingChange]);
   useEffect(() => {

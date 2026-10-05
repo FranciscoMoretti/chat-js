@@ -181,7 +181,9 @@ describe("ChatModelsProvider", () => {
 
       const updatedValue = values.at(-1);
       expect(updatedValue).not.toBe(values[0]);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading models from updatedValue; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(updatedValue?.models).toEqual(updatedModels);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getModelById from updatedValue; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(updatedValue?.getModelById(config.ai.workflows.chat)).toBe(
         updatedModels[0]
       );

@@ -218,6 +218,7 @@ test("compiled idle capture preserves native history and exact document revision
       candidate.conversationId,
       document.documentId
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from followupDocumentRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(followupDocumentRevision?.id).toBe(original.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
@@ -396,6 +397,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
       )
     ).toBeVisible({ timeout: 40_000 });
     expect(groups).toBe(0);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeTurnId from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(checkpoint?.beforeTurnId).toBe("turn_1");
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })

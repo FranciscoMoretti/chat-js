@@ -41,9 +41,11 @@ const sharedModelId = (
   if (message.role !== "assistant") {
     return "";
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
   const turnId = message.metadata?.turnId ?? "";
   return turnId === ""
-    ? (message.metadata?.modelId ?? "")
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
+      (message.metadata?.modelId ?? "")
     : (models.get(turnId) ?? "");
 };
 
@@ -175,7 +177,9 @@ const sharedEvePart = (
   }
   if (part.type === "dynamic-tool") {
     const parts: EveMessagePart[] = [sharedTool(part)];
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Dynamic-tool display metadata is optional and may lack the EVE input request/response namespace; shared transcript must still project the tool part without prompting/answer text. The app guidance prefers optional chaining.
     const request = part.toolMetadata?.eve?.inputRequest;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Dynamic-tool display metadata is optional and may lack the EVE input request/response namespace; shared transcript must still project the tool part without prompting/answer text. The app guidance prefers optional chaining.
     const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ text: request.prompt, type: "text" });
@@ -187,7 +191,9 @@ const sharedEvePart = (
       }
     }
     const answer =
+      // oxlint-disable-next-line oxc/no-optional-chaining -- An input response can be absent while an input request exists; response text and optionId lookups must not throw when sharing a pending request. The app guidance prefers optional chaining.
       response?.text ??
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Request/options can be absent and Array.find can return undefined for an unmatched optionId; preserve omission of nonexistent answer text. The app guidance prefers optional chaining. An input response can be absent while an input request exists; response text and optionId lookups must not throw when sharing a pending request. The app guidance prefers optional chaining.
       request?.options?.find((option) => option.id === response?.optionId)
         ?.label;
     if (typeof answer === "string" && answer !== "") {

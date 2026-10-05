@@ -77,6 +77,7 @@ const EveDeletionProvider = ({
           status.rootId === rootId
         ) {
           const projectId =
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from conversation; preserve one receiver evaluation, skipped accesses and the existing (route.source === "project" ? route.projectId : undefined) fallback. The app guidance prefers optional chaining.
             conversation?.projectId ??
             (route.source === "project" ? route.projectId : undefined);
           router.replace(

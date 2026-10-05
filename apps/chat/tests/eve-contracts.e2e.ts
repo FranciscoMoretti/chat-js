@@ -96,6 +96,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from balance; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(balance?.credits).toBe(49);
   const unknown = {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -109,6 +110,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.eventId, unknown.eventId));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.costUsd).toBeNull();
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing unknown own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(await recordEveUsage({ ...unknown, costUsd: 0.015 })).toBe(true);
@@ -118,6 +120,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from balance; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(balance?.credits).toBe(47);
   expect(await recordEveUsage(unknown)).toBe(true);
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -254,6 +257,7 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from conversationBeforeOwnerActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading updatedAt from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationBeforeOwnerActivity?.updatedAt).toEqual(before?.updatedAt);
   await recordEveConversationActivity(owner, bound.sessionId, activityAt);
   await recordEveConversationActivity(
@@ -269,6 +273,7 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from conversationAfterOwnerActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationAfterOwnerActivity?.updatedAt).toEqual(activityAt);
   expect(
     await updateEveConversationMetadata("other", bound.id, {
@@ -279,6 +284,7 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstMessage from conversationAfterMetadataEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
 /* oxlint-enable oxc/no-async-await */
@@ -338,12 +344,18 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     { fork: { beforeTurnId: "turn_2", conversationId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootConversationId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.rootConversationId).toBe(root.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.parentConversationId).toBe(branch.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkTurnId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.forkTurnId).toBe("turn_2");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading visibility from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.rootId).toBe(root.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branches from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.branches.map((item) => item.id)).toEqual([
     root.id,
     branch.id,
@@ -517,6 +529,7 @@ test.each(["deleting", "deleted"] as const)(
     const [before] = await db
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from creation; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
       .where(eq(eveChat.id, creation?.chatId ?? ""));
     expect(await getEveConversation(owner, bound.id)).toBeUndefined();
     expect(await getPublicEveConversation(bound.id)).toBeUndefined();
@@ -559,7 +572,9 @@ test.each(["deleting", "deleted"] as const)(
     const [afterActivity] = await db
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from creation; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
       .where(eq(eveChat.id, creation?.chatId ?? ""));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from afterActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading updatedAt from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(afterActivity?.updatedAt).toEqual(before?.updatedAt);
     await expect(
       createEveConversation(owner, operation, "deleted marker", start)
@@ -606,7 +621,9 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, child.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from deletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading chatId from rootCreation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(deletion?.rootId).toBe(rootCreation?.chatId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversations from deletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].toSorted()
   );
@@ -795,8 +812,10 @@ test("final application deletion erases family content, preserves accounting and
     activeConversationId: null,
   });
   const tombstonedCreationReplay = await getEveCreation(owner, operation);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from tombstonedCreationReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(tombstonedCreationReplay?.operationId).toBe(operation);
   const unrelatedConversation = await getEveConversation(owner, unrelated.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstMessage from unrelatedConversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(unrelatedConversation?.firstMessage).toBe("Keep this");
   expect(
     await db

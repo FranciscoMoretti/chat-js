@@ -71,6 +71,7 @@ const SearchResults = ({
     (active.isFetching && !active.isFetchingNextPage);
   const failed = !changingQuery && active.isError;
   const recentItems =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from history.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
     history.data?.pages
       .flatMap((page) => page.items)
       .filter((item) => item.state === "bound")
@@ -81,6 +82,7 @@ const SearchResults = ({
         conversationId: item.conversationId ?? item.id,
         excerpt: "",
       })) ?? [];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from results.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   const matchedItems = results.data?.pages.flatMap((page) => page.items) ?? [];
   const currentItems = isSearch ? matchedItems : recentItems;
   const items = waiting || failed ? [] : currentItems;
@@ -134,8 +136,12 @@ const SearchResults = ({
 
 /* oxlint-disable typescript/explicit-function-return-type -- searchShortcut: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const searchShortcut = () =>
-  navigator.platform.toUpperCase().includes("MAC") ? "Cmd+K" : "Ctrl+K";
+const searchShortcut = () => {
+  if (navigator.platform.toUpperCase().includes("MAC")) {
+    return "Cmd+K";
+  }
+  return "Ctrl+K";
+};
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable unicorn/no-null -- subscribePlatform: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */

@@ -125,6 +125,7 @@ test("native search retains sources, progress and billing across reload", async 
     const receipt = toolResultSchema.parse(call.data.result.output);
     expect(receipt.usage.costUsd).toBe(0.05);
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from receipt.updates; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       receipt.updates?.filter(
         (update) => ResearchUpdateSchema.parse(update).type === "web"
       )

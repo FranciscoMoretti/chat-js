@@ -463,10 +463,12 @@ const PromptInputSpeechButton = ({
         ) {
           const result = event.results[index];
           if (result.isFinal) {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading transcript from result[0]; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
             finalTranscript += result[0]?.transcript ?? "";
           }
         }
 
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading current from textareaRef; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (finalTranscript && textareaRef?.current) {
           const textarea = textareaRef.current;
           const currentValue = textarea.value;
@@ -475,6 +477,7 @@ const PromptInputSpeechButton = ({
 
           textarea.value = newValue;
           textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onTranscriptionChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
           onTranscriptionChange?.(newValue);
         }
       };

@@ -361,6 +361,7 @@ const saveEveDocumentRevision = async (
   signal?: AbortSignal,
   historicalTurns?: readonly number[]
 ): Promise<typeof eveDocumentRevision.$inferSelect> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   signal?.throwIfAborted();
   const input = revisionInput.parse(value);
   // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
@@ -371,6 +372,7 @@ const saveEveDocumentRevision = async (
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${input.conversationId}`}, 0))`
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     signal?.throwIfAborted();
     const [conversation] = await tx
       .select()
@@ -418,6 +420,7 @@ const saveEveDocumentRevision = async (
           eq(eveDocumentHead.documentId, input.documentId)
         )
       );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revisionId from head; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
     if ((head?.revisionId ?? null) !== input.expectedRevisionId) {
       throw new Error("Document changed. Reload before saving.");
     }
@@ -442,6 +445,7 @@ const saveEveDocumentRevision = async (
       input.fileIds
     );
     await prepareManualRevision(tx, input, historicalTurns);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     signal?.throwIfAborted();
     const [revision] = await tx
       .insert(eveDocumentRevision)
@@ -470,6 +474,7 @@ const saveEveDocumentRevision = async (
         set: { revisionId: revision.id },
         target: [eveDocumentHead.conversationId, eveDocumentHead.documentId],
       });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     signal?.throwIfAborted();
     return revision;
   });
@@ -839,6 +844,7 @@ const initializeEveForkDocuments = async (
           eq(eveConversation.ownerId, ownerId)
         )
       );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!target?.parentConversationId) {
       throw new Error("Fork conversation not found.");
     }

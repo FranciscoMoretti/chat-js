@@ -131,6 +131,7 @@ const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
 /* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   signal?.throwIfAborted();
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
   const abort = new AbortController();
@@ -142,6 +143,7 @@ const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
     clearTimeout(timeout);
     reject(new DOMException("Aborted", "AbortError"));
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   signal?.addEventListener("abort", onAbort, {
     once: true,
     signal: abort.signal,
@@ -169,6 +171,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     messages,
   }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) => {
     const requestBody: StreamBody | undefined = body;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseLabel from requestBody; preserve one receiver evaluation, skipped accesses and the existing "Assistant" fallback.
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
     const streamId = crypto.randomUUID();
     const userMessage = messages.at(-1);
@@ -177,6 +180,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     const words = response.split(" ");
     // Different cadences make independent streams easy to follow in the demo.
     const responseNumber = Number(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from RESPONSE_NUMBER_PATTERN.exec(...); preserve one receiver evaluation, skipped accesses and the existing 1 fallback.
       RESPONSE_NUMBER_PATTERN.exec(responseLabel)?.[0] ?? 1
     );
     const tokenDelay = 140 + (responseNumber % 3) * 35;
@@ -218,6 +222,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             });
             controller.close();
           } catch (error) {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             if (abortSignal?.aborted) {
               controller.enqueue({
                 finishReason: "stop",

@@ -15,6 +15,7 @@ import { mockModel } from "eve/evals";
 export default defineAgent({
   experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("slow")) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
@@ -34,6 +35,7 @@ export default defineAgent({
         ],
       };
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("confirm")) {
       if (toolResults.length > 0) {
         return "Approval handled.";
@@ -42,6 +44,7 @@ export default defineAgent({
       return {
         toolCalls: [
           {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from tool; preserve one receiver evaluation, skipped accesses and the existing "run_tool" fallback. The app guidance prefers optional chaining.
             name: tool?.name ?? "run_tool",
             input: tool
               ? { note: "Review release" }

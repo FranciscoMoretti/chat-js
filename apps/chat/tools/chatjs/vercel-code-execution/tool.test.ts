@@ -68,6 +68,7 @@ beforeEach(() => {
 it.each(["python", "javascript"] as const)(
   "dispatches %s to the sandbox and cleans up",
   async (language) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const result = await codeExecution.execute?.(
       { code: "source", language, title: "Calculate" },
       testToolContext()
@@ -100,6 +101,7 @@ it.each(["python", "javascript"] as const)(
 /* oxlint-enable no-undefined */
 it("normalizes execution errors and cleans up the sandbox", async () => {
   mocks.python.mockRejectedValue(new Error("remote execution failed"));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext()
@@ -131,6 +133,7 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   const abortSignal = new AbortController().signal;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext({ abortSignal })
@@ -168,6 +171,7 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
     return cleanup.promise;
   });
   const controller = new AbortController();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = codeExecution.execute?.(
     {
       code: "await new Promise(() => {})",
@@ -200,6 +204,7 @@ it("retains ownership when creation outcome is unknown", async () => {
   mocks.create.mockRejectedValueOnce(new Error("lost create response"));
 
   await expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     codeExecution.execute?.(
       { code: "source", language: "python", title: "Calculate" },
       testToolContext({ callId: "lost" })
@@ -217,6 +222,7 @@ it("retains ownership when creation outcome is unknown", async () => {
 
 it("retains the completed execution charge when its result is invalid", async () => {
   mocks.python.mockResolvedValue({ chart: 42, message: "4" });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = await codeExecution.execute?.(
     { code: "source", language: "python", title: "Calculate" },
     testToolContext()

@@ -53,6 +53,7 @@ const trpcClient = createTRPCClient<AppRouter>({
       fetch(input, init): Promise<Response> {
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           if (typeof init?.body !== "string") {
             throw new TypeError("Expected a JSON document batch body");
           }

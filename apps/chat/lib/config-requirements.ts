@@ -31,6 +31,7 @@ const formatRequirementDescription = (
   const keys = requirement.options
     .map((option) => option.join(" + "))
     .join(" or ");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from requirement.description; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const describedOptions = requirement.description
     ?.split(ALTERNATIVE_SEPARATOR)
     .map((option) =>

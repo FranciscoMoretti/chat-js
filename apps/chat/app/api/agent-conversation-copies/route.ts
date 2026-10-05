@@ -20,6 +20,7 @@ const headers = { "cache-control": "no-store" };
  * unicorn/no-null (#570): readCopyBody preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const readCopyBody = async (request: Request): Promise<unknown> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getReader from request.body; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const reader = request.body?.getReader();
   if (!reader) {
     return null;
@@ -67,6 +68,7 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
  */
 export const POST = async (request: Request): Promise<Response> => {
   const session = await auth.api.getSession({ headers: request.headers });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });
   }
@@ -107,6 +109,7 @@ export const POST = async (request: Request): Promise<Response> => {
     return Response.json(
       {
         conversationId:
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           existing?.creationKind === "copy" ? existing.id : undefined,
         error: message,
         retryable: !rejected,

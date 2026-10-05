@@ -144,6 +144,7 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     const [message] = result;
     assert.ok(message && Array.isArray(message.content));
     const [file] = message.content;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from file; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     assert.ok(file?.type === "file");
     assert.ok(file.data instanceof Uint8Array);
     assert.deepEqual([...file.data], [1, 2, 3]);
@@ -407,15 +408,18 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     );
 
     assert.equal(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from downloadedUrl; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       downloadedUrl?.toString(),
       "https://chat.example/api/files/l_u0a2bkphKLFKsBI4q5Tue9.png"
     );
     const [message] = result;
     assert.ok(message && Array.isArray(message.content));
     const [file, inlineFile] = message.content;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from file; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     assert.ok(file?.type === "file");
     assert.ok(file.data instanceof Uint8Array);
     assert.deepEqual([...file.data], [1, 2, 3]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from inlineFile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     assert.ok(inlineFile?.type === "file");
     assert.equal(inlineFile.data, "aGVsbG8=");
   });

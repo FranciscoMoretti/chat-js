@@ -21,6 +21,7 @@ import { sharedEveMessages } from "./shared-messages";
  */
 export const getPublicEveTranscript = async (id: string) => {
   const row = await getPublicEveConversation(id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!row?.sessionId) {
     return null;
   }

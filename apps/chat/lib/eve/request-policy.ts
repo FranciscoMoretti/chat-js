@@ -63,6 +63,7 @@ const parseSessionRequest = (
   sessionId: string;
   schema: typeof cancel | z.ZodUnion<[typeof message, typeof respond]>;
 } | null => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- RegExp.exec returns null for nonmatching session paths; first chain preserves the null-policy route rejection. The app guidance prefers optional chaining.
   const groups = sessionPath.exec(path)?.groups;
   if (!groups) {
     return null;

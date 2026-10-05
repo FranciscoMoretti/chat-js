@@ -136,12 +136,14 @@ const DELETE = async (
     );
   } catch {
     const current = await getEveDeletionState(ownerId, id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "deleted") {
       return Response.json(
         { rootId: current.rootId, status: "deleted" },
         { headers }
       );
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "deleting") {
       return Response.json(
         {

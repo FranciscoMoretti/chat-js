@@ -19,7 +19,9 @@ export abstract class TextSplitter implements TextSplitterParams {
   public chunkSize = 1000;
   public chunkOverlap = 200;
   public constructor(fields?: Partial<TextSplitterParams>) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Constructor fields is an optional public argument; the no-options constructor retains each established default, so direct access is not equivalent. The app guidance prefers optional chaining.
     this.chunkSize = fields?.chunkSize ?? this.chunkSize;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Constructor fields is an optional public argument; the no-options constructor retains each established default, so direct access is not equivalent. The app guidance prefers optional chaining.
     this.chunkOverlap = fields?.chunkOverlap ?? this.chunkOverlap;
   }
   public abstract splitText(text: string): string[];
@@ -72,6 +74,7 @@ export abstract class TextSplitter implements TextSplitterParams {
       updatedTotal > overlapLimit ||
       (updatedTotal + nextLength > this.chunkSize && updatedTotal > 0)
     ) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- currentDoc[0] is an array read after repeated shift(); indexing is not a presence guarantee. Preserve zero-length fallback rather than rely solely on string[] inference or private-method callers. The app guidance prefers optional chaining.
       updatedTotal -= currentDoc[0]?.length ?? 0;
       currentDoc.shift();
     }

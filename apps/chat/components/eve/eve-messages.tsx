@@ -66,19 +66,23 @@ const PendingInput = ({
     <div className="space-y-3">
       <p>{request.prompt}</p>
       <div className="flex flex-wrap gap-2">
-        {request.options?.map((option): React.JSX.Element => (
-          <Button
-            disabled={disabled}
-            key={option.id}
-            onClick={() =>
-              respond({ optionId: option.id, requestId: request.requestId })
-            }
-            type="button"
-            variant={option.style === "danger" ? "outline" : "default"}
-          >
-            {option.label}
-          </Button>
-        ))}
+        {
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from request.options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          request.options?.map((option): React.JSX.Element => (
+            <Button
+              disabled={disabled}
+              key={option.id}
+              onClick={() =>
+                respond({ optionId: option.id, requestId: request.requestId })
+              }
+              type="button"
+              variant={option.style === "danger" ? "outline" : "default"}
+            >
+              {option.label}
+            </Button>
+          ))
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
       </div>
       {request.allowFreeform && (
         <form
@@ -200,6 +204,7 @@ const Part = ({
   ) {
     return <EveMcpResult part={part} />;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading inputRequest from part.toolMetadata.eve; read eve from part.toolMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const request = part.toolMetadata?.eve?.inputRequest;
   return (
     <section
@@ -270,6 +275,7 @@ export const EveMessages = ({
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toolCallId from messages.flatMap(...).filter(...).findLast(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const latestDocumentCallId = messages
     .flatMap((message) => message.parts)
     .filter((part) => part.type === "dynamic-tool")
@@ -285,6 +291,7 @@ export const EveMessages = ({
     if (message.role === "user") {
       precedingUser = message;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from editor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const editing = editor?.messageId === message.id ? editor : undefined;
     const canEdit =
       !isReadonly &&
@@ -296,6 +303,7 @@ export const EveMessages = ({
       .filter((part) => part.type === "text")
       .map((part) => part.text)
       .join("\n");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling modelForMessage; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const modelId = modelForMessage?.(message);
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve actions's awaited sequencing and rejected-Promise behavior. */
     const actions = (
@@ -308,13 +316,26 @@ export const EveMessages = ({
               !eveUserForkBoundary(message)
         }
         isEditing={Boolean(editing)}
-        isLoading={disabled && message.id === messages.at(-1)?.id && !editing}
-        onCancelEdit={editing?.onCancel}
+        isLoading={
+          disabled &&
+          message.id /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ ===
+            messages.at(-1)?.id &&
+          /* oxlint-enable oxc/no-optional-chaining */ !editing
+        }
+        onCancelEdit={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading onCancel from editing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          editing?.onCancel
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         onStartEdit={
           !isReadonly && onEdit ? (): void => onEdit(message) : undefined
         }
         role={message.role}
-        siblings={renderVersions?.(message, userMessage)}
+        siblings={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when calling renderVersions; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          renderVersions?.(message, userMessage)
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
 
         // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message copy manages clipboard failures and feedback within the async handler.
         onCopy={async () => {
@@ -345,7 +366,7 @@ export const EveMessages = ({
                   disabled={
                     actionsDisabled ||
                     Boolean(editor) ||
-                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These flags express independent truthy conditions, not a nullish fallback.
+                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: These flags express independent truthy conditions, not a nullish fallback. Optional chain: Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                     !(message.metadata?.turnId || message.metadata?.modelId) ||
                     !(userMessage && eveUserForkBoundary(userMessage))
                   }
@@ -377,11 +398,23 @@ export const EveMessages = ({
               // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
               <EveAttachment key={`${message.id}:file:${index}`} part={part} />
             ))}
-          editor={editing?.content}
+          editor={
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from editing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            editing?.content
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           editDisabled={!canEdit}
-          key={messageKey?.(message) ?? message.id}
+          key={
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when calling messageKey; preserve one receiver evaluation, skipped call arguments and the existing message.id fallback. The app guidance prefers optional chaining. */
+            messageKey?.(message) ??
+            /* oxlint-enable oxc/no-optional-chaining */ message.id
+          }
           messageId={message.id}
-          responses={renderResponses?.(message)}
+          responses={
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when calling renderResponses; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            renderResponses?.(message)
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           onEdit={
             !isReadonly && onEdit ? (): void => onEdit(message) : undefined
           }
@@ -395,7 +428,11 @@ export const EveMessages = ({
         className="w-full max-w-full items-start py-1"
         data-message-id={message.id}
         from={message.role}
-        key={messageKey?.(message) ?? message.id}
+        key={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when calling messageKey; preserve one receiver evaluation, skipped call arguments and the existing message.id fallback. The app guidance prefers optional chaining. */
+          messageKey?.(message) ??
+          /* oxlint-enable oxc/no-optional-chaining */ message.id
+        }
       >
         <MessageContent
           // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -418,8 +455,9 @@ export const EveMessages = ({
             />
           ))}
           {actions}
-          {message.id === messages.at(-1)?.id &&
-            !isReadonly &&
+          {message.id /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ ===
+            messages.at(-1)?.id &&
+            /* oxlint-enable oxc/no-optional-chaining */ !isReadonly &&
             !actionsDisabled &&
             onSuggestion &&
             config.ai.tools.followupSuggestions.enabled && (

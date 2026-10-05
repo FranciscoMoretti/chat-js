@@ -36,6 +36,7 @@ export const InternalLink = ({
   const isElectron = isElectronRenderer();
 
   const navigate = (event: ReactMouseEvent<HTMLAnchorElement>): void => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onNavigate; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onNavigate?.();
     const targetHref = event.currentTarget.getAttribute("href");
     if (typeof targetHref === "string" && targetHref !== "") {
@@ -45,6 +46,7 @@ export const InternalLink = ({
   };
 
   const handleClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onClick?.(event);
 
     if (event.defaultPrevented || event.button !== 0) {
@@ -61,10 +63,12 @@ export const InternalLink = ({
       return;
     }
 
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onNavigate; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onNavigate?.();
   };
 
   const handleAuxClick: ReactMouseEventHandler<HTMLAnchorElement> = (event) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onAuxClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onAuxClick?.(event);
 
     if (event.defaultPrevented || event.button !== 1 || !isElectron) {

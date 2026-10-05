@@ -52,6 +52,7 @@ const removeMcpClient = async (
     if (
       typeof expectedOAuthState === "string" &&
       (client.status !== "authorizing" ||
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Client existence guard does not establish authorization URL presence. getAuthorizationUrl returns the class optional authorizationUrl state; an authorizing client without matching URL/state must be rejected without throwing.
         client.getAuthorizationUrl()?.searchParams.get("state") !==
           expectedOAuthState)
     ) {

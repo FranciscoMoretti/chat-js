@@ -156,6 +156,7 @@ export const prepareDependencyUpdate = async (
   for (const item of plan.items) {
     const descriptor = z
       .object({ id: z.string(), kind: z.string() })
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       .safeParse(item.meta?.chatjs);
     const key = descriptor.success
       ? `${descriptor.data.kind}:${descriptor.data.id}`
@@ -171,10 +172,13 @@ export const prepareDependencyUpdate = async (
     const required = new Set(Object.values(receipt.items).flat());
     for (const name of required) {
       const version =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the existing manifest.devDependencies?.[name] fallback. Keep the existing nullish guard when reading name from manifest.devDependencies; preserve one receiver evaluation, skipped accesses and the existing manifest.devDependencies?.[name] fallback.
         manifest.dependencies?.[name] ?? manifest.devDependencies?.[name];
       if (
         typeof version === "string" &&
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from before.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         typeof before.dependencies?.[name] !== "string" &&
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from before.devDependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         typeof before.devDependencies?.[name] !== "string"
       ) {
         receipt.owned[name] = version;
@@ -182,11 +186,13 @@ export const prepareDependencyUpdate = async (
     }
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;
       if (
         !required.has(name) &&
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         group?.[name] === installedVersion &&
         // oxlint-disable-next-line eslint/no-await-in-loop -- Process each installation or source entry in order and stop at the first relevant result.
         !(await sourceUses(cwd, name))

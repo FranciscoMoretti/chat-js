@@ -139,6 +139,7 @@ const writePnpmWorkspaceConfig = async (
     ...PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) => `  ${name}: true`),
   ];
   let supplyChainLines: string[] = [];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading blockExoticSubdeps from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (typeof options?.blockExoticSubdeps === "boolean") {
     supplyChainLines = [`blockExoticSubdeps: ${options.blockExoticSubdeps}`];
   }
@@ -395,6 +396,7 @@ const scaffoldFromTemplate = async (
     readonly packageManager?: PackageManager;
   }
 ): Promise<void> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading packageManager from options; preserve one receiver evaluation, skipped accesses and the existing "bun" fallback.
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
 

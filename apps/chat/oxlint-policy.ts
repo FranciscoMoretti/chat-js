@@ -39,8 +39,8 @@ export const auditedRestrictionRules = {
   "node/no-top-level-await": "error",
   // Reviewed native async and iterator contracts are explained at their source.
   "oxc/no-async-await": "error",
-  // Optional chaining is required by the application coding guidance and supported by the target runtimes.
-  "oxc/no-optional-chaining": "off",
+  // Reviewed nullish access, callback and fallback contracts are explained beside each chain.
+  "oxc/no-optional-chaining": "error",
   // Reviewed object composition, omitted keys and snapshot contracts are explained locally.
   "oxc/no-rest-spread-properties": "error",
   "react-perf/jsx-no-jsx-as-prop": "error",

@@ -132,6 +132,7 @@ const HookHarness = ({
   const helpers = useThread(options);
   onRender(helpers);
   return createElement("div", {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCommit; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     ref: () => onCommit?.(helpers.setMessages),
   });
 };
@@ -528,6 +529,7 @@ describe("useThread", (): void => {
 
     await act(async (): Promise<void> => {
       transport.finish(0);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading finished from run; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       await run?.finished;
     });
     expect(hook.current.status).toBe("ready");

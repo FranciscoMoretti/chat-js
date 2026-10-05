@@ -160,6 +160,7 @@ const LegacyUserMessageReference = ({
             onClick={(event) => {
               const selection = globalThis.getSelection();
               if (
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 selection?.toString() &&
                 event.currentTarget.contains(selection.anchorNode)
               ) {

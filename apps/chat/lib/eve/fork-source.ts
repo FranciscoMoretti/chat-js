@@ -13,10 +13,12 @@ typescript/strict-boolean-expressions (#610): eveUserForkBoundary intentionally 
 const eveUserForkBoundary = (
   message: Pick<EveMessage, "id" | "role" | "metadata">
 ): string | undefined => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (message.role !== "user" || message.metadata?.optimistic) {
     return;
   }
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     message.metadata?.turnId &&
     nativeBoundary.test(message.metadata.turnId)
   ) {

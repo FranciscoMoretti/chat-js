@@ -43,6 +43,7 @@ export const resolveCreationRequest = async (
   scope?: CreationScope
 ) => {
   if ("modelIds" in operation) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading checkpointId from operation.fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (operation.fork?.checkpointId) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
@@ -102,6 +103,7 @@ export const resolveCreationRequest = async (
   }
   const binding = await requestConversation(operation);
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from readCreationRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     readCreationRequest(storage, ownerId, scope)?.operationId ===
     operation.operationId
   ) {

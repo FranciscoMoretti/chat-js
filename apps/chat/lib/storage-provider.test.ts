@@ -41,6 +41,7 @@ test.each([
       presignedUrl: "https://private.example/signed",
     });
     const adapter = createStorageAdapter(credentials);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading supported from adapter.signedUrl; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(adapter.signedUrl?.supported).toBe(true);
     expect(await adapter.url("chat/objects/object-key")).toBe(
       "https://private.example/signed"

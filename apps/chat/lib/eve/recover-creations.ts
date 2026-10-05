@@ -37,6 +37,7 @@ const waitForConcurrentBinding = async (
     await delay(250);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read durable state after each bounded wait.
     const current = await getEveCreation(ownerId, operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "bound" && current.sessionId) {
       return true;
     }

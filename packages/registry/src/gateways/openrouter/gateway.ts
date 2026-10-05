@@ -45,7 +45,9 @@ interface OpenRouterModelResponse {
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const inputMods = model.architecture?.input_modalities ?? ["text"];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const outputMods = model.architecture?.output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
 
@@ -78,6 +80,7 @@ const toAiGatewayModel = (
   model: Readonly<OpenRouterModelResponse>
 ): AiGatewayModel => {
   const tags = deriveTags(model);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const outputMods = model.architecture?.output_modalities ?? ["text"];
 
   let type: "language" | "embedding" | "image" = "language";
@@ -94,16 +97,23 @@ const toAiGatewayModel = (
     description: model.description ?? "",
     id: model.id,
     max_tokens:
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading max_completion_tokens from model.top_provider; preserve one receiver evaluation, skipped accesses and the existing UNKNOWN_MODEL_LIMIT fallback.
       model.top_provider?.max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
     name: model.name ?? model.id,
     object: "model",
     owned_by,
     pricing: {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       image: model.pricing?.image,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input: model.pricing?.prompt,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_read from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input_cache_read: model.pricing?.input_cache_read,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_write from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input_cache_write: model.pricing?.input_cache_write,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading completion from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       output: model.pricing?.completion,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading web_search from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       web_search: model.pricing?.web_search,
     },
     // oxlint-disable-next-line eslint/no-undefined -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.

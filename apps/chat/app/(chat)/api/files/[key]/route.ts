@@ -17,6 +17,7 @@ export const GET = async (
     return new Response("Invalid file key", { status: 400 });
   }
   const principal = await resolveEvePrincipal(request.headers);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const access = await canReadEveFile(key, principal?.ownerId);
   if (!(access.allowed && access.managed)) {
     return new Response("File not found", {

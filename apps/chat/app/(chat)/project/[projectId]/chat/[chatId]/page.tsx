@@ -29,10 +29,12 @@ const ProjectChatPageRoute = async ({
     notFound();
   }
   const session = await auth.api.getSession({ headers: await headers() });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!session?.user) {
     redirect("/login");
   }
   const project = await getEveConversationProject(session.user.id, chatId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from project; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (project?.id !== projectId) {
     notFound();
   }

@@ -121,6 +121,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       return <p>Waiting for the tool.</p>;
     }
     if (value.state === "input-streaming") {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from streamingInputSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const input = streamingInputSchema?.safeParse(value.input);
       return (
         <Renderer
@@ -128,6 +129,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           tool={{
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             input: input?.success ? input.data : undefined,
             state: value.state,
           }}
@@ -176,7 +178,9 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     const parsed = envelope.safeParse(props.tool);
     const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
       (update) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from updateSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const value = updateSchema?.safeParse(update);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         return value?.success ? [value.data] : [];
       }
     );

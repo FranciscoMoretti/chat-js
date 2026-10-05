@@ -34,7 +34,9 @@ export const eveCodeSandboxName = ({
   };
 }): string => {
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public ownerId is explicitly string | undefined; missing authenticated owner must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
     (ownerId?.trim() ?? "") === "" ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public sessionId is explicitly string | undefined; absent session must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
     (sessionId?.trim() ?? "") === "" ||
     callId.trim() === "" ||
     provider.teamId.trim() === "" ||

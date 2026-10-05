@@ -344,6 +344,7 @@ const getEveChatPageConversation = async (
       ownerId,
       logical.activeConversationId
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from active; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (active?.chatId === routeId) {
       return active;
     }
@@ -434,6 +435,7 @@ class CreationConflictError extends Error {
     >
   ) {
     super(message, options);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from options; preserve one receiver evaluation, skipped accesses and the existing "creation_conflict" fallback. The app guidance prefers optional chaining.
     this.code = options?.code ?? "creation_conflict";
     this.name = "CreationConflictError";
   }
@@ -456,6 +458,7 @@ const assertCreationAvailable = (
 const boundConversation = (
   row: Readonly<Pick<ConversationRow, "id" | "state" | "sessionId">> | undefined
 ): BoundConversation | undefined => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (row?.state === "bound" && row.sessionId) {
     return { id: row.id, sessionId: row.sessionId };
   }
@@ -671,6 +674,7 @@ const reserveEveConversation = async (
             )
           )
       : [];
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (fork && !source?.sessionId) {
       throw new CreationConflictError(
         "The source conversation is not available for editing."
@@ -690,6 +694,7 @@ const reserveEveConversation = async (
             )
           )
           .limit(1);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from source; preserve one receiver evaluation, skipped accesses and the existing initialGroup?.id fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from initialGroup; preserve one receiver evaluation, skipped accesses and the existing initialGroup?.id fallback. The app guidance prefers optional chaining.
     const chatId = source?.chatId ?? initialGroup?.id ?? crypto.randomUUID();
     const [createdChat] = await tx
       .insert(eveChat)
@@ -713,10 +718,14 @@ const reserveEveConversation = async (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...value,
         chatId,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading checkpointId from fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         forkCheckpointId: fork?.checkpointId,
         forkKind: value.forkKind,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeMessageId from fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         forkMessageId: fork?.beforeMessageId,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeTurnId from fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         forkTurnId: fork?.beforeTurnId,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         parentConversationId: fork?.conversationId,
         rootConversationId: source
           ? (source.rootConversationId ?? source.id)
@@ -870,9 +879,13 @@ const matchesEveFork = (
   fork: EveForkInput | undefined,
   forkKind: typeof eveConversation.$inferSelect.forkKind
 ): boolean =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   existing.parentConversationId === (fork?.conversationId ?? null) &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeTurnId from fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   existing.forkTurnId === (fork?.beforeTurnId ?? null) &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeMessageId from fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   existing.forkMessageId === (fork?.beforeMessageId ?? null) &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading checkpointId from fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   existing.forkCheckpointId === (fork?.checkpointId ?? null) &&
   existing.forkKind === forkKind;
 /* oxlint-enable unicorn/no-null */
@@ -928,6 +941,7 @@ const bindConversationSession = async (
       )
     )
     .returning();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!bound?.sessionId) {
     const [existing] = await tx
       .select()
@@ -1067,6 +1081,7 @@ const createEveConversation = async (
       }>(
         sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${reservation.id}`}, 0)) as locked`
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!lock?.locked) {
         throw new CreationConflictError(
           "Creation is still in progress. Retry the same operation shortly.",

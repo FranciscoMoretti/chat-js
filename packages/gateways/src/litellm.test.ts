@@ -74,6 +74,7 @@ const omitsAuthorizationForUnauthenticatedProxies = async (): Promise<void> => {
       "Content-Type": "application/json",
     },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading headers from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(new Headers(init?.headers).has("Authorization")).toBe(false);
 };
 /* oxlint-enable oxc/no-async-await */

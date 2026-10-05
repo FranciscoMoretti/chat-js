@@ -284,7 +284,9 @@ const prepareEveCopyTranscript = (
 } => {
   const boundary = events.findLast((event) => COPY_BOUNDARIES.has(event.type));
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from boundary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     boundary?.type !== "session.waiting" &&
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from boundary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     boundary?.type !== "session.completed"
   ) {
     throw new EveCopyNotReadyError();
@@ -317,7 +319,7 @@ const prepareEveCopyTranscript = (
       }
       return {
         role: "assistant",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         ...(message.metadata?.modelId
           ? { modelId: message.metadata.modelId }
           : {}),
@@ -566,7 +568,8 @@ const copyAttachmentResolver = (
       ? decodeInlineAttachment(part)
       : undefined;
     const key = inline
-      ? allocations.inlineFiles?.get(inline.id)
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from allocations.inlineFiles; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        allocations.inlineFiles?.get(inline.id)
       : keyFromFileUrl(part.url);
     if (!(key && destinationKeys.has(key))) {
       throw new Error("Missing copied attachment allocation.");

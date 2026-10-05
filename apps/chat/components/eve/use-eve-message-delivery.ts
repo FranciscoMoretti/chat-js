@@ -60,9 +60,13 @@ export const useEveMessageDelivery = (sessionId: string) => {
       }
       acknowledged.current = operationId;
       pendingRef.current = null;
-      setPending((pendingMessage) =>
-        pendingMessage?.operationId === operationId ? null : pendingMessage
-      );
+      setPending((pendingMessage) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from pendingMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        if (pendingMessage?.operationId === operationId) {
+          return null;
+        }
+        return pendingMessage;
+      });
     },
     [sessionId]
   );
@@ -109,12 +113,17 @@ export const useEveMessageDelivery = (sessionId: string) => {
           sessionId,
           delivery.operationId
         );
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from pendingRef.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (pendingRef.current?.operationId === delivery.operationId) {
           pendingRef.current = null;
         }
-        setPending((current) =>
-          current?.operationId === delivery.operationId ? null : current
-        );
+        setPending((current) => {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+          if (current?.operationId === delivery.operationId) {
+            return null;
+          }
+          return current;
+        });
       },
       [sessionId]
     ),

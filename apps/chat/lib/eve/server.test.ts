@@ -35,6 +35,7 @@ describe("EVE deployment authentication", () => {
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/operation/operation");
     const headers = new Headers(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading headers from fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT]; read INIT_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.headers
     );
     expect(headers.get("x-vercel-protection-bypass")).toBe("deployment-secret");
@@ -49,6 +50,7 @@ describe("EVE deployment authentication", () => {
     vi.stubGlobal("fetch", fetcher);
     await eveRequest("owner", "/eve/chat/v1/health");
     const headers = new Headers(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading headers from fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT]; read INIT_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.headers
     );
     expect(headers.has("x-vercel-protection-bypass")).toBe(false);
@@ -61,11 +63,13 @@ it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
   await eveRequest("owner", "/eve/chat/v1/operation/recovery?kind=seed");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading URL_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetcher.mock.calls[FIRST_CALL]?.[URL_ARGUMENT]).toEqual(
     new URL(
       "https://preview.example.com/eve/chat/v1/operation/recovery?kind=seed"
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading redirect from fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT]; read INIT_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.redirect).toBe(
     "error"
   );
@@ -82,9 +86,11 @@ it("routes the real SDK directly to the named chat worker", async () => {
     );
   vi.stubGlobal("fetch", fetcher);
   await new Client(getEveConnectionOptions("owner")).health();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading URL_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetcher.mock.calls[FIRST_CALL]?.[URL_ARGUMENT]).toBe(
     "https://preview.example.com/eve/chat/v1/health"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading redirect from fetcher.mock.calls[FIRST_CALL][INIT_ARGUMENT]; read INIT_ARGUMENT from fetcher.mock.calls[FIRST_CALL]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetcher.mock.calls[FIRST_CALL]?.[INIT_ARGUMENT]?.redirect).toBe(
     "error"
   );

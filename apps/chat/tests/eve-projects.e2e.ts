@@ -118,6 +118,7 @@ test("assignment, filtered history and removal retain native identity", async ()
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
     row.sessionId
   );
@@ -163,6 +164,7 @@ test("both application checks and database constraints reject cross-owner assign
         )
       )
   ).rejects.toThrow();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -182,6 +184,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
     row.sessionId
   );
@@ -255,6 +258,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, fork.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
     ownProject
   );
@@ -301,10 +305,12 @@ test("an unresolved fork retains its project route for creation recovery", async
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(pending?.state).toBe("uncertain");
   if (!pending) {
     throw new Error("Missing unresolved fork");
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, pending.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, pending.id))?.id).toBe(
     ownProject
   );

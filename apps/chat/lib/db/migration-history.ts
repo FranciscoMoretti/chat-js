@@ -71,7 +71,9 @@ const getMigrationHistoryProblem = ({
 
   const matchesAvailablePrefix = applied.every(
     (recorded, index) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading hash from available[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       recorded.hash === available[index]?.hash &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading createdAt from available[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       recorded.createdAt === available[index]?.createdAt
   );
   return matchesAvailablePrefix

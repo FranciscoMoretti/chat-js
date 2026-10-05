@@ -71,8 +71,13 @@ const Fixture = (): React.JSX.Element => {
           Acknowledge another operation
         </button>
         <button
-          disabled={!delivery.pending?.operationId}
+          disabled={
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from delivery.pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            !delivery.pending?.operationId
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           onClick={() => {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from delivery.pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             const operationId = delivery.pending?.operationId;
             if (operationId) {
               delivery.accept(event(operationId));

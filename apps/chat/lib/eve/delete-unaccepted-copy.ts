@@ -35,6 +35,7 @@ export const deleteUnacceptedEveCopy = async (
   } catch (error) {
     // A concurrent cleanup may have completed while this caller waited on the family lock.
     const current = await getEveDeletionState(ownerId, conversationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state !== "deleted") {
       throw error;
     }

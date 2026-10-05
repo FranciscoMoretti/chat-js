@@ -118,9 +118,11 @@ const EveConversation = ({
   const model = useDefaultModel();
   const draft = useEveComposerDraft(ownerId, draftScopeId);
   const [pending, setPending] = useState(false);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onStatusChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   useEffect(() => onStatusChange?.("ready"), [onStatusChange]);
   useEffect(
     () =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onNavigationBlockedChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onNavigationBlockedChange?.(
         !draft.loaded || Boolean(draft.error) || pending
       ),
@@ -130,7 +132,11 @@ const EveConversation = ({
     <main>
       {header}
       <section className="mx-auto max-w-3xl space-y-4 p-4">
-        {comparisonPresentation?.cards}
+        {
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading cards from comparisonPresentation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          comparisonPresentation?.cards
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         <p>Selected native session: {sessionId}</p>
         <p>Follow-up model: {model}</p>
         <ComposerMenu

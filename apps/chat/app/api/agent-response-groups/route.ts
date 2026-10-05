@@ -59,6 +59,7 @@ export const POST = async (request: Request): Promise<Response> => {
       const source = result.candidates.find(
         (candidate) => candidate.state === "bound"
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (source?.state === "bound") {
         after(() =>
           persistGeneratedEveConversationTitle({

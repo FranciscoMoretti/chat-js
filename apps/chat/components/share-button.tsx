@@ -294,6 +294,7 @@ const ShareButton = ({
 } & React.ComponentProps<typeof Button>): React.JSX.Element => {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAuthenticated = Boolean(session?.user);
 
   const triggerButton = (

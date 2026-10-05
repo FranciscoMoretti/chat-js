@@ -90,6 +90,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.env.optional; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
         optionalEnv: provider.env.optional?.map(({ key }) => key) ?? [],
       }),
     },

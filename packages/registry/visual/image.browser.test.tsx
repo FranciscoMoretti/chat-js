@@ -87,6 +87,7 @@ test("image tool loading, success, and unavailable states", async () => {
       .poll(() => container.textContent)
       .toContain("Generated image unavailable");
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading complete from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       .poll(() => container.querySelector("img")?.complete)
       .toBe(true);
     const button = container.querySelector<HTMLButtonElement>("button");

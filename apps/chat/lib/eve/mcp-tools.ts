@@ -99,6 +99,7 @@ const assertConnector = (
   if (
     !(
       installedFeatures.has("mcp") &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enabled from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       connector?.enabled &&
       (connector.userId === ownerId || connector.userId === null)
     )
@@ -310,6 +311,7 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
           : {
               error: new Error(
                 `Invalid tool input: ${
+                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slice from validate.errors; preserve one receiver evaluation, skipped accesses and the existing "schema validation failed" fallback.
                   validate.errors
                     ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
                     .map(
@@ -331,7 +333,9 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling asSchema(...).validate; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   const validated = await asSchema(tool.inputSchema).validate?.(input);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from validated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (!validated?.success) {
     throw validated && !validated.success
       ? validated.error
@@ -358,6 +362,7 @@ const executeEveMcpTool = async (
   context: Pick<ToolContext, "session" | "callId" | "abortSignal" | "approval">,
   messages: readonly ModelMessage[]
 ): Promise<ReturnType<typeof eveMcpResult.parse>> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
     throw new Error("MCP tools require an authenticated owner.");
@@ -380,6 +385,7 @@ const executeEveMcpTool = async (
     // Use the current persisted connector policy, not discovered SDK metadata.
     if (
       connector.requireApproval &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responder from context.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       context.approval?.responder.principalId !== ownerId
     ) {
       throw new Error("MCP tools require an owner approval receipt.");
@@ -436,6 +442,7 @@ const requestEveMcpApproval = async (
   input: unknown,
   context: Pick<ToolContext, "session" | "abortSignal">
 ): Promise<"user-approval" | "not-applicable"> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
     throw new Error("MCP tools require an authenticated owner.");

@@ -60,6 +60,7 @@ export const POST = async (request: Request): Promise<Response> => {
   const response = await createEveConversationOperation(
     principal.ownerId,
     input.data,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reservationId from admission; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     admission?.reservationId
   );
   if (admission) {

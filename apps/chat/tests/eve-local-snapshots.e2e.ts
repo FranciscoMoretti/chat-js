@@ -152,6 +152,7 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
     );
   } finally {
     for (const vm of [sandbox, childSandbox]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading destroy from vm; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       await vm?.destroy().catch((error: unknown) => {
         if (
           !(
@@ -233,8 +234,10 @@ test("EVE checkpoint capture records real provider resources for retryable clean
       content: "at turn zero",
       path: "checkpoint.txt",
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling handle.captureForkCheckpoint; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const checkpoint = await handle.captureForkCheckpoint?.("turn_0");
     expect(checkpoint).toBeDefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading snapshotName from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (typeof checkpoint?.snapshotName !== "string") {
       throw new TypeError("EVE did not return a fork snapshot identity.");
     }
@@ -256,6 +259,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
       version: 1,
     });
     await Snapshot.get(checkpoint.snapshotName);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling handle.captureForkCheckpoint; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(await handle.captureForkCheckpoint?.("turn_0")).toEqual(checkpoint);
     await handle.session.writeTextFile({
       content: "later parent edit",
@@ -311,6 +315,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     await child.shutdown();
     await handle.shutdown();
     await fenceLocalEveSandboxMutations(appRoot, [sessionKey, childKey]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling handle.captureForkCheckpoint; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(handle.captureForkCheckpoint?.("turn_1")).rejects.toThrow(
       "pending deletion"
     );
@@ -341,6 +346,7 @@ test("EVE checkpoint capture records real provider resources for retryable clean
     }
     expect(await purgeLocalEveSandboxes(inputs)).toEqual(resources);
   } finally {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading shutdown from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await child?.shutdown();
     await handle.shutdown();
     await purgeLocalEveSandboxes(inputs);

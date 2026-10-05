@@ -275,6 +275,7 @@ it.each([
       { key: `highlight:${search}`, text },
     ]);
     const result = await searchEveConversations("alice", { search });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading excerpt from result.items.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(result.items.find((item) => item.id === chat)?.excerpt).toContain(
       excerpt
     );
@@ -299,6 +300,7 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
   `);
   const first = await searchEveConversations("pager", { search: "pagin" });
   expect(first.items).toHaveLength(20);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from first.nextCursor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(first.nextCursor?.updatedAt).toBe("2026-09-25T10:00:00.123456Z");
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where "chatId" = $1`,

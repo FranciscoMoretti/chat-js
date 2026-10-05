@@ -178,8 +178,9 @@ const CodeBlockCopyButton = ({
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyToClipboard's awaited sequencing and rejected-Promise behavior. */
   const copyToClipboard = async (): Promise<void> => {
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
+    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: This tests for a browser window; globalThis also exists during server rendering. Optional chain: Keep the existing nullish guard when reading writeText from navigator.clipboard; read clipboard from navigator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onError?.(new Error("Clipboard API not available"));
       return;
     }
@@ -187,9 +188,11 @@ const CodeBlockCopyButton = ({
     try {
       await navigator.clipboard.writeText(code);
       setIsCopied(true);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCopy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onCopy?.();
       setTimeout(() => setIsCopied(false), timeout);
     } catch (error) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };

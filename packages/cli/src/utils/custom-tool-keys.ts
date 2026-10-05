@@ -70,12 +70,14 @@ export const validateCustomToolKeys = async (
       (item: ReadonlyNative<ts.VariableDeclaration>) =>
         ts.isIdentifier(item.name) && item.name.text === "customTools"
     );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const initializer = declaration?.initializer;
   const usesCoreHelper = source.statements.some(
     (statement: ReadonlyNative<ts.Statement>) =>
       ts.isImportDeclaration(statement) &&
       ts.isStringLiteral(statement.moduleSpecifier) &&
       statement.moduleSpecifier.text === "@/lib/eve/tool-types" &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading namedBindings from statement.importClause; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       statement.importClause?.namedBindings &&
       ts.isNamedImports(statement.importClause.namedBindings) &&
       statement.importClause.namedBindings.elements.some(

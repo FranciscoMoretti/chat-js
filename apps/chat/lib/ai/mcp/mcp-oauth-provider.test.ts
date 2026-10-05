@@ -340,6 +340,7 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
     .mockResolvedValueOnce(Response.json(second));
   await client.fetch(refreshRequest("refresh-old"));
   await client.fetch(refreshRequest("refresh-first"));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pin from stored.tokens; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(stored.tokens?.pin).toBe("retained");
   stored = {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing stored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -352,6 +353,7 @@ test("multiple completed refreshes cannot overwrite a later rotation in delayed 
   };
   await client.saveTokens(first);
   await client.saveTokens(second);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading access_token from stored.tokens; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(stored.tokens?.access_token).toBe("third");
   expect(mocks.save).toHaveBeenCalledTimes(2);
   expect(await client.tokens()).toMatchObject({ access_token: "third" });

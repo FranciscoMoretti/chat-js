@@ -86,6 +86,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
   } finally {
     release.resolve(undefined);
     server.closeAllConnections();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling queue.close; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     await queue.close?.();
     await pool.query(
       "delete from graphile_worker._private_jobs where task_id in (select id from graphile_worker._private_tasks where identifier=$1)",

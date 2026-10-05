@@ -30,7 +30,9 @@ export const assertPostgresLifecycleCompatibility = async (
     select max(id) as boundary from graphile_worker.migrations
   `;
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading boundary from workflow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     workflow?.boundary !== workflowMigrationBoundary ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading boundary from graphile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     graphile?.boundary !== graphileMigrationBoundary
   ) {
     throw new Error(

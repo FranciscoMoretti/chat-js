@@ -99,6 +99,7 @@ const readProviderLiteral = async (
     .flatMap((statement) => statement.declarationList.declarations)
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
     .find((item) => item.name.getText(parsed) === name);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (!declaration?.initializer) {
     throw new Error(
       `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
@@ -180,6 +181,7 @@ const readProviderId = async (
   if (!source.trim()) {
     return;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const value = declaration?.initializer && unwrap(declaration.initializer);
   if (!value || !ts.isStringLiteralLike(value)) {
     throw new Error(
@@ -251,6 +253,7 @@ const gatewayConfigEdit = async (
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
       return undefined;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declarations.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const initializer = declarations.find(
       (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
         declaration.name.getText(parsed) === value.text

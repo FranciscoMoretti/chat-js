@@ -697,7 +697,9 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
       role: "tool",
     },
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from imported.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const tool = imported.seed.messages[1]?.parts[0];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from tool; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (tool?.type !== "dynamic-tool" || tool.state !== "output-available") {
     throw new Error("Expected settled imported tool");
   }
@@ -715,6 +717,7 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
     },
   ];
   const copied = prepareEveCopyTranscript(history(messages));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from copied.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copied.seed.messages[1]?.parts[0]).toMatchObject({
     output: "plain text",
     outputType: "text",

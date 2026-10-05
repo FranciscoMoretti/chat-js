@@ -133,7 +133,9 @@ test("copied responses regenerate with their original model after reload", async
     { times: 1 }
   );
   await regenerate.click();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from regenerated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await expect.poll(() => regenerated?.id, { timeout: 95_000 }).toBeTruthy();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from regenerated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await expect(page).toHaveURL(`${origin}/chat/${regenerated?.id}`);
   await expect(page.getByRole("log").getByText(answer)).toBeVisible({
     timeout: 45_000,

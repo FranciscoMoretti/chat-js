@@ -96,6 +96,7 @@ const contributionBinding = (
       node.moduleSpecifier.text === marker &&
       (!node.importClause || !ts.isTypeOnlyImportDeclaration(node.importClause))
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading namedBindings from imported.importClause; read importClause from imported; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const bindings = imported?.importClause?.namedBindings;
   const namedBindings =
     bindings && ts.isNamedImports(bindings) ? bindings.elements : [];
@@ -106,6 +107,7 @@ const contributionBinding = (
   if (bindings && ts.isNamespaceImport(bindings)) {
     return { binding: `${bindings.name.text}.${symbol}`, bindings, specifier };
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from specifier; preserve one receiver evaluation, skipped accesses and the existing symbol fallback.
   return { binding: specifier?.name.text ?? symbol, bindings, specifier };
 };
 interface PlannedContribution {
@@ -152,6 +154,7 @@ const planContribution = async (
         item.name.getText(parsed) === name
     );
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     !declaration?.initializer ||
     !ts.isArrayLiteralExpression(declaration.initializer)
   ) {
@@ -217,6 +220,7 @@ const planContribution = async (
       });
     } else {
       const importEnd =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading end from parsed.statements.findLast(...); preserve one receiver evaluation, skipped accesses and the existing SOURCE_START fallback.
         parsed.statements.findLast(
           (node: ReadonlyNative<ts.Statement>): boolean =>
             ts.isImportDeclaration(node) ||
@@ -400,6 +404,7 @@ const syncFeatures = async (
       "@/features/attachment-uploads/integration",
       ["attach-files", "take-photo"],
       (binding): string => `...${binding}.controls`,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       previous?.content
     );
     if (previous) {

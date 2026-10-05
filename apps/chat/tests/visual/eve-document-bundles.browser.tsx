@@ -98,9 +98,11 @@ test("installed text, code and sheet bundles render saved content", async () => 
       .poll(() => container.textContent)
       .toContain("A saved research note.");
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => container.querySelector(".cm-content")?.textContent)
       .toContain("Installed code editor");
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => container.querySelector('[role="grid"]')?.textContent)
       .toContain("Apples");
     await takeSnapshot("installed-document-bundles");
@@ -215,6 +217,7 @@ test("saved code run controls follow installed execution and retain disabled sta
       .element(page.getByRole("button", { exact: true, name: "Run" }).nth(1))
       .toBeDisabled();
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading querySelector from container.querySelectorAll(...)[2]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       container.querySelectorAll("section")[2]?.querySelector("button")
     ).toBeNull();
     await takeSnapshot("saved-code-installed-run-controls");

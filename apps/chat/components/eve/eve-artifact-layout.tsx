@@ -159,11 +159,15 @@ const EveArtifactPanel = ({
       { enabled: artifact.documentId !== "init" }
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading history from document.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   const history = document.data?.history ?? [];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from document.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const revision = document.data?.revision;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from revision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const index = history.findIndex((item) => item.id === revision?.id);
   const previewing =
     artifact.status === "streaming" && artifact.followLive !== false;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading canEdit from document.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const owned = !readOnly && document.data?.canEdit;
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onSaved's awaited sequencing and rejected-Promise behavior. */
   const onSaved = useCallback(async () => {
@@ -207,7 +211,8 @@ const EveArtifactPanel = ({
   const contentProps = {
     content: previewing
       ? artifact.content
-      : (editing.draft?.content ?? revision?.content ?? ""),
+      : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from editing.draft; preserve one receiver evaluation, skipped accesses and the existing revision?.content fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading content from revision; preserve one receiver evaluation, skipped accesses and the existing revision?.content fallback. The app guidance prefers optional chaining.
+        (editing.draft?.content ?? revision?.content ?? ""),
     currentVersionIndex: index,
     isCurrentVersion: index === history.length - 1,
     isReadonly: !editable,
@@ -226,6 +231,7 @@ const EveArtifactPanel = ({
     }
     editing.restore(revision.content, revision.title, latest.id);
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history[index - 1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const previousRevisionId = history[index - 1]?.id;
   const canCompare = Boolean(previousRevisionId && !editing.draft);
   const comparing = showChanges && canCompare;
@@ -235,6 +241,7 @@ const EveArtifactPanel = ({
     !editable ||
     Boolean(editing.draft);
   let subtitle = "Loading document…";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading createdAt from revision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (revision?.createdAt) {
     subtitle = `Updated ${formatDistanceToNow(new Date(revision.createdAt), { addSuffix: true })}`;
   }
@@ -272,7 +279,8 @@ const EveArtifactPanel = ({
               >
                 {previewing
                   ? artifact.title
-                  : (revision?.title ?? artifact.title)}
+                  : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from revision; preserve one receiver evaluation, skipped accesses and the existing artifact.title fallback. The app guidance prefers optional chaining.
+                    (revision?.title ?? artifact.title)}
               </ArtifactTitle>
               <ArtifactDescription>{subtitle} </ArtifactDescription>
             </div>
@@ -289,12 +297,19 @@ const EveArtifactPanel = ({
               nextDisabled={
                 Boolean(editing.draft) || index >= history.length - 1
               }
-              onPrevious={() => selectRevision(history[index - 1]?.id)}
+              onPrevious={() =>
+                selectRevision(
+                  /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history[index - 1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                  history[index - 1]?.id
+                  /* oxlint-enable oxc/no-optional-chaining */
+                )
+              }
               onNext={() =>
                 selectRevision(
                   index + 1 === history.length - 1
                     ? undefined
-                    : history[index + 1]?.id
+                    : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history[index + 1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+                      history[index + 1]?.id
                 )
               }
               run={
@@ -468,12 +483,15 @@ const Layout = ({
 } & DocumentActionProps) => {
   const { artifact, setArtifact } = useArtifact();
   const ownerId = artifact.conversationId ?? conversationId;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling isExecutionBusy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const busy = ownerId ? isExecutionBusy?.(ownerId) : undefined;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling getExecutionMessages; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const ownerMessages = ownerId ? getExecutionMessages?.(ownerId) : undefined;
   useEffect(() => {
     if (artifact.status !== "streaming" || !artifact.previewCallId) {
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading flatMap from ownerMessages; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const call = ownerMessages
       ?.flatMap((message) => message.parts)
       .find(
@@ -481,6 +499,7 @@ const Layout = ({
           part.type === "dynamic-tool" &&
           part.toolCallId === artifact.previewCallId
       );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from call; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (call?.type === "dynamic-tool" && call.state === "output-available") {
       const result = eveDocumentResult.safeParse(call.output);
       if (result.success) {

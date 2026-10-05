@@ -97,6 +97,7 @@ const directoryPackageManager = (cwd: string): PackageManager | undefined => {
       fs.existsSync(path.join(cwd, filename))
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading manager from lockfile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   return lockfile?.manager;
 };
 

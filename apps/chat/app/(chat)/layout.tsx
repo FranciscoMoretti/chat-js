@@ -62,7 +62,9 @@ const ChatLayoutDynamic = async ({
     ? null
     : await resolveEvePrincipal(headersRes);
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from cookieStore.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const cookieModel = cookieStore.get("chat-model")?.value;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAnonymous = !session?.user;
 
   const default_chat_model = config.ai.workflows.chat;
@@ -94,6 +96,7 @@ const ChatLayoutDynamic = async ({
     }
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from session.user; read user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (session?.user?.id) {
     const queryClient = getQueryClient();
     // "Lazy prefetch": don't await; pending queries are dehydrated + streamed.
@@ -115,8 +118,16 @@ const ChatLayoutDynamic = async ({
         <DefaultModelProvider defaultModel={defaultModel}>
           <KeyboardShortcuts />
           <EveRuntimeProvider
-            key={principal?.ownerId ?? "anonymous"}
-            ownerId={principal?.ownerId}
+            key={
+              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the existing "anonymous" fallback. The app guidance prefers optional chaining. */
+              principal?.ownerId ??
+              /* oxlint-enable oxc/no-optional-chaining */ "anonymous"
+            }
+            ownerId={
+              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+              principal?.ownerId
+              /* oxlint-enable oxc/no-optional-chaining */
+            }
           >
             {children}
           </EveRuntimeProvider>
@@ -137,6 +148,7 @@ const ChatLayout = async ({
   children: React.ReactNode;
 }): Promise<ReactJSX.Element> => {
   const cookieStore = await cookies();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from cookieStore.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   const content = (

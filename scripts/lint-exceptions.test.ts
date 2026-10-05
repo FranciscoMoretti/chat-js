@@ -135,6 +135,7 @@ test("block scope and reason cannot change even when counts or token counts stay
 
 test("astral characters before comments preserve parser offsets", () => {
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rules from readExceptions(...)[ZERO]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     readExceptions(
       'const emoji = "😀"; // oxlint-disable-line rule -- Unicode fixture.'
     )[ZERO]?.rules

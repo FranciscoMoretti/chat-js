@@ -67,7 +67,8 @@ const install = async (root: string): Promise<void> => {
         await writeFile(
           path.join(root, file),
           file === "features/mcp/chatjs.json"
-            ? JSON.stringify(mcpItem.meta?.chatjs)
+            ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from mcpItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+              JSON.stringify(mcpItem.meta?.chatjs)
             : await readFile(
                 path.resolve(
                   import.meta.dir,
@@ -198,6 +199,7 @@ test("MCP installation requires the approval schema before changing an older sca
     }))
   );
   files.push({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from mcpItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     content: JSON.stringify(mcpItem.meta?.chatjs),
     path: "mcp.json",
     target: "~/features/mcp/chatjs.json",
@@ -444,6 +446,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     }))
   );
   files.push({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from attachmentUploadsItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     content: JSON.stringify(attachmentUploadsItem.meta?.chatjs),
     path: "uploads.json",
     target: "~/features/attachment-uploads/chatjs.json",

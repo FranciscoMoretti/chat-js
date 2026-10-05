@@ -62,6 +62,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
   const { isMobile, state } = useSidebar();
   const isDesktopCollapsed = !isMobile && state === "collapsed";
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const user = session?.user;
 
   if (isPending) {
@@ -230,7 +231,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 ) {
                   // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
                   await window.signOut();
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+                  // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.syncAuthSession; read syncAuthSession from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
                   await window.electronAPI?.syncAuthSession?.();
                 } else {
                   await authClient.signOut();

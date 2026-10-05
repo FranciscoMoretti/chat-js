@@ -38,6 +38,7 @@ const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
     <DropdownMenuItem
       disabled={disabled}
       onSelect={(): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         if (!session?.user) {
           toast(loginPrompt);
           return;
@@ -76,6 +77,7 @@ const TakePhotoControl = ({ disabled, onAttach }: ComposerControlProps) => {
     <DropdownMenuItem
       disabled={disabled}
       onSelect={(): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         if (!session?.user) {
           toast(loginPrompt);
           return;

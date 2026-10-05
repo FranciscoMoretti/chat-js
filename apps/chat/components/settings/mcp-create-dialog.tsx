@@ -152,9 +152,11 @@ export const McpCreateDialog = ({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing values own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...values,
       name: values.name.trim(),
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from values.oauthClientId; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       oauthClientId: values.oauthClientId?.trim()
         ? values.oauthClientId
         : undefined,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from values.oauthClientSecret; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       oauthClientSecret: values.oauthClientSecret?.trim()
         ? values.oauthClientSecret
         : undefined,

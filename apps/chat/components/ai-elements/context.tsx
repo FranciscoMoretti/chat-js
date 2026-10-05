@@ -264,10 +264,13 @@ const ContextContentFooter = ({
   const { modelId, usage } = useContextValue();
   const costUSD =
     typeof modelId === "string" && modelId !== ""
-      ? getUsage({
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        getUsage({
           modelId,
           usage: {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading inputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
             input: usage?.inputTokens ?? 0,
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading outputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
             output: usage?.outputTokens ?? 0,
           },
         }).costUSD?.totalUSD
@@ -333,6 +336,7 @@ const ContextInputUsage = ({
   ...props
 }: ContextInputUsageProps) => {
   const { usage, modelId } = useContextValue();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading inputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
   const inputTokens = usage?.inputTokens ?? 0;
 
   if (children) {
@@ -344,7 +348,8 @@ const ContextInputUsage = ({
   }
 
   const inputCost = modelId
-    ? getUsage({
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      getUsage({
         modelId,
         usage: { input: inputTokens, output: 0 },
       }).costUSD?.totalUSD
@@ -380,6 +385,7 @@ const ContextOutputUsage = ({
   ...props
 }: ContextOutputUsageProps) => {
   const { usage, modelId } = useContextValue();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading outputTokens from usage; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
   const outputTokens = usage?.outputTokens ?? 0;
 
   if (children) {
@@ -391,7 +397,8 @@ const ContextOutputUsage = ({
   }
 
   const outputCost = modelId
-    ? getUsage({
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      getUsage({
         modelId,
         usage: { input: 0, output: outputTokens },
       }).costUSD?.totalUSD
@@ -438,7 +445,8 @@ const ContextReasoningUsage = ({
   }
 
   const reasoningCost = modelId
-    ? getUsage({
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      getUsage({
         modelId,
         usage: { reasoningTokens },
       }).costUSD?.totalUSD
@@ -485,7 +493,8 @@ const ContextCacheUsage = ({
   }
 
   const cacheCost = modelId
-    ? getUsage({
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      getUsage({
         modelId,
         usage: { cacheReads: cacheTokens, input: 0, output: 0 },
       }).costUSD?.totalUSD

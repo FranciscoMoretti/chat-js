@@ -172,9 +172,9 @@ const generateDemo = async (): Promise<Map<string, string>> => {
             ),
           }))
         );
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
+        // oxlint-disable-next-line typescript/no-unsafe-assignment, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         const metadata = item.meta?.chatjs;
-        // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
+        // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading kind from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         if (metadata?.kind === "tool" || metadata?.kind === "feature") {
           const target =
             // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
@@ -292,6 +292,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     const output = new Map(copies);
     return output;
   } finally {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stopServer; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     stopServer?.();
     await fs.rm(temporary, { force: true, recursive: true });
   }
@@ -424,6 +425,7 @@ const syncDemo = async (options: {
       ? baselineSchema.parse(JSON.parse(previous))
       : null;
   const files = [
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the existing {} fallback.
     ...new Set([...expected.keys(), ...Object.keys(record?.files ?? {})]),
   ].toSorted();
   await preflight(root, files);
@@ -442,6 +444,7 @@ const syncDemo = async (options: {
       return false;
     }
     const hash = content === null ? null : digest(content);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     return record?.files[file]
       ? hash !== record.files[file]
       : content !== null && content !== expected.get(file);

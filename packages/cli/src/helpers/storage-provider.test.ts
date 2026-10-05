@@ -49,6 +49,7 @@ describe("storage registry integration", () => {
       []
     );
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from getStorageEnvironmentRequirements(...)[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
         (option) => option.map((provider) => provider.key)
       )

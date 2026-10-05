@@ -55,8 +55,11 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
     assistant: "Because.",
     user: "Why?",
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseMetadata from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.responseMetadata).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls).toHaveLength(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from result.modelCalls; read modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls?.[0]).toMatchObject({
     modelId: "google/gemini-2.5-flash-lite",
     providerMetadata: {
@@ -64,6 +67,7 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
     },
     usage: { inputTokens: 20, outputTokens: 10 },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from result.modelCalls; read modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls?.[0].failed).toBeUndefined();
   expect(model.doGenerateCalls).toHaveLength(1);
 });

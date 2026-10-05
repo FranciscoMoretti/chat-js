@@ -359,6 +359,7 @@ test("project UI edits instructions, creates a native conversation and lists it 
                 const response = await page.request
                   .delete(url, { headers: { origin }, timeout: 30_000 })
                   .catch(() => null);
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 if (response?.status() !== 200) {
                   return null;
                 }

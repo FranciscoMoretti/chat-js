@@ -110,7 +110,7 @@ it("distinguishes content and destination in quota identity", async () => {
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop, oxc/no-rest-spread-properties -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.reserve.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }
   expect(new Set(hashes).size).toBe(3);

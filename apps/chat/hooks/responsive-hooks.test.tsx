@@ -34,6 +34,7 @@ const MountedValue = ({
   readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useMounted();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };
@@ -47,6 +48,7 @@ const MobileValue = ({
   readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useIsMobile();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };
@@ -62,6 +64,7 @@ const MediaQueryValue = ({
   readonly query: string;
 }): React.JSX.Element => {
   const value = useMediaQuery(query);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onValue; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   onValue?.(value);
   return <Value value={value} />;
 };

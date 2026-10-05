@@ -20,12 +20,14 @@ export const EveThinkingMessage = ({
   const latest = messages.at(-1);
   // Eve opens the stream before the assistant has any visible content.
   const hasContent =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     latest?.role === "assistant" &&
-    latest.parts.some((part) =>
-      part.type === "text"
-        ? Boolean(part.text.trim())
-        : part.type !== "step-start"
-    );
+    latest.parts.some((part) => {
+      if (part.type === "text") {
+        return Boolean(part.text.trim());
+      }
+      return part.type !== "step-start";
+    });
   return status === "submitted" || !hasContent ? <ThinkingMessage /> : null;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

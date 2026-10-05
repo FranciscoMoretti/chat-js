@@ -256,6 +256,7 @@ const collectToolSources = async (
         "tool"
       );
       const item = await readItem(source, targetDir);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
       if (metadata.slot !== selection.slot) {
         throw new Error(
@@ -385,6 +386,7 @@ const promptCreateSetup = async (
   const selectedTools = await Promise.all(
     toolSources.map(async (source) => {
       const item = await readItem(source, targetDir);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );

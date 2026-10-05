@@ -94,6 +94,7 @@ const extensionToLanguage: Readonly<Record<string, string>> = {
 };
 
 const getLanguageFromFileName = (fileName: string): string => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from fileName.split(...).pop(...); preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
   const extension = fileName.split(".").pop()?.toLowerCase() ?? "";
   return extensionToLanguage[extension] ?? "python";
 };

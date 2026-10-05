@@ -60,6 +60,7 @@ vi.mock("../lib/eve/server", async (importOriginal) => {
           .from(eveConversation)
           // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect raw native creation receipts to verify session identity and cross-owner replay isolation without normalizing the transport payload.
           .where(eq(eveConversation.sessionId, session.sessionId));
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (row?.state === "bound") {
           probe.beforeResponse = true;
           break;
@@ -104,11 +105,14 @@ test("real native hook binds before a lost response, and retry keeps the accepte
   expect(probe.beforeResponse).toBe(true);
   const row = await getEveCreation(owner, command.operationId);
   expect(row).toMatchObject({ initialRequest: null, state: "bound" });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.id).not.toBe(command.operationId);
   const retry = await createEveConversationOperation(owner, command);
   expect(retry.status).toBe(200);
   expect(await retry.json()).toEqual({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     id: row?.id,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     sessionId: row?.sessionId,
   });
   expect(probe.dispatches).toBe(1);

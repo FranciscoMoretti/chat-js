@@ -163,6 +163,7 @@ try {
   assert.equal(
     await page.locator("aside").evaluate((panel): boolean => {
       const viewport =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from panel.querySelector(...).parentElement; read parentElement from panel.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
       if (!viewport) {
         return false;

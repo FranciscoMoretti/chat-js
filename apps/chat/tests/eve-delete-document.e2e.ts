@@ -96,6 +96,7 @@ test("installed deleteDocument requires approval, survives reload, and honors re
         eq(eveConversation.ownerId, session.user.id)
       )
     );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from document; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!document?.sessionId) {
     throw new Error("Missing created document");
   }

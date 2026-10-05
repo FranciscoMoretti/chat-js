@@ -122,6 +122,7 @@ it("restores exact trusted inline history without an installed upload feature", 
     "owner",
     "abcdefghijklmnopqrstuvwx.png"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 2 from mocks.upload.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(new Uint8Array(mocks.upload.mock.calls[0]?.[2])).toEqual(
     new Uint8Array([1, 2, 3])
   );
@@ -157,6 +158,7 @@ it("requires owned bound history and a native user message before copying", asyn
  * typescript/strict-boolean-expressions (#610): it("rechecks file access and size and never fetches a remote history URL") intentionally keeps the existing falsy-value behavior of part; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 it("rechecks file access and size and never fetches a remote history URL", async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from mocks.messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const part = mocks.messages[0]?.parts[0];
   if (!part) {
     throw new Error("Missing native fixture");

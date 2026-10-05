@@ -70,9 +70,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     dataPart: Parameters<
       NonNullable<ThreadCallbacks<TMessage>["onData"]>
     >[typeof FIRST_PARAMETER_INDEX]
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onData; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   ): void => this.#callbacks.onData?.(dataPart);
 
   public readonly onError = (error: Readonly<Error>): void =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     this.#callbacks.onError?.(error);
 
   public readonly onFinish = (
@@ -82,6 +84,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
         NonNullable<ThreadCallbacks<TMessage>["onFinish"]>
       >[typeof FIRST_PARAMETER_INDEX]
     >
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onFinish; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   ): void => this.#callbacks.onFinish?.(event);
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onToolCall's awaited sequencing and rejected-Promise behavior. */
@@ -93,6 +96,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
       >[typeof FIRST_PARAMETER_INDEX]
     >
   ): Promise<void> => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onToolCall; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await this.#callbacks.onToolCall?.(event);
   };
   /* oxlint-enable oxc/no-async-await */
@@ -105,6 +109,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
       >[typeof FIRST_PARAMETER_INDEX]
     >
   ): Promise<boolean> =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.sendAutomaticallyWhen; preserve one receiver evaluation, skipped call arguments and the existing false fallback.
     await (this.#callbacks.sendAutomaticallyWhen?.(event) ?? false);
   /* oxlint-enable oxc/no-async-await */
   public readonly setMessages = (
@@ -112,6 +117,7 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     messages: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["setMessages"]
     >[typeof FIRST_PARAMETER_INDEX]
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setMessages from this.#thread; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   ): void => this.#thread?.setMessages(messages);
 }
 
@@ -223,12 +229,15 @@ const useSelectedController = <TMessage extends UIMessage>({
   });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
   if (
     previousExternalThread !== externalThread ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     previousThreadId !== ownOptions?.id
   ) {
     setPreviousExternalThread(externalThread);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     setPreviousThreadId(ownOptions?.id);
     setThread(externalThread ?? createOwnedThread(ownOptions, dispatchers));
   }
@@ -266,10 +275,15 @@ const useThreadController = <TMessage extends UIMessage>(
     : OMITTED_HOOK_INPUT;
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onData from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onData: ownOptions?.onData,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onError from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onError: ownOptions?.onError,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onFinish from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onFinish: ownOptions?.onFinish,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onToolCall from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onToolCall: ownOptions?.onToolCall,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sendAutomaticallyWhen from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     sendAutomaticallyWhen: ownOptions?.sendAutomaticallyWhen,
   };
   const dispatchers = useLatestDispatchers<TMessage>(callbacks);

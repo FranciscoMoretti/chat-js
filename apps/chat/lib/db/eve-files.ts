@@ -147,6 +147,7 @@ const registerEveStoredFile = async (
     .select({ ownerId: eveStoredFile.ownerId, state: eveStoredFile.state })
     .from(eveStoredFile)
     .where(eq(eveStoredFile.key, key));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from saved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (saved?.ownerId !== ownerId || saved.state !== "active") {
     throw new Error("File ownership cannot be reassigned.");
   }

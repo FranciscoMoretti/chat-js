@@ -107,6 +107,7 @@ export const planInstallation = async (
     const pending = items.get(source) ?? readItem(source, cwd);
     items.set(source, pending);
     const item = await pending;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const metadata: unknown = item.meta?.chatjs;
     validateRequestedKind(source, kind, registryMetadataKind(metadata));
     if (sources.has(source)) {
@@ -311,6 +312,7 @@ export const planInstallation = async (
   const featureIds = new Set(targetFeatures.keys());
   for (const feature of targetFeatures.values()) {
     const missing =
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from feature.requiresFeatures; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
       feature.requiresFeatures?.filter((id): boolean => !featureIds.has(id)) ??
       [];
     if (missing.length > EMPTY_DEPENDENCY_COUNT) {

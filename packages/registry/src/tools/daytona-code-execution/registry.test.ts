@@ -11,15 +11,19 @@ import { registry } from "../../../registry";
 const daytona = registry.items.find(
   (item) => item.name === "daytona-code-execution"
 );
+// oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from daytona.meta; read meta from daytona; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
 const descriptor = toolDefinitionSchema.parse(daytona?.meta?.chatjs);
 
 test("Daytona installation declares its credentials and shared executor without Vercel dependencies", () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dependencies from daytona; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(daytona?.dependencies).toContain("@daytona/sdk@0.220.0");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from daytona.dependencies; read dependencies from daytona; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     daytona?.dependencies?.some((dependency) =>
       dependency.startsWith("@vercel/")
     )
   ).toBe(false);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading registryDependencies from daytona; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(daytona?.registryDependencies).toEqual([
     "@chatjs/code-execution-ui",
     "@chatjs/code-execution-runtime",
@@ -28,6 +32,7 @@ test("Daytona installation declares its credentials and shared executor without 
   expect(descriptor.envRequirements).toEqual([
     { options: [["DAYTONA_API_KEY", "DAYTONA_ORGANIZATION_ID"]] },
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading languages from descriptor.codeExecutionCapabilities; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(descriptor.codeExecutionCapabilities?.languages).toEqual([
     "python",
     "javascript",

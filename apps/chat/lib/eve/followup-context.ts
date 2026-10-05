@@ -38,6 +38,7 @@ export const followupContext = (
     return {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...current,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Pinned EVE MessageCompletedStreamEvent declares message:string|null; scheduled-launch-delivery actually writes message:null. Empty assistant fallback is required even after event.type narrowing. The app guidance prefers optional chaining.
       assistant: event.data.message?.slice(-MAX_CONTEXT_CHARACTERS) ?? "",
     };
   }

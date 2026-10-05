@@ -36,12 +36,22 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
       <SandboxComposed
         code={code}
         language={language}
-        output={result?.message}
+        output={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+          result?.message
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         state={tool.state}
         title={title}
       />
 
-      <CodeExecutionChart value={result?.chart} />
+      <CodeExecutionChart
+        value={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading chart from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+          result?.chart
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
+      />
     </div>
   );
 };

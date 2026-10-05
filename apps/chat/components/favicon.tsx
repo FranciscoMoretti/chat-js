@@ -24,6 +24,7 @@ export const Favicon = ({
     onError={(event) => {
       const target = event.currentTarget;
       target.style.display = "none";
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading classList from target.nextElementSibling; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       target.nextElementSibling?.classList.remove("hidden");
     }}
   />

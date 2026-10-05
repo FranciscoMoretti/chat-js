@@ -44,6 +44,7 @@ export const SidebarProjects = (): ReactJSX.Element => {
       { enabled: route.type === "chat" || route.type === "projectChat" }
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from identity.data; preserve one receiver evaluation, skipped accesses and the existing identity.data?.projectId fallback. The app guidance prefers optional chaining.
   const currentProjectId = route.projectId ?? identity.data?.projectId;
 
   const createProjectMutation = useMutation(
@@ -86,6 +87,7 @@ export const SidebarProjects = (): ReactJSX.Element => {
         </SidebarMenuButton>
       </SidebarMenuItem>
       {!isLoading &&
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from projects; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         projects?.map((project) => {
           const isActive = currentProjectId === project.id;
           return (

@@ -146,9 +146,11 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       const packageMetadata: unknown = await Bun.file(
         path.join(installedPackage, "package.json")
       ).json();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chunk from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...).groups; read groups from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const indexChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
         indexSource
       )?.groups?.chunk;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chunk from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...).groups; read groups from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const reactChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
         reactSource
       )?.groups?.chunk;

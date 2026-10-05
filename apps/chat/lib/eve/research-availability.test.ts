@@ -132,6 +132,7 @@ it.each([
         tools: { deepResearch: definition, webSearch: definition },
       })
     ).rejects.toThrow("provider reached");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.doGenerateCalls[0].tools; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
     expect(names).toEqual(
       ["automatic", "selected"].includes(scenario)

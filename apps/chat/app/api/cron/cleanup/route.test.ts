@@ -87,7 +87,7 @@ test("cleanup uses EVE ownership", async () => {
   });
 
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.cleanupEve.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.cleanupEve.mock.calls[0]?.[0].getTime()).toBeLessThanOrEqual(
     Date.now() - 4 * 60 * 60 * 1000
   );

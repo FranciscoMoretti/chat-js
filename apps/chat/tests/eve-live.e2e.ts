@@ -100,6 +100,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
@@ -160,6 +161,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   for (const event of compactionUsage) {
     expect(event.meta.id.startsWith("evt_")).toBe(true);
     expect(event.data.sessionId).toBe(sessionId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(event.data.usage?.costUsd).toBeGreaterThan(0);
     // No reconciliation before this read: the authored billing hook must have
     // received and recorded the same event delivered by the public client.
@@ -167,7 +169,9 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
       .select()
       .from(eveUsage)
       .where(eq(eveUsage.eventId, event.meta.id));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from recorded; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(recorded?.sessionId).toBe(sessionId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from recorded; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(Number(recorded?.costUsd)).toBe(event.data.usage?.costUsd);
   }
   const rewind = await client.sessions.attach(sessionId).snapshot();
@@ -263,6 +267,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, id));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session");
   }
@@ -314,6 +319,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const firstStep = snapshot.events.find(
     (event) => event.type === "step.started"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from firstStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(firstStep?.data.modelId).toBe("gateway/openai/gpt-4.1-mini-fast");
   await expect(
     page.getByTestId("model-selector").filter({ visible: true })
@@ -321,6 +327,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
   const lastStep = snapshot.events.findLast(
     (event) => event.type === "step.started"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from lastStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(lastStep?.data.modelId).toBe(`gateway/${selected}`);
   expect(
     snapshot.events.filter((event) => event.type === "message.received")
@@ -335,6 +342,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
     .from(eveConversation)
     .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
     .where(eq(eveConversation.id, conversation.id));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from activeConversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(activeConversation?.updatedAt.getTime()).toBeGreaterThan(
     conversation.updatedAt.getTime()
   );

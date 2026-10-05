@@ -64,6 +64,7 @@ const createImageRequest = (
     }
   };
   /* oxlint-enable oxc/no-async-await */
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const selected = context.session.auth.current?.attributes.modelId;
   const selectedModel =
     typeof selected === "string" ? selected : ABSENT_DIAGNOSTIC_VALUE;
@@ -71,6 +72,7 @@ const createImageRequest = (
   const startMs = Date.now();
   const imageParts = attachments.filter(
     (part: Readonly<{ type: string; mediaType?: string }>): boolean =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from part.mediaType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       part.type === "file" && part.mediaType?.startsWith("image/") === true
   );
   return {

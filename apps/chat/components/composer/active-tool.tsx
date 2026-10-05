@@ -26,7 +26,9 @@ export const ActiveTool = ({
     return null;
   }
   const definition = getToolDisplay(selectedTool);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from definition; preserve one receiver evaluation, skipped accesses and the existing CircleAlert fallback. The app guidance prefers optional chaining.
   const Icon = definition?.icon ?? CircleAlert;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading shortName from definition; preserve one receiver evaluation, skipped accesses and the existing "Unavailable tool" fallback. The app guidance prefers optional chaining.
   const label = definition?.shortName ?? "Unavailable tool";
   return (
     <Button

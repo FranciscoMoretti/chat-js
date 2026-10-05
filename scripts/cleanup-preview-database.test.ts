@@ -169,6 +169,7 @@ describe("preview database cleanup", (): void => {
         "GET",
         "DELETE",
       ]);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from calls[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       expect(calls[1]?.url).toEndWith("/br-preview");
     }
   });
@@ -213,6 +214,7 @@ describe("preview database cleanup", (): void => {
         { branches: [preview], pagination: { next: "" } },
       ],
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from calls[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(calls[1]?.url).toEndWith("?cursor=next%2Fpage%3F");
     expect(result).toContain("Deleted");
   });

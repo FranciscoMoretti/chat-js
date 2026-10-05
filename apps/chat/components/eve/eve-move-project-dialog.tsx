@@ -58,6 +58,7 @@ export const EveMoveProjectDialog = ({
   );
   /* oxlint-enable oxc/no-async-await */
   const available =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from projects.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     !projectId || projects.data?.some((project) => project.id === projectId);
   return (
     <Dialog
@@ -90,11 +91,15 @@ export const EveMoveProjectDialog = ({
               Project unavailable
             </option>
           )}
-          {projects.data?.map((project): React.JSX.Element => (
-            <option key={project.id} value={project.id}>
-              {project.name}
-            </option>
-          ))}
+          {
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from projects.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            projects.data?.map((project): React.JSX.Element => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
         </select>
         {projects.isPending && <output>Loading projects…</output>}
         {projects.isError && (

@@ -111,6 +111,7 @@ const fetchBranchPage = async ({ base, cursor, headers, request }) => {
  */
 const readNextCursor = (page, seenCursors) => {
   const hasCursor = isRecord(page.pagination) && "next" in page.pagination;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading next from page.pagination; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const rawCursor = page.pagination?.next;
   if (hasCursor && !isFalsyCursor(rawCursor) && typeof rawCursor !== "string") {
     throw new Error("Invalid or repeated Neon pagination cursor.");
@@ -225,7 +226,9 @@ const hasUnchangedPullRequest = (current, original, repository) =>
   current.state === "closed" &&
   current.closed_at === original.closed_at &&
   current.head.ref === original.head.ref &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from current.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading full_name from original.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   current.head.repo?.full_name === original.head.repo?.full_name &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from current.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   current.head.repo?.full_name === `${repository.owner}/${repository.repo}`;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkPullRequestGate's awaited sequencing and rejected-Promise behavior. */
@@ -243,6 +246,7 @@ const checkPullRequestGate = async (github, repository, number) => {
   });
   if (
     pull.state !== "closed" ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from pull.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     pull.head.repo?.full_name !== `${repository.owner}/${repository.repo}`
   ) {
     return { kind: "skip", result: "Skipped open or fork pull request." };

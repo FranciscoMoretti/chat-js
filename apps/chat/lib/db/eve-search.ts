@@ -143,6 +143,7 @@ const highlightSearchExcerpt = (
       groups.push(negated);
     } else if (token[0] === ")") {
       groups.pop();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading term from token.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     } else if (!negated && token.groups?.term) {
       terms.push({
         prefix: Boolean(token.groups.prefix),

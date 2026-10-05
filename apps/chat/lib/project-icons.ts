@@ -56,6 +56,7 @@ const DEFAULT_PROJECT_ICON: ProjectIconName = "folder";
 const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
 
 const getColorValue = (name: ProjectColorName): string =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing fallbackProjectColor.value fallback. The app guidance prefers optional chaining.
   PROJECT_COLORS.find((color) => color.name === name)?.value ??
   fallbackProjectColor.value;
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON, getColorValue, PROJECT_COLOR_NAMES, PROJECT_COLORS, PROJECT_ICONS); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

@@ -281,6 +281,7 @@ it("projects the original native model without private turn identities", () => {
     },
   ]);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading metadata from messages.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     messages.find((message) => message.role === "assistant")?.metadata
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');

@@ -11,6 +11,7 @@ export const chartsFinished = (container: HTMLElement): boolean => {
   return (
     charts.length > 0 &&
     [...charts].every((element) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       getInstanceByDom(element)?.getZr().animation.isFinished()
     )
   );

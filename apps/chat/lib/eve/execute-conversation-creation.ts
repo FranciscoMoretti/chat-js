@@ -56,6 +56,7 @@ const resolveFork = async (
     return;
   }
   const source = await getEveConversation(ownerId, input.conversationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!source?.sessionId || source.state !== "bound") {
     // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return Response.json(

@@ -19,7 +19,9 @@ export const useEveAttachments = (state?: {
   const [localAttachments, setLocalAttachments] = useState<DraftAttachment[]>(
     []
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from state; preserve one receiver evaluation, skipped accesses and the existing localAttachments fallback. The app guidance prefers optional chaining.
   const attachments = state?.attachments ?? localAttachments;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setAttachments from state; preserve one receiver evaluation, skipped accesses and the existing setLocalAttachments fallback. The app guidance prefers optional chaining.
   const setAttachments = state?.setAttachments ?? setLocalAttachments;
   const behavior = attachmentUploads.useUploads({
     attachmentCount: attachments.length,

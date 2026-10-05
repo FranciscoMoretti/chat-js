@@ -28,6 +28,7 @@ describe("Eve request policy", () => {
       expect(parseSessionRequest(path, "POST")).toBeNull();
     }
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from parseSessionRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       parseSessionRequest("/eve/v1/session/a/stream", "GET")?.sessionId
     ).toBe("a");
     expect(parseSessionRequest("/eve/v1/session/a/cancel", "GET")).toBeNull();
@@ -50,6 +51,7 @@ describe("Eve request policy", () => {
   it("accepts native active-turn cancellation but rejects malformed or expanded controls", () => {
     const policy = parseSessionRequest("/eve/v1/session/a/cancel", "POST");
     for (const input of [{}, { turnId: "turn-1" }]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(policy?.schema.safeParse(input).success).toBe(true);
     }
     for (const input of [
@@ -59,16 +61,20 @@ describe("Eve request policy", () => {
       { tasks: true },
       { owner: "other" },
     ]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(policy?.schema.safeParse(input).success).toBe(false);
     }
   });
   it("rejects malformed native messages and stream cursors", () => {
     const policy = parseSessionRequest("/eve/v1/session/a", "POST");
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       policy?.schema.safeParse({ message: "hello", owner: "other" }).success
     ).toBe(false);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(policy?.schema.safeParse({ message: "  " }).success).toBe(false);
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       policy?.schema.safeParse({
         inputResponses: [{ optionId: "allow", requestId: "req" }],
       }).success
@@ -82,6 +88,7 @@ describe("Eve request policy", () => {
       expect(safeStreamQuery(new URLSearchParams(query))).toBeNull();
     }
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from safeStreamQuery(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       safeStreamQuery(
         new URLSearchParams("startIndex=0&includeTailIndex=1")
       )?.get("startIndex")
@@ -92,6 +99,7 @@ describe("Eve request policy", () => {
       "streamControlVersion=1&includeTailIndex=1",
       "startIndex=12&streamControlVersion=1&includeTailIndex=1",
     ]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from safeStreamQuery(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(safeStreamQuery(new URLSearchParams(query))?.toString()).toBe(
         query
       );

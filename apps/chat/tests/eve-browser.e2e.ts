@@ -396,6 +396,7 @@ test("unknown completed usage prevents new admission until its cost is reconcile
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
@@ -593,6 +594,7 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toBeEditable();
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
@@ -601,6 +603,7 @@ test("stalled creation releases the composer and retries the retained operation"
     expect(attempts).toHaveLength(2);
     expect(attempts[1]).toEqual(attempts[0]);
   } finally {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
   }
 });

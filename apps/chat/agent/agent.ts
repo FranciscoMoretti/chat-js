@@ -41,6 +41,7 @@ export default defineAgent({
   model: defineDynamic({
     events: {
       "step.started": async (_event, context) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const modelId = context.session.auth.current?.attributes.modelId;
         if (typeof modelId === "string") {
           selectedModel.update(() => ({ modelId }));

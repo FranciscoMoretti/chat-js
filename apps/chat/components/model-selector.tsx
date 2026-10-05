@@ -95,11 +95,13 @@ const getFeatureIcons = (model: AppModelDefinition) => {
       key: "functionCalling",
     },
     {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       condition: model.input?.image,
       config: enabled.find((feature) => feature.key === "imageInput"),
       key: "imageInput",
     },
     {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pdf from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       condition: model.input?.pdf,
       config: enabled.find((feature) => feature.key === "pdfInput"),
       key: "pdfInput",
@@ -297,6 +299,7 @@ const PureModelSelector = ({
   className?: string;
 }): ReactJSX.Element => {
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
@@ -382,18 +385,23 @@ const PureModelSelector = ({
             return model.toolCall;
           }
           case "imageInput": {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             return model.input?.image;
           }
           case "pdfInput": {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pdf from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             return model.input?.pdf;
           }
           case "audioInput": {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading audio from model.input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             return model.input?.audio;
           }
           case "imageOutput": {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             return model.output?.image;
           }
           case "audioOutput": {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading audio from model.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             return model.output?.audio;
           }
           default: {
@@ -445,18 +453,20 @@ const PureModelSelector = ({
   );
   const triggerLabel = useMemo(() => {
     if (useMultipleModels && selectedModelCount > 1) {
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       return `${selectedItem?.model.name || "Selected model"} +${selectedModelCount - 1}`;
     }
 
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     return selectedItem?.model.name || "Select model";
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
 
   const selectSingleModel = useCallback(
     (id: AppModelId) => {
       startTransition(() => {
         setOptimisticSelection(id);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onModelSelectionChangeAction?.(id);
         setOpen(false);
       });
@@ -491,6 +501,7 @@ const PureModelSelector = ({
         }
 
         setOptimisticSelection(nextSelection);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onModelSelectionChangeAction?.(nextSelection);
       });
     },
@@ -524,6 +535,7 @@ const PureModelSelector = ({
         }
 
         setOptimisticSelection(nextSelection);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onModelSelectionChangeAction?.(nextSelection);
       });
     },
@@ -538,6 +550,7 @@ const PureModelSelector = ({
         const nextSelection = buildMultiModelSelection([optimisticModelId]);
         startTransition(() => {
           setOptimisticSelection(nextSelection);
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
           onModelSelectionChangeAction?.(nextSelection);
         });
         return;
@@ -545,6 +558,7 @@ const PureModelSelector = ({
 
       startTransition(() => {
         setOptimisticSelection(optimisticModelId);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onModelSelectionChangeAction?.(optimisticModelId);
       });
     },
@@ -569,14 +583,18 @@ const PureModelSelector = ({
             )}
             <p className="inline-flex items-center gap-1.5 truncate">
               {triggerLabel}
-              {selectedItem?.model.reasoning && reasoningConfig && (
-                <span
-                  className="inline-flex shrink-0 items-center gap-1"
-                  title={reasoningConfig.description}
-                >
-                  <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
-                </span>
-              )}
+              {
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                selectedItem?.model.reasoning &&
+                  /* oxlint-enable oxc/no-optional-chaining */ reasoningConfig && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1"
+                      title={reasoningConfig.description}
+                    >
+                      <reasoningConfig.icon className="text-muted-foreground h-3 w-3" />
+                    </span>
+                  )
+              }
             </p>
           </div>
           <ChevronUpIcon

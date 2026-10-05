@@ -222,6 +222,7 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "evalite",
     "better-sqlite3",
   ]) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dependency from manifest.devDependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     delete manifest.devDependencies?.[dependency];
   }
   for (const script of [
@@ -231,8 +232,10 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "test:research:native",
     "test:tools:live",
   ]) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading script from manifest.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     delete manifest.scripts?.[script];
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   delete manifest.overrides?.evalite;
   await writeFile(packagePath, formattedScaffoldJson(manifest));
 };

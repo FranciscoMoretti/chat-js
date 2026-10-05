@@ -14,6 +14,7 @@ export const runCommand = async (
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
   const child = spawn(command, args, { cwd, stdio: "pipe" });
   const stderr: string[] = [];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading on from child.stderr; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   child.stderr?.on("data", (data) => {
     stderr.push(String(data));
   });

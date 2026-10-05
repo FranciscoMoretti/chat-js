@@ -57,20 +57,24 @@ test("sandbox code updates while streaming without switching tabs", async (): Pr
   await render("", "input-streaming");
   await render("print(53 *", "input-streaming");
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 *");
   await render("print(53 * 41244)", "input-streaming", "pyth");
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 * 41244)");
   await takeSnapshot("streaming-code");
   await render("print(53 * 41244)", "output-available");
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("print(53 * 41244)");
   await takeSnapshot("completed-code");
   await page.getByRole("tab", { name: "Output" }).click();
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     .poll(() => container.querySelector("pre code")?.textContent)
     .toBe("2185932");
 });

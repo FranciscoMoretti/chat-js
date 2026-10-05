@@ -29,6 +29,7 @@ export const fetchEveChannelFile = async (
   if (!key) {
     return null;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading auth from context.session; read session from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const auth = context?.session?.auth.current;
   if (!auth || auth.principalType === "anonymous") {
     throw new Error("Attachment resolution requires an authenticated owner.");

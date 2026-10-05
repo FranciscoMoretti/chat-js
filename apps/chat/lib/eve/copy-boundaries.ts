@@ -47,6 +47,7 @@ export const eveCopyBoundaries = (
         if (message.role !== "user") {
           return [];
         }
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const turn = nativeTurn.safeParse(message.metadata?.turnId);
         if (turn.success) {
           return [

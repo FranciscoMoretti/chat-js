@@ -135,6 +135,7 @@ export class MCPClient {
   }
 
   public get serverInfo() {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Class client is absent before connection and reset to undefined by close; serverInfo getter must remain absent then.
     return this.client?.serverInfo;
   }
 
@@ -143,6 +144,7 @@ export class MCPClient {
     oauthState?: string,
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Connect exposes an optional caller AbortSignal; omitted signal still permits shared initialization.
     abortSignal?.throwIfAborted();
     if (!this.connectPromise) {
       // oxlint-disable-next-line promise/prefer-await-to-then -- Shared initialization clears independently of any cancelled caller's wait.
@@ -379,6 +381,7 @@ export class MCPClient {
    */
   public async close(): Promise<void> {
     this.generation += 1;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Connection abort controller is optional before the first initialization; close also works before connecting.
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
     this.connectPromise = undefined;
     this.oauthProvider = this.createOAuthProvider();
@@ -387,10 +390,12 @@ export class MCPClient {
     this.authorizationUrl = undefined;
     this._status = "disconnected";
     try {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Close snapshots possibly absent class client then resets it. await client?.close() also preserves a microtask yield when no client exists; an if(client) without await would change invalidation timing.
       await client?.close();
     } catch (error) {
       log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Optional cache invalidation callback is supplied by client configuration; closing must work with no callback.
     this.invalidateCache?.();
   }
   /* oxlint-enable oxc/no-async-await */

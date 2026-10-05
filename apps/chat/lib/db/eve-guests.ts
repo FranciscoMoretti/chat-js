@@ -209,6 +209,7 @@ const rateAvailable = async (
           eq(eveGuestRate.startsAt, period.startsAt)
         )
       );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading requests from bucket; preserve one receiver evaluation, skipped accesses and the existing EMPTY_QUOTA fallback. The app guidance prefers optional chaining.
     if ((bucket?.requests ?? EMPTY_QUOTA) >= limit) {
       return false;
     }
@@ -459,6 +460,7 @@ const reserveEveGuestMessages = async <T = undefined>(
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         reservations.push({ operationId: input.operationId, ...result });
       }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling persistAdmission; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       const admission = await persistAdmission?.(tx);
       return { admission, reservations, status: "admitted" } as const;
     });

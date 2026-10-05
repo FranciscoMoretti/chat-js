@@ -48,6 +48,7 @@ test.afterEach(async ({ page }, testInfo) => {
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id.data));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (conversation?.sessionId) {
     await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
       .attach(conversation.sessionId)
@@ -169,6 +170,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   });
   expect(receipt.usage.costUsd).toBe(0);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from receipt.updates; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     receipt.updates?.some(
       (update) => ResearchUpdateSchema.parse(update).type === "writing"
     )

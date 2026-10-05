@@ -65,6 +65,7 @@ const slotReadAccess = (
   answerMatches: (nodeId, branchId, userId) => {
     const value = node(nodeId);
     return (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       value?.conversationId === branchId &&
       value.parentId === userId &&
       value.message.role === "assistant"
@@ -134,6 +135,7 @@ export const logicalResponseSlots = (
       branch.responseGroupId &&
       userId === `group:${branch.responseGroupId}:user`
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseGroupId from groupBranch; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!groupBranch?.responseGroupId) {
     return;
   }

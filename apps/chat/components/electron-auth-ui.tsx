@@ -103,7 +103,10 @@ const ElectronTransferUser = ({
     params.delete("code_challenge_method");
 
     const nextQuery = params.toString();
-    return nextQuery ? `/login?${nextQuery}` : "/login";
+    if (nextQuery) {
+      return `/login?${nextQuery}`;
+    }
+    return "/login";
   }, [query]);
 
   useEffect(() => {

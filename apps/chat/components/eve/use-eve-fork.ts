@@ -58,7 +58,9 @@ const responseModelSelection = (
 ) => {
   const modelId = responseModel(
     events,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from response.metadata; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
     response.metadata?.turnId ?? "",
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from response.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     response.metadata?.modelId
   );
   return isSelectedModelValue(modelId) ? modelId : undefined;
@@ -246,10 +248,12 @@ export const useEveFork = (
       if (pending || editingMessageId || !family.data || !boundary) {
         return;
       }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading response from editContext; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const responseSelection = editContext?.response
         ? responseModelSelection(editContext.response, editContext.events ?? [])
         : undefined;
       const editingSelection =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelSelection from editContext; preserve one receiver evaluation, skipped accesses and the existing responseSelection fallback. The app guidance prefers optional chaining.
         editContext?.modelSelection ?? responseSelection ?? selectedModel;
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
@@ -351,6 +355,7 @@ export const useEveFork = (
           },
           requestedTool
         );
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onComparisonStarted; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onComparisonStarted?.(
           operation.message,
           operation.selectedTool,

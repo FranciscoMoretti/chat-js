@@ -178,6 +178,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authenticated = await getAuthenticatedSession({
       mcpConnectorId: this.config.mcpConnectorId,
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthenticatedSession is a database lookup that can yield no authenticated session; no-row result must fall through to existing state initialization.
     if (authenticated?.serverUrl === this.config.serverUrl) {
       this.currentOAuthState = authenticated.state ?? "";
       this.cachedAuthData = authenticated;
@@ -266,6 +267,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     const clientInfo = McpOAuthClientProvider.decodeStoredCredentials(
       storedClientInformationSchema,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can return no session row; credential decoder intentionally receives undefined and returns no client information.
       authData?.clientInfo,
       "client information"
     );
@@ -308,6 +310,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // Some OAuth servers treat authorization codes as bound to client_id.
 
+    // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth cache can be absent before registration; only a cached clientInfo record should suppress duplicate client registration.
     if (this.cachedAuthData?.clientInfo) {
       return;
     }
@@ -329,6 +332,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authData = await this.getAuthData();
     return McpOAuthClientProvider.decodeStoredCredentials(
       storedTokensSchema,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can return no session row; token decoder intentionally receives undefined and returns no credentials.
       authData?.tokens,
       "tokens"
     );
@@ -343,6 +347,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const request = new Request(input, init);
     if (
       request.method !== "POST" ||
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Native Headers.get returns null when Content-Type is absent; such requests must use ordinary mcpFetch rather than the OAuth-refresh branch.
       !request.headers
         .get("content-type")
         ?.includes("application/x-www-form-urlencoded")
@@ -355,6 +360,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // Compare the cached fingerprint only; validate the latest credentials under
     // the lock so a stale malformed cache cannot prevent adopting a repaired row.
+    // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth auth cache starts absent and may have no saved token record; fingerprint observation must remain undefined so repaired latest credentials can be adopted under the lock.
     const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
     return await withMcpOAuthRefreshLock(
       this.config.mcpConnectorId,
@@ -365,10 +371,12 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         });
         const latestTokens = McpOAuthClientProvider.decodeStoredCredentials(
           storedTokensSchema,
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Latest state database query can return no row after concurrent deletion; decoder/validation must reject absent credentials rather than dereference them.
           latest?.tokens,
           "tokens"
         );
         if (
+          // oxlint-disable-next-line oxc/no-optional-chaining -- decodeStoredCredentials returns undefined for absent credentials; absent refresh_token must reject the refreshed-session reuse path before sending a refresh request.
           !latestTokens?.refresh_token ||
           !latest ||
           latest.mcpConnectorId !== this.config.mcpConnectorId ||
@@ -456,6 +464,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     }
     // If we already have a verifier for this session, keep it.
     // but the code_challenge is generated from the FIRST verifier.
+    // oxlint-disable-next-line oxc/no-optional-chaining -- OAuth cache can lack a saved codeVerifier; missing verifier must allow the existing first-save path instead of throwing.
     const existingVerifier = this.cachedAuthData?.codeVerifier;
 
     if (typeof existingVerifier === "string" && existingVerifier !== "") {
@@ -502,11 +511,13 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     const authData = await this.getAuthData();
     log.info(
       {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can yield no session row/verifier. Both logging Boolean and explicit rejection guard preserve the missing-code-verifier error rather than throwing on property access.
         hasCodeVerifier: Boolean(authData?.codeVerifier),
         state: this.currentOAuthState,
       },
       "codeVerifier called"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- getAuthData can yield no session row/verifier. Both logging Boolean and explicit rejection guard preserve the missing-code-verifier error rather than throwing on property access.
     if (!authData?.codeVerifier) {
       throw new Error("OAuth code verifier not found");
     }

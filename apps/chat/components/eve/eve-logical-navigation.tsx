@@ -68,6 +68,7 @@ const EveLogicalResponses = ({
     typeof userId === "string" && userId !== ""
       ? logicalResponseSlots(snapshot, userId)
       : undefined;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from group.slots.find(...).original; read original from group.slots.find(...); read slots from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const recoveredId = group?.slots.find((slot) => slot.operationId === pending)
     ?.original?.id;
   useEffect(() => {
@@ -89,14 +90,18 @@ const EveLogicalResponses = ({
       <EveResponseGroupCards
         candidates={group.slots.map((slot) => ({
           disabled,
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing slot.modelId fallback. The app guidance prefers optional chaining.
           modelName: getModelById(slot.modelId)?.name ?? slot.modelId,
           operationId: slot.operationId,
           state: slot.original ? "bound" : "unresolved",
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           status: snapshot.agents.get(
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branch from slot.attempt; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from slot.original; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining.
             slot.attempt?.branch.id ?? slot.original?.id ?? ""
           )?.status,
         }))}
         selectedOperationId={
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from unconfirmed; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading operationId from selectedSlot; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining.
           unconfirmed?.operationId ?? selectedSlot?.operationId ?? null
         }
         onSelect={(operationId) => {

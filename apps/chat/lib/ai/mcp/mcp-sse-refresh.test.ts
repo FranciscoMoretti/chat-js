@@ -132,6 +132,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
           "id" in message &&
           (typeof message.id === "string" || typeof message.id === "number")
         ) {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from streamController; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           streamController?.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({

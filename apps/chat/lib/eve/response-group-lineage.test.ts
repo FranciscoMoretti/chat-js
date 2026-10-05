@@ -55,11 +55,13 @@ describe("response group lineage", () => {
     const fromOtherSlot = resolveEveResponseGroupLineage("b", conversations, [
       group,
     ]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from fromOtherSlot; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(fromOtherSlot?.replacements.get("operation-a")).toEqual({
       conversationId: "a-newest",
       sessionId: "session-a-newest",
     });
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from resolveEveResponseGroupLineage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       resolveEveResponseGroupLineage("a-new", conversations, [
         group,
       ])?.replacements.get("operation-a")
@@ -106,6 +108,7 @@ describe("response group lineage", () => {
       parentConversationId: "imported",
     });
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replacements from resolveEveResponseGroupLineage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       resolveEveResponseGroupLineage(
         regenerated.id,
         [copy, candidate, regenerated],

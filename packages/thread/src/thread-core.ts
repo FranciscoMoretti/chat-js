@@ -578,8 +578,10 @@ abstract class ThreadCore<
         typeof cursorId === "string" && cursorId !== ""
           ? this.getMessage(cursorId)
           : ABSENT_MESSAGE_TARGET;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from cursorMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (cursorMessage?.role === "assistant") {
         const run = this.continueAssistant({
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the existing cursorId === this.getSnapshot().cursorId fallback.
           follow: tree?.follow ?? cursorId === this.getSnapshot().cursorId,
           messageId: cursorMessage.id,
           options: request,
@@ -589,6 +591,7 @@ abstract class ThreadCore<
       }
     }
     const run = await this.startRun({
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       follow: tree?.follow,
       from:
         tree && "from" in tree
@@ -712,6 +715,7 @@ abstract class ThreadCore<
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stop's awaited sequencing and rejected-Promise behavior. */
   public stop = async (): Promise<void> =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chat from this.getSelectedRunRecord(...); preserve one receiver evaluation, skipped accesses and the existing Promise.resolve() fallback.
     await (this.getSelectedRunRecord()?.chat.stop() ?? Promise.resolve());
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopAll's awaited sequencing and rejected-Promise behavior. */
@@ -731,6 +735,7 @@ abstract class ThreadCore<
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopRun's awaited sequencing and rejected-Promise behavior. */
   public async stopRun(runId: string): Promise<void> {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chat from this.#runs.get(...); preserve one receiver evaluation, skipped accesses and the existing Promise.resolve() fallback.
     await (this.#runs.get(runId)?.chat.stop() ?? Promise.resolve());
   }
   /* oxlint-enable oxc/no-async-await */
@@ -786,9 +791,11 @@ abstract class ThreadCore<
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing indexes own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from selectedRun; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       error: selectedRun?.error,
       messages: tree.getPath(),
       runs: runSnapshot.runs,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from selectedRun; preserve one receiver evaluation, skipped accesses and the existing "ready" fallback.
       status: selectedRun?.status ?? "ready",
       treeStatus: runSnapshot.status,
     };
@@ -934,6 +941,7 @@ abstract class ThreadCore<
       id: approvalId,
       label: "Tool approval",
       matches: (part): boolean =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from part.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         isToolLookupPart(part) && part.approval?.id === approvalId,
     });
     if (!owner) {
@@ -1165,6 +1173,7 @@ abstract class ThreadCore<
 
   private assertCanContinueAssistant(messageId: string): void {
     const existing = this.#runs.getForResponseMessage(messageId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (existing?.status === "submitted" || existing?.status === "streaming") {
       throw new Error(
         `Assistant message ${messageId} already has an active run`

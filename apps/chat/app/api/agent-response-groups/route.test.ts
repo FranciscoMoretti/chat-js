@@ -160,7 +160,7 @@ test("schedules one title generation for an initial comparison chat", async () =
 
   expect(response.status).toBe(200);
   expect(mocks.after).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.after.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await mocks.after.mock.calls[0]?.[0]();
   expect(mocks.persistTitle).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",

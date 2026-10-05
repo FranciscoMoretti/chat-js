@@ -95,12 +95,14 @@ const eveMessageDelivery = {
     if (
       event.type !== "message.received" ||
       !pending.operationId ||
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
         .operationId !== pending.operationId
     ) {
       return false;
     }
     const stored = read(storage, sessionId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (stored?.operationId === pending.operationId) {
       storage.removeItem(storageKey(sessionId));
     }
@@ -144,6 +146,7 @@ const eveMessageDelivery = {
     const current = read(storage, sessionId);
     if (
       !pending.operationId ||
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading retryable from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !current?.retryable ||
       current.operationId !== pending.operationId
     ) {
@@ -188,7 +191,8 @@ const eveMessageOperationId = (
   event: MessageStreamEvent
 ): string | undefined =>
   event.type === "message.received"
-    ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
+    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
     : undefined;
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery, eveMessageDeliveryMetadata, eveMessageOperationId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

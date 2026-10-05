@@ -557,6 +557,7 @@ export const ThreadsLaunch = ({
   const s = stateAt(t, content);
   const cursor = cursorAt(t);
   return (
+    /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading title from beats.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading subtitle from beats.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
     <AbsoluteFill
       // oxlint-disable-next-line react/forbid-component-props -- AbsoluteFill accepts className in its styling contract; preserve this caller's layout and appearance.
       className="stage"
@@ -617,6 +618,7 @@ export const ThreadsLaunch = ({
         </div>
       </Sequence>
     </AbsoluteFill>
+    /* oxlint-enable oxc/no-optional-chaining */
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

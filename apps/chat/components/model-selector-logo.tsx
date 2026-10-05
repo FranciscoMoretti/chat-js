@@ -21,6 +21,7 @@ export const ModelSelectorLogo = ({
   const { getModelById } = useChatModels();
   const provider = useMemo(() => {
     const model = getModelById(modelId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading owned_by from model; preserve one receiver evaluation, skipped accesses and the existing modelId.split("/")[0] fallback. The app guidance prefers optional chaining.
     return model?.owned_by ?? modelId.split("/")[0] ?? "";
   }, [getModelById, modelId]);
 

@@ -42,6 +42,7 @@ export const SignupForm = ({
     () => false
   );
   const { callbackURL, onRedirectToUrl, signInOptions } =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading origin from globalThis.location; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     buildSocialAuthRequest(query, globalThis.location?.origin);
   const loginHref = { pathname: "/login" as const, query };
 

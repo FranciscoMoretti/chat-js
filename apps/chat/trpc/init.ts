@@ -43,6 +43,7 @@ import { auth } from "@/lib/auth";
 const createTRPCContext = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   return {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     user: session?.user,
   };
 });

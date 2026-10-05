@@ -45,6 +45,7 @@ const responseState = (chat: PlaygroundChat, message: PlaygroundMessage) => {
   if (message.role !== "assistant") {
     return "complete";
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from chat.tree.getRunForMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const status = chat.tree.getRunForMessage(message.id)?.status;
   if (status === "streaming" || status === "submitted") {
     return status;
@@ -221,6 +222,7 @@ const Conversation = ({
   );
   useEffect((): void => {
     if (textLength && followTranscript.current) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading scrollTo from transcript.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -230,6 +232,7 @@ const Conversation = ({
   useEffect((): void => {
     followTranscript.current = true;
     if (cursorId) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading scrollTo from transcript.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       transcript.current?.scrollTo({
         behavior: "instant",
         top: transcript.current.scrollHeight,
@@ -243,8 +246,12 @@ const Conversation = ({
         <div>
           <p className="text-sm font-medium">Chat</p>
           <p className="text-muted-foreground font-mono text-[11px]">
-            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
-              ?.title ?? "Start a conversation"}
+            {
+              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from chat.tree.messagesById[chat.tree.cursorId ?? ""].metadata; read metadata from chat.tree.messagesById[chat.tree.cursorId ?? ""]; preserve one receiver evaluation, skipped accesses and the existing "Start a conversation" fallback. */
+              chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+                ?.title ??
+                /* oxlint-enable oxc/no-optional-chaining */ "Start a conversation"
+            }
           </p>
         </div>
         <span className={styles.viewingBadge}>
@@ -276,6 +283,7 @@ const Conversation = ({
               return;
             }
             const leaf = chat.tree.getLeaves(sibling.id).at(-1);
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from leaf; preserve one receiver evaluation, skipped accesses and the existing sibling.id fallback.
             chat.tree.setCursor(leaf?.id ?? sibling.id);
           };
 
@@ -369,8 +377,12 @@ const Conversation = ({
         <p className={styles.composerContext}>
           <GitBranch size={12} /> Continuing from{" "}
           <strong>
-            {chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
-              ?.title ?? "the beginning"}
+            {
+              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from chat.tree.messagesById[chat.tree.cursorId ?? ""].metadata; read metadata from chat.tree.messagesById[chat.tree.cursorId ?? ""]; preserve one receiver evaluation, skipped accesses and the existing "the beginning" fallback. */
+              chat.tree.messagesById[chat.tree.cursorId ?? ""]?.metadata
+                ?.title ??
+                /* oxlint-enable oxc/no-optional-chaining */ "the beginning"
+            }
           </strong>
         </p>
         <div className="border-border focus-within:border-foreground/40 rounded-lg border">
@@ -605,7 +617,11 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
                   ) : (
                     <span className={styles.assistantGlyph}>✦</span>
                   )}
-                  {message.metadata?.title ?? message.role}
+                  {
+                    /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from message.metadata; preserve one receiver evaluation, skipped accesses and the existing message.role fallback. */
+                    message.metadata?.title ??
+                      /* oxlint-enable oxc/no-optional-chaining */ message.role
+                  }
                 </span>
                 <span className={styles.nodePreview}>
                   {getMessageText(message) || "Waiting for first token…"}

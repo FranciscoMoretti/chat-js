@@ -94,15 +94,18 @@ test("a lost native creation reply recovers the same session from the retained c
     session.user.id,
     operation.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(reservation?.state).toBe("uncertain");
   const lookup = await eveRequest(
     session.user.id,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(lookup.status).toBe(200);
   expect(await lookup.json()).toEqual({ sessionId: nativeSessionId });
   const otherOwner = await eveRequest(
     crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(otherOwner.status).toBe(404);
@@ -125,13 +128,16 @@ test("a lost native creation reply recovers the same session from the retained c
   );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     new URL(`/chat/${reservation?.id}`, page.url()).href
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
   const bound = await getEveCreation(session.user.id, operation.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.sessionId).toBe(nativeSessionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.state).toBe("bound");
   const client = new Client(getEveConnectionOptions(session.user.id));
   const snapshot = await client.sessions
@@ -197,6 +203,7 @@ test("an unresolved project conversation recovers after its project is deleted",
     session.user.id,
     operation.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(reservation?.state).toBe("uncertain");
   const removed = await page.request.post("/api/trpc/project.remove", {
     data: { json: { id: projectId } },
@@ -211,6 +218,7 @@ test("an unresolved project conversation recovers after its project is deleted",
       pending: { ...operation, operationId: crypto.randomUUID() },
     }
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await page.goto(`/chat/${reservation?.id}`);
   const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(recovery).toContainText("does not have the original request");
@@ -278,7 +286,9 @@ test("an unresolved project conversation recovers after its project is deleted",
     { timeout: 90_000 }
   );
   const bound = await getEveCreation(session.user.id, operation.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.state).toBe("bound");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.id).toBe(reservation?.id);
   expect(
     await page.evaluate((key) => sessionStorage.getItem(key), storageKey)

@@ -49,6 +49,7 @@ for (const page of pages) {
     await loaded.promise;
 
     const source = frame.contentDocument;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading querySelector from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(source?.querySelector("main")).not.toBeNull();
 
     if (!source) {

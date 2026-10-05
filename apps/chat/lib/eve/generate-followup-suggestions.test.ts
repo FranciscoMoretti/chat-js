@@ -60,7 +60,9 @@ it("retains paid usage when structured output cannot be read", async () => {
     };
   });
   const result = await generateEveFollowupSuggestions(exchange);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseMetadata from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.responseMetadata).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls).toEqual([
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing evidence own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { modelId: mocks.feature.default, ...evidence },

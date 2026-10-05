@@ -72,12 +72,14 @@ export const McpConnectDialog = ({
   const [isRedirecting, setIsRedirecting] = useState(false);
   const attempt = useRef(0);
   useEffect(() => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (!open || !connector?.id) {
       attempt.current += 1;
     }
     return (): void => {
       attempt.current += 1;
     };
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   }, [open, connector?.id]);
   const handleClose = useCallback((): void => {
     attempt.current += 1;
@@ -89,7 +91,10 @@ export const McpConnectDialog = ({
     if (!connector) {
       return "";
     }
-    return connector.type === "http" ? getGoogleFaviconUrl(connector.url) : "";
+    if (connector.type === "http") {
+      return getGoogleFaviconUrl(connector.url);
+    }
+    return "";
   }, [connector]);
 
   const { mutate: authorize, isPending } = useMutation(
@@ -171,18 +176,18 @@ export const McpConnectDialog = ({
               )}
             </div>
             <div className="min-w-0 flex-1 overflow-hidden">
-              <DialogTitle
+              <DialogTitle /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from connector; preserve one receiver evaluation, skipped accesses and the existing "connector" fallback. */
                 // oxlint-disable-next-line react/forbid-component-props -- DialogTitle accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="truncate"
               >
                 Connect {connector?.name ?? "connector"}
-              </DialogTitle>
-              <DialogDescription
+              </DialogTitle /* oxlint-enable oxc/no-optional-chaining */>
+              <DialogDescription /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading url from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
                 // oxlint-disable-next-line react/forbid-component-props -- DialogDescription accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="truncate"
               >
                 {connector?.url ? getUrlWithoutParams(connector.url) : null}
-              </DialogDescription>
+              </DialogDescription /* oxlint-enable oxc/no-optional-chaining */>
             </div>
           </div>
         </DialogHeader>
@@ -213,11 +218,13 @@ export const McpConnectDialog = ({
               <p className="text-sm font-medium">
                 How {config.appName} uses data
               </p>
-              <p className="text-muted-foreground mt-1 text-sm">
+              <p
+                /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from connector; preserve one receiver evaluation, skipped accesses and the existing "this connector" fallback. */ className="text-muted-foreground mt-1 text-sm"
+              >
                 By default, we do not train on your data. Data from{" "}
                 {connector?.name ?? "this connector"} may be used to provide you
                 relevant and useful information.
-              </p>
+              </p /* oxlint-enable oxc/no-optional-chaining */>
             </div>
           </div>
 
@@ -242,7 +249,7 @@ export const McpConnectDialog = ({
           // oxlint-disable-next-line react/forbid-component-props -- DialogFooter accepts className in its styling contract; preserve this caller's layout and appearance.
           className="mt-4 flex-col gap-3 sm:flex-col"
         >
-          <Button
+          <Button /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from connector; preserve one receiver evaluation, skipped accesses and the existing "connector" fallback. */
             // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className="w-full"
             disabled={isPending || isRedirecting || !connector}
@@ -265,7 +272,7 @@ export const McpConnectDialog = ({
                 />
               </>
             )}
-          </Button>
+          </Button /* oxlint-enable oxc/no-optional-chaining */>
           <Button
             // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className="w-full"

@@ -27,7 +27,11 @@ const EveShareDialogContent = ({
       <ShareDialogView
         chatId={chatId}
         isPending={query.isPending || mutation.isPending || query.isError}
-        isPublic={query.data?.visibility === "public"}
+        isPublic={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading visibility from query.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          query.data?.visibility ===
+          /* oxlint-enable oxc/no-optional-chaining */ "public"
+        }
         onClose={onClose}
         setVisibility={async (visibility) => {
           await mutation.mutateAsync({ id: chatId, visibility });

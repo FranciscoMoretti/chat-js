@@ -64,6 +64,7 @@ const addImageCosts = (
   let total = initialCost;
   for (const entry of entries) {
     const price = Number(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from models.find(...).pricing; read pricing from models.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       models.find((model) => model.id === entry.modelId)?.pricing?.image
     );
     if (Number.isFinite(price) && price > NO_IMAGE_PRICE) {
@@ -169,7 +170,7 @@ class CostAccumulator {
     // Sum LLM costs (unrounded) then ceil at the end
     for (const entry of llmEntries) {
       const model = modelById.get(entry.modelId);
-      // oxlint-disable-next-line typescript/strict-boolean-expressions -- Nonempty pricing strings narrow optional catalog rates while preserving one guard read per rate and the existing getter order.
+      // oxlint-disable-next-line typescript/strict-boolean-expressions, oxc/no-optional-chaining -- Nonempty pricing strings narrow optional catalog rates while preserving one guard read per rate and the existing getter order. Optional chain: Keep the existing nullish guard when reading input from model.pricing; read pricing from model; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading output from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (model?.pricing?.input && model.pricing?.output) {
         total += calculateLLMCost(entry.usage, {
           input: model.pricing.input,

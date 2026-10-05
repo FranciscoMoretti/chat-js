@@ -23,6 +23,7 @@ import { assertEveConfigured } from "./server";
  */
 export const readPublicEveCopySource = async (id: string) => {
   const row = await getPublicEveConversation(id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!row?.sessionId) {
     throw new Error("Shared conversation is unavailable.");
   }
@@ -32,6 +33,7 @@ export const readPublicEveCopySource = async (id: string) => {
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
   const current = await getPublicEveConversation(id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (current?.sessionId !== row.sessionId || current.ownerId !== row.ownerId) {
     throw new Error("Shared conversation is unavailable.");
   }

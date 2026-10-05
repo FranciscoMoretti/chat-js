@@ -7,6 +7,7 @@ import { config } from "@/lib/config";
 
 const { appName, appPrefix, appUrl, organization } = config;
 const orgEmail =
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading privacyEmail from organization.contact; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading legalEmail from organization.contact; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   organization.contact?.privacyEmail || organization.contact?.legalEmail;
 
 const JSON_INDENTATION_SPACES = 2;

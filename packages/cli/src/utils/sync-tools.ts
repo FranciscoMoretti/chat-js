@@ -225,9 +225,11 @@ const missingPreviousRegistration = (
   ids: Set<string>,
   entries: Awaited<ReturnType<typeof readdir>>
 ): string | null => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading matchAll from previousTools; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
   for (const match of previousTools?.matchAll(
     /from "\.\/(?<id>[a-z][a-z0-9-]*)\/tool"/gu
   ) ?? []) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from match.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const id = match.groups?.id;
     if (
       !ids.has(id ?? "") &&
@@ -430,6 +432,7 @@ const validateToolDependencies = (
       (item: ReadonlyInput<Registration>): boolean =>
         registrationKey(item) === "runCodeDocument"
     ) &&
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading codeExecutorExport from executor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     !executor?.codeExecutorExport
   ) {
     throw new Error(
@@ -625,6 +628,7 @@ const syncTools = async (
           ? `import { ${composerTools
               .map((item, index) => ({
                 alias: `Icon${index}`,
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
                 icon: item.composer?.icon,
               }))
               .toSorted((left, right): number =>
@@ -633,6 +637,7 @@ const syncTools = async (
               .map((item): string => `${item.icon} as ${item.alias}`)
               .join(", ")} } from "lucide-react";\n`
           : ""
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading shortName from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );

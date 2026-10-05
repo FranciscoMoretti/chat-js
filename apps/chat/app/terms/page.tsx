@@ -67,17 +67,19 @@ const PricingSection = ({
       </p>
       <ul>
         {hasFree && (
-          <li>
+          <li /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from config.pricing.free; read free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading summary from config.pricing.free; read free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          >
             <strong>{config.pricing?.free?.name}:</strong>{" "}
             {config.pricing?.free?.summary}
-          </li>
+          </li /* oxlint-enable oxc/no-optional-chaining */>
         )}
         {hasPro && (
-          <li>
+          <li /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading monthlyPrice from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading summary from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          >
             <strong>{config.pricing?.pro?.name}:</strong> {currencySymbol}
             {config.pricing?.pro?.monthlyPrice}/month —{" "}
             {config.pricing?.pro?.summary}
-          </li>
+          </li /* oxlint-enable oxc/no-optional-chaining */>
         )}
       </ul>
       {paymentProcessors.length > 0 && (
@@ -117,13 +119,17 @@ const TermsPage = (): React.JSX.Element => {
     USD: "$",
   };
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading currency from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const currencyCode = config.pricing?.currency;
   const currencySymbol = currencyCode
     ? (currencySymbolMap[currencyCode] ?? currencyCode)
     : "";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasFree = Boolean(config.pricing?.free);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading paymentProcessors from config.services; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const paymentProcessors = Array.isArray(config.services?.paymentProcessors)
     ? config.services.paymentProcessors
     : [];

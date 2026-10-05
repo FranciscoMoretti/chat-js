@@ -130,6 +130,7 @@ const snapshotCopyCheckpoints = async (
     }
     const heads = checkpointEntries.get(key) ?? [];
     for (const head of heads) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentId from byId.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (byId.get(head.revisionId)?.documentId !== head.documentId) {
         throw new Error(
           "Published document boundary is outside accessible ancestry."

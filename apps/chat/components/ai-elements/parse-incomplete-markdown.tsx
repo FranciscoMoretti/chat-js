@@ -93,6 +93,7 @@ export const parseIncompleteMarkdown = (text: string): string => {
   }
 
   const incompleteMarker =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading marker from incompleteLinkOrImagePattern.exec(...).groups; read groups from incompleteLinkOrImagePattern.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     incompleteLinkOrImagePattern.exec(text)?.groups?.marker;
   let result =
     typeof incompleteMarker === "string" && incompleteMarker !== ""

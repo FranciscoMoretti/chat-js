@@ -316,12 +316,14 @@ export const McpDetailsPage = ({
 
   const connector = useMemo(
     () =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from connectors; preserve one receiver evaluation, skipped accesses and the existing null fallback.
       connectors?.find(
         (candidateConnector): boolean => candidateConnector.id === connectorId
       ) ?? null,
     [connectors, connectorId]
   );
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading userId from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const canEdit = connector?.userId !== null;
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: toggleEnabled }'s awaited sequencing and rejected-Promise behavior. */
@@ -332,6 +334,7 @@ export const McpDetailsPage = ({
         _newData,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update connector");
       },
@@ -342,12 +345,13 @@ export const McpDetailsPage = ({
           if (!old) {
             return old;
           }
-          return old.map((candidateConnector) =>
-            candidateConnector.id === newData.id
-              ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-                { ...candidateConnector, enabled: newData.enabled }
-              : candidateConnector
-          );
+          return old.map((candidateConnector) => {
+            if (candidateConnector.id === newData.id) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return { ...candidateConnector, enabled: newData.enabled };
+            }
+            return candidateConnector;
+          });
         });
         return { prev };
       },
@@ -377,6 +381,7 @@ export const McpDetailsPage = ({
         _data,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to uninstall connector");
       },
@@ -426,9 +431,11 @@ export const McpDetailsPage = ({
     staleTime: 30_000,
   });
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const isIncompatible = connectionStatus?.status === "incompatible";
 
   const needsOAuth =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from discoveryError.data; read data from discoveryError; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     discoveryError?.data?.code === "UNAUTHORIZED" &&
     discoveryError.message.includes("OAuth authorization");
 
@@ -663,7 +670,11 @@ export const McpDetailsPage = ({
       />
 
       <DiscoveryContent
-        connectionError={connectionStatus?.error}
+        connectionError={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+          connectionStatus?.error
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         discovery={discovery ?? null}
         discoveryError={discoveryError}
         isIncompatible={isIncompatible}

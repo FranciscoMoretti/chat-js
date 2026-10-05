@@ -76,7 +76,7 @@ const ElectronAuthOverlay = ({
                 // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
                 onClick={async () => {
                   try {
-                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+                    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
                     await window.electronAPI?.cancelAuthFlow?.();
                   } catch (error) {
                     console.error("Failed to cancel Electron auth flow", error);
@@ -156,7 +156,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
       typeof window.onUserUpdated !== "function" ||
       // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
       typeof window.onAuthError !== "function" ||
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when reading onAuthStateChanged from window.electronAPI; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       typeof window.electronAPI?.onAuthStateChanged !== "function"
     ) {
       return;
@@ -165,7 +165,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadAuthState's awaited sequencing and rejected-Promise behavior. */
     const loadAuthState = async (): Promise<void> => {
       try {
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.getAuthState; read getAuthState from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         const state = await window.electronAPI?.getAuthState?.();
         if (state) {
           setAuthState(state);
@@ -179,7 +179,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
 
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve syncAndRefresh's awaited sequencing and rejected-Promise behavior. */
     const syncAndRefresh = async (): Promise<void> => {
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.syncAuthSession; read syncAuthSession from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       await window.electronAPI?.syncAuthSession?.();
       router.refresh();
     };

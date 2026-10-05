@@ -52,6 +52,7 @@ const isAuthPage = (pathname: string): boolean =>
  */
 const getSafeReturnTo = (url: URL): string | null => {
   const returnTo = url.searchParams.get("returnTo");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from returnTo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!returnTo?.startsWith("/") || returnTo.startsWith("//")) {
     return null;
   }
@@ -82,6 +83,7 @@ export const proxy = async (req: NextRequest) => {
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isLoggedIn = Boolean(session?.user);
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);

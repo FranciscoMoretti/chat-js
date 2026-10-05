@@ -72,6 +72,7 @@ const guestRequestIpHash = (
   const header = env.VERCEL_URL
     ? "x-vercel-forwarded-for"
     : env.TRUSTED_CLIENT_IP_HEADER;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from request.headers.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const address = header ? request.headers.get(header)?.trim() : undefined;
   if (!(address && isIP(address)) || address.includes("%")) {
     throw new Error("Trusted client address is unavailable.");
@@ -147,6 +148,7 @@ const validateGuestCreation = async (
       principal.ownerId,
       input.fork.conversationId
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (source?.state !== "bound" || !source.sessionId) {
       return Response.json(
         { creationRejected: true, error: "Source conversation not found." },

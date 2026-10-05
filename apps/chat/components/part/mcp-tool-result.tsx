@@ -37,7 +37,11 @@ export const McpToolResult = ({
       <McpToolHeader
         icon={icon}
         state={part.state}
-        title={part.title ?? parsed?.toolName ?? part.toolName}
+        title={
+          part.title /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading toolName from parsed; preserve one receiver evaluation, skipped accesses and the existing parsed?.toolName fallback. The app guidance prefers optional chaining. */ ??
+          parsed?.toolName ??
+          /* oxlint-enable oxc/no-optional-chaining */ part.toolName
+        }
         type={`tool-${part.toolName}`}
       />
       <ToolContent>

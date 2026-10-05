@@ -47,6 +47,7 @@ export const authenticateDisposableGuest = async (
 } | null> => {
   const authorization = request.headers.get("authorization");
   const claims = readGuestCredential(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     authorization?.startsWith("Bearer ") ? authorization.slice(7) : null
   );
   if (!claims) {

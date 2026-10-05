@@ -43,6 +43,7 @@ export const useEveMetadataMutations = () => {
     trpc.eve.rename.mutationOptions<() => void>({
       meta: { eveMetadata: true },
       onError: (error, _input, rollback) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling rollback; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         rollback?.();
         toast.error(error.message);
       },
@@ -55,6 +56,7 @@ export const useEveMetadataMutations = () => {
     trpc.eve.pin.mutationOptions<() => void>({
       meta: { eveMetadata: true },
       onError: (error, _input, rollback) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling rollback; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         rollback?.();
         toast.error(error.message);
       },

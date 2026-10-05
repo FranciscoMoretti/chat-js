@@ -133,6 +133,7 @@ export const EveDocumentAssistantActions = ({
                   aria-label={action.label}
 
                   onClick={() => {
+                    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
                     void onAction?.(
                       documentAssistantRequest(action, documentId, revisionId)
                     );

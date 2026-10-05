@@ -107,6 +107,7 @@ export const EveHistoryList = ({
       }
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from history.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
   const pathname = usePathname();
   const route = parseChatIdFromPathname(pathname);
@@ -227,6 +228,7 @@ export const EveHistoryList = ({
                         chat={item}
                         onDelete={() => openDeletion(item)}
                         onMoveProject={
+                          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                           session?.user && item.state === "bound"
                             ? () => setMoving(item)
                             : undefined
@@ -252,10 +254,15 @@ export const EveHistoryList = ({
                 return (
                   <SidebarChatItem
                     chat={item}
-                    isActive={selectedIdentity.data?.chatId === item.id}
+                    isActive={
+                      /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from selectedIdentity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                      selectedIdentity.data?.chatId ===
+                      /* oxlint-enable oxc/no-optional-chaining */ item.id
+                    }
                     key={item.id}
                     onDelete={() => openDeletion(item)}
                     onMoveProject={
+                      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                       session?.user && item.state === "bound"
                         ? () => setMoving(item)
                         : undefined

@@ -55,6 +55,7 @@ export const insertEveConversationFixtures = (
             .from(eveConversation)
             .where(eq(eveConversation.id, conversation.parentConversationId))
         : [];
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from parent; preserve one receiver evaluation, skipped accesses and the existing parent?.chatId fallback. The app guidance prefers optional chaining.
       const chatId = requestedChatId ?? parent?.chatId ?? crypto.randomUUID();
       // oxlint-disable-next-line eslint/no-await-in-loop -- Membership requires metadata to exist before the session row.
       await tx

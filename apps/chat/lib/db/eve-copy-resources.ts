@@ -91,6 +91,7 @@ const writeEveCopyFile = async (
     if (receipt.writtenAt) {
       return receipt;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from copy.plan; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const file = copy.plan?.files.find((candidate) => candidate.key === key);
     if (copy.phase !== "preparing" || !file) {
       throw new Error("Saved copy preparation is unavailable.");

@@ -7,6 +7,7 @@ import { TRPCClientError } from "@trpc/client";
  */
 /** An intentionally cancelled transport is not an application failure. */
 export const isAbortedRequest = (result: unknown): boolean =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from result.cause; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   result instanceof TRPCClientError && result.cause?.name === "AbortError";
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */

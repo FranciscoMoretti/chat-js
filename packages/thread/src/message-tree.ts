@@ -217,6 +217,7 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public setPath(messages: readonly Readonly<TMessage>[]): void {
     this.updatePath(messages);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the existing ROOT_PARENT_ID fallback.
     this.#cursorId = messages.at(LAST_PATH_INDEX)?.id ?? ROOT_PARENT_ID;
   }
 

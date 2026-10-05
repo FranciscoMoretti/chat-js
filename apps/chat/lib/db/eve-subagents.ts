@@ -67,7 +67,9 @@ const registerEveSubagent = async (
   const parent = root
     ? undefined
     : await getEveSubagent(ownerId, parentSessionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading conversationId from parent; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining.
   const conversationId = root?.id ?? parent?.conversationId;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const rootTurnId = root ? parentTurnId : parent?.rootTurnId;
   if (!conversationId || !rootTurnId || sessionId === parentSessionId) {
     throw new Error("Native child has no owned parent conversation.");

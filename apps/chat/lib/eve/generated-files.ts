@@ -36,6 +36,7 @@ export const eveGeneratedFileUploader =
       throw new Error("Generated files require a native session.");
     }
     const scope = await resolveEveConversationScope(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       context.session.auth.initiator?.principalId,
       context.session.id,
       context.abortSignal

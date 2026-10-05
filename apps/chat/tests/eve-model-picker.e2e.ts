@@ -101,7 +101,9 @@ test("the single-model picker dispatches and retains the selected native model",
       })
       .from(eveConversation)
       .where(eq(eveConversation.id, conversationId));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialModelId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(conversation?.initialModelId).toBe(modelId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!conversation?.sessionId) {
       throw new Error("Missing native session binding.");
     }
@@ -118,6 +120,7 @@ test("the single-model picker dispatches and retains the selected native model",
     const modelStep = snapshot.events.find(
       (event) => event.type === "step.started"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from modelStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);
     await page.reload();
     await expect(picker).toContainText(modelName);

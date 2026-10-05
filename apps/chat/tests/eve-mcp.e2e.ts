@@ -101,6 +101,7 @@ async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
           break;
         }
         case "tools/call": {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           if (rpc.params?.name !== "read_token") {
             throw new Error("Unknown fixture tool");
           }
@@ -210,6 +211,7 @@ test("composer connector controls persist and fence native tool execution", asyn
           .select({ enabled: mcpConnector.enabled })
           .from(mcpConnector)
           .where(eq(mcpConnector.id, id));
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enabled from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         return connector?.enabled;
       })
       .toBe(false);
@@ -378,6 +380,7 @@ test("native MCP executes and its saved result survives connector removal and re
       let connectorRequests = 0;
       publicPage.on("request", (request) => {
         const procedures =
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from decodeURIComponent(...).split(...)[1]; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
           decodeURIComponent(new URL(request.url()).pathname)
             .split("/api/trpc/")[1]
             ?.split(",") ?? [];

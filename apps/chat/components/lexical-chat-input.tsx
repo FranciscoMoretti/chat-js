@@ -158,6 +158,7 @@ const LexicalChatInput = ({
   const [editor, setEditor] = useState<LexicalEditor | null>(null);
 
   useEffect(() => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setEditable from editor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     editor?.setEditable(!readOnly);
   }, [editor, readOnly]);
 

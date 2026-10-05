@@ -41,10 +41,12 @@ const modelSelectionIds = (
   retained: string | undefined,
   selection: Parameters<typeof expandSelectedModelValue>[0] | undefined,
   selected: Parameters<typeof expandSelectedModelValue>[0]
-) =>
-  typeof retained === "string" && retained !== ""
-    ? [retained]
-    : expandSelectedModelValue(selection ?? selected);
+) => {
+  if (typeof retained === "string" && retained !== "") {
+    return [retained];
+  }
+  return expandSelectedModelValue(selection ?? selected);
+};
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- unsupportedAttachments: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including files: DraftAttachment[]); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including model?.input.pdf). */
@@ -54,11 +56,14 @@ const unsupportedAttachments = (
   files: DraftAttachment[]
 ): boolean =>
   models.some((model) =>
-    files.some((file) =>
-      file.contentType === "application/pdf"
-        ? !model?.input.pdf
-        : !model?.input.image
-    )
+    files.some((file) => {
+      if (file.contentType === "application/pdf") {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input from model; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        return !model?.input.pdf;
+      }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input from model; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      return !model?.input.image;
+    })
   );
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
@@ -93,6 +98,7 @@ export const EveComposer = ({
   const { getModelById } = useChatModels();
   const models = modelSelectionIds(
     retainedModelId,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from modelSelection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     modelSelection?.value,
     selected
   ).map((modelId) => getModelById(modelId));
@@ -106,17 +112,22 @@ export const EveComposer = ({
       current.filter((file) => file.url !== attachment.url)
     );
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling files.composer; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const uploads = files.composer?.(Boolean(uploadLocked));
   return (
     <div
       {...{
         "aria-label": "Message composer",
         role: "group",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing uploads?.rootProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Keep the existing uploads?.rootProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Optional chain: Keep the existing nullish guard when reading rootProps from uploads; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         ...uploads?.rootProps,
       }}
     >
-      {uploads?.input}
+      {
+        /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading input from uploads; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+        uploads?.input
+        /* oxlint-enable oxc/no-optional-chaining */
+      }
       <ControlledChatComposer
         {...props}
         attachments={
@@ -133,10 +144,17 @@ export const EveComposer = ({
           <>
             <ComposerMenu
               disabled={uploadLocked}
-              selectedModelId={models[0]?.id ?? ""}
+              selectedModelId={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from models[0]; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining. */
+                models[0]?.id ?? /* oxlint-enable oxc/no-optional-chaining */ ""
+              }
               selectedTool={selectedTool}
               onToolChange={onToolChange}
-              onAttach={uploads?.onAttach ?? uploadsOmitted}
+              onAttach={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading onAttach from uploads; preserve one receiver evaluation, skipped accesses and the existing uploadsOmitted fallback. The app guidance prefers optional chaining. */
+                uploads?.onAttach ??
+                /* oxlint-enable oxc/no-optional-chaining */ uploadsOmitted
+              }
             />
             <ActiveTool
               selectedTool={selectedTool}

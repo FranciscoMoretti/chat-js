@@ -25,6 +25,7 @@ export const EveToolResult = ({
     part.state === "output-available"
       ? toolOutputSchema.safeParse(part.output)
       : null;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from platformOutput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (platformOutput?.success && platformOutput.data.status === "error") {
     return createElement(Renderer, {
       isReadonly,
@@ -38,6 +39,7 @@ export const EveToolResult = ({
       },
     });
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from platformOutput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const tool = platformOutput?.success
     ? {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.

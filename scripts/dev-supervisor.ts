@@ -46,6 +46,7 @@ const hasChildProcessId = (pid: number | undefined): pid is number =>
 /* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const trackChildren = (): void => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const childPid = child?.pid;
   if (!hasChildProcessId(childPid)) {
     return;

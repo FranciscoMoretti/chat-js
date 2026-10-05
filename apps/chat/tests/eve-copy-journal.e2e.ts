@@ -346,6 +346,7 @@ test("cannot accept or expose a native seed before file and document receipts co
     ctx.input.plan.seed
   );
   const unplanned = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading copy from unplanned; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(unplanned?.copy.plan).toBeNull();
 });
 /* oxlint-enable oxc/no-async-await */
@@ -418,6 +419,7 @@ test("accepted copies recover after source revocation and a lost native reply, t
     })
   ).rejects.toThrow("Lost native");
   const uncertain = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversation from uncertain; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(uncertain?.conversation.state).toBe("uncertain");
   expect(
     await resolveAcceptedEveCopySeed(ownerId, ctx.saved.conversation.id)
@@ -440,6 +442,7 @@ test("accepted copies recover after source revocation and a lost native reply, t
     ctx.saved.conversation.id,
   ]);
   const journal = await getEveCopyOperation(ownerId, ctx.input.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading copy from journal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(journal?.copy).toMatchObject({
     phase: "bound",
     plan: null,

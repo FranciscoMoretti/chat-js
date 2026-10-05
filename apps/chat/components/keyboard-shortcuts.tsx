@@ -46,7 +46,10 @@ const getNewChatShortcutText = () => {
   }
 
   const isMac = navigator.platform.toUpperCase().includes("MAC");
-  return isMac ? "Cmd+Shift+O" : "Ctrl+Shift+O";
+  if (isMac) {
+    return "Cmd+Shift+O";
+  }
+  return "Ctrl+Shift+O";
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getNewChatShortcutText, KeyboardShortcuts); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

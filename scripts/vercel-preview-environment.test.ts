@@ -148,6 +148,7 @@ it("accepts equivalent default ports and percent-encoded credentials", () => {
     "%70review:%73ecret"
   ).replace("/neondb", ":5432/neondb");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading DATABASE_MIGRATION_URL from resolveMaintainerPreviewDatabase(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     resolveMaintainerPreviewDatabase({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...preview,

@@ -31,8 +31,10 @@ export const resolveGateway = async (
   if (item.type !== "registry:item") {
     throw new Error("Selected gateway must have type registry:item.");
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const definition = gatewayDefinitionSchema.parse(item.meta?.chatjs);
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from item.files; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     item.files?.some(
       (file: Readonly<RegistryFile>) => file.target === "~/lib/ai/gateway.ts"
     ) !== true

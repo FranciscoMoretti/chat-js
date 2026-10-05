@@ -29,9 +29,10 @@ it("aborts a stalled creation without resending or changing its operation", asyn
     (_url: string, init: RequestInit) =>
       // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
       new Promise<Response>((_resolve, reject) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         init.signal?.addEventListener(
           "abort",
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error.
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors, oxc/no-optional-chaining -- #603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error. Optional chain: Keep the existing nullish guard when reading reason from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           () => reject(init.signal?.reason),
           { once: true }
         );
@@ -44,6 +45,7 @@ it("aborts a stalled creation without resending or changing its operation", asyn
   await vi.advanceTimersByTimeAsync(30_000);
   await result;
   expect(fetchMock).toHaveBeenCalledTimes(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from fetchMock.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetchMock.mock.calls[0]?.[1].body).toBe(JSON.stringify(operation));
 });
 /* oxlint-enable oxc/no-async-await */

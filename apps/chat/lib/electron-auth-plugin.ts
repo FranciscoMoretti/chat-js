@@ -32,6 +32,7 @@ const electronAuthPlugin = {
     const expectedOrigin = `${ELECTRON_APP_SCHEME}:/`;
     if (
       (electronOrigin !== null && electronOrigin !== expectedOrigin) ||
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from origin; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       (origin?.startsWith(`${ELECTRON_APP_SCHEME}:`) === true &&
         origin !== expectedOrigin)
     ) {

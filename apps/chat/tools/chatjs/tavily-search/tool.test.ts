@@ -76,6 +76,7 @@ test("native search streams sources and seals a final cost receipt", async () =>
     status: "success",
     usage: { costUsd: 0.05 },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from results.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(results.at(-1)?.updates).toContainEqual(
     expect.objectContaining({
       results: [expect.objectContaining({ source: "web", title: "Source" })],

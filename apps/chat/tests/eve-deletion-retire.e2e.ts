@@ -116,7 +116,9 @@ test("internal retirement settles usage after access revocation and is retryable
     turnIndex: 0,
   });
   const family = await retireEveFamilyForDeletion(owner, binding.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.rootId).toBe(identity.chatId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversations from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.conversations).toEqual([
     { id: binding.id, sessionId: binding.sessionId },
   ]);
@@ -141,6 +143,7 @@ test("internal retirement settles usage after access revocation and is retryable
     .where(eq(userCredit.userId, owner));
   expect(after.credits).toBe(before.credits);
   const prepared = await prepareEveFamilyDeletion(owner, binding.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading runIds from prepared; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(prepared?.runIds).toContain(binding.sessionId);
   expect(await prepareEveFamilyDeletion(owner, binding.id)).toEqual(prepared);
   const purgeResources = async () => {

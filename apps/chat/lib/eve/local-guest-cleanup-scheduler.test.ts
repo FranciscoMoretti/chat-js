@@ -42,6 +42,7 @@ beforeEach(() => {
  * no-undefined (#519): afterEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
 afterEach(() => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   stop = undefined;
   vi.useRealTimers();
@@ -67,6 +68,7 @@ test("startup is singleton and sweeps never overlap", async () => {
   expect(mocks.cleanup).toHaveBeenCalledWith(process.cwd());
   await vi.advanceTimersByTimeAsync(180_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   expect(startLocalEveGuestCleanup()).toBe(stop);
   await vi.advanceTimersByTimeAsync(60_000);
@@ -74,6 +76,7 @@ test("startup is singleton and sweeps never overlap", async () => {
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   await vi.advanceTimersByTimeAsync(120_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
@@ -142,6 +145,7 @@ test("a failed sweep retries later and stopping in flight prevents rescheduling"
     return { deletedCount: 0, pendingCount: 0 };
   });
   await vi.advanceTimersByTimeAsync(60_000);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(120_000);

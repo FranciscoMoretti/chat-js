@@ -42,6 +42,7 @@ export const purgeEveFamilyCodeSandboxes = async (
     return;
   }
   const capability = getCodeSandboxCleanup(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     Object.entries(tools).find(([name]) => name === "codeExecution")?.[1]
   );
   if (!capability) {

@@ -57,6 +57,7 @@ const Suggestion = ({
   ...props
 }: SuggestionProps): ReactJSX.Element => {
   const handleClick = (): void => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onClick?.(suggestion);
   };
 

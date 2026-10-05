@@ -119,7 +119,9 @@ test("menu portal groups and submenu preserve callbacks and refs", async () => {
     </>
   );
   try {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dataset from navRef.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(navRef.current?.dataset.contract).toBe("nav");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from menuRef.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(menuRef.current?.textContent).toBe("Wrapper menu");
     await act(() =>
       page.getByRole("navigation", { name: "Forwarded breadcrumb" }).click()
@@ -239,7 +241,9 @@ test("close callbacks hover content and separate popover anchor are forwarded", 
     expect(anchor).not.toBeNull();
     expect(content).not.toBeNull();
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getBoundingClientRect from content; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => content?.getBoundingClientRect().top)
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getBoundingClientRect from anchor; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
       .toBeGreaterThanOrEqual(anchor?.getBoundingClientRect().bottom ?? 0);
     await takeSnapshot("primitives-hover-separate-anchor");
     await act(() => userEvent.keyboard("{Escape}"));

@@ -328,7 +328,9 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   await expect(dialog.getByRole("option")).toHaveCount(8);
   await expect(dialog.locator('[data-slot="skeleton"]')).toHaveCount(0);
   const after = await dialog.boundingBox();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading height from after; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading height from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(after?.height).toBe(before?.height);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading y from after; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading y from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(after?.y).toBe(before?.y);
   await expect(
     dialog.getByText("Search across your conversations")

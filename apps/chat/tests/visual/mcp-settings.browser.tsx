@@ -502,6 +502,7 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await expect
       .poll(
         () =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dataset from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
             .mounted
       )
@@ -534,6 +535,7 @@ test("invalid authorization links keep the dialog open and display an error", as
     await expect
       .poll(
         () =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dataset from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
             .mounted
       )

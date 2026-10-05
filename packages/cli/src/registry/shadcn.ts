@@ -61,6 +61,7 @@ const listTools = async (
   );
   return catalog.items.filter(
     (item: Readonly<{ meta?: Readonly<Record<string, unknown>> }>): boolean => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const chatjs = item.meta?.chatjs;
       return (
         typeof chatjs === "object" &&

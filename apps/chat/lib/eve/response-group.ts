@@ -53,7 +53,9 @@ export const createEveResponseGroup = async (
 ) => {
   const input = eveResponseGroupInput.parse(value);
   const group =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading group from guestAdmission; preserve one receiver evaluation, skipped accesses and the existing (await reserveEveResponseGroup(ownerId, input)) fallback. The app guidance prefers optional chaining.
     guestAdmission?.group ?? (await reserveEveResponseGroup(ownerId, input));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reservations from guestAdmission; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const guestReservations = guestAdmission?.reservations;
   const dispatch = async (
     candidate: (typeof group.candidates)[number],
@@ -66,6 +68,7 @@ export const createEveResponseGroup = async (
         group.id,
         candidate.operationId
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from guestReservations; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const guestReservation = guestReservations?.find(
         (entry) => entry.operationId === candidate.operationId
       );
@@ -79,6 +82,7 @@ export const createEveResponseGroup = async (
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (fork ? { fork, forkKind } : { projectId: input.projectId }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
           ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
         },
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reservationId from guestReservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         guestReservation?.reservationId
       );
       let released: boolean | undefined;

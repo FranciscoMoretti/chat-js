@@ -70,6 +70,7 @@ test("renders stable disabled generating cards from the durable comparison reque
   });
 
   try {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
     const buttons = renderer?.root.findAllByType("button") ?? [];
     expect(buttons).toHaveLength(2);
     // oxlint-disable-next-line typescript/no-unsafe-return -- #598: This eve-optimistic-response-group fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -77,13 +78,14 @@ test("renders stable disabled generating cards from the durable comparison reque
       true,
       true,
     ]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toJSON from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const output = JSON.stringify(renderer?.toJSON());
     expect(output).toContain("Compare this request");
     expect(output).toContain("First model");
     expect(output).toContain("Second model");
     expect(output.match(/Generating\.\.\./gu)).toHaveLength(2);
   } finally {
-    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     act(() => renderer?.unmount());
   }
 });

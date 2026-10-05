@@ -17,19 +17,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 /* oxlint-disable no-magic-numbers -- highlightedExcerpt: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1);  */
 
 const highlightedExcerpt = (excerpt: string): (React.JSX.Element | string)[] =>
-  excerpt.split(/(?<match>⟦[^⟧]*⟧)/u).map((part, index) =>
-    part.startsWith("⟦") && part.endsWith("⟧") ? (
-      <mark
-        className="text-foreground bg-transparent font-medium"
-        // oxlint-disable-next-line react/no-array-index-key -- #551: Repeated matched text needs its offset in this excerpt; marks have no component state.
-        key={`${index}:${part}`}
-      >
-        {part.slice(1, -1)}
-      </mark>
-    ) : (
-      part
-    )
-  );
+  excerpt.split(/(?<match>⟦[^⟧]*⟧)/u).map((part, index) => {
+    if (part.startsWith("⟦") && part.endsWith("⟧")) {
+      return (
+        <mark
+          className="text-foreground bg-transparent font-medium"
+          // oxlint-disable-next-line react/no-array-index-key -- #551: Repeated matched text needs its offset in this excerpt; marks have no component state.
+          key={`${index}:${part}`}
+        >
+          {part.slice(1, -1)}
+        </mark>
+      );
+    }
+    return part;
+  });
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveSearchResultsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- EveSearchResultsView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable no-magic-numbers */
@@ -105,6 +106,7 @@ export const EveSearchResultsView = ({
                 size="sm"
                 onClick={() => {
                   onQueryChange("");
+                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from inputRef.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                   inputRef.current?.focus();
                 }}
               >

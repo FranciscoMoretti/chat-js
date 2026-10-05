@@ -205,6 +205,7 @@ const assertSynced = async (
   copyFn: (dest: string) => Promise<void>
 ): Promise<boolean> => {
   const templateStats = await stat(actualDir).catch(() => null);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isDirectory from templateStats; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (templateStats?.isDirectory() !== true) {
     console.error(
       `${label}: template folder missing. Run \`bun template:sync\`.`

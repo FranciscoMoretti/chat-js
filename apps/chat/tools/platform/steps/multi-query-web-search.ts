@@ -53,6 +53,7 @@ const multiQueryWebSearchStep = async ({
   const updateId = generateUUID();
   try {
     // Send initial annotation showing all queries being executed
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),
@@ -85,6 +86,7 @@ const multiQueryWebSearchStep = async ({
     const allResults = deduplicateByDomainAndUrl(
       searchResults.flatMap((searchResult) => searchResult.results)
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),
@@ -111,6 +113,7 @@ const multiQueryWebSearchStep = async ({
       error instanceof Error ? error.message : "Unknown error occurred";
 
     // Send error annotation
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),

@@ -349,6 +349,7 @@ const complete = async (
   const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${id} and owner=${owner}`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading owner from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (checkpoint?.owner !== owner) {
     throw new Error("not owned");
   }
@@ -363,12 +364,14 @@ const complete = async (
     await provider.capture(id, checkpoint.sandbox);
     // Snapshot stops the original VM. Reopen parent before releasing admission.
     await provider.restore(id, `parent:${id}`);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling afterRestore; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     afterRestore?.();
     await sql.begin(async (tx) => {
       const ownedBranchRecord = await ownedBranch(tx, owner, source);
       const [current] = await tx<
         Checkpoint[]
       >`select * from checkpoint where id=${id} for update`;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (current?.status === "ready") {
         return;
       }
@@ -400,6 +403,7 @@ const fork = async (
   const [checkpoint] = await sql<
     Checkpoint[]
   >`select * from checkpoint where id=${input.checkpoint} and owner=${input.owner} and status='ready'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (checkpoint?.status !== "ready") {
     throw new Error("checkpoint not ready or not owned");
   }
@@ -415,6 +419,7 @@ const fork = async (
       { owner: string; checkpoint: string; deleted: boolean }[]
     >`select owner,checkpoint,deleted from child_request where id=${input.child} for update`;
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading owner from request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       request?.owner !== input.owner ||
       request.checkpoint !== checkpoint.id ||
       request.deleted
@@ -429,6 +434,7 @@ const fork = async (
     const [request] = await tx<
       { deleted: boolean }[]
     >`select deleted from child_request where id=${input.child} for update`;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading deleted from request; preserve one receiver evaluation, skipped accesses and the existing true fallback.
     if (request?.deleted ?? true) {
       throw new Error("child deleted");
     }

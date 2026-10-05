@@ -23,6 +23,7 @@ const defaultsFor = (
 ): ReadonlyInput<GatewayDefinition["defaults"]> => {
   const defaults =
     input.gatewayDefaults ??
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading meta from builtInGateways.find(...); preserve one receiver evaluation, skipped accesses and the existing builtInGateways.find(       (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>         item.meta.chatjs.id === input.gateway     )?.meta.chatjs.defaults fallback.
     builtInGateways.find(
       (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
         item.meta.chatjs.id === input.gateway

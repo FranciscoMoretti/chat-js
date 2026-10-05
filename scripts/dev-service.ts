@@ -99,6 +99,7 @@ const createContext = (): ServiceContext => {
     .digest("hex")
     .slice(HASH_PREFIX_START, SERVICE_ID_LENGTH);
   const label = `com.chatjs.dev.${id}`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling process.getuid; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   const target = `gui/${process.getuid?.()}`;
   const plist = nodePath.join(
     homedir(),
@@ -172,6 +173,7 @@ const checkNodeVersion = async (
 ): Promise<string> => {
   const output = await operations.run("node", NODE_VERSION_COMMAND);
   const [node, version] = output.trim().split("\n");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from version; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const major = Number(version?.split(".")[MAJOR_VERSION_SEGMENT_INDEX]);
   if (!node || !Number.isInteger(major) || major < MIN_NODE_MAJOR_VERSION) {
     throw new Error(

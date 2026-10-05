@@ -29,6 +29,7 @@ export const installedToolAvailabilityMiddleware = (
       Promise.resolve({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing params own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...params,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- AI middleware params.tools is an optional capability list; omit/filter only when supplied, preserving the undefined tools result and synchronous filter failures. The app guidance prefers optional chaining.
         tools: params.tools?.filter((tool) => !unavailable.has(tool.name)),
       }),
   };

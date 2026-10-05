@@ -34,6 +34,7 @@ export const ComposerMenu = (
 ): ReactJSX.Element | null => {
   const mobile = useIsMobile();
   const controls = composerControls.filter(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling Component.isAvailable; preserve one receiver evaluation, skipped call arguments and the existing true fallback. The app guidance prefers optional chaining.
     ({ Component }) => Component.isAvailable?.(mobile) ?? true
   );
   if (controls.length === 0 && !props.selectedTool) {
@@ -66,8 +67,11 @@ export const ComposerMenu = (
                 onSelect={() => props.onToolChange(null)}
               >
                 Clear{" "}
-                {getToolDisplay(props.selectedTool)?.shortName ??
-                  "unavailable tool"}
+                {
+                  /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading shortName from getToolDisplay(...); preserve one receiver evaluation, skipped accesses and the existing "unavailable tool" fallback. The app guidance prefers optional chaining. */
+                  getToolDisplay(props.selectedTool)?.shortName ??
+                    /* oxlint-enable oxc/no-optional-chaining */ "unavailable tool"
+                }
               </DropdownMenuItem>
             </>
           )}

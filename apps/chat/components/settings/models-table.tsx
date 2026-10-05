@@ -46,6 +46,7 @@ export const ModelsTable = ({
         _newData,
         context: { prev: typeof preferences } | undefined
       ) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update model preference");
       },
@@ -122,6 +123,7 @@ export const ModelsTable = ({
     return sortedModels.filter(
       (model) =>
         model.name.toLowerCase().includes(query) ||
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from model.owned_by; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         model.owned_by?.toLowerCase().includes(query) ||
         model.id.toLowerCase().includes(query)
     );

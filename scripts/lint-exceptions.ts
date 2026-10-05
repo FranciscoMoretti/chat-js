@@ -96,6 +96,7 @@ const readDirectives = (
         /^\s*(?<engine>eslint|oxlint)-(?<kind>disable(?:-next-line|-line)?|enable)\b(?<body>[\s\S]*)$/u.exec(
           comment
         );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from match; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (match?.groups) {
         const { engine = "", kind = "", body = "" } = match.groups;
         const separator = body.indexOf("--");
@@ -280,7 +281,8 @@ const readExceptions = (
         );
         const physicalScope =
           directive.kind === "disable"
-            ? { end: enable?.start ?? source.length, start: directive.end }
+            ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading start from enable; preserve one receiver evaluation, skipped accesses and the existing source.length fallback.
+              { end: enable?.start ?? source.length, start: directive.end }
             : lineScope(source, directive);
         let scope = physicalScope;
         if (FILE_METRICS.has(rule.replace(/^eslint\//u, ""))) {

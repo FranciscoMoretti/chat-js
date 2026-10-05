@@ -167,6 +167,7 @@ beforeEach(() => {
           ? Response.json({ sessionId: saved.sessionId })
           : Response.json({ code: "eve_operation_not_found" }, { status: 404 });
       }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (typeof init?.body !== "string") {
         throw new TypeError("Expected a JSON copy request body");
       }
@@ -331,14 +332,18 @@ test("saves a complete independent copy, including inline bytes and files only i
     ownerId,
     fixtureData.input.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading copy from operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(operation?.copy).toMatchObject({
     phase: "bound",
     plan: null,
     seed: null,
   });
   const native = mocks.native.get(`${ownerId}/${bound.id}`);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from native; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(native?.sessionId).toBe(bound.sessionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading seed from native; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(native?.seed.attachments).toBe("channel");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading seed from native; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const serialized = JSON.stringify(native?.seed);
   for (const privateValue of [
     fixtureData.source.sessionId,
@@ -373,6 +378,7 @@ test("saves a complete independent copy, including inline bytes and files only i
     )
   ).toBe(true);
   expect(mocks.upload).toHaveBeenCalledTimes(2);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 3 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[3]).toBe(modelId);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -406,6 +412,7 @@ test("a lost native reply recovers without reopening or reading a revoked source
     ownerId,
     fixtureData.input.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversation from operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(operation?.conversation.state).toBe("uncertain");
   await db
     .update(eveConversation)
@@ -419,6 +426,7 @@ test("a lost native reply recovers without reopening or reading a revoked source
     "https://chatjs.example"
   );
   expect(bound.sessionId).toBe(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from mocks.native.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     mocks.native.get(`${ownerId}/${bound.id}`)?.sessionId
   );
   expect(mocks.source).toHaveBeenCalledTimes(1);
@@ -475,6 +483,7 @@ test("uncertain storage writes retry persisted keys without taking another snaps
     fixtureData.input,
     "https://chatjs.example"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversation from operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound.id).toBe(operation?.conversation.id);
   expect(mocks.source).toHaveBeenCalledTimes(1);
   expect(mocks.upload.mock.calls[0][0]).toBe(mocks.upload.mock.calls[1][0]);
@@ -507,6 +516,7 @@ test("an unavailable native lookup leaves acceptance recoverable and never blind
     ownerId,
     fixtureData.input.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading copy from copyOperationAfterLookupFailure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copyOperationAfterLookupFailure?.copy.phase).toBe("accepted");
   expect(mocks.request).toHaveBeenCalledTimes(1);
   expect(mocks.native.size).toBe(0);
@@ -624,6 +634,7 @@ test("a lost cleanup reply leaves rejection discoverable and a retry finishes er
     ownerId,
     fixtureData.input.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading copy from copyOperationAfterLostCleanupReply; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copyOperationAfterLostCleanupReply?.copy.phase).toBe("rejected");
   await expect(
     saveEveCopyOperation(ownerId, fixtureData.input, "https://chatjs.example")

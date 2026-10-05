@@ -14,6 +14,7 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   // Inline images do not initiate a network request.
   const inline = INLINE_IMAGE.exec(value);
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading base64 from inline.groups; read groups from inline; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     typeof inline?.groups?.base64 === "string" &&
     inline.groups.base64 !== ""
   ) {

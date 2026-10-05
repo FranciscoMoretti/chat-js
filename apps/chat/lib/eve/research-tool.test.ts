@@ -122,6 +122,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
   expect(outputs[0].updates).toContainEqual(
     expect.objectContaining({ type: "started" })
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from outputs.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(outputs.at(-1)?.updates).toContainEqual(
     expect.objectContaining({ type: "completed" })
   );
@@ -286,6 +287,7 @@ it("publishes completed searches when a researcher fails without masking the fai
     }
   };
   await expect(consume()).rejects.toBe(error);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from outputs.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(outputs.at(-1)?.updates).toContainEqual(search);
   expect(mocks.save).not.toHaveBeenCalled();
 });

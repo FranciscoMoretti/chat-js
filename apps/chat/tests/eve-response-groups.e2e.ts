@@ -143,8 +143,11 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   const root = await getEveCreation(owner, left.candidates[0].operationId);
   for (const candidate of left.candidates.slice(1)) {
     const child = await getEveCreation(owner, candidate.operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(child?.parentConversationId).toBe(root?.id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootConversationId from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(child?.rootConversationId).toBe(root?.id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkTurnId from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(child?.forkTurnId).toBe("turn_0");
   }
 });
@@ -213,7 +216,9 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   ).toBe(true);
   for (const candidate of result.candidates) {
     const row = await getEveCreation(owner, candidate.operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(row?.parentConversationId).toBe(source.id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkTurnId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(row?.forkTurnId).toBe(fork.beforeTurnId);
   }
   await expect(
@@ -455,10 +460,12 @@ test("owner-only group reads preserve order and rejection recovery without expos
     { code: "project_not_found", error: "Project missing" }
   );
   const result = await getEveResponseGroup(owner, group.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading candidates from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.candidates.map((candidate) => candidate.state)).toEqual([
     "bound",
     "rejected",
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading candidates from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.candidates[1]).toMatchObject({ code: "project_not_found" });
   expect(result).not.toHaveProperty("inputHash");
   expect(await getEveResponseGroupForConversation(owner, first.id)).toEqual(
@@ -474,6 +481,7 @@ test("owner-only group reads preserve order and rejection recovery without expos
     group.candidates[1].operationId
   );
   const responseCandidates = await getEveResponseGroup(owner, group.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading candidates from responseCandidates; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(responseCandidates?.candidates[1].state).toBe("waiting");
   await beginEveConversationDeletion(owner, first.id);
   expect(await getEveResponseGroup(owner, group.id)).toBeUndefined();

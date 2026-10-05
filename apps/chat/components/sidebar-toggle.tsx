@@ -35,6 +35,7 @@ export const SidebarToggle = ({
           // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={className}
           onClick={(event) => {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
             onClick?.(event);
             if (!event.defaultPrevented) {
               toggleSidebar();

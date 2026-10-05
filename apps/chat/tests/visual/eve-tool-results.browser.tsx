@@ -114,6 +114,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
     await expect
       .poll(() => {
         const heading = container.querySelector("h3");
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; read parentElement from heading; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const panel = heading?.parentElement?.parentElement?.parentElement;
         return panel && getComputedStyle(panel).opacity === "1";
       })
@@ -168,6 +169,7 @@ test("failed research keeps validated progress alongside its error", async () =>
         />
       )
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       "The tool did not complete."
     );
@@ -243,6 +245,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     );
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(
       "The tool did not complete"
     );

@@ -38,6 +38,7 @@ const singleValueRegistration = (line: string): boolean => {
   ) {
     return true;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from /^export \{(?<bindings>[^}]*)\}/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const reexport = /^export \{(?<bindings>[^}]*)\}/u.exec(line)?.groups;
   if (!reexport) {
     return false;
@@ -89,6 +90,7 @@ const renderRegistration = (
     return { source: line };
   }
   const declaration =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     /^export (?<kind>const|type) (?<name>[A-Za-z_$][\w$]*)(?=\s|[:=])/u.exec(
       line
     )?.groups;

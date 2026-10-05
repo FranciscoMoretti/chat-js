@@ -46,6 +46,7 @@ const responseModel = (
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading indexOf from reference; preserve one receiver evaluation, skipped accesses and the existing MISSING_SEPARATOR_INDEX fallback. The app guidance prefers optional chaining.
   const separator = reference?.indexOf("/") ?? MISSING_SEPARATOR_INDEX;
   if (
     typeof reference === "string" &&

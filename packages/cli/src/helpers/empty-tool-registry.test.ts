@@ -53,6 +53,7 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
     const chatApp = nodePath.resolve(import.meta.dir, "../../../../apps/chat");
     const appRequire = createRequire(nodePath.join(chatApp, "package.json"));
     const dependencyPaths = appRequire.resolve.paths("react");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from dependencyPaths; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const nodeModules = dependencyPaths?.find((candidate) =>
       existsSync(nodePath.join(candidate, "react", "package.json"))
     );

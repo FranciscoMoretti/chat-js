@@ -66,8 +66,10 @@ describe("device login page", () => {
       renderer = create(<DeviceLoginPage />);
     });
 
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(renderer?.root.findByType("a").props.href).toBe("/");
 
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const retryButton = renderer?.root.find(
       (node) => node.type === "button" && node.children.includes("Try again")
     );
@@ -75,10 +77,11 @@ describe("device login page", () => {
 
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
-      // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+      // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- #596: This device-login-page fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading props from retryButton; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       retryButton?.props.onClick();
     });
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       renderer?.root.findAll((node) =>
         node.children.includes("Opening the desktop app...")
       )
@@ -86,14 +89,17 @@ describe("device login page", () => {
 
     // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
     act(() => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling fetchOptions.onError; read onError from fetchOptions; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       fetchOptions?.onError?.();
     });
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       renderer?.root.findAll((node) =>
         node.children.includes("You're signed in")
       )
     ).toHaveLength(1);
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading root from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       renderer?.root.findAll((node) =>
         node.children.includes("Opening the desktop app...")
       )

@@ -238,6 +238,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   });
   for (let index = 0; index < malformed.length; index += 1) {
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
     ).toBe("");
     expect(
@@ -250,6 +251,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await expect
     .poll((): boolean =>
       [...container.querySelectorAll("h3")].every((heading) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         const panel = heading.parentElement?.parentElement?.parentElement;
         return panel && getComputedStyle(panel).opacity === "1";
       })
@@ -260,6 +262,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
       ].every((element) =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         getInstanceByDom(element)?.getZr().animation.isFinished()
       )
     )

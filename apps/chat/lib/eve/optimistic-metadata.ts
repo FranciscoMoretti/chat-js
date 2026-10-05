@@ -27,6 +27,7 @@ const pendingEveMetadataMutations = (
   cache.isMutating({
     predicate: (mutation: {
       readonly options: { readonly meta?: { readonly eveMetadata?: unknown } };
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading eveMetadata from mutation.options.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     }): boolean => mutation.options.meta?.eveMetadata === true,
   });
 
@@ -83,6 +84,7 @@ const optimisticEveMetadata = async (
     }
   }
   for (const [key, data] of details) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (data?.chatId === id) {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       cache.setQueryData(key, { ...data, ...patch });
@@ -91,6 +93,7 @@ const optimisticEveMetadata = async (
   // Only restore the affected field; another chat or pin mutation may be in flight.
   return (): void => {
     for (const [key, previous] of lists) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const before = previous?.pages
         .flatMap((page) => page.items)
         .find((item) => item.id === id);
@@ -113,8 +116,10 @@ const optimisticEveMetadata = async (
       }
     }
     for (const [key, previous] of details) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (previous?.chatId === id) {
         cache.setQueryData<Identity>(key, (current) =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           current?.chatId === id
             ? rollbackFields(current, previous, patch)
             : current

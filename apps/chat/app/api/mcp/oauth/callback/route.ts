@@ -91,6 +91,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
       }
     }
     return redirectToConnector({
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading mcpConnectorId from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       connectorId: pending?.mcpConnectorId,
       errorMessage:
         "Authorization was not completed. Please try connecting again.",

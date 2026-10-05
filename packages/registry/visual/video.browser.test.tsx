@@ -87,9 +87,11 @@ test("video tool streaming, loading, player, and error states", async () => {
     video.currentTime = 0;
     await expect.poll(() => video.seeking).toBe(false);
     expect(video.controls).toBe(true);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).toContain(
       "Preparing prompt"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).not.toContain("Couldn");
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");

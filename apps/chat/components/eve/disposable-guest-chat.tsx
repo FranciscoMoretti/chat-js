@@ -270,8 +270,9 @@ const GuestConversation = ({
   );
   const failure =
     commandError ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value. Optional chain: Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     agent.error?.message ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView

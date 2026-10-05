@@ -20,6 +20,7 @@ export class RecursiveCharacterTextSplitter
   public separators: string[] = ["\n\n", "\n", ".", ",", ">", "<", " ", ""];
   public constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {
     super(fields);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Constructor fields is an optional public argument; the no-options constructor retains each established default, so direct access is not equivalent. The app guidance prefers optional chaining.
     this.separators = fields?.separators ?? this.separators;
   }
   private findBestSeparator(text: string): string {

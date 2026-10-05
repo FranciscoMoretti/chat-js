@@ -69,6 +69,7 @@ export const POST = async (request: Request) => {
 
   let receivedBytes = 0;
   let exceedsLimit = false;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pipeThrough from request.body; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const body = request.body?.pipeThrough(
     new TransformStream<Uint8Array, Uint8Array>({
       transform(chunk, controller): void {

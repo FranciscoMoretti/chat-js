@@ -33,6 +33,7 @@ export const ingestEveUsage = async (
     );
     return undefined;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from attribution; preserve one receiver evaluation, skipped accesses and the existing sessionId fallback. The app guidance prefers optional chaining.
   const billingSession = attribution?.sessionId ?? sessionId;
   const eventId = attribution
     ? `eve-child:${sessionId}:${event.meta.id}`
@@ -42,11 +43,14 @@ export const ingestEveUsage = async (
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
       const priced = await recordEveUsage({
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation, skipped accesses and the existing (call.failed === true ? 0 : undefined) fallback. The app guidance prefers optional chaining.
         costUsd: call.usage?.costUsd ?? (call.failed === true ? 0 : undefined),
         eventId: `${eventId}:model-call:${index}`,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading generationId from call.providerMetadata.gateway; read gateway from call.providerMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         generationId: call.providerMetadata?.gateway?.generationId,
         ownerId,
         sessionId: billingSession,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from attribution; preserve one receiver evaluation, skipped accesses and the existing event.data.turnId fallback. The app guidance prefers optional chaining.
         turnId: attribution?.turnId ?? event.data.turnId,
       });
       if (call.failed !== true && !priced) {
@@ -69,6 +73,7 @@ export const ingestEveUsage = async (
       eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
       ownerId,
       sessionId: billingSession,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from attribution; preserve one receiver evaluation, skipped accesses and the existing event.data.turnId fallback. The app guidance prefers optional chaining.
       turnId: attribution?.turnId ?? event.data.turnId,
     });
   }
@@ -80,14 +85,17 @@ export const ingestEveUsage = async (
     return undefined;
   }
   const priced = await recordEveUsage({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     costUsd: event.type === "step.failed" ? 0 : event.data.usage?.costUsd,
     eventId,
     generationId:
       event.type === "step.failed"
         ? undefined
-        : event.data.providerMetadata?.gateway?.generationId,
+        : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading generationId from event.data.providerMetadata.gateway; read gateway from event.data.providerMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+          event.data.providerMetadata?.gateway?.generationId,
     ownerId,
     sessionId: billingSession,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from attribution; preserve one receiver evaluation, skipped accesses and the existing event.data.turnId fallback. The app guidance prefers optional chaining.
     turnId: attribution?.turnId ?? event.data.turnId,
   });
   // A failed step has no completed-call usage receipt. Keep its evidence without

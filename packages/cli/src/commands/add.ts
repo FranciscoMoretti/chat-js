@@ -126,6 +126,7 @@ const prepareAdd = async (
     cwd,
     {
       features: [],
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from gateway; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       gateway: gateway?.source,
       storage: storage
         ? { options: storage.options, source: storage.source }
@@ -138,9 +139,11 @@ const prepareAdd = async (
   assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
   const gatewayItem = plan.items.find((item: RegistryItemInput): boolean =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     hasProviderKind(item.meta?.chatjs, "gateway")
   );
   const storageItem = plan.items.find((item: RegistryItemInput): boolean =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     hasProviderKind(item.meta?.chatjs, "storage")
   );
   const selectedGateway =
@@ -204,7 +207,9 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
     ...plan.features.flatMap(
       (feature: FeatureInput) => feature.envRequirements ?? []
     ),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading definition from selectedGateway; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
     ...(selectedGateway?.definition.envRequirements ?? []),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading definition from selectedStorage; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
     ...(selectedStorage?.definition.envRequirements ?? []),
   ];
   for (const requirement of requirements) {

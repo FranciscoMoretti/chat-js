@@ -127,8 +127,10 @@ const EveConversation = ({
       event.type === "turn.cancelled"
   );
   const durableError =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined;
   const displayedError =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from commandFailure; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining.
     commandFailure?.message ?? agent.error?.message ?? durableError;
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
@@ -145,6 +147,7 @@ const EveConversation = ({
   const messages = agent.data.messages
     .filter((message) => {
       if (
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         message.metadata?.optimistic &&
         message.metadata.status === "failed"
       ) {
@@ -160,13 +163,18 @@ const EveConversation = ({
       const id = controller.logicalId(conversationId, message.id);
       const canonical =
         typeof id === "string" && id !== ""
-          ? snapshot.nodes.get(id)?.message
+          ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from snapshot.nodes.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+            snapshot.nodes.get(id)?.message
           : undefined;
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing message own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      return canonical ? { ...message, parts: canonical.parts } : message;
+      if (canonical) {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing message own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        return { ...message, parts: canonical.parts };
+      }
+      return message;
     });
   const editingMessageId =
     fork.editingMessageId ??
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.find(...); preserve one receiver evaluation, skipped accesses and the existing messages.find(       (message) =>         eveUserForkBoundary(message) === fork.editingBoundary &&         Boolean(fork.editingBoundary)     )?.id fallback. The app guidance prefers optional chaining.
     messages.find(
       (message) =>
         eveUserForkBoundary(message) === fork.editingBoundary &&
@@ -174,9 +182,12 @@ const EveConversation = ({
     )?.id;
   const responseModels = responseModelReferences(agent.events);
   const modelForMessage = (message: (typeof messages)[number]) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const reference = message.metadata?.turnId
       ? responseModels.get(message.metadata.turnId)
-      : message.metadata?.modelId;
+      : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        message.metadata?.modelId;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading indexOf from reference; preserve one receiver evaluation, skipped accesses and the existing -1 fallback. The app guidance prefers optional chaining.
     const separator = reference?.indexOf("/") ?? -1;
     return reference && separator > 0 && separator < reference.length - 1
       ? reference.slice(separator + 1)
@@ -223,6 +234,7 @@ const EveConversation = ({
       action,
       agent.resume,
       cancellation > 0,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from controller.getSnapshot(...).agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       () => controller.getSnapshot().agents.get(conversationId)?.error,
       () => !operationId || delivery.hasAcknowledged(operationId)
     );
@@ -339,9 +351,11 @@ const EveConversation = ({
       onStopExecution={cancelExecution}
       logicalChatId={controller.chatId}
       getExecutionMessages={(id) =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
         snapshot.agents.get(id)?.data.messages ?? []
       }
       isExecutionBusy={(id) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const status = snapshot.agents.get(id)?.status;
         return (
           status === "submitted" ||
@@ -478,6 +492,7 @@ const EveConversation = ({
                     ? logicalResponseSlots(snapshot, logicalId)
                     : undefined;
                   const groupModels: Record<string, number> = {};
+                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slots from group; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
                   for (const slot of group?.slots ?? []) {
                     groupModels[slot.modelId] =
                       (groupModels[slot.modelId] ?? 0) + 1;
@@ -578,11 +593,12 @@ const EveConversation = ({
                   )}
                   <Button
                     onClick={() => {
-                      setDraft((current) =>
-                        current
-                          ? `${current}\n\n${pendingMessage.message}`
-                          : pendingMessage.message
-                      );
+                      setDraft((current) => {
+                        if (current) {
+                          return `${current}\n\n${pendingMessage.message}`;
+                        }
+                        return pendingMessage.message;
+                      });
                       files.setAttachments((current) => [
                         ...current,
                         ...pendingMessage.attachments.filter(
@@ -658,12 +674,21 @@ const EveConversation = ({
               }}
               onToolChange={handleSelectedToolChange}
               readOnly={Boolean(comparison)}
-              retainedModelId={pendingMessage?.modelId}
-              retainedModelIds={comparison?.modelIds}
+              retainedModelId={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from pendingMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                pendingMessage?.modelId
+                /* oxlint-enable oxc/no-optional-chaining */
+              }
+              retainedModelIds={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelIds from comparison; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                comparison?.modelIds
+                /* oxlint-enable oxc/no-optional-chaining */
+              }
               selectedTool={displayedTool}
               stopDisabled={cancelPending || agent.status === "resuming"}
             />
             {displayedError &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rejection from pendingMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               !pendingMessage?.rejection &&
               !isEveCommandRejection(commandFailure ?? agent.error) && (
                 <Button
@@ -697,6 +722,7 @@ const sameComposerDraft = (
   draft.text.trim() === sent.text.trim() &&
   draft.attachments.length === sent.attachments.length &&
   draft.attachments.every(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from sent.attachments[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     (file, index) => file.url === sent.attachments[index]?.url
   );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -786,7 +812,10 @@ const retainedToolSelection = (
   draft: UiToolName | null
 ) => {
   const retained = comparison ?? pending;
-  return retained ? (retained.selectedTool ?? null) : draft;
+  if (retained) {
+    return retained.selectedTool ?? null;
+  }
+  return draft;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */

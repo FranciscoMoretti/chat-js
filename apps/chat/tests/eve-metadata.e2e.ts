@@ -115,6 +115,7 @@ test("rename and pin persist, preserve input, and reject another owner's changes
           .from(eveConversation)
           .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
           .where(eq(eveConversation.id, ids[0]));
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from conversationRows[0]; read 0 from conversationRows; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         return conversationRows?.[0]?.isPinned;
       })
       .toBe(true);
@@ -145,6 +146,7 @@ test("rename and pin persist, preserve input, and reject another owner's changes
           .from(eveConversation)
           .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
           .where(eq(eveConversation.id, ids[0]));
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from conversationRows[0]; read 0 from conversationRows; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         return conversationRows?.[0]?.isPinned;
       })
       .toBe(false);
@@ -182,7 +184,9 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       .from(eveConversation)
       .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
       .where(eq(eveConversation.id, ids[0]));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.title).toBe(renamed);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstMessage from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.firstMessage).toBe(firstTitle);
     const [foreign] = await db
       .select({
@@ -193,7 +197,9 @@ test("rename and pin persist, preserve input, and reject another owner's changes
       .from(eveConversation)
       .innerJoin(eveChat, eq(eveChat.id, eveConversation.chatId))
       .where(eq(eveConversation.id, ids[2]));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from foreign; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(foreign?.title).toBe(secondTitle);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from foreign; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(foreign?.isPinned).toBe(false);
   } finally {
     await db.delete(eveConversation).where(inArray(eveConversation.id, ids));

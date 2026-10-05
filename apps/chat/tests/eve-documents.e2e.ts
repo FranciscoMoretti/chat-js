@@ -336,6 +336,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
     earlier.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierBranchRevision?.id).toBe(original.id);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -383,6 +384,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     chat.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chatRevisionAfterManualEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chatRevisionAfterManualEdit?.id).toBe(generated.id);
   const child = await createEveConversation(
     owner,
@@ -396,6 +398,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     child.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from childRevisionAfterManualEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childRevisionAfterManualEdit?.content).toBe("Manual content");
   const earlier = await createEveConversation(
     owner,
@@ -409,6 +412,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     earlier.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierNestedBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierNestedBranchRevision?.id).toBe(original.id);
   await expect(
     saveEveDocumentRevision(
@@ -427,6 +431,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
     chat.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from chatHeadAfterRejectedReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chatHeadAfterRejectedReplay?.id).toBe(generated.id);
   await expect(
     saveEveDocumentRevision({
@@ -488,12 +493,14 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     laterBranch.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from laterBranchRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(laterBranchRevision?.content).toBe("Later content");
   const earlierBranchRevisionAtFork = await getEveDocumentRevision(
     owner,
     earlierBranch.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from earlierBranchRevisionAtFork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(earlierBranchRevisionAtFork?.id).toBe(first.id);
   for (const beforeTurnId of ["turn_0", "turn_1"]) {
     const child = await createEveConversation(
@@ -511,7 +518,9 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     if (beforeTurnId === "turn_0") {
       expect(document).toBeUndefined();
     } else {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from document; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(document?.id).toBe(first.id);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from document; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(document?.content).toBe("Original");
     }
   }
@@ -623,8 +632,11 @@ test("document viewing respects visibility, revocation and fork ancestry without
     canEdit: false,
     revision: { content: "Original", id: first.id },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.revision).not.toHaveProperty("ownerId");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading revision from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.revision).not.toHaveProperty("operationId");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading history from visible; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(visible?.history).toHaveLength(1);
   expect(
     await getAccessibleEveDocument(
@@ -772,6 +784,7 @@ test("concurrent replays create one revision and old replays never rewind the he
     chat.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from latestDocumentHistory.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(latestDocumentHistory.at(-1)?.id).toBe(second.id);
   await expect(
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -911,12 +924,14 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     child.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from childHistoryAfterEdit.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childHistoryAfterEdit.at(-1)?.id).toBe(childEdit.id);
   const parentRevisionHistory = await getEveDocumentRevision(
     owner,
     chat.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from parentRevisionHistory; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(parentRevisionHistory?.content).toBe("Parent newest");
   const nested = await createEveConversation(
     owner,
@@ -998,6 +1013,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
   });
   const history = await getEveDocumentHistory(owner, chat.id, input.documentId);
   expect(history).toHaveLength(1002);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(history.at(-1)?.id).toBe(newest.id);
   expect(history.every((version) => !("content" in version))).toBe(true);
   const child = await createEveConversation(
@@ -1012,6 +1028,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
     child.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from longChildHistory.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(longChildHistory.at(-1)?.id).toBe(ids[498]);
   expect(
     await getEveDocumentRevision(owner, child.id, input.documentId, newest.id)
@@ -1071,6 +1088,7 @@ test("document references protect owned files across families and revision histo
     input.documentId,
     revision.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from copiedDocumentRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copiedDocumentRevision?.content).toBe(input.content);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -1137,6 +1155,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     child.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from namedChildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(namedChildRevision?.id).toBe(manual.id);
   const ordinary = await createEveConversation(
     owner,
@@ -1150,6 +1169,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     ordinary.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ordinaryChildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(ordinaryChildRevision?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, child.id, 1);
   const grandchild = await createEveConversation(
@@ -1164,6 +1184,7 @@ test("named idle snapshots preserve manual edits across retries without changing
     grandchild.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from grandchildRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(grandchildRevision?.id).toBe(manual.id);
   await expect(
     createEveConversation(
@@ -1551,6 +1572,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     child.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from childRevisionAfterDeletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(childRevisionAfterDeletion?.id).toBe(original.id);
   await captureEveDocumentCheckpoint(owner, root.id, 2);
   const later = await createEveConversation(
@@ -1580,6 +1602,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     root.id,
     input.documentId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from rootRevisionAfterDeletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(rootRevisionAfterDeletion?.id).toBe(replacement.id);
 });
 /* oxlint-enable oxc/no-async-await */

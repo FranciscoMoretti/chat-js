@@ -75,6 +75,7 @@ test("history pages and searches older conversations without exposing other owne
     const first = await listEveConversations(owner.id, { search: prefix });
     expect(first.items).toHaveLength(50);
     expect(first.items.slice(0, 2).every((row) => row.isPinned)).toBe(true);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from first.nextCursor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(first.nextCursor?.updatedAt).toBe("2099-01-01T00:00:00.123456Z");
     const second = await listEveConversations(owner.id, {
       cursor: first.nextCursor,

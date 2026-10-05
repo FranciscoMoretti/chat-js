@@ -40,27 +40,31 @@ const SourcesList = ({
   sources: SearchResultItem[] | undefined;
 }): React.JSX.Element => (
   <div className="space-y-3">
-    {sources?.map((source: SearchResultItem): React.JSX.Element => (
-      <a
-        aria-label={source.title}
-        className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
-        href={source.url}
-        key={source.url}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        <div className="flex items-start gap-3">
-          <div className="mt-1 shrink-0">
-            <Favicon url={getFaviconUrl(source)} />
+    {
+      /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from sources; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+      sources?.map((source: SearchResultItem): React.JSX.Element => (
+        <a
+          aria-label={source.title}
+          className="bg-secondary hover:bg-accent block rounded-lg p-4 transition-colors"
+          href={source.url}
+          key={source.url}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <div className="flex items-start gap-3">
+            <div className="mt-1 shrink-0">
+              <Favicon url={getFaviconUrl(source)} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <h4 className="text-sm leading-tight font-medium">
+                {source.title}
+              </h4>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <h4 className="text-sm leading-tight font-medium">
-              {source.title}
-            </h4>
-          </div>
-        </div>
-      </a>
-    ))}
+        </a>
+      ))
+      /* oxlint-enable oxc/no-optional-chaining */
+    }
   </div>
 );
 /* oxlint-disable react/jsx-no-literals -- AllSourcesView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
@@ -153,7 +157,12 @@ const ShowSourcesButton = ({
   <button
     aria-label="Show all sources"
     className="group border-border hover:bg-accent flex items-center justify-center gap-2 rounded-lg border p-2.5 transition-colors"
-    onClick={() => document.querySelector<HTMLElement>(`#${dialogId}`)?.click()}
+    onClick={
+      () =>
+        /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading click from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+        document.querySelector<HTMLElement>(`#${dialogId}`)?.click()
+      /* oxlint-enable oxc/no-optional-chaining */
+    }
     type="button"
   >
     <FaviconGroup

@@ -68,6 +68,7 @@ const main = async () => {
         );
       }
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from batch.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     cursor = batch.at(-1)?.id;
     console.info(`Search backfill: ${indexed} indexed, ${failed} failed.`);
   }

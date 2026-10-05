@@ -81,10 +81,14 @@ describe("ThreadRunChat", (): void => {
     const standardRequest = standardChat.sendMessage(input);
     const threadRequest = threadRunChat.start();
     await Bun.sleep(0);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messages from threadTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(threadTransport.request?.messages).toEqual(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messages from standardTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       standardTransport.request?.messages
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from threadTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(threadTransport.request?.messageId).toBe(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from standardTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       standardTransport.request?.messageId
     );
     emitRichResponse(standardTransport);
@@ -117,6 +121,7 @@ describe("ThreadRunChat", (): void => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
     expect(spec.messageId).toBe("server-id");
   });
@@ -174,6 +179,7 @@ describe("ThreadRunChat", (): void => {
     transport.finish();
 
     await waitFor((): boolean => transport.requests.length === 2);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
     transport.emit(
       { messageId: "assistant-1", type: "start" },
@@ -191,6 +197,7 @@ describe("ThreadRunChat", (): void => {
         .getChildren(spec.parentMessageId)
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
       expect.objectContaining({
         output: { temperature: 22 },

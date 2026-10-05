@@ -139,7 +139,9 @@ test.each(["before-dispatch", "lost-response"])(
     );
     expect(interruptedResponse.status).toBe(409);
     const interrupted = await getEveCreation(owner, command.operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from interrupted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(interrupted?.state).toBe("uncertain");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialRequest from interrupted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(interrupted?.initialRequest).toEqual(command);
 
     if (failure === "before-dispatch") {
@@ -157,6 +159,7 @@ test.each(["before-dispatch", "lost-response"])(
         await getEveCreation(owner, blockedCommand.operationId)
       ).toBeUndefined();
       const retained = await getEveCreation(owner, command.operationId);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialRequest from retained; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(retained?.initialRequest).toEqual(command);
     }
     fail = false;
@@ -169,19 +172,25 @@ test.each(["before-dispatch", "lost-response"])(
     expect(next.status).toBe(200);
     const recovered = await getEveCreation(owner, command.operationId);
     expect(recovered).toMatchObject({
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from interrupted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       id: interrupted?.id,
       initialRequest: null,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from interrupted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       sessionId: `wrun_${interrupted?.id}`,
       state: "bound",
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from interrupted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(allocations.filter((id) => id === interrupted?.id)).toHaveLength(1);
     // The recovered session participates in usage reconciliation before admission.
     expect(native.positions).toHaveBeenLastCalledWith(expect.any(String), [
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from recovered; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       recovered?.sessionId,
     ]);
     const retry = await createEveConversationOperation(owner, command);
     expect(await retry.json()).toEqual({
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from recovered; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       id: recovered?.id,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from recovered; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       sessionId: recovered?.sessionId,
     });
     expect(allocations).toHaveLength(2);

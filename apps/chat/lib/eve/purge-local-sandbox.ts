@@ -141,6 +141,7 @@ const readLocalSandboxResources = async (
     }
     throw error;
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stateSnapshotName from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const snapshots: string[] = metadata?.stateSnapshotName
     ? [metadata.stateSnapshotName, ...recordedSnapshots]
     : [...recordedSnapshots];

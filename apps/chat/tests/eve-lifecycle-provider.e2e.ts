@@ -32,6 +32,7 @@ const world = createWorld({
 const fixtureIds: string[] = [];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling world.close; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await world.close?.();
   await connection`delete from workflow.workflow_events where run_id = any(${fixtureIds})`;
   await connection`delete from workflow.workflow_event_slots where run_id = any(${fixtureIds})`;

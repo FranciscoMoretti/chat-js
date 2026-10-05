@@ -24,7 +24,12 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating video: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          Generating video: &quot;
+          {
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing "Preparing prompt…" fallback. */
+            tool.input?.prompt ?? "Preparing prompt…"
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           &quot;
         </div>
       </div>

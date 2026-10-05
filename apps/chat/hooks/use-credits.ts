@@ -11,6 +11,7 @@ export const useGetCredits = (): {
   isLoadingCredits: boolean;
 } => {
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAuthenticated = Boolean(session?.user);
   const trpc = useTRPC();
 
@@ -21,6 +22,7 @@ export const useGetCredits = (): {
   });
 
   return {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from creditsData; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     credits: creditsData?.credits,
     isLoadingCredits: isAuthenticated && isLoadingCredits,
   };

@@ -164,7 +164,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       .select()
       .from(eveConversation)
       .where(eq(eveConversation.id, branch.id));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.parentConversationId).toBe(source.id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootConversationId from stored; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(stored?.rootConversationId).toBe(source.id);
     await page.goto(`/chat/${source.id}`);
     await expect(page.getByRole("log")).toContainText(
@@ -227,6 +229,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               if (response?.status() !== 200) {
                 return null;
               }

@@ -135,6 +135,7 @@ const RuntimeSlot = ({
       chatId={runtime.chatId}
       conversationId={snapshot.conversationId}
       fallbackTitle={
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from identity.data; preserve one receiver evaluation, skipped accesses and the existing runtime.title fallback. The app guidance prefers optional chaining.
         identity.data?.title ??
         runtime.title ??
         (runtime.operation
@@ -159,13 +160,18 @@ const RuntimeSlot = ({
       )}
       {active && (
         <EveLogicalContext.Provider value={context}>
-          {agent && selected?.sessionId ? (
-            <EveConversation
+          {agent /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+          selected?.sessionId ? (
+            /* oxlint-enable oxc/no-optional-chaining */ <EveConversation
               conversationId={selected.id}
               sessionId={selected.sessionId}
               ownerId={runtime.ownerId}
               draftScopeId={runtime.chatId}
-              initialMessage={runtime.operation?.message}
+              initialMessage={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from runtime.operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                runtime.operation?.message
+                /* oxlint-enable oxc/no-optional-chaining */
+              }
               header={header}
             />
           ) : (
@@ -222,6 +228,7 @@ const EveRuntimeProvider = ({
       });
       const existing = registry.get(identity.chatId);
       const controller =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from existing; preserve one receiver evaluation, skipped accesses and the existing new LogicalChat(identity.chatId, request.id, !navigate) fallback. The app guidance prefers optional chaining.
         existing?.controller ??
         new LogicalChat(identity.chatId, request.id, !navigate);
       controller.setBranches(family.branches);

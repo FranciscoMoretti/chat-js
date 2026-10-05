@@ -48,6 +48,7 @@ const LoginPageContent = async ({
     ? await auth.api.getSession({ headers: await headers() })
     : null;
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (session?.user && isElectronTransfer) {
     return <ElectronTransferUser query={query} session={session} />;
   }

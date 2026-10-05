@@ -7,6 +7,7 @@ export const spinner = (
   options?: { readonly silent?: boolean }
 ): ReturnType<typeof ora> =>
   ora({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading silent from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     isSilent: options?.silent,
     text,
   });

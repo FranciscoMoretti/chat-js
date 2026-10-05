@@ -176,7 +176,12 @@ const Transcript = ({
         editor={edit}
         isReadonly={isReadonly}
         messages={messages}
-        modelForMessage={(message) => message.metadata?.modelId}
+        modelForMessage={
+          (message) =>
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            message.metadata?.modelId
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         onEdit={(message) => {
           setEditingId(message.id);
           onLog(`edit:${message.id}`);

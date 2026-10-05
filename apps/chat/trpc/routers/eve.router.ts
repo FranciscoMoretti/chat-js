@@ -51,9 +51,11 @@ const eveProcedure = protectedProcedure;
  * typescript/strict-boolean-expressions (#610): eveOwnedProcedure intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   let ownerId = ctx.user?.id;
   if (!ownerId) {
     const principal = await resolveEvePrincipal(await headers());
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     ownerId = principal?.ownerId;
   }
   if (!ownerId) {
@@ -113,9 +115,11 @@ export const eveRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       let ownerId = ctx.user?.id;
       if (!ownerId) {
         const principal = await resolveEvePrincipal(await headers());
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         ownerId = principal?.ownerId;
       }
       const document = await getAccessibleEveDocument(

@@ -27,6 +27,7 @@ import { useSession } from "@/providers/session-provider";
 
 const PureHeaderActions = (): ReactJSX.Element => {
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const user = session?.user;
   const router = useRouter();
 

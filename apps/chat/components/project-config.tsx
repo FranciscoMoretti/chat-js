@@ -31,6 +31,7 @@ export const ProjectConfig = ({
   readonly onEditInstructions: () => void;
   readonly onRenameProject: () => void;
 }): React.JSX.Element => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from instructions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasInstructions = Boolean(instructions?.trim());
 
   return (

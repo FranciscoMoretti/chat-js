@@ -57,6 +57,7 @@ const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 const parseChatIdFromPathname = (
   pathname: string | null
 ): ParsedChatIdFromPathname => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading shareId from pathname.match(...).groups; read groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const shareId = pathname?.match(SHARE_ROUTE_PATTERN)?.groups?.shareId;
   if (shareId) {
     return {
@@ -67,7 +68,9 @@ const parseChatIdFromPathname = (
     };
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const projectGroups = pathname?.match(PROJECT_ROUTE_PATTERN)?.groups;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from projectGroups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (projectGroups?.projectId) {
     const { chatId, projectId } = projectGroups;
     if (chatId) {
@@ -76,6 +79,7 @@ const parseChatIdFromPathname = (
     return { id: null, projectId, source: "project", type: "projectHome" };
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from pathname.match(...).groups; read groups from pathname.match(...); read match from pathname; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const chatId = pathname?.match(CHAT_ROUTE_PATTERN)?.groups?.chatId;
   if (chatId) {
     return { id: chatId, projectId: null, source: "chat", type: "chat" };

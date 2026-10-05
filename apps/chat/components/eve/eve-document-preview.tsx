@@ -48,6 +48,7 @@ export const EveDocumentPreview = ({
   let loadingMessage = "Loading document…";
   if (document.isError) {
     loadingMessage =
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from document.error.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       document.error.data?.code === "NOT_FOUND"
         ? "Document is no longer available in this conversation."
         : "Open document to retry loading.";
@@ -55,6 +56,7 @@ export const EveDocumentPreview = ({
   let content: ReactNode = (
     <p className="text-muted-foreground">{loadingMessage}</p>
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from document.data.history.at(...); read history from document.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isLatest = document.data?.history.at(-1)?.id === result.revisionId;
   if (document.data && !document.isError) {
     content = (

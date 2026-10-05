@@ -57,6 +57,7 @@ const reserveEveCodeSandbox = async (
         )
       );
     const conversation = conversationRows.at(FIRST_ROW_INDEX);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
     const sessionId = conversation?.sessionId ?? "";
     if (sessionId === "") {
       throw new Error("Conversation is unavailable for code execution.");

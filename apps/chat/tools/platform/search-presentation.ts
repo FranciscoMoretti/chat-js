@@ -66,6 +66,7 @@ const executeMultiQuerySearch = async ({
     "executeMultiQuerySearch start"
   );
   if (writeTopLevelUpdates) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         timestamp: Date.now(),
@@ -95,6 +96,7 @@ const executeMultiQuerySearch = async ({
 
   completedSteps += 1;
   if (writeTopLevelUpdates) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         timestamp: Date.now(),

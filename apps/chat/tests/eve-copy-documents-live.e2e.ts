@@ -160,6 +160,7 @@ test("copied document history survives source deletion and supports native editi
     )
   ).toBe(false);
   const latest = revisions.find((revision) => revision.id === head.revisionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
   expect(
     await db
@@ -180,6 +181,7 @@ test("copied document history survives source deletion and supports native editi
     },
   ]);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from revisions.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading parentRevisionId from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     revisions.find((revision) => revision.id === latest?.parentRevisionId)
       ?.content
   ).toBe(original.content);
@@ -306,6 +308,7 @@ test("copied document history survives source deletion and supports native editi
   const seed = forkSnapshot.events.find(
     (event) => event.type === "history.seeded"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from seed; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(seed?.data.messages).toHaveLength(2);
   expect(
     forkSnapshot.events.some(

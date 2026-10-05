@@ -290,7 +290,9 @@ ipcMain.handle(
   "better-auth:requestAuth",
   async (_event, options): Promise<void> => {
     if (isAuthFlowInProgress) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       mainWindow?.show();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       mainWindow?.focus();
       return;
     }
@@ -338,6 +340,7 @@ const syncAuthSessionCookies = async (
   win?: BrowserWindow | null
 ): Promise<void> => {
   const targetWindow = win ?? mainWindow;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading webContents from targetWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const targetSession = targetWindow?.webContents.session;
 
   if (!targetSession) {
@@ -414,6 +417,7 @@ ipcMain.removeHandler("better-auth:getUser");
 /* oxlint-disable unicorn/no-null -- better-auth:getUser: The SDK/wire/OS contract uses null as an explicit absence value. */
 ipcMain.handle("better-auth:getUser", async () => {
   const sessionResult = await electronAuthClient.getSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from sessionResult.data; preserve one receiver evaluation, skipped accesses and the existing null fallback.
   return sessionResult.data?.user ?? null;
 });
 /* oxlint-enable oxc/no-async-await */
@@ -479,6 +483,7 @@ const waitForElectronSession = async (timeoutMs = 8000): Promise<boolean> => {
     try {
       // oxlint-disable-next-line no-await-in-loop -- Poll sequentially until the native cookie and server session agree.
       const sessionResult = await electronAuthClient.getSession();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from sessionResult.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const hasUser = Boolean(sessionResult.data?.user);
 
       if (hasCookie && hasUser) {
@@ -636,7 +641,9 @@ const createTray = (): Tray => {
   const contextMenu = Menu.buildFromTemplate([
     {
       click: (): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         mainWindow?.show();
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         mainWindow?.focus();
       },
       label: `Show ${APP_NAME}`,
@@ -655,10 +662,13 @@ const createTray = (): Tray => {
   trayInstance.setContextMenu(contextMenu);
 
   trayInstance.on("click", (): void => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isVisible from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (mainWindow?.isVisible()) {
       mainWindow.hide();
     } else {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       mainWindow?.show();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       mainWindow?.focus();
     }
   });
@@ -758,6 +768,7 @@ void (async (): Promise<void> => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createWindow();
     } else {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading show from mainWindow; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       mainWindow?.show();
     }
   });
@@ -801,6 +812,7 @@ app.on("second-instance", (_event, commandLine): void => {
 
 app.on("before-quit", (): void => {
   isQuitting = true;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading destroy from tray; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   tray?.destroy();
 });
 

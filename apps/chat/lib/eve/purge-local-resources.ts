@@ -34,6 +34,7 @@ export const purgeLocalEveFamilyResources = async (
   appRoot: string
 ) => {
   const family = await prepareEveFamilyDeletion(ownerId, conversationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversations from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!family?.conversations.length) {
     return family;
   }

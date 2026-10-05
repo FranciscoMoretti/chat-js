@@ -208,6 +208,7 @@ for (const identity of ["registered", "guest"]) {
         document.documentElement.dataset.missingFirstMessage = "false";
         const observer = new MutationObserver(() => {
           if (
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading includes from document.querySelector(...).textContent; read textContent from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             !document.querySelector('[role="log"]')?.textContent?.includes(text)
           ) {
             document.documentElement.dataset.missingFirstMessage = "true";

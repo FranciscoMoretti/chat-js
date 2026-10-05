@@ -21,12 +21,14 @@ export const useRenameProject = () => {
       detail?: Project | null;
     }>({
       onError: (_error, _variables, context) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading previous from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (context?.previous) {
           queryClient.setQueryData(
             trpc.project.list.queryKey(),
             context.previous
           );
         }
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading detail from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (context?.detail) {
           queryClient.setQueryData(
             trpc.project.getById.queryKey({ id: _variables.id }),
@@ -54,6 +56,7 @@ export const useRenameProject = () => {
             old ? { ...old, name: nextName } : old
           );
           queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from old; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             old?.map((project) =>
               project.id === variables.id
                 ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing project own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.

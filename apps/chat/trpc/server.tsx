@@ -47,6 +47,7 @@ const prefetch = <T extends ReturnType<TRPCQueryOptions<ResolverDef>>>(
   queryOptions: T
 ): void => {
   const queryClient = getQueryClient();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from queryOptions.queryKey[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (queryOptions.queryKey[1]?.type === "infinite") {
     void preloadQuery(
       queryClient.infiniteQuery(

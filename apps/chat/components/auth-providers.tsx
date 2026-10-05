@@ -115,7 +115,10 @@ export const SocialAuthProviders = ({
 } = {}): ReactJSX.Element => {
   const lastUsedProvider = useMemo<SocialAuthProvider | null>(() => {
     const remembered = authClient.getLastUsedLoginMethod();
-    return isSocialAuthProvider(remembered) ? remembered : null;
+    if (isSocialAuthProvider(remembered)) {
+      return remembered;
+    }
+    return null;
   }, []);
 
   const providers = useMemo<AuthProviderDefinition[]>(() => {
@@ -154,8 +157,10 @@ export const SocialAuthProviders = ({
         },
       });
 
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from result.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const redirectUrl = result.data?.url;
       if (typeof redirectUrl === "string" && redirectUrl !== "") {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onRedirectToUrl; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onRedirectToUrl?.(redirectUrl);
       }
     } catch (error) {

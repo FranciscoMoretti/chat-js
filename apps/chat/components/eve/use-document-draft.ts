@@ -104,6 +104,7 @@ export const useDocumentDraft = ({
         return;
       }
       const { current } = latest;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (current?.content === content) {
         return;
       }

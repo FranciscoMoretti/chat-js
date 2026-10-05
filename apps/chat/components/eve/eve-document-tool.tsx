@@ -55,6 +55,7 @@ export const EveDocumentTool = ({
       pendingCall.current = undefined;
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const operation = Object.entries(eveDocumentOperations).find(
       ([name]) => name === part.toolName
     )?.[1];
@@ -112,16 +113,18 @@ export const EveDocumentTool = ({
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
     setArtifact((current) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from completed; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!completed?.success) {
-        return current.previewCallId === part.toolCallId
-          ? {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-              ...current,
-              isVisible: current.documentId !== "init",
-              previewCallId: undefined,
-              status: "idle",
-            }
-          : current;
+        if (current.previewCallId === part.toolCallId) {
+          return {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            ...current,
+            isVisible: current.documentId !== "init",
+            previewCallId: undefined,
+            status: "idle",
+          };
+        }
+        return current;
       }
       if (
         current.isVisible &&

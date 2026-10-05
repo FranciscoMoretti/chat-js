@@ -54,6 +54,7 @@ type LogicalChatSnapshot = {
  * typescript/strict-boolean-expressions (#610): logicalNativeId intentionally keeps the existing falsy-value behavior of custom; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const logicalNativeId = (sessionId: string, message: EveMessage): string => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from message.metadata.custom; read custom from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const custom = message.metadata?.custom?.chatjs;
   if (
     message.role === "user" &&
@@ -75,8 +76,11 @@ const aliasKey = (branchId: string, messageId: string): string =>
  * typescript/prefer-readonly-parameter-types (#565): busy accepts agent?: NativeChatAgent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const busy = (agent?: NativeChatAgent): boolean =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   agent?.status === "streaming" ||
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   agent?.status === "submitted" ||
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   agent?.status === "resuming";
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -88,9 +92,11 @@ const latestMessageTime = (
   createdAt: string | Date
 ): number => {
   let time = new Date(createdAt).getTime();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading events from agent; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   for (const event of agent?.events ?? []) {
     if (
       (event.type === "message.received" || event.type === "step.started") &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from event.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       event.meta?.at
     ) {
       time = Math.max(time, new Date(event.meta.at).getTime());
@@ -177,6 +183,7 @@ class LogicalChat {
   public observe(conversationId: string, agent: NativeChatAgent): void {
     const previous = this.agents.get(conversationId);
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       previous?.data === agent.data &&
       previous.events === agent.events &&
       previous.status === agent.status &&
@@ -205,6 +212,7 @@ class LogicalChat {
     this.hydrateLatest = false;
     this.follow = true;
     const path = this.snapshot.paths.get(conversationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from path; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (path?.length && this.snapshot.readyBranches.has(conversationId)) {
       this.pendingSelection = undefined;
       this.selected = conversationId;
@@ -221,9 +229,11 @@ class LogicalChat {
     if (!node) {
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from this.snapshot.children.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     let last = this.snapshot.children.get(node.id)?.at(-1);
     while (last) {
       node = this.snapshot.nodes.get(last) ?? node;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from this.snapshot.children.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       last = this.snapshot.children.get(node.id)?.at(-1);
     }
     this.pendingSelection = undefined;
@@ -275,6 +285,7 @@ class LogicalChat {
           continue;
         }
         const agent = this.agents.get(id);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (!agent?.data.messages.length) {
           continue;
         }
@@ -323,6 +334,7 @@ class LogicalChat {
       this.hydrateLatest &&
       paths.size === this.branches.length &&
       this.branches.every(
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from this.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         (branch) => this.agents.get(branch.id)?.status !== "resuming"
       )
     ) {
@@ -341,6 +353,7 @@ class LogicalChat {
     const pendingPath =
       this.pendingSelection && paths.get(this.pendingSelection);
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from pendingPath; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       pendingPath?.length &&
       this.pendingSelection &&
       readyBranches.has(this.pendingSelection)
@@ -351,6 +364,7 @@ class LogicalChat {
     }
     const selectedPath = paths.get(this.selected);
     if (this.follow || !this.cursor) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading at from selectedPath; preserve one receiver evaluation, skipped accesses and the existing this.cursor fallback. The app guidance prefers optional chaining.
       this.cursor = selectedPath?.at(-1) ?? this.cursor;
     }
     this.snapshot = {
@@ -395,9 +409,11 @@ const sourcePrefix = (
     : aliases.get(
         aliasKey(
           sourceId,
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from sourceAgent.data.messages.find(...); read data from sourceAgent; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
           sourceAgent?.data.messages.find(
             (message) =>
               message.role === "user" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               message.metadata?.turnId === branch.forkTurnId
           )?.id ?? ""
         )
@@ -443,6 +459,7 @@ const projectBranch = (
   );
   const messages = agent.data.messages.filter(
     (message) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !(message.metadata?.optimistic && message.metadata.status === "failed")
   );
   if (messages.length < prefix.length) {

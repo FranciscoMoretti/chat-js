@@ -21,10 +21,10 @@ export const getUsageTokenDetails = (
   usage?: ReadonlyNativeSurface<StoredLanguageModelUsage>
 ): { cachedInputTokens: number; reasoningTokens: number } => ({
   cachedInputTokens:
-    // oxlint-disable-next-line no-magic-numbers -- Historical records with neither cache count represent zero known cached tokens.
+    // oxlint-disable-next-line no-magic-numbers, oxc/no-optional-chaining -- Historical records with neither cache count represent zero known cached tokens. Optional chain: Saved pre-SDK7 records may omit inputTokenDetails and the entire usage argument; nested missing cache counts must use legacy cachedInputTokens/zero. The app guidance prefers optional chaining. Legacy cachedInputTokens lookup follows optional usage argument; absent usage must return zero. The app guidance prefers optional chaining.
     usage?.inputTokenDetails?.cacheReadTokens ?? usage?.cachedInputTokens ?? 0,
   reasoningTokens:
-    // oxlint-disable-next-line no-magic-numbers -- Historical records with neither reasoning count represent zero known reasoning tokens.
+    // oxlint-disable-next-line no-magic-numbers, oxc/no-optional-chaining -- Historical records with neither reasoning count represent zero known reasoning tokens. Optional chain: Saved pre-SDK7 records may omit outputTokenDetails and the entire usage argument; nested missing reasoning counts must use legacy reasoningTokens/zero. The app guidance prefers optional chaining. Legacy reasoningTokens lookup follows optional usage argument; absent usage must return zero. The app guidance prefers optional chaining.
     usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0,
 });
 /* oxlint-enable import/no-named-export */

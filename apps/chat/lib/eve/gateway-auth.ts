@@ -90,14 +90,17 @@ const authorizeDeletionRequest = async (
  * typescript/strict-boolean-expressions (#610): gatewaySessionPolicy intentionally keeps the existing falsy-value behavior of compactionSession; ordinaryCheckpoint; checkpointSession; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const gatewaySessionPolicy = (path: string, method: string) => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from compactionPath.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
   if (compactionSession) {
     return { sessionId: compactionSession };
   }
   const ordinaryCheckpoint =
     (method === "GET" || method === "POST") &&
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from checkpointLookupPath.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     checkpointLookupPath.exec(path)?.[1];
   const namedCheckpoint =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from namedCheckpointLookupPath.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const checkpointSession = ordinaryCheckpoint || namedCheckpoint;

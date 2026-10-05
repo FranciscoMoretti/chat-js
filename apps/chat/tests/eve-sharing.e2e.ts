@@ -105,6 +105,7 @@ test("sharing exposes only a read-only transcript, enforces ownership and revoke
             (event) =>
               event.type === "message.completed" &&
               event.data.finishReason === "stop" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim() === "share-fixture-ok"
           );
         },

@@ -32,6 +32,7 @@ it("keeps registered-only pages behind login", async () => {
     const resolvedResult1 = await proxy(
       new NextRequest(`http://localhost${path}`)
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading headers from resolvedResult1; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(resolvedResult1?.headers.get("location")).toBe(
       "http://localhost/login"
     );

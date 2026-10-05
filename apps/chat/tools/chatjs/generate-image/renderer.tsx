@@ -36,6 +36,7 @@ type GenerateImageTool = ToolRendererProps<
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from tool.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const imageUrl = tool.output?.imageUrl;
   const { handleImageError, imageUnavailable } = useImageLoadError(imageUrl);
 
@@ -44,7 +45,12 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
         <div className="bg-muted-foreground/20 h-64 w-full animate-pulse rounded-lg" />
         <div className="text-muted-foreground">
-          Generating image: &quot;{tool.input?.prompt ?? "Preparing prompt…"}
+          Generating image: &quot;
+          {
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing "Preparing prompt…" fallback. */
+            tool.input?.prompt ?? "Preparing prompt…"
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           &quot;
         </div>
       </div>

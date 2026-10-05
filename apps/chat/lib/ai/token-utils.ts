@@ -95,6 +95,7 @@ const extractSystemMessage = (
   otherMessages: ModelMessage[];
 } => {
   const systemMessage =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     preserveSystemMessage && messages[0]?.role === "system"
       ? messages[0]
       : null;

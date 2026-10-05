@@ -245,6 +245,7 @@ test("ChatJS upload remains durable through creation retries and message editing
       filename: "eve-square.png",
       mediaType: "image/png",
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from retained; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!retained?.data) {
       throw new Error("Edited message lost its image");
     }

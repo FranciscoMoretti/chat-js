@@ -49,6 +49,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   const input = documentExecutionInput.parse(value);
   const scope = await resolveEveConversationScope(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal
@@ -59,6 +60,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
     input.documentId,
     input.revisionId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading kind from revision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (revision?.kind !== "code") {
     throw new Error("Code document not found.");
   }

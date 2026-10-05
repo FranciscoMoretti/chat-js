@@ -85,6 +85,7 @@ const sourceTargets = (plan: ReadonlyNative<Plan>): string[] => [
             NonNullable<Plan["items"][number]["files"]>[number]
           >
         ) => {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from file.target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           if (file.target?.startsWith("~/") === true) {
             return [file.target.slice(REGISTRY_ROOT_PREFIX.length)];
           }
@@ -214,7 +215,9 @@ const installPlan = async (
   // A replacement writes shared source. Unknown/native source requires explicit authorization.
   const replacingShared = plan.items.some(
     (item: ReadonlyNative<Plan["items"][number]>): boolean =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       hasProviderKind(item.meta?.chatjs, "gateway") ||
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       hasProviderKind(item.meta?.chatjs, "storage")
   );
   const overwrite =
@@ -230,6 +233,7 @@ const installPlan = async (
               file: ReadonlyNative<
                 NonNullable<Plan["items"][number]["files"]>[number]
               >
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from file.target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             ): boolean => file.target?.startsWith("~/") !== true
           )
           .map(
@@ -284,6 +288,7 @@ const installPlan = async (
       plan.environmentVariables
     );
     await updateDependencies();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling options.finalize; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await options.finalize?.();
   } catch (error) {
     // Restore old source even when shadcn or registration failed; new source may need repair.

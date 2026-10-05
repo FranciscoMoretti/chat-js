@@ -290,7 +290,7 @@ describe("scaffoldFromTemplate", (): void => {
       // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary. Optional chain: Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(manifest.overrides?.evalite).toBeUndefined();
     for (const script of [
       "eval:dev",
@@ -346,12 +346,17 @@ describe("scaffoldFromTemplate", (): void => {
     expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.6.2");
     expect(packageJson.dependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading build from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.build).toBe(
       "tsx lib/db/migrate.ts --deployment && eve build && next build"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prebuild from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "redis:connect" from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading format from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
     expect(existsSync(pathModule.join(destination, "biome.jsonc"))).toBe(false);
     expect(existsSync(pathModule.join(destination, "oxlint.config.ts"))).toBe(
@@ -815,8 +820,11 @@ describe("scaffoldElectron", (): void => {
       },
     });
     expect(configModule.default).toBeDefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.generateAssets; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.generateAssets?.();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.preStart; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.preStart?.();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.prePackage; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.prePackage?.();
     expect(commands).toEqual([
       { args: ["run", "prebuild"], command: "npm", nodeEnv: undefined },
@@ -883,6 +891,7 @@ describe("scaffoldElectron", (): void => {
       expect(script).not.toContain("bun ");
       expect(script).not.toContain("bunx");
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
       await readFile(

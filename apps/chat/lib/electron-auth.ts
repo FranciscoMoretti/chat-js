@@ -67,6 +67,7 @@ const buildSocialAuthRequest = (
     return {
       callbackURL: deviceLoginCallbackURL,
       onRedirectToUrl: (url: string): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading assign from globalThis.location; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         globalThis.location?.assign(url);
       },
       signInOptions: {

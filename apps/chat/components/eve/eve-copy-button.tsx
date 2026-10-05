@@ -41,6 +41,7 @@ const EveCopyButton = ({
   const [failure, setFailure] = useState("");
   const [rejected, setRejected] = useState(false);
   const [destination, setDestination] = useState<string>();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const ownerId = session.data?.user.id;
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */

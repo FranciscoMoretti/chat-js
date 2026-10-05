@@ -287,6 +287,7 @@ export const mcpRouter = createTRPCRouter({
 
       return {
         hasSession: Boolean(session),
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tokens from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         isAuthenticated: Boolean(session?.tokens),
       };
     }),
@@ -449,6 +450,7 @@ export const mcpRouter = createTRPCRouter({
                 .then((promptResult) =>
                   promptResult.prompts.map((prompt) => ({
                     arguments:
+                      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from prompt.arguments; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
                       prompt.arguments?.map((arg) => ({
                         description: arg.description ?? null,
                         name: arg.name,
@@ -545,6 +547,7 @@ export const mcpRouter = createTRPCRouter({
     return results
       .filter(
         (connectionResult): boolean =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionResult.status; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           connectionResult.status?.status === "connected"
       )
       .map((connectionResult) => publicConnector(connectionResult.connector));

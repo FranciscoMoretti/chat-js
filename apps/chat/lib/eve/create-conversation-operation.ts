@@ -70,6 +70,7 @@ export const createEveConversationOperation = async (
     | undefined;
   try {
     const existing = await getEveCreation(ownerId, input.operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (existing?.creationKind === "copy") {
       return Response.json(
         {
@@ -80,6 +81,7 @@ export const createEveConversationOperation = async (
         { status: 409 }
       );
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (existing?.state === "deleting" || existing?.state === "deleted") {
       return Response.json(
         {

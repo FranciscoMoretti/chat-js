@@ -32,6 +32,7 @@ export const GET = async (request: NextRequest) => {
     // Verify this is being called by Vercel cron
     const authHeader = request.headers.get("authorization");
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from env.CRON_SECRET; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !env.CRON_SECRET?.trim() ||
       authHeader !== `Bearer ${env.CRON_SECRET}`
     ) {

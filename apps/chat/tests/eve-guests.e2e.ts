@@ -130,6 +130,7 @@ afterAll(async () => {
 test("guest identity is server-owned, expires and grants no BetterAuth session or signup credits", async () => {
   const row = await guest();
   const guestIdentity = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from guestIdentity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestIdentity?.ownerId).toBe(row.ownerId);
   expect(
     await findEveGuest(createEveGuestCredential().tokenHash)
@@ -171,6 +172,7 @@ test("concurrent replay reserves once and rejects changed request content", asyn
     7
   );
   const guestAfterReplay = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterReplay?.remainingMessages).toBe(9);
   const rates = await db
     .select()
@@ -209,6 +211,7 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
     results.filter((result) => result.status === "exhausted")
   ).toHaveLength(5);
   const guestAfterCompetingSends = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCompetingSends; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCompetingSends?.remainingMessages).toBe(0);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -235,6 +238,7 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
     })
   ).toEqual({ status: "rate-limited" });
   const secondGuestAfterRateLimit = await findEveGuest(second.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from secondGuestAfterRateLimit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(secondGuestAfterRateLimit?.remainingMessages).toBe(10);
   const ipQuotaRowsAfterLimit = await db
     .select()
@@ -299,6 +303,7 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
   );
   expect(releases.filter(Boolean)).toHaveLength(1);
   const guestAfterConcurrentRelease = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterConcurrentRelease; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterConcurrentRelease?.remainingMessages).toBe(10);
   const retry = await reserveEveGuestMessage(input);
   if (retry.status !== "reserved") {
@@ -327,6 +332,7 @@ test("refund is once-only, owner-scoped, and a stale attempt cannot refund its r
     )
   ).toBe(false);
   const guestAfterRetryCommit = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterRetryCommit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterRetryCommit?.remainingMessages).toBe(9);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -349,6 +355,7 @@ test("committing and releasing the same attempt are mutually exclusive", async (
   ]);
   expect(results.filter(Boolean)).toHaveLength(1);
   const guestAfterCommitReleaseRace = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCommitReleaseRace; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCommitReleaseRace?.remainingMessages).toBe(
     results[0] ? 0 : 1
   );
@@ -427,6 +434,7 @@ test("first admission creates one guest and reserves once across different IPs",
     5
   );
   const bootstrappedGuest = await findEveGuest(credential.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from bootstrappedGuest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bootstrappedGuest?.remainingMessages).toBe(1);
   expect(await db.select().from(user).where(eq(user.id, ownerId))).toHaveLength(
     1
@@ -574,6 +582,7 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
     status: "replay",
   });
   const guestAfterMixedReplay = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterMixedReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterMixedReplay?.remainingMessages).toBe(1);
   const entries = await db
     .select()
@@ -623,6 +632,7 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
     )
   ).toHaveLength(1);
   const guestAfterConcurrentComparison = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterConcurrentComparison; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterConcurrentComparison?.remainingMessages).toBe(0);
   const ipQuotaRowsAfterComparison = await db
     .select()
@@ -651,6 +661,7 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
     ])
   ).toEqual({ status: "rate-limited" });
   const guestAfterComparisonRateLimit = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterComparisonRateLimit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterComparisonRateLimit?.remainingMessages).toBe(10);
   expect(
     await db
@@ -776,6 +787,7 @@ test("refunded guest creation cannot dispatch late, while a new admission can re
     )
   ).toBe(false);
   const guestAfterCreationRefund = await findEveGuest(row.tokenHash);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCreationRefund; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCreationRefund?.remainingMessages).toBe(0);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
@@ -814,11 +826,13 @@ test("creation claims and refunds serialize without a free native dispatch", asy
       expect(creation.status).toBe("rejected");
       expect(dispatch).not.toHaveBeenCalled();
       const guestAfterRefundWins = await findEveGuest(row.tokenHash);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterRefundWins; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(guestAfterRefundWins?.remainingMessages).toBe(1);
     } else {
       expect(creation.status).toBe("fulfilled");
       expect(dispatch).toHaveBeenCalledTimes(1);
       const guestAfterCreationWins = await findEveGuest(row.tokenHash);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCreationWins; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(guestAfterCreationWins?.remainingMessages).toBe(0);
     }
   }

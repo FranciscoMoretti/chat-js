@@ -61,6 +61,7 @@ vi.mock("../types/anonymous", () => ({
  * typescript/strict-boolean-expressions (#610): startTurn intentionally keeps the existing falsy-value behavior of selectedTool; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const startTurn = (selectedTool?: string, principalType = "user") =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling selectionHook.events["turn.started"]; read "turn.started" from selectionHook.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   selectionHook.events?.["turn.started"]?.(
     {
       data: { sequence: 1, turnId: "turn_1" },

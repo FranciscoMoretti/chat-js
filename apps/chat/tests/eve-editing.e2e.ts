@@ -108,6 +108,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from accepted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`, "u"), {
       timeout: 60_000,
     });
@@ -155,6 +156,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration request payload; this assertion verifies the selected model survives editing.
     expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
     await expect(page).not.toHaveURL(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from accepted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       new RegExp(`/chat/${accepted?.id}$`, "u"),
       {
         timeout: 60_000,
@@ -269,6 +271,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               if (response?.status() !== 200) {
                 return null;
               }

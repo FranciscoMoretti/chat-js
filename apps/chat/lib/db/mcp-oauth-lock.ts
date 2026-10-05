@@ -53,12 +53,15 @@ const createRefreshCancellation = (
   const cancel = (): void => {
     cancelQuery();
     if (!refreshStarted) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Cancel listener is registered only for a supplied signal; runtime event admission implies presence, but removing this optional access alone fails TS narrowing across the callback. Splitting cancellation state solely for the rule adds complexity; preserve rejection reason and query-cancel ordering.
       aborted.reject(signal?.reason);
     }
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Public signal is optional; without it refresh still runs and no cancellation listener is registered.
   signal?.addEventListener("abort", cancel, { once: true });
   return {
     aborted: aborted.promise,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Dispose executes even when no signal was supplied; it must remain a no-op in that case.
     dispose: (): void => signal?.removeEventListener("abort", cancel),
     markStarted: (): void => {
       refreshStarted = true;
@@ -90,8 +93,10 @@ const createLockedRefresh =
     }>
   ): ((transaction: LockQuery) => Promise<{ value: Result }>) =>
   async (transaction: LockQuery): Promise<{ value: Result }> => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public optional signal is checked before lock setup, after each awaited lock step, and after the operation race; no prior optional call establishes a signal-presence guard.
     options.signal?.throwIfAborted();
     await transaction`select set_config('lock_timeout', ${OAUTH_REFRESH_LOCK_TIMEOUT}, true)`;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public optional signal is checked before lock setup, after each awaited lock step, and after the operation race; no prior optional call establishes a signal-presence guard.
     options.signal?.throwIfAborted();
     try {
       await options.cancellation.waitFor(
@@ -100,6 +105,7 @@ const createLockedRefresh =
     } finally {
       options.cancellation.resetQuery();
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public optional signal is checked before lock setup, after each awaited lock step, and after the operation race; no prior optional call establishes a signal-presence guard.
     options.signal?.throwIfAborted();
     options.cancellation.markStarted();
     return { value: await options.run() };
@@ -118,6 +124,7 @@ export const withMcpOAuthRefreshLock = async <Result>(
   run: () => Promise<Result>,
   signal?: ReadonlyNativeSurface<AbortSignal>
 ): Promise<Result> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Public optional signal is checked before lock setup, after each awaited lock step, and after the operation race; no prior optional call establishes a signal-presence guard.
   signal?.throwIfAborted();
   const cancellation = createRefreshCancellation(signal);
   try {
@@ -125,6 +132,7 @@ export const withMcpOAuthRefreshLock = async <Result>(
       createLockedRefresh({ cancellation, connectorId, run, signal })
     );
     const result = await Promise.race([operation, cancellation.aborted]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public optional signal is checked before lock setup, after each awaited lock step, and after the operation race; no prior optional call establishes a signal-presence guard.
     signal?.throwIfAborted();
     return result.value;
   } finally {

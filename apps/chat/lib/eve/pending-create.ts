@@ -30,8 +30,10 @@ type CreationScope =
  */
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (scope?.conversationId) {
     suffix = `:fork:${scope.conversationId}`;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   } else if (scope?.projectId) {
     suffix = `:project:${scope.projectId}`;
   }
@@ -75,11 +77,14 @@ const prepareResponseGroupCreation = (
     return saved;
   }
   const request = eveResponseGroupInput.parse({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message,
     modelIds,
     operationId: crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
@@ -122,11 +127,14 @@ const prepareCreation = (
     return stored;
   }
   const pending = createConversationInput.safeParse({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
@@ -197,6 +205,7 @@ const moveRejectedProjectCreation = (
 ): z.output<typeof creationRequest> => {
   const scope = { projectId };
   const pending = readCreationRequest(storage, ownerId, scope);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
     throw new Error("The saved request changed. Reload before continuing.");
   }

@@ -68,6 +68,7 @@ const debitTurnUsage = async (
       )
     );
   const delta =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading due from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading paid from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining.
     (totals?.due ?? NO_CHARGED_CENTS) - (totals?.paid ?? NO_CHARGED_CENTS);
   if (delta > NO_CHARGED_CENTS) {
     await tx
@@ -194,6 +195,7 @@ const recordEveUsage = async (input: {
     if (!guest) {
       await debitTurnUsage(tx, input);
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from existing; preserve one receiver evaluation, skipped accesses and the existing existing?.costUsd fallback. The app guidance prefers optional chaining.
     const recordedCost = costUsd ?? existing?.costUsd;
     return recordedCost !== null && recordedCost !== undefined;
   });

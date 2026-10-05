@@ -105,6 +105,7 @@ const started: HookEvent = {
  * typescript/promise-function-async (#606): dispatch preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 const dispatch = (event: HookEvent, hookContext = context) =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling search.events["*"]; read "*" from search.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   search.events?.["*"]?.(event, hookContext);
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 beforeEach(() => {

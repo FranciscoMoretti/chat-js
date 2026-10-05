@@ -205,7 +205,7 @@ describe("useEveFork", () => {
       );
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -249,7 +249,7 @@ describe("useEveFork", () => {
       });
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -300,7 +300,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).selectedTool).toBe("webSearch");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -342,7 +342,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeUndefined();
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -387,7 +387,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).draft).toBe("Keep this edit draft.");
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -453,7 +453,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -498,7 +498,7 @@ describe("useEveFork", () => {
       expect(required(fork).pending).toBeDefined();
       expect(mocks.resolveCreationRequest).toHaveBeenCalledTimes(1);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -569,7 +569,7 @@ describe("useEveFork", () => {
         )
       ).toBeNull();
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -619,9 +619,10 @@ describe("useEveFork", () => {
         await required(fork).retry();
       });
 
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 2 from mocks.resolveCreationRequest.mock.calls[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(mocks.resolveCreationRequest.mock.calls[1]?.[2]).toEqual(original);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -673,7 +674,7 @@ describe("useEveFork", () => {
       expect(required(fork).editingMessageId).toBe("seed_message_0");
       expect(required(fork).locked).toBe(false);
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });
@@ -725,7 +726,7 @@ describe("useEveFork", () => {
         messageId: "seed_message_0",
       });
     } finally {
-      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      // oxlint-disable-next-line typescript/no-deprecated, oxc/no-optional-chaining -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together. Optional chain: Keep the existing nullish guard when reading unmount from renderer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       act(() => renderer?.unmount());
     }
   });

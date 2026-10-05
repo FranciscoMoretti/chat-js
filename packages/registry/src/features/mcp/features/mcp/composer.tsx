@@ -45,6 +45,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
   const queryClient = useQueryClient();
 
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const isAuthenticated = Boolean(session?.user);
 
   const {
@@ -67,6 +68,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
         _newData,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update connector");
       },
@@ -77,12 +79,13 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
           if (!old) {
             return old;
           }
-          return old.map((connector) =>
-            connector.id === newData.id
-              ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-                { ...connector, enabled: newData.enabled }
-              : connector
-          );
+          return old.map((connector) => {
+            if (connector.id === newData.id) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return { ...connector, enabled: newData.enabled };
+            }
+            return connector;
+          });
         });
         return { prev };
       },
@@ -102,6 +105,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
     status = "Loading connectors…";
   } else if (isError) {
     status = "Could not load connectors";
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from connectors; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   } else if (!connectors?.length) {
     status = "No connected servers";
   }
@@ -120,6 +124,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
             {typeof status === "string" && status !== "" ? (
               <DropdownMenuLabel>{status}</DropdownMenuLabel>
             ) : (
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from connectors; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
               connectors?.map((connector) => (
                 <DropdownMenuCheckboxItem
                   key={connector.id}

@@ -64,6 +64,7 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
       const fetchedModels = await getActiveGateway().fetchModels();
       const models = fetchedModels.map((model) => toModelData(model));
       const rate = Number(
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from models.find(...).pricing; read pricing from models.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         models.find((model) => model.id === modelId)?.pricing?.image
       );
       if (!Number.isFinite(rate) || rate < 0) {
@@ -84,9 +85,12 @@ export const createEveToolCost = (usage: ToolUsage = createToolUsage()) => ({
       }
       const fetchedModels = await getActiveGateway().fetchModels();
       const models = fetchedModels.map((model) => toModelData(model));
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pricing from models.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const pricing = models.find((model) => model.id === modelId)?.pricing;
       return (
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input from pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         tokenCost(tokens.inputTokens, pricing?.input) +
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output from pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         tokenCost(tokens.outputTokens, pricing?.output)
       );
     });

@@ -30,6 +30,7 @@ export const voteEveMessage = async (
   }
 ) => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!(conversation?.sessionId && conversation.state === "bound")) {
     return null;
   }

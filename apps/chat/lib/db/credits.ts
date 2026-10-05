@@ -32,6 +32,7 @@ const getCredits = async (userId: string): Promise<number> => {
       .limit(1);
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from rows[0]; preserve one receiver evaluation, skipped accesses and the existing 0 fallback. The app guidance prefers optional chaining.
   return rows[0]?.credits ?? 0;
 };
 /* oxlint-enable oxc/no-async-await */

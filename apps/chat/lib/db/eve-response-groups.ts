@@ -68,6 +68,7 @@ const reserveGroupRow = async (
     eq(eveResponseGroup.operationId, input.operationId)
   );
   const [existing] = await tx.select().from(eveResponseGroup).where(condition);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading deleted from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (existing?.deleted) {
     throw new Error("This response group has been deleted.");
   }
@@ -76,6 +77,7 @@ const reserveGroupRow = async (
       "This response group already has a different message, model order, tool selection, or source."
     );
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from input.fork; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
   const sourceId = input.fork?.conversationId ?? null;
   const [source] = sourceId
     ? await tx
@@ -284,6 +286,7 @@ const recordEveResponseGroupRejection = async (
     );
     const [group] = await tx.select().from(eveResponseGroup).where(condition);
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from group.candidates; read candidates from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !group?.candidates?.some(
         (candidate) => candidate.operationId === operationId
       )
@@ -331,6 +334,7 @@ const getEveResponseGroup = async (
         eq(eveResponseGroup.deleted, false)
       )
     );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading candidates from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!group?.candidates) {
     return;
   }
@@ -367,6 +371,7 @@ const getEveResponseGroup = async (
           (conversation: Readonly<Pick<ConversationRow, "operationId">>) =>
             conversation.operationId === candidate.operationId
         );
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (row?.state === "bound" && row.sessionId) {
           return {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.

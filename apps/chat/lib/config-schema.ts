@@ -515,6 +515,7 @@ const mergeToolsConfig = (
 
 // Apply defaults to partial config
 const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading gateway from input.ai; preserve one receiver evaluation, skipped accesses and the existing gatewayType fallback. The app guidance prefers optional chaining.
   const gateway = input.ai?.gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;
   const aiInput = input.ai;
@@ -525,11 +526,12 @@ const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
     ...gatewayDefaults,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...aiInput,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tools from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     tools: mergeToolsConfig(gatewayDefaults.tools, aiInput?.tools),
     workflows: {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...gatewayDefaults.workflows,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput?.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Keep the existing aiInput?.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Optional chain: Keep the existing nullish guard when reading workflows from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       ...aiInput?.workflows,
     },
   };

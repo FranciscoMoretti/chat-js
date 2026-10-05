@@ -46,6 +46,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     if (lock.current || files.length === 0) {
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (!session?.user) {
       toast.error("Sign in to attach files.");
       return;

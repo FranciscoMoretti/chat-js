@@ -45,8 +45,16 @@ const ScopedEveSearch = async (): Promise<ReactJSX.Element> => {
   const principal = await resolveEvePrincipal(await headers());
   return (
     <EveSearchChats
-      key={principal?.ownerId ?? "anonymous"}
-      ownerId={principal?.ownerId}
+      key={
+        /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the existing "anonymous" fallback. The app guidance prefers optional chaining. */
+        principal?.ownerId ??
+        /* oxlint-enable oxc/no-optional-chaining */ "anonymous"
+      }
+      ownerId={
+        /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+        principal?.ownerId
+        /* oxlint-enable oxc/no-optional-chaining */
+      }
     />
   );
 };
@@ -74,6 +82,7 @@ const HistorySkeleton = (): React.JSX.Element => (
 /* oxlint-disable react/forbid-component-props -- SidebarGroup accept the supplied styling props; preserve this composition's layout and appearance. */
 const RegisteredEveProjects = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   return session?.user ? (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>

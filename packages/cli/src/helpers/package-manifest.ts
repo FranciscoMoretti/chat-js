@@ -182,6 +182,7 @@ export const normalizeScaffoldedPackageJson = (
     };
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading template from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   switch (options?.template) {
     case "chat-app": {
       packageJson.type = "module";
@@ -196,6 +197,7 @@ export const normalizeScaffoldedPackageJson = (
       }
       normalizeElectronDevDependencies(
         packageJson.devDependencies,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tsxVersion from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         options?.tsxVersion
       );
       break;
@@ -205,8 +207,11 @@ export const normalizeScaffoldedPackageJson = (
     }
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading persistPackageManager from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (options?.persistPackageManager !== false) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading packageManager from options; preserve one receiver evaluation, skipped accesses and the existing "bun" fallback.
     const packageManager = options?.packageManager ?? "bun";
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from process.env.npm_config_user_agent.match(...); read match from process.env.npm_config_user_agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const launcherVersion = process.env.npm_config_user_agent?.match(
       new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`, "u")
     )?.[1];

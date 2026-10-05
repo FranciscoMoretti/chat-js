@@ -41,6 +41,7 @@ const ChatModelsProvider = ({
 }): React.JSX.Element => {
   const trpc = useTRPC();
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAuthenticated = Boolean(session?.user);
 
   const { data: preferences } = useQuery({

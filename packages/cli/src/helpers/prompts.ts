@@ -205,6 +205,7 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
     const source = await text({
       message: "Gateway registry item URL or local JSON path:",
       validate: (value) =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
         (value?.trim() ?? "") === ""
           ? "Enter a registry item address"
           : globalThis.undefined,
@@ -279,6 +280,7 @@ const promptStorage = async (
       const address = await text({
         message: "Storage registry item address:",
         validate: (value) =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
           (value?.trim() ?? "") === ""
             ? "Enter an item address"
             : globalThis.undefined,
@@ -322,6 +324,7 @@ const promptStorage = async (
       selection.source === `@chatjs/${item.name}`
   );
   const providerId = PROVIDER_NAMES.find(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading meta from builtin; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     (id) => id === builtin?.meta.chatjs.id
   );
   if (providerId !== globalThis.undefined) {
@@ -371,7 +374,8 @@ const promptCoreFeatures = async (
       hint:
         key === "documents"
           ? "Create, edit, and review documents in chat"
-          : coreFeatureEnvRequirements[
+          : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from coreFeatureEnvRequirements[key as keyof typeof coreFeatureEnvRequirements]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+            coreFeatureEnvRequirements[
               key as keyof typeof coreFeatureEnvRequirements
             ]
               ?.map(
@@ -432,10 +436,12 @@ const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
   if (item.hidden === true) {
     return false;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slot from item.meta.chatjs; read chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const hasSlot = Boolean(item.meta?.chatjs?.slot);
   if (hasSlot) {
     return false;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentRunExport from item.meta.chatjs; read chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const hasDocumentRun = Boolean(item.meta?.chatjs?.documentRunExport);
   return !hasDocumentRun && item.name !== "deep-research";
 };
@@ -446,6 +452,7 @@ const assistantToolOptions = (
 ): Option<string>[] => [
   ...supportedBuiltInTools.map((key) => ({
     hint:
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading description from builtInToolEnvRequirements[key]; preserve one receiver evaluation, skipped accesses and the existing BUILT_IN_TOOL_HINTS[key] fallback.
       builtInToolEnvRequirements[key]?.description ?? BUILT_IN_TOOL_HINTS[key],
     label: BUILT_IN_TOOL_LABELS[key],
     value: key,
@@ -619,6 +626,7 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   const address = await text({
     message: "Search tool registry address:",
     validate: (value) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
       (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
@@ -655,6 +663,7 @@ const promptCodeExecutionTool = async (
   const address = await text({
     message: "Code-execution tool registry address:",
     validate: (value) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
       (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
@@ -684,6 +693,7 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   const address = await text({
     message: "URL retrieval tool registry address:",
     validate: (value) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
       (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
@@ -715,6 +725,7 @@ const promptImageGenerationTool = async (
   const address = await text({
     message: "image generation tool registry address:",
     validate: (value) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
       (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);
@@ -746,6 +757,7 @@ const promptVideoGenerationTool = async (
   const address = await text({
     message: "video generation tool registry address:",
     validate: (value) =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
       (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
   });
   handleCancel(address);

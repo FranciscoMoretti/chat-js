@@ -65,6 +65,7 @@ const documentExecutionLanguage = (
   if (!title.includes(".")) {
     return "python";
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from title.split(...).at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const extension = title.split(".").at(LAST_EXTENSION_INDEX)?.toLowerCase();
   if (!(typeof extension === "string" && extension !== "")) {
     return "python";

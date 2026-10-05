@@ -30,6 +30,7 @@ const routes = async () => {
   const config = await configure("phase-production-build", {
     defaultConfig: {},
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling config.rewrites; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   return await config.rewrites?.();
 };
 /* oxlint-enable oxc/no-async-await */

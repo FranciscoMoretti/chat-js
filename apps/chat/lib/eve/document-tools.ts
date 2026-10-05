@@ -67,6 +67,7 @@ export const executeEveDocumentTool = async (
   if (name === "readDocument") {
     const input = eveDocumentReadInput.parse(value);
     const scope = await resolveEveConversationScope(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       context.session.auth.initiator?.principalId,
       context.session.id,
       context.abortSignal
@@ -90,6 +91,7 @@ export const executeEveDocumentTool = async (
       title: revision.title,
     };
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const operation = Object.entries(eveDocumentOperations).find(
     ([key]) => key === name
   )?.[1];
@@ -99,6 +101,7 @@ export const executeEveDocumentTool = async (
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
   const scope = await resolveEveConversationScope(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     context.session.auth.initiator?.principalId,
     context.session.id,
     context.abortSignal
@@ -110,8 +113,10 @@ export const executeEveDocumentTool = async (
       ...scope,
       content: input.content,
       documentId:
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentId from edit; preserve one receiver evaluation, skipped accesses and the existing documentIdForCall(context.session.id, context.callId) fallback. The app guidance prefers optional chaining.
         edit?.documentId ??
         documentIdForCall(context.session.id, context.callId),
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading expectedRevisionId from edit; preserve one receiver evaluation, skipped accesses and the existing null fallback. The app guidance prefers optional chaining.
       expectedRevisionId: edit?.expectedRevisionId ?? null,
       fileIds: input.fileIds,
       kind: operation.kind,

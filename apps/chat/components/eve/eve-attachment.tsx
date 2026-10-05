@@ -18,6 +18,7 @@ export const EveAttachment = ({
   const [resolved, setResolved] = useState<{ source: string; url: string }>();
   const source = part.url;
   useEffect(() => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!source?.startsWith("data:")) {
       return;
     }
@@ -48,7 +49,9 @@ export const EveAttachment = ({
     };
   }, [source]);
   let url = source;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (source?.startsWith("data:")) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from resolved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     url = resolved?.source === source ? resolved.url : undefined;
   }
   return typeof url === "string" && url !== "" ? (

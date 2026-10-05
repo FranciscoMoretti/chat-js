@@ -49,6 +49,7 @@ export const EveDocumentActions = ({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copy's awaited sequencing and rejected-Promise behavior. */
   const copy = async (): Promise<void> => {
     try {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling documentUi[kind].copyContent; read copyContent from documentUi[kind]; preserve one receiver evaluation, skipped call arguments and the existing content fallback. The app guidance prefers optional chaining.
       const copied = documentUi[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
       toast.success(

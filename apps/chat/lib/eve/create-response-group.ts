@@ -61,6 +61,7 @@ const retainResponseGroupDraft = (
     storage.removeItem(recoveryKey(ownerId, result.id));
   }
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from readCreationRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     readCreationRequest(storage, ownerId, scope)?.operationId ===
     operation.operationId
   ) {
@@ -87,6 +88,7 @@ const requestResponseGroup = async (
   const result = eveResponseGroupResult.parse(await response.json());
   const [primary] = result.candidates;
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from primary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     primary?.state === "rejected" &&
     (result.candidates
       .slice(FIRST_ALTERNATE_CANDIDATE_INDEX)

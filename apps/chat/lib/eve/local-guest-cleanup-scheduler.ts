@@ -46,6 +46,7 @@ const enabled = (): boolean => {
 /** Development only. Never load database clients for a remote or disabled runtime. */
 export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   if (!enabled()) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stop from schedulerGlobal.chatjsEveGuestCleanup; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     schedulerGlobal.chatjsEveGuestCleanup?.stop();
     return;
   }

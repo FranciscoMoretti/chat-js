@@ -90,9 +90,11 @@ export default defineHook({
       }
       try {
         const scope = await resolveEveConversationScope(
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           context.session.auth.initiator?.principalId,
           context.session.id,
           AbortSignal.timeout(10_000),
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           context.session.auth.initiator?.attributes.chatjsReservationId
         );
         if (needsRecovery.get()) {
@@ -121,7 +123,8 @@ export default defineHook({
             name: error instanceof Error ? error.name : "UnknownError",
             stack:
               error instanceof Error
-                ? error.stack?.split("\n").slice(1).join("\n")
+                ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from error.stack; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+                  error.stack?.split("\n").slice(1).join("\n")
                 : undefined,
           }
         );

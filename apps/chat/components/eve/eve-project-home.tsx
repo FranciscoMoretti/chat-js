@@ -101,6 +101,7 @@ export const EveProjectHome = ({
     PROJECT_ICONS.find((value) => value === current.icon) ??
     DEFAULT_PROJECT_ICON;
   const color =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing DEFAULT_PROJECT_COLOR fallback. The app guidance prefers optional chaining.
     PROJECT_COLORS.find((value) => value.name === current.iconColor)?.name ??
     DEFAULT_PROJECT_COLOR;
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */

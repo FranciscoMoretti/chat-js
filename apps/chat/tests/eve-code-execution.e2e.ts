@@ -84,6 +84,7 @@ test("native code execution renders real output and reconciles its fixed charge 
       event.data.result.toolName === "codeExecution"
   );
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     result?.type !== "action.result" ||
     result.data.result.kind !== "tool-result"
   ) {
@@ -161,9 +162,11 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading width from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     .poll(async () => (await page.locator("canvas").boundingBox())?.width)
     .toBeLessThan(390);
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading x from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     .poll(async () => (await page.locator("canvas").boundingBox())?.x)
     .toBeGreaterThanOrEqual(0);
   await page.locator("canvas").screenshot({

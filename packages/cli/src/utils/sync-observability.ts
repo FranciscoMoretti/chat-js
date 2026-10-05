@@ -69,6 +69,7 @@ const locateObservabilityFile = async (
   cwd: string,
   file: ObservabilityFile
 ): Promise<LocatedFile> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replace from file.target; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const target = file.target?.replace(/^~\//u, "");
   if (typeof target !== "string" || target === "") {
     throw new Error(
@@ -196,6 +197,7 @@ const initializeObservability = async (cwd: string): Promise<void> => {
     "langfuse-vercel",
     "langfuse",
   ]) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dependency from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     delete manifest.dependencies?.[dependency];
   }
   await writeFile(manifestPath, formattedManifest(manifest));

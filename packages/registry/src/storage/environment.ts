@@ -54,6 +54,7 @@ const credentialOptions = (
     if (variables.length > EMPTY_VARIABLE_COUNT) {
       credentialModes.push(variables);
     } else {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const optionName = STORAGE_OPTION_HINT.exec(mode.label)?.groups?.option;
       hasUnvalidatedCredentialMode ||=
         optionName === ABSENT_ADAPTER_OPTION ||
@@ -70,6 +71,7 @@ const requiresEnvironmentVariable = (
   variable: Readonly<EnvVar>,
   adapterOptions: Readonly<Record<string, unknown>>
 ): boolean => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const optionName = STORAGE_OPTION_HINT.exec(variable.description)?.groups
     ?.option;
   return (
@@ -92,6 +94,7 @@ const getStorageEnvironmentRequirements = (
     return [];
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from metadata.env.required; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const required = metadata.env.required?.filter((variable: Readonly<EnvVar>) =>
     requiresEnvironmentVariable(variable, adapterOptions)
   );

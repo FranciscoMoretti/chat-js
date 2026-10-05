@@ -293,6 +293,7 @@ test("search selections register standard tools without requiring a renderer", a
   const root = await project();
   await installSearch(root, "external-search", "EXTERNAL_SEARCH_KEY");
   const definitions = await syncTools(root);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading envRequirements from definitions[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(definitions[0]?.envRequirements).toEqual([
     { options: [["EXTERNAL_SEARCH_KEY"]] },
   ]);
@@ -450,6 +451,7 @@ test("sync preserves request-context auth and environment credential fallbacks",
   definition.envRequirements[0].runtimeAuth = "vercel-oidc";
   await writeFile(descriptor, JSON.stringify(definition));
   const definitions = await syncTools(root);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading envRequirements from definitions[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(definitions[0]?.envRequirements).toEqual([
     {
       options: [["RUNNER_TOKEN"], ["RUNNER_ID", "RUNNER_SECRET"]],

@@ -32,10 +32,12 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   public reconnectToStream = reconnectToNoStream;
 
   public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     this.requests[requestIndex]?.enqueue(chunk);
   }
 
   public finish(requestIndex: number): void {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading close from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     this.requests[requestIndex]?.close();
   }
 }

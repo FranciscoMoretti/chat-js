@@ -70,6 +70,7 @@ export const POST = async (
     );
   }
   const source = await getEveConversation(principal.ownerId, id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!source?.sessionId || source.state !== "bound") {
     return Response.json(
       { error: "Source conversation not found." },

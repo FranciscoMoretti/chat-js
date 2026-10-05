@@ -165,6 +165,7 @@ test("artifact Run executes saved source, retains output across reload and shari
   expect(executions).toHaveLength(1);
   const [event] = executions;
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from event; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     event?.type !== "action.result" ||
     event.data.result.kind !== "tool-result"
   ) {

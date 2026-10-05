@@ -109,6 +109,7 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
     failure = error;
   }
   expect(failure).toBeDefined();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading requirements from failure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(failure?.requirements).toEqual([
     {
       allOf: [
@@ -125,16 +126,21 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
       options: [],
     },
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from failure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(failure?.message).toContain("MISSING_KEY");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from failure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(failure?.message).toContain(
     "ALTERNATIVE_A or ALTERNATIVE_B + ALTERNATIVE_C"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from failure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(failure?.message).not.toMatch(
     /SATISFIED|VERCEL_TOKEN|supplied-secret|nested-secret/u
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading requirements from failure; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(JSON.stringify(failure?.requirements)).not.toMatch(
     /supplied-secret|nested-secret/u
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading allOf from requirements[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(requirements[0]?.allOf).toHaveLength(2);
   expect(() =>
     requireCredentials("grouped-feature", requirements, {

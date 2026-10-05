@@ -91,6 +91,7 @@ const InputGroupAddon = ({
         return;
       }
       event.preventDefault();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from event.currentTarget.parentElement.querySelector(...); read querySelector from event.currentTarget.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       event.currentTarget.parentElement
         ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
           "input, textarea"

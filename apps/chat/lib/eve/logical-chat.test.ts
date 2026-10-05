@@ -225,6 +225,7 @@ describe("logical chat over native sessions", () => {
       ])
     );
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from chat.getSnapshot(...).nodes.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       chat.getSnapshot().nodes.get(chat.logicalId("root", "u1") ?? "missing")
         ?.message.parts
     ).toEqual(original[0].parts);
@@ -299,6 +300,7 @@ it("navigation revokes a delayed pending response without affecting its native o
     )
   );
   expect(chat.getSnapshot().conversationId).toBe("root");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from chat.getSnapshot(...).agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chat.getSnapshot().agents.get("retry")?.status).toBe("streaming");
 });
 

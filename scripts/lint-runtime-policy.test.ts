@@ -65,9 +65,11 @@ const assertDiagnostics = (
 ): void => {
   for (const file of files) {
     const diagnostics = output.split("\n").filter((line): boolean => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filename from diagnosticLocation.exec(...).groups; read groups from diagnosticLocation.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const filename = diagnosticLocation.exec(line)?.groups?.filename;
       return (
         filename === path.relative(cwd, file) ||
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading endsWith from filename; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         filename?.endsWith(`/${file}`) === true
       );
     });

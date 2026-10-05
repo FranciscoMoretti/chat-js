@@ -7,7 +7,7 @@ test("retired agent links render the unmatched-route page", async ({
 }, testInfo) => {
   await page.emulateMedia({ colorScheme: "light" });
   const response = await page.goto("/agent?conversation=retired-conversation");
-  // oxlint-disable-next-line eslint/no-magic-numbers -- Assert the HTTP not-found contract.
+  // oxlint-disable-next-line eslint/no-magic-numbers, oxc/no-optional-chaining -- Assert the HTTP not-found contract. Optional chain: Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(response?.status()).toBe(404);
   await expect(page).toHaveURL(/\/agent\?conversation=retired-conversation$/u);
   await expect(

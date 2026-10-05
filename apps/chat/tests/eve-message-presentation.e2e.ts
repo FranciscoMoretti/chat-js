@@ -120,13 +120,16 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     const node = document.querySelector(
       '[data-testid="editable-transcript"] [data-message-id="user-1"] pre'
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstChild from node; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!node?.firstChild) {
       throw new Error("Missing selectable message text");
     }
     const range = document.createRange();
     range.selectNodeContents(node);
     const selection = globalThis.getSelection();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading removeAllRanges from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     selection?.removeAllRanges();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addRange from selection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     selection?.addRange(range);
     const button = node.closest("button");
     if (!button) {
@@ -135,6 +138,7 @@ test("EVE message presentation keeps editing, actions, versions and cards cohere
     button.click();
   });
   await expect(editable.getByTestId("inline-editor")).toHaveCount(0);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading removeAllRanges from globalThis.getSelection(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await page.evaluate(() => globalThis.getSelection()?.removeAllRanges());
   await firstUser.locator('button[data-testid="message-content"]').click();
   await expect(editable.getByTestId("inline-editor")).toBeVisible();

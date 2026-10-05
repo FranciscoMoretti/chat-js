@@ -64,6 +64,7 @@ const dispatchEveCopy = async (
       }>(
         sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!lock?.locked) {
         throw new CreationConflictError(
           "Copy creation is still in progress. Retry the same operation."

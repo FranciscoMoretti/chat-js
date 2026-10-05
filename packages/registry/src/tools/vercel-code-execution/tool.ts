@@ -67,6 +67,7 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
     const cleanupOwnedSandbox = async (): Promise<void> => {
       await cleanupSandbox(sandbox, log, requestId);
       if (sandbox) {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading release from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         await sandboxOwnership?.release();
       }
     };
@@ -78,15 +79,20 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
     };
 
     try {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       abortSignal?.throwIfAborted();
       log.info({ language, requestId, runtime, title }, "creating sandbox");
       const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
       const name = auth
-        ? await sandboxOwnership?.reserve(auth, abortSignal)
+        ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reserve from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+          await sandboxOwnership?.reserve(auth, abortSignal)
         : undefined;
       sandbox = await createSandbox(runtime, abortSignal, name, auth);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading created from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       await sandboxOwnership?.created(sandbox.name);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       abortSignal?.addEventListener("abort", stop, { once: true });
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       abortSignal?.throwIfAborted();
       log.debug({ requestId }, "sandbox created");
 
@@ -117,6 +123,7 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
         message: `Sandbox execution failed: ${getErrorMessage(error)}`,
       };
     } finally {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading removeEventListener from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       abortSignal?.removeEventListener("abort", stop);
       stop();
       await cleanup;

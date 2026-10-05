@@ -70,7 +70,11 @@ export const EveFeedbackActions = ({
       onVote={(type) =>
         mutation.mutateAsync({ conversationId, messageId, type })
       }
-      vote={votes.data?.find((vote) => vote.messageId === messageId)}
+      vote={
+        /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from votes.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+        votes.data?.find((vote) => vote.messageId === messageId)
+        /* oxlint-enable oxc/no-optional-chaining */
+      }
     />
   );
 };

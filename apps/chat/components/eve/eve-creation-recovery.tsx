@@ -53,7 +53,8 @@ export const EveCreationRecovery = ({
         saved &&
           (typeof operationId === "string" && operationId !== ""
             ? saved.operationId === operationId
-            : scope?.projectId && saved.projectId === scope.projectId)
+            : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+              scope?.projectId && saved.projectId === scope.projectId)
           ? saved
           : undefined
       );
@@ -81,6 +82,7 @@ export const EveCreationRecovery = ({
       );
       globalThis.location.assign(`/chat/${id}`);
     } catch (error) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (error instanceof CreationRejectedError && scope?.projectId) {
         setRejected(true);
       }
@@ -96,6 +98,7 @@ export const EveCreationRecovery = ({
   };
   /* oxlint-enable oxc/no-async-await */
   const continueWithoutProject = (): void => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!(rejected && pending && scope?.projectId)) {
       return;
     }
@@ -134,8 +137,11 @@ export const EveCreationRecovery = ({
       </p>
       <output className="block">{status}</output>
       {failure && <p role="alert">{failure}</p>}
-      {rejected && scope?.projectId ? (
-        <Button onClick={continueWithoutProject}>
+      {rejected /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+      scope?.projectId ? (
+        /* oxlint-enable oxc/no-optional-chaining */ <Button
+          onClick={continueWithoutProject}
+        >
           Continue without project
         </Button>
       ) : null}

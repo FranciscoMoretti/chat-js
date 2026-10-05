@@ -142,13 +142,13 @@ const SidebarProvider = ({
   );
 
   // Helper to toggle the sidebar.
-  const toggleSidebar = useReactCallback(
-    () =>
-      isMobile
-        ? setOpenMobile((wasOpen) => !wasOpen)
-        : setOpen((wasOpen) => !wasOpen),
-    [isMobile, setOpen, setOpenMobile]
-  );
+  const toggleSidebar = useReactCallback(() => {
+    if (isMobile) {
+      setOpenMobile((wasOpen) => !wasOpen);
+      return;
+    }
+    setOpen((wasOpen) => !wasOpen);
+  }, [isMobile, setOpen, setOpenMobile]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   useReactEffect(() => {
@@ -349,6 +349,7 @@ const SidebarTrigger = ({
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
       onClick={(event) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onClick?.(event);
         toggleSidebar();
       }}

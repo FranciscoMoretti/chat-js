@@ -135,6 +135,7 @@ export const AttachmentCard = ({
   className?: string;
 }): ReactJSX.Element => {
   const { name, url, contentType } = attachment;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
 

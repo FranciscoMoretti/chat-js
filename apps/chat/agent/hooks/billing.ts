@@ -22,6 +22,7 @@ import { ingestEveUsage } from "../../lib/eve/usage";
 export default defineHook({
   events: {
     "*": async (event, context) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const ownerId = context.session.auth.initiator?.principalId;
       if (!ownerId) {
         throw new Error("Eve billing requires an authenticated owner.");
@@ -52,6 +53,7 @@ export default defineHook({
         return;
       }
       const binding = await getEveSubagent(ownerId, context.session.id);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootSessionId from binding; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!binding?.rootSessionId) {
         throw new Error("Child usage requires a native owner binding.");
       }

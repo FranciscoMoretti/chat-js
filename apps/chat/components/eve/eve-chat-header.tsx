@@ -86,8 +86,10 @@ const projectAppearance = (
   project: { icon: string; iconColor: string } | undefined
 ) => ({
   color:
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing "gray" fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading iconColor from project; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     PROJECT_COLORS.find((value) => value.name === project?.iconColor)?.name ??
     "gray",
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from project; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   icon: PROJECT_ICONS.find((value) => value === project?.icon) ?? "folder",
 });
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
@@ -107,10 +109,12 @@ const EveChatHeader = ({
   const trpc = useTRPC();
   const { data: session } = useSession();
   const identity = useQuery(trpc.eve.get.queryOptions({ id: chatId }));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from identity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const projectId = identity.data?.projectId;
   const project = useQuery(
     trpc.project.getById.queryOptions(
       { id: projectId ?? "" },
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       { enabled: Boolean(projectId && session?.user) }
     )
   );
@@ -118,6 +122,7 @@ const EveChatHeader = ({
   const openDeletion = useEveDeletion();
   const [draft, setDraft] = useState<string>();
   const [sharing, setSharing] = useState(false);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from identity.data; preserve one receiver evaluation, skipped accesses and the existing fallbackTitle fallback. The app guidance prefers optional chaining.
   const title = identity.data?.title ?? fallbackTitle;
   const save = (): void => {
     if (draft === undefined) {
@@ -158,22 +163,31 @@ const EveChatHeader = ({
               // oxlint-disable-next-line react/forbid-component-props -- BreadcrumbList accepts className in its styling contract; preserve this caller's layout and appearance.
               className="flex-nowrap"
             >
-              {projectId && session?.user && (
-                <>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                      <InternalLink
-                        aria-label={project.data?.name ?? "Project"}
-                        title={project.data?.name ?? "Project"}
-                        href={`/project/${projectId}`}
-                      >
-                        <ProjectIcon icon={icon} color={color} size={16} />
-                      </InternalLink>
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                </>
-              )}
+              {projectId /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+                session?.user && (
+                  /* oxlint-enable oxc/no-optional-chaining */ <>
+                    <BreadcrumbItem>
+                      <BreadcrumbLink asChild>
+                        <InternalLink
+                          aria-label={
+                            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from project.data; preserve one receiver evaluation, skipped accesses and the existing "Project" fallback. The app guidance prefers optional chaining. */
+                            project.data?.name ??
+                            /* oxlint-enable oxc/no-optional-chaining */ "Project"
+                          }
+                          title={
+                            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from project.data; preserve one receiver evaluation, skipped accesses and the existing "Project" fallback. The app guidance prefers optional chaining. */
+                            project.data?.name ??
+                            /* oxlint-enable oxc/no-optional-chaining */ "Project"
+                          }
+                          href={`/project/${projectId}`}
+                        >
+                          <ProjectIcon icon={icon} color={color} size={16} />
+                        </InternalLink>
+                      </BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator />
+                  </>
+                )}
               <BreadcrumbItem
                 // oxlint-disable-next-line react/forbid-component-props -- BreadcrumbItem accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="min-w-0"
@@ -196,11 +210,16 @@ const EveChatHeader = ({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <ChatMenuItems
-                        isPinned={identity.data?.isPinned ?? false}
+                        isPinned={
+                          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the existing false fallback. The app guidance prefers optional chaining. */
+                          identity.data?.isPinned ??
+                          /* oxlint-enable oxc/no-optional-chaining */ false
+                        }
                         onRename={() => setDraft(title)}
                         onTogglePin={() =>
                           pin.mutate({
                             id: chatId,
+                            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                             isPinned: !identity.data?.isPinned,
                           })
                         }

@@ -192,12 +192,15 @@ test("search and word-count renderers preserve their visible states", async (): 
   });
 
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=word-count-error]")?.textContent
   ).toBe("Tool unavailable");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=native-receipt]")?.textContent
   ).toContain("Words");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=native-receipt-error]")?.textContent
   ).toBe("The tool did not complete.");
   expect(container.textContent).toContain("Counting words...");

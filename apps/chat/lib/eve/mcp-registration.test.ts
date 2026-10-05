@@ -35,6 +35,7 @@ it("discovers for the session owner and preserves namespaced tool definitions", 
       remoteName: "echo",
     },
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling mcp.events["step.started"]; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const definitions = await mcp.events["step.started"]?.(
     {},
     {
@@ -77,6 +78,7 @@ it("continues ordinary chat when MCP discovery times out", async () => {
   vi.spyOn(AbortSignal, "timeout").mockReturnValue(signal);
   mocks.discover.mockRejectedValue(signal.reason);
   await expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling mcp.events["step.started"]; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     mcp.events["step.started"]?.(
       {},
       {
@@ -110,6 +112,7 @@ it("does not discover remote tools for an explicitly selected local capability",
   mocks.discover.mockClear();
   try {
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling mcp.events["step.started"]; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       await mcp.events["step.started"]?.(
         {},
         {
@@ -137,6 +140,7 @@ it("never discovers registered account connectors for a guest", async () => {
   mocks.discover.mockClear();
   try {
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling mcp.events["step.started"]; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       await mcp.events["step.started"]?.(
         {},
         {

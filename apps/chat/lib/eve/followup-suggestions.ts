@@ -14,6 +14,7 @@ const messageFollowupSuggestions = (
   message: Pick<EveMessage, "metadata">
 ): string[] => {
   const parsed = eveFollowupSuggestions.safeParse(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "followup-suggestions" from message.metadata.annotations; read annotations from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     message.metadata?.annotations?.["followup-suggestions"]
   );
   return parsed.success ? [...new Set(parsed.data.suggestions)] : [];

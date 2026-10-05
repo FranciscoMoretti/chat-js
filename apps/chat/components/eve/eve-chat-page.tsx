@@ -57,8 +57,10 @@ export const EveChatPage = async ({
     notFound();
   }
   let recoveryScope: CreationScope | undefined;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (selected?.parentConversationId) {
     recoveryScope = { conversationId: selected.parentConversationId };
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialProjectId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   } else if (selected?.initialProjectId) {
     recoveryScope = { projectId: selected.initialProjectId };
   }
@@ -73,6 +75,7 @@ export const EveChatPage = async ({
       }
     />
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (selected?.sessionId && selected.state === "bound") {
     return (
       <EveRuntimeRoute
@@ -86,6 +89,7 @@ export const EveChatPage = async ({
   }
 
   const copy =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     selected?.creationKind === "copy"
       ? await getEveCopyOperation(principal.ownerId, selected.operationId)
       : undefined;
@@ -103,6 +107,7 @@ export const EveChatPage = async ({
       />
     );
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialModelId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (copy && selected?.initialModelId) {
     content = (
       <EveCopyButton

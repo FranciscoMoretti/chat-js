@@ -216,7 +216,7 @@ it("connection initialization always receives a cancellation signal", async () =
     url: "https://mcp.test",
   });
   await client.connect();
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.create.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
   expect(signal).toBeInstanceOf(AbortSignal);
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.

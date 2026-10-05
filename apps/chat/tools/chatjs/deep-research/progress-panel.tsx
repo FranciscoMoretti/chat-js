@@ -54,6 +54,7 @@ export const ResearchProgress = ({
       updates
         .filter((update) => update.type === "web")
         .reduce(
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from update.results; preserve one receiver evaluation, skipped accesses and the existing 0 fallback.
           (acc, update): number => acc + (update.results?.length ?? 0),
           0
         ),
@@ -80,11 +81,13 @@ export const ResearchProgress = ({
         (update) => update.type === "completed"
       );
 
-      return completedUpdate?.timestamp
-        ? Math.floor(
-            (completedUpdate.timestamp - progressUpdates[0].timestamp) / 1000
-          )
-        : 0;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading timestamp from completedUpdate; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+      if (completedUpdate?.timestamp) {
+        return Math.floor(
+          (completedUpdate.timestamp - progressUpdates[0].timestamp) / 1000
+        );
+      }
+      return 0;
     }
     return 0;
   }, [updates, isComplete]);

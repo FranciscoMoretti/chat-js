@@ -32,6 +32,7 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
         declaration.name.getText(parsed) === "mcpConnector"
     );
   const [, columns] =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     connector?.initializer && ts.isCallExpression(connector.initializer)
       ? connector.initializer.arguments
       : [];

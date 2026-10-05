@@ -38,6 +38,7 @@ export const EveModelPicker = ({
   const { getModelById } = useChatModels();
   if (retainedModelIds) {
     const names = retainedModelIds
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing id fallback. The app guidance prefers optional chaining.
       .map((id) => getModelById(id)?.name ?? id)
       .join(", ");
     return (
@@ -47,9 +48,9 @@ export const EveModelPicker = ({
     );
   }
   const selectedModel =
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading id from getModelById(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     (retainedModelId && getModelById(retainedModelId)?.id) ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. Optional chain: Keep the existing nullish guard when reading value from modelSelection; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     getPrimarySelectedModelId(modelSelection?.value) ||
     defaultModel;
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
@@ -73,7 +74,11 @@ export const EveModelPicker = ({
           }
         }}
         selectedModelId={selectedModel}
-        selectedModelSelection={modelSelection?.value ?? selectedModel}
+        selectedModelSelection={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from modelSelection; preserve one receiver evaluation, skipped accesses and the existing selectedModel fallback. The app guidance prefers optional chaining. */
+          modelSelection?.value ??
+          /* oxlint-enable oxc/no-optional-chaining */ selectedModel
+        }
       />
     </fieldset>
   );

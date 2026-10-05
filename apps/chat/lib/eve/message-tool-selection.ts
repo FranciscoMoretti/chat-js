@@ -26,6 +26,7 @@ unicorn/no-null (#570): eveMessageTool preserves explicit null in its storage/AP
 const eveMessageTool = (
   message: Pick<EveMessage, "metadata">
 ): UiToolName | null => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from message.metadata.custom; read custom from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const value = message.metadata?.custom?.chatjs;
   return value === undefined ? null : selection.parse(value).selectedTool;
 };

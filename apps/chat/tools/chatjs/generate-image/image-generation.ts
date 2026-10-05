@@ -121,6 +121,7 @@ const runGenerateImageTraditional = async (
   const [firstImage] = res.images;
   log.debug(
     {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from firstImage.base64; read base64 from firstImage; preserve one receiver evaluation, skipped accesses and the existing EMPTY_IMAGE_BYTES fallback.
       base64Length: firstImage?.base64?.length ?? EMPTY_IMAGE_BYTES,
       mode: options.mode,
     },
@@ -130,6 +131,7 @@ const runGenerateImageTraditional = async (
   const timestamp = Date.now();
   const filename = `generated-image-${timestamp}.png`;
   // Provider usage remains billable if the subsequent storage upload fails.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addImageCost from options.costAccumulator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   options.costAccumulator?.addImageCost(
     modelId,
     res.images.length,
@@ -245,11 +247,13 @@ const runGenerateImageMultimodal = async (
     model: options.modelProvider.createLanguageModel(selection.modelId),
     providerOptions: multimodalProviderOptions(selection.modelId),
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addLLMCost from options.costAccumulator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   options.costAccumulator?.addLLMCost(
     selection.usageModelId,
     res.usage,
     "generateImage-multimodal"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from res.files; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const imageFile = res.files?.find(
     (file: Readonly<{ mediaType: string }>): boolean =>
       file.mediaType.startsWith("image/")

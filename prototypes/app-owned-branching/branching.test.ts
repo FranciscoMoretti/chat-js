@@ -107,6 +107,7 @@ beforeAll(async () => {
 /* oxlint-enable node/no-sync */
 /* oxlint-disable node/no-sync -- branching.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 afterAll(async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading end from sql; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   await sql?.end();
   if (started) {
     execFileSync(
@@ -238,14 +239,18 @@ test("stopping snapshot restores parent and independent child; later document an
     owner,
   });
   const rows2 = await sql`select stopped from provider_vm where id='original'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stopped from rows2[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows2[0]?.stopped).toBe(true);
   const rows3 = await sql`select documents from branch where id='child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documents from rows3[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows3[0]?.documents).toEqual({ doc: "revision-1" });
   const rows4 = await sql`select files from provider_vm where id='child:child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows4[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows4[0]?.files).toEqual({ "work.txt": "v1" });
   await write("child", "child-v3");
   const rows5 =
     await sql`select files from provider_vm where id='parent:boundary'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows5[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows5[0]?.files).toEqual({ "work.txt": "parent-v2" });
   await add("parent-next", "m1");
   await add("child-next", "m1", "child");
@@ -320,10 +325,12 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     )
   ).rejects.toThrow("lost provider reply");
   const rows6 = await sql`select status from checkpoint`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from rows6[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows6[0]?.status).toBe("failed");
   await expect(add("late", null)).rejects.toThrow("capture barrier");
   await complete(sql, mockProvider(sql), owner, capture.id);
   const rows7 = await sql`select status from checkpoint`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from rows7[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows7[0]?.status).toBe("ready");
   expect(await sql`select id from provider_snapshot`).toHaveLength(1);
 });
@@ -348,6 +355,7 @@ test("crash after restore before publication retries without resnapshotting or o
   ]);
   const rows8 =
     await sql`select files from provider_vm where id='parent:boundary'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows8[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows8[0]?.files).toEqual({ "work.txt": "continued" });
   expect(await sql`select id from provider_vm`).toHaveLength(2);
 });
@@ -408,6 +416,7 @@ test("child creation is idempotent through lost replies, including after child c
   await add("child-1", null, "child");
   await fork(sql, provider, request);
   const rows9 = await sql`select head from branch where id='child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading head from rows9[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows9[0]?.head).toBe("child-1");
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await reserve(sql, { ...capture, id: "other" });
@@ -444,6 +453,7 @@ test("historical edit/regenerate uses the prior boundary, excludes suffix, retai
   await add("replacement-question", "answer-1", "edit");
   const selected = await history(sql, owner, "replacement-question");
   expect(selected).toHaveLength(3);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selected[1].annotation; read annotation from selected[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(selected[1]?.annotation?.model).toBe("original-model");
   expect(selected.at(-1)).toEqual(text("replacement-question"));
   expect(await history(sql, owner, "answer-2")).toHaveLength(4);
@@ -620,9 +630,11 @@ test("app annotations are separate records and excluded from model history", asy
     role: "assistant",
   });
   const rows = await sql`select payload from node where id='annotated'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading payload from rows[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows[0]?.payload).not.toHaveProperty("annotation");
   const annotations =
     await sql`select payload from annotation where node='annotated'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading payload from annotations[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(annotations[0]?.payload).toEqual({
     model: "original",
     selectedTool: null,

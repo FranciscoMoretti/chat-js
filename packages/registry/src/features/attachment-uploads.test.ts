@@ -55,7 +55,9 @@ test("compresses large accepted images with configured limits", async () => {
   const [compressedFile] = prepared.files;
   const [compressionCall = []] = compression.mock.calls;
   const [, compressionOptions] = compressionCall;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from compressedFile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(compressedFile?.name).toBe("photo.png");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading size from compressedFile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(compressedFile?.size).toBe(COMPRESSED_IMAGE_TEXT.length);
   expect(compressionOptions).toMatchObject({
     maxSizeMB: options.maxBytes / BYTES_PER_MEBIBYTE,

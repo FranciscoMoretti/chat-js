@@ -526,6 +526,7 @@ test("orphan cleanup retains references and young uploads and retries reappearin
   expect(fenced.map((file) => file.key).toSorted()).toEqual(
     [orphan, foreign].toSorted()
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from fenced.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fenced.find((file) => file.key === foreign)?.ownerId).toBe(stranger);
   expect(fenced.some((file) => file.key === legacy)).toBe(false);
   await expect(

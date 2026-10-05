@@ -99,6 +99,7 @@ class ThreadRunState<
 
   private withResumePrefix(message: TMessage): TMessage {
     const prefix = this.resumePrefix;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from prefix; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (prefix?.id === message.id) {
       // Seed the SDK's response object once, so later tool/approval updates
       // operate on the same restored parts instead of a separate projection.

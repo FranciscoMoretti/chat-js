@@ -122,17 +122,25 @@ test("start awaits setup, stops the existing service, then bootstraps", async ()
     "run",
     "log",
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_BOOTOUT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_BOOTOUT]?.startsWith("run:launchctl bootout ")).toBe(
     true
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_PRINT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_PRINT]?.startsWith("run:launchctl print ")).toBe(true);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_BOOTSTRAP]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_BOOTSTRAP]?.startsWith("run:launchctl bootstrap ")).toBe(
     true
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading endsWith from events[EVENT_PLIST_WRITE]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_PLIST_WRITE]?.endsWith(":384")).toBe(true);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_NODE_VERSION]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_NODE_VERSION]?.startsWith("run:node ")).toBe(true);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_SETUP_DIRECTORY]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_SETUP_DIRECTORY]?.startsWith("mkdir:")).toBe(true);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_LOG_DIRECTORY]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_LOG_DIRECTORY]?.startsWith("mkdir:")).toBe(true);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_START_LOG]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_START_LOG]?.startsWith("log:Started ")).toBe(true);
 });
 /* oxlint-enable oxc/no-async-await */
@@ -150,12 +158,15 @@ test("start leaves the current service alone when setup fails", async (): Promis
 test("stop awaits launchd shutdown before removing the plist", async (): Promise<void> => {
   const { events, operations } = fixture({ loaded: false });
   await runDevService("stop", operations, "darwin");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_STOP_BOOTOUT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_STOP_BOOTOUT]?.startsWith("run:launchctl bootout ")).toBe(
     true
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_STOP_PRINT]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_STOP_PRINT]?.startsWith("run:launchctl print ")).toBe(
     true
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from events[EVENT_REMOVE]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(events[EVENT_REMOVE]?.startsWith("remove:")).toBe(true);
 });
 /* oxlint-enable oxc/no-async-await */

@@ -19,8 +19,10 @@ export default defineHook({
   events: {
     "turn.started": (_event, context) => {
       eveTurnGuest.update(
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         () => context.session.auth.current?.attributes.chatjsGuest === "true"
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const supplied = context.session.auth.current?.attributes.selectedTool;
       const selected =
         supplied === undefined ? null : frontendToolsSchema.parse(supplied);

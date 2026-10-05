@@ -49,7 +49,9 @@ it("checks the destination owner before reading local storage, regardless of the
   expect(mocks.owned.mock.invocationCallOrder[0]).toBeLessThan(
     mocks.download.mock.invocationCallOrder[0]
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading bytes from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.bytes.toString()).toBe("image bytes");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading mediaType from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.mediaType).toBe("image/png");
 });
 /* oxlint-enable oxc/no-async-await */

@@ -107,8 +107,11 @@ test("steps retain only current image inputs, not the conversation history", asy
     session: { auth: { current: null, initiator: null }, id: "test" },
   };
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const initial = state.update.mock.lastCall?.[0]();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(initial?.attachments).toHaveLength(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(initial?.attachments[0].url).toBe("data:image/png;base64,bmV3");
   messages.push({
     content: [
@@ -125,8 +128,11 @@ test("steps retain only current image inputs, not the conversation history", asy
     role: "tool",
   });
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const next = state.update.mock.lastCall?.[0]();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(next?.attachments).toEqual(initial?.attachments);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from next.lastGeneratedImage; read lastGeneratedImage from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(next?.lastGeneratedImage?.imageUrl).toBe(
     "/api/files/abcdefghijklmnopqrstuvwx.png"
   );
@@ -134,8 +140,10 @@ test("steps retain only current image inputs, not the conversation history", asy
   expect(JSON.stringify(next)).not.toContain("b2xk");
   messages.push({ content: "Edit it", role: "user" });
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(state.update.mock.lastCall?.[0]()).toEqual({
     attachments: [],
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading lastGeneratedImage from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     lastGeneratedImage: next?.lastGeneratedImage,
   });
 });

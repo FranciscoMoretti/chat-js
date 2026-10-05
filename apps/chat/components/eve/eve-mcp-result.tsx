@@ -31,6 +31,7 @@ export const EveMcpResult = ({
           ? "MCP tool failed. Check the connector in settings and try again."
           : undefined,
         input: part.input,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         output: result?.success ? result.data.output : undefined,
         state: failed ? "output-error" : part.state,
         toolName: part.toolName,

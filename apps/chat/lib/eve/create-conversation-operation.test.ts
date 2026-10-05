@@ -111,11 +111,11 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     input.operationId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     '"beforeTurnId":"turn_0"'
   );
@@ -169,7 +169,7 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     "turn_0",
     checkpointId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const body = JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body);
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(body.fork).toEqual({
@@ -193,10 +193,10 @@ it("persists fork intent without forwarding ChatJS metadata to Eve", async () =>
   } satisfies Parameters<typeof createEveConversationOperation>[1];
   const response = await createEveConversationOperation("owner", regeneration);
   expect(response.status).toBe(200);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].forkKind).toBe("regenerate");
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body)
   ).not.toHaveProperty("forkKind");
 });
@@ -238,7 +238,7 @@ it("dispatches imported forks by message identity without requiring an execution
   );
   expect(resolvedResult4.status).toBe(200);
   expect(mocks.readiness).not.toHaveBeenCalled();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body).fork).toEqual({
     beforeMessageId: "seed_message_2",
     sessionId: "source",
@@ -268,8 +268,9 @@ it("forwards selected tools on creation and includes them in the reservation ide
     ...input,
     selectedTool: "webSearch",
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 4 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
@@ -277,7 +278,7 @@ it("forwards selected tools on creation and includes them in the reservation ide
     ...input,
     selectedTool: "deepResearch",
   });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
     originalHash
   );
@@ -292,7 +293,7 @@ it("forwards selected tools on creation and includes them in the reservation ide
 it("persists a compact fallback title before native creation", async () => {
   await createEveConversationOperation("owner", input);
 
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialTitle).toBe(
     "Fallback: compare"
   );
@@ -310,7 +311,7 @@ it("journals the complete creation command before dispatch so another tab can re
     typeof createEveConversationOperation
   >[1];
   await createEveConversationOperation("owner", command);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
 });
 /* oxlint-enable oxc/no-async-await */

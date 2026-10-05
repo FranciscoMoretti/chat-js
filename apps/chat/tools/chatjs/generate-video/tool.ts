@@ -42,6 +42,7 @@ const resolveVideoExtension = (mediaType?: string): string => {
     return "mp4";
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from subtypeWithParams.split(...).at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const subtype = subtypeWithParams
     .split(";")
     .at(FIRST_SUBTYPE_INDEX)
@@ -179,6 +180,7 @@ const generateAndStoreVideo = async (
     throw new Error("No video generated");
   }
   // Provider usage is billable even if the subsequent storage upload fails.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addAPICost from integration.costAccumulator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   integration.costAccumulator?.addAPICost("generateVideo", COST_CENTS);
   const buffer = Buffer.from(video.uint8Array);
   const uploadArguments = [
@@ -202,6 +204,7 @@ const prepareGeneration = (
   const costAccumulator = createEveToolCost(usage);
   const modelProvider = eveToolModelProvider;
   const uploadFile = eveGeneratedFileUploader(context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const selected = context.session.auth.current?.attributes.modelId;
   // oxlint-disable-next-line eslint/no-undefined -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.
   const selectedModel = typeof selected === "string" ? selected : undefined;

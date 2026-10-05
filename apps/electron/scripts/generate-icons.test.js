@@ -46,6 +46,7 @@ describe("generate-icons", () => {
   });
 
   test("forge config points packager at generated icons", () => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading icon from forgeConfig.packagerConfig; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(forgeConfig.packagerConfig?.icon).toBe("./build/icon");
   });
 });

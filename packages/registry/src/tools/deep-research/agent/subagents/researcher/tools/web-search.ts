@@ -16,9 +16,11 @@ const researchSteps = defineState<number>("chatjs.research-steps", () => 0);
 export default defineDynamic({
   events: {
     "step.started": (_event, context) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (context.session.auth.initiator?.attributes.chatjsGuest === "true") {
         throw new Error("Research search is unavailable.");
       }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from Object.entries(...).find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const search = Object.entries(providers).find(
         ([name]) => name === "webSearch"
         // oxlint-disable-next-line eslint/no-magic-numbers -- Object.entries stores the provider value at tuple index one.

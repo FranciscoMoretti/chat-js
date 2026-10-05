@@ -95,11 +95,14 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       generateId: (): string => responseMessageId,
       id: host.id,
       messageMetadataSchema: host.messageMetadataSchema,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onData; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
       onData: (event): void => host.onData?.(event),
       onError: (error: Readonly<Error>): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         host.onError?.(error);
       },
       onFinish: (event: FinishEventReader<TMessage>): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onFinish; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         host.onFinish?.({
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event,
@@ -109,10 +112,12 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the SDK static/dynamic generic tool-call union when forwarding to the current callback; mapped readonly changes its conditional assignability.
       onToolCall: async (event): Promise<void> => {
         host.registerToolCall(spec.id, event.toolCall.toolCallId);
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.onToolCall; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         await host.onToolCall?.(event);
       },
       // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK callback receives the original mutable message array; existing callbacks may update that array.
       sendAutomaticallyWhen: (event): boolean | PromiseLike<boolean> =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling host.sendAutomaticallyWhen; preserve one receiver evaluation, skipped call arguments and the existing false fallback.
         host.sendAutomaticallyWhen?.(event) ?? false,
       state,
       transport,
@@ -135,6 +140,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type === "start" &&
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           lastMessage?.role === "assistant"
         ) {
           chunkToEnqueue = {
@@ -149,6 +155,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type !== "start" &&
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           lastMessage?.role === "assistant"
         ) {
           savePrefix(structuredClone(lastMessage));

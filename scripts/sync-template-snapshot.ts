@@ -61,6 +61,7 @@ class SnapshotIoLimiter {
     }
 
     this.activeOperations += ONE_OPERATION;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.onActiveOperationsChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     this.onActiveOperationsChange?.(this.activeOperations);
     try {
       return await operation();
@@ -72,6 +73,7 @@ class SnapshotIoLimiter {
         next.resolve(null);
       } else {
         this.activeOperations -= ONE_OPERATION;
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.onActiveOperationsChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
         this.onActiveOperationsChange?.(this.activeOperations);
       }
     }

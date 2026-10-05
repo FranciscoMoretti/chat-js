@@ -219,6 +219,7 @@ const MessageBranch = ({
   const handleBranchChange = useCallback(
     (newBranch: number) => {
       setCurrentBranch(newBranch);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onBranchChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onBranchChange?.(newBranch);
     },
     [onBranchChange]
@@ -270,11 +271,13 @@ const MessageBranchContent = ({
   ...props
 }: MessageBranchContentProps) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = useMemo(
-    // oxlint-disable-next-line typescript/no-unsafe-return -- #598: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
-    () => (Array.isArray(children) ? children : [children]),
-    [children]
-  );
+  const childrenArray = useMemo(() => {
+    if (Array.isArray(children)) {
+      // oxlint-disable-next-line typescript/no-unsafe-return -- #598: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
+      return children;
+    }
+    return [children];
+  }, [children]);
 
   // Use useEffect to update branches when they change
   useEffect(() => {
@@ -462,6 +465,7 @@ const MessageAttachment = ({
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const filename = data.filename || "";
   const mediaType =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from data.mediaType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
   const attachmentLabel = filename || (isImage ? "Image" : "Attachment");

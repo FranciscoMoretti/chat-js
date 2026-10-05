@@ -191,11 +191,13 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     const codeChallenge = url.searchParams.get("code_challenge") ?? "";
     const client = clients.get(clientId);
     const valid =
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading redirectUris from client; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       client?.redirectUris.includes(redirectUri) &&
       state &&
       url.searchParams.get("response_type") === "code" &&
       url.searchParams.get("code_challenge_method") === "S256" &&
       codeChallenge &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from url.searchParams.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       url.searchParams.get("scope")?.split(" ").includes("mcp:tools");
     if (!valid) {
       sendJson(response, 400, { error: "invalid_authorization_request" });
@@ -284,6 +286,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     request: IncomingMessage,
     response: ServerResponse
   ): Promise<void> {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replace from request.headers.authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const token = request.headers.authorization?.replace(BEARER_PREFIX, "");
     if (!(token && accessTokens.has(token))) {
       reject(response);
@@ -319,6 +322,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
       });
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (rpc.method === "tools/call" && rpc.params?.name === "read_token") {
       counters.toolCalls += 1;
       sendMcpResult(response, rpc.id, {

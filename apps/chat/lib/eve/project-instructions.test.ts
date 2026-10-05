@@ -101,6 +101,7 @@ const startTurn = (
   sequence: number,
   parent?: HookContext["session"]["parent"]
 ) =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling conversation.events["turn.started"]; read "turn.started" from conversation.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   conversation.events?.["turn.started"]?.(
     {
       data: { sequence, turnId: `turn_${sequence}` },
@@ -117,6 +118,7 @@ const startTurn = (
  * unicorn/no-null (#570): readInstructions preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const readInstructions = () =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling instructions.events["turn.started"]; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   instructions.events["turn.started"]?.(
     {},
     {
@@ -236,6 +238,7 @@ test("does not project a child's waiting checkpoint into the root branch", async
     meta: { at: "2026-09-11T12:00:00Z", id: "waiting-event" },
     type: "session.waiting",
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling conversation.events["session.waiting"]; read "session.waiting" from conversation.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await conversation.events?.["session.waiting"]?.(
     {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing waiting own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -262,6 +265,7 @@ test("does not project a child's waiting checkpoint into the root branch", async
  * no-magic-numbers (#517): test("generates user follow-up suggestions only for the root session") uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 test("generates user follow-up suggestions only for the root session", async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling followups.events["turn.completed"]; read "turn.completed" from followups.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await followups.events?.["turn.completed"]?.(
     {
       data: { sequence: 0, turnId: "turn_0" },
@@ -276,6 +280,7 @@ test("generates user follow-up suggestions only for the root session", async () 
     })
   );
   expect(mocks.followups).not.toHaveBeenCalled();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling followups.events["turn.completed"]; read "turn.completed" from followups.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   await followups.events?.["turn.completed"]?.(
     {
       data: { sequence: 0, turnId: "turn_0" },

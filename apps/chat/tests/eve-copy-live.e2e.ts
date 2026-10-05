@@ -84,6 +84,7 @@ test("saves without generation, recovers after source revocation and reload, and
           snapshot.events.some(
             (event) =>
               event.type === "message.completed" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim() === "COPY-ORCHID"
           )
         );
@@ -272,6 +273,7 @@ test("saves without generation, recovers after source revocation and reload, and
         return continued.events.some(
           (event) =>
             event.type === "message.completed" &&
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             event.data.message?.trim() === "COPY-ORCHID"
         );
       },
@@ -388,6 +390,7 @@ for (const attachment of [
             snapshot.events.some(
               (event) =>
                 event.type === "message.completed" &&
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 event.data.message?.trim() === "attachment-ready"
             )
           );
@@ -474,6 +477,7 @@ for (const attachment of [
           return continued.events.some(
             (event) =>
               event.type === "message.completed" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim().toLowerCase().replaceAll(".", "") ===
                 attachment.answer
           );
@@ -521,6 +525,7 @@ for (const attachment of [
           .getAnimations({ subtree: true })
           .filter(
             (animation) =>
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getTiming from animation.effect; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               animation.effect?.getTiming().iterations !==
               Number.POSITIVE_INFINITY
           )
@@ -569,7 +574,9 @@ for (const attachment of [
       { times: 1 }
     );
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect.poll(() => edited?.id, { timeout: 95_000 }).toBeTruthy();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(page).toHaveURL(`${origin}/chat/${edited?.id}`, {
       timeout: 120_000,
     });

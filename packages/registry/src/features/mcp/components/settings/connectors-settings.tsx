@@ -91,8 +91,11 @@ const CustomConnectorRow = ({
     staleTime: 30_000,
   });
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading needsAuth from connectionStatus; preserve one receiver evaluation, skipped accesses and the existing false fallback.
   const needsOAuth = connectionStatus?.needsAuth ?? false;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const isConnected = connectionStatus?.status === "connected";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const isIncompatible = connectionStatus?.status === "incompatible";
 
   const statusText = ((): string => {
@@ -108,6 +111,7 @@ const CustomConnectorRow = ({
     if (isConnected) {
       return "Connected";
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from connectionStatus; preserve one receiver evaluation, skipped accesses and the existing "Unable to reach server" fallback.
     return connectionStatus?.error ?? "Unable to reach server";
   })();
 
@@ -213,17 +217,21 @@ const CustomConnectorRow = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            {authStatus?.isAuthenticated ? (
-              <>
-                <DropdownMenuItem
-                  disabled={isDisconnecting}
-                  onClick={onDisconnect}
-                >
-                  Disconnect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
+            {
+              /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading isAuthenticated from authStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+              authStatus?.isAuthenticated ? (
+                <>
+                  <DropdownMenuItem
+                    disabled={isDisconnecting}
+                    onClick={onDisconnect}
+                  >
+                    Disconnect
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null
+              /* oxlint-enable oxc/no-optional-chaining */
+            }
             {needsOAuth ? (
               <>
                 <DropdownMenuItem
@@ -364,6 +372,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
         _data,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to uninstall connector");
       },

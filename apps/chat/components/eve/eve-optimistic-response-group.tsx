@@ -51,6 +51,7 @@ const EveOptimisticResponseGroup = ({
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...candidate,
     disabled: true,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing candidate.modelId fallback. The app guidance prefers optional chaining.
     modelName: getModelById(candidate.modelId)?.name ?? candidate.modelId,
     state: "pending",
   }));
