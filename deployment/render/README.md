@@ -70,7 +70,15 @@ Before calling this profile hosted, record the exact commit, installed provider 
 5. A private Supabase upload that an unauthenticated raw URL cannot read, authorized download, copy, original deletion with the copy intact, then final deletion. Run these with two users to check isolation.
 6. Expired guest and orphan-file cleanup, failure/retry, unknown sandbox resources, interrupted deletion, late-write rejection and final native/resource erasure. Confirm cron failure on unsupported/skipped/pending work and success only after completion.
 
-No hosted deployment, credentialed Supabase storage test or real Render restart is claimed by this change.
+### Credentialed Supabase checks (2026-10-05)
+
+A fresh, isolated Supabase Free project in `eu-west-1`, running PostgreSQL 17.11, passed application migrations, workflow core setup and `eve:check` from this Mac at commit `8cde7811`. The session pooler on port 5432 passed a two-connection LISTEN/NOTIFY check. TLS certificate verification stayed enabled using Supabase's downloaded CA certificate. Before migration, the empty application's `public` schema had default table/sequence/function grants to API roles revoked, along with default public function execution. These checks establish connectivity and core setup; the remote lifecycle guard remains unchanged.
+
+A private bucket passed credentialed upload, authenticated download, short-lived signed download, denial of unsigned public reads, server-side copy, original deletion with the copy intact, final deletion and repeated deletion. All disposable test objects were removed. The checks used `files-sdk` 2.5.0 with `@supabase/storage-js` 2.117.2 in a temporary package because the checked-in demo does not install the Supabase adapter's peer dependency. They verify the storage provider directly, not two-user application ownership isolation or the installed non-Vercel app profile.
+
+The same check found a remaining integration issue: `files-sdk`'s Supabase `exists()` throws `FilesError` with code `Provider` and message `Object not found` after deletion instead of returning `false`. Provider listings independently confirmed deletion. Resolve and regression-test that missing-object mapping before relying on `exists()` for cleanup or absence checks.
+
+No hosted deployment, real Render restart, remote lifecycle erasure or complete non-Vercel conversation is claimed by these checks. Credentials remain in an ignored local environment file and are not part of this profile.
 
 ## Platform references
 
