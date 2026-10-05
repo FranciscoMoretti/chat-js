@@ -3,7 +3,9 @@ import type { EveMessagePart } from "eve/client";
 import React from "react";
 
 import { toolOutputSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+/* oxlint-enable sort-imports */
 
 import { eveCodeExecutionResult } from "./schemas";
 

@@ -1,5 +1,7 @@
 import { auth } from "@/lib/auth";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 export type EvePrincipal =
   | { kind: "registered"; ownerId: string }

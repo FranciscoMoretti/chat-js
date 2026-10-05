@@ -3,17 +3,27 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, isNull, or, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveResponseGroupCandidates } from "@/lib/eve/response-group-candidates";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
+/* oxlint-enable sort-imports */
 import { resolveEveResponseGroupLineage } from "@/lib/eve/response-group-lineage";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveResponseGroup } from "./schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_PARAMETER_INDEX = 0;

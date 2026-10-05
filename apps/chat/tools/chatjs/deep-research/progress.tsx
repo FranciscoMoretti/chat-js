@@ -2,7 +2,9 @@ import React from "react";
 
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ResearchProgress } from "./progress-panel";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */

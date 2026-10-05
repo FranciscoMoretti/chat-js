@@ -1,16 +1,20 @@
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   LifecycleInventory,
   SupportedLifecycleProvider,
 } from "@/lib/eve/lifecycle/provider";
+/* oxlint-enable sort-imports */
 
 import { assertPostgresLifecycleCompatibility } from "./compatibility";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   prepareEveNativeSessionPurge,
   purgeEveNativeSession,
   retireEveNativeSessions,
 } from "./eve-native-purge";
+/* oxlint-enable sort-imports */
 import { readEvePostgresRunInventory } from "./eve-run-inventory";
 
 const taskIdentifier = "workflow_flows";

@@ -1,9 +1,13 @@
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import { toModelData } from "@/lib/ai/to-model-data";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UsageInfo } from "@/lib/credits/cost-accumulator";
+/* oxlint-enable sort-imports */
 
 import { createToolUsage } from "./tool-usage";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolUsage } from "./tool-usage";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): tokenCost uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

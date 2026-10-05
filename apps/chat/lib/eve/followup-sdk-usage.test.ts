@@ -1,5 +1,7 @@
 import { MockLanguageModelV3 } from "ai/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 

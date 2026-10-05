@@ -1,24 +1,34 @@
 /* oxlint-disable import/max-dependencies -- The registry explicitly composes source-owned provider and feature catalogs at its public assembly boundary. */
-import { registrySchema } from "shadcn/schema";
 import type { RegistryItem } from "shadcn/schema";
+import { registrySchema } from "shadcn/schema";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  codeExecutionRuntimeItem,
   codeExecutionItem,
+  codeExecutionRuntimeItem,
   daytonaCodeExecutionItem,
 } from "./code-execution";
+/* oxlint-enable sort-imports */
 import { toolDefinitionSchema } from "./metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import registryPackage from "./package.json";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { attachmentUploadsItem } from "./src/features/attachment-uploads";
+/* oxlint-enable sort-imports */
 import { mcpItem } from "./src/features/mcp";
 import { observabilityItems } from "./src/features/observability";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { builtInGateways } from "./src/gateways/catalog";
+/* oxlint-enable sort-imports */
 import { builtInStorage } from "./src/storage/catalog";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  codeExecutionUiItem,
   documentItems,
   savedCodeExecutionItem,
-  codeExecutionUiItem,
 } from "./src/tools/documents";
+/* oxlint-enable sort-imports */
 import { researchItem } from "./src/tools/research";
 
 const toolItems = (

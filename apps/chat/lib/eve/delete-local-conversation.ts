@@ -1,7 +1,9 @@
 import { completeEveConversationDeletion } from "@/lib/db/eve-deletion";
 
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
+/* oxlint-enable sort-imports */
 import { retireEveSessionForDeletion } from "./retire-session";
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --

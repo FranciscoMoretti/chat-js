@@ -1,5 +1,8 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UIMessage } from "ai";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   useCallback,
   useEffect,
@@ -8,17 +11,22 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
-import { createThreadHelpers } from "./thread-hook-helpers";
 import type { UseThreadHelpers } from "./thread-hook-helpers";
+import { createThreadHelpers } from "./thread-hook-helpers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { SnapshotStore } from "./thread-snapshot-store";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CanonicalMessage,
   ThreadInit,
   ThreadStateSnapshot,
 } from "./types";
+/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 

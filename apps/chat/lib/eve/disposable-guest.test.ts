@@ -4,7 +4,9 @@
 /* oxlint-disable eslint/no-await-in-loop -- Sequential adversarial requests keep each authorization assertion explicit. */
 import { randomUUID } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import {
   issueGuestCredential,

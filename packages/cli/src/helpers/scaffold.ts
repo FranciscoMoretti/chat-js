@@ -1,5 +1,6 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import {
   access,
@@ -10,19 +11,27 @@ import {
   rmdir,
   writeFile,
 } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
 import { registryUrl } from "#cli/registry/shadcn";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { PackageManager } from "#cli/types";
+/* oxlint-enable sort-imports */
 import { runCommand } from "#cli/utils/run-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { initializeFeatureUi } from "#cli/utils/sync-features";
+/* oxlint-enable sort-imports */
 import { syncTools } from "#cli/utils/sync-tools";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { mcpFiles } from "../../../registry/src/features/mcp";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isJsonObject,
   isStringArray,
@@ -30,13 +39,16 @@ import {
   requireJsonObject,
   // oxlint-disable-next-line import/max-dependencies -- Scaffold integrates filesystem transforms, registry descriptors, JSON validation, and package installation adapters.
 } from "./json-object";
+/* oxlint-enable sort-imports */
 import { normalizeScaffoldedPackageJson } from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
-  normalizeScaffoldContent,
 } from "./scaffold-content";
+/* oxlint-enable sort-imports */
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [

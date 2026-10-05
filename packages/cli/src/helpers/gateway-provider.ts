@@ -3,12 +3,18 @@ import { readFile, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewaySelection } from "#cli/registry/gateways";
+/* oxlint-enable sort-imports */
 import { updateEnvironmentExample } from "#cli/utils/environment-example";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+/* oxlint-enable sort-imports */
 import { preflight } from "#cli/utils/preflight";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyInput } from "./readonly-input";
+/* oxlint-enable sort-imports */
 
 const JSON_INDENTATION_SPACES = 2;
 const KEYS_EQUAL = 0;
@@ -65,6 +71,7 @@ const gatewayDefaultsSource = (
   definition: ReadonlyInput<GatewaySelection["definition"]>
 ): string =>
   generatedRegistrationSource(`import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups the external defaults type before the local Gateway type; both are erased and retain the generated declaration contracts.
 import type { Gateway } from "./gateway";
 
 export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];

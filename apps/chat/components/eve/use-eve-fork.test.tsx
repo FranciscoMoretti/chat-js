@@ -1,6 +1,8 @@
 import type { EveMessage } from "eve/client";
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CreationRejectedError } from "@/lib/eve/create-conversation";

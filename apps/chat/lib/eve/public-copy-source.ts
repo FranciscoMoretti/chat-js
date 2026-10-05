@@ -2,10 +2,16 @@ import { Client } from "eve/client";
 
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveCopyBoundaries } from "./copy-boundaries";
+/* oxlint-enable sort-imports */
 import { prepareEveCopyTranscript } from "./copy-transcript";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): readPublicEveCopySource uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

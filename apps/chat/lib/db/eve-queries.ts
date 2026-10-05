@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveChatProject,
@@ -23,6 +24,7 @@ import {
   eveResponseGroup,
   project,
 } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";

@@ -3,17 +3,25 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@tanstack/react-query" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
-import { isServer, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, isServer } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
+/* oxlint-enable sort-imports */
 import { createTRPCContext } from "@trpc/tanstack-react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 import superjson from "superjson";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { getBaseUrl } from "@/lib/url";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppRouter } from "@/trpc/routers/_app";
+/* oxlint-enable sort-imports */
 
 import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";

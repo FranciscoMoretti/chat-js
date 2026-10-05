@@ -2,10 +2,11 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  eveCodeSandbox,
   eveChat,
   eveChatProject,
+  eveCodeSandbox,
   eveConversation,
   eveConversationCopy,
   eveConversationCopyFile,
@@ -18,10 +19,11 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
-  eveVote,
   eveSearchText,
   eveSubagentSession,
+  eveVote,
 } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- jsdoc/require-param (#534): completeEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
 max-lines-per-function (#510): completeEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

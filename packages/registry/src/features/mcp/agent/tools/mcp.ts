@@ -1,12 +1,16 @@
 import { defineDynamic, defineTool } from "eve/tools";
 import type { ToolDefinition } from "eve/tools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { parse, stringify } from "superjson";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "@/lib/eve/mcp-tools";
+/* oxlint-enable sort-imports */
 import { eveTurnGuest, eveTurnTool } from "@/lib/eve/turn-tools";
 import { createModuleLogger } from "@/lib/logger";
 

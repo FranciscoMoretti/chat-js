@@ -2,10 +2,14 @@ import { Maximize2, Minimize2 } from "lucide-react";
 import React from "react";
 
 import { cn } from "@/lib/utils";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 // Type-only imports
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ResearchTask } from "./task";
+/* oxlint-enable sort-imports */
 import { ResearchTasks } from "./tasks";
 import { UpdateTitle } from "./update-title";
 
@@ -107,11 +111,13 @@ export const ResearchProgress = ({
           {isExpanded ? (
             <Minimize2
               aria-hidden="true"
+              // oxlint-disable-next-line react/forbid-component-props -- Minimize2 accepts className in its styling contract; preserve this caller's layout and appearance.
               className="text-muted-foreground size-4 shrink-0"
             />
           ) : (
             <Maximize2
               aria-hidden="true"
+              // oxlint-disable-next-line react/forbid-component-props -- Maximize2 accepts className in its styling contract; preserve this caller's layout and appearance.
               className="text-muted-foreground size-4 shrink-0"
             />
           )}

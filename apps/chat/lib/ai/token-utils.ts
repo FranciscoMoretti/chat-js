@@ -1,7 +1,9 @@
-import type { ModelMessage, ToolModelMessage, SystemModelMessage } from "ai";
+import type { ModelMessage, SystemModelMessage, ToolModelMessage } from "ai";
 import { getEncoding } from "js-tiktoken";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
+/* oxlint-enable sort-imports */
 
 const MinChunkSize = 140;
 const NON_TEXT_PART_TOKEN_ESTIMATE = 765;

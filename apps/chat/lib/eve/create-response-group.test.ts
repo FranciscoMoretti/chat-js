@@ -1,11 +1,14 @@
 import { afterEach, expect, test, vi } from "vitest";
 
 import { CreationRejectedError } from "./create-conversation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   moveRejectedProjectCreation,
   prepareCreation,
@@ -13,8 +16,11 @@ import {
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
+/* oxlint-enable sort-imports */
 import { resolveCreationRequest } from "./resolve-creation-request";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseGroupResult } from "./response-group-contracts";
+/* oxlint-enable sort-imports */
 
 afterEach(() => vi.unstubAllGlobals());
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, unicorn/no-null --

@@ -2,9 +2,13 @@
 import React from "react";
 
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const SavedCodeRenderer = defineToolRenderer({

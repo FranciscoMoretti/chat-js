@@ -1,8 +1,12 @@
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
-import { LogicalChat, logicalChatBusy } from "./logical-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
+/* oxlint-enable sort-imports */
+import { LogicalChat, logicalChatBusy } from "./logical-chat";
 
 /* oxlint-disable max-params --
  * max-params (#511): message keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

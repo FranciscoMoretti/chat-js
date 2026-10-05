@@ -4,16 +4,22 @@
  */
 import { readFile } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eq, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { expect, test } from "vitest";
 
 import { db } from "../lib/db/client";
 import { reserveEveUpload } from "../lib/db/eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "../lib/db/file-storage-keys";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveStoredFile, user } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 

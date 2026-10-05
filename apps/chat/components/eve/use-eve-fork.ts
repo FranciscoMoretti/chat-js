@@ -1,33 +1,47 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessage, MessageStreamEvent } from "eve/client";
+/* oxlint-enable sort-imports */
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
 import type { EveForkInput } from "@/lib/eve/contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
+/* oxlint-enable sort-imports */
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage } from "@/lib/eve/draft";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
+/* oxlint-enable sort-imports */
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/pending-create import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   finishCreation,
   prepareCreation,
   prepareResponseGroupCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import { responseModel } from "@/lib/eve/response-model";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveRuntime } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveAttachments } from "./use-eve-attachments";
+/* oxlint-enable sort-imports */
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 

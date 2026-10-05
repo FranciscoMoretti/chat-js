@@ -5,11 +5,15 @@ import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:url import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-import { chromium } from "playwright";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Page } from "playwright";
+/* oxlint-enable sort-imports */
+import { chromium } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.

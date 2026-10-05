@@ -3,13 +3,17 @@
  */
 import { defineHook } from "eve/hooks";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   captureEveDocumentCheckpoint,
   captureEveNamedDocumentCheckpoint,
 } from "../../lib/db/eve-documents";
+/* oxlint-enable sort-imports */
 import { getEveConversationProject } from "../../lib/db/eve-queries";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { projectInstructions } from "../../lib/eve/project-instructions";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-default-export, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --

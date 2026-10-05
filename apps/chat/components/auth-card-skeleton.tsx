@@ -1,11 +1,13 @@
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +28,14 @@ export const AuthCardSkeleton = ({
   variant = "form",
 }: AuthCardSkeletonProps): React.JSX.Element => (
   <div className={cn("flex w-full flex-col gap-6", className)}>
-    <Card className={cardClassName}>
-      <CardHeader className="text-center">
+    <Card
+      // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
+      className={cardClassName}
+    >
+      <CardHeader
+        // oxlint-disable-next-line react/forbid-component-props -- CardHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="text-center"
+      >
         <h1 className="text-xl leading-none font-semibold">{title}</h1>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -35,15 +43,33 @@ export const AuthCardSkeleton = ({
         <div className="grid gap-3">
           {variant === "device" ? (
             <>
-              <Skeleton className="mx-auto size-10 rounded-full" />
-              <Skeleton className="mx-auto h-4 w-56" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mx-auto size-10 rounded-full"
+              />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mx-auto h-4 w-56"
+              />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-10 w-full"
+              />
             </>
           ) : (
             <>
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="mx-auto h-4 w-40" />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-10 w-full"
+              />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-10 w-full"
+              />
+              <Skeleton
+                // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mx-auto h-4 w-40"
+              />
             </>
           )}
         </div>

@@ -5,7 +5,9 @@ import { config } from "dotenv";
 import postgres from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { databaseConnection, databaseEnvOptions } from "../lib/db/connection";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 config({ path: ".env.local", quiet: true });

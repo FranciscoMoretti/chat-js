@@ -1,15 +1,21 @@
 "use client";
 
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DisposableGuestChat,
   GuestConversationView,
 } from "@/components/eve/disposable-guest-chat";
+/* oxlint-enable sort-imports */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 

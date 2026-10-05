@@ -3,7 +3,9 @@
 import { CircleAlert, X } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import type { UiToolName } from "@/lib/ai/types";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +30,7 @@ export const ActiveTool = ({
   return (
     <Button
       aria-label={definition ? `Clear ${label} tool` : "Clear unavailable tool"}
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "h-8 gap-1 rounded-full px-2 @[500px]:h-10 @[500px]:gap-2",
         definition ? "text-primary" : "text-destructive"
@@ -38,11 +41,17 @@ export const ActiveTool = ({
       title={label}
       variant="ghost"
     >
-      <Icon className="size-3.5" />
+      <Icon
+        // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-3.5"
+      />
       <span className={cn(definition && "hidden @[500px]:inline")}>
         {label}
       </span>
-      <X className="size-3 opacity-70" />
+      <X
+        // oxlint-disable-next-line react/forbid-component-props -- X accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-3 opacity-70"
+      />
     </Button>
   );
 };

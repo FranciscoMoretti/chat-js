@@ -3,38 +3,58 @@
  */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "@/lib/eve/guest-message-admission";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDeliveryMetadata,
 } from "@/lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "@/lib/eve/principal";
+/* oxlint-enable sort-imports */
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "@/lib/eve/request-policy";
+/* oxlint-enable sort-imports */
 import { eveRequest } from "@/lib/eve/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "@/lib/eve/usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --

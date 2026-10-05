@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { multiQueryWebSearchStep } from "./steps/multi-query-web-search";

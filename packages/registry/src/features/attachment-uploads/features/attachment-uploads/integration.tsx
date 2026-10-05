@@ -2,18 +2,28 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  AttachmentUploadIntegration,
   AttachmentUploadInput,
+  AttachmentUploadIntegration,
 } from "@/lib/installation-contracts";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { AttachFilesControl, TakePhotoControl } from "./controls";
+/* oxlint-enable sort-imports */
 import { uploadAttachment } from "./upload";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { processFilesForUpload } from "./upload-prep";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */

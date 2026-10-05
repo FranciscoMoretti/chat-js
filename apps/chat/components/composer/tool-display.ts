@@ -1,7 +1,9 @@
 import type { LucideIcon } from "lucide-react";
 import { Wrench } from "lucide-react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import { composerTools } from "@/tools/chatjs/composer-tools";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
 

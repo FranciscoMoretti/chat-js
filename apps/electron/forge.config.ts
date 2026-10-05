@@ -1,16 +1,24 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { spawnSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { existsSync, readFileSync } from "node:fs";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MakerDeb } from "@electron-forge/maker-deb";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MakerDMG } from "@electron-forge/maker-dmg";
+/* oxlint-enable sort-imports */
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ForgeConfig } from "@electron-forge/shared-types";
+/* oxlint-enable sort-imports */
 
 interface Branding {
   appName: string;

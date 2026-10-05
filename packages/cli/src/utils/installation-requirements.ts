@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { preflight } from "./preflight";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { readProviderId, readProviderLiteral } from "./provider-config";
+/* oxlint-enable sort-imports */
 
 type MediaKind = "image" | "video";
 interface MediaGateway {

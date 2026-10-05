@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
 import { isWorktreeEnvConfig } from "./worktree-config";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { WorktreeEnvConfig } from "./worktree-runtime";
+/* oxlint-enable sort-imports */
 import { resolveWorktreeRuntime } from "./worktree-runtime";
 
 const ZERO_OFFSET = 0;

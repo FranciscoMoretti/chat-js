@@ -1,4 +1,4 @@
-import type { WorkflowToolDefinition, ToolDefinition } from "eve/tools";
+import type { ToolDefinition, WorkflowToolDefinition } from "eve/tools";
 
 import type { ToolOutput, ToolResult } from "./tool-result";
 

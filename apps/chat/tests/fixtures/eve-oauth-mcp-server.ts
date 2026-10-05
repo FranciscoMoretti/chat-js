@@ -7,7 +7,9 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { createHash, randomUUID } from "node:crypto";
 import { createServer } from "node:http";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { IncomingMessage, ServerResponse } from "node:http";
+/* oxlint-enable sort-imports */
 
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */

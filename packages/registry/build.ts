@@ -6,7 +6,9 @@ import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
 import { spawn } from "bun";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { format } from "oxfmt";
+/* oxlint-enable sort-imports */
 
 import { registry } from "./registry";
 

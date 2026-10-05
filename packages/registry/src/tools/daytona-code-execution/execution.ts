@@ -4,7 +4,9 @@ import type { CodeExecutionInput } from "@/lib/eve/code-executor";
 import { createModuleLogger } from "@/lib/logger";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CodeExecutionResult } from "@/tools/chatjs/_shared/code-execution/types";
+/* oxlint-enable sort-imports */
 
 import { commandSandbox } from "./sandbox";
 import type { createDaytonaProvider } from "./sandbox";

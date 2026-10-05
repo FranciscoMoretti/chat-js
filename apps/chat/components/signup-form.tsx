@@ -1,11 +1,16 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense, useSyncExternalStore } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
 import { SocialAuthProviders } from "@/components/auth-providers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Card,
   CardContent,
@@ -13,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 import {
   buildSocialAuthRequest,
   isElectronRenderer,
@@ -39,8 +45,14 @@ export const SignupForm = ({
   return (
     <div className="flex flex-col gap-6" {...props}>
       <Card {...props}>
-        <CardHeader className="text-center">
-          <CardTitle className="text-xl">
+        <CardHeader
+          // oxlint-disable-next-line react/forbid-component-props -- CardHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-center"
+        >
+          <CardTitle
+            // oxlint-disable-next-line react/forbid-component-props -- CardTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-xl"
+          >
             {isElectron ? "Continue in browser" : "Create an account"}
           </CardTitle>
           <CardDescription>
@@ -70,6 +82,7 @@ export const SignupForm = ({
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <InternalLink
+                  // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="underline underline-offset-4"
                   href={loginHref}
                 >

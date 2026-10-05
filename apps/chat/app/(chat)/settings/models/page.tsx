@@ -1,16 +1,22 @@
 import { ExternalLink } from "lucide-react";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { ModelsSettings } from "@/components/settings/models-settings";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { preloadQuery } from "@/trpc/preload-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable react/jsx-max-depth -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -19,7 +25,10 @@ const ModelsSettingsHeader = ({
 }: {
   readonly showRegistryLink?: boolean;
 }): React.JSX.Element => (
-  <SettingsPageHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+  <SettingsPageHeader
+    // oxlint-disable-next-line react/forbid-component-props -- SettingsPageHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+    className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+  >
     <div>
       <h2 className="text-lg font-semibold">Models</h2>
       <p className="text-muted-foreground text-sm">
@@ -29,6 +38,7 @@ const ModelsSettingsHeader = ({
     {showRegistryLink ? (
       <Button
         asChild
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-full max-w-[300px] sm:w-auto"
         size="sm"
         variant="outline"
@@ -38,12 +48,18 @@ const ModelsSettingsHeader = ({
           rel="noopener noreferrer"
           target="_blank"
         >
-          <ExternalLink className="size-4" />
+          <ExternalLink
+            // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="size-4"
+          />
           <span>Models Registry</span>
         </a>
       </Button>
     ) : (
-      <Skeleton className="h-8 w-full max-w-[300px] sm:w-36" />
+      <Skeleton
+        // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="h-8 w-full max-w-[300px] sm:w-36"
+      />
     )}
   </SettingsPageHeader>
 );
@@ -77,9 +93,18 @@ const ModelsSettingsPage = (): React.JSX.Element => (
       <SettingsPage>
         <ModelsSettingsHeader />
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-5/6" />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-12 w-full"
+          />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-12 w-full"
+          />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-12 w-5/6"
+          />
         </div>
       </SettingsPage>
     }

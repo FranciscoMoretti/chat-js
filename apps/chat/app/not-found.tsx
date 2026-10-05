@@ -1,7 +1,11 @@
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable react/jsx-max-depth -- * react/jsx-max-depth (#548): NotFound keeps related render components together; extraction changes component, state, and layout boundaries. */
 const NotFound = (): React.JSX.Element => (

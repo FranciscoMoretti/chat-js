@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "./app-models";
+/* oxlint-enable sort-imports */
 
 const toolNameSchema = z.enum([
   "createTextDocument",

@@ -2,7 +2,9 @@
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import React from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentProps } from "react";
+/* oxlint-enable sort-imports */
 
 type NextProviderProps = ComponentProps<typeof NextThemesProvider>;
 

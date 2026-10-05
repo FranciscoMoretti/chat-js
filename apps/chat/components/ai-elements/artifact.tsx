@@ -1,17 +1,23 @@
 "use client";
 
 import { XIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LucideIcon } from "lucide-react";
+/* oxlint-enable sort-imports */
 import React from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentProps, HTMLAttributes } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 type ArtifactProps = HTMLAttributes<HTMLDivElement>;
@@ -64,6 +70,7 @@ const ArtifactClose = ({
   ...props
 }: ArtifactCloseProps): React.JSX.Element => (
   <Button
+    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-muted-foreground hover:text-foreground size-8 p-0",
       className
@@ -74,7 +81,12 @@ const ArtifactClose = ({
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactClose's Button prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    {children ?? <XIcon className="size-4" />}
+    {children ?? (
+      <XIcon
+        // oxlint-disable-next-line react/forbid-component-props -- XIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4"
+      />
+    )}
     <span className="sr-only">Close</span>
   </Button>
 );
@@ -148,6 +160,7 @@ const ArtifactAction = ({
 }: ArtifactActionProps): React.JSX.Element => {
   const button = (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "text-muted-foreground hover:text-foreground size-8 p-0",
         className
@@ -158,7 +171,14 @@ const ArtifactAction = ({
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactAction's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {Icon ? <Icon className="size-4" /> : children}
+      {Icon ? (
+        <Icon
+          // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
+      ) : (
+        children
+      )}
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       <span className="sr-only">{label || tooltip}</span>
     </Button>

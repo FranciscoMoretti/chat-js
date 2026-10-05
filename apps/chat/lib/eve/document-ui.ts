@@ -1,5 +1,7 @@
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType } from "react";
+/* oxlint-enable sort-imports */
 
 import type { DocumentAssistantRequest } from "./document-contracts";
 

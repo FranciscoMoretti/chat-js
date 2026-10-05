@@ -1,16 +1,26 @@
 import { headers } from "next/headers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { notFound, redirect } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-enable sort-imports */
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveChatPageConversation } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CreationScope } from "@/lib/eve/pending-create";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DisposableGuestChat } from "./disposable-guest-chat";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- ./eve-artifact-layout import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { EveArtifactLayout } from "./eve-artifact-layout";
 /* oxlint-enable import/max-dependencies */

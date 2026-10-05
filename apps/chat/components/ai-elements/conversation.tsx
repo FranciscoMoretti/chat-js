@@ -1,9 +1,13 @@
 "use client";
 
 import { ArrowDownIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useCallback } from "react";
+/* oxlint-enable sort-imports */
 import type { ComponentProps } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -17,6 +21,7 @@ const Conversation = ({
   ...props
 }: ConversationProps): React.JSX.Element => (
   <StickToBottom
+    // oxlint-disable-next-line react/forbid-component-props -- StickToBottom accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("relative flex-1 overflow-y-hidden", className)}
     initial="smooth"
     resize="smooth"
@@ -36,6 +41,7 @@ const ConversationContent = ({
   ...props
 }: ConversationContentProps): React.JSX.Element => (
   <StickToBottom.Content
+    // oxlint-disable-next-line react/forbid-component-props -- StickToBottom.Content accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("flex flex-col gap-8 p-4", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ConversationContent's StickToBottom.Content prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -99,6 +105,7 @@ const ConversationScrollButton = ({
   return (
     !isAtBottom && (
       <Button
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "absolute bottom-4 left-[50%] translate-x-[-50%] rounded-full",
           className
@@ -110,7 +117,10 @@ const ConversationScrollButton = ({
         // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ConversationScrollButton's Button prop contract, preserving caller options, children and callbacks.
         {...props}
       >
-        <ArrowDownIcon className="size-4" />
+        <ArrowDownIcon
+          // oxlint-disable-next-line react/forbid-component-props -- ArrowDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
       </Button>
     )
   );

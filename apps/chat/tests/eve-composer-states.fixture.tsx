@@ -1,10 +1,14 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-thinking-message" dependency within this package instead of introducing an alias or barrel API. */
 import type { EveMessage } from "eve/client";
-import type { ComponentProps } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
+import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
+/* oxlint-enable sort-imports */
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
 /* oxlint-enable import/no-relative-parent-imports */
 

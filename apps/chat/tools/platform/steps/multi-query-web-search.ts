@@ -1,7 +1,9 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { generateUUID } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { deduplicateByDomainAndUrl } from "./search-utils";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 type SearchQuery = {

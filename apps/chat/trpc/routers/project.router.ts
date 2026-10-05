@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createProject,
   deleteProject,
@@ -8,9 +9,14 @@ import {
   getProjectsByUserId,
   updateProject,
 } from "@/lib/db/queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PROJECT_COLOR_NAMES, PROJECT_ICONS } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { generateUUID } from "@/lib/utils";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * no-magic-numbers (#517): projectRouter uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

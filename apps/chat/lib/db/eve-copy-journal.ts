@@ -3,16 +3,25 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+/* oxlint-enable sort-imports */
 import { eveCopyResources } from "@/lib/eve/copy-transcript";
 import { isFileStorageKey } from "@/lib/file-url";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CreationConflictError } from "./eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveConversation,
@@ -22,6 +31,7 @@ import {
   eveResponseGroup,
   eveStoredFile,
 } from "./schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers --

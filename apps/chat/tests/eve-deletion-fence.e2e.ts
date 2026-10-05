@@ -6,9 +6,13 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
 import { eveConversation } from "../lib/db/schema";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
+/* oxlint-enable sort-imports */
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
 /* oxlint-enable import/no-relative-parent-imports */
 

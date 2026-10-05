@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import type { ComponentType } from "react";
+import React from "react";
 import { z } from "zod";
 
 type ValidatedToolRenderer = ComponentType<{

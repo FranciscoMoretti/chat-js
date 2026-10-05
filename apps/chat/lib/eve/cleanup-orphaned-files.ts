@@ -1,7 +1,11 @@
 import { completeEveFilePurge } from "@/lib/db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
 

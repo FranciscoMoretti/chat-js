@@ -3,7 +3,9 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ThemeToggle } from "./theme-toggle";
+/* oxlint-enable sort-imports */
 
 const NAV_LINKS = [
   { href: siteLinks.threads, label: "Threads" },
@@ -23,6 +25,7 @@ export const Navbar = (): React.JSX.Element => (
   <header className="border-border/40 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-xl">
     <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
       <Link
+        // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
         className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
         href="/"
       >

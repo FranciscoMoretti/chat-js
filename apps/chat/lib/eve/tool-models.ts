@@ -1,5 +1,7 @@
 import { getActiveGateway } from "@/lib/ai/active-gateway";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "@/lib/ai/app-model-id";
+/* oxlint-enable sort-imports */
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 

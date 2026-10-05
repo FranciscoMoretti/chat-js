@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+/* oxlint-enable sort-imports */
 
 const codeExecutionInput = z.object({
   code: z

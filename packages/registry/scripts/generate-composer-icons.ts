@@ -3,7 +3,9 @@ import { writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-namespace -- This namespace exposes a generated or compiler API whose members are selected at the call site. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import * as lucide from "lucide-react";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-namespace */
 
 const components = new Set<unknown>(Object.values(lucide.icons));

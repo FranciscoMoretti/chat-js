@@ -2,11 +2,15 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/chatjs/tools"; "../ai/installed-tool-capabilities"; "../db/eve-code-sandboxes" dependency within this package instead of introducing an alias or barrel API.
  */
 import { tools } from "../../tools/chatjs/tools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getCodeSandboxCleanup } from "../ai/installed-tool-capabilities";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
+/* oxlint-enable sort-imports */
 import { eveCodeSandboxName } from "./code-sandbox-name";
 /* oxlint-enable import/no-relative-parent-imports */
 

@@ -12,23 +12,37 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config as loadEnvConfig } from "dotenv";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedFeatures } from "../features/installed";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
+/* oxlint-enable sort-imports */
 import { generatedForGateway } from "../lib/ai/models.generated";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "../lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   authEnvRequirements,
   getMissingRequirement,
   isRequirementSatisfied,
 } from "../lib/config-requirements";
+/* oxlint-enable sort-imports */
 import { databaseEnvOptions } from "../lib/db/connection";
 import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 import { resolveEveEnvironment } from "../lib/eve/environment";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { storageEnvRequirements, storageId } from "../lib/storage-options";
+/* oxlint-enable sort-imports */
 import { installedToolNames } from "../tools/chatjs/installed-features";
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 

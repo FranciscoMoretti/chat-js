@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 
 import {
@@ -9,7 +9,9 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useSidebar } from "@/components/ui/sidebar";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
@@ -50,6 +52,7 @@ const ChatLayout = ({
   return (
     <ChatLayoutContext.Provider value={contextValue}>
       <ResizablePanelGroup
+        // oxlint-disable-next-line react/forbid-component-props -- ResizablePanelGroup accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
@@ -78,6 +81,7 @@ const ChatLayoutMain = ({
 
   return (
     <ResizablePanel
+      // oxlint-disable-next-line react/forbid-component-props -- ResizablePanel accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(isSecondaryPanelVisible && "hidden md:block", className)}
       defaultSize={defaultSize}
       minSize={minSize}
@@ -123,6 +127,7 @@ const ChatLayoutHandle = ({
 
   return (
     <ResizableHandle
+      // oxlint-disable-next-line react/forbid-component-props -- ResizableHandle accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("hidden md:flex", className)}
       withHandle={withHandle}
       {...props}

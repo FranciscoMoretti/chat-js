@@ -1,6 +1,8 @@
 import type { ToolContext } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveToolAllowed, eveTurnTool } from "@/lib/eve/turn-tools";
+/* oxlint-enable sort-imports */
 import {
   installedDocumentKinds,
   installedToolNames,

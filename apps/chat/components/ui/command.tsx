@@ -2,11 +2,14 @@
 
 import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Dialog,
   DialogContent,
@@ -14,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Command: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -23,6 +27,7 @@ const Command = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive>): ReactJSX.Element => (
   <CommandPrimitive
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "bg-popover text-popover-foreground flex h-full w-full flex-col overflow-hidden rounded-md",
       className
@@ -54,15 +59,22 @@ const CommandDialog = ({
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandDialog's Dialog prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    <DialogHeader className="sr-only">
+    <DialogHeader
+      // oxlint-disable-next-line react/forbid-component-props -- DialogHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="sr-only"
+    >
       <DialogTitle>{title}</DialogTitle>
       <DialogDescription>{description}</DialogDescription>
     </DialogHeader>
     <DialogContent
+      // oxlint-disable-next-line react/forbid-component-props -- DialogContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("overflow-hidden p-0", className)}
       showCloseButton={showCloseButton}
     >
-      <Command className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+      <Command
+        // oxlint-disable-next-line react/forbid-component-props -- Command accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5"
+      >
         {children}
       </Command>
     </DialogContent>
@@ -85,8 +97,12 @@ const CommandInput = ({
     className={cn("flex items-center gap-2 px-3", containerClassName)}
     data-slot="command-input-wrapper"
   >
-    <SearchIcon className="size-4 shrink-0 opacity-50" />
+    <SearchIcon
+      // oxlint-disable-next-line react/forbid-component-props -- SearchIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="size-4 shrink-0 opacity-50"
+    />
     <CommandPrimitive.Input
+      // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.Input accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
         className
@@ -108,6 +124,7 @@ const CommandList = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.List>): ReactJSX.Element => (
   <CommandPrimitive.List
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.List accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "max-h-[300px] scroll-py-1 overflow-x-hidden overflow-y-auto",
       className
@@ -127,6 +144,7 @@ const CommandEmpty = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Empty>): ReactJSX.Element => (
   <CommandPrimitive.Empty
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.Empty accepts className in its styling contract; preserve this caller's layout and appearance.
     className="py-6 text-center text-sm"
     data-slot="command-empty"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandEmpty's CommandPrimitive.Empty prop contract, preserving caller options, children and callbacks.
@@ -144,6 +162,7 @@ const CommandGroup = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Group>): ReactJSX.Element => (
   <CommandPrimitive.Group
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.Group accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-foreground [&_[cmdk-group-heading]]:text-muted-foreground overflow-hidden p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium",
       className
@@ -166,6 +185,7 @@ const CommandSeparator = ({
   typeof CommandPrimitive.Separator
 >): ReactJSX.Element => (
   <CommandPrimitive.Separator
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.Separator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("bg-border -mx-1 h-px", className)}
     data-slot="command-separator"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CommandSeparator's CommandPrimitive.Separator prop contract, preserving caller options, children and callbacks.
@@ -183,6 +203,7 @@ const CommandItem = ({
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Item>): ReactJSX.Element => (
   <CommandPrimitive.Item
+    // oxlint-disable-next-line react/forbid-component-props -- CommandPrimitive.Item accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className

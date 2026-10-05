@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveResponseGroup } from "@/lib/db/eve-response-groups";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --

@@ -1,10 +1,14 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/use-eve-message-delivery"; "../lib/eve/message-delivery" dependency within this package instead of introducing an alias or barrel API. */
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): event preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */

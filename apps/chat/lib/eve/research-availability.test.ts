@@ -11,14 +11,22 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { generateText, tool, wrapLanguageModel } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
+/* oxlint-enable sort-imports */
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveTurnGuest, eveTurnTool } from "./turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {

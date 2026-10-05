@@ -1,18 +1,20 @@
 "use client";
 
 import {
+  Corner as ScrollAreaPrimitiveCorner,
+  Root as ScrollAreaPrimitiveRoot,
   ScrollAreaScrollbar as ScrollAreaPrimitiveScrollAreaScrollbar,
   ScrollAreaThumb as ScrollAreaPrimitiveScrollAreaThumb,
-  Root as ScrollAreaPrimitiveRoot,
   Viewport as ScrollAreaPrimitiveViewport,
-  Corner as ScrollAreaPrimitiveCorner,
 } from "@radix-ui/react-scroll-area";
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ScrollBar: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, orientation = "vertical", ...props }). */
@@ -27,6 +29,7 @@ const ScrollBar = reactForwardRef<
     ref
   ): ReactJSX.Element => (
     <ScrollAreaPrimitiveScrollAreaScrollbar
+      // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveScrollAreaScrollbar accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "flex touch-none transition-colors select-none",
         orientation === "vertical" &&
@@ -40,7 +43,10 @@ const ScrollBar = reactForwardRef<
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ScrollBar's ScrollAreaPrimitiveScrollAreaScrollbar prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      <ScrollAreaPrimitiveScrollAreaThumb className="bg-border relative flex-1 rounded-full" />
+      <ScrollAreaPrimitiveScrollAreaThumb
+        // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveScrollAreaThumb accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="bg-border relative flex-1 rounded-full"
+      />
     </ScrollAreaPrimitiveScrollAreaScrollbar>
   )
 );
@@ -55,12 +61,16 @@ const ScrollArea = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveRoot>
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <ScrollAreaPrimitiveRoot
+    // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("relative overflow-hidden", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ScrollArea's ScrollAreaPrimitiveRoot prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    <ScrollAreaPrimitiveViewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitiveViewport
+      // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveViewport accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-full w-full rounded-[inherit]"
+    >
       {children}
     </ScrollAreaPrimitiveViewport>
     <ScrollBar />

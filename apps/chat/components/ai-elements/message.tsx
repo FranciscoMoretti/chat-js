@@ -3,18 +3,22 @@
 import { code } from "@streamdown/code";
 import { math } from "@streamdown/math";
 import { mermaid } from "@streamdown/mermaid";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { FileUIPart, UIMessage } from "ai";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
+/* oxlint-enable sort-imports */
 import type {
-  JSX as ReactJSX,
   ComponentProps,
   HTMLAttributes,
   ReactElement,
+  JSX as ReactJSX,
 } from "react";
 import React, {
   createContext,
@@ -27,8 +31,12 @@ import React, {
 } from "react";
 import { Streamdown } from "streamdown";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
+/* oxlint-enable sort-imports */
 import {
   Tooltip,
   TooltipContent,
@@ -39,7 +47,9 @@ import {
 import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "streamdown/styles.css";
+/* oxlint-enable sort-imports */
 
 const plugins = { code, math, mermaid };
 
@@ -306,6 +316,7 @@ const MessageBranchSelector = ({
 
   return (
     <ButtonGroup
+      // oxlint-disable-next-line react/forbid-component-props -- ButtonGroup accepts className in its styling contract; preserve this caller's layout and appearance.
       className="[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md"
       orientation="horizontal"
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageBranchSelector's ButtonGroup prop contract, preserving caller options, children and callbacks.
@@ -382,6 +393,7 @@ const MessageBranchPage = ({
 
   return (
     <ButtonGroupText
+      // oxlint-disable-next-line react/forbid-component-props -- ButtonGroupText accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "text-muted-foreground border-none bg-transparent shadow-none",
         className
@@ -402,6 +414,7 @@ type MessageResponseProps = ComponentProps<typeof Streamdown>;
 const MessageResponse = memo(
   ({ className, ...props }: MessageResponseProps): React.JSX.Element => (
     <Streamdown
+      // oxlint-disable-next-line react/forbid-component-props -- Streamdown accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         className
@@ -460,6 +473,7 @@ const MessageAttachment = ({
           {onRemove && (
             <Button
               aria-label="Remove attachment"
+              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
               className="bg-background/80 hover:bg-background absolute top-2 right-2 size-6 rounded-full p-0 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 [&>svg]:size-3"
               onClick={(event) => {
                 event.stopPropagation();
@@ -478,7 +492,10 @@ const MessageAttachment = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="bg-muted text-muted-foreground flex size-full shrink-0 items-center justify-center rounded-lg">
-                <PaperclipIcon className="size-4" />
+                <PaperclipIcon
+                  // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-4"
+                />
               </div>
             </TooltipTrigger>
             <TooltipContent>
@@ -488,6 +505,7 @@ const MessageAttachment = ({
           {onRemove && (
             <Button
               aria-label="Remove attachment"
+              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
               className="hover:bg-accent size-6 shrink-0 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100 [&>svg]:size-3"
               onClick={(event) => {
                 event.stopPropagation();

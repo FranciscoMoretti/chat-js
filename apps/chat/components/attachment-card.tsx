@@ -8,18 +8,27 @@ import {
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentViewData } from "@/components/attachment-list";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getFileImageProps } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 const LoadingPreview = (): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
-    <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
+    <Loader2Icon
+      // oxlint-disable-next-line react/forbid-component-props -- Loader2Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="text-muted-foreground size-5 animate-spin"
+    />
   </div>
 );
 
@@ -36,7 +45,10 @@ const ImagePreview = ({
   if (imageUnavailable) {
     return (
       <output className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1">
-        <ImageOffIcon className="size-5" />
+        <ImageOffIcon
+          // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-5"
+        />
         <span className="text-[10px]">Unavailable</span>
       </output>
     );
@@ -46,6 +58,7 @@ const ImagePreview = ({
   return (
     <Image
       alt={name || "attachment"}
+      // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
       className="object-cover"
       fill
       onError={handleImageError}
@@ -66,9 +79,15 @@ const FilePreview = ({
 }): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
     {isPdf ? (
-      <FileTextIcon className="size-5 text-red-500" />
+      <FileTextIcon
+        // oxlint-disable-next-line react/forbid-component-props -- FileTextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-5 text-red-500"
+      />
     ) : (
-      <PaperclipIcon className="text-muted-foreground size-5" />
+      <PaperclipIcon
+        // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="text-muted-foreground size-5"
+      />
     )}
   </div>
 );
@@ -135,6 +154,7 @@ export const AttachmentCard = ({
       {onRemove && !isUploading && (
         <Button
           aria-label="Remove attachment"
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className="border-border bg-background/90 supports-[backdrop-filter]:bg-background/70 absolute top-1 right-1 size-6 rounded-full border p-0 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 [&>svg]:size-3"
           onClick={(event) => {
             event.stopPropagation();

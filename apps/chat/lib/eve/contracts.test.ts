@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "./request-policy";
+/* oxlint-enable sort-imports */
 import { sendCommand } from "./send-command";
 
 /* oxlint-disable max-lines-per-function, unicorn/no-null --

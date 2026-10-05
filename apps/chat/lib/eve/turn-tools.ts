@@ -3,13 +3,17 @@
  */
 import { defineState } from "eve/context";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 
 import type { UiToolName } from "../ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "../types/anonymous";
+/* oxlint-enable sort-imports */
 import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";
 /* oxlint-enable import/no-relative-parent-imports */

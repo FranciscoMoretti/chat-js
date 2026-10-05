@@ -2,7 +2,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MessageActions } from "../components/ai-elements/message";
+/* oxlint-enable sort-imports */
 import { MessageVoteActions } from "../components/message-vote-actions";
 /* oxlint-enable import/no-relative-parent-imports */
 

@@ -1,17 +1,19 @@
 "use client";
 
 import {
-  Root as TabsPrimitiveRoot,
-  List as TabsPrimitiveList,
-  Trigger as TabsPrimitiveTrigger,
   Content as TabsPrimitiveContent,
+  List as TabsPrimitiveList,
+  Root as TabsPrimitiveRoot,
+  Trigger as TabsPrimitiveTrigger,
 } from "@radix-ui/react-tabs";
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 
@@ -24,6 +26,7 @@ const TabsList = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveList>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveList
+    // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveList accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "bg-muted text-muted-foreground inline-flex h-10 items-center justify-center rounded-md p-1",
       className
@@ -44,6 +47,7 @@ const TabsTrigger = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveTrigger>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveTrigger
+    // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "ring-offset-background focus-visible:ring-ring data-[state=active]:bg-background data-[state=active]:text-foreground inline-flex items-center justify-center rounded-sm px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm",
       className
@@ -64,6 +68,7 @@ const TabsContent = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveContent>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveContent
+    // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "ring-offset-background focus-visible:ring-ring mt-2 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
       className

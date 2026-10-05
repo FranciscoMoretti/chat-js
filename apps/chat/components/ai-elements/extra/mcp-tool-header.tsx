@@ -1,12 +1,16 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ChevronDownIcon, WrenchIcon } from "lucide-react";
+/* oxlint-enable sort-imports */
 import React from "react";
 import type { ReactNode } from "react";
 
 import { getStatusBadge } from "@/components/ai-elements/tool";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CollapsibleTrigger } from "@/components/ui/collapsible";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface McpToolHeaderProps {
@@ -27,6 +31,7 @@ export const McpToolHeader = ({
   ...props
 }: McpToolHeaderProps): React.JSX.Element => (
   <CollapsibleTrigger
+    // oxlint-disable-next-line react/forbid-component-props -- CollapsibleTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex w-full items-center justify-between gap-4 p-3",
       className
@@ -35,13 +40,21 @@ export const McpToolHeader = ({
     {...props}
   >
     <div className="flex items-center gap-2">
-      {icon ?? <WrenchIcon className="text-muted-foreground size-4" />}
+      {icon ?? (
+        <WrenchIcon
+          // oxlint-disable-next-line react/forbid-component-props -- WrenchIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-muted-foreground size-4"
+        />
+      )}
       <span className="text-sm font-medium">
         {title ?? type.replace(/^[^-]*(?:-|$)/u, "")}
       </span>
       {getStatusBadge(state)}
     </div>
-    <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
+    <ChevronDownIcon
+      // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180"
+    />
   </CollapsibleTrigger>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

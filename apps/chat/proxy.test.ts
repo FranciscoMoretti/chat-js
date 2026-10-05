@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { proxy } from "./proxy";
 

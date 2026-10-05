@@ -3,7 +3,9 @@ import type { DefinedAgent } from "eve";
 
 import { resolveEveModel } from "@/lib/eve/model-selection";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getDeepResearchConfig } from "./configuration";
+/* oxlint-enable sort-imports */
 
 type Phase = "research" | "compression" | "final_report";
 export const defineResearchAgent = (

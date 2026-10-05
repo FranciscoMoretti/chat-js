@@ -2,7 +2,9 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/hooks/conversation"; "../../agent/hooks/followup-suggestions"; "../../agent/instructions/project" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { HookContext } from "eve/hooks";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import conversation from "../../agent/hooks/conversation";
 import followups from "../../agent/hooks/followup-suggestions";

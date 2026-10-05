@@ -2,7 +2,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { createEveConversationOperation } from "./create-conversation-operation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   creation: vi.fn(),

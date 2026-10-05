@@ -3,11 +3,17 @@
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type * as ChatjsUI from "@/tools/chatjs/ui";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-namespace */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --

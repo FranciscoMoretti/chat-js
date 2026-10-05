@@ -2,7 +2,9 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * jsdoc/require-param (#534): readPublicEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

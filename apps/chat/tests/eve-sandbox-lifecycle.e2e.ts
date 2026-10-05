@@ -3,32 +3,46 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-code-sandboxes"; "../lib/db/eve-queries"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 import { expect, test } from "@playwright/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { APIError, Sandbox } from "@vercel/sandbox";
+/* oxlint-enable sort-imports */
 import { eq } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   confirmEveCodeSandboxCreation,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { eveCodeSandboxName } from "../lib/eve/code-sandbox-name";
 import { purgeEveFamilyCodeSandboxes } from "../lib/eve/purge-code-sandboxes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "../lib/logger";
+/* oxlint-enable sort-imports */
 import { executeJavaScriptInSandbox } from "../tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "../tools/chatjs/_shared/code-execution/python";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   cleanupSandbox,
   createSandbox,
   resolveSandboxAuth,
 } from "../tools/chatjs/vercel-code-execution/execution-sandbox";
+/* oxlint-enable sort-imports */
 import { codeExecution } from "../tools/chatjs/vercel-code-execution/tool";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 import { testToolContext } from "./helpers/eve-tool-context";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 

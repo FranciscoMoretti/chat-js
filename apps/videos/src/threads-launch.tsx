@@ -1,24 +1,30 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AbsoluteFill,
   Sequence,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+/* oxlint-enable sort-imports */
 
 import { Logo } from "./shared/brand";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Caption, ClickPulse, Pointer } from "./shared/presentation";
+/* oxlint-enable sort-imports */
 import {
+  DURATION,
   beats,
   cursorAt,
-  DURATION,
   ease,
   presentationAt,
   stateAt,
 } from "./story";
 import type { LaunchScript, ReplyState, StoryState } from "./story";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./styles.css";
+/* oxlint-enable sort-imports */
 
 const Author = (): React.JSX.Element => (
   <>
@@ -233,6 +239,7 @@ const PromptMessage = ({
     {!s.editing && (
       <MessageActions
         user
+        // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
         className="promptActions"
         actionTime={t}
         index={2}
@@ -299,6 +306,7 @@ const Chat = ({
           {s.edited ? s.portoAnswer : s.answer}
         </div>
         <MessageActions
+          // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
           className="replyActions"
           regenerateHint={t >= 11.65 && t < 12.2}
           actionTime={t}
@@ -317,7 +325,11 @@ const Chat = ({
         <div className="followupUser">
           <div className="role">You</div>
           <div className="bubble">{s.followup.prompt}</div>
-          <MessageActions user className="followupPromptActions" />
+          <MessageActions
+            user
+            // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="followupPromptActions"
+          />
         </div>
         <div className="author">
           <Author />
@@ -327,6 +339,7 @@ const Chat = ({
         </div>
         <div className="followupAnswer">{s.followup.text}</div>
         <MessageActions
+          // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
           className="followupReplyActions"
           streaming={s.followup.state === "streaming"}
         />
@@ -530,7 +543,10 @@ export const ThreadsLaunch = ({
   const s = stateAt(t, content);
   const cursor = cursorAt(t);
   return (
-    <AbsoluteFill className="stage">
+    <AbsoluteFill
+      // oxlint-disable-next-line react/forbid-component-props -- AbsoluteFill accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="stage"
+    >
       <div className="brand">
         <Logo />
         ChatJS Threads

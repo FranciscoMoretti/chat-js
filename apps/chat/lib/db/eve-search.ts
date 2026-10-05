@@ -1,10 +1,12 @@
 import { and, eq, sql } from "drizzle-orm";
 
-import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 import type { EveSearchText } from "@/lib/eve/search-text";
+import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveSearchText } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): SearchTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

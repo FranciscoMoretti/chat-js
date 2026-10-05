@@ -2,8 +2,12 @@ import { Client } from "eve/client";
 
 import { getPublicEveConversation } from "@/lib/db/eve-queries";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
 import { sharedEveMessages } from "./shared-messages";
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --

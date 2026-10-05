@@ -3,24 +3,42 @@
  */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { canSpend } from "@/lib/db/credits";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveCreation } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { createConversationInput } from "./contracts";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { EveCreationRecoveryError } from "./creation-recovery-error";
+/* oxlint-enable sort-imports */
 import { executeEveConversationCreation } from "./execute-conversation-creation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/admission");

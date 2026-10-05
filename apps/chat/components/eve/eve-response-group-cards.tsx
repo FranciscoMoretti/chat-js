@@ -1,6 +1,6 @@
 "use client";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 /* oxlint-disable import/no-relative-parent-imports -- ../response-choice-cards import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 
 import { ResponseChoiceCards } from "../response-choice-cards";

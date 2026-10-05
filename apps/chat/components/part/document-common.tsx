@@ -1,10 +1,14 @@
 import { File, Loader2, Pencil } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
 import React, { memo } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { useDocumentConversation } from "@/components/eve/eve-document-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useArtifact } from "@/hooks/use-artifact";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
 /* oxlint-disable id-length -- hasProp: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
 
 const hasProp = <T extends string>(

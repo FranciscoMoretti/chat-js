@@ -1,5 +1,7 @@
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { claimExpiredEveGuestFamilies } from "@/lib/db/eve-guest-cleanup";
+/* oxlint-enable sort-imports */
 
 import { deleteLocalEveConversationFamily } from "./delete-local-conversation";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";

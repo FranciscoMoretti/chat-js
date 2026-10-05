@@ -3,7 +3,9 @@
  */
 import { execFileSync } from "node:child_process";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { serialize } from "superjson";
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */

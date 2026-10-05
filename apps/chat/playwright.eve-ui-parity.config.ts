@@ -1,6 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import config from "./playwright.eve.config";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-default-export --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.

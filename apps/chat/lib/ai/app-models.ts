@@ -2,13 +2,17 @@ import { unstable_cache as cache } from "next/cache";
 
 import { config } from "@/lib/config";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId, ModelId } from "./app-model-id";
+/* oxlint-enable sort-imports */
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   generatedForGateway,
   models as generatedModels,
 } from "./models.generated";
+/* oxlint-enable sort-imports */
 
 type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
@@ -18,20 +22,18 @@ type AppModelDefinition = Omit<ModelData, "id"> & {
 const DISABLED_MODELS = new Set(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): buildAppModels accepts models: ModelData[]; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Returned definitions retain mutable tags/pricing references from catalog records; deep-readonly inputs would require cloning or a public ModelData return-type change.
+const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
   models
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Shallow model copies preserve mutable nested catalog references in the returned public definitions.
     .flatMap((model) => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Runtime gateway catalogs may contain new string IDs beyond the SDK literal union; keep their existing ModelId contract without rejecting newly available models.
       const modelId = model.id as ModelId;
       // If the model supports reasoning, return two variants:
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
       if (model.reasoning) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The existing app API exposes synthetic -reasoning variants using AppModelId even though the provider literal union does not include that suffix.
         const reasoningId = `${modelId}-reasoning` as AppModelId;
 
         return [
@@ -45,6 +47,7 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
             ...model,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
+            id: modelId,
             reasoning: false,
           },
         ];
@@ -56,39 +59,46 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
           ...model,
           apiModelId: modelId,
           disabled: DISABLED_MODELS.has(modelId),
+          id: modelId,
         },
       ];
     })
     .filter(
-      (model) => model.type === "language" && !model.disabled
-    ) as AppModelDefinition[];
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+      (model: {
+        readonly type: ModelData["type"];
+        readonly disabled: boolean;
+      }) => model.type === "language" && !model.disabled
+    );
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): buildChatModels uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): buildChatModels accepts appModels: AppModelDefinition[]; model; leftModel; rightModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const buildChatModels = (
-  appModels: AppModelDefinition[]
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Sorting/filtering retains original model records with mutable nested fields in the public return array.
+  appModels: readonly AppModelDefinition[]
 ): AppModelDefinition[] =>
   appModels
-    .filter((model) => model.output.text)
-    .toSorted((leftModel, rightModel) => {
-      const aProviderIndex = PROVIDER_ORDER.indexOf(leftModel.owned_by);
-      const bProviderIndex = PROVIDER_ORDER.indexOf(rightModel.owned_by);
+    .filter(
+      (model: { readonly output: { readonly text: boolean } }) =>
+        model.output.text
+    )
+    .toSorted(
+      (
+        leftModel: { readonly owned_by: string },
+        rightModel: { readonly owned_by: string }
+      ) => {
+        const leftProviderIndex = PROVIDER_ORDER.indexOf(leftModel.owned_by);
+        const rightProviderIndex = PROVIDER_ORDER.indexOf(rightModel.owned_by);
 
-      const aIndex =
-        aProviderIndex === -1 ? PROVIDER_ORDER.length : aProviderIndex;
-      const bIndex =
-        bProviderIndex === -1 ? PROVIDER_ORDER.length : bProviderIndex;
+        const leftIndex =
+          // oxlint-disable-next-line no-magic-numbers -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.
+          leftProviderIndex === -1 ? PROVIDER_ORDER.length : leftProviderIndex;
+        const rightIndex =
+          // oxlint-disable-next-line no-magic-numbers -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.
+          rightProviderIndex === -1
+            ? PROVIDER_ORDER.length
+            : rightProviderIndex;
 
-      if (aIndex !== bIndex) {
-        return aIndex - bIndex;
+        return leftIndex - rightIndex;
       }
-
-      return 0;
-    });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+    );
 
 const fetchAllAppModels = cache(
   async (): Promise<AppModelDefinition[]> => {
@@ -108,54 +118,45 @@ const fetchChatModels = cache(
   { revalidate: 3600, tags: ["ai-gateway-models"] }
 );
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): getAppModelDefinition accepts candidateModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const getAppModelDefinition = async (
   modelId: AppModelId
 ): Promise<AppModelDefinition> => {
   const models = await fetchAllAppModels();
-  const model = models.find((candidateModel) => candidateModel.id === modelId);
+  const model = models.find(
+    (candidateModel: { readonly id: AppModelId }) =>
+      candidateModel.id === modelId
+  );
   if (!model) {
     throw new Error(`Model ${modelId} not found`);
   }
   return model;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns --
- * jsdoc/require-param (#534): snapshotMatchesGateway's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): snapshotMatchesGateway's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- */
 /**
- * Set of model IDs from the generated models file.
- * Used to detect new models from the API that we haven't "decided" on yet.
- * When the snapshot was generated for a different gateway the IDs won't match,
- * so we fall back to an empty set (which auto-enables all models).
+ * Whether the generated catalog belongs to the selected gateway.
+ * @param {string} gateway - Gateway identity from application configuration.
+ * @returns {boolean} True when generated IDs can be used to identify previously known models.
  */
 const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- *  * typescript/prefer-readonly-parameter-types (#565): KNOWN_MODEL_IDS accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const KNOWN_MODEL_IDS = new Set<string>(
   snapshotMatchesGateway(config.ai.gateway)
-    ? generatedModels.map((model) => model.id)
+    ? generatedModels.map((model: { readonly id: string }) => model.id)
     : []
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getDefaultEnabledModels's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/prefer-readonly-parameter-types (#565): getDefaultEnabledModels accepts appModels: AppModelDefinition[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Returns the default enabled models for a given list of app models.
  * Includes curated defaults + any new models from the API not in models.generated.ts
+ * @param {readonly { readonly id: AppModelId; readonly apiModelId: ModelId }[]} appModels - Available application variants and their provider IDs.
+ * @returns {Set<AppModelId>} Curated IDs, their available reasoning variants, and IDs absent from the matching generated catalog.
  */
 const getDefaultEnabledModels = (
-  appModels: AppModelDefinition[]
+  appModels: readonly {
+    readonly id: AppModelId;
+    readonly apiModelId: ModelId;
+  }[]
 ): Set<AppModelId> => {
   const enabled = new Set<AppModelId>(config.ai.curatedDefaults);
 
@@ -175,7 +176,6 @@ const getDefaultEnabledModels = (
 
   return enabled;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
 export { fetchChatModels, getAppModelDefinition, getDefaultEnabledModels };
 export type { AppModelDefinition };
 export type { AppModelId, ModelId } from "./app-model-id";

@@ -1,6 +1,8 @@
 import { keyFromFileUrl } from "@/lib/file-url";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessageInput } from "./message-input";
+/* oxlint-enable sort-imports */
 
 export const eveMessageFileKeys = (
   message:

@@ -3,7 +3,9 @@ import { expect, test } from "bun:test";
 
 /* oxlint-disable import/no-relative-parent-imports -- These package-local tests exercise the actual published registry descriptors. */
 import { toolDefinitionSchema } from "../../../metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { registry } from "../../../registry";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const daytona = registry.items.find(

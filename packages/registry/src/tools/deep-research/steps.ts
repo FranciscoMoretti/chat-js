@@ -2,13 +2,21 @@ import { Client } from "eve/client";
 import type { WorkflowToolContext } from "eve/tools";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 import { sharedEveMessages } from "@/lib/eve/shared-messages";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { researchAvailable } from "./availability";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getDeepResearchConfig } from "./configuration";
+/* oxlint-enable sort-imports */
 import { researchReport } from "./schemas";
 
 type Context = Readonly<

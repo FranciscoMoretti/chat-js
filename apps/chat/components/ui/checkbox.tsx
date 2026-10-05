@@ -1,16 +1,18 @@
 "use client";
 
 import {
-  Root as CheckboxPrimitiveRoot,
   Indicator as CheckboxPrimitiveIndicator,
+  Root as CheckboxPrimitiveRoot,
 } from "@radix-ui/react-checkbox";
 import { Check } from "lucide-react";
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Checkbox: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
@@ -21,6 +23,7 @@ const Checkbox = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof CheckboxPrimitiveRoot>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <CheckboxPrimitiveRoot
+    // oxlint-disable-next-line react/forbid-component-props -- CheckboxPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "peer border-primary ring-offset-background focus-visible:ring-ring data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4 shrink-0 rounded-sm border focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
       className
@@ -30,9 +33,13 @@ const Checkbox = reactForwardRef<
     {...props}
   >
     <CheckboxPrimitiveIndicator
+      // oxlint-disable-next-line react/forbid-component-props -- CheckboxPrimitiveIndicator accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("flex items-center justify-center text-current")}
     >
-      <Check className="h-4 w-4" />
+      <Check
+        // oxlint-disable-next-line react/forbid-component-props -- Check accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="h-4 w-4"
+      />
     </CheckboxPrimitiveIndicator>
   </CheckboxPrimitiveRoot>
 ));

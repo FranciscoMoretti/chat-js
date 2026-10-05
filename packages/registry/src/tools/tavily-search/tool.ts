@@ -1,16 +1,24 @@
 import { tavily } from "@tavily/core";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineTool } from "eve/tools";
+/* oxlint-enable sort-imports */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+/* oxlint-enable sort-imports */
 
 import { webSearchInput } from "./schemas";
 

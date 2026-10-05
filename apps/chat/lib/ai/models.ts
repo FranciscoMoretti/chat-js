@@ -1,11 +1,15 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { unstable_cache } from "next/cache";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { getActiveGateway } from "./active-gateway";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelData } from "./model-data";
+/* oxlint-enable sort-imports */
 import { toModelData } from "./to-model-data";
 
 const log = createModuleLogger("ai/models");

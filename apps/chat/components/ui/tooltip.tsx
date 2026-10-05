@@ -1,17 +1,19 @@
 "use client";
 
 import {
+  Arrow as TooltipPrimitiveArrow,
+  Content as TooltipPrimitiveContent,
+  Portal as TooltipPrimitivePortal,
   Provider as TooltipPrimitiveProvider,
   Root as TooltipPrimitiveRoot,
   Trigger as TooltipPrimitiveTrigger,
-  Content as TooltipPrimitiveContent,
-  Portal as TooltipPrimitivePortal,
-  Arrow as TooltipPrimitiveArrow,
 } from "@radix-ui/react-tooltip";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -76,6 +78,7 @@ const TooltipContent = ({
 }): ReactJSX.Element => (
   <TooltipPrimitivePortal>
     <TooltipPrimitiveContent
+      // oxlint-disable-next-line react/forbid-component-props -- TooltipPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 animate-in data-[state=closed]:animate-out z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-xs text-balance",
         variant === "primary" && "bg-primary text-primary-foreground",
@@ -89,6 +92,7 @@ const TooltipContent = ({
     >
       {children}
       <TooltipPrimitiveArrow
+        // oxlint-disable-next-line react/forbid-component-props -- TooltipPrimitiveArrow accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]",
           variant === "primary" && "bg-primary fill-primary",

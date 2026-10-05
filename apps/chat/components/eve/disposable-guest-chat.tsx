@@ -2,25 +2,35 @@
 
 import type { EveMessage } from "eve/client";
 import { useEveAgent } from "eve/react";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+/* oxlint-enable sort-imports */
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
+/* oxlint-enable sort-imports */
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import type { UiToolName } from "@/lib/ai/types";
 /* oxlint-disable import/max-dependencies -- @/providers/default-model-provider import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useDefaultModel } from "@/providers/default-model-provider";
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveComposer } from "./eve-composer";
+/* oxlint-enable sort-imports */
 import { EveMessages } from "./eve-messages";
 import { useEveAttachments } from "./use-eve-attachments";
 
@@ -94,8 +104,14 @@ const GuestConversationView = ({
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   return (
     <>
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="mx-auto w-full max-w-3xl">
+      <Conversation
+        // oxlint-disable-next-line react/forbid-component-props -- Conversation accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="min-h-0 flex-1"
+      >
+        <ConversationContent
+          // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="mx-auto w-full max-w-3xl"
+        >
           <EveMessages
             messages={messages}
             isReadonly={false}
@@ -340,7 +356,11 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     <ChatLayout isSecondaryPanelVisible={false}>
       <ChatLayoutMain defaultSize={100}>
         <section className="flex h-full min-h-0 flex-col">
-          <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
+          <ChatHeaderView
+            breadcrumb={null}
+            // oxlint-disable-next-line react/forbid-component-props -- ChatHeaderView accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-(--header-height)"
+          />
           {binding ? (
             <GuestConversation binding={binding} key={binding.sessionId} />
           ) : (

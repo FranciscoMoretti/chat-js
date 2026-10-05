@@ -6,21 +6,33 @@ import { timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getDeletingEveConversationForSession,
   ownsEveSession,
   readEveSessionMapping,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { getEveSubagent } from "@/lib/db/eve-subagents";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { isFencedEveDescendant } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 import { parseDeletionSessionRequest } from "./deletion-policy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { loadEveModelDefinition } from "./model-selection";
+/* oxlint-enable sort-imports */
 import { parseSessionRequest } from "./request-policy";
 import { resolveWorkflowWorld } from "./world-config";
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules */

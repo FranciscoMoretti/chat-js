@@ -1,12 +1,16 @@
 import { Slot } from "@radix-ui/react-slot";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChevronRight, MoreHorizontal } from "lucide-react";
+/* oxlint-enable sort-imports */
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
-  ReactNode as ReactReactNode,
-  JSX as ReactJSX,
   ComponentProps as ReactComponentProps,
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  JSX as ReactJSX,
+  ReactNode as ReactReactNode,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Breadcrumb: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }). */
@@ -78,6 +82,7 @@ const BreadcrumbLink = reactForwardRef<
 
   return (
     <Comp
+      // oxlint-disable-next-line react/forbid-component-props -- Comp accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("hover:text-foreground transition-colors", className)}
       ref={ref}
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbLink's Comp prop contract, preserving caller options, children and callbacks.
@@ -142,7 +147,10 @@ const BreadcrumbEllipsis = ({
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward BreadcrumbEllipsis's native span attributes, preserving caller events and accessibility props.
     {...props}
   >
-    <MoreHorizontal className="h-4 w-4" />
+    <MoreHorizontal
+      // oxlint-disable-next-line react/forbid-component-props -- MoreHorizontal accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-4 w-4"
+    />
     <span className="sr-only">More</span>
   </span>
 );

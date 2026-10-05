@@ -3,17 +3,25 @@
  */
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "dotenv";
+/* oxlint-enable sort-imports */
 import { readMigrationFiles } from "drizzle-orm/migrator";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { drizzle } from "drizzle-orm/postgres-js";
+/* oxlint-enable sort-imports */
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "./connection";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
+  getMigrationHistoryProblem,
 } from "./migration-history";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 config({

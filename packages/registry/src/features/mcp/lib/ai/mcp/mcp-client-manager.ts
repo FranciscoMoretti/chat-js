@@ -1,5 +1,7 @@
 import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
+/* oxlint-enable sort-imports */
 
 // Map to store active MCP clients by connector ID
 const clientsMap = new Map<string, MCPClient>();

@@ -1,23 +1,31 @@
 "use client";
 
 import { Github } from "lucide-react";
-import type { JSX as ReactJSX, ComponentType } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ComponentType, JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
 import React, { useMemo } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ElectronBrowserSignIn } from "@/components/electron-auth-ui";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type {
+  SocialAuthProvider,
+  SocialAuthSignInOptions,
+} from "@/lib/social-auth";
+/* oxlint-enable sort-imports */
 import {
   getEnabledSocialAuthProviders,
   isSocialAuthProvider,
   sortSocialAuthProvidersByLastUsed,
-} from "@/lib/social-auth";
-import type {
-  SocialAuthProvider,
-  SocialAuthSignInOptions,
 } from "@/lib/social-auth";
 
 const emptyQuery: Record<string, string> = {};
@@ -154,6 +162,7 @@ export const SocialAuthProviders = ({
 
         return (
           <Button
+            // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className="relative w-full"
             key={id}
 
@@ -163,10 +172,14 @@ export const SocialAuthProviders = ({
             type="button"
             variant="outline"
           >
-            <Icon className="mr-2 h-4 w-4" />
+            <Icon
+              // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="mr-2 h-4 w-4"
+            />
             Continue with {label}
             {isLastUsed ? (
               <Badge
+                // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="absolute top-0 right-2 h-5 -translate-y-1/2 px-1.5 text-[10px]"
                 variant="default"
               >

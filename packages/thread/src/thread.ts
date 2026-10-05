@@ -1,8 +1,12 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { AbstractThread } from "./abstract-thread";
+/* oxlint-enable sort-imports */
 import { MemoryThreadState } from "./thread-state";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CanonicalMessage, ThreadInit } from "./types";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadInit carries SDK message arrays and callbacks into AbstractThread and MemoryThreadState; readonly conversion must preserve those constructor contracts. */
 class Thread<

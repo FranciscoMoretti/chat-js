@@ -2,15 +2,21 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/mcp" dependency within this package instead of introducing an alias or barrel API.
  */
 import { jsonSchema, tool } from "ai";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import mcp from "../../agent/tools/mcp";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "./mcp-tools";
-import { hasEveToolReceipt, createToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { createToolResult, hasEveToolReceipt } from "./tool-result";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({

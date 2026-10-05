@@ -12,22 +12,32 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 
 import selectionHook from "../../agent/hooks/tool-selection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "../ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveCreationContentHash } from "./creation-content-hash";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   moveRejectedProjectCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
+/* oxlint-enable sort-imports */
 import { selectedEveTools } from "./selected-tools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveInstalledToolEnabled,
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));

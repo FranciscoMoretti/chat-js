@@ -6,10 +6,14 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { getEveCreation, listPendingEveCreations } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 
 import { createConversationInput } from "./contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveCreationRecoveryError } from "./creation-recovery-error";
+/* oxlint-enable sort-imports */
 import { executeEveConversationCreation } from "./execute-conversation-creation";
 /* oxlint-enable import/no-nodejs-modules */
 

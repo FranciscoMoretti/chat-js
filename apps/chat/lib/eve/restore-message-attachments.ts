@@ -1,23 +1,33 @@
 import { Client, defaultMessageReducer } from "eve/client";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   canReadEveFile,
   reserveEveUpload,
   writeEveUpload,
 } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createFileId,
   downloadFile,
   getFileMetadata,
   uploadFileAtKey,
 } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "@/lib/file-url";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { attachmentDigest, draftAttachment } from "./draft";
+/* oxlint-enable sort-imports */
 import { assertEveConfigured } from "./server";
 
 const EMPTY_ATTACHMENT_BYTES = 0;

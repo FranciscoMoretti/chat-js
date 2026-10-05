@@ -38,6 +38,7 @@ const ActionContainerLink = ({
   ...props
 }: ActionContainerLinkProps): ReactJSX.Element => (
   <InternalLink
+    // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("absolute inset-0 z-10", className)}
     tabIndex={tabIndex ?? -1}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ActionContainerLink's InternalLink prop contract, preserving caller options, children and callbacks.

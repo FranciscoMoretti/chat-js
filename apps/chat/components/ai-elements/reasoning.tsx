@@ -1,8 +1,10 @@
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
-import type { JSX as ReactJSX, ComponentProps } from "react";
+/* oxlint-enable sort-imports */
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, {
   createContext,
   memo,
@@ -13,14 +15,18 @@ import React, {
   useState,
 } from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Response } from "./response";
+/* oxlint-enable sort-imports */
 import { Shimmer } from "./shimmer";
 
 interface ReasoningContextValue {
@@ -120,6 +126,7 @@ const Reasoning = memo(
     return (
       <ReasoningContext.Provider value={contextValue}>
         <Collapsible
+          // oxlint-disable-next-line react/forbid-component-props -- Collapsible accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("not-prose mb-4", className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
@@ -159,6 +166,7 @@ const ReasoningTrigger = memo(
 
     return (
       <CollapsibleTrigger
+        // oxlint-disable-next-line react/forbid-component-props -- CollapsibleTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
           className
@@ -168,9 +176,13 @@ const ReasoningTrigger = memo(
       >
         {children ?? (
           <>
-            <BrainIcon className="size-4" />
+            <BrainIcon
+              // oxlint-disable-next-line react/forbid-component-props -- BrainIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
             {getThinkingMessage(isStreaming, duration)}
             <ChevronDownIcon
+              // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
               className={cn(
                 "size-4 transition-transform",
                 isOpen ? "rotate-180" : "rotate-0"
@@ -197,6 +209,7 @@ const ReasoningContent = memo(
     ...props
   }: ReasoningContentProps): React.JSX.Element => (
     <CollapsibleContent
+      // oxlint-disable-next-line react/forbid-component-props -- CollapsibleContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "mt-4 text-sm",
         "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
@@ -205,7 +218,12 @@ const ReasoningContent = memo(
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ReasoningContent's CollapsibleContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      <Response className="grid gap-2">{children}</Response>
+      <Response
+        // oxlint-disable-next-line react/forbid-component-props -- Response accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="grid gap-2"
+      >
+        {children}
+      </Response>
     </CollapsibleContent>
   )
 );

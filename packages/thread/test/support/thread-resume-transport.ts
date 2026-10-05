@@ -1,7 +1,9 @@
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
 
 import type { ReadonlyDeep } from "./readonly-types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ControlledTransport } from "./thread-controlled-transport";
+/* oxlint-enable sort-imports */
 
 const SDK_PARAMETER_INDEX = 0;
 

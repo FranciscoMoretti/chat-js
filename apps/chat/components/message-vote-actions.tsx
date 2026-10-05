@@ -2,7 +2,9 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MessageAction } from "./ai-elements/message";
+/* oxlint-enable sort-imports */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const MessageVoteActions = ({
@@ -17,6 +19,7 @@ export const MessageVoteActions = ({
   <>
     <MessageAction
       aria-pressed={vote ? !vote.isUpvoted : false}
+      // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground pointer-events-auto! h-7 w-7 p-0"
       data-testid="message-downvote"
       disabled={disabled || vote?.isUpvoted === false}
@@ -33,6 +36,7 @@ export const MessageVoteActions = ({
     </MessageAction>
     <MessageAction
       aria-pressed={vote?.isUpvoted ?? false}
+      // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground pointer-events-auto! h-7 w-7 p-0"
       data-testid="message-upvote"
       disabled={disabled || vote?.isUpvoted === true}

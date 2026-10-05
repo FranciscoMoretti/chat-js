@@ -1,15 +1,23 @@
-import { Files } from "files-sdk";
 import type { Body, StoredFile, UploadResult } from "files-sdk";
+import { Files } from "files-sdk";
 import { nanoid } from "nanoid";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { FILE_STORAGE_PREFIX } from "./constants";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   fileIdsForStorageKeys,
   storageKeyForFile,
 } from "./db/file-storage-keys";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl, isFileStorageKey, keyFromFileUrl } from "./file-url";
+/* oxlint-enable sort-imports */
 import { storageOptions } from "./storage-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createStorageAdapter } from "./storage-provider";
+/* oxlint-enable sort-imports */
 
 const PATH_SEPARATOR = /[\\/]/u;
 // oxlint-disable-next-line no-control-regex -- Filename sanitization deliberately removes ASCII C0 and DEL control characters.

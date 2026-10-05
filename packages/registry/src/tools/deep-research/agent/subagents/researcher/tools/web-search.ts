@@ -1,5 +1,7 @@
 import { defineState } from "eve/context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineDynamic } from "eve/tools";
+/* oxlint-enable sort-imports */
 
 import { providers } from "@/tools/chatjs/providers";
 

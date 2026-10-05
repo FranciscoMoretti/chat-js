@@ -3,54 +3,74 @@ import { readFile, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { intro, outro } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import { Command } from "commander";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { buildConfigTs } from "#cli/helpers/config-builder";
+/* oxlint-enable sort-imports */
 import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
-import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EnvVarEntry } from "#cli/helpers/env-checklist";
+/* oxlint-enable sort-imports */
+import { collectEnvChecklist } from "#cli/helpers/env-checklist";
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import { parseJsonObject } from "#cli/helpers/json-object";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   promptAssistantTools,
   promptAuth,
+  promptCodeExecutionTool,
   promptCoreFeatures,
-  promptObservability,
   promptDocumentTypes,
   promptElectron,
   promptGateway,
-  promptProjectName,
-  promptStorage,
-  promptSearchTool,
-  promptUrlRetrievalTool,
   promptImageGenerationTool,
+  promptObservability,
+  promptProjectName,
+  promptSearchTool,
+  promptStorage,
+  promptUrlRetrievalTool,
   promptVideoGenerationTool,
-  promptCodeExecutionTool,
   // oxlint-disable-next-line import/max-dependencies -- The creation command composes validation, prompts, source scaffolding, registry planning, configuration writing, and process installation directly.
 } from "#cli/helpers/prompts";
+/* oxlint-enable sort-imports */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
 } from "#cli/helpers/scaffold";
+/* oxlint-enable sort-imports */
 import { configureStorageProvider } from "#cli/helpers/storage-provider";
 import { resolveGateway } from "#cli/registry/gateways";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
 import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { PackageManager } from "#cli/types";
+/* oxlint-enable sort-imports */
 import { launcherPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
 import { highlighter } from "#cli/utils/highlighter";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   installPlan,
-  recordInstalledSource,
   plannedSourceTargets,
+  recordInstalledSource,
 } from "#cli/utils/install-plan";
+/* oxlint-enable sort-imports */
 import { planInstallation } from "#cli/utils/installation-plan";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { logger } from "#cli/utils/logger";
+/* oxlint-enable sort-imports */
 import { runCommand } from "#cli/utils/run-command";
 import { spinner } from "#cli/utils/spinner";
 import { syncFeatures } from "#cli/utils/sync-features";
@@ -58,8 +78,10 @@ import { syncTools } from "#cli/utils/sync-tools";
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { toolDefinitionSchema } from "../../../registry/metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { observabilityItems } from "../../../registry/src/features/observability";
+/* oxlint-enable sort-imports */
 
 const resolveCreateTarget = (
   targetArg: string | undefined

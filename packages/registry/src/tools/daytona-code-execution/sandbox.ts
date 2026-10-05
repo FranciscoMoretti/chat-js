@@ -2,8 +2,10 @@
 /* oxlint-disable-next-line import/no-nodejs-modules -- Server-side credential scope hashing must use Node crypto and never expose the API key. */
 import { createHash } from "node:crypto";
 
-import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
+/* oxlint-enable sort-imports */
+import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 
 import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
 import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";

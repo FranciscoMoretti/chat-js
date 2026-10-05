@@ -3,9 +3,13 @@
  */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import nodePath from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";
 /* oxlint-enable import/no-nodejs-modules */

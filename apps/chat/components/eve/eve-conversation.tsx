@@ -1,53 +1,69 @@
 "use client";
 
 import type { useEveAgent } from "eve/react";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+/* oxlint-enable sort-imports */
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
+/* oxlint-enable sort-imports */
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/logical-response-slots import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
+/* oxlint-enable sort-imports */
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveLogicalResponses,
   EveLogicalVersions,
 } from "./eve-logical-navigation";
+/* oxlint-enable sort-imports */
 import { EveMessages } from "./eve-messages";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
+/* oxlint-enable sort-imports */
 import { EveThinkingMessage } from "./eve-thinking-message";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
@@ -337,7 +353,10 @@ const EveConversation = ({
         {header}
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation>
-            <ConversationContent className="mx-auto w-full max-w-3xl">
+            <ConversationContent
+              // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="mx-auto w-full max-w-3xl"
+            >
               {initialMessage && messages.length === 0 && (
                 <EveInitialMessage message={initialMessage} />
               )}

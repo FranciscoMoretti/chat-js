@@ -2,7 +2,9 @@
 
 import { spawn } from "bun";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { loadWorktreeConfig, resolveWorktreeRuntime } from "./worktree-runtime";
+/* oxlint-enable sort-imports */
 
 const ARGUMENT_START_INDEX = 2;
 const FIRST_ARGUMENT_INDEX = 0;

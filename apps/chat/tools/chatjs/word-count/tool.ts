@@ -1,9 +1,13 @@
 import { defineTool } from "eve/tools";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 
 import { wordCountInput } from "./schemas";
 

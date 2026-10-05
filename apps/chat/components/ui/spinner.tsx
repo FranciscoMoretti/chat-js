@@ -13,6 +13,7 @@ const Spinner = ({
   <output aria-label={label} className="inline-flex">
     <Loader2Icon
       aria-hidden="true"
+      // oxlint-disable-next-line react/forbid-component-props -- Loader2Icon accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("size-4 animate-spin", className)}
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Spinner's Loader2Icon prop contract, preserving caller options, children and callbacks.
       {...props}

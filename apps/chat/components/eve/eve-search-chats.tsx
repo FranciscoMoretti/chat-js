@@ -3,9 +3,12 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useState, useSyncExternalStore } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Dialog,
   DialogContent,
@@ -13,10 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSearchResultsView } from "./eve-search-results-view";
+/* oxlint-enable sort-imports */
 import { useDebouncedSearch } from "./use-debounced-search";
 /* oxlint-disable max-lines-per-function, max-statements, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- SearchResults: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page). */
 
@@ -165,7 +171,10 @@ export const EveSearchChats = ({
   return (
     <>
       <SidebarMenuButton tooltip="Search chats" onClick={() => setOpen(true)}>
-        <SearchIcon className="size-4" />
+        <SearchIcon
+          // oxlint-disable-next-line react/forbid-component-props -- SearchIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
         <span>Search chats</span>
         <span className="text-muted-foreground ml-auto text-xs">
           {shortcut}
@@ -173,10 +182,14 @@ export const EveSearchChats = ({
       </SidebarMenuButton>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
+          // oxlint-disable-next-line react/forbid-component-props -- DialogContent accepts className in its styling contract; preserve this caller's layout and appearance.
           className="overflow-hidden p-0"
           showCloseButton={!ownerId}
         >
-          <DialogHeader className="sr-only">
+          <DialogHeader
+            // oxlint-disable-next-line react/forbid-component-props -- DialogHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="sr-only"
+          >
             <DialogTitle>Search chats</DialogTitle>
             <DialogDescription>
               Search your conversation history.

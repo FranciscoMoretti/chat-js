@@ -1,8 +1,12 @@
 import { takeSnapshot } from "@uiverify/vitest";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Toaster, toast } from "sonner";
+/* oxlint-enable sort-imports */
 import { afterEach, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
@@ -11,15 +15,25 @@ import { ComposerMenu } from "@/components/composer/composer-menu";
 import { EveComposer } from "@/components/eve/eve-composer";
 import { useEveAttachments } from "@/components/eve/use-eve-attachments";
 /* oxlint-disable import/max-dependencies -- @/components/settings/settings-nav import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { SettingsNav } from "@/components/settings/settings-nav";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { composerControls } from "@/composer-controls";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DraftAttachment } from "@/lib/eve/draft";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentUploadInput } from "@/lib/installation-contracts";
+/* oxlint-enable sort-imports */
 import type { composerTools } from "@/tools/chatjs/composer-tools";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 const state = vi.hoisted(() => ({
   attach: vi.fn(),

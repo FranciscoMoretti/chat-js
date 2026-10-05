@@ -1,23 +1,25 @@
 "use client";
 
 import {
-  Root as DropdownMenuPrimitiveRoot,
-  Portal as DropdownMenuPrimitivePortal,
-  Trigger as DropdownMenuPrimitiveTrigger,
+  CheckboxItem as DropdownMenuPrimitiveCheckboxItem,
   Content as DropdownMenuPrimitiveContent,
   Group as DropdownMenuPrimitiveGroup,
   Item as DropdownMenuPrimitiveItem,
-  CheckboxItem as DropdownMenuPrimitiveCheckboxItem,
   ItemIndicator as DropdownMenuPrimitiveItemIndicator,
+  Label as DropdownMenuPrimitiveLabel,
+  Portal as DropdownMenuPrimitivePortal,
   RadioGroup as DropdownMenuPrimitiveRadioGroup,
   RadioItem as DropdownMenuPrimitiveRadioItem,
-  Label as DropdownMenuPrimitiveLabel,
+  Root as DropdownMenuPrimitiveRoot,
   Separator as DropdownMenuPrimitiveSeparator,
   Sub as DropdownMenuPrimitiveSub,
-  SubTrigger as DropdownMenuPrimitiveSubTrigger,
   SubContent as DropdownMenuPrimitiveSubContent,
+  SubTrigger as DropdownMenuPrimitiveSubTrigger,
+  Trigger as DropdownMenuPrimitiveTrigger,
 } from "@radix-ui/react-dropdown-menu";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
+/* oxlint-enable sort-imports */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
@@ -84,6 +86,7 @@ const DropdownMenuContent = ({
 >): ReactJSX.Element => (
   <DropdownMenuPrimitivePortal>
     <DropdownMenuPrimitiveContent
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
         className
@@ -128,6 +131,7 @@ const DropdownMenuItem = ({
   variant?: "default" | "destructive";
 }): ReactJSX.Element => (
   <DropdownMenuPrimitiveItem
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "data-[variant=destructive]:*:[svg]:!text-destructive focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -155,6 +159,7 @@ const DropdownMenuCheckboxItem = ({
 >): ReactJSX.Element => (
   <DropdownMenuPrimitiveCheckboxItem
     checked={checked}
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveCheckboxItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -165,7 +170,10 @@ const DropdownMenuCheckboxItem = ({
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
       <DropdownMenuPrimitiveItemIndicator>
-        <CheckIcon className="size-4" />
+        <CheckIcon
+          // oxlint-disable-next-line react/forbid-component-props -- CheckIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
       </DropdownMenuPrimitiveItemIndicator>
     </span>
     {children}
@@ -202,6 +210,7 @@ const DropdownMenuRadioItem = ({
   typeof DropdownMenuPrimitiveRadioItem
 >): ReactJSX.Element => (
   <DropdownMenuPrimitiveRadioItem
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveRadioItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -212,7 +221,10 @@ const DropdownMenuRadioItem = ({
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
       <DropdownMenuPrimitiveItemIndicator>
-        <CircleIcon className="size-2 fill-current" />
+        <CircleIcon
+          // oxlint-disable-next-line react/forbid-component-props -- CircleIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-2 fill-current"
+        />
       </DropdownMenuPrimitiveItemIndicator>
     </span>
     {children}
@@ -232,6 +244,7 @@ const DropdownMenuLabel = ({
   inset?: boolean;
 }): ReactJSX.Element => (
   <DropdownMenuPrimitiveLabel
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveLabel accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
       className
@@ -255,6 +268,7 @@ const DropdownMenuSeparator = ({
   typeof DropdownMenuPrimitiveSeparator
 >): ReactJSX.Element => (
   <DropdownMenuPrimitiveSeparator
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSeparator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("bg-border -mx-1 my-1 h-px", className)}
     data-slot="dropdown-menu-separator"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DropdownMenuSeparator's DropdownMenuPrimitiveSeparator prop contract, preserving caller options, children and callbacks.
@@ -311,6 +325,7 @@ const DropdownMenuSubTrigger = ({
   inset?: boolean;
 }): ReactJSX.Element => (
   <DropdownMenuPrimitiveSubTrigger
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSubTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -321,7 +336,10 @@ const DropdownMenuSubTrigger = ({
     {...props}
   >
     {children}
-    <ChevronRightIcon className="ml-auto size-4" />
+    <ChevronRightIcon
+      // oxlint-disable-next-line react/forbid-component-props -- ChevronRightIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="ml-auto size-4"
+    />
   </DropdownMenuPrimitiveSubTrigger>
 );
 /* oxlint-enable react/react-in-jsx-scope */
@@ -337,6 +355,7 @@ const DropdownMenuSubContent = ({
   typeof DropdownMenuPrimitiveSubContent
 >): ReactJSX.Element => (
   <DropdownMenuPrimitiveSubContent
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuPrimitiveSubContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
       className

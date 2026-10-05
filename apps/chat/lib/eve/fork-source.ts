@@ -1,6 +1,8 @@
 import type { EveMessage } from "eve/client";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveForkInput, EveForkKind } from "./contracts";
+/* oxlint-enable sort-imports */
 
 const importedBoundary = /^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u;
 const nativeBoundary = /^turn_(?<turnIndex>0|[1-9][0-9]*)$/u;

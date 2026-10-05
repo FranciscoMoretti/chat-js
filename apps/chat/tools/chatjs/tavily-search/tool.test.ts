@@ -1,10 +1,14 @@
 import { expect, test, vi } from "vitest";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
 import { webSearchInput } from "./schemas";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { webSearch } from "./tool";
+/* oxlint-enable sort-imports */
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 /* oxlint-disable typescript/explicit-function-return-type --

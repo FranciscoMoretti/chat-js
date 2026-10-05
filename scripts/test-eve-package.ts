@@ -1,7 +1,9 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import { execFileSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import { readFile, writeFile } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The package verification command builds a local fixture and launches its runtime as a subprocess.
 import path from "node:path";
 

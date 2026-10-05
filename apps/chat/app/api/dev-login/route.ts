@@ -1,8 +1,12 @@
 import { eq } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auth } from "@/lib/auth";
+/* oxlint-enable sort-imports */
 import { db } from "@/lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { session, user } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --

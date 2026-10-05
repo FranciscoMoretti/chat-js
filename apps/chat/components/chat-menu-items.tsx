@@ -3,7 +3,9 @@
 import { FolderInput, Pencil, PinIcon, Trash2 } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import { ShareMenuItem } from "@/components/upgrade-cta/share-menu-item";
 
 interface ChatMenuItemsProps {
@@ -26,13 +28,24 @@ export const ChatMenuItems = ({
   showShare = true,
 }: ChatMenuItemsProps): React.JSX.Element => (
   <>
-    <DropdownMenuItem className="cursor-pointer" onClick={onRename}>
+    <DropdownMenuItem
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="cursor-pointer"
+      onClick={onRename}
+    >
       <Pencil size={16} />
       <span>Rename</span>
     </DropdownMenuItem>
 
-    <DropdownMenuItem className="cursor-pointer" onClick={onTogglePin}>
-      <PinIcon className={`size-4 ${isPinned ? "fill-current" : ""}`} />
+    <DropdownMenuItem
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="cursor-pointer"
+      onClick={onTogglePin}
+    >
+      <PinIcon
+        // oxlint-disable-next-line react/forbid-component-props -- PinIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className={`size-4 ${isPinned ? "fill-current" : ""}`}
+      />
       <span>{isPinned ? "Unpin" : "Pin"}</span>
     </DropdownMenuItem>
 
@@ -47,6 +60,7 @@ export const ChatMenuItems = ({
 
     {onDelete && (
       <DropdownMenuItem
+        // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
         className="text-destructive focus:bg-destructive/15 focus:text-destructive cursor-pointer"
         onSelect={onDelete}
       >

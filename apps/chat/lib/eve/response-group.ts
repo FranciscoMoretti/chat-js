@@ -1,15 +1,21 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { releaseEveGuestCreation } from "@/lib/db/eve-guests";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   recordEveResponseGroupRejection,
   reserveEveResponseGroup,
 } from "@/lib/db/eve-response-groups";
+/* oxlint-enable sort-imports */
 
 import { conversationBinding } from "./contracts";
 import { createEveConversationOperation } from "./create-conversation-operation";
 import { settleGuestCreation } from "./guest-admission";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseGroupResult } from "./response-group-contracts";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupInput } from "./response-group-input";
 
 type CandidateResult = EveResponseGroupResult["candidates"][number];

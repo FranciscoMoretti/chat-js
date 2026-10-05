@@ -1,31 +1,39 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Conversation,
   ConversationContent,
 } from "@/components/ai-elements/conversation";
+/* oxlint-enable sort-imports */
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
 import { ThinkingMessage } from "@/components/thinking-message";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
+/* oxlint-enable sort-imports */
 import {
   finishCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- ./eve-composer import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 
 import { EveComposer } from "./eve-composer";
@@ -33,7 +41,9 @@ import { EveComposer } from "./eve-composer";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useEveRuntime } from "./eve-logical-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveOptimisticResponseGroup } from "./eve-optimistic-response-group";
+/* oxlint-enable sort-imports */
 import { useEveAttachments } from "./use-eve-attachments";
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- NewEveConversation: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: ReturnType<typeof prepareSelectedCreation>); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -218,7 +228,10 @@ export const NewEveConversation = ({
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <Conversation>
-          <ConversationContent className="mx-auto w-full max-w-3xl">
+          <ConversationContent
+            // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="mx-auto w-full max-w-3xl"
+          >
             {optimisticComparison ? (
               <EveOptimisticResponseGroup operation={optimisticComparison} />
             ) : (

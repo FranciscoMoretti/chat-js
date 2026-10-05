@@ -2,7 +2,9 @@ import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { codeExecution } from "./tool";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),

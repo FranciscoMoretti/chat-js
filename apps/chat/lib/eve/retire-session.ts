@@ -1,15 +1,21 @@
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 
 import { getEveConnectionOptions } from "./connection-options";
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { reconcileEveSubagentUsage } from "./reconcile-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
 import { ingestEveUsage } from "./usage";
 
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;

@@ -5,23 +5,31 @@
 import { Client } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   withManagedUsageReconciliation,
 } from "@/lib/db/eve-billing";
+/* oxlint-enable sort-imports */
 import { listEveOwnerBindings } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   advanceEveSubagentUsageCursor,
   getEveSubagent,
   listEveSubagents,
 } from "@/lib/db/eve-subagents";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
 import { ingestEveActivity } from "./activity";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
+/* oxlint-enable sort-imports */
 import { recoverEveCreations } from "./recover-creations";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";

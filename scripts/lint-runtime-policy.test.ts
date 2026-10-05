@@ -1,10 +1,12 @@
 import { expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun lint probes create isolated project directories and resolve their source paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 const root = path.resolve(import.meta.dir, "..");
 const runtimePaths = [

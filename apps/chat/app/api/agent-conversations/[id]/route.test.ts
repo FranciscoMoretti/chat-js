@@ -1,6 +1,8 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DELETE, GET } from "./route";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   env: {

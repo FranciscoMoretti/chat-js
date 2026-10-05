@@ -1,9 +1,11 @@
 import { expect, test } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   MissingCredentialsError,
   requireCredentials,
 } from "./required-credentials";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reports missing groups explicitly without exposing supplied secrets") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

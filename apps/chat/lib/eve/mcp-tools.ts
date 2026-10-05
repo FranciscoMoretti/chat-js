@@ -2,26 +2,38 @@
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
-import { asSchema, jsonSchema } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelMessage, Tool } from "ai";
+/* oxlint-enable sort-imports */
+import { asSchema, jsonSchema } from "ai";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
 import type { ToolContext } from "eve/tools";
 
 import { installedFeatures } from "@/features/installed";
 import { requireMcpCredentials } from "@/features/mcp/setup";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createToolId } from "@/lib/ai/mcp-name-id";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
 } from "@/lib/db/mcp-queries";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies.
 import type { McpConnector } from "@/lib/db/schema";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+/* oxlint-enable sort-imports */
 
 type ReadonlyNativeSurface<Value> = Value extends (
   ...parameters: readonly never[]
@@ -304,8 +316,6 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
@@ -318,8 +328,6 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-params */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 

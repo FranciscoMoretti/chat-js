@@ -1,17 +1,25 @@
 import { after } from "next/server";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "@/lib/eve/contracts";
+/* oxlint-enable sort-imports */
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createEveConversationOperation } from "@/lib/eve/create-conversation-operation";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   admitGuestCreation,
   settleGuestCreation,
 } from "@/lib/eve/guest-admission";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
 

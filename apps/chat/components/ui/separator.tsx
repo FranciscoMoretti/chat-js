@@ -1,10 +1,12 @@
 "use client";
 
 import { Root as SeparatorPrimitiveRoot } from "@radix-ui/react-separator";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Separator: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -17,6 +19,7 @@ const Separator = ({
   ...props
 }: ReactComponentProps<typeof SeparatorPrimitiveRoot>): ReactJSX.Element => (
   <SeparatorPrimitiveRoot
+    // oxlint-disable-next-line react/forbid-component-props -- SeparatorPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px",
       className

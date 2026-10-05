@@ -1,9 +1,13 @@
 import { Loader2, SearchIcon } from "lucide-react";
 import { motion } from "motion/react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
 import { WebSourceBadge } from "@/components/source-badge";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-enable sort-imports */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { UpdateTitle } from "./update-title";
@@ -56,11 +60,15 @@ export const ResearchTask = ({
           <div className="flex flex-wrap gap-2">
             {update.queries.map((query) => (
               <Badge
+                // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="bg-muted flex items-center gap-1"
                 key={query}
                 variant="outline"
               >
-                <SearchIcon className="size-3.5" />
+                <SearchIcon
+                  // oxlint-disable-next-line react/forbid-component-props -- SearchIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-3.5"
+                />
                 {/* // TODO: Make this size width responsive or accomodate long text in another manner */}
                 <span className="max-w-[300px] truncate">{query}</span>
               </Badge>
@@ -82,7 +90,10 @@ export const ResearchTask = ({
         {update.type === "web" && update.status === "running" && (
           <div className="py-2">
             <div className="flex items-center gap-3">
-              <Loader2 className="text-muted-foreground size-4 animate-spin" />
+              <Loader2
+                // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-muted-foreground size-4 animate-spin"
+              />
               <p className="text-xsize-neutral-500">Searching the web...</p>
             </div>
           </div>

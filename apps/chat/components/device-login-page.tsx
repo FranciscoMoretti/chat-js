@@ -2,11 +2,16 @@
 
 import { CheckCircle2, LoaderCircle } from "lucide-react";
 import Link from "next/link";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { usePathname, useSearchParams } from "next/navigation";
+/* oxlint-enable sort-imports */
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useMemo, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Card,
   CardContent,
@@ -14,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
 import { isElectronTransferQuery } from "@/lib/electron-auth";
@@ -44,17 +50,31 @@ const DeviceAuthScreen = ({
     <div className="bg-background flex min-h-dvh w-screen items-center justify-center">
       <div className="w-full max-w-sm px-6">
         <Card>
-          <CardHeader className="text-center">
+          <CardHeader
+            // oxlint-disable-next-line react/forbid-component-props -- CardHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-center"
+          >
             <div className="mb-2 flex justify-center">
               {isLoading ? (
-                <LoaderCircle className="text-muted-foreground size-8 animate-spin" />
+                <LoaderCircle
+                  // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="text-muted-foreground size-8 animate-spin"
+                />
               ) : (
                 <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
-                  <CheckCircle2 className="size-7" />
+                  <CheckCircle2
+                    // oxlint-disable-next-line react/forbid-component-props -- CheckCircle2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-7"
+                  />
                 </div>
               )}
             </div>
-            <CardTitle className="text-xl">{title}</CardTitle>
+            <CardTitle
+              // oxlint-disable-next-line react/forbid-component-props -- CardTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-xl"
+            >
+              {title}
+            </CardTitle>
             {!isLoading && (
               <CardDescription>
                 You can close this tab and return to {config.appName}.
@@ -62,15 +82,24 @@ const DeviceAuthScreen = ({
             )}
           </CardHeader>
           {!isLoading && (
-            <CardContent className="text-center">
+            <CardContent
+              // oxlint-disable-next-line react/forbid-component-props -- CardContent accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-center"
+            >
               <div className="mb-4">
-                <Button asChild className="w-full" variant="outline">
+                <Button
+                  asChild
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="w-full"
+                  variant="outline"
+                >
                   <Link href="/">Continue on web</Link>
                 </Button>
               </div>
               <p className="text-muted-foreground/60 text-xs">
                 Didn&apos;t open?{" "}
                 <Button
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="text-muted-foreground/60 hover:text-muted-foreground h-auto p-0 text-xs underline underline-offset-2 hover:no-underline"
                   onClick={onRetry}
                   type="button"

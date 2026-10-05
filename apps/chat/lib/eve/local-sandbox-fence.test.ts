@@ -2,6 +2,7 @@
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, readFile, rm, utimes, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   mkdir,
   mkdtemp,
@@ -10,10 +11,15 @@ import {
   utimes,
   writeFile,
 } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import nodePath from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
 /* oxlint-enable import/no-nodejs-modules */

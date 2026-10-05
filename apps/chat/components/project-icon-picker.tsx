@@ -1,22 +1,32 @@
 "use client";
 
 import { Smile } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ProjectIcon } from "@/components/project-icon";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface ProjectIconPickerProps {
@@ -41,6 +51,7 @@ export const ProjectIconPicker = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("size-9 p-0", className)}
           type="button"
           variant="outline"
@@ -48,11 +59,18 @@ export const ProjectIconPicker = ({
           {icon ? (
             <ProjectIcon color={displayColor} icon={icon} size={18} />
           ) : (
-            <Smile className="text-muted-foreground size-[18px]" />
+            <Smile
+              // oxlint-disable-next-line react/forbid-component-props -- Smile accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-muted-foreground size-[18px]"
+            />
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-3">
+      <PopoverContent
+        align="start"
+        // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="w-auto p-3"
+      >
         {/* Color row */}
         <div className="mb-3 flex gap-1.5">
           {PROJECT_COLORS.map((swatchColor): React.JSX.Element => (

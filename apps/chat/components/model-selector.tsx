@@ -7,7 +7,6 @@ import {
   ChevronUpIcon,
   FilterIcon,
 } from "lucide-react";
-import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   memo,
   startTransition,
@@ -17,11 +16,15 @@ import React, {
   useRef,
   useState,
 } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Command,
   CommandEmpty,
@@ -30,6 +33,7 @@ import {
   CommandList,
   CommandItem as UICommandItem,
 } from "@/components/ui/command";
+/* oxlint-enable sort-imports */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,29 +41,39 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/components/ui/switch import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { Switch } from "@/components/ui/switch";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { LoginCtaBanner } from "@/components/upgrade-cta/login-cta-banner";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
+import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
 import {
   getPrimarySelectedModelId,
   isSelectedModelCounts,
 } from "@/lib/ai/types";
-import type { SelectedModelCounts, SelectedModelValue } from "@/lib/ai/types";
 import { config } from "@/lib/config";
 import { getEnabledFeatures } from "@/lib/features-config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ModelSelectorLogo } from "./model-selector-logo";
+/* oxlint-enable sort-imports */
 
 type FeatureFilter = Record<string, boolean>;
 
@@ -101,7 +115,10 @@ const getFeatureIcons = (model: AppModelDefinition) => {
           key={featureConfig.key}
           title={featureConfig.description}
         >
-          <IconComponent className="text-muted-foreground h-3 w-3" />
+          <IconComponent
+            // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-muted-foreground h-3 w-3"
+          />
         </div>
       );
     }
@@ -171,6 +188,7 @@ const PureCommandItem = ({
 
   return (
     <UICommandItem
+      // oxlint-disable-next-line react/forbid-component-props -- UICommandItem accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "flex h-9 w-full cursor-pointer items-center justify-between px-3 py-1.5 transition-all",
         isSelected && "border-l-primary bg-primary/10 border-l-2",
@@ -212,7 +230,10 @@ const PureCommandItem = ({
                 type="button"
               >
                 {count}×
-                <ChevronDownIcon className="h-2.5 w-2.5" />
+                <ChevronDownIcon
+                  // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="h-2.5 w-2.5"
+                />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -229,7 +250,10 @@ const PureCommandItem = ({
                 >
                   {modelCount}x
                   {modelCount === count && (
-                    <CheckIcon className="ml-auto h-3 w-3" />
+                    <CheckIcon
+                      // oxlint-disable-next-line react/forbid-component-props -- CheckIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="ml-auto h-3 w-3"
+                    />
                   )}
                 </DropdownMenuItem>
               ))}
@@ -527,6 +551,7 @@ const PureModelSelector = ({
       <PopoverTrigger asChild>
         <Button
           aria-expanded={open}
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("flex w-fit justify-between gap-2 md:px-2", className)}
           data-testid="model-selector"
           variant="ghost"
@@ -550,6 +575,7 @@ const PureModelSelector = ({
             </p>
           </div>
           <ChevronUpIcon
+            // oxlint-disable-next-line react/forbid-component-props -- ChevronUpIcon accepts className in its styling contract; preserve this caller's layout and appearance.
             className={cn(
               "h-4 w-4 shrink-0 opacity-50 transition-transform",
               open && "rotate-180"
@@ -559,6 +585,7 @@ const PureModelSelector = ({
       </PopoverTrigger>
       <PopoverContent
         align="start"
+        // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-[350px] p-0"
         onFocusOutside={(event) => event.preventDefault()}
 
@@ -577,6 +604,7 @@ const PureModelSelector = ({
           <Command>
             <div className="flex items-center border-b">
               <CommandInput
+                // oxlint-disable-next-line react/forbid-component-props -- CommandInput accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="px-3"
                 containerClassName="w-full border-0 h-11"
                 onClick={(event) => event.stopPropagation()}
@@ -585,6 +613,7 @@ const PureModelSelector = ({
               <Popover onOpenChange={setFilterOpen} open={filterOpen}>
                 <PopoverTrigger asChild>
                   <Button
+                    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                     className={cn(
                       "relative mr-3 h-8 w-8 p-0",
                       activeFilterCount > 0 && "text-primary"
@@ -592,9 +621,13 @@ const PureModelSelector = ({
                     size="sm"
                     variant="ghost"
                   >
-                    <FilterIcon className="h-4 w-4" />
+                    <FilterIcon
+                      // oxlint-disable-next-line react/forbid-component-props -- FilterIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="h-4 w-4"
+                    />
                     {activeFilterCount > 0 && (
                       <Badge
+                        // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
                         className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center p-0 text-xs"
                         variant="secondary"
                       >
@@ -603,12 +636,17 @@ const PureModelSelector = ({
                     )}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent align="end" className="p-0">
+                <PopoverContent
+                  align="end"
+                  // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="p-0"
+                >
                   <div className="p-4">
                     <div className="mb-3 flex h-7 items-center justify-between">
                       <div className="text-sm font-medium">Filter by Tools</div>
                       {activeFilterCount > 0 && (
                         <Button
+                          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                           className="h-6 text-xs"
                           onClick={() => setFeatureFilters(initialFilters)}
                           size="sm"
@@ -637,10 +675,14 @@ const PureModelSelector = ({
                               }
                             />
                             <Label
+                              // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
                               className="flex items-center gap-1.5 text-sm"
                               htmlFor={feature.key}
                             >
-                              <IconComponent className="h-3.5 w-3.5" />
+                              <IconComponent
+                                // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
+                                className="h-3.5 w-3.5"
+                              />
                               {feature.name}
                             </Label>
                           </div>
@@ -656,6 +698,7 @@ const PureModelSelector = ({
               config.features.parallelResponses && (
                 <div className="flex items-center justify-between border-b px-3 py-2">
                   <Label
+                    // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="cursor-pointer text-sm"
                     htmlFor="use-multiple-models"
                   >
@@ -678,6 +721,7 @@ const PureModelSelector = ({
               </div>
             )}
             <CommandList
+              // oxlint-disable-next-line react/forbid-component-props -- CommandList accepts className in its styling contract; preserve this caller's layout and appearance.
               className="max-h-[min(40dvh,400px)]"
               onMouseDown={(event) => event.stopPropagation()}
             >
@@ -712,6 +756,7 @@ const PureModelSelector = ({
                         useMultipleModels ? (
                           <Checkbox
                             checked={isSelected}
+                            // oxlint-disable-next-line react/forbid-component-props -- Checkbox accepts className in its styling contract; preserve this caller's layout and appearance.
                             className="pointer-events-none"
                           />
                         ) : null
@@ -725,13 +770,17 @@ const PureModelSelector = ({
               <div className="border-t p-2">
                 <Button
                   asChild
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="w-full justify-between"
                   size="sm"
                   variant="ghost"
                 >
                   <InternalLink aria-label="Add Models" href="/settings/models">
                     Add Models
-                    <ChevronRightIcon className="h-4 w-4" />
+                    <ChevronRightIcon
+                      // oxlint-disable-next-line react/forbid-component-props -- ChevronRightIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="h-4 w-4"
+                    />
                   </InternalLink>
                 </Button>
               </div>

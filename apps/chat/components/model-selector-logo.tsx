@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useMemo } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 import { useChatModels } from "@/providers/chat-models-provider";
@@ -28,6 +30,7 @@ export const ModelSelectorLogo = ({
   return (
     <Image
       alt={`${provider} logo`}
+      // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("size-4 brightness-0 dark:invert", className)}
       height={16}
       src={`https://models.dev/logos/${provider}.svg`}

@@ -1,11 +1,13 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EVE_TITLE_MAX_LENGTH,
   eveConversationTitleFallback,
   generateEveConversationTitleResult,
   persistGeneratedEveConversationTitle,
 } from "./conversation-title";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   generate: vi.fn(),

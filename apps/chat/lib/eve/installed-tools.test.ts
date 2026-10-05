@@ -2,10 +2,14 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/installed" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { ModelMessage } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import installed from "../../agent/tools/installed";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { eveImageContext } from "./image-context";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const state = vi.hoisted(() => ({

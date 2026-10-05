@@ -1,6 +1,6 @@
 import type { EveMessage } from "eve/client";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { ThinkingMessage } from "@/components/thinking-message";
 

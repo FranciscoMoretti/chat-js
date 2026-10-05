@@ -1,9 +1,13 @@
 "use client";
 import dynamic from "next/dynamic";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { parse, unparse } from "papaparse";
+/* oxlint-enable sort-imports */
 import React from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DocumentUi } from "@/lib/eve/document-ui";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */

@@ -2,15 +2,22 @@ import type { Sandbox } from "@vercel/sandbox";
 import { defineTool } from "eve/tools";
 
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CodeExecutor } from "@/lib/eve/code-executor";
+/* oxlint-enable sort-imports */
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -19,8 +26,9 @@ import {
   getSandboxRuntime,
   resolveSandboxAuth,
 } from "./execution-sandbox";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
-import { codeExecutionResult, codeExecutionInput } from "./schemas";
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
 
 // Vercel Sandbox execution.
 const COST_CENTS = 5;

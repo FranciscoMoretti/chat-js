@@ -3,14 +3,18 @@ import { Copy, Pencil, PencilOff } from "lucide-react";
 import React, { useState } from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Message,
   MessageAction,
   MessageActions,
   MessageContent,
 } from "../components/ai-elements/message";
+/* oxlint-enable sort-imports */
 import { useIsMobile } from "../hooks/use-mobile";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "../lib/utils";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): LegacyMessageActionsReference's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
@@ -47,6 +51,7 @@ const LegacyMessageActionsReference = ({
   const showActionsWithoutHover = isMobile || isEditing;
   return (
     <MessageActions
+      // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
       className={
         showActionsWithoutHover
           ? ""
@@ -56,23 +61,32 @@ const LegacyMessageActionsReference = ({
       {!isReadonly &&
         (isEditing ? (
           <MessageAction
+            // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={onCancelEdit}
             tooltip="Cancel edit"
           >
-            <PencilOff className="h-3.5 w-3.5" />
+            <PencilOff
+              // oxlint-disable-next-line react/forbid-component-props -- PencilOff accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-3.5 w-3.5"
+            />
           </MessageAction>
         ) : (
           <MessageAction
+            // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
             onClick={onStartEdit}
             tooltip="Edit message"
           >
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil
+              // oxlint-disable-next-line react/forbid-component-props -- Pencil accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-3.5 w-3.5"
+            />
           </MessageAction>
         ))}
       {siblings}
       <MessageAction
+        // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
         className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
         tooltip="Copy"
       >
@@ -113,6 +127,7 @@ const LegacyUserMessageReference = ({
   const [mode, setMode] = useState<"view" | "edit">("view");
   return (
     <Message
+      // oxlint-disable-next-line react/forbid-component-props -- Message accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
         "py-1"
@@ -130,6 +145,7 @@ const LegacyUserMessageReference = ({
         {mode === "view" && responses}
         {mode === "view" && isReadonly && (
           <MessageContent
+            // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="group-[.is-user]:bg-card text-left"
             data-testid="legacy-message-content"
           >
@@ -154,6 +170,7 @@ const LegacyUserMessageReference = ({
             type="button"
           >
             <MessageContent
+              // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
               className="group-[.is-user]:bg-card text-left group-[.is-user]:max-w-none"
               data-testid="legacy-message-content"
             >

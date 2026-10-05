@@ -5,15 +5,19 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
 import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
 import { reserveEveGeneratedFile } from "../lib/db/eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import {
   eveConversation,
   eveFileReference,
@@ -22,12 +26,14 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { purgeEveFamilyFiles } from "../lib/eve/purge-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createFileId,
   deleteFilesByUrls,
   getFileMetadata,
   uploadFileAtKey,
 } from "../lib/file-storage";
+/* oxlint-enable sort-imports */
 import { createFileUrl } from "../lib/file-url";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 

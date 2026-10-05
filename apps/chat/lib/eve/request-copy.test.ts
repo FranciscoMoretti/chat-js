@@ -64,7 +64,6 @@ it("preserves a server rejection's recovery identity and retryability", async ()
       error: "Copy rejected",
       retryable: false,
     },
-    // oxlint-disable-next-line no-magic-numbers -- HTTP 400 models a rejected copy request.
     { status: 400 }
   );
   vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
@@ -76,7 +75,6 @@ it("preserves a server rejection's recovery identity and retryability", async ()
 });
 
 it("keeps malformed server failures retryable", async () => {
-  // oxlint-disable-next-line no-magic-numbers -- HTTP 500 models a non-JSON server failure.
   vi.spyOn(globalThis, "fetch").mockResolvedValue(
     new Response("invalid JSON", { status: 500 })
   );

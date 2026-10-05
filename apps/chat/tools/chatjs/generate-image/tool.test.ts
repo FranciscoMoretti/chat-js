@@ -6,9 +6,13 @@ import { MockImageModelV3, MockLanguageModelV3 } from "ai/test";
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { toolResultSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { generateImageResult } from "./schemas";
+/* oxlint-enable sort-imports */
 import { generateImageTool } from "./tool";
 /* oxlint-enable import/no-namespace */
 

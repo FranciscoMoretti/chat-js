@@ -1,14 +1,18 @@
 "use client";
 
 import type { Route } from "next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import Link from "next/link";
+/* oxlint-enable sort-imports */
 import { useRouter } from "next/navigation";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
   MouseEvent as ReactMouseEvent,
   MouseEventHandler as ReactMouseEventHandler,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { isElectronRenderer } from "@/lib/electron-auth";
 

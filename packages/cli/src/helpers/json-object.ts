@@ -1,8 +1,5 @@
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" &&
-  // oxlint-disable-next-line unicorn/no-null -- JSON null is a value, but cannot hold the properties these configuration transforms edit.
-  value !== null &&
-  !Array.isArray(value);
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const requireJsonObject = (
   value: unknown,

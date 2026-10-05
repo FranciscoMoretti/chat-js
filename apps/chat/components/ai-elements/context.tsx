@@ -1,18 +1,24 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 import { getUsage } from "tokenlens";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+/* oxlint-enable sort-imports */
 import { Progress } from "@/components/ui/progress";
 import { getUsageTokenDetails } from "@/lib/ai/usage-token-details";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { StoredLanguageModelUsage } from "@/lib/ai/usage-token-details";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 const PERCENT_MAX = 100;
@@ -160,6 +166,7 @@ const ContextContent = ({
   ...props
 }: ContextContentProps): React.JSX.Element => (
   <HoverCardContent
+    // oxlint-disable-next-line react/forbid-component-props -- HoverCardContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("min-w-60 divide-y overflow-hidden p-0", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ContextContent's HoverCardContent prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -204,7 +211,11 @@ const ContextContentHeader = ({
             </p>
           </div>
           <div className="space-y-2">
-            <Progress className="bg-muted" value={usedPercent * PERCENT_MAX} />
+            <Progress
+              // oxlint-disable-next-line react/forbid-component-props -- Progress accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="bg-muted"
+              value={usedPercent * PERCENT_MAX}
+            />
           </div>
         </>
       )}

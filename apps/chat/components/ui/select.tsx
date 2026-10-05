@@ -1,29 +1,33 @@
 "use client";
 
 import {
-  Root as SelectPrimitiveRoot,
-  Group as SelectPrimitiveGroup,
-  Value as SelectPrimitiveValue,
-  Trigger as SelectPrimitiveTrigger,
-  Icon as SelectPrimitiveIcon,
-  ScrollUpButton as SelectPrimitiveScrollUpButton,
-  ScrollDownButton as SelectPrimitiveScrollDownButton,
   Content as SelectPrimitiveContent,
-  Portal as SelectPrimitivePortal,
-  Viewport as SelectPrimitiveViewport,
-  Label as SelectPrimitiveLabel,
+  Group as SelectPrimitiveGroup,
+  Icon as SelectPrimitiveIcon,
   Item as SelectPrimitiveItem,
   ItemIndicator as SelectPrimitiveItemIndicator,
   ItemText as SelectPrimitiveItemText,
+  Label as SelectPrimitiveLabel,
+  Portal as SelectPrimitivePortal,
+  Root as SelectPrimitiveRoot,
+  ScrollDownButton as SelectPrimitiveScrollDownButton,
+  ScrollUpButton as SelectPrimitiveScrollUpButton,
   Separator as SelectPrimitiveSeparator,
+  Trigger as SelectPrimitiveTrigger,
+  Value as SelectPrimitiveValue,
+  Viewport as SelectPrimitiveViewport,
 } from "@radix-ui/react-select";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
+/* oxlint-enable sort-imports */
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 
@@ -40,6 +44,7 @@ const SelectTrigger = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveTrigger>
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveTrigger
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "border-input bg-background ring-offset-background focus:ring-ring data-[placeholder]:text-muted-foreground flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className
@@ -50,7 +55,10 @@ const SelectTrigger = reactForwardRef<
   >
     {children}
     <SelectPrimitiveIcon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown
+        // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="h-4 w-4 opacity-50"
+      />
     </SelectPrimitiveIcon>
   </SelectPrimitiveTrigger>
 ));
@@ -65,6 +73,7 @@ const SelectScrollUpButton = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollUpButton>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveScrollUpButton
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveScrollUpButton accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex cursor-default items-center justify-center py-1",
       className
@@ -73,7 +82,10 @@ const SelectScrollUpButton = reactForwardRef<
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectScrollUpButton's SelectPrimitiveScrollUpButton prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    <ChevronUp className="h-4 w-4" />
+    <ChevronUp
+      // oxlint-disable-next-line react/forbid-component-props -- ChevronUp accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-4 w-4"
+    />
   </SelectPrimitiveScrollUpButton>
 ));
 /* oxlint-enable react/react-in-jsx-scope */
@@ -87,6 +99,7 @@ const SelectScrollDownButton = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollDownButton>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveScrollDownButton
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveScrollDownButton accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex cursor-default items-center justify-center py-1",
       className
@@ -95,7 +108,10 @@ const SelectScrollDownButton = reactForwardRef<
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectScrollDownButton's SelectPrimitiveScrollDownButton prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    <ChevronDown className="h-4 w-4" />
+    <ChevronDown
+      // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-4 w-4"
+    />
   </SelectPrimitiveScrollDownButton>
 ));
 /* oxlint-enable react/react-in-jsx-scope */
@@ -115,6 +131,7 @@ const SelectContent = reactForwardRef<
   ): ReactJSX.Element => (
     <SelectPrimitivePortal>
       <SelectPrimitiveContent
+        // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] origin-[--radix-select-content-transform-origin] overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
           position === "popper" &&
@@ -128,6 +145,7 @@ const SelectContent = reactForwardRef<
       >
         <SelectScrollUpButton />
         <SelectPrimitiveViewport
+          // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveViewport accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn(
             "p-1",
             position === "popper" &&
@@ -152,6 +170,7 @@ const SelectLabel = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveLabel>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveLabel
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveLabel accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("py-1.5 pr-2 pl-8 text-sm font-semibold", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectLabel's SelectPrimitiveLabel prop contract, preserving caller options, children and callbacks.
@@ -169,6 +188,7 @@ const SelectItem = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveItem>
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveItem
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "focus:bg-accent focus:text-accent-foreground relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
@@ -179,7 +199,10 @@ const SelectItem = reactForwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <SelectPrimitiveItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check
+          // oxlint-disable-next-line react/forbid-component-props -- Check accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="h-4 w-4"
+        />
       </SelectPrimitiveItemIndicator>
     </span>
 
@@ -197,6 +220,7 @@ const SelectSeparator = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveSeparator>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveSeparator
+    // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveSeparator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("bg-muted -mx-1 my-1 h-px", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SelectSeparator's SelectPrimitiveSeparator prop contract, preserving caller options, children and callbacks.

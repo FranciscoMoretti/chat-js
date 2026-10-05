@@ -3,10 +3,14 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+/* oxlint-enable sort-imports */
 import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
+/* oxlint-enable sort-imports */
 import { TestRunHost } from "./support/test-run-host";
 
 const userMessage = (): UIMessage => ({

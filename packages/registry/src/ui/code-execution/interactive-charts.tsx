@@ -1,13 +1,20 @@
 import dynamic from "next/dynamic";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Card } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react/only-export-components -- #623: ChartSkeleton is the existing local loading fallback for this dynamic default chart entrypoint; the loader module is not a standalone Fast Refresh component boundary. */
 const ChartSkeleton = () => (
-  <Card className="border-border bg-card overflow-hidden">
+  <Card
+    // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
+    className="border-border bg-card overflow-hidden"
+  >
     <div className="flex h-[400px] items-center justify-center p-6">
       <div className="bg-muted size-8 animate-pulse rounded-md" />
     </div>

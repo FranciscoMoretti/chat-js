@@ -1,7 +1,9 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { toolResultSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },

@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import type { EveCopyBoundary } from "@/lib/eve/copy-boundaries";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -12,6 +13,7 @@ import {
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
 } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

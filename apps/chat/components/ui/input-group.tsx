@@ -1,11 +1,13 @@
 "use client";
 
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +131,7 @@ const InputGroupButton = ({
 }: Omit<ReactComponentProps<typeof Button>, "size"> &
   VariantProps<typeof inputGroupButtonVariants>): ReactJSX.Element => (
   <Button
+    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(inputGroupButtonVariants({ size }), className)}
     data-size={size}
     type={type}
@@ -167,6 +170,7 @@ const InputGroupInput = ({
   ...props
 }: ReactComponentProps<"input">): ReactJSX.Element => (
   <Input
+    // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
       className
@@ -187,6 +191,7 @@ const InputGroupTextarea = ({
   ...props
 }: ReactComponentProps<"textarea">): ReactJSX.Element => (
   <Textarea
+    // oxlint-disable-next-line react/forbid-component-props -- Textarea accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
       className

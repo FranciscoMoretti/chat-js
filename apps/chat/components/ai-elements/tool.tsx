@@ -1,6 +1,7 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -9,23 +10,29 @@ import {
   WrenchIcon,
   XCircleIcon,
 } from "lucide-react";
-import type { JSX as ReactJSX, ComponentProps, ReactNode } from "react";
+/* oxlint-enable sort-imports */
+import type { ComponentProps, JSX as ReactJSX, ReactNode } from "react";
 import React, { isValidElement } from "react";
 
 import { Badge } from "@/components/ui/badge";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CodeBlock } from "./code-block";
+/* oxlint-enable sort-imports */
 
 type ToolProps = ComponentProps<typeof Collapsible>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Tool: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
 
+/* oxlint-disable react/forbid-component-props -- Collapsible accept the supplied styling props; preserve this composition's layout and appearance. */
 const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   <Collapsible
     className={cn("not-prose mb-4 w-full rounded-md border", className)}
@@ -33,6 +40,7 @@ const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
     {...props}
   />
 );
+/* oxlint-enable react/forbid-component-props */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface ToolHeaderProps {
@@ -42,6 +50,7 @@ interface ToolHeaderProps {
   className?: string;
 }
 
+/* oxlint-disable react/forbid-component-props -- ClockIcon, CheckCircleIcon, CircleIcon, XCircleIcon, Badge accept the supplied styling props; preserve this composition's layout and appearance. */
 const getStatusBadge = (status: ToolUIPart["state"]): ReactJSX.Element => {
   const labels: Record<ToolUIPart["state"], string> = {
     "approval-requested": "Awaiting Approval",
@@ -70,9 +79,11 @@ const getStatusBadge = (status: ToolUIPart["state"]): ReactJSX.Element => {
     </Badge>
   );
 };
+/* oxlint-enable react/forbid-component-props */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolHeader: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/forbid-component-props -- CollapsibleTrigger, WrenchIcon, ChevronDownIcon accept the supplied styling props; preserve this composition's layout and appearance. */
 const ToolHeader = ({
   className,
   title,
@@ -98,12 +109,14 @@ const ToolHeader = ({
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
+/* oxlint-enable react/forbid-component-props */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ToolContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolContentProps). */
 
+/* oxlint-disable react/forbid-component-props -- CollapsibleContent accept the supplied styling props; preserve this composition's layout and appearance. */
 const ToolContent = ({
   className,
   ...props
@@ -117,6 +130,7 @@ const ToolContent = ({
     {...props}
   />
 );
+/* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ToolInputProps = ComponentProps<"div"> & {

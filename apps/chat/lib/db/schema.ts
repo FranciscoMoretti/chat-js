@@ -1,5 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   boolean,
   check,
@@ -17,8 +18,11 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
+/* oxlint-enable sort-imports */
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
 

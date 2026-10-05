@@ -2,7 +2,9 @@
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { mkdir, readdir, writeFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdir, readdir, writeFile } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 import nodePath from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 

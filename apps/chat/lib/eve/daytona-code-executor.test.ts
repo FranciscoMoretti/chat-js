@@ -1,6 +1,6 @@
 /* oxlint-disable typescript/explicit-function-return-type -- Hoisted SDK mocks retain their inferred spy types for these accounting assertions. */
 /* oxlint-disable import/no-relative-parent-imports -- The contract test exercises the canonical registry adapter without installing Daytona into the Vercel demo. */
-/* oxlint-disable eslint/no-magic-numbers, unicorn/no-null -- Usage amounts and malformed output are concrete public contract assertions. */
+/* oxlint-disable unicorn/no-null -- Null is a malformed output fixture checked at the executor boundary. */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "@/tests/helpers/eve-tool-context";

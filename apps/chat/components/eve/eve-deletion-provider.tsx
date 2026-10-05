@@ -2,14 +2,20 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useCurrentChatRoute } from "@/lib/chat-route";
+/* oxlint-enable sort-imports */
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDeleteDialog } from "./eve-delete-dialog";
+/* oxlint-enable sort-imports */
 
 interface Conversation {
   id: string;

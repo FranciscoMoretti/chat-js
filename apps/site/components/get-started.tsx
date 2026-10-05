@@ -72,7 +72,10 @@ export const GetStarted = (): React.JSX.Element => {
                 type="button"
               >
                 <span className="flex items-center gap-1.5">
-                  <Copy className="h-4 w-4" />
+                  <Copy
+                    // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="h-4 w-4"
+                  />
                   <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
                 </span>
               </button>
@@ -86,7 +89,10 @@ export const GetStarted = (): React.JSX.Element => {
             className="bg-primary text-primary-foreground shadow-primary/15 hover:shadow-primary/20 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
             href={siteLinks.docs}
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen
+              // oxlint-disable-next-line react/forbid-component-props -- BookOpen accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-4 w-4"
+            />
             Read the Docs
           </a>
           <a

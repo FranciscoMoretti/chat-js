@@ -1,6 +1,8 @@
 import { sql } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): pending assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.

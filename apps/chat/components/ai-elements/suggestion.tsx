@@ -1,10 +1,14 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 type SuggestionsProps = ComponentProps<typeof ScrollArea>;
@@ -17,6 +21,7 @@ const Suggestions = ({
   ...props
 }: SuggestionsProps): React.JSX.Element => (
   <ScrollArea
+    // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
     className="w-full overflow-x-auto whitespace-nowrap"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestions's ScrollArea prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -24,7 +29,11 @@ const Suggestions = ({
     <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
       {children}
     </div>
-    <ScrollBar className="hidden" orientation="horizontal" />
+    <ScrollBar
+      // oxlint-disable-next-line react/forbid-component-props -- ScrollBar accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="hidden"
+      orientation="horizontal"
+    />
   </ScrollArea>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -51,6 +60,7 @@ const Suggestion = ({
 
   return (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("cursor-pointer rounded-full px-4", className)}
       onClick={handleClick}
       size={size}

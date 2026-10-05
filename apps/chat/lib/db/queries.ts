@@ -2,6 +2,9 @@ import "server-only";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { User, UserModelPreference } from "./schema";
+/* oxlint-enable sort-imports */
 import {
   eveChat,
   eveChatProject,
@@ -11,7 +14,6 @@ import {
   user,
   userModelPreference,
 } from "./schema";
-import type { User, UserModelPreference } from "./schema";
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/explicit-function-return-type (#560): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

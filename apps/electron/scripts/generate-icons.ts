@@ -2,10 +2,14 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The build-time icon generator reads the source image and writes platform icon files on disk.
 import path from "node:path";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The build-time icon generator reads the source image and writes platform icon files on disk.
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { BICUBIC2, clearCache, createICNS, createICO } from "png2icons";
+/* oxlint-enable sort-imports */
 
 const LOSSLESS_COLOR_COUNT = 0;
 

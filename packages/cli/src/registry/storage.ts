@@ -1,10 +1,12 @@
-/* oxlint-disable import/no-relative-parent-imports -- Storage descriptors are validated by the canonical registry metadata schema; the CLI Bun build bundles this sibling-package source, whose package exposes only generated registry JSON subpaths. */
-import { storageDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- StorageSelection preserves the descriptor type inferred from the canonical registry schema; the registry package exports generated JSON only, with no metadata type subpath. */
 import type { StorageDefinition } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable import/no-relative-parent-imports -- Storage descriptors are validated by the canonical registry metadata schema; the CLI Bun build bundles this sibling-package source, whose package exposes only generated registry JSON subpaths. */
+import { storageDefinitionSchema } from "../../../registry/metadata";
+/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { itemAddress, readItem } from "./shadcn";
+/* oxlint-enable sort-imports */
 
 type RegistryFile = NonNullable<
   Awaited<ReturnType<typeof readItem>>["files"]

@@ -1,9 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   CreationRejectedError,
   requestConversation,
 } from "./create-conversation";
+/* oxlint-enable sort-imports */
 
 const operation = {
   message: "yo",

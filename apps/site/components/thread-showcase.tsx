@@ -1,8 +1,9 @@
 "use client";
 
-import { getMessageText } from "@chat-js/thread";
 import type { ThreadRunHandle } from "@chat-js/thread";
+import { getMessageText } from "@chat-js/thread";
 import { useThread } from "@chat-js/thread/react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Check,
   ChevronLeft,
@@ -16,17 +17,20 @@ import {
   Sparkles,
   Square,
 } from "lucide-react";
+/* oxlint-enable sort-imports */
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   buildTreeLayout,
-  initialTree,
   createPlaygroundTransport,
+  initialTree,
 } from "./thread-playground-model";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  PlaygroundChat as ThreadChat,
   PlaygroundMessage,
+  PlaygroundChat as ThreadChat,
 } from "./thread-playground-model";
+/* oxlint-enable sort-imports */
 
 import styles from "./thread-showcase.module.css";
 
@@ -117,7 +121,10 @@ const ThreadInstallCommand = (): React.JSX.Element => {
     <div className="border-border bg-card mt-8 max-w-3xl border">
       <div className="border-border flex items-center justify-between border-b px-3 py-2">
         <span className="text-muted-foreground flex items-center gap-2 px-2 text-sm">
-          <Package className="size-3.5" />
+          <Package
+            // oxlint-disable-next-line react/forbid-component-props -- Package accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="size-3.5"
+          />
           npm package
         </span>
         <button
@@ -128,7 +135,17 @@ const ThreadInstallCommand = (): React.JSX.Element => {
           }}
           type="button"
         >
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+          {copied ? (
+            <Check
+              // oxlint-disable-next-line react/forbid-component-props -- Check accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
+          ) : (
+            <Copy
+              // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
+          )}
         </button>
       </div>
       <div className="overflow-x-auto px-4 py-4">
@@ -288,7 +305,10 @@ const Conversation = ({
                   }}
                   type="button"
                 >
-                  <GitBranch className="size-3" />
+                  <GitBranch
+                    // oxlint-disable-next-line react/forbid-component-props -- GitBranch accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-3"
+                  />
                   Branch from here
                 </button>
                 {hasSiblings ? (
@@ -304,7 +324,10 @@ const Conversation = ({
                       title="Previous version"
                       type="button"
                     >
-                      <ChevronLeft className="size-3.5" />
+                      <ChevronLeft
+                        // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
+                        className="size-3.5"
+                      />
                     </button>
                     <span className="min-w-8 text-center font-mono text-[10px]">
                       Branch {siblingIndex + 1} / {siblings.length}
@@ -317,7 +340,10 @@ const Conversation = ({
                       title="Next version"
                       type="button"
                     >
-                      <ChevronRight className="size-3.5" />
+                      <ChevronRight
+                        // oxlint-disable-next-line react/forbid-component-props -- ChevronRight accepts className in its styling contract; preserve this caller's layout and appearance.
+                        className="size-3.5"
+                      />
                     </button>
                   </fieldset>
                 ) : null}
@@ -352,7 +378,10 @@ const Conversation = ({
           />
           <div className="border-border flex items-center justify-between gap-2 border-t p-1.5">
             <label className="text-muted-foreground flex h-8 items-center gap-1.5 px-2 text-xs">
-              <GitBranch className="size-3.5" />
+              <GitBranch
+                // oxlint-disable-next-line react/forbid-component-props -- GitBranch accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-3.5"
+              />
               <span>Responses</span>
               <select
                 aria-label="Number of responses"
@@ -394,7 +423,10 @@ const Conversation = ({
                 title="Stop all responses"
                 type="button"
               >
-                <Square className="size-3.5" />
+                <Square
+                  // oxlint-disable-next-line react/forbid-component-props -- Square accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-3.5"
+                />
               </button>
               <button
                 aria-label={`Send message with ${responseCount} ${
@@ -408,7 +440,10 @@ const Conversation = ({
                 title="Send message"
                 type="submit"
               >
-                <Send className="size-4" />
+                <Send
+                  // oxlint-disable-next-line react/forbid-component-props -- Send accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-4"
+                />
               </button>
             </div>
           </div>

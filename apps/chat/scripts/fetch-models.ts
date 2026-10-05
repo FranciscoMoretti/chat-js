@@ -4,7 +4,9 @@
  */
 import { writeFileSync } from "node:fs";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getActiveGateway } from "../lib/ai/active-gateway";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable no-console, no-magic-numbers, node/no-sync, typescript/strict-boolean-expressions, unicorn/no-null --

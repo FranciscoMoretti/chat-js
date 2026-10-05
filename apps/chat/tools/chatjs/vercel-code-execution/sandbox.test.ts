@@ -1,5 +1,7 @@
 import { getVercelOidcTokenSync } from "@vercel/oidc";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { APIError, Sandbox } from "@vercel/sandbox";
+/* oxlint-enable sort-imports */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /* oxlint-disable no-undefined --

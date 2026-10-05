@@ -1,14 +1,22 @@
 "use client";
 
 import { ImageOffIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ImageActions, ImageModal } from "@/components/image-modal";
+/* oxlint-enable sort-imports */
 import { useImageLoadError } from "@/hooks/use-image-load-error";
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateImageInput, generateImageResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type GenerateImageTool = ToolRendererProps<
   typeof generateImageInput,
@@ -52,7 +60,10 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
         <div className="group relative">
           {imageUnavailable ? (
             <output className="bg-muted/30 text-muted-foreground flex min-h-64 w-full flex-col items-center justify-center gap-2">
-              <ImageOffIcon className="size-8" />
+              <ImageOffIcon
+                // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-8"
+              />
               <span>Generated image unavailable</span>
             </output>
           ) : (
@@ -73,6 +84,7 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
                 />
               </button>
               <ImageActions
+                // oxlint-disable-next-line react/forbid-component-props -- ImageActions accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="absolute top-2 right-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
                 imageUrl={output.imageUrl}
               />

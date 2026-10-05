@@ -3,7 +3,9 @@
  */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { gatewayModelDefaults } from "../lib/ai/gateway-model-defaults";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseGroupResult } from "../lib/eve/response-group-contracts";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const ownerId = "comparison-fixture-owner";

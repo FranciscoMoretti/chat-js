@@ -24,7 +24,10 @@ export const DevLoginTool = (): React.JSX.Element | null => {
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none" />
         <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
       </span>
-      <LogIn className="size-3.5 text-zinc-500 transition-colors group-hover:text-zinc-300" />
+      <LogIn
+        // oxlint-disable-next-line react/forbid-component-props -- LogIn accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-3.5 text-zinc-500 transition-colors group-hover:text-zinc-300"
+      />
       <span>Dev login</span>
     </a>
   );

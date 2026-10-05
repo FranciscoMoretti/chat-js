@@ -1,7 +1,11 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createTRPCContext } from "@/trpc/init";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { appRouter } from "@/trpc/routers/_app";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * typescript/prefer-readonly-parameter-types (#565): handler accepts req: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

@@ -3,7 +3,9 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { ImageModel } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
@@ -12,7 +14,9 @@ import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewayType } from "../../registry/src/gateways/metadata";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { OpenAICompatibleGateway } from "../../registry/src/gateways/openai-compatible/gateway";
@@ -30,7 +34,9 @@ import { VercelGateway } from "../../registry/src/gateways/vercel/gateway";
 import gatewayPackage from "../package.json";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewayProvider } from "./gateway-provider";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 const OPTIONS_PARAMETER_INDEX = 0;

@@ -6,9 +6,13 @@ import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
 import { uiverifyPlugin } from "@uiverify/vitest/plugin";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { playwright } from "@vitest/browser-playwright";
-import { defineConfig } from "vitest/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Plugin } from "vitest/config";
+/* oxlint-enable sort-imports */
+import { defineConfig } from "vitest/config";
 
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");

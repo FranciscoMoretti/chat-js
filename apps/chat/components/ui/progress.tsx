@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  Root as ProgressPrimitiveRoot,
   Indicator as ProgressPrimitiveIndicator,
+  Root as ProgressPrimitiveRoot,
 } from "@radix-ui/react-progress";
 import type {
   ComponentProps as ReactComponentProps,
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- Progress: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 100); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including value). */
 
 /* oxlint-disable react/react-in-jsx-scope -- Progress uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+/* oxlint-disable react/forbid-component-props -- ProgressPrimitiveRoot, ProgressPrimitiveIndicator accept the supplied styling props; preserve this composition's layout and appearance. */
 const Progress = ({
   className,
   value,
@@ -36,6 +37,7 @@ const Progress = ({
     />
   </ProgressPrimitiveRoot>
 );
+/* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 

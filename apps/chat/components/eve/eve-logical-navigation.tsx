@@ -1,15 +1,21 @@
 "use client";
 
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useLogicalChat } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveLogicalGroupRecovery } from "./eve-logical-group-recovery";
+/* oxlint-enable sort-imports */
 import { EveResponseGroupCards } from "./eve-response-group-cards";
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop -- EveLogicalVersions: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 

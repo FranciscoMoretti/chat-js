@@ -1,7 +1,9 @@
 import type { ChatStatus, UIMessage } from "ai";
 
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ThreadConcurrency, ThreadRun } from "./types";
+/* oxlint-enable sort-imports */
 
 const SIBLING_ORDER_STEP = 1;
 

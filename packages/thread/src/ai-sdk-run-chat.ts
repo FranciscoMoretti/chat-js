@@ -1,4 +1,3 @@
-import { AbstractChat } from "ai";
 import type {
   ChatInit,
   ChatRequestOptions,
@@ -7,6 +6,7 @@ import type {
   UIMessage,
   UIMessageChunk,
 } from "ai";
+import { AbstractChat } from "ai";
 
 import type { ReadonlyMessageValue } from "./message-utils";
 import { ThreadRunState } from "./thread-run-state";

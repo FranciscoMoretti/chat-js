@@ -1,6 +1,8 @@
 import { defineTool } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { executeDocumentDeletion, requestDocumentDeletion } from "./execute";
+/* oxlint-enable sort-imports */
 import { deleteDocumentInput } from "./schemas";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */

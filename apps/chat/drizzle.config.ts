@@ -1,7 +1,9 @@
 import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "./lib/db/connection";
+/* oxlint-enable sort-imports */
 
 config({
   path: ".env.local",

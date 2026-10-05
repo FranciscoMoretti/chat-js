@@ -4,7 +4,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({

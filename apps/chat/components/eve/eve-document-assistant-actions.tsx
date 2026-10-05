@@ -9,14 +9,18 @@ import {
   Square,
 } from "lucide-react";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 import {
   documentAssistantActions,
   documentAssistantRequest,
@@ -101,6 +105,7 @@ export const EveDocumentAssistantActions = ({
           <TooltipTrigger asChild>
             <Button
               aria-label="Stop generation"
+              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
               className="h-auto w-auto rounded-full p-3"
               variant="ghost"
 
@@ -121,6 +126,7 @@ export const EveDocumentAssistantActions = ({
                 <Button
                   disabled={disabled || !onAction}
                   variant="ghost"
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="h-auto w-auto rounded-full p-3"
                   aria-label={action.label}
 

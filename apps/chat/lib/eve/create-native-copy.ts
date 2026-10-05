@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveRequest } from "./server";
+/* oxlint-enable sort-imports */
 
 const SEED_LOOKUP_TIMEOUT_MS = 15_000;
 const SEED_CREATION_TIMEOUT_MS = 30_000;

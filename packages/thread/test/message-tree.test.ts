@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { MessageTree } from "#thread-source/message-tree";
+/* oxlint-enable sort-imports */
 
 const message = (id: string, role: UIMessage["role"] = "user"): UIMessage => ({
   id,

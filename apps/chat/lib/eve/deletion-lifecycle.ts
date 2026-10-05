@@ -1,7 +1,9 @@
 import { env } from "@/lib/env";
 
-import { createEveLifecycleProvider } from "./lifecycle/provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SupportedLifecycleProvider } from "./lifecycle/provider";
+/* oxlint-enable sort-imports */
+import { createEveLifecycleProvider } from "./lifecycle/provider";
 import { resolveWorkflowWorld } from "./world-config";
 
 // Selection alone performs no database work. Family retirement checks compatibility

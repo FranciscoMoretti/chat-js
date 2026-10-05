@@ -3,10 +3,14 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-enable sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel } from "ai";
+/* oxlint-enable sort-imports */
 
 const MODEL_OWNER_SEGMENT_INDEX = 0;
 const EMPTY_TAG_COUNT = 0;

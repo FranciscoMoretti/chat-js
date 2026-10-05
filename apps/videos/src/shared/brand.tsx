@@ -1,6 +1,10 @@
 import { loadFont } from "@remotion/fonts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Img, staticFile } from "remotion";
+/* oxlint-enable sort-imports */
 
 void loadFont({
   family: "Geist",

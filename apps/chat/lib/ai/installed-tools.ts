@@ -1,6 +1,8 @@
 import type { NativeToolUI } from "@/lib/eve/tool-types";
 import type { tools } from "@/tools/chatjs/tools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { WorkflowTools } from "@/tools/chatjs/workflow-types";
+/* oxlint-enable sort-imports */
 
 type AllTools = typeof tools & WorkflowTools;
 

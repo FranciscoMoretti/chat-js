@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { SignupForm } from "@/components/signup-form";

@@ -1,10 +1,12 @@
 import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 
@@ -53,6 +55,7 @@ const Button = ({
 
   return (
     <Comp
+      // oxlint-disable-next-line react/forbid-component-props -- Comp accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(buttonVariants({ className, size, variant }))}
       data-slot="button"
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Button's Comp prop contract, preserving caller options, children and callbacks.

@@ -2,10 +2,14 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
 import { auth } from "@ai-sdk/mcp";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import type { McpOAuthSession } from "../../db/schema";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { McpOAuthClientProvider } from "./mcp-oauth-provider";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const sdkIssuer = "http://127.0.0.1:3799";

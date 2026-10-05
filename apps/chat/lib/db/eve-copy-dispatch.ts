@@ -2,11 +2,17 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveSeedSearchText } from "@/lib/eve/search-text";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
+/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
+/* oxlint-enable sort-imports */
 
 /**
  * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.

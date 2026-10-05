@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { databaseConnection, databaseEnvOptions } from "./connection";
+/* oxlint-enable sort-imports */
 
 const databaseOptionsSchema = z.object(databaseEnvOptions);
 

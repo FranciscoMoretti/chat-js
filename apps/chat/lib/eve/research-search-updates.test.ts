@@ -2,12 +2,16 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { WorkflowToolContext } from "eve/tools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { researchSearchUpdates } from "@/tools/chatjs/deep-research/search-updates";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));

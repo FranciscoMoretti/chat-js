@@ -1,7 +1,9 @@
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import gatewayPackage from "@chat-js/gateways/package.json";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
+/* oxlint-enable sort-imports */
 import { gatewayMetadata } from "./metadata";
 
 const environment = {

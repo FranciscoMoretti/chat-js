@@ -1,7 +1,9 @@
 import { and, eq, inArray, lt, notExists, sql } from "drizzle-orm";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * jsdoc/require-param (#534): prepareEveOrphanedFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

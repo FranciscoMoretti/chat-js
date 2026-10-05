@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
-  mkdtemp,
   mkdir,
+  mkdtemp,
   readFile,
   rm,
   symlink,
@@ -10,8 +10,10 @@ import {
 } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { syncTools } from "./sync-tools";
 
@@ -641,3 +643,66 @@ test.each(["GlobeIcon", "BookOpen", "Edit3"])(
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 /* oxlint-enable eslint/no-magic-numbers */
+
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- This registration contract checks imported bindings, generated metadata, and a hash-validated repeat sync in one fixture. */
+/* oxlint-disable eslint/no-magic-numbers -- Eleven concrete tool bindings exercise the first lexical alias rollover; alternating icons make binding mismatches visible. */
+test("grouped tool and composer imports keep bindings attached beyond nine aliases", async () => {
+  const root = await project();
+  const directory = path.join(root, "tools/chatjs/composer-fixture");
+  await mkdir(directory, { recursive: true });
+  const tools = Array.from({ length: 11 }, (value, index) => ({
+    composer: {
+      icon: index % 2 === 0 ? "Globe" : "Wrench",
+      name: `Tool ${index}`,
+      shortName: `Tool ${index}`,
+    },
+    toolExport: `tool${index}`,
+  }));
+  await writeFile(
+    path.join(directory, "chatjs.json"),
+    JSON.stringify({
+      contractVersion: 1,
+      id: "composer-fixture",
+      kind: "tool",
+      tools: tools.toReversed(),
+    })
+  );
+  await writeFile(
+    path.join(directory, "tool.ts"),
+    tools
+      .map(
+        (tool: { readonly toolExport: string }) =>
+          `export const ${tool.toolExport} = {};`
+      )
+      .join("\n")
+  );
+  await syncTools(root);
+  const toolRegistry = await readFile(
+    path.join(root, "tools/chatjs/tools.ts"),
+    "utf-8"
+  );
+  expect(toolRegistry.indexOf("tool0 as tool10")).toBeLessThan(
+    toolRegistry.indexOf("tool8 as tool2")
+  );
+  expect(toolRegistry).toContain("tool10 as tool0");
+  expect(toolRegistry).toContain("tool0: tool10");
+  expect(toolRegistry).toContain("tool10: tool0");
+  const file = path.join(root, "tools/chatjs/composer-tools.ts");
+  const generated = await readFile(file, "utf-8");
+  expect(generated.indexOf("Wrench as Icon10")).toBeLessThan(
+    generated.indexOf("Globe as Icon2")
+  );
+  expect(generated).toContain(
+    '"tool10": { icon: Icon2, name: "Tool 10", shortName: "Tool 10" }'
+  );
+  expect(generated).toContain(
+    '"tool2": { icon: Icon3, name: "Tool 2", shortName: "Tool 2" }'
+  );
+  expect(generated).not.toContain("sort-imports");
+  await syncTools(root, { checkOnly: true });
+  await syncTools(root);
+  expect(await readFile(file, "utf-8")).toBe(generated);
+});
+
+/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */

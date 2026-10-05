@@ -1,7 +1,9 @@
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { itemAddress, readItem } from "./shadcn";
+/* oxlint-enable sort-imports */
 
 type RegistryFile = NonNullable<
   Awaited<ReturnType<typeof readItem>>["files"]

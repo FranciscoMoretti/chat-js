@@ -1,10 +1,13 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React, { useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Dialog,
   DialogContent,
@@ -13,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 
 type EveDeletionPhase =
   | "confirm"
@@ -129,7 +133,10 @@ const EveDeleteDialogView = ({
     >
       <DialogContent showCloseButton={!busy}>
         <DialogHeader>
-          <DialogTitle className="mr-6">
+          <DialogTitle
+            // oxlint-disable-next-line react/forbid-component-props -- DialogTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="mr-6"
+          >
             Delete conversation and branches?
           </DialogTitle>
           <DialogDescription>

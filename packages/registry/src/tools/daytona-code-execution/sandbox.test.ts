@@ -1,13 +1,15 @@
 /* oxlint-disable eslint/max-lines-per-function -- The suite groups independent provider boundary tests sharing one typed fixture. */
 /* oxlint-disable eslint/require-await, typescript/require-await -- Asynchronous provider stubs intentionally settle immediately unless a scenario injects a lifecycle race. */
 /* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- Test fixture factories preserve inferred mutable state so each case can inject failures at the provider boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Fixture callbacks retain mutable SDK state so each case can inject lifecycle races or provider failures. */
 /* oxlint-disable eslint/no-magic-numbers -- Concrete SDK deadlines, status codes and expected counts are protocol assertions. */
 import { describe, expect, test } from "bun:test";
 
 import { DaytonaNotFoundError } from "@daytona/sdk";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { commandSandbox, createDaytonaProvider } from "./sandbox";
+/* oxlint-enable sort-imports */
 import type { DaytonaResource } from "./sandbox";
 
 const credentials = { apiKey: "test-only", organizationId: "org-a" };

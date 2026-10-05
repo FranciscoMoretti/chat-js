@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { retryEveAdmission } from "./admission-retry";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "./contracts";
+/* oxlint-enable sort-imports */
 import type { createConversationInput } from "./contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 
 class CreationRejectedError extends Error {
   public readonly projectUnavailable: boolean;

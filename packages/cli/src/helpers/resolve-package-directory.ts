@@ -1,7 +1,9 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
@@ -32,7 +34,6 @@ export const resolvePackageDirectory = async (
       const manifest: unknown = JSON.parse(manifestSource);
       if (
         typeof manifest === "object" &&
-        // oxlint-disable-next-line unicorn/no-null -- JSON permits null; exclude it before checking the parsed object's name.
         manifest !== null &&
         "name" in manifest &&
         manifest.name === packageName

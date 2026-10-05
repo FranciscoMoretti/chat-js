@@ -2,18 +2,28 @@
  * import/max-dependencies (#524): import from "react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
 import type { Metadata } from "next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { Geist, Geist_Mono } from "next/font/google";
+/* oxlint-enable sort-imports */
 import Script from "next/script";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./globals.css";
+/* oxlint-enable sort-imports */
 import React from "react";
 import { Toaster } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
+/* oxlint-enable sort-imports */
 import { ThemeProvider } from "@/components/theme-provider";
 import { installedLayoutComponents } from "@/features/installed-layout";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 /* oxlint-enable import/max-dependencies */
 

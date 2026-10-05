@@ -6,31 +6,45 @@ import type {
   EveMessagePart,
   InputResponse,
 } from "eve/client";
-import type { JSX as ReactJSX, ReactNode } from "react";
 import React, { useState } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Message, MessageContent } from "@/components/ai-elements/message";
+/* oxlint-enable sort-imports */
 import { Response } from "@/components/ai-elements/response";
 import { ToolInput } from "@/components/ai-elements/tool";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { FollowUpSuggestionsView } from "@/components/followup-suggestions-view";
+/* oxlint-enable sort-imports */
 import { MessageActionsView } from "@/components/message-actions-view";
 import { ReasoningPart } from "@/components/part/message-reasoning";
 import { RetryButtonView } from "@/components/retry-button-view";
 /* oxlint-disable import/max-dependencies -- @/components/tag import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { Tag } from "@/components/tag";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { Textarea } from "@/components/ui/textarea";
 import { UserMessageView } from "@/components/user-message-view";
 import { parseToolId } from "@/lib/ai/mcp-name-id";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveInstalledToolRenderer } from "@/lib/ai/tool-renderer-registry";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveAttachment } from "./eve-attachment";
+/* oxlint-enable sort-imports */
 import { EveDocumentTool } from "./eve-document-tool";
 import { EveFeedbackActions } from "./eve-feedback-actions";
 import { EveMcpResult } from "./eve-mcp-result";
@@ -191,7 +205,11 @@ const Part = ({
     >
       <p className="font-medium">{part.toolName}</p>
       {part.input !== undefined && (
-        <ToolInput className="p-0" input={part.input} />
+        <ToolInput
+          // oxlint-disable-next-line react/forbid-component-props -- ToolInput accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="p-0"
+          input={part.input}
+        />
       )}
       {part.state === "approval-requested" && request ? (
         <PendingInput
@@ -365,12 +383,16 @@ export const EveMessages = ({
     }
     return (
       <Message
+        // oxlint-disable-next-line react/forbid-component-props -- Message accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-full max-w-full items-start py-1"
         data-message-id={message.id}
         from={message.role}
         key={messageKey?.(message) ?? message.id}
       >
-        <MessageContent className="w-full px-0 py-0 text-left">
+        <MessageContent
+          // oxlint-disable-next-line react/forbid-component-props -- MessageContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="w-full px-0 py-0 text-left"
+        >
           <span className="sr-only">Assistant</span>
           {message.parts.map((part, index): React.JSX.Element => (
             <Part

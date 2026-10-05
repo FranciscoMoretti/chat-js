@@ -3,7 +3,9 @@ import { execFileSync, spawn } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { setTimeout as delay } from "node:timers/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { checkHealth } from "./dev-health";
+/* oxlint-enable sort-imports */
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
 const INITIAL_RESTART_BACKOFF_MS = 5000;

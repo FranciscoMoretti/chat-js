@@ -1,7 +1,9 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The packaging entry point writes branding.json to the generated desktop project.
 import { writeFile } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 
 const { appName, appPrefix, appUrl, organization } = config;
 const orgEmail =

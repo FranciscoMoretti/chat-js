@@ -2,11 +2,15 @@
 
 import { AlertCircle, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import authClient from "@/lib/auth-client";
 import { config } from "@/lib/config";
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-console, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- ElectronAuthOverlay: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { state, }: { state: ElectronRendererAuthState; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including state.detail); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -48,9 +52,15 @@ const ElectronAuthOverlay = ({
         <div className="flex items-start gap-3">
           <div className="text-muted-foreground mt-0.5">
             {isLoading ? (
-              <LoaderCircle className="size-5 animate-spin" />
+              <LoaderCircle
+                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-5 animate-spin"
+              />
             ) : (
-              <AlertCircle className="size-5 text-amber-600" />
+              <AlertCircle
+                // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-5 text-amber-600"
+              />
             )}
           </div>
           <div className="space-y-2">
@@ -58,6 +68,7 @@ const ElectronAuthOverlay = ({
             <p className="text-muted-foreground text-sm">{detailMessage}</p>
             {canCancel ? (
               <Button
+                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="mt-2"
 
                 // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
@@ -78,6 +89,7 @@ const ElectronAuthOverlay = ({
             ) : null}
             {isLoading ? null : (
               <Button
+                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="mt-2"
                 onClick={() => setIsDismissed(true)}
                 size="sm"

@@ -5,11 +5,17 @@ import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 
 import type research from "../../agent/tools/deepResearch";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { readDocument } from "../../tools/chatjs/read-document/tool";
+/* oxlint-enable sort-imports */
 import type { runCodeDocument } from "../../tools/chatjs/saved-code-execution/tool";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { createTextDocument } from "../../tools/chatjs/text-documents/tool";
+/* oxlint-enable sort-imports */
 import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { NativeToolUI } from "./tool-types";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({

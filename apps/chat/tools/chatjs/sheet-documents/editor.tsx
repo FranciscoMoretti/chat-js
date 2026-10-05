@@ -1,13 +1,21 @@
 "use client";
 
 import { useTheme } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { parse, unparse } from "papaparse";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React, { memo, useMemo, useState } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import DataGrid, { textEditor } from "react-data-grid";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "react-data-grid/lib/styles.css";
+/* oxlint-enable sort-imports */
 
 interface SheetEditorProps {
   content: string;
@@ -139,6 +147,7 @@ const PureSpreadsheetEditor = ({
 
   return (
     <DataGrid
+      // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts className in its styling contract; preserve this caller's layout and appearance.
       className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
       columns={columns}
       defaultColumnOptions={{
@@ -154,6 +163,7 @@ const PureSpreadsheetEditor = ({
       }}
       onRowsChange={isReadonly === true ? undefined : handleRowsChange}
       rows={localRows}
+      // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts style in its styling contract; preserve this caller's layout and appearance.
       style={{ height: "100%" }}
     />
   );

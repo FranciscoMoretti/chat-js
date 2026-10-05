@@ -1,10 +1,15 @@
 "use client";
 
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ProjectIconPicker } from "@/components/project-icon-picker";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Dialog,
   DialogContent,
@@ -13,12 +18,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 import { Input } from "@/components/ui/input";
-import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
 } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
+import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
 
 export interface ProjectDetailsData {
   color: ProjectColorName;
@@ -150,6 +158,7 @@ export const ProjectDetailsDialog = ({
           <Input
             // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the project editor intentionally starts keyboard entry in the project name field.
             autoFocus
+            // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
             className="flex-1"
             maxLength={255}
             onChange={(event) => setName(event.target.value)}

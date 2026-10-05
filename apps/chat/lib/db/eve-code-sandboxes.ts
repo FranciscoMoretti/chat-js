@@ -2,8 +2,12 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveCodeSandboxName } from "@/lib/eve/code-sandbox-name";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveCodeSandbox, eveConversation } from "./schema";
+/* oxlint-enable sort-imports */
 
 const FIRST_ROW_INDEX = 0;
 

@@ -7,17 +7,23 @@ import { createHash } from "node:crypto";
 import { parseSessionTranscriptSeed } from "eve/transcript";
 
 import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { createFileId } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
+/* oxlint-enable sort-imports */
 import type { EveCopyPlan } from "./copy-journal-contract";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   eveCopyInlineAttachments,
   materializeEveCopyTranscript,
 } from "./copy-transcript";
+/* oxlint-enable sort-imports */
 import type { prepareEveCopyTranscript } from "./copy-transcript";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --

@@ -3,7 +3,9 @@ import { FilesError } from "files-sdk";
 
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 import { getBaseUrl } from "@/lib/url";
 
 const HTTP_NOT_FOUND = 404;

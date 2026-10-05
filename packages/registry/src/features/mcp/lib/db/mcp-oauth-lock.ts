@@ -1,6 +1,8 @@
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "@/lib/db/connection";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
 const OAUTH_LOCK_POOL_IDLE_TIMEOUT_SECONDS = 20;

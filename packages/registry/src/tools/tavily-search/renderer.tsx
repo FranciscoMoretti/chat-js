@@ -2,10 +2,14 @@
 import React from "react";
 
 import { WebSearch } from "@/components/part/web-search";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { webSearchInput, webSearchResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */

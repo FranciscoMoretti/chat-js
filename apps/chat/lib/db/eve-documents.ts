@@ -2,12 +2,17 @@ import { and, eq, inArray, lt, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { artifactKinds } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
 import { documentFileIds } from "@/lib/eve/document-contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 import { db } from "./client";
 import { retainEveDocumentFiles } from "./eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -19,6 +24,7 @@ import {
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
 } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): revisionInput uses 2_000_000, 1, 512, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

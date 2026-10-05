@@ -3,10 +3,12 @@
  */
 import { defineHook } from "eve/hooks";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveSubagent,
   registerEveSubagent,
 } from "../../lib/db/eve-subagents";
+/* oxlint-enable sort-imports */
 import { ingestEveUsage } from "../../lib/eve/usage";
 /* oxlint-enable import/no-relative-parent-imports */
 

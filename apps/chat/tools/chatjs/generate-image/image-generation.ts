@@ -2,13 +2,21 @@ import { generateImage, generateText } from "ai";
 import type { FileUIPart } from "ai";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
+/* oxlint-enable sort-imports */
 import type { createEveToolCost } from "@/lib/eve/tool-cost";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { FileUploader } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectEditImages } from "./image-input";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModelSelection } from "./image-model";
+/* oxlint-enable sort-imports */
 import type { generateImageResult } from "./schemas";
 
 const log = createModuleLogger("ai.tools.generate-image");

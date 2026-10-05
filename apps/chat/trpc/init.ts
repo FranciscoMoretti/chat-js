@@ -12,11 +12,17 @@
 
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { initTRPC, TRPCError } from "@trpc/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { TRPCError, initTRPC } from "@trpc/server";
+/* oxlint-enable sort-imports */
 import { headers } from "next/headers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cache } from "react";
+/* oxlint-enable sort-imports */
 import superjson from "superjson";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ZodError } from "zod";
+/* oxlint-enable sort-imports */
 
 import { auth } from "@/lib/auth";
 /* oxlint-enable import/no-nodejs-modules */

@@ -1,15 +1,19 @@
 "use client";
 
 import type { ChatStatus } from "ai";
-import type { JSX as ReactJSX, ComponentProps, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ComponentProps, JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-enable sort-imports */
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   PromptInput,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+/* oxlint-enable sort-imports */
 import { LexicalChatInput } from "@/components/lexical-chat-input";
 import { useIsMobile } from "@/hooks/use-mobile";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ChatComposerFooter: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -21,8 +25,14 @@ const ChatComposerFooter = ({
   tools?: ReactNode;
   actions: ReactNode;
 }): React.JSX.Element => (
-  <PromptInputFooter className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1">
-    <PromptInputTools className="flex min-w-0 items-center gap-1 @[500px]:gap-2">
+  <PromptInputFooter
+    // oxlint-disable-next-line react/forbid-component-props -- PromptInputFooter accepts className in its styling contract; preserve this caller's layout and appearance.
+    className="flex w-full min-w-0 flex-row items-center justify-between gap-1 border-t px-1 py-1 group-has-[>input]/input-group:pb-1 @[500px]:gap-2 [.border-t]:pt-1"
+  >
+    <PromptInputTools
+      // oxlint-disable-next-line react/forbid-component-props -- PromptInputTools accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="flex min-w-0 items-center gap-1 @[500px]:gap-2"
+    >
       {tools}
     </PromptInputTools>
     <div className="flex items-center gap-1">{actions}</div>
@@ -74,6 +84,7 @@ export const ControlledChatComposer = ({
   };
   return (
     <PromptInput
+      // oxlint-disable-next-line react/forbid-component-props -- PromptInput accepts className in its styling contract; preserve this caller's layout and appearance.
       className="@container relative transition-colors"
       inputGroupClassName="bg-muted dark:bg-muted"
       onSubmit={(event) => {
@@ -86,6 +97,7 @@ export const ControlledChatComposer = ({
         aria-label="Message"
         // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: The caller owns initial focus; this shared composer defaults autoFocus to false.
         autoFocus={autoFocus}
+        // oxlint-disable-next-line react/forbid-component-props -- LexicalChatInput accepts className in its styling contract; preserve this caller's layout and appearance.
         className="max-h-[max(35svh,5rem)] min-h-[60px] overflow-y-scroll sm:min-h-[80px]"
         data-testid="multimodal-input"
         initialValue={draft}
@@ -112,6 +124,7 @@ export const ControlledChatComposer = ({
         actions={
           <PromptInputSubmit
             aria-label={busy && onStop ? "Stop" : "Send"}
+            // oxlint-disable-next-line react/forbid-component-props -- PromptInputSubmit accepts className in its styling contract; preserve this caller's layout and appearance.
             className="size-8 shrink-0 @[500px]:size-10"
             disabled={busy && onStop ? stopDisabled : !canSend}
             onClick={(event) => {

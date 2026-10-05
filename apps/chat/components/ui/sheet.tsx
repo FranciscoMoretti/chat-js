@@ -1,20 +1,22 @@
 "use client";
 
 import {
-  Root as SheetPrimitiveRoot,
-  Trigger as SheetPrimitiveTrigger,
   Close as SheetPrimitiveClose,
-  Portal as SheetPrimitivePortal,
-  Overlay as SheetPrimitiveOverlay,
   Content as SheetPrimitiveContent,
-  Title as SheetPrimitiveTitle,
   Description as SheetPrimitiveDescription,
+  Overlay as SheetPrimitiveOverlay,
+  Portal as SheetPrimitivePortal,
+  Root as SheetPrimitiveRoot,
+  Title as SheetPrimitiveTitle,
+  Trigger as SheetPrimitiveTrigger,
 } from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: React.ComponentProps<typeof SheetPrimitive.Root>). */
@@ -84,6 +86,7 @@ const SheetOverlay = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveOverlay>): ReactJSX.Element => (
   <SheetPrimitiveOverlay
+    // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveOverlay accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=open]:animate-in fixed inset-0 z-50 bg-black/50",
       className
@@ -110,6 +113,7 @@ const SheetContent = ({
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitiveContent
+      // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "bg-background data-[state=closed]:animate-out data-[state=open]:animate-in fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
         side === "right" &&
@@ -127,8 +131,14 @@ const SheetContent = ({
       {...props}
     >
       {children}
-      <SheetPrimitiveClose className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
-        <XIcon className="size-4" />
+      <SheetPrimitiveClose
+        // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveClose accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
+      >
+        <XIcon
+          // oxlint-disable-next-line react/forbid-component-props -- XIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
         <span className="sr-only">Close</span>
       </SheetPrimitiveClose>
     </SheetPrimitiveContent>
@@ -179,6 +189,7 @@ const SheetTitle = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveTitle>): ReactJSX.Element => (
   <SheetPrimitiveTitle
+    // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveTitle accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-foreground font-semibold", className)}
     data-slot="sheet-title"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetTitle's SheetPrimitiveTitle prop contract, preserving caller options, children and callbacks.
@@ -196,6 +207,7 @@ const SheetDescription = ({
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveDescription>): ReactJSX.Element => (
   <SheetPrimitiveDescription
+    // oxlint-disable-next-line react/forbid-component-props -- SheetPrimitiveDescription accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="sheet-description"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SheetDescription's SheetPrimitiveDescription prop contract, preserving caller options, children and callbacks.

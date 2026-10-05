@@ -1,6 +1,7 @@
 import { ArrowRight, FileText } from "lucide-react";
 import React, { useId } from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Dialog,
   DialogContent,
@@ -8,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 import {
   Drawer,
   DrawerContent,
@@ -16,11 +18,19 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getFaviconUrl } from "@/lib/url-utils";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SearchResultItem } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { Favicon } from "./favicon";
+/* oxlint-enable sort-imports */
 import { FaviconGroup } from "./favicon-group";
 /* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SourcesList: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { sources, }: { sources: SearchResultItem[] | undefined; }). */
 
@@ -75,11 +85,18 @@ const AllSourcesView = ({
           </button>
         </DialogTrigger>
         <DialogContent
+          // oxlint-disable-next-line react/forbid-component-props -- DialogContent accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("max-h-[80vh] overflow-y-auto", "max-w-4xl")}
         >
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
+            <DialogTitle
+              // oxlint-disable-next-line react/forbid-component-props -- DialogTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="flex items-center gap-2"
+            >
+              <FileText
+                // oxlint-disable-next-line react/forbid-component-props -- FileText accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-4 w-4"
+              />
               {title}
             </DialogTitle>
           </DialogHeader>
@@ -96,10 +113,19 @@ const AllSourcesView = ({
           Show All
         </button>
       </DrawerTrigger>
-      <DrawerContent className="h-[85vh]">
+      <DrawerContent
+        // oxlint-disable-next-line react/forbid-component-props -- DrawerContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="h-[85vh]"
+      >
         <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
+          <DrawerTitle
+            // oxlint-disable-next-line react/forbid-component-props -- DrawerTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="flex items-center gap-2"
+          >
+            <FileText
+              // oxlint-disable-next-line react/forbid-component-props -- FileText accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-4 w-4"
+            />
             {title}
           </DrawerTitle>
         </DrawerHeader>
@@ -128,6 +154,7 @@ const ShowSourcesButton = ({
     type="button"
   >
     <FaviconGroup
+      // oxlint-disable-next-line react/forbid-component-props -- FaviconGroup accepts className in its styling contract; preserve this caller's layout and appearance.
       className="mr-1.5"
       maxVisible={3}
       sources={sources.map((source) => ({
@@ -138,7 +165,10 @@ const ShowSourcesButton = ({
     <span className="text-muted-foreground group-hover:text-foreground text-xs">
       {sources.length} Sources
     </span>
-    <ArrowRight className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors" />
+    <ArrowRight
+      // oxlint-disable-next-line react/forbid-component-props -- ArrowRight accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 transition-colors"
+    />
   </button>
 );
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

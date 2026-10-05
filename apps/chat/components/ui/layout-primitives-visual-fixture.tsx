@@ -3,6 +3,7 @@
 import { InboxIcon } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Card,
   CardAction,
@@ -24,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 import {
   Dialog,
   DialogContent,

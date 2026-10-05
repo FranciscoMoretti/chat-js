@@ -1,39 +1,45 @@
-import {
-  convertFileListToFileUIParts,
-  DefaultChatTransport,
-  generateId,
-} from "ai";
 import type {
   AbstractChat,
   ChatInit,
   ChatStatus,
   ChatTransport,
-  UIMessage,
   UIDataTypes,
+  UIMessage,
   UITools,
+} from "ai";
+import {
+  DefaultChatTransport,
+  convertFileListToFileUIParts,
+  generateId,
 } from "ai";
 
 import { ThreadRunChat } from "./ai-sdk-run-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   RequestReader,
   ThreadRunHost,
   ThreadRunSpec,
 } from "./ai-sdk-run-chat";
+/* oxlint-enable sort-imports */
 import { MessageTree } from "./message-tree";
 import type { SnapshotInput } from "./message-tree-readers";
-import { RunRegistry } from "./run-registry";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { RunRecord } from "./run-registry";
+/* oxlint-enable sort-imports */
+import { RunRegistry } from "./run-registry";
 import { ThreadRunHostAdapter } from "./thread-run-host";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   MessageTreeSnapshot,
   ThreadConcurrency,
-  ThreadRunHandle,
   ThreadRun,
+  ThreadRunHandle,
   ThreadStartRunOptions,
   ThreadState,
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
+/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 const SECOND_PARAMETER_INDEX = 1;

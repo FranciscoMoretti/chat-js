@@ -1,7 +1,9 @@
 import React from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./presentation.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Caption: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Caption = ({

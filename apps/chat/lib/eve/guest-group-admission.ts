@@ -6,12 +6,18 @@ import { createHash } from "node:crypto";
 
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { reserveEveGuestMessages } from "@/lib/db/eve-guests";
+/* oxlint-enable sort-imports */
 import { reserveEveResponseGroupInTransaction } from "@/lib/db/eve-response-groups";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 import { validateGuestCreation } from "./guest-admission";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "./principal";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupCandidates } from "./response-group-candidates";
 import type { eveResponseGroupInput } from "./response-group-input";
 /* oxlint-enable import/no-nodejs-modules */

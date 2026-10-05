@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 
 import { coreFeatureEnvRequirements } from "./config-requirements";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectEnvChecklist } from "./env-checklist";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */

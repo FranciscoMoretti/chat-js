@@ -1,9 +1,13 @@
-import { generateText, Output } from "ai";
+import { Output, generateText } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { HookModelCall, TurnCompletedHookResult } from "eve/hooks";
+/* oxlint-enable sort-imports */
 
 import { config } from "@/lib/config";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { FollowupContext } from "./followup-context";
+/* oxlint-enable sort-imports */
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
 

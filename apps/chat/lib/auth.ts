@@ -4,15 +4,23 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { lastLoginMethod } from "better-auth/plugins";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { authSessionOptions } from "./auth-session-options";
+/* oxlint-enable sort-imports */
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ELECTRON_TRUSTED_ORIGINS } from "./electron-auth";
+/* oxlint-enable sort-imports */
 import { electronAuthPlugin } from "./electron-auth-plugin";
 import { getBaseUrl } from "./url";
 /* oxlint-enable import/max-dependencies */

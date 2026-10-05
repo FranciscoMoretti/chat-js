@@ -1,10 +1,12 @@
 "use client";
 import React from "react";
 
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { wordCountInput, wordCountResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type WordCountRendererTool = ToolRendererProps<
   typeof wordCountInput,

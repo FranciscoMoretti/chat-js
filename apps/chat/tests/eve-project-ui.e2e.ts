@@ -2,7 +2,9 @@
 import { expect, test } from "@playwright/test";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 
 test.use({ actionTimeout: 20_000 });
 

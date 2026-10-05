@@ -2,10 +2,14 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/eve/followup-context"; "../../lib/eve/generate-followup-suggestions" dependency within this package instead of introducing an alias or barrel API.
  */
 import { defineState } from "eve/context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineHook } from "eve/hooks";
+/* oxlint-enable sort-imports */
 
 import { followupContext } from "../../lib/eve/followup-context";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { FollowupContext } from "../../lib/eve/followup-context";
+/* oxlint-enable sort-imports */
 import { generateEveFollowupSuggestions } from "../../lib/eve/generate-followup-suggestions";
 /* oxlint-enable import/no-relative-parent-imports */
 

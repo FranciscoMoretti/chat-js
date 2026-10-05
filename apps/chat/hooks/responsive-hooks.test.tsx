@@ -1,10 +1,14 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useMediaQuery } from "./use-media-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useIsMobile } from "./use-mobile";
+/* oxlint-enable sort-imports */
 import { useMounted } from "./use-mounted";
 
 declare global {
@@ -18,12 +22,10 @@ const originalMatchMedia = Object.getOwnPropertyDescriptor(
   globalThis,
   "matchMedia"
 );
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Value: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { value }: { value: boolean }). */
 
 const Value = ({ value }: { readonly value: boolean }): React.JSX.Element => (
   <output>{String(value)}</output>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MountedValue = ({

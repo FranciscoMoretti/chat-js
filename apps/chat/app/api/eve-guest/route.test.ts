@@ -2,7 +2,9 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { readGuestCredential } from "@/lib/eve/disposable-guest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { POST } from "./route";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), model: vi.fn() }));
 const settings = vi.hoisted(

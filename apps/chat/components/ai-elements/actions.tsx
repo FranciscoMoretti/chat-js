@@ -1,15 +1,19 @@
 "use client";
 
-import React from "react";
 import type { ComponentProps } from "react";
+import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 type ActionsProps = ComponentProps<"div">;
@@ -49,6 +53,7 @@ const Action = ({
 }: ActionProps): React.JSX.Element => {
   const button = (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "text-muted-foreground hover:text-foreground relative size-9 p-1.5",
         className

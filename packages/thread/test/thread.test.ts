@@ -3,17 +3,25 @@ import { describe, expect, test } from "bun:test";
 import type { UIMessage } from "ai";
 
 import { getMessageText } from "#thread-source/message-utils";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+/* oxlint-enable sort-imports */
 import { Thread } from "#thread-source/thread";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  createThreadStateSnapshot,
   MemoryThreadState,
+  createThreadStateSnapshot,
 } from "#thread-source/thread-state";
+/* oxlint-enable sort-imports */
 import type { ThreadState } from "#thread-source/types";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { RecordingThreadState } from "./support/recording-thread-state";
+/* oxlint-enable sort-imports */
 import { StateBackedThread } from "./support/state-backed-thread";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledTransport } from "./support/thread-controlled-transport";
+/* oxlint-enable sort-imports */
 import { ResumeTransport } from "./support/thread-resume-transport";
 
 const user = (id: string): UIMessage => ({

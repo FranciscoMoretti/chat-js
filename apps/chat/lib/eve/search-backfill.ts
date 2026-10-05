@@ -2,9 +2,13 @@ import { Client } from "eve/client";
 
 import { indexEveSearchText } from "@/lib/db/eve-search";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
-import { eveEventSearchText } from "./search-text";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveSearchText } from "./search-text";
+/* oxlint-enable sort-imports */
+import { eveEventSearchText } from "./search-text";
 
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
  * jsdoc/require-param (#534): backfillEveSearchConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

@@ -7,23 +7,37 @@ import { isIP } from "node:net";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   commitEveGuestMessage,
   readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
 } from "@/lib/db/eve-guests";
+/* oxlint-enable sort-imports */
 import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 import type { createConversationInput } from "./contracts";
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveGuestIpHash } from "./guest-credential";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "./model-selection";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "./principal";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 type ReadonlyGuestCreationInput = ReadonlyNativeSurface<

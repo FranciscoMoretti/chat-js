@@ -3,12 +3,20 @@ import { format, isWithinInterval } from "date-fns";
 import React from "react";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { weatherInput, weatherResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 

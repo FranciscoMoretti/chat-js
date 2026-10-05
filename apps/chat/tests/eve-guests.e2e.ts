@@ -6,10 +6,13 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   commitEveGuestMessage,
   createEveGuest,
@@ -18,8 +21,10 @@ import {
   reserveEveGuestMessage,
   reserveEveGuestMessages,
 } from "../lib/db/eve-guests";
+/* oxlint-enable sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
 import { reserveEveResponseGroupInTransaction } from "../lib/db/eve-response-groups";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveGuest,
@@ -30,13 +35,18 @@ import {
   user,
   userCredit,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createEveGuestCredential,
   eveGuestOwnerId,
 } from "../lib/eve/guest-credential";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupCandidates } from "../lib/eve/response-group-candidates";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);

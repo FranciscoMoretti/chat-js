@@ -1,12 +1,14 @@
 "use client";
 
 import { Root as TogglePrimitiveRoot } from "@radix-ui/react-toggle";
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 
@@ -39,6 +41,7 @@ const Toggle = ({
 }: ReactComponentProps<typeof TogglePrimitiveRoot> &
   VariantProps<typeof toggleVariants>): ReactJSX.Element => (
   <TogglePrimitiveRoot
+    // oxlint-disable-next-line react/forbid-component-props -- TogglePrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(toggleVariants({ className, size, variant }))}
     data-slot="toggle"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Toggle's TogglePrimitiveRoot prop contract, preserving caller options, children and callbacks.

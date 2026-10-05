@@ -3,7 +3,9 @@
  */
 import assert from "node:assert/strict";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, describe, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { RecursiveCharacterTextSplitter } from "./text-splitter";
 /* oxlint-enable import/no-nodejs-modules */

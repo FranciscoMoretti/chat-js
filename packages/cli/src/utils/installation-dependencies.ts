@@ -5,7 +5,9 @@ import path from "node:path";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+/* oxlint-enable sort-imports */
 
 import type { planInstallation } from "./installation-plan";
 import { preflight } from "./preflight";

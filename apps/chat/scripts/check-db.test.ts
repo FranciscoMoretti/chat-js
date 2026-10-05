@@ -2,12 +2,20 @@
  * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { mkdtempSync, rmSync } from "node:fs";; import { tmpdir } from "node:os";; import path from "node:path";; import { fileURLToPath } from "node:url";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { execFileSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdtempSync, rmSync } from "node:fs";
+/* oxlint-enable sort-imports */
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-statements, no-magic-numbers, node/no-sync --

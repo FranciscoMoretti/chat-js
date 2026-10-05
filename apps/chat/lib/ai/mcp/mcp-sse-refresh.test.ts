@@ -1,5 +1,7 @@
 import { createMCPClient } from "@ai-sdk/mcp";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
+/* oxlint-enable sort-imports */
 import { expect, test } from "vitest";
 
 const serverUrl = "https://mcp.test/";

@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- These Bun integration fixtures create and clean temporary source files on the host filesystem.
 import { tmpdir } from "node:os";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   checkExceptions,
   parseBaseline,
@@ -11,6 +12,7 @@ import {
   reviewBaselineUpdate,
   snapshotExceptions,
 } from "./lint-exceptions";
+/* oxlint-enable sort-imports */
 
 const ZERO = 0;
 const CLI_PROCESS_TIMEOUT_MS = 5000;

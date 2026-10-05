@@ -2,11 +2,17 @@
 
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Compartment, EditorState, Transaction } from "@codemirror/state";
+/* oxlint-enable sort-imports */
 import { oneDark } from "@codemirror/theme-one-dark";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EditorView } from "@codemirror/view";
+/* oxlint-enable sort-imports */
 import { basicSetup } from "codemirror";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { memo, useEffect, useRef } from "react";
+/* oxlint-enable sort-imports */
 
 interface EditorProps {
   content: string;

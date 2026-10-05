@@ -4,15 +4,21 @@
  */
 import { execFileSync } from "node:child_process";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "dotenv";
+/* oxlint-enable sort-imports */
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
+/* oxlint-enable sort-imports */
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
 
 import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { resolveEveSetup } from "./eve-setup-config";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });

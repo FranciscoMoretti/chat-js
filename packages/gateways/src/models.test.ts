@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
 
-import { aiGatewayModelSchema } from "./models";
 import type { AiGatewayModel } from "./models";
+import { aiGatewayModelSchema } from "./models";
 
 const tagsSchema = aiGatewayModelSchema.shape.tags;
 

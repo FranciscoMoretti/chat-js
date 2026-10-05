@@ -5,31 +5,47 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+/* oxlint-enable sort-imports */
 import { usePathname } from "next/navigation";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { Separator } from "@/components/ui/separator";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+/* oxlint-enable sort-imports */
 import type { listEveConversations } from "@/lib/db/eve-queries";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/optimistic-metadata import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveDeletion } from "./eve-deletion-provider";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
+/* oxlint-enable sort-imports */
 import { EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
@@ -171,6 +187,7 @@ export const EveHistoryList = ({
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
+      // oxlint-disable-next-line react/forbid-component-props -- SidebarGroup accepts className in its styling contract; preserve this caller's layout and appearance.
       className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
     >
       {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
@@ -281,6 +298,7 @@ export const EveHistoryList = ({
       )}
       {history.hasNextPage && !history.isError && (
         <Button
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className="mt-2"
           disabled={history.isFetching}
 

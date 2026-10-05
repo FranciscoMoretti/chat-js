@@ -3,7 +3,9 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
 import { spawnSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */

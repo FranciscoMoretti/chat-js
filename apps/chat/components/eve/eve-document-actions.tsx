@@ -5,13 +5,17 @@ import React from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { Toggle } from "@/components/ui/toggle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 import { documentUi } from "@/tools/chatjs/document-ui";
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- EveDocumentActions: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types */
 
@@ -70,6 +74,7 @@ export const EveDocumentActions = ({
             <div>
               <Toggle
                 aria-label="View changes"
+                // oxlint-disable-next-line react/forbid-component-props -- Toggle accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="h-fit p-2 [&_svg]:size-[18px]"
                 disabled={disabled || !canCompare}
                 pressed={comparing}
@@ -86,6 +91,7 @@ export const EveDocumentActions = ({
         <TooltipTrigger asChild>
           <Button
             aria-label="View Previous version"
+            // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className={buttonClass}
             variant="outline"
             disabled={disabled || previousDisabled}
@@ -100,6 +106,7 @@ export const EveDocumentActions = ({
         <TooltipTrigger asChild>
           <Button
             aria-label="View Next version"
+            // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className={buttonClass}
             variant="outline"
             disabled={disabled || nextDisabled}
@@ -114,6 +121,7 @@ export const EveDocumentActions = ({
         <TooltipTrigger asChild>
           <Button
             aria-label={copyLabel}
+            // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className={
               kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
             }

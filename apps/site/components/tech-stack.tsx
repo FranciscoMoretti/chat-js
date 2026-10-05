@@ -14,6 +14,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="Next.js"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -37,6 +38,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="AI SDK"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -143,6 +145,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="Zustand"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="brightness-0 dark:brightness-100"
         height={28}
         sizes="28px"

@@ -1,11 +1,15 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { afterEach, expect, test, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
+/* oxlint-enable sort-imports */
 
 const operationId = "11111111-1111-4111-8111-111111111111";
 /* oxlint-disable typescript/explicit-function-return-type -- eve-optimistic-response-group.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */

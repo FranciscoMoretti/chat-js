@@ -7,18 +7,28 @@ import {
 } from "@lexical/markdown";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+/* oxlint-enable sort-imports */
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+/* oxlint-enable sort-imports */
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EditorState } from "lexical";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { $getRoot } from "lexical";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { memo, useEffect, useRef } from "react";
+/* oxlint-enable sort-imports */
 
 import { createEditorConfig, handleEditorChange } from "./editor-config";
 
@@ -120,7 +130,10 @@ const PureEditor = ({
       <LexicalComposer initialConfig={editorConfig}>
         <RichTextPlugin
           contentEditable={
-            <ContentEditable className="lexical-editor text-left outline-hidden" />
+            <ContentEditable
+              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="lexical-editor text-left outline-hidden"
+            />
           }
           ErrorBoundary={LexicalErrorBoundary}
           placeholder={

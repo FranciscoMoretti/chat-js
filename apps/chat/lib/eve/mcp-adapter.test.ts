@@ -1,12 +1,15 @@
-import { tool } from "ai";
 import type { ToolExecutionOptions } from "ai";
+import { tool } from "ai";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
- * max-lines-per-function (#510): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * typescript/prefer-readonly-parameter-types (#565): describe("Eve tool contract") accepts _input; options: ToolExecutionOptions<typeof services>; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/max-nested-calls (#568): describe("Eve tool contract") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -51,4 +54,4 @@ describe("Eve tool contract", () => {
     expect(output).toEqual(["context-test"]);
   });
 });
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */

@@ -1,5 +1,7 @@
 import { installedRouters } from "@/features/installed-routers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
+/* oxlint-enable sort-imports */
 
 import { creditsRouter } from "./credits.router";
 import { eveRouter } from "./eve.router";

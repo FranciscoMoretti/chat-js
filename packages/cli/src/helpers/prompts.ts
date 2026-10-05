@@ -1,4 +1,5 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   cancel,
   confirm,
@@ -7,12 +8,14 @@ import {
   select,
   text,
 } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
 
 import type { RegistryIndexItem } from "#cli/registry/schema";
-import { resolveStorage } from "#cli/registry/storage";
 import type { StorageSelection } from "#cli/registry/storage";
+import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
@@ -20,6 +23,7 @@ import {
   DOCUMENT_TYPE_KEYS,
   GATEWAYS,
 } from "#cli/types";
+/* oxlint-enable sort-imports */
 import type {
   AuthProvider,
   BuiltInToolKey,
@@ -30,26 +34,32 @@ import type {
 import { highlighter } from "#cli/utils/highlighter";
 import { logger } from "#cli/utils/logger";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AUTHENTICATION_DEFAULTS,
   FEATURES_DEFAULTS,
   // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../../apps/chat/lib/config-schema";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
   coreFeatureEnvRequirements,
   gatewayEnvRequirements,
 } from "./config-requirements";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import type { ReadonlyInput } from "./readonly-input";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 } from "./storage-provider";
+/* oxlint-enable sort-imports */
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 

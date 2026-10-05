@@ -5,10 +5,14 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PGlite } from "@electric-sql/pglite";
+/* oxlint-enable sort-imports */
 import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;

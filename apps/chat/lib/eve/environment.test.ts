@@ -4,12 +4,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveRuntimeEnvOptions } from "../env-schema";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   configureWorkflowEnvironment,
   resolveEveEnvironment,
   resolveWorkflowDatabaseUrl,
 } from "./environment";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const base = {

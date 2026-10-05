@@ -1,8 +1,12 @@
 import { auth } from "@/lib/auth";
 import { getEveCreation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { eveCopyInput } from "@/lib/eve/copy-input";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
+/* oxlint-enable sort-imports */
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
 

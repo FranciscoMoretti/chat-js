@@ -1,7 +1,9 @@
 import type { EveMessage, EveMessageData } from "eve/client";
 import type { UseEveAgentHelpers } from "eve/react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveBranchReference } from "./fork-source";
+/* oxlint-enable sort-imports */
 import { LogicalCommands } from "./logical-commands";
 
 type NativeChatAgent = UseEveAgentHelpers<EveMessageData>;

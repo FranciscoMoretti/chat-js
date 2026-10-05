@@ -1,13 +1,18 @@
 "use client";
 
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import type { InitialConfigType } from "@lexical/react/LexicalComposer";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+/* oxlint-enable sort-imports */
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+/* oxlint-enable sort-imports */
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   $createParagraphNode,
   $createTextNode,
@@ -15,13 +20,16 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ENTER_COMMAND,
 } from "lexical";
+/* oxlint-enable sort-imports */
 import type { EditorState, LexicalEditor } from "lexical";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  JSX as ReactJSX,
   ClipboardEvent,
   KeyboardEvent,
+  JSX as ReactJSX,
   RefObject,
 } from "react";
+/* oxlint-enable sort-imports */
 import React, {
   useCallback,
   useEffect,
@@ -31,7 +39,9 @@ import React, {
 
 import { useAutoFocus } from "@/hooks/use-auto-focus";
 /* oxlint-disable import/max-dependencies -- @/lib/utils import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- EnterKeySubmitPlugin: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: globalThis.KeyboardEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -242,6 +252,7 @@ const LexicalChatInput = ({
             <ContentEditable
               aria-label={ariaLabel}
               aria-readonly={readOnly}
+              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts className in its styling contract; preserve this caller's layout and appearance.
               className={cn(
                 "focus:outline-hidden focus-visible:outline-hidden",
                 "[&>.lexical-root]:min-h-[20px] [&>.lexical-root]:outline-hidden",
@@ -253,6 +264,7 @@ const LexicalChatInput = ({
               onKeyDown={onKeyDown}
               onPaste={onPaste}
               spellCheck
+              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts style in its styling contract; preserve this caller's layout and appearance.
               style={{
                 // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the Firefox-specific focus appearance override until browser rendering verifies its removal.
                 MozBoxShadow: "none",

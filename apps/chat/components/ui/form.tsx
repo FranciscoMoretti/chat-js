@@ -2,22 +2,26 @@
 
 import type { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
-import {
-  createContext as reactCreateContext,
-  useMemo as useReactMemo,
-  useContext as useReactContext,
-  useId as useReactId,
-} from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
+import {
+  createContext as reactCreateContext,
+  useContext as useReactContext,
+  useId as useReactId,
+  useMemo as useReactMemo,
+} from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Controller,
   FormProvider,
   useFormContext,
   useFormState,
 } from "react-hook-form";
+/* oxlint-enable sort-imports */
 import type {
   ControllerFieldState,
   ControllerProps,
@@ -140,6 +144,7 @@ const FormLabel = ({
 
   return (
     <Label
+      // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("data-[error=true]:text-destructive", className)}
       data-error={Boolean(error)}
       data-slot="form-label"

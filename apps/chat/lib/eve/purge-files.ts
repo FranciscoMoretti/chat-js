@@ -4,7 +4,9 @@ import {
   releaseEveFamilyFileReferences,
 } from "@/lib/db/eve-file-purge";
 import { deleteFilesByUrls } from "@/lib/file-storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-param, no-magic-numbers --
  * jsdoc/require-param (#534): purgeEveFamilyFiles's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

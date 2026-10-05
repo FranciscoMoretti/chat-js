@@ -2,12 +2,14 @@ import { FilesError } from "files-sdk";
 
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   downloadFile,
   getFileMetadata,
   getFileProviderUrl,
   storageSupportsRange,
 } from "./file-storage";
+/* oxlint-enable sort-imports */
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 

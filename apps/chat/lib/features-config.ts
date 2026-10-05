@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import { Brain, Eye, FileText, Image, Mic, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface FeatureConfig {
   category: "capability" | "input" | "output";

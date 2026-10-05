@@ -1,17 +1,23 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComposerControlProps } from "./control";
+/* oxlint-enable sort-imports */
 import { getToolDisplay } from "./tool-display";
 
 const loginPrompt = (
@@ -44,6 +50,7 @@ const ToolControl = ({
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuCheckboxItem accepts className in its styling contract; preserve this caller's layout and appearance.
       className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
 
       // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.

@@ -1,26 +1,34 @@
 "use client";
 
 import type {
-  JSX as ReactJSX,
   ComponentProps,
   Dispatch,
+  JSX as ReactJSX,
   SetStateAction,
 } from "react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ActiveTool } from "@/components/composer/active-tool";
+/* oxlint-enable sort-imports */
 import { ComposerMenu } from "@/components/composer/composer-menu";
 import { ContextBar } from "@/components/context-bar";
 import { ControlledChatComposer } from "@/components/controlled-chat-composer";
-import { expandSelectedModelValue } from "@/lib/ai/types";
 import type { UiToolName } from "@/lib/ai/types";
+import { expandSelectedModelValue } from "@/lib/ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DraftAttachment } from "@/lib/eve/draft";
+/* oxlint-enable sort-imports */
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useDefaultModel } from "@/providers/default-model-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- ./eve-model-picker import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveModelPicker } from "./eve-model-picker";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import type { useEveAttachments } from "./use-eve-attachments";
 

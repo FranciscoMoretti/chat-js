@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Faq } from "@/components/faq";
+/* oxlint-enable sort-imports */
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
@@ -13,7 +15,9 @@ import { Platforms } from "@/components/platforms";
 import { TechStack } from "@/components/tech-stack";
 /* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { siteConfig, siteLinks } from "@/lib/site-config";
+/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {

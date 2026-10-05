@@ -3,20 +3,26 @@ import path from "node:path";
 // oxlint-disable-next-line import/no-nodejs-modules -- Electron main backs off between native-cookie and server-session readiness polls.
 import { setTimeout as sleep } from "node:timers/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  app,
   BrowserWindow,
-  ipcMain,
   Menu,
+  Tray,
+  app,
+  ipcMain,
   nativeImage,
   shell,
-  Tray,
 } from "electron";
+/* oxlint-enable sort-imports */
 import type { MenuItemConstructorOptions } from "electron";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS } from "./config";
+/* oxlint-enable sort-imports */
 import { electronAuthClient } from "./lib/auth-client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasSessionCookie, isBetterAuthCookieName } from "./lib/auth-cookies";
+/* oxlint-enable sort-imports */
 
 const isSquirrelStartupEvent = (): boolean => {
   if (process.platform !== "win32") {

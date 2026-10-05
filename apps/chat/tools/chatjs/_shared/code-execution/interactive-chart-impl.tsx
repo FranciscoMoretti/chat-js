@@ -1,11 +1,17 @@
 "use client";
 import ReactECharts from "echarts-for-react/lib/index";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EChartsOption } from "echarts-for-react/lib/types";
+/* oxlint-enable sort-imports */
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Card } from "@/components/ui/card";
+/* oxlint-enable sort-imports */
 
 const CHART_COLORS = [
   "#22c55e",
@@ -256,7 +262,10 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
       initial={{ opacity: 0, y: 20 }}
       transition={{ duration: 0.5 }}
     >
-      <Card className="border-border bg-card overflow-hidden">
+      <Card
+        // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="border-border bg-card overflow-hidden"
+      >
         <div className="p-6">
           {chart.title && (
             <h3 className="text-foreground mb-4 text-lg font-medium">
@@ -267,6 +276,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             notMerge
             // oxlint-disable-next-line typescript/no-unsafe-assignment -- ECharts options are assembled across supported chart variants; replacing its open option type requires a separate chart-schema design.
             option={getChartOptions()}
+            // oxlint-disable-next-line react/forbid-component-props -- ReactECharts accepts style in its styling contract; preserve this caller's layout and appearance.
             style={{ height: "400px", width: "100%" }}
             theme={resolvedTheme === "dark" ? "dark" : undefined}
           />

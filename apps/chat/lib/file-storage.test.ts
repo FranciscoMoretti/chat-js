@@ -3,15 +3,19 @@
  */
 import assert from "node:assert/strict";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { fileIdsForStorageKeys } from "./db/file-storage-keys";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  createFileId,
   deleteFilesByUrls,
   listFiles,
-  createFileId,
   uploadFileAtKey,
 } from "./file-storage";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "./file-url";
 /* oxlint-enable import/no-nodejs-modules */
 

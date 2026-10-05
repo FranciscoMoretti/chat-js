@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { applyDefaults, defineConfig } from "./config-schema";
+/* oxlint-enable sort-imports */
 
 test("partial tool and workflow overrides retain required sibling defaults", () => {
   const input = defineConfig({

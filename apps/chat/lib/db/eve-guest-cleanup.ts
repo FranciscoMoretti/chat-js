@@ -1,7 +1,9 @@
 import { and, eq, inArray, isNull, lte, ne, or, sql } from "drizzle-orm";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveGuest } from "./schema";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable jsdoc/require-returns, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls --
  * jsdoc/require-returns (#535): claimExpiredEveGuestFamilies's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

@@ -1,11 +1,15 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { config } from "@/lib/config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): vi.mock("@tanstack/react-query") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

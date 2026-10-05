@@ -3,16 +3,21 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  assertEveCopySourceAvailable,
   EveCopySourceChangedError,
+  assertEveCopySourceAvailable,
   lockEveCopyOwners,
   readEveCopy,
 } from "./eve-copy-journal";
+/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversationCopy,
   eveConversationCopyFile,
@@ -23,6 +28,7 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveStoredFile,
 } from "./schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_ROW_INDEX = 0;

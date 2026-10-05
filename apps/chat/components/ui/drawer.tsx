@@ -1,13 +1,15 @@
 "use client";
 
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   HTMLAttributes as ReactHTMLAttributes,
+  JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { cn } from "@/lib/utils";
@@ -41,6 +43,7 @@ const DrawerOverlay = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Overlay
+    // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Overlay accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("fixed inset-0 z-50 bg-black/80", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerOverlay's DrawerPrimitive.Overlay prop contract, preserving caller options, children and callbacks.
@@ -60,6 +63,7 @@ const DrawerContent = reactForwardRef<
   <DrawerPortal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
+      // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Content accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "bg-background fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border",
         className
@@ -116,6 +120,7 @@ const DrawerTitle = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Title
+    // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Title accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-lg leading-none font-semibold tracking-tight",
       className
@@ -136,6 +141,7 @@ const DrawerDescription = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Description
+    // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Description accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-muted-foreground text-sm", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DrawerDescription's DrawerPrimitive.Description prop contract, preserving caller options, children and callbacks.

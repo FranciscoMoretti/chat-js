@@ -1,5 +1,7 @@
 import { ClientError } from "eve/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { sendCommand } from "./send-command";
 

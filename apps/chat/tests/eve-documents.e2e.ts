@@ -10,11 +10,18 @@
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import assert from "node:assert/strict";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   captureEveDocumentCheckpoint,
   captureEveNamedDocumentCheckpoint,
@@ -26,12 +33,17 @@ import {
   removeEveDocumentFromConversation,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
+/* oxlint-enable sort-imports */
 import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { referenceEveFiles, registerEveStoredFile } from "../lib/db/eve-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -47,10 +59,14 @@ import {
   user,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { documentHistoryTurns } from "../lib/eve/document-history";
+/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "../lib/eve/document-tools";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);

@@ -27,9 +27,13 @@ import {
 } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { getColorValue } from "@/lib/project-icons";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   book: Book,
@@ -78,8 +82,10 @@ export const ProjectIcon = ({
 
   return (
     <IconComponent
+      // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("shrink-0", className)}
       size={size}
+      // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts style in its styling contract; preserve this caller's layout and appearance.
       style={{ color: colorValue }}
     />
   );

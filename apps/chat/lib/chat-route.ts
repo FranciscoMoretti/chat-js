@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+/* oxlint-enable sort-imports */
 
 export type {
   ChatRouteSource,

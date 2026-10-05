@@ -3,7 +3,9 @@
 import { createContext, useContext } from "react";
 import type { ContextType } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalChat, LogicalChatSnapshot } from "@/lib/eve/logical-chat";
+/* oxlint-enable sort-imports */
 import type { EveMessageInput } from "@/lib/eve/message-input";
 /* oxlint-disable import/group-exports, unicorn/no-null -- EveLogicalContext: import/group-exports: #620: Keep these createContext values and related hooks directly exported: grouped clauses in Oxlint 1.82 classify the capitalized context names as component exports despite identical runtime and public types.; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 

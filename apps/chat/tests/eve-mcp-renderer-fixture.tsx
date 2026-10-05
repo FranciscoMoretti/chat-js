@@ -5,7 +5,9 @@ import type { EveMessagePart } from "eve/client";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveMcpResult } from "../components/eve/eve-mcp-result";
+/* oxlint-enable sort-imports */
 import { McpToolResult } from "../components/part/mcp-tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
 

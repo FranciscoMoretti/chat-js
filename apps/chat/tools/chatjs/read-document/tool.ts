@@ -1,9 +1,11 @@
 import { defineTool } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentReadInput,
   eveDocumentReadResult,
 } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */

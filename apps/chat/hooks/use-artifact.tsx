@@ -1,6 +1,5 @@
 "use client";
 
-import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   createContext,
   useCallback,
@@ -8,8 +7,11 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import type { JSX as ReactJSX, ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined -- initialArtifactData: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value. */
 

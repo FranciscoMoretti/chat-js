@@ -2,10 +2,14 @@
 import { Globe } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Favicon } from "@/components/favicon";
+/* oxlint-enable sort-imports */
 import { getGoogleFaviconUrl } from "@/components/get-google-favicon-url";
 import { getUrlWithoutParams } from "@/components/get-url-without-params";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 
@@ -32,11 +36,21 @@ export const ConnectorHeader = ({
       <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-lg">
         {faviconUrl ? (
           <>
-            <Favicon className="size-5 rounded-sm" url={faviconUrl} />
-            <Globe className="text-muted-foreground hidden size-5" />
+            <Favicon
+              // oxlint-disable-next-line react/forbid-component-props -- Favicon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-5 rounded-sm"
+              url={faviconUrl}
+            />
+            <Globe
+              // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-muted-foreground hidden size-5"
+            />
           </>
         ) : (
-          <Globe className="text-muted-foreground size-5" />
+          <Globe
+            // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-muted-foreground size-5"
+          />
         )}
       </div>
 
@@ -45,13 +59,18 @@ export const ConnectorHeader = ({
           <span className="truncate text-sm font-medium">{name}</span>
           {isCustom ? (
             <Badge
+              // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
               className="h-5 shrink-0 px-2 text-[10px]"
               variant="secondary"
             >
               CUSTOM
             </Badge>
           ) : (
-            <Badge className="h-5 shrink-0 px-2 text-[10px]" variant="outline">
+            <Badge
+              // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-5 shrink-0 px-2 text-[10px]"
+              variant="outline"
+            >
               Built-in
             </Badge>
           )}

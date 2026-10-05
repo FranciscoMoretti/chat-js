@@ -1,9 +1,13 @@
 /* oxlint-disable unicorn/prefer-structured-clone -- Exercise persisted JSON wire data, including omitted undefined values. */
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ingestEveUsage } from "./usage";
+/* oxlint-enable sort-imports */
 
 const record = vi.hoisted(() => vi.fn());
 vi.mock("../db/eve-subagents", () => ({ registerEveSubagent: vi.fn() }));

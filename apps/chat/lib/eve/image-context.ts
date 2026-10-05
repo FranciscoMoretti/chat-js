@@ -1,7 +1,9 @@
 import type { FileUIPart, ModelMessage } from "ai";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 const imageResult = z.object({
   imageUrl: z.string(),

@@ -2,10 +2,16 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ModelSelector } from "@/components/model-selector";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
 import { gatewayModelDefaults } from "@/lib/ai/gateway-model-defaults";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
+/* oxlint-enable sort-imports */
 
 const defaultModelOptions: Pick<AppModelDefinition, "reasoning" | "toolCall"> =
   {

@@ -1,11 +1,17 @@
 import type { ToolUIPart } from "ai";
 import { createElement } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType } from "react";
+/* oxlint-enable sort-imports */
 
 import { ui } from "@/tools/chatjs/ui";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isValidatedToolRenderer } from "./define-tool-renderer";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { InstalledTools } from "./installed-tools";
+/* oxlint-enable sort-imports */
 
 type InstalledToolName = keyof InstalledTools;
 

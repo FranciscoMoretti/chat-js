@@ -2,15 +2,20 @@
 import { randomUUID } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
+/* oxlint-enable sort-imports */
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -21,8 +26,11 @@ import {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
+/* oxlint-enable sort-imports */
 import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpOAuthSession } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-oauth-provider");

@@ -2,12 +2,18 @@ import { after } from "next/server";
 
 import { env } from "@/lib/env";
 import { persistGeneratedEveConversationTitle } from "@/lib/eve/conversation-title";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { admitGuestResponseGroup } from "@/lib/eve/guest-group-admission";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createEveResponseGroup } from "@/lib/eve/response-group";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupResult } from "@/lib/eve/response-group-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "@/lib/eve/response-group-input";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

@@ -1,13 +1,17 @@
 import { defaultMessageReducer } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
+/* oxlint-enable sort-imports */
 
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
 import { responseModelReferences } from "./response-model";
-import { toolOutputSchema, hasEveToolReceipt } from "./tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 // This local view only covers EVE's plain message data; opaque tool values stay unknown.
 type ReadonlyMessageData<Value> = Value extends object

@@ -18,7 +18,11 @@ export const UpdateTitle = ({
 }) => {
   if (isRunning) {
     return (
-      <Shimmer as="h3" className={cn("text-sm font-medium", className)}>
+      <Shimmer
+        as="h3"
+        // oxlint-disable-next-line react/forbid-component-props -- Shimmer accepts className in its styling contract; preserve this caller's layout and appearance.
+        className={cn("text-sm font-medium", className)}
+      >
         {title}
       </Shimmer>
     );

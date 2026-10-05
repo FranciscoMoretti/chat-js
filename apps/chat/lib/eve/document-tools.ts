@@ -4,21 +4,27 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolContext } from "eve/tools";
+/* oxlint-enable sort-imports */
 
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../db/eve-documents";
+/* oxlint-enable sort-imports */
 import { resolveEveConversationScope } from "./conversation-scope";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentOperations,
   eveDocumentReadInput,
 } from "./document-contracts";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;

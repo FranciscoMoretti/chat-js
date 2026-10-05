@@ -1,12 +1,18 @@
 import { CircleCheck, Dot, FileText, Pencil, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type React from "react";
+/* oxlint-enable sort-imports */
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ResearchTask } from "./task";
+/* oxlint-enable sort-imports */
 
 const icons: Record<ResearchUpdate["type"], React.ElementType> = {
   completed: CircleCheck,
@@ -21,7 +27,12 @@ const icons: Record<ResearchUpdate["type"], React.ElementType> = {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const StepTypeIcon = ({ update }: { update: ResearchUpdate }) => {
   const Icon = icons[update.type];
-  return <Icon className="text-muted-foreground h-4 w-4" />;
+  return (
+    <Icon
+      // oxlint-disable-next-line react/forbid-component-props -- Icon is selected from the closed Lucide SVG icon map; className sets its size and color.
+      className="text-muted-foreground h-4 w-4"
+    />
+  );
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

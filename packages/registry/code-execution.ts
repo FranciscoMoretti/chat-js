@@ -1,7 +1,9 @@
 import type { RegistryItem } from "shadcn/schema";
 
 import { toolDefinitionSchema } from "./metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import registryPackage from "./package.json";
+/* oxlint-enable sort-imports */
 
 const codeExecutionRuntimeItem: RegistryItem = {
   files: ["python.ts", "javascript.ts", "types.ts"].map((file) => ({

@@ -3,9 +3,15 @@
  */
 import assert from "node:assert/strict";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelMessage } from "ai";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { FilesError } from "files-sdk";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, describe, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { replaceFilePartUrlByBinaryDataInMessages } from "./download-assets";
 /* oxlint-enable import/no-nodejs-modules */
@@ -20,12 +26,11 @@ vi.mock("@/lib/url", () => ({
 
 vi.mock("@/lib/file-storage", () => ({ downloadFile }));
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
  * init-declarations (#507): describe("replaceFilePartUrlByBinaryDataInMessages") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): describe("replaceFilePartUrlByBinaryDataInMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): describe("replaceFilePartUrlByBinaryDataInMessages") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("replaceFilePartUrlByBinaryDataInMessages") uses 1, 2, 0, 7, 3, 4, 5, 6 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): describe("replaceFilePartUrlByBinaryDataInMessages") accepts { url }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): describe("replaceFilePartUrlByBinaryDataInMessages") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): describe("replaceFilePartUrlByBinaryDataInMessages") intentionally keeps the existing falsy-value behavior of message; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): describe("replaceFilePartUrlByBinaryDataInMessages") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -403,6 +408,6 @@ describe("replaceFilePartUrlByBinaryDataInMessages", () => {
     assert.equal(inlineFile.data, "aGVsbG8=");
   });
 });
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This download-assets.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

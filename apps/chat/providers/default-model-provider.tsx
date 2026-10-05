@@ -10,7 +10,9 @@ import React, {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
 
 interface DefaultModelContextType {
   changeModel: (modelId: AppModelId) => Promise<void>;

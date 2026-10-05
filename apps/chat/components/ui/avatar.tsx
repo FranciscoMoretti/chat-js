@@ -1,16 +1,18 @@
 "use client";
 
 import {
-  Root as AvatarPrimitiveRoot,
-  Image as AvatarPrimitiveImage,
   Fallback as AvatarPrimitiveFallback,
+  Image as AvatarPrimitiveImage,
+  Root as AvatarPrimitiveRoot,
 } from "@radix-ui/react-avatar";
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  ComponentRef as ReactComponentRef,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Avatar: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
@@ -21,6 +23,7 @@ const Avatar = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveRoot>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveRoot
+    // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
       className
@@ -41,6 +44,7 @@ const AvatarImage = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveImage>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveImage
+    // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveImage accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("aspect-square h-full w-full", className)}
     ref={ref}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward AvatarImage's AvatarPrimitiveImage prop contract, preserving caller options, children and callbacks.
@@ -58,6 +62,7 @@ const AvatarFallback = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveFallback>
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveFallback
+    // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveFallback accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "bg-muted flex h-full w-full items-center justify-center rounded-full",
       className

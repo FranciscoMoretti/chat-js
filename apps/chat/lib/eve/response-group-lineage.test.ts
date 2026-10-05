@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveEveResponseGroupLineage } from "./response-group-lineage";
 import type { EveResponseGroupLineageConversation } from "./response-group-lineage";
+import { resolveEveResponseGroupLineage } from "./response-group-lineage";
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): row uses 1000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

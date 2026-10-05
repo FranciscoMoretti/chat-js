@@ -1,7 +1,9 @@
 import { Slot } from "@radix-ui/react-slot";
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,7 @@ const ButtonGroupText = ({
 
   return (
     <Comp
+      // oxlint-disable-next-line react/forbid-component-props -- Comp accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "bg-muted flex items-center gap-2 rounded-md border px-4 text-sm font-medium shadow-xs [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
         className
@@ -71,6 +74,7 @@ const ButtonGroupSeparator = ({
   ...props
 }: React.ComponentProps<typeof Separator>): React.JSX.Element => (
   <Separator
+    // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "bg-input relative !m-0 self-stretch data-[orientation=vertical]:h-auto",
       className

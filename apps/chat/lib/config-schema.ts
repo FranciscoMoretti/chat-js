@@ -1,15 +1,19 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
+/* oxlint-enable sort-imports */
 
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "./readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 // Helper to create typed model ID schemas
 const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();

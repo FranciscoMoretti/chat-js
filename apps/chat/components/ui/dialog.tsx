@@ -1,20 +1,22 @@
 "use client";
 
 import {
-  Root as DialogPrimitiveRoot,
-  Trigger as DialogPrimitiveTrigger,
-  Portal as DialogPrimitivePortal,
   Close as DialogPrimitiveClose,
-  Overlay as DialogPrimitiveOverlay,
   Content as DialogPrimitiveContent,
-  Title as DialogPrimitiveTitle,
   Description as DialogPrimitiveDescription,
+  Overlay as DialogPrimitiveOverlay,
+  Portal as DialogPrimitivePortal,
+  Root as DialogPrimitiveRoot,
+  Title as DialogPrimitiveTitle,
+  Trigger as DialogPrimitiveTrigger,
 } from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Dialog: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -84,6 +86,7 @@ const DialogOverlay = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveOverlay>): ReactJSX.Element => (
   <DialogPrimitiveOverlay
+    // oxlint-disable-next-line react/forbid-component-props -- DialogPrimitiveOverlay accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=open]:animate-in fixed inset-0 z-50 bg-black/50",
       className
@@ -110,6 +113,7 @@ const DialogContent = ({
   <DialogPortal data-slot="dialog-portal">
     <DialogOverlay />
     <DialogPrimitiveContent
+      // oxlint-disable-next-line react/forbid-component-props -- DialogPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 bg-background data-[state=closed]:animate-out data-[state=open]:animate-in fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
         className
@@ -121,6 +125,7 @@ const DialogContent = ({
       {children}
       {showCloseButton && (
         <DialogPrimitiveClose
+          // oxlint-disable-next-line react/forbid-component-props -- DialogPrimitiveClose accepts className in its styling contract; preserve this caller's layout and appearance.
           className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
           data-slot="dialog-close"
         >
@@ -179,6 +184,7 @@ const DialogTitle = ({
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveTitle>): ReactJSX.Element => (
   <DialogPrimitiveTitle
+    // oxlint-disable-next-line react/forbid-component-props -- DialogPrimitiveTitle accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-lg leading-none font-semibold", className)}
     data-slot="dialog-title"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogTitle's DialogPrimitiveTitle prop contract, preserving caller options, children and callbacks.
@@ -198,6 +204,7 @@ const DialogDescription = ({
   typeof DialogPrimitiveDescription
 >): ReactJSX.Element => (
   <DialogPrimitiveDescription
+    // oxlint-disable-next-line react/forbid-component-props -- DialogPrimitiveDescription accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("text-muted-foreground text-sm", className)}
     data-slot="dialog-description"
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward DialogDescription's DialogPrimitiveDescription prop contract, preserving caller options, children and callbacks.

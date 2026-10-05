@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import {
   BrainCircuit,
   Code,
@@ -13,6 +12,7 @@ import {
   Search,
   Video,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import React from "react";
 
 interface Feature {

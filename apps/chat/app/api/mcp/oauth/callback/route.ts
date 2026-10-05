@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { requireMcpCredentials } from "@/features/mcp/setup";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createMcpClientForCallback,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
+/* oxlint-enable sort-imports */
 import {
   deletePendingSessionByState,
   getMcpConnectorById,
@@ -14,7 +18,9 @@ import {
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
+/* oxlint-enable sort-imports */
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
@@ -25,7 +31,6 @@ const log = createModuleLogger("mcp-oauth-callback");
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const GET = async (request: NextRequest): Promise<NextResponse> => {
   const {
     code,
@@ -168,5 +173,4 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     });
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

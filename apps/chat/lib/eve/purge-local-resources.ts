@@ -1,8 +1,12 @@
 import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fenceLocalEveSandboxMutations } from "./local-sandbox-fence";
+/* oxlint-enable sort-imports */
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { prepareEveFamilyDeletion } from "./prepare-deletion";
+/* oxlint-enable sort-imports */
 import { purgeEveFamilyCodeSandboxes } from "./purge-code-sandboxes";
 import { purgeEveFamilyFiles } from "./purge-files";
 import { purgeLocalEveSandboxes } from "./purge-local-sandbox";

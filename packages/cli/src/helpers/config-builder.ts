@@ -1,8 +1,12 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { builtInGateways } from "#cli/registry/gateways";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
+/* oxlint-enable sort-imports */
 
 import {
   applyDefaults,

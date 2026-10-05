@@ -1,7 +1,9 @@
-import { toolOutput } from "eve/tools";
 import type { ToolModelOutput } from "eve/tools";
+import { toolOutput } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 

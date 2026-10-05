@@ -1,7 +1,11 @@
 import { getMessageText } from "@chat-js/thread";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { MessageTreeSnapshot } from "@chat-js/thread";
+/* oxlint-enable sort-imports */
 import type { UseThreadHelpers } from "@chat-js/thread/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+/* oxlint-enable sort-imports */
 
 interface PlaygroundMetadata {
   activeStreamId: string | null;

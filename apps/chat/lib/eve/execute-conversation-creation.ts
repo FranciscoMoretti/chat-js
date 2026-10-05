@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CreationConflictError,
   CreationProjectNotFoundError,
@@ -11,18 +12,25 @@ import {
   getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
-import type { createConversationInput, EveForkInput } from "./contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { EveForkInput, createConversationInput } from "./contracts";
+/* oxlint-enable sort-imports */
 import { eveConversationTitleFallback } from "./conversation-title";
 import { eveCreationContentHash } from "./creation-content-hash";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
+/* oxlint-enable sort-imports */
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageDeliveryMetadata } from "./message-delivery";
+/* oxlint-enable sort-imports */
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";

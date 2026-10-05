@@ -5,8 +5,10 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
-import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseCardCandidate } from "../components/eve/eve-response-group-cards";
+/* oxlint-enable sort-imports */
+import { EveResponseGroupCards } from "../components/eve/eve-response-group-cards";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
 /* oxlint-enable import/no-relative-parent-imports */
 

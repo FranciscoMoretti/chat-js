@@ -1,10 +1,14 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { useCallback, useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useTRPC } from "@/trpc/react";
+/* oxlint-enable sort-imports */
 
 const draftSchema = z.object({
   baseRevisionId: z.uuid(),

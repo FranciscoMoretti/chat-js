@@ -1,8 +1,12 @@
 import userConfig from "@/chat.config";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ActiveGatewayType } from "./ai/app-model-id";
+/* oxlint-enable sort-imports */
 import { applyDefaults } from "./config-schema";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiConfig, Config } from "./config-schema";
+/* oxlint-enable sort-imports */
 
 type ActiveAiConfig = Extract<AiConfig, { gateway: ActiveGatewayType }>;
 

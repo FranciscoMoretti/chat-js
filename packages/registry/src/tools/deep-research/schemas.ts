@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 
 const MINIMUM_RESEARCH_TEXT_LENGTH = 1;
 

@@ -1,10 +1,12 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Sources } from "@/components/sources";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/max-nested-calls -- webSearchOutput: unicorn/max-nested-calls: keep this existing parse, validation, or rendering composition explicit at the feature boundary. */
 

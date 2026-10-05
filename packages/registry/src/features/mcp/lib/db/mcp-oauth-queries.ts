@@ -7,7 +7,9 @@ import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { mcpOAuthSession } from "@/lib/db/schema";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpOAuthSession } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const AUTHENTICATED_SESSION_LIMIT = 1;

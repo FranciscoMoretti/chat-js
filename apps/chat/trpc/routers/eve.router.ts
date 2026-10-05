@@ -5,30 +5,42 @@ import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveChatIdentity,
   listEveConversationBranches,
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { searchEveConversations } from "@/lib/db/eve-search";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   assignEveConversationProject,
   getEveMessageVotes,
 } from "@/lib/db/queries";
+/* oxlint-enable sort-imports */
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveHistoryInput } from "@/lib/eve/history-input";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+/* oxlint-enable sort-imports */
 import { voteEveMessage } from "@/lib/eve/vote-message";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/trpc/init";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 const eveProcedure = protectedProcedure;

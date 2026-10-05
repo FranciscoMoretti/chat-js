@@ -1,12 +1,18 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useMemo } from "react";
+/* oxlint-enable sort-imports */
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "@/lib/ai/app-model-id";
+/* oxlint-enable sort-imports */
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 

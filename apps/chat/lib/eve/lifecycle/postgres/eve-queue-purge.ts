@@ -1,8 +1,12 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

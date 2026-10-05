@@ -1,38 +1,48 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+/* oxlint-enable sort-imports */
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { itemAddress, readItem } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import type { InstallationSelection } from "../../../registry/installation";
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { installationSelectionSchema } from "../../../registry/installation";
-import {
-  featureDefinitionSchema,
-  featureIdSchema,
-  toolDefinitionSchema,
-  storageDefinitionSchema,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-} from "../../../registry/metadata";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   FeatureDefinition,
   ToolDefinition,
   // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
+/* oxlint-enable sort-imports */
+import {
+  featureDefinitionSchema,
+  featureIdSchema,
+  storageDefinitionSchema,
+  toolDefinitionSchema,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+} from "../../../registry/metadata";
 import {
   registryMetadataKind,
-  validateRequestedKind,
   validateCodeExecutionRequirements,
   validateProviderRequirements,
+  validateRequestedKind,
 } from "./installation-requirements";
 import { preflight } from "./preflight";
 import { readProviderId } from "./provider-config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { readInstalledTools, validateToolInstallation } from "./sync-tools";
+/* oxlint-enable sort-imports */
 
 type ReadonlyNative<Value> = Value extends (
   ...args: readonly never[]
@@ -191,7 +201,6 @@ export const planInstallation = async (
       const next = [...expected.values()].find(
         (item: ReadonlyNative<ToolDefinition>) =>
           item.id !== previous.id &&
-          // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
           ((typeof item.slot === "string" && item.slot === previous.slot) ||
             (typeof item.documentKind === "string" &&
               item.documentKind === previous.documentKind))

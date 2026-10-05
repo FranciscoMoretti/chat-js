@@ -1,9 +1,13 @@
 import { builtInGateways } from "#cli/registry/gateways";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AuthProvider, BuiltInToolKey, CoreFeatureKey } from "#cli/types";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { mcpDefinition } from "../../../registry/src/features/mcp";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyInput } from "./readonly-input";
+/* oxlint-enable sort-imports */
 
 type EnvVarName = string;
 

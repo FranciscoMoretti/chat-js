@@ -2,16 +2,22 @@
 
 import type { EveMessagePart } from "eve/client";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef } from "react";
+/* oxlint-enable sort-imports */
 import { useIsClient } from "usehooks-ts";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentToolResult } from "@/components/part/document-common";
+/* oxlint-enable sort-imports */
 import { useArtifact } from "@/hooks/use-artifact";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentOperations,
   eveDocumentResult,
 } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 
 import {
   useDocumentConversation,

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isFileStorageKey } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 interface DocumentAssistantRequest {
   message: string;

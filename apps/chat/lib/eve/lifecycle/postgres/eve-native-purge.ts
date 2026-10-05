@@ -1,10 +1,16 @@
-import postgres from "postgres";
 import type { Sql } from "postgres";
+import postgres from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { purgeEvePostgresSessionPayloads } from "./eve-payload-purge";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { purgeEvePostgresQueue } from "./eve-queue-purge";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fenceEvePostgresSession } from "./eve-session-fence";
+/* oxlint-enable sort-imports */
 
 const FIRST_INVENTORY_PASS = 0;
 const NEXT_INVENTORY_PASS = 1;

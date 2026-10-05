@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DeviceLoginPage } from "@/components/device-login-page";

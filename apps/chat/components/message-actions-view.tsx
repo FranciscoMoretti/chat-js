@@ -4,10 +4,12 @@ import { Copy, Pencil, PencilOff } from "lucide-react";
 import React from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   MessageAction,
   MessageActions,
 } from "@/components/ai-elements/message";
+/* oxlint-enable sort-imports */
 import { useIsMobile } from "@/hooks/use-mobile";
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/prefer-readonly-parameter-types -- jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -40,6 +42,7 @@ export const MessageActionsView = ({
   const showActions = isMobile || isEditing || role === "assistant";
   return (
     <MessageActions
+      // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
       className={
         showActions
           ? ""
@@ -48,20 +51,28 @@ export const MessageActionsView = ({
     >
       {role === "user" && onStartEdit && (
         <MessageAction
+          // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
           className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
           disabled={editDisabled}
           onClick={isEditing ? onCancelEdit : onStartEdit}
           tooltip={isEditing ? "Cancel edit" : "Edit message"}
         >
           {isEditing ? (
-            <PencilOff className="h-3.5 w-3.5" />
+            <PencilOff
+              // oxlint-disable-next-line react/forbid-component-props -- PencilOff accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-3.5 w-3.5"
+            />
           ) : (
-            <Pencil className="h-3.5 w-3.5" />
+            <Pencil
+              // oxlint-disable-next-line react/forbid-component-props -- Pencil accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-3.5 w-3.5"
+            />
           )}
         </MessageAction>
       )}
       {siblings}
       <MessageAction
+        // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
         className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
         onClick={onCopy}
         tooltip="Copy"

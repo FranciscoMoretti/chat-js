@@ -2,25 +2,33 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   ButtonGroup,
   ButtonGroupSeparator,
   ButtonGroupText,
 } from "@/components/ui/button-group";
+/* oxlint-enable sort-imports */
 import { Input } from "@/components/ui/input";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth -- UiPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
@@ -68,9 +76,16 @@ export const UiPrimitivesVisualFixture = (): React.JSX.Element => (
 
     <section className="grid max-w-3xl grid-cols-[auto_6rem_auto_auto_auto_auto] items-center gap-3">
       <span>Horizontal</span>
-      <Separator className="!w-24 shrink-0" />
+      <Separator
+        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="!w-24 shrink-0"
+      />
       <span>Vertical</span>
-      <Separator className="!h-8 shrink-0" orientation="vertical" />
+      <Separator
+        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="!h-8 shrink-0"
+        orientation="vertical"
+      />
       <Popover>
         <PopoverTrigger asChild>
           <Button>Open popover</Button>

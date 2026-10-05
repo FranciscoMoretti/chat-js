@@ -1,9 +1,11 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "./guest-message-admission";
+/* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 
 const mocks = vi.hoisted(() => ({

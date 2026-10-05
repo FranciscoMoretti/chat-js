@@ -3,11 +3,15 @@ import { afterEach, expect, test } from "bun:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installItems } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { observabilityItems } from "../../../registry/src/features/observability";
@@ -87,6 +91,11 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
     const features = await readFile(
       path.join(root, "features/installed.ts"),
       "utf-8"
+    );
+    expect(instrumentation.includes("sort-imports")).toBe(
+      selected.some(
+        (item: { readonly name: string }) => item.name === "langfuse"
+      )
     );
     for (const item of observabilityItems) {
       const output = item.name === "langfuse" ? instrumentation : layout;

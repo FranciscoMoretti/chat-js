@@ -1,5 +1,7 @@
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveSharedPage } from "@/components/eve/eve-shared-page";

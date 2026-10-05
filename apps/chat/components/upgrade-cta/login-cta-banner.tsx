@@ -1,12 +1,18 @@
 "use client";
 
 import { LogIn, X } from "lucide-react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { AnimatePresence, motion } from "motion/react";
+/* oxlint-enable sort-imports */
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface LoginCtaBannerProps {
@@ -72,11 +78,15 @@ export const LoginCtaBanner = ({
         >
           <div className="flex flex-1 items-center gap-2">
             {!compact && (
-              <LogIn className={cn("h-4 w-4 shrink-0", textStyles[variant])} />
+              <LogIn
+                // oxlint-disable-next-line react/forbid-component-props -- LogIn accepts className in its styling contract; preserve this caller's layout and appearance.
+                className={cn("h-4 w-4 shrink-0", textStyles[variant])}
+              />
             )}
             <span className={cn("text-sm", textStyles[variant])}>
               {message}{" "}
               <InternalLink
+                // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
                 className={cn(
                   "font-medium underline hover:no-underline",
                   linkStyles[variant]
@@ -89,12 +99,16 @@ export const LoginCtaBanner = ({
           </div>
           {dismissible && (
             <Button
+              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
               className="h-6 w-6 p-0 opacity-70 hover:bg-transparent hover:opacity-100"
               onClick={() => setDismissed(true)}
               size="sm"
               variant="ghost"
             >
-              <X className="h-4 w-4" />
+              <X
+                // oxlint-disable-next-line react/forbid-component-props -- X accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-4 w-4"
+              />
             </Button>
           )}
         </div>

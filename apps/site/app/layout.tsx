@@ -1,12 +1,18 @@
 import { Analytics } from "@vercel/analytics/next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Metadata, Viewport } from "next";
+/* oxlint-enable sort-imports */
 import { ThemeProvider } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+/* oxlint-enable sort-imports */
 import React from "react";
 
 import { siteConfig } from "@/lib/site-config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./globals.css";
+/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {

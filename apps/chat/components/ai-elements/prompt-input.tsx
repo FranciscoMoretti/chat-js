@@ -1,6 +1,7 @@
 "use client";
 
 import type { ChatStatus } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   CornerDownLeftIcon,
   Loader2Icon,
@@ -9,12 +10,15 @@ import {
   SquareIcon,
   XIcon,
 } from "lucide-react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  JSX as ReactJSX,
   ComponentProps,
   HTMLAttributes,
+  JSX as ReactJSX,
   RefObject,
 } from "react";
+/* oxlint-enable sort-imports */
 import React, {
   Children,
   useCallback,
@@ -23,6 +27,7 @@ import React, {
   useState,
 } from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Command,
   CommandEmpty,
@@ -32,6 +37,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+/* oxlint-enable sort-imports */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,7 +110,10 @@ const PromptInput = ({
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInput's native form attributes, preserving caller events and accessibility props.
     {...props}
   >
-    <InputGroup className={cn("overflow-hidden", inputGroupClassName)}>
+    <InputGroup
+      // oxlint-disable-next-line react/forbid-component-props -- InputGroup accepts className in its styling contract; preserve this caller's layout and appearance.
+      className={cn("overflow-hidden", inputGroupClassName)}
+    >
       {children}
     </InputGroup>
   </form>
@@ -124,6 +133,7 @@ const PromptInputHeader = ({
 }: PromptInputHeaderProps): React.JSX.Element => (
   <InputGroupAddon
     align="block-end"
+    // oxlint-disable-next-line react/forbid-component-props -- InputGroupAddon accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("order-first flex-wrap gap-1", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputHeader's InputGroupAddon prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -144,6 +154,7 @@ const PromptInputFooter = ({
 }: PromptInputFooterProps): React.JSX.Element => (
   <InputGroupAddon
     align="block-end"
+    // oxlint-disable-next-line react/forbid-component-props -- InputGroupAddon accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("justify-between gap-1", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputFooter's InputGroupAddon prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -183,6 +194,7 @@ const PromptInputButton = ({
 
   return (
     <InputGroupButton
+      // oxlint-disable-next-line react/forbid-component-props -- InputGroupButton accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(className)}
       size={newSize}
       type="button"
@@ -218,11 +230,17 @@ const PromptInputActionMenuTrigger = ({
 }: PromptInputActionMenuTriggerProps): React.JSX.Element => (
   <DropdownMenuTrigger asChild>
     <PromptInputButton
+      // oxlint-disable-next-line react/forbid-component-props -- PromptInputButton accepts className in its styling contract; preserve this caller's layout and appearance.
       className={className}
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuTrigger's PromptInputButton prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {children ?? <PlusIcon className="size-4" />}
+      {children ?? (
+        <PlusIcon
+          // oxlint-disable-next-line react/forbid-component-props -- PlusIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-4"
+        />
+      )}
     </PromptInputButton>
   </DropdownMenuTrigger>
 );
@@ -239,6 +257,7 @@ const PromptInputActionMenuContent = ({
 }: PromptInputActionMenuContentProps): React.JSX.Element => (
   <DropdownMenuContent
     align="start"
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuContent's DropdownMenuContent prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -254,6 +273,7 @@ const PromptInputActionMenuItem = ({
   ...props
 }: PromptInputActionMenuItemProps): React.JSX.Element => (
   <DropdownMenuItem
+    // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputActionMenuItem's DropdownMenuItem prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -278,19 +298,40 @@ const PromptInputSubmit = ({
   children,
   ...props
 }: PromptInputSubmitProps): React.JSX.Element => {
-  let Icon = <CornerDownLeftIcon className="size-4" />;
+  let Icon = (
+    <CornerDownLeftIcon
+      // oxlint-disable-next-line react/forbid-component-props -- CornerDownLeftIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="size-4"
+    />
+  );
 
   if (status === "submitted") {
-    Icon = <Loader2Icon className="size-4 animate-spin" />;
+    Icon = (
+      <Loader2Icon
+        // oxlint-disable-next-line react/forbid-component-props -- Loader2Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4 animate-spin"
+      />
+    );
   } else if (status === "streaming") {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = (
+      <SquareIcon
+        // oxlint-disable-next-line react/forbid-component-props -- SquareIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4"
+      />
+    );
   } else if (status === "error") {
-    Icon = <XIcon className="size-4" />;
+    Icon = (
+      <XIcon
+        // oxlint-disable-next-line react/forbid-component-props -- XIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4"
+      />
+    );
   }
 
   return (
     <InputGroupButton
       aria-label="Submit"
+      // oxlint-disable-next-line react/forbid-component-props -- InputGroupButton accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(className)}
       size={size}
       type="submit"
@@ -457,6 +498,7 @@ const PromptInputSpeechButton = ({
 
   return (
     <PromptInputButton
+      // oxlint-disable-next-line react/forbid-component-props -- PromptInputButton accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "relative transition-all duration-200",
         isListening && "bg-accent text-accent-foreground animate-pulse",
@@ -467,7 +509,10 @@ const PromptInputSpeechButton = ({
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSpeechButton's PromptInputButton prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      <MicIcon className="size-4" />
+      <MicIcon
+        // oxlint-disable-next-line react/forbid-component-props -- MicIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4"
+      />
     </PromptInputButton>
   );
 };
@@ -496,6 +541,7 @@ const PromptInputSelectTrigger = ({
   ...props
 }: PromptInputSelectTriggerProps): React.JSX.Element => (
   <SelectTrigger
+    // oxlint-disable-next-line react/forbid-component-props -- SelectTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-muted-foreground border-none bg-transparent font-medium shadow-none transition-colors",
       "hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
@@ -516,6 +562,7 @@ const PromptInputSelectContent = ({
   ...props
 }: PromptInputSelectContentProps): React.JSX.Element => (
   <SelectContent
+    // oxlint-disable-next-line react/forbid-component-props -- SelectContent accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectContent's SelectContent prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -532,6 +579,7 @@ const PromptInputSelectItem = ({
   ...props
 }: PromptInputSelectItemProps): React.JSX.Element => (
   <SelectItem
+    // oxlint-disable-next-line react/forbid-component-props -- SelectItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectItem's SelectItem prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -548,6 +596,7 @@ const PromptInputSelectValue = ({
   ...props
 }: PromptInputSelectValueProps): React.JSX.Element => (
   <SelectValue
+    // oxlint-disable-next-line react/forbid-component-props -- SelectValue accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelectValue's SelectValue prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -671,6 +720,7 @@ const PromptInputCommand = ({
   ...props
 }: PromptInputCommandProps): React.JSX.Element => (
   <Command
+    // oxlint-disable-next-line react/forbid-component-props -- Command accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommand's Command prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -687,6 +737,7 @@ const PromptInputCommandInput = ({
   ...props
 }: PromptInputCommandInputProps): React.JSX.Element => (
   <CommandInput
+    // oxlint-disable-next-line react/forbid-component-props -- CommandInput accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandInput's CommandInput prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -703,6 +754,7 @@ const PromptInputCommandList = ({
   ...props
 }: PromptInputCommandListProps): React.JSX.Element => (
   <CommandList
+    // oxlint-disable-next-line react/forbid-component-props -- CommandList accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandList's CommandList prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -719,6 +771,7 @@ const PromptInputCommandEmpty = ({
   ...props
 }: PromptInputCommandEmptyProps): React.JSX.Element => (
   <CommandEmpty
+    // oxlint-disable-next-line react/forbid-component-props -- CommandEmpty accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandEmpty's CommandEmpty prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -735,6 +788,7 @@ const PromptInputCommandGroup = ({
   ...props
 }: PromptInputCommandGroupProps): React.JSX.Element => (
   <CommandGroup
+    // oxlint-disable-next-line react/forbid-component-props -- CommandGroup accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandGroup's CommandGroup prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -751,6 +805,7 @@ const PromptInputCommandItem = ({
   ...props
 }: PromptInputCommandItemProps): React.JSX.Element => (
   <CommandItem
+    // oxlint-disable-next-line react/forbid-component-props -- CommandItem accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandItem's CommandItem prop contract, preserving caller options, children and callbacks.
     {...props}
@@ -767,6 +822,7 @@ const PromptInputCommandSeparator = ({
   ...props
 }: PromptInputCommandSeparatorProps): React.JSX.Element => (
   <CommandSeparator
+    // oxlint-disable-next-line react/forbid-component-props -- CommandSeparator accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputCommandSeparator's CommandSeparator prop contract, preserving caller options, children and callbacks.
     {...props}

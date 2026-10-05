@@ -1,6 +1,8 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, LogicalChatSnapshot } from "./logical-chat";
+/* oxlint-enable sort-imports */
 
 const LAST_ATTEMPT_INDEX = -1;
 interface SlotAttempt {

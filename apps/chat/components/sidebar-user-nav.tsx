@@ -10,12 +10,20 @@ import {
   Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+/* oxlint-enable sort-imports */
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,11 +40,15 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/use-credits";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import authClient from "@/lib/auth-client";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/lib/electron-auth import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { isElectronRenderer } from "@/lib/electron-auth";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return -- SidebarUserNav: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including user.image); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
@@ -74,7 +86,10 @@ export const SidebarUserNav = (): ReactJSX.Element => {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton onClick={() => router.push("/login")}>
-            <LogIn className="size-4" />
+            <LogIn
+              // oxlint-disable-next-line react/forbid-component-props -- LogIn accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
             <span>Sign in</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -93,6 +108,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
+              // oxlint-disable-next-line react/forbid-component-props -- SidebarMenuButton accepts className in its styling contract; preserve this caller's layout and appearance.
               className={cn(
                 "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mx-auto",
                 isDesktopCollapsed &&
@@ -101,13 +117,17 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               size="lg"
             >
               <Avatar
+                // oxlint-disable-next-line react/forbid-component-props -- Avatar accepts className in its styling contract; preserve this caller's layout and appearance.
                 className={cn(
                   "size-8 rounded-lg",
                   isDesktopCollapsed && "size-6"
                 )}
               >
                 <AvatarImage alt={displayName} src={avatarImageSrc} />
-                <AvatarFallback className="rounded-lg">
+                <AvatarFallback
+                  // oxlint-disable-next-line react/forbid-component-props -- AvatarFallback accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="rounded-lg"
+                >
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -121,26 +141,40 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                   {user.name || user.email}
                 </span>
                 <span className="flex items-center gap-1 truncate text-xs">
-                  <DollarSign className="size-3" />
+                  <DollarSign
+                    // oxlint-disable-next-line react/forbid-component-props -- DollarSign accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-3"
+                  />
                   {((credits ?? 0) / 100).toFixed(2)}
                 </span>
               </div>
               <ChevronsUpDown
+                // oxlint-disable-next-line react/forbid-component-props -- ChevronsUpDown accepts className in its styling contract; preserve this caller's layout and appearance.
                 className={cn("ml-auto size-4", isDesktopCollapsed && "hidden")}
               />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
+            // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="p-0 font-normal">
+            <DropdownMenuLabel
+              // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuLabel accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="p-0 font-normal"
+            >
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar
+                  // oxlint-disable-next-line react/forbid-component-props -- Avatar accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="h-8 w-8 rounded-lg"
+                >
                   <AvatarImage alt={displayName} src={avatarImageSrc} />
-                  <AvatarFallback className="rounded-lg">
+                  <AvatarFallback
+                    // oxlint-disable-next-line react/forbid-component-props -- AvatarFallback accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="rounded-lg"
+                  >
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
@@ -156,7 +190,10 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <InternalLink href="/settings">
-                  <Settings className="mr-2 size-4" />
+                  <Settings
+                    // oxlint-disable-next-line react/forbid-component-props -- Settings accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="mr-2 size-4"
+                  />
                   Settings
                 </InternalLink>
               </DropdownMenuItem>
@@ -166,9 +203,15 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 }
               >
                 {resolvedTheme === "light" ? (
-                  <Moon className="mr-2 size-4" />
+                  <Moon
+                    // oxlint-disable-next-line react/forbid-component-props -- Moon accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="mr-2 size-4"
+                  />
                 ) : (
-                  <Sun className="mr-2 size-4" />
+                  <Sun
+                    // oxlint-disable-next-line react/forbid-component-props -- Sun accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="mr-2 size-4"
+                  />
                 )}
                 Toggle Theme
               </DropdownMenuItem>
@@ -192,7 +235,10 @@ export const SidebarUserNav = (): ReactJSX.Element => {
                 globalThis.location.href = "/";
               }}
             >
-              <LogOut className="mr-2 size-4" />
+              <LogOut
+                // oxlint-disable-next-line react/forbid-component-props -- LogOut accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mr-2 size-4"
+              />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

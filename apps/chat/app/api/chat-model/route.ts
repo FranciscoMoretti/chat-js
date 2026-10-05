@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { NextRequest } from "next/server";
+/* oxlint-enable sort-imports */
+import { NextResponse } from "next/server";
 
 /* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): POST uses 60, 24, 365 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

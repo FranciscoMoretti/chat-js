@@ -1,18 +1,24 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI hashes installed source using the native cryptographic implementation.
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+/* oxlint-enable sort-imports */
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptors outside the CLI package are bundled into the published executable.
-import { toolDefinitionSchema } from "../../../registry/metadata";
 // oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptor types live outside the CLI package.
 import type { ToolDefinition } from "../../../registry/metadata";
+// oxlint-disable-next-line import/no-relative-parent-imports -- Shared registry descriptors outside the CLI package are bundled into the published executable.
+import { toolDefinitionSchema } from "../../../registry/metadata";
 import { validateCustomToolKeys } from "./custom-tool-keys";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { generatedRegistrationSource } from "./generated-registration-source";
+/* oxlint-enable sort-imports */
 import { preflight } from "./preflight";
 
 const generated =
@@ -282,19 +288,50 @@ const registrationImports = (
   }[],
   file: "tool" | "renderer"
 ): string => {
-  const groups = new Map<string, string[]>();
+  const groups = new Map<string, (typeof entries)[number][]>();
   for (const item of entries) {
     const names = groups.get(item.id) ?? [];
-    names.push(`${item.name} as ${item.alias}`);
+    names.push(item);
     groups.set(item.id, names);
   }
-  return [...groups]
-    .map(([id, names]: readonly [string, readonly string[]]): string =>
-      names.length === 1
-        ? `import { ${names[0]} } from "./${id}/${file}";`
-        : `import {\n${names.map((name): string => `  ${name},`).join("\n")}\n} from "./${id}/${file}";`
-    )
-    .join("\n");
+  const imports = [...groups];
+  // Every caller emits fixed single-binding imports before this segment. The
+  // first grouped declaration therefore conflicts with sort-imports syntax
+  // ordering. Preserve its module's position and all subsequent module order.
+  const firstGrouped = imports.findIndex(
+    ([, names]: readonly [string, readonly (typeof entries)[number][]]) =>
+      names.length > 1
+  );
+  const rendered = imports.map(
+    (
+      [id, names]: readonly [string, readonly (typeof entries)[number][]],
+      index
+    ): string => {
+      const declaration =
+        names.length === 1
+          ? `import { ${names[0].name} as ${names[0].alias} } from "./${id}/${file}";`
+          : `import {\n${names
+              .toSorted((left, right): number =>
+                left.alias.localeCompare(right.alias)
+              )
+              .map((name): string => `  ${name.name} as ${name.alias},`)
+              .join("\n")}\n} from "./${id}/${file}";`;
+      if (index === firstGrouped) {
+        return `/* oxlint-disable sort-imports -- Grouped installed bindings must follow the fixed single-binding imports without changing tool-module evaluation order. */\n${declaration}`;
+      }
+      // Numeric aliases retain descriptor traversal identity. Only annotate an
+      // actual lexical rollover before the grouped-import exception begins.
+      if (
+        index > 0 &&
+        (firstGrouped === -1 || index < firstGrouped) &&
+        imports[index - 1][1][0].alias > names[0].alias
+      ) {
+        return `// oxlint-disable-next-line sort-imports -- Numeric tool aliases retain descriptor traversal and module evaluation order across lexical digit boundaries.\n${declaration}`;
+      }
+      return declaration;
+    }
+  );
+  return `${rendered.join("\n")}${firstGrouped === -1 ? "" : "\n/* oxlint-enable sort-imports */"}`;
 };
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -316,7 +353,7 @@ const sourceFor = (
       })),
       "tool"
     )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
-    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\nimport { customTools } from "./custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
+    toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n// oxlint-disable-next-line sort-imports -- Evaluate the tool-set runtime before custom tool modules, preserving the generated registry dependency order.\nimport { customTools } from "./custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
       ordinary
         .filter((item): boolean => !item.provider)
         .map((item) => ({
@@ -565,7 +602,20 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "composer-tools.ts"),
     generatedSource(
-      `import type { LucideIcon } from "lucide-react";\n${composerTools.length > 0 ? `import { ${composerTools.map((item, index): string => `${item.composer?.icon} as Icon${index}`).join(", ")} } from "lucide-react";` : ""}\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
+      `${
+        composerTools.length > 0
+          ? `import { ${composerTools
+              .map((item, index) => ({
+                alias: `Icon${index}`,
+                icon: item.composer?.icon,
+              }))
+              .toSorted((left, right): number =>
+                left.alias.localeCompare(right.alias)
+              )
+              .map((item): string => `${item.icon} as ${item.alias}`)
+              .join(", ")} } from "lucide-react";\n`
+          : ""
+      }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
   const runner = definitions.find((item) => item.documentRunExport);

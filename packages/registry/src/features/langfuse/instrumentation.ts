@@ -1,7 +1,9 @@
 import type { InstrumentationRegistration } from "@/lib/installation-contracts";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getLangfuseEnvironment } from "./credentials";
+/* oxlint-enable sort-imports */
 
 export const register: InstrumentationRegistration = async ({
   appPrefix,

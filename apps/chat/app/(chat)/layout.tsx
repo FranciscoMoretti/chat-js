@@ -1,27 +1,41 @@
 import { cookies, headers } from "next/headers";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { getChatModels } from "@/app/actions/get-chat-models";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { AppSidebar } from "@/components/app-sidebar";
+/* oxlint-enable sort-imports */
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { EveRuntimeProvider } from "@/components/eve/eve-runtime-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+/* oxlint-enable sort-imports */
 import type { AppModelId } from "@/lib/ai/app-model-id";
 /* oxlint-disable import/max-dependencies -- @/lib/config import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { config } from "@/lib/config";
 /* oxlint-enable import/max-dependencies */
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
+/* oxlint-enable sort-imports */
 import { preloadQuery } from "@/trpc/preload-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { TRPCReactProvider } from "@/trpc/react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 
 import { auth } from "../../lib/auth";
@@ -125,7 +139,10 @@ const ChatLayout = async ({
   const content = (
     <>
       <AppSidebar />
-      <SidebarInset className={sidebarInsetClassName}>
+      <SidebarInset
+        // oxlint-disable-next-line react/forbid-component-props -- SidebarInset accepts className in its styling contract; preserve this caller's layout and appearance.
+        className={sidebarInsetClassName}
+      >
         <Suspense fallback={<ChatLoadingShell />}>
           <ChatLayoutDynamic>{children}</ChatLayoutDynamic>
         </Suspense>

@@ -2,11 +2,13 @@
 import { expect, test, vi } from "vitest";
 
 import { toolResultSchema } from "./tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createToolUsage,
-  executeWithToolUsage,
   executeWithToolProgress,
+  executeWithToolUsage,
 } from "./tool-usage";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep context's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.

@@ -1,7 +1,9 @@
 import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-enable sort-imports */
 
 const EMPTY_COLLECTION_LENGTH = 0;
 const FIRST_ROW_INDEX = 0;

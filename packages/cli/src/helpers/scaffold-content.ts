@@ -4,10 +4,12 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  researchAgentFiles,
   researchAgentDirectories,
+  researchAgentFiles,
 } from "../../../registry/src/tools/research";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 import { isJsonObject } from "./json-object";
 

@@ -1,10 +1,14 @@
 import type { ModelMessage } from "ai";
 import { clsx } from "clsx";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ClassValue } from "clsx";
+/* oxlint-enable sort-imports */
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ChatSDKError } from "./ai/errors";
+/* oxlint-enable sort-imports */
 import type { ErrorCode } from "./ai/errors";
 import type { ReadonlyNativeSurface } from "./readonly-native-surface";
 

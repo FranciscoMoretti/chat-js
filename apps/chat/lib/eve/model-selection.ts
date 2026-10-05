@@ -2,12 +2,18 @@ import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getActiveGateway } from "@/lib/ai/active-gateway";
+/* oxlint-enable sort-imports */
 import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
+/* oxlint-enable sort-imports */
 import type { ModelData } from "@/lib/ai/model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;

@@ -1,17 +1,23 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { AttachmentList } from "@/components/attachment-list";
+/* oxlint-enable sort-imports */
 import { UserMessageView } from "@/components/user-message-view";
 import { restoreDraft } from "@/lib/eve/draft";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessageInput } from "@/lib/eve/message-input";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupCandidates } from "@/lib/eve/response-group-candidates";
 import { useChatModels } from "@/providers/chat-models-provider";
 
-import { EveResponseGroupCards } from "./eve-response-group-cards";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveResponseCardCandidate } from "./eve-response-group-cards";
+/* oxlint-enable sort-imports */
+import { EveResponseGroupCards } from "./eve-response-group-cards";
 
 interface OptimisticResponseGroupOperation {
   forkKind?: "comparison" | "edit";

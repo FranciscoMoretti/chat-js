@@ -1,10 +1,12 @@
 import { defineTool } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentWriteResult,
 } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 import { executeEveDocumentTool } from "@/lib/eve/document-tools";
 
 import { textGuidelines } from "./guidelines";

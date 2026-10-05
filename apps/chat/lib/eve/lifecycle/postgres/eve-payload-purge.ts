@@ -1,7 +1,9 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
+/* oxlint-enable sort-imports */
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 
 const receiptSchema = z.object({

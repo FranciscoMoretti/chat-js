@@ -1,7 +1,10 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -10,6 +13,7 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
+/* oxlint-enable sort-imports */
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const copiedFile = "bbbbbbbbbbbbbbbbbbbbbbbb.png";

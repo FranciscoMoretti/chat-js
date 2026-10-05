@@ -1,17 +1,25 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
   SharedV4ProviderOptions,
 } from "@ai-sdk/provider";
+/* oxlint-enable sort-imports */
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel, LanguageModelMiddleware } from "ai";
+/* oxlint-enable sort-imports */
+import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 
 import { getActiveGateway } from "./active-gateway";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "./app-models";
+/* oxlint-enable sort-imports */
 import { getAppModelDefinition } from "./app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { InstalledGateway } from "./gateways/registry";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): ActiveGatewayModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

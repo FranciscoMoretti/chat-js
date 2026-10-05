@@ -5,7 +5,9 @@ import { createRequire } from "node:module";
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { WebpackOverrideFn } from "@remotion/bundler";
+/* oxlint-enable sort-imports */
 
 const require = createRequire(path.resolve("package.json"));
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- webpackOverride: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */

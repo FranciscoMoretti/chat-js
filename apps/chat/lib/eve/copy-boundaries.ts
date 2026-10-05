@@ -1,5 +1,5 @@
-import { defaultMessageReducer } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
+import { defaultMessageReducer } from "eve/client";
 import { z } from "zod";
 
 const MIN_CHECKPOINT_INDEX = 0;

@@ -6,15 +6,22 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq, inArray, sql } from "drizzle-orm";
 import postgres from "postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,
   releaseEveFamilyFileReferences,
 } from "../lib/db/eve-file-purge";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   canReadEveFile,
   isEveFileUnavailable,
@@ -25,11 +32,14 @@ import {
   writeEveGeneratedFile,
   writeEveUpload,
 } from "../lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import {
   eveConversation,
   eveFileReference,

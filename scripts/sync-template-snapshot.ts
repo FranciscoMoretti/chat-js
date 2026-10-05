@@ -1,7 +1,9 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
-import { readdir, readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The repository template snapshot hashes and copies source files using host filesystem paths.
 import path from "node:path";
 

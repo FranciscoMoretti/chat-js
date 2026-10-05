@@ -1,5 +1,7 @@
 import { installedInstrumentation } from "@/features/installed-instrumentation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): register reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.

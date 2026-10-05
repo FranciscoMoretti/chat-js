@@ -1,10 +1,14 @@
 import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { authSessionOptions } from "@/lib/auth-session-options";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GET } from "./route";
+/* oxlint-enable sort-imports */
 
 const state = vi.hoisted(() => {
   const data: Record<"user" | "session", Record<string, unknown>[]> = {

@@ -1,8 +1,10 @@
 import { rejectUnacceptedEveCopy } from "@/lib/db/eve-copy-dispatch";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   completeEveConversationDeletion,
   getEveDeletionState,
 } from "@/lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
 import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
 
 import { purgeEveFamilyFiles } from "./purge-files";

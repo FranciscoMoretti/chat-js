@@ -2,13 +2,17 @@ import {
   auth,
   experimental_createMCPClient as createMCPClient,
 } from "@ai-sdk/mcp";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
+/* oxlint-enable sort-imports */
 import type { Tool } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
+/* oxlint-enable sort-imports */
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";

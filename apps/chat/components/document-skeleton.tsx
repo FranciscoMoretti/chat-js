@@ -2,7 +2,9 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
 
 const DocumentSkeleton = ({
   artifactKind: _artifactKind,

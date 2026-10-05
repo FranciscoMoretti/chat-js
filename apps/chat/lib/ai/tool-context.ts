@@ -1,19 +1,20 @@
 import type { Experimental_VideoModelV4 } from "@ai-sdk/provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel, LanguageModel } from "ai";
+/* oxlint-enable sort-imports */
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): ToolProgressWriter accepts part: { data: ResearchUpdate; id?: string; type: "data-researchUpdate"; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Progress events understood by installed search tools without depending on ChatMessage. */
 interface ToolProgressWriter {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Writer implementations receive ResearchUpdate with mutable query/results arrays; making the callback accept readonly arrays would break assignability of existing publishing consumers.
   write: (part: {
     data: ResearchUpdate;
     id?: string;
     type: "data-researchUpdate";
   }) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 interface ToolModelProvider {
   createImageModel: (modelId: string) => ImageModel;

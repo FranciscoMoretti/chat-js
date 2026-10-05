@@ -3,27 +3,39 @@ import { access, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { confirm, isCancel, log } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import { Command } from "commander";
 
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  parseStorageOptions,
   configureStorageProvider,
+  parseStorageOptions,
 } from "#cli/helpers/storage-provider";
+/* oxlint-enable sort-imports */
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { inferPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/max-dependencies -- Adding an installation composes provider resolution, source rollback, registration, dependency installation, configuration edits, and prompts directly.
 import { installPlan } from "#cli/utils/install-plan";
 import { planInstallation } from "#cli/utils/installation-plan";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { gatewayConfigEdit } from "#cli/utils/provider-config";
+/* oxlint-enable sort-imports */
 import { runCommand } from "#cli/utils/run-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
 } from "#cli/utils/sync-features";
+/* oxlint-enable sort-imports */
 import { syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (

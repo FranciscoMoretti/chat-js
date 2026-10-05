@@ -2,7 +2,9 @@ import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { mcpConnector } from "@/lib/db/schema";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpConnector } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("mcp-queries");

@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
+/* oxlint-enable sort-imports */
 import {
   CreationRejectedError,
   requestConversation,
@@ -12,7 +14,9 @@ import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { finishCreation, readCreationRequest } from "./pending-create";
+/* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --

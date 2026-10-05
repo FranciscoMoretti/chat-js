@@ -1,12 +1,18 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseEnvOptions } from "./db/connection";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isWorkflowTransactionPooler,
   resolveEveEnvironment,
 } from "./eve/environment";
+/* oxlint-enable sort-imports */
 import { resolveWorkflowWorld } from "./eve/world-config";
 
 /* oxlint-disable node/no-process-env --
@@ -40,13 +46,13 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): getEveRuntimeEnvOptions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getEveRuntimeEnvOptions uses 0, 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 node/no-process-env (#537): getEveRuntimeEnvOptions reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
 typescript/explicit-function-return-type (#560): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEveRuntimeEnvOptions accepts environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+ */
 const getEveRuntimeEnvOptions = (
   environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
 ) => ({
@@ -121,7 +127,7 @@ const getEveRuntimeEnvOptions = (
             "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
           ),
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 

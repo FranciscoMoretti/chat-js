@@ -2,10 +2,15 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessage } from "eve/client";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useCallback, useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Artifact,
   ArtifactClose,
@@ -14,6 +19,7 @@ import {
   ArtifactHeader,
   ArtifactTitle,
 } from "@/components/ai-elements/artifact";
+/* oxlint-enable sort-imports */
 import {
   ChatLayout,
   ChatLayoutHandle,
@@ -21,22 +27,34 @@ import {
   ChatLayoutSecondary,
 } from "@/components/chat/chat-layout";
 import { DocumentSkeleton } from "@/components/document-skeleton";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ArtifactProvider, useArtifact } from "@/hooks/use-artifact";
+/* oxlint-enable sort-imports */
 import type { DocumentAssistantRequest } from "@/lib/eve/document-contracts";
 import { eveDocumentResult } from "@/lib/eve/document-contracts";
 /* oxlint-disable import/max-dependencies -- @/tools/chatjs/document-run import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentRun } from "@/tools/chatjs/document-run";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDocumentActions } from "./eve-document-actions";
+/* oxlint-enable sort-imports */
 import { EveDocumentAssistantActions } from "./eve-document-assistant-actions";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentBody } from "./eve-document-body";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveDocumentContext,
   EveDocumentReplayContext,
 } from "./eve-document-context";
+/* oxlint-enable sort-imports */
 import { useDocumentDraft } from "./use-document-draft";
 
 const artifactRegionProps = { role: "region" as const };
@@ -224,19 +242,27 @@ const EveArtifactPanel = ({
       {}
       <Artifact
         aria-label="Document"
+        // oxlint-disable-next-line react/forbid-component-props -- Artifact accepts className in its styling contract; preserve this caller's layout and appearance.
         className="relative h-full min-h-0 w-full rounded-none border-0"
         data-testid="artifact"
         {...artifactRegionProps}
       >
-        <ArtifactHeader className="bg-background/80 shrink-0 items-start p-2">
+        <ArtifactHeader
+          // oxlint-disable-next-line react/forbid-component-props -- ArtifactHeader accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="bg-background/80 shrink-0 items-start p-2"
+        >
           <div className="flex min-w-0 items-start gap-4">
             <ArtifactClose
+              // oxlint-disable-next-line react/forbid-component-props -- ArtifactClose accepts className in its styling contract; preserve this caller's layout and appearance.
               className="hover:bg-accent h-fit p-2"
               onClick={closeArtifact}
               variant="outline"
             />
             <div className="min-w-0">
-              <ArtifactTitle className="break-words">
+              <ArtifactTitle
+                // oxlint-disable-next-line react/forbid-component-props -- ArtifactTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="break-words"
+              >
                 {previewing
                   ? artifact.title
                   : (revision?.title ?? artifact.title)}
@@ -288,7 +314,10 @@ const EveArtifactPanel = ({
         {owned && !editing.draft && !editing.saving && (
           <span className="sr-only">All changes saved</span>
         )}
-        <ArtifactContent className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+        <ArtifactContent
+          // oxlint-disable-next-line react/forbid-component-props -- ArtifactContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
+        >
           {document.isPending && !previewing && (
             <DocumentSkeleton artifactKind={artifact.kind} />
           )}

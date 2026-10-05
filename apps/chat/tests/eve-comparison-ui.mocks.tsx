@@ -2,11 +2,17 @@
 import React, { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ComposerMenu } from "../components/composer/composer-menu";
+/* oxlint-enable sort-imports */
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { models } from "../lib/ai/models.generated";
+/* oxlint-enable sort-imports */
 import { useDefaultModel } from "../providers/default-model-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): fixtureModels accepts model; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */

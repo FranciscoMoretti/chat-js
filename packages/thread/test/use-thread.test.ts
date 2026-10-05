@@ -9,23 +9,33 @@ import {
 } from "bun:test";
 
 import type { UIMessage } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { act, createElement } from "react";
-import { createRoot } from "react-dom/client";
+/* oxlint-enable sort-imports */
 import type { Root } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 
 import { getMessageText } from "#thread-source/message-utils";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+/* oxlint-enable sort-imports */
 import { Thread } from "#thread-source/thread";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MemoryThreadState } from "#thread-source/thread-state";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   UseThreadHelpers,
   UseThreadOptions,
 } from "#thread-source/use-thread";
+/* oxlint-enable sort-imports */
 
 import { ControlledTransport } from "./support/hook-controlled-transport";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { createHookDom } from "./support/hook-dom";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { RejectingTransport } from "./support/rejecting-transport";
+/* oxlint-enable sort-imports */
 import { ResumeTransport } from "./support/resume-transport";
 import { StateBackedThread } from "./support/state-backed-thread";
 /* oxlint-enable import/max-dependencies */

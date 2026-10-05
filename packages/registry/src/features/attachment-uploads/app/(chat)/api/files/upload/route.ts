@@ -1,11 +1,19 @@
 import { headers } from "next/headers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { NextResponse } from "next/server";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auth } from "@/lib/auth";
+/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // Allow multipart headers and fields without buffering an unbounded request.

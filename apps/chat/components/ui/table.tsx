@@ -1,10 +1,12 @@
 import { forwardRef as reactForwardRef } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   HTMLAttributes as ReactHTMLAttributes,
   JSX as ReactJSX,
-  ThHTMLAttributes as ReactThHTMLAttributes,
   TdHTMLAttributes as ReactTdHTMLAttributes,
+  ThHTMLAttributes as ReactThHTMLAttributes,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Table: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */

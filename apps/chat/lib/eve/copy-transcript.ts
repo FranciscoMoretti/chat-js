@@ -4,19 +4,25 @@
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveChannelInput } from "eve/channels/eve";
+/* oxlint-enable sort-imports */
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  createFileUrl,
   FILES_PATH,
+  createFileUrl,
   isFileStorageKey,
   keyFromFileUrl,
 } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 import { eveDocumentOperations } from "./document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+/* oxlint-enable sort-imports */
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 import { sharedEveMessages } from "./shared-messages";
 /* oxlint-enable import/no-nodejs-modules */

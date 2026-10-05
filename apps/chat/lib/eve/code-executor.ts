@@ -1,6 +1,8 @@
 import type { ToolContext } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 type CodeExecutionInput = Readonly<{
   code: string;

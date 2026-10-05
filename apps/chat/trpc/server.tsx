@@ -1,14 +1,20 @@
 // Ensure this file cannot be imported from the client.
 import "server-only";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import type { ResolverDef, TRPCQueryOptions } from "@trpc/tanstack-react-query";
+import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { cache } from "react";
+/* oxlint-enable sort-imports */
 
 import { createTRPCContext } from "./init";
 import { preloadQuery } from "./preload-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { makeQueryClient } from "./query-client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { appRouter } from "./routers/_app";
+/* oxlint-enable sort-imports */
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.

@@ -1,20 +1,30 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-artifact-layout"; "../components/eve/eve-document-tool"; "../components/ui/sidebar"; "../hooks/use-artifact"; "../trpc/react" dependency within this package instead of introducing an alias or barrel API. */
 import { QueryClientProvider } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessagePart } from "eve/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveArtifactLayout } from "../components/eve/eve-artifact-layout";
+/* oxlint-enable sort-imports */
 import { EveDocumentTool } from "../components/eve/eve-document-tool";
 import { SidebarProvider } from "../components/ui/sidebar";
 import { useArtifact } from "../hooks/use-artifact";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { TRPCProvider } from "../trpc/react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationId,
   existingId,
   queryClient,
   trpcClient,
 } from "./eve-artifact-query.fixture";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 type Part = Extract<EveMessagePart, { type: "dynamic-tool" }>;

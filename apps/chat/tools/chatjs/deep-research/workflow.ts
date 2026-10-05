@@ -3,10 +3,15 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { z } from "zod";
 
-import { createToolResult } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolResult } from "@/lib/eve/tool-result";
+/* oxlint-enable sort-imports */
+import { createToolResult } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -16,6 +21,7 @@ import {
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
 } from "./prompts";
+/* oxlint-enable sort-imports */
 import {
   researchBrief,
   researchClarification,
@@ -25,11 +31,13 @@ import {
 } from "./schemas";
 import type { researchOutput } from "./schemas";
 import { researchSearchUpdates } from "./search-updates";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   prepareResearch,
   researchCompletionTime,
   saveResearchReport,
 } from "./steps";
+/* oxlint-enable sort-imports */
 
 type ResearchOutput = z.infer<typeof researchOutput>;
 

@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, {
   useCallback,
   useEffect,
@@ -11,25 +11,35 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { LogicalChat } from "@/lib/eve/logical-chat";
+/* oxlint-enable sort-imports */
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/trpc/react import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useTRPC } from "@/trpc/react";
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveChatHeader } from "./eve-chat-header";
+/* oxlint-enable sort-imports */
 import { EveConversation } from "./eve-conversation";
 import { EveInitialMessage } from "./eve-initial-message";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveLogicalContext,
   EveRuntimeContext,
   useEveRuntime,
 } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
 import type { OpenRequest } from "./eve-logical-context";
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };

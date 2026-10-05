@@ -1,15 +1,19 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
-  ROOT_PARENT_ID,
   ABSENT_MESSAGE,
+  ROOT_PARENT_ID,
   assertLeaf,
-  assertParentUnchanged,
   assertParentExistsAndAcyclic,
+  assertParentUnchanged,
   validateMessagePath,
 } from "./message-tree-guards";
+/* oxlint-enable sort-imports */
 import { readMessageTreeIndexes } from "./message-tree-readers";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SnapshotInput, TreeStorageReader } from "./message-tree-readers";
+/* oxlint-enable sort-imports */
 import type { MessageTreeSnapshot } from "./types";
 
 const EMPTY_CHILD_COUNT = 0;

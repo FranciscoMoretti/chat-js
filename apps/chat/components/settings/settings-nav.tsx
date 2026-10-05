@@ -1,10 +1,14 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
 import type { SettingsItem } from "@/components/settings/settings-item";
 import { cn } from "@/lib/utils";
 import { settingsItems } from "@/settings-items";
@@ -43,6 +47,7 @@ export const SettingsNav = ({
 
         return (
           <InternalLink
+            // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
             className={cn(
               "text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-2 rounded-md px-3 py-2.5 transition-colors",
               isActive && "bg-muted text-foreground"
@@ -50,7 +55,10 @@ export const SettingsNav = ({
             href={href}
             key={href}
           >
-            <Icon className="size-4" />
+            <Icon
+              // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
             {label}
           </InternalLink>
         );

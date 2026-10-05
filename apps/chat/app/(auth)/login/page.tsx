@@ -2,7 +2,9 @@
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DevLoginTool } from "@/components/dev-login-tool";
@@ -10,12 +12,16 @@ import { ElectronTransferUser } from "@/components/electron-auth-ui";
 import { InternalLink } from "@/components/internal-link";
 import { LoginForm } from "@/components/login-form";
 import { buttonVariants } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auth } from "@/lib/auth";
+/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   ELECTRON_AUTH_CLIENT_ID,
   toSearchParamRecord,
 } from "@/lib/electron-auth";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
 
@@ -54,7 +60,10 @@ const LoginPageContent = async ({
         />
       }
     >
-      <LoginForm className="w-full" />
+      <LoginForm
+        // oxlint-disable-next-line react/forbid-component-props -- LoginForm accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="w-full"
+      />
     </Suspense>
   );
 };
@@ -71,13 +80,17 @@ const LoginPage = ({
 }): React.JSX.Element => (
   <div className="container mx-auto flex h-dvh w-screen flex-col items-center justify-center">
     <InternalLink
+      // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         buttonVariants({ variant: "ghost" }),
         "absolute top-4 left-4 md:top-8 md:left-8"
       )}
       href="/"
     >
-      <ChevronLeft className="mr-2 h-4 w-4" />
+      <ChevronLeft
+        // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="mr-2 h-4 w-4"
+      />
       Back
     </InternalLink>
     <DevLoginTool />

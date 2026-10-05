@@ -4,9 +4,13 @@ import React from "react";
 import { SandboxComposed } from "@/components/sandbox";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionInput,

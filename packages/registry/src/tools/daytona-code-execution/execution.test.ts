@@ -6,7 +6,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { executeInDaytona } from "./execution";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DaytonaResource } from "./sandbox";
+/* oxlint-enable sort-imports */
 
 const setup = () => {
   const events: string[] = [];

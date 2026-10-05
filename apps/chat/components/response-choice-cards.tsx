@@ -3,7 +3,9 @@
 import { LoaderCircle } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 export interface ResponseChoiceSlot {
@@ -36,6 +38,7 @@ export const ResponseChoiceCards = ({
       {slots.map((slot): React.JSX.Element => (
         <Button
           aria-pressed={slot.selected}
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn(
             "h-auto min-w-[160px] flex-col items-start gap-1 rounded-xl px-3 py-2 text-left",
             slot.selected && "border-primary bg-primary/5 text-primary"
@@ -49,7 +52,11 @@ export const ResponseChoiceCards = ({
           <span className="text-sm font-medium">{slot.modelName}</span>
           <span className="text-muted-foreground flex items-center gap-1 text-xs">
             {slot.loading ? (
-              <LoaderCircle aria-hidden className="size-3 animate-spin" />
+              <LoaderCircle
+                aria-hidden
+                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-3 animate-spin"
+              />
             ) : null}
             {slot.statusLabel}
           </span>

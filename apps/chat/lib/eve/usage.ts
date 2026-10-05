@@ -3,7 +3,9 @@ import type { MessageStreamEvent } from "eve/client";
 import { recordEveUsage } from "@/lib/db/eve-billing";
 import { registerEveSubagent } from "@/lib/db/eve-subagents";
 
-import { toolResultSchema, hasEveToolReceipt } from "./tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

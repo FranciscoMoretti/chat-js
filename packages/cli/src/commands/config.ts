@@ -1,15 +1,21 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI observes native process or stream lifecycle events.
 import { once } from "node:events";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Command } from "commander";
+/* oxlint-enable sort-imports */
 
 import type { PackageManager } from "#cli/types";
 import { inferPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";

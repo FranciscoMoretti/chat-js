@@ -2,7 +2,9 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+/* oxlint-enable sort-imports */
 
 export const SettingsHeader = (): React.JSX.Element => {
   const { isMobile } = useSidebar();

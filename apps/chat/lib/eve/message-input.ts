@@ -1,7 +1,9 @@
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 const MIN_CONTENT_LENGTH = 1;
 const MIN_MESSAGE_PARTS = 1;

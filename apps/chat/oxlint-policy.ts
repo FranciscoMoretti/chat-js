@@ -50,8 +50,8 @@ export const auditedRestrictionRules = {
     { nativeAllowList: "all" },
   ],
   "react-perf/jsx-no-new-object-as-prop": ["error", { nativeAllowList: "all" }],
-  // Tailwind and primitive components expose className/style as supported typed APIs.
-  "react/forbid-component-props": "off",
+  // Reviewed component styling contracts are documented beside the affected props.
+  "react/forbid-component-props": "error",
   "react/jsx-max-depth": "error",
   // UI copy has no translation-layer contract; expression wrapping would not add localization.
   "react/jsx-no-literals": "off",
@@ -60,8 +60,8 @@ export const auditedRestrictionRules = {
   "react/only-export-components": "error",
   // Components using the automatic JSX runtime explain that compiler contract locally.
   "react/react-in-jsx-scope": "error",
-  // Oxfmt owns declaration and member ordering; a second sorter creates conflicting rewrites.
-  "sort-imports": "off",
+  // Conflicting declaration ordering is reviewed locally; named members remain sorted.
+  "sort-imports": "error",
   "typescript/consistent-type-definitions": "error",
   "typescript/explicit-function-return-type": "error",
   "typescript/explicit-module-boundary-types": "error",

@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveRuntimeEnvOptions } from "./env-schema";
+/* oxlint-enable sort-imports */
 
 const schema = z.object(getEveRuntimeEnvOptions({}));
 /* oxlint-disable no-magic-numbers --

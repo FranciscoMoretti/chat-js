@@ -1,10 +1,14 @@
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+/* oxlint-enable sort-imports */
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { diffWords } from "diff";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { $createParagraphNode, $getRoot, TextNode } from "lexical";
+/* oxlint-enable sort-imports */
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import React, { useEffect } from "react";
 
@@ -229,7 +233,10 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
       <LexicalComposer initialConfig={initialConfig}>
         <RichTextPlugin
           contentEditable={
-            <ContentEditable className="lexical-editor text-left outline-hidden" />
+            <ContentEditable
+              // oxlint-disable-next-line react/forbid-component-props -- ContentEditable accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="lexical-editor text-left outline-hidden"
+            />
           }
           ErrorBoundary={LexicalErrorBoundary}
           placeholder={null}

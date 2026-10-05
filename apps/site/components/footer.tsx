@@ -30,6 +30,7 @@ export const Footer = (): React.JSX.Element => (
         {/* Brand */}
         <div>
           <Link
+            // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
             className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
             href="/"
           >

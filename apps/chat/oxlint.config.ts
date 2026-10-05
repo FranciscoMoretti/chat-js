@@ -1,9 +1,13 @@
 import { defineConfig } from "oxlint";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import core from "ultracite/oxlint/core";
+/* oxlint-enable sort-imports */
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auditedRestrictionRules } from "./oxlint-policy.ts";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-default-export -- Oxlint loads its configuration through this required default export.
 export default defineConfig({

@@ -1,5 +1,7 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { expect, test, vi } from "vitest";
 
 import { CodeBlock } from "./code-block";

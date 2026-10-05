@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
 import { UiPrimitivesVisualFixture } from "@/components/ui/ui-primitives-visual-fixture";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";

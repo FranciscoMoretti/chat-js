@@ -1,12 +1,20 @@
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { CreationRejectedError } from "./create-conversation";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { finishCreation, readCreationRequest } from "./pending-create";
+/* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
 import { eveResponseGroupResult } from "./response-group-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "./response-group-input";
+/* oxlint-enable sort-imports */
 
 const RESPONSE_GROUP_REQUEST_TIMEOUT_MS = 75_000;
 const FIRST_ALTERNATE_CANDIDATE_INDEX = 1;

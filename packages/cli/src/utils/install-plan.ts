@@ -2,6 +2,7 @@
 import { createHash, randomUUID } from "node:crypto";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import type { Dirent } from "node:fs";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
@@ -11,20 +12,28 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installItems } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
 
 import { updateEnvironmentExample } from "./environment-example";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { prepareDependencyUpdate } from "./installation-dependencies";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { planInstallation } from "./installation-plan";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { assertMcpApprovalSchema } from "./mcp-schema";
+/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/max-dependencies -- Installation composes provider validation, dependency ownership and rollback within one transaction.
 import { preflight } from "./preflight";
-// oxlint-disable-next-line import/max-dependencies -- Keep schema checks, provider registration and rollback together at the installation transaction boundary.
 import { toolRegistrationTargets } from "./sync-tools";
 
 type Plan = Awaited<ReturnType<typeof planInstallation>>;

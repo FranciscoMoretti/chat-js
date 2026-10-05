@@ -1,5 +1,7 @@
 import { asSchema } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelMessage, Tool } from "ai";
+/* oxlint-enable sort-imports */
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
 

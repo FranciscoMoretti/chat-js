@@ -1,9 +1,13 @@
 /* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageInput } from "./message-input";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveForkInput uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const eveForkInput = z.union([

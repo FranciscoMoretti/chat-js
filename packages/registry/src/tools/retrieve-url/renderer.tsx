@@ -3,10 +3,12 @@ import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { retrievedInput, retrievedResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
@@ -22,7 +24,10 @@ const LoadingState = () => (
     <div className="flex items-center gap-4">
       <div className="relative h-10 w-10">
         <div className="bg-primary/10 absolute inset-0 animate-pulse rounded-full" />
-        <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
+        <Globe
+          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
+        />
       </div>
       <div className="flex-1 space-y-2">
         <div className="bg-muted-foreground/20 h-4 w-36 animate-pulse rounded-md" />
@@ -50,7 +55,10 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
   <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
     <div className="flex items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
+        <Globe
+          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="h-4 w-4 text-red-600 dark:text-red-300"
+        />
       </div>
       <div>
         <div className="text-sm font-medium text-red-700 dark:text-red-300">
@@ -111,7 +119,10 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
       <div className="flex items-start gap-4">
         <div className="relative h-10 w-10 shrink-0">
           <div className="from-primary/10 absolute inset-0 rounded-lg bg-linear-to-br to-transparent" />
-          <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
+          <Globe
+            // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
+          />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
           <h2 className="text-foreground truncate text-lg font-semibold tracking-tight">
@@ -130,7 +141,10 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
               rel="noopener noreferrer"
               target="_blank"
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink
+                // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-3 w-3"
+              />
               View source
             </a>
           </div>
@@ -162,10 +176,16 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
       <details className="group">
         <summary className="text-muted-foreground hover:bg-muted flex w-full cursor-pointer items-center justify-between px-4 py-2 text-sm transition-colors">
           <div className="flex items-center gap-2">
-            <TextIcon className="text-muted-foreground h-4 w-4" />
+            <TextIcon
+              // oxlint-disable-next-line react/forbid-component-props -- TextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-muted-foreground h-4 w-4"
+            />
             <span>View content</span>
           </div>
-          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+          <ChevronDown
+            // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
+          />
         </summary>
         <div className="bg-muted/50 max-h-[50vh] overflow-y-auto p-4">
           <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">

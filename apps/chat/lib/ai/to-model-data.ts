@@ -2,13 +2,11 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): toModelData uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): toModelData accepts model: AiGatewayModel; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ModelData shares tags and pricing with the gateway record; accepting deep-readonly arrays would require copying those references or changing the public mutable output contract.
 export const toModelData = (model: AiGatewayModel): ModelData => {
   const tags = model.tags ?? [];
   // A missing positive tag does not establish that a language model rejects tools.
+  // oxlint-disable-next-line no-undefined -- Missing tool-use metadata means unknown support; ModelData distinguishes this from false for nonlanguage models.
   const toolCall = tags.includes("tool-use") ? true : undefined;
 
   return {
@@ -39,4 +37,3 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     type: model.type,
   };
 };
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

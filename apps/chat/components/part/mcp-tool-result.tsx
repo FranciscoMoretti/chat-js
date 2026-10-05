@@ -4,13 +4,17 @@ import type { DynamicToolUIPart } from "ai";
 import React from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { McpToolHeader } from "@/components/ai-elements/extra/mcp-tool-header";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tool,
   ToolContent,
   ToolInput,
   ToolOutput,
 } from "@/components/ai-elements/tool";
+/* oxlint-enable sort-imports */
 import { parseToolId } from "@/lib/ai/mcp-name-id";
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 

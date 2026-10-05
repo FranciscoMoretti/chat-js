@@ -1,16 +1,21 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChevronDown, Share } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
 import React, { useState } from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-enable sort-imports */
 import { ChatMenuItems } from "@/components/chat-menu-items";
 import { InternalLink } from "@/components/internal-link";
 import { ProjectIcon } from "@/components/project-icon";
 import { ShareDialog } from "@/components/share-button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,6 +23,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/components/ui/dropdown-menu import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import {
   DropdownMenu,
@@ -26,17 +32,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 /* oxlint-enable import/max-dependencies */
 import { Input } from "@/components/ui/input";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PROJECT_COLORS, PROJECT_ICONS } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveDeletion } from "./eve-deletion-provider";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { EveShareButton, EveShareDialogContent } from "./eve-share-dialog";
+/* oxlint-enable sort-imports */
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 /* oxlint-disable react/jsx-max-depth -- EveSharedBadge: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
@@ -44,7 +58,11 @@ const EveSharedBadge = (): React.JSX.Element => (
   <Tooltip>
     <TooltipTrigger asChild>
       <div className="bg-muted/50 text-muted-foreground flex items-center gap-1.5 rounded-md px-2 py-1 text-sm">
-        <Share className="opacity-70" size={14} />
+        <Share
+          // oxlint-disable-next-line react/forbid-component-props -- Share accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="opacity-70"
+          size={14}
+        />
         <span>Shared</span>
       </div>
     </TooltipTrigger>
@@ -124,13 +142,20 @@ const EveChatHeader = ({
           hasMessages && (
             <EveShareButton
               chatId={conversationId}
+              // oxlint-disable-next-line react/forbid-component-props -- EveShareButton accepts className in its styling contract; preserve this caller's layout and appearance.
               className="hidden md:flex"
             />
           )
         }
         breadcrumb={
-          <Breadcrumb className="ml-2 min-w-0">
-            <BreadcrumbList className="flex-nowrap">
+          <Breadcrumb
+            // oxlint-disable-next-line react/forbid-component-props -- Breadcrumb accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="ml-2 min-w-0"
+          >
+            <BreadcrumbList
+              // oxlint-disable-next-line react/forbid-component-props -- BreadcrumbList accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="flex-nowrap"
+            >
               {projectId && session?.user && (
                 <>
                   <BreadcrumbItem>
@@ -147,7 +172,10 @@ const EveChatHeader = ({
                   <BreadcrumbSeparator />
                 </>
               )}
-              <BreadcrumbItem className="min-w-0">
+              <BreadcrumbItem
+                // oxlint-disable-next-line react/forbid-component-props -- BreadcrumbItem accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="min-w-0"
+              >
                 {draft === undefined ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -159,6 +187,7 @@ const EveChatHeader = ({
                         <span className="truncate">{title}</span>
                         <ChevronDown
                           aria-hidden
+                          // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
                           className="text-muted-foreground size-4 shrink-0"
                         />
                       </button>
@@ -191,6 +220,7 @@ const EveChatHeader = ({
                     aria-label="Chat title"
                     // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Rename replaces the title with this input and transfers keyboard focus into it.
                     autoFocus
+                    // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
                     maxLength={255}
                     value={draft}

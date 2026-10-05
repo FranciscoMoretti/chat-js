@@ -2,19 +2,23 @@
 
 import { MoreHorizontal } from "lucide-react";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { InternalLink } from "@/components/internal-link";
-import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import type { ProjectDetailsData } from "@/components/project-details-dialog";
+import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { ProjectIcon } from "@/components/project-icon";
 import { ProjectMenuItems } from "@/components/project-menu-items";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import {
   SidebarMenuAction,
   SidebarMenuButton,
@@ -22,9 +26,13 @@ import {
 } from "@/components/ui/sidebar";
 import { useRenameProject } from "@/hooks/use-projects";
 /* oxlint-disable import/max-dependencies -- @/lib/db/schema import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Project } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SidebarProjectItem: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including data: ProjectDetailsData). */
 
 export const SidebarProjectItem = ({
@@ -56,7 +64,12 @@ export const SidebarProjectItem = ({
 
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton asChild className="cursor-pointer" isActive={isActive}>
+      <SidebarMenuButton
+        asChild
+        // oxlint-disable-next-line react/forbid-component-props -- SidebarMenuButton accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="cursor-pointer"
+        isActive={isActive}
+      >
         <InternalLink
           href={projectHref}
           onNavigate={() => {
@@ -79,6 +92,7 @@ export const SidebarProjectItem = ({
       <DropdownMenu modal>
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
+            // oxlint-disable-next-line react/forbid-component-props -- SidebarMenuAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground mr-0.5"
             showOnHover={!isActive}
           >

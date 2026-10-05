@@ -3,19 +3,25 @@ import {
   contextStorage,
 } from "@eve-test/dist/src/context/container.js";
 import { SessionKey } from "@eve-test/dist/src/context/keys.js";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getToolApprovalReceipt,
   prepareToolApprovalReceipts,
 } from "@eve-test/dist/src/context/tool-approval-receipts.js";
+/* oxlint-enable sort-imports */
 import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
 import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
+/* oxlint-enable sort-imports */
 /* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 const actor = {
   authenticator: "test",

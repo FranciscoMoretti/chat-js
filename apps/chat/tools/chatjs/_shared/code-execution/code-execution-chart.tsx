@@ -3,8 +3,10 @@ import Image from "next/image";
 import React from "react";
 import { z } from "zod";
 
-import InteractiveChart from "./interactive-charts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { BaseChart } from "./interactive-charts";
+/* oxlint-enable sort-imports */
+import InteractiveChart from "./interactive-charts";
 
 const chartLabels = {
   title: z.string().default(""),
@@ -79,6 +81,7 @@ export const CodeExecutionChart = ({ value }: { value: unknown }) => {
         <div className="relative aspect-[4/3] w-full">
           <Image
             alt="Chart output"
+            // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
             className="rounded-lg object-contain"
             fill
             sizes="(max-width: 768px) 100vw, 768px"

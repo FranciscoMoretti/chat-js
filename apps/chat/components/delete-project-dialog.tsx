@@ -3,9 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useCallback } from "react";
+/* oxlint-enable sort-imports */
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+/* oxlint-enable sort-imports */
 import { useTRPC } from "@/trpc/react";
 
 interface DeleteProjectDialogProps {

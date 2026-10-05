@@ -1,7 +1,7 @@
 import type {
-  ExecutionSandbox,
   CodeExecutionContext,
   CodeExecutionResult,
+  ExecutionSandbox,
 } from "./types";
 
 const WHITESPACE_REGEX = /\s+/u;

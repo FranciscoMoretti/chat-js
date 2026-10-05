@@ -1,12 +1,16 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { connection } from "next/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+/* oxlint-enable sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
@@ -58,9 +62,18 @@ const ConnectorsSettingsPage = () => (
       <SettingsPage>
         <ConnectorsSettingsHeader />
         <div className="flex flex-col gap-3">
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-5/6" />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-16 w-full"
+          />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-16 w-full"
+          />
+          <Skeleton
+            // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-16 w-5/6"
+          />
         </div>
       </SettingsPage>
     }

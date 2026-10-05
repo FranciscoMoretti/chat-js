@@ -4,10 +4,14 @@
 import { isDeepStrictEqual } from "node:util";
 
 import postgres from "postgres";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Sql } from "postgres";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_ROW_INDEX = 0;

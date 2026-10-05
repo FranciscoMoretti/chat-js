@@ -1,8 +1,10 @@
 import type { EveMessage } from "eve/client";
 import { z } from "zod";
 
-import { frontendToolsSchema } from "@/lib/ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+import { frontendToolsSchema } from "@/lib/ai/types";
 
 const selection = z.object({ selectedTool: frontendToolsSchema.nullable() });
 

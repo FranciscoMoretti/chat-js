@@ -1,17 +1,23 @@
 import { generateText } from "ai";
 
 import { getLanguageModel } from "@/lib/ai/providers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { chatTelemetry } from "@/lib/ai/telemetry";
+/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isEveRootTitlePending,
   replaceEveRootFallbackTitle,
   settleEveRootFallbackTitle,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { eveMessageTitle } from "./message-input";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+/* oxlint-enable sort-imports */
 
 const EVE_TITLE_MAX_LENGTH = 40;
 const TITLE_START_INDEX = 0;

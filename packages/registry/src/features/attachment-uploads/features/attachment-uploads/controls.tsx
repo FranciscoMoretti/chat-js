@@ -3,12 +3,16 @@ import { Camera, Paperclip } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComposerControlProps } from "@/components/composer/control";
+/* oxlint-enable sort-imports */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import { installedFeatures } from "@/features/installed";
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 
 const loginPrompt = (

@@ -1,10 +1,16 @@
 import { getVercelOidcTokenSync } from "@vercel/oidc";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { APIError, Sandbox } from "@vercel/sandbox";
+/* oxlint-enable sort-imports */
 
 import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
+/* oxlint-enable sort-imports */
 
 interface SandboxAuth {
   projectId: string;

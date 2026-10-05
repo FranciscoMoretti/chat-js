@@ -1,7 +1,9 @@
 import type { ToolContext } from "eve/tools";
 
-import { createToolResult, createToolError } from "./tool-result";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
+import { createToolError, createToolResult } from "./tool-result";
 
 /** Only an explicitly reported domain failure becomes an error receipt. */
 class ExpectedToolFailureError extends Error {

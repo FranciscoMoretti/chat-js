@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
+/* oxlint-enable sort-imports */
 import { eveRequest } from "./server";
 
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): readEveCheckpoint keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

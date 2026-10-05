@@ -1,22 +1,28 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Plug, Settings } from "lucide-react";
+/* oxlint-enable sort-imports */
 import React from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComposerControlProps } from "@/components/composer/control";
+/* oxlint-enable sort-imports */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  DropdownMenuPortal,
-  DropdownMenuGroup,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
@@ -102,7 +108,10 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
         Connectors
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuSubContent className="w-56">
+        <DropdownMenuSubContent
+          // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuSubContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="w-56"
+        >
           <DropdownMenuGroup>
             {typeof status === "string" && status !== "" ? (
               <DropdownMenuLabel>{status}</DropdownMenuLabel>

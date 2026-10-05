@@ -3,12 +3,16 @@
  */
 import { readFileSync } from "node:fs";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
-  getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
+  getMigrationHistoryProblem,
 } from "./migration-history";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const baseline = { createdAt: 2, hash: "eve" };

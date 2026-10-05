@@ -1,9 +1,15 @@
 import { CodeHighlightNode, CodeNode } from "@lexical/code";
 import { LinkNode } from "@lexical/link";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ListItemNode, ListNode } from "@lexical/list";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+/* oxlint-enable sort-imports */
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EditorState, LexicalEditor } from "lexical";
+/* oxlint-enable sort-imports */
 
 const DOCUMENT_NODE_CLASSES = [
   HeadingNode,

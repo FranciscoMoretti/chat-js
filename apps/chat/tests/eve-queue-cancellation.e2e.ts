@@ -7,8 +7,12 @@
 import { createServer } from "node:http";
 
 import { createWorld } from "@workflow/world-postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Pool } from "pg";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { env } from "../lib/env";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */

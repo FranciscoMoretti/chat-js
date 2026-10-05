@@ -1,6 +1,8 @@
 import React, { createElement } from "react";
 import type { ComponentProps } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DeviceLoginPage } from "./device-login-page";

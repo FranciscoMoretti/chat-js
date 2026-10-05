@@ -2,13 +2,19 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../lib/db/eve-search"; "../../lib/eve/conversation-scope"; "../../lib/eve/search-backfill"; "../../lib/eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  */
 import { defineState } from "eve/context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineHook } from "eve/hooks";
+/* oxlint-enable sort-imports */
 
 import { indexEveSearchText } from "../../lib/db/eve-search";
 import { resolveEveConversationScope } from "../../lib/eve/conversation-scope";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { backfillEveSearchConversation } from "../../lib/eve/search-backfill";
+/* oxlint-enable sort-imports */
 import { eveEventSearchText } from "../../lib/eve/search-text";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveSearchText } from "../../lib/eve/search-text";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const maxPendingEntries = 256;

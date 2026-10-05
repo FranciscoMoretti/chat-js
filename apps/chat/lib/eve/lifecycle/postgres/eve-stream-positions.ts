@@ -1,5 +1,5 @@
-import postgres from "postgres";
 import type { Sql } from "postgres";
+import postgres from "postgres";
 import { z } from "zod";
 
 const positionRows = z.array(

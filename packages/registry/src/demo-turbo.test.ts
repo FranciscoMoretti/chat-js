@@ -6,18 +6,22 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 import { runTestProcess } from "./features/test-runtime";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  findTask,
   jsonObject,
   jsonString,
-  taskList,
   parseAffectedTaskNames,
-  findTask,
   parseJsonObject,
+  taskList,
 } from "./test-json";
+/* oxlint-enable sort-imports */
 import type { TaskPlan } from "./test-json";
 
 const SUCCESS_EXIT_CODE = 0;

@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon } from "lucide-react";
-import type { JSX as ReactJSX, ComponentProps, HTMLAttributes } from "react";
+import type { ComponentProps, HTMLAttributes, JSX as ReactJSX } from "react";
 import React, {
   createContext,
   useContext,
@@ -10,7 +10,9 @@ import React, {
   useState,
 } from "react";
 import { codeToHtml } from "shiki";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { BundledLanguage, ShikiTransformer } from "shiki";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -190,6 +192,7 @@ const CodeBlockCopyButton = ({
 
   return (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("shrink-0", className)}
 
       // oxlint-disable-next-line typescript/no-misused-promises -- #585: The clipboard handler catches failures and invokes onError; the click does not consume a return value.

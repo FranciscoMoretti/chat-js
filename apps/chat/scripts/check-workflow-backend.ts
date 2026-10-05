@@ -3,7 +3,9 @@
  */
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "../lib/db/connection";
+/* oxlint-enable sort-imports */
 import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 /* oxlint-enable import/no-relative-parent-imports */

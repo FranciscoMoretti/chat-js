@@ -1,14 +1,20 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   issueGuestCredential,
   newGuestClaims,
 } from "@/lib/eve/disposable-guest";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { sameOrigin } from "@/lib/eve/request-policy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): input uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
