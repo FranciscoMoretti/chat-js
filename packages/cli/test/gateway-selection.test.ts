@@ -604,7 +604,15 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     // Exercise namespaced transitive dependencies, including the shared UI item
     // without a ChatJS tool descriptor, through actual installation and sync.
     const sharedDirectory = join(cwd, "tools/chatjs/_shared/code-execution");
-    await rm(sharedDirectory, { force: true, recursive: true });
+    await Promise.all(
+      [
+        "code-execution-chart.tsx",
+        "interactive-charts.tsx",
+        "interactive-chart-impl.tsx",
+      ].map(
+        async (file) => await rm(join(sharedDirectory, file), { force: true })
+      )
+    );
     await run(cwd, ["node", cliEntry, "add", "saved-code-execution", "--yes"]);
     expect(
       await Bun.file(join(sharedDirectory, "interactive-charts.tsx")).exists()

@@ -25922,10 +25922,10 @@
       "961e7a3afde651eedd49b8cb00737542630486a6d0e69cab1711f7b49c8eb67f"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": [
-      "93d27cb5549fbefb69c22673c680787fd64df3feb0638479e11bf16eac1a4020"
+      "6e03b767c8d96d4eed25ee12b9f2bbed3ee7b74c9398dfe00393083406cd5451"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "b3bfb4bea5cd03282e6569f1847542503751dd4321385b8109bf9c25ba862436"
+      "2d9190caf0f43fb7969bf5c8002af2dd4d268c5ef9a92974c3c9a77a30f977bb"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"typescript/unbound-method\",\"oxlint-disable-next-line\"]": [
       "5675c7ab6ad63c3bdd26dff254c75693de2f6aa4522321b32c2dcdba84d5d2ee"
@@ -25948,14 +25948,14 @@
     "[\"packages/cli/test/gateway-selection.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "72c3eee78e254f4200f41d5ed7e9a31b166b803f9c8da8e15112c2d0cd0b9def",
       "5af45491d8c778d7597d2c0f7f4874fd9ec21167f5dc1b376feb62972d906636",
-      "28445ec45bc99843075a7b4337fafe1d2c01a8aa01f8d771c60e2dcd70d81275",
+      "59f01b1d8223f253109a0d56aca798d51879ee1abdaa71f01af6eb5d2e945966",
       "75fbed6281470e49afa934c05fcc7a0e6f88bec5fd8818a32735cfa0e6116e74",
       "dd0ab5403d9f0f88c443158b51b6f2ae9d7a475a6babc527eab6d7dc09fd903e",
       "500856dac9d8d718812fbe56a63de54e321a8fa7309bc16c2a09558ddde43dd6"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
       "742d39607407b15d43dcf891e108b34187517e81440b01c6c3c980cbbab5167d",
-      "eadbd2faa5b4df8264c6f35ea70965f7ee215dec84accb1dcf15f92ed4ce620c",
+      "d42773c3b5785cfc2d1a38665d4098f104a739a5ac88f057779a86bd4f2ee9db",
       "f31e4dce3612e0a18eee3342b0096351f02a23cc351e3006dbe8fa1d0516521d",
       "6b00becde8b2f9b6d75eb9f74e21e29b982c86f75b3125ed5fe2bceb6e67c1f9",
       "500856dac9d8d718812fbe56a63de54e321a8fa7309bc16c2a09558ddde43dd6"
@@ -26056,7 +26056,7 @@
       "b70854018092e978f58c89c23e05abee5cd966c7e6312172614c463cb8100652"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "3119c87364e0cce19426dd68dfac860bbab04f1e42fc414ee86247ee76b49786"
+      "2b64a8531713196ad3f52a0b76e746182d06dc4606f91eb1883ca6026552e31e"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"eslint/complexity\",\"oxlint-disable-next-line\"]": [
       "f660002c0a775e32b4f27dc222a036b674f0871c26dd393a374c440a916cb65f"
@@ -26071,7 +26071,7 @@
       "d2de513ecb1b807c19ac7505c17357602dcfec4a92404d593d63fd1cfb655462"
     ],
     "[\"packages/cli/test/gateway-selection.test.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "c25c4957552e59490211cbacc50deb25afff529cc18d59e68e90e93f02f637e7"
+      "af98fce7f8c064c958fc61571a4beb759e814ad8ce51d4042f005e86f9a4537e"
     ],
     "[\"packages/cli/test/native-tool-fixture.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
       "93dfdfc52cccc99ee39774bdc1256327432808715dbef6368166952f4db2b39f"
