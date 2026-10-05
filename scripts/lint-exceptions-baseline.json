@@ -5760,6 +5760,7 @@
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.ts\",\"eslint/max-params\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
@@ -22552,32 +22553,32 @@
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "8bf06086c853edff8273d222b35fa6d3f7a5493d0ea28d7c96e0f1dff7171007",
-      "23e5e2c5c2308e059a73ebbbd2bee5b6e39c22c86bb6e0e568a73f86fdd7c469",
-      "f6130e90064d344cf92e7d77d59d07a84a4357d8991abe3cf1ebc7212bc0f8e3",
+      "7de277e908fb893b832b1c797b8416fd2c2000bd571223407c8d147b5ca435ec",
+      "8506404702991f043731bbfe95375f2164d9bb9817c4367a44441c117dd15a9a",
       "d43d5653657e60f383964d3bfb0cbacb99c62fb147d52b062875d985331e04b9",
       "1687d1729d2bac9d0dd0824c10b822c08b47476787c0da9582291b42cfea747d",
       "7c9495ed568411dccc4dd407baa4ac61836277059ba98f12fabd40947c26747c"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": [
-      "0e32270bee38f946f592015c29e78cfd058ad610be1071c9ce92942a1b8e7783",
-      "fa0e4eb7709c9d08db55eceefafd2b132018504503c9f27b7c6f44f43a3aa9ae",
+      "582a4447bdfebc1157ba56a0b66b28bd8cedac9d268c4353c43c3f2c495350be",
+      "e68b68997c15cf5808a882c209936e225e1fd7ba5464d17c3218f439aaedfc93",
       "19b724d2c9c632814ea2bc76db2ed628026b8605c385b7d3feeb8f316e223640"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "a4e40845aa6b4812c1e03096af10f158edb87902407e8064edb691a5620c8208",
-      "d1f61c94476b796c44fa6b55e74f5f7b7744690b1c89976eaf6a6e1847363d50",
+      "dffc45ae15c2b822f715fb60d7ab780c9f70819c79ec987899ab81d36832b022",
+      "cd1b850989ce497547618762c78fc0b71e3dea7454c2fc4658beb94096654c15",
       "a1c6444e27503f3d983c24043fd257b8f1b2b9e904da42508069852cdcdeabb3",
       "a260c49d486dae403142f44d31bc18bbc97d449c805cf7cb8c15fcaf0cf8c7eb",
       "af5662f8651c49894566a1da57bda9cebbb9f323286a290e995b35879cc954ae",
       "cbff05ed3a45a36456217632bb90abac4047663d40914dd5d809e772d836a3e3"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "852847d4d3e3093a3ac9f8f4624889dac7f597e63989e14ac831af37deef3810",
+      "32b882eca4187dd16cb3a912796d1f5a01a6a547ead8b442f28a9ecba48f6d86",
       "645e468f924322c871533b2e8bca0361d8871fe4c31630ddd3c79da51c7cd59f",
       "085e55b005dcf33994c9432c200d5bc6d1811f9f7e35dbd48cf5cc5aaa565da3"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "0c280e61fb3ec53bb1bc74ea428279403da84252e3f9328d370e9703002ff30b",
+      "0f4bf28e69d4e59bb143ac299a2878e9b1c5b12de0f144a05b3e3edea1957107",
       "96f1b979a759c9e01a3ea8e8ffb519212dec7f9424cc35a626752ece1a94186a",
       "a7d89f1399e8ce1cf6ec4937a2d30147e78092f0c71182e861d7ea4d2096cd25",
       "371ff6b0d72e1f8125a573593207ac4ac6089784ba71f1aaa11c5cee8294eb9a"
@@ -22595,7 +22596,7 @@
       "232c7a0e5360f97c02a71e212053f11c5b319110daaa5be1b59489b9655c1a03"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "ee2b6c46d74b86666c9ad9cd9331267f3595b1e35b881ef23079b8c682d31c23"
+      "6dfcc586666a49cb26c35a0c09fe109faf4365d544fd67dcac0952cf035d4857"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/types.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "bd0684e5749cea52804e98a58d015bf0189e4c1ae3d7dbb7d642c87637881df4"
@@ -27097,32 +27098,32 @@
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "8bf06086c853edff8273d222b35fa6d3f7a5493d0ea28d7c96e0f1dff7171007",
-      "23e5e2c5c2308e059a73ebbbd2bee5b6e39c22c86bb6e0e568a73f86fdd7c469",
-      "f6130e90064d344cf92e7d77d59d07a84a4357d8991abe3cf1ebc7212bc0f8e3",
+      "7de277e908fb893b832b1c797b8416fd2c2000bd571223407c8d147b5ca435ec",
+      "8506404702991f043731bbfe95375f2164d9bb9817c4367a44441c117dd15a9a",
       "d43d5653657e60f383964d3bfb0cbacb99c62fb147d52b062875d985331e04b9",
       "1687d1729d2bac9d0dd0824c10b822c08b47476787c0da9582291b42cfea747d",
       "7c9495ed568411dccc4dd407baa4ac61836277059ba98f12fabd40947c26747c"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": [
-      "0e32270bee38f946f592015c29e78cfd058ad610be1071c9ce92942a1b8e7783",
-      "fa0e4eb7709c9d08db55eceefafd2b132018504503c9f27b7c6f44f43a3aa9ae",
+      "582a4447bdfebc1157ba56a0b66b28bd8cedac9d268c4353c43c3f2c495350be",
+      "e68b68997c15cf5808a882c209936e225e1fd7ba5464d17c3218f439aaedfc93",
       "19b724d2c9c632814ea2bc76db2ed628026b8605c385b7d3feeb8f316e223640"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "a4e40845aa6b4812c1e03096af10f158edb87902407e8064edb691a5620c8208",
-      "d1f61c94476b796c44fa6b55e74f5f7b7744690b1c89976eaf6a6e1847363d50",
+      "dffc45ae15c2b822f715fb60d7ab780c9f70819c79ec987899ab81d36832b022",
+      "cd1b850989ce497547618762c78fc0b71e3dea7454c2fc4658beb94096654c15",
       "a1c6444e27503f3d983c24043fd257b8f1b2b9e904da42508069852cdcdeabb3",
       "a260c49d486dae403142f44d31bc18bbc97d449c805cf7cb8c15fcaf0cf8c7eb",
       "af5662f8651c49894566a1da57bda9cebbb9f323286a290e995b35879cc954ae",
       "cbff05ed3a45a36456217632bb90abac4047663d40914dd5d809e772d836a3e3"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "852847d4d3e3093a3ac9f8f4624889dac7f597e63989e14ac831af37deef3810",
+      "32b882eca4187dd16cb3a912796d1f5a01a6a547ead8b442f28a9ecba48f6d86",
       "645e468f924322c871533b2e8bca0361d8871fe4c31630ddd3c79da51c7cd59f",
       "085e55b005dcf33994c9432c200d5bc6d1811f9f7e35dbd48cf5cc5aaa565da3"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "0c280e61fb3ec53bb1bc74ea428279403da84252e3f9328d370e9703002ff30b",
+      "0f4bf28e69d4e59bb143ac299a2878e9b1c5b12de0f144a05b3e3edea1957107",
       "96f1b979a759c9e01a3ea8e8ffb519212dec7f9424cc35a626752ece1a94186a",
       "a7d89f1399e8ce1cf6ec4937a2d30147e78092f0c71182e861d7ea4d2096cd25",
       "371ff6b0d72e1f8125a573593207ac4ac6089784ba71f1aaa11c5cee8294eb9a"
@@ -27140,7 +27141,7 @@
       "232c7a0e5360f97c02a71e212053f11c5b319110daaa5be1b59489b9655c1a03"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "ee2b6c46d74b86666c9ad9cd9331267f3595b1e35b881ef23079b8c682d31c23"
+      "6dfcc586666a49cb26c35a0c09fe109faf4365d544fd67dcac0952cf035d4857"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/types.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "bd0684e5749cea52804e98a58d015bf0189e4c1ae3d7dbb7d642c87637881df4"
@@ -27189,28 +27190,31 @@
       "e64a2418af0cec62aa990056cd7150644ab4b9f8dcecc8135b1b62aa7c389f77"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "4c265ac26e026bf81eb07a62970b2f55dc81ee8dd4d6a18a0643f7c5a3c2e121"
+      "53d2f9f38e08ed374130ac53dd80c99fc212d2d4b661cc30aa92ae1a0ab2ed6d"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/require-await\",\"oxlint-disable\"]": [
-      "f7ee13ac4c92f4af5d717c0ad68e242c74e8eb151ac878ab7f3448e5e3f39d60"
+      "2afb9700a645f877fac54d594421d97a239360c70b9c6e21835fedc0476efac0"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/require-await\",\"oxlint-disable\"]": [
-      "f7ee13ac4c92f4af5d717c0ad68e242c74e8eb151ac878ab7f3448e5e3f39d60"
+      "2afb9700a645f877fac54d594421d97a239360c70b9c6e21835fedc0476efac0"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/await-thenable\",\"oxlint-disable\"]": [
-      "37677c09619cb8e2dabdba1453b869e37b1488d5d6edace219114a0d47f3646b"
+      "4d5eaf9f9f96a47895d88ab59abd117db387241e9cc1ffbd992ea9ee45544a7f"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/no-confusing-void-expression\",\"oxlint-disable\"]": [
-      "37677c09619cb8e2dabdba1453b869e37b1488d5d6edace219114a0d47f3646b"
+      "4d5eaf9f9f96a47895d88ab59abd117db387241e9cc1ffbd992ea9ee45544a7f"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "1c50bfa4e476b0200e34dbc978db6ea0a85b534f4e0eb1ff2c7b54ac32628c9e"
+      "d3ce972cbdc1a55dbeec8da0b796bb8c2f795c33287654023ff96dbc4d581492"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "1c50bfa4e476b0200e34dbc978db6ea0a85b534f4e0eb1ff2c7b54ac32628c9e"
+      "d3ce972cbdc1a55dbeec8da0b796bb8c2f795c33287654023ff96dbc4d581492"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "296dd485c95d96b7d53df4470c265059c0428e1837c33da84cbfa752009e3c0d"
+      "fb0a0c9c626c7441d8314ff23be9d9fbb2588bf8661d67d8fd8ebcf96cb746c4"
+    ],
+    "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "e7e94688979ffc6fd314cdbb0eb2a0043fee907c4455fa53e0cf7e779e2c4046"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "a2001d28dc3e7fc3e8e1b0eea8b8db6243ea392782fad0d7838c6bd451a3dfe3"
@@ -27252,7 +27256,7 @@
       "a23a5b3431d9621278f83fbe8e650a5e1c871b919e57260ac6884c41f1a16eb3"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/sandbox.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "9a9cc29086168dbeb3ddbbd9739842a021351c534ebd6cef810979f3d0f25986"
+      "4955047a4ace076b8da7c569e3cfd8f5f953c38d6081fdb0e8c60f3645699711"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/sandbox.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": [
       "85bdd031ab796d12b3824cc494f452ceb7ea4979eb9694020b67de5fa60b9355"
@@ -27264,10 +27268,10 @@
       "6e314ca5eea05f001e5e57b0d77c7a3a28781ff2d3af3ef32d61e59a535dc018"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "bfc492cd4c5d16a4f612db5a746d78ff2a665afe7da26987c3e324c70d0c6b2a"
+      "abe60053a104e5a76a02224de1f48417b0e12f257c021d63a40d8529f3165a80"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/tool.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "98957e0db31903793414a2e06c212d17a576838761daae5bb05ad89f2ddfd586"
+      "b43451a62c5af3c2d659645c27d4152cf219b9cafcda66c941414fc48e9b84f3"
     ],
     "[\"packages/registry/src/tools/deep-research/agent/subagents/researchCompressor/agent.ts\",\"import/no-default-export\",\"oxlint-disable\"]": [
       "47bd1c0e57104584d9ce72569ee553abf53b3ed3a6faf547146223905870f6fb"

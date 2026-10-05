@@ -40,17 +40,39 @@ type Credentials = Readonly<{ apiKey: string; organizationId: string }>;
 const shellArgument = (value: string): string =>
   `'${value.replaceAll("'", String.raw`'\''`)}'`;
 
+const waitForCommand = async <Result>(
+  operation: Promise<Result>,
+  signal: AbortSignal
+): Promise<Result> => {
+  const cancelled = Promise.withResolvers<never>();
+  const stop = (): void => {
+    cancelled.reject(new Error("Daytona command cancelled"));
+  };
+  signal.addEventListener("abort", stop, { once: true });
+  if (signal.aborted) {
+    stop();
+  }
+  try {
+    return await Promise.race([operation, cancelled.promise]);
+  } finally {
+    signal.removeEventListener("abort", stop);
+  }
+};
+
 const commandSandbox = (
   resource: DaytonaResource,
   signal: AbortSignal
 ): ExecutionSandbox => ({
   async runCommand({ cmd, args }) {
     signal.throwIfAborted();
-    const result = await resource.process.executeCommand(
-      [cmd, ...args].map((argument) => shellArgument(argument)).join(" "),
-      "/tmp",
-      {},
-      EXECUTION_TIMEOUT_SECONDS
+    const result = await waitForCommand(
+      resource.process.executeCommand(
+        [cmd, ...args].map((argument) => shellArgument(argument)).join(" "),
+        "/tmp",
+        {},
+        EXECUTION_TIMEOUT_SECONDS
+      ),
+      signal
     );
     signal.throwIfAborted();
     // Daytona exposes combined command output; keep it once in stdout.

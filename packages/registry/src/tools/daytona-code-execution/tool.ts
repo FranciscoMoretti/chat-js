@@ -48,7 +48,12 @@ const executeCode: CodeExecutor = async (input, context) =>
       return output;
     } catch (error) {
       createModuleLogger("daytona-code-execution").error(
-        { reason: error instanceof Error ? error.message : "Unknown error" },
+        {
+          callId: context.callId,
+          language: input.language,
+          reason: error instanceof Error ? error.message : "Unknown error",
+          sessionId: context.session.id,
+        },
         "Sandbox execution failed"
       );
       return usage.fail();

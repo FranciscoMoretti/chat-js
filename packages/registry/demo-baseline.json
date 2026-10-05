@@ -63,7 +63,7 @@
     "tools/chatjs/_shared/code-execution/interactive-chart-impl.tsx": "e6f30e07e46592d8f94e8f1dc40d95e5bfeecc121b71203787f4374cb0828aa2",
     "tools/chatjs/_shared/code-execution/interactive-charts.tsx": "b94c2dc148dd4c6c77eea7bd53470adf7bee6ded6208ef276f0fce62f7e80aae",
     "tools/chatjs/_shared/code-execution/javascript.ts": "4fb514cb01979e9526ddaf919ae297919837309773d027304fc72710e514a7d2",
-    "tools/chatjs/_shared/code-execution/python.ts": "7792f434f203832494aec5f65a0a50e9ef4f9bc19298fbbd571216c17c769aa4",
+    "tools/chatjs/_shared/code-execution/python.ts": "55e1691d78fc04e65512a32e4d7708b887e511addc74d303f83a85fcee89747d",
     "tools/chatjs/_shared/code-execution/types.ts": "6cf4d4efb868b8e059c166b0d4579dc80e2b795b67ebbf104aa6d09053fae701",
     "tools/chatjs/code-documents/chatjs.json": "1f9eb4c17f831128e1811bff72d226d5d7b7a593db3b3817037190a175b0a83a",
     "tools/chatjs/code-documents/document.tsx": "9d781d6bfa5522ef9b6ee9f64695286aeb13eb36fcb1c4c298b040a7cb3824e3",

@@ -163,3 +163,69 @@ describe("Daytona allocation lifecycle", () => {
     expect(state.events).toEqual(["reserve", "create", "delete", "release"]);
   });
 });
+
+const rejectedMessage = async (pending: Promise<unknown>): Promise<string> => {
+  try {
+    await pending;
+    return "completed";
+  } catch (error) {
+    return error instanceof Error ? error.message : "unknown";
+  }
+};
+
+/* oxlint-disable eslint/max-statements -- Keep the deferred command, deletion barrier, cancellation and release assertions in one race regression test. */
+test("cancellation settles even when the command never responds, after deletion confirms", async () => {
+  const state = setup();
+  const command = Promise.withResolvers<{ exitCode: number; result: string }>();
+  const deletion = Promise.withResolvers<boolean>();
+  const deleting = Promise.withResolvers<boolean>();
+  state.resource.process.executeCommand = async () => {
+    state.controller.abort();
+    return await command.promise;
+  };
+  state.selected.cleanup.deleteAndConfirmAbsent = async () => {
+    state.events.push("delete");
+    deleting.resolve(true);
+    await deletion.promise;
+  };
+  const pending = executeInDaytona(
+    input,
+    state.selected,
+    state.ownership,
+    state.controller.signal
+  );
+  const rejected = rejectedMessage(pending);
+  await deleting.promise;
+  expect(state.events).not.toContain("release");
+  deletion.resolve(true);
+  expect(await rejected).toContain("cancelled");
+  expect(state.events).toContain("release");
+});
+
+/* oxlint-enable eslint/max-statements */
+
+test.each([false, true])(
+  "Python package failure preserves combined output (extra=%s)",
+  async (extra) => {
+    const state = setup();
+    let calls = 0;
+    state.resource.process.executeCommand = async () => {
+      calls += 1;
+      return extra && calls === 1
+        ? { exitCode: 0, result: "installed" }
+        : { exitCode: 1, result: "pip: no matching distribution" };
+    };
+    const result = await executeInDaytona(
+      {
+        code: extra ? "!pip install missing-package\nprint(42)" : "print(42)",
+        language: "python",
+        title: "test",
+      },
+      state.selected,
+      state.ownership,
+      state.controller.signal
+    );
+    expect(result.message).toContain("pip: no matching distribution");
+    expect(state.events).toContain("release");
+  }
+);

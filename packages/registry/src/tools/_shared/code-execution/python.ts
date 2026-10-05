@@ -30,7 +30,10 @@ const installBasePackages = async (
     cmd: "pip",
   });
   if (installStep.exitCode !== 0) {
-    const installStderr = await installStep.stderr();
+    const errorOutput = await installStep.stderr();
+    const standardOutput =
+      errorOutput.trim() === "" ? await installStep.stdout() : "";
+    const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { requestId, stderr: installStderr },
       "base package installation failed"
@@ -103,7 +106,10 @@ const processExtraPackages = async (
     cmd: "pip",
   });
   if (dynamicInstall.exitCode !== 0) {
-    const stderr = await dynamicInstall.stderr();
+    const errorOutput = await dynamicInstall.stderr();
+    const standardOutput =
+      errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
+    const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(
       { exitCode: dynamicInstall.exitCode, requestId },
       "dynamic package installation failed"
