@@ -144,6 +144,7 @@ const requireGroup = (
     throw new Error("Response group content is unavailable.");
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     candidates: result.candidates,
     inputHash: result.inputHash,
@@ -295,6 +296,7 @@ const recordEveResponseGroupRejection = async (
         ? {
             modelId: candidate.modelId,
             operationId,
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (rejection ? { rejection } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
             ...(rejection ? { rejection } : {}),
           }
         : candidate
@@ -367,6 +369,7 @@ const getEveResponseGroup = async (
         );
         if (row?.state === "bound" && row.sessionId) {
           return {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
             conversationId: row.id,
             sessionId: row.sessionId,
@@ -374,11 +377,14 @@ const getEveResponseGroup = async (
           };
         }
         if (row) {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           return { ...identity, state: "unresolved" };
         }
         return candidate.rejection
-          ? { ...identity, state: "rejected", ...candidate.rejection }
-          : { ...identity, state: "waiting" };
+          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing candidate.rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            { ...identity, state: "rejected", ...candidate.rejection }
+          : // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            { ...identity, state: "waiting" };
       }
     ),
     id: group.id,
@@ -438,6 +444,7 @@ const getEveResponseGroupForConversation = async (
     );
   const boundFamily = family.flatMap(
     (member: ReadonlyNativeSurface<(typeof family)[number]>) =>
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
   );
   if (boundFamily.length === EMPTY_FAMILY_SIZE) {
@@ -536,6 +543,7 @@ const getEveResponseGroupForConversation = async (
     );
   const boundGroupFamilies = groupFamilies.flatMap(
     (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) =>
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
   );
   const groupLineage = resolveEveResponseGroupLineage(
@@ -552,6 +560,7 @@ const getEveResponseGroupForConversation = async (
   }
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveResponseGroupForConversation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return eveResponseGroupResult.parse({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing group own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...group,
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
     candidates: group.candidates.map(
@@ -564,7 +573,8 @@ const getEveResponseGroupForConversation = async (
           candidate.operationId
         );
         return candidate.state === "bound" && replacement
-          ? { ...candidate, ...replacement }
+          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing replacement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            { ...candidate, ...replacement }
           : candidate;
       }
     ),

@@ -137,6 +137,7 @@ const PureDocumentToolCall = ({
       className="cursor pointer flex w-fit flex-row items-start justify-between gap-3 rounded-xl border px-3 py-2"
       onClick={() => {
         setArtifact((currentArtifact) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentArtifact own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...currentArtifact,
           isVisible: true,
         }));

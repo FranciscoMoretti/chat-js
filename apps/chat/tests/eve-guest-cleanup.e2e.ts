@@ -77,12 +77,14 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
   ];
   await insertEveConversationFixtures([
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[0],
       operationId: crypto.randomUUID(),
       state: "deleted",
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       forkTurnId: "turn_0",
       id: excluded[1],
@@ -91,6 +93,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       rootConversationId: roots[0].id,
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[2],
       operationId: crypto.randomUUID(),

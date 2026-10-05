@@ -140,7 +140,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     expect(conversationBinding.parse(await replay.json())).toEqual(branch);
     const changed = await page.request.post("/api/agent-conversations", {
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...operation,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         fork: { ...operation.fork, beforeTurnId: "turn_0" },
       },
       headers,
@@ -188,7 +190,9 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     try {
       const forbidden = await page.request.post("/api/agent-conversations", {
         data: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...operation,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           fork: { ...operation.fork, conversationId: foreignId },
           operationId: crypto.randomUUID(),
         },
@@ -197,6 +201,7 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
       expect(forbidden.status()).toBe(404);
       const raw = await page.request.post("/api/agent-conversations", {
         data: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...operation,
           fork: { beforeTurnId: "turn_1", sessionId: source.sessionId },
         },

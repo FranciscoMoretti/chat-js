@@ -106,6 +106,7 @@ test("purge requires fences, removes every native payload table, isolates other 
     "Fence every run"
   );
   const inventory = await fenceEvePostgresSession(query, root);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await purgeEvePostgresQueue(query, { ...input, runIds: inventory.runIds });
   const receipt = await purgeEvePostgresSessionPayloads(query, input);
   expect(receipt.runIds).toEqual([root, child].toSorted());
@@ -153,6 +154,7 @@ test("queued payloads prevent removal until queue cleanup completes", async () =
   expect(
     await query`select session_id from workflow.eve_payload_purges where session_id = ${root}`
   ).toEqual([]);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await purgeEvePostgresQueue(query, { ...input, runIds: inventory.runIds });
   await purgeEvePostgresSessionPayloads(query, input);
 });
@@ -181,6 +183,7 @@ test("queue-discovered native runs remain in the payload inventory after queue r
   await query`select id from graphile_worker.add_job(${task}, ${query.json(envelope)}::json, run_at := now() + interval '1 day')`;
   const inventory = await fenceEvePostgresSession(query, root);
   const input = { sessionId: root, taskIdentifier: task };
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await purgeEvePostgresQueue(query, { ...input, runIds: inventory.runIds });
   // Queue cleanup fences the discovered run; its stream still needs fencing.
   await expect(purgeEvePostgresSessionPayloads(query, input)).rejects.toThrow(
@@ -462,9 +465,11 @@ test("sandbox coverage requires fences and receipts, then survives native payloa
     })
   ).toEqual([root, child].toSorted());
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     verifyEveSandboxCoverage(query, { ...input, appRoot: "/other" }, verify)
   ).rejects.toThrow("scope changed");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     verifyEveSandboxCoverage(query, { ...input, runIds: [root] }, verify)
   ).rejects.toThrow("scope changed");
 });

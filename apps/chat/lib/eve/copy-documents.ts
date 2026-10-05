@@ -61,8 +61,10 @@ const prepareEveCopyDocuments = (
   const copied = rewriteEveCopyResources(snapshot, allocations, true);
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate copied document revisions without mutating resource-rewrite results.
   return copied.map((document) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...document,
     revisions: document.revisions.map((revision) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...revision,
       operationId: `copy:${revision.id}`,
       turnIndex: null,

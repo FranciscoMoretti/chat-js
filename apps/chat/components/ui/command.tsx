@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- Command uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Command = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive>): ReactJSX.Element => (
   <CommandPrimitive
@@ -48,6 +49,7 @@ const CommandDialog = ({
   children,
   className,
   showCloseButton = true,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes title, description, children, className, showCloseButton from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof Dialog> & {
   title?: string;
@@ -89,6 +91,7 @@ const CommandDialog = ({
 const CommandInput = ({
   className,
   containerClassName,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, containerClassName from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Input> & {
   containerClassName?: string;
@@ -121,6 +124,7 @@ const CommandInput = ({
 /* oxlint-disable react/react-in-jsx-scope -- CommandList uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandList = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.List>): ReactJSX.Element => (
   <CommandPrimitive.List
@@ -141,6 +145,7 @@ const CommandList = ({
 
 /* oxlint-disable react/react-in-jsx-scope -- CommandEmpty uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandEmpty = ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- CommandEmpty snapshots props before resolving CommandPrimitive.Empty; direct props changes getter/member-resolution order, as verified by a getter that changes the primitive.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Empty>): ReactJSX.Element => (
   <CommandPrimitive.Empty
@@ -159,6 +164,7 @@ const CommandEmpty = ({
 /* oxlint-disable react/react-in-jsx-scope -- CommandGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandGroup = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Group>): ReactJSX.Element => (
   <CommandPrimitive.Group
@@ -180,6 +186,7 @@ const CommandGroup = ({
 /* oxlint-disable react/react-in-jsx-scope -- CommandSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandSeparator = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof CommandPrimitive.Separator
@@ -200,6 +207,7 @@ const CommandSeparator = ({
 /* oxlint-disable react/react-in-jsx-scope -- CommandItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof CommandPrimitive.Item>): ReactJSX.Element => (
   <CommandPrimitive.Item
@@ -221,6 +229,7 @@ const CommandItem = ({
 /* oxlint-disable react/react-in-jsx-scope -- CommandShortcut uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const CommandShortcut = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"span">): ReactJSX.Element => (
   <span

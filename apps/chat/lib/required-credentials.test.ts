@@ -98,6 +98,7 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
   let failure: MissingCredentialsError | undefined;
   try {
     requireCredentials("grouped-feature", requirements, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...env,
       NODE_ENV: "test",
     });
@@ -137,6 +138,7 @@ test("reports only unsatisfied subgroups recursively, even without descriptions"
   expect(requirements[0]?.allOf).toHaveLength(2);
   expect(() =>
     requireCredentials("grouped-feature", requirements, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...env,
       ALTERNATIVE_A: "token",
       MISSING_KEY: "key",

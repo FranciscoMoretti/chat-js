@@ -47,6 +47,7 @@ export default defineAgent({
         }
         const resolved = await resolveEveModel(selectedModel.get().modelId);
         return {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolved own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...resolved,
           model: wrapLanguageModel({
             middleware: installedToolAvailabilityMiddleware(context.session),

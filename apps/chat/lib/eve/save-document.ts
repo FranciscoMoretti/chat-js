@@ -67,6 +67,7 @@ export const saveManualEveDocument = async (
   const turns = documentHistoryTurns(snapshot.events);
   const saved = await saveEveDocumentRevision(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fileIds: [...new Set([...previous.fileIds, ...input.fileIds])],
       kind: previous.kind,

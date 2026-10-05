@@ -124,6 +124,7 @@ async function fixture(parentId?: string) {
       ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
       : undefined
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...conversation, sessionId };
 }
 /* oxlint-enable oxc/no-async-await */

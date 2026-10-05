@@ -29,6 +29,7 @@ export const InternalLink = ({
   onClick,
   onNavigate,
   href,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes onAuxClick, onClick, onNavigate, href from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: InternalLinkProps): ReactJSX.Element => {
   const router = useRouter();

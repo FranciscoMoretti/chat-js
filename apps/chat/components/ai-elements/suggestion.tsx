@@ -18,6 +18,7 @@ type SuggestionsProps = ComponentProps<typeof ScrollArea>;
 const Suggestions = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SuggestionsProps): React.JSX.Element => (
   <ScrollArea
@@ -52,6 +53,7 @@ const Suggestion = ({
   variant = "outline",
   size = "sm",
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes suggestion, onClick, className, variant, size, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SuggestionProps): ReactJSX.Element => {
   const handleClick = (): void => {

@@ -106,8 +106,10 @@ test("partial binding moves recovery before releasing the composer and preserves
   ).toBeUndefined();
   const next = prepareCreation(storage, "owner", "New unrelated draft");
   const complete: EveResponseGroupResult = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     candidates: result.candidates.map((candidate) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...candidate,
       conversationId: crypto.randomUUID(),
       sessionId: `native-${candidate.operationId}`,
@@ -127,6 +129,7 @@ test("partial binding moves recovery before releasing the composer and preserves
 test("storage failure cannot release an unresolved request", () => {
   const { storage, operation, result } = fixture();
   const failing = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing storage own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...storage,
     setItem: () => {
       throw new Error("Storage full");
@@ -146,6 +149,7 @@ test("storage failure cannot release an unresolved request", () => {
 test("all rejected candidates are definitive while a mixed uncertain result keeps its request", async () => {
   const { operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     candidates: result.candidates.map(({ operationId, modelId }) => ({
       error: "Source unavailable",
@@ -159,9 +163,11 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
     CreationRejectedError
   );
   const mixed: EveResponseGroupResult = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejected own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...rejected,
     candidates: [
       ...rejected.candidates.slice(0, 1),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result.candidates[1] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...result.candidates[1], state: "unresolved" },
     ],
   };
@@ -174,11 +180,13 @@ test("all rejected candidates are definitive while a mixed uncertain result keep
 test("rejected secondary candidates retain the original request for their retry", () => {
   const { storage, operation, result } = fixture();
   const rejected: EveResponseGroupResult = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     candidates: result.candidates.map((candidate) =>
       candidate.state === "bound"
         ? candidate
-        : { ...candidate, error: "Model unavailable", state: "rejected" }
+        : // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          { ...candidate, error: "Model unavailable", state: "rejected" }
     ),
   };
   retainResponseGroupDraft(storage, "owner", operation, rejected);
@@ -234,6 +242,7 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     "owner",
     "Follow up",
     ["model-a", "model-b"],
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...scope, fork }
   );
   const fetcher = vi
@@ -254,8 +263,10 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
     "Changed draft",
     ["model-b", "model-b"],
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...scope,
       fork: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...fork,
         beforeTurnId: "turn_4",
         checkpointId: crypto.randomUUID(),
@@ -264,6 +275,7 @@ test("follow-up retries recover the saved checkpoint before dispatch", async () 
   );
   expect(recovered).toEqual(operation);
   fetcher
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     .mockResolvedValueOnce(Response.json({ ready: true, ...fork }))
     .mockResolvedValueOnce(Response.json(result));
   await resolveCreationRequest(storage, "owner", recovered, scope);
@@ -299,11 +311,10 @@ test("a checkpoint receipt for different history cannot dispatch a comparison", 
     ["a", "b"],
     { conversationId, fork }
   );
-  const fetcher = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json({ ready: true, ...fork, checkpointId: crypto.randomUUID() })
-    );
+  const fetcher = vi.fn().mockResolvedValue(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    Response.json({ ready: true, ...fork, checkpointId: crypto.randomUUID() })
+  );
   vi.stubGlobal("fetch", fetcher);
   await expect(
     resolveCreationRequest(storage, "owner", operation, { conversationId })
@@ -336,19 +347,25 @@ test("only an exact durable checkpoint rejection releases a comparison for editi
     "owner",
     "Keep this draft",
     ["a", "b"],
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...scope, fork }
   );
   const rejection = {
     checkpointRejected: true,
     reason: "source_advanced",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...fork,
   };
   const fetcher = vi.fn();
   vi.stubGlobal("fetch", fetcher);
   for (const body of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...rejection, checkpointId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...rejection, beforeTurnId: "turn_2" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...rejection, conversationId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...rejection, reason: "unknown" },
   ]) {
     fetcher.mockResolvedValueOnce(Response.json(body, { status: 409 }));

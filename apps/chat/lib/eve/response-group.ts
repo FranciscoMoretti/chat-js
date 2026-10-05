@@ -76,6 +76,7 @@ export const createEveResponseGroup = async (
           modelId: candidate.modelId,
           operationId: candidate.operationId,
           selectedTool: input.selectedTool,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (fork ? { fork, forkKind } : { projectId: input.projectId }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
           ...(fork ? { fork, forkKind } : { projectId: input.projectId }),
         },
         guestReservation?.reservationId
@@ -107,6 +108,7 @@ export const createEveResponseGroup = async (
             code?: "project_not_found";
           } = {
             error: failure.data.error,
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (failure.data.code === "project_not_found"               ? { code: "project_not_found" }               : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
             ...(failure.data.code === "project_not_found"
               ? { code: "project_not_found" }
               : {}),
@@ -121,13 +123,16 @@ export const createEveResponseGroup = async (
             modelId: candidate.modelId,
             operationId: candidate.operationId,
             state: "rejected",
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...rejection,
           };
         }
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return { ...candidate, state: "unresolved" };
       }
       const binding = conversationBinding.parse(await response.json());
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...candidate,
         conversationId: binding.id,
         sessionId: binding.sessionId,
@@ -135,6 +140,7 @@ export const createEveResponseGroup = async (
       };
     } catch {
       // Network loss and native uncertainty are retried with this exact identity.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...candidate, state: "unresolved" };
     }
   };
@@ -178,6 +184,7 @@ export const createEveResponseGroup = async (
         primary,
         ...rest.map(
           (candidate) =>
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ({ ...candidate, state: "waiting" }) satisfies CandidateResult
         ),
       ],

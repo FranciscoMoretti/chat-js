@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 const Switch = reactForwardRef<
   ReactComponentRef<typeof SwitchPrimitivesRoot>,
   ReactComponentPropsWithoutRef<typeof SwitchPrimitivesRoot>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SwitchPrimitivesRoot
     // oxlint-disable-next-line react/forbid-component-props -- SwitchPrimitivesRoot accepts className in its styling contract; preserve this caller's layout and appearance.

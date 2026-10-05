@@ -138,6 +138,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByText("Words", { exact: true })).toHaveCount(0);
   const conflict = await page.request.post("/api/agent-conversations", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     data: { ...operation, selectedTool: "webSearch" },
     headers: { origin },
   });

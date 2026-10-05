@@ -19,6 +19,7 @@ const plugin = electron({
 // Better Auth matches custom trusted origins by prefix. Electron sends one
 // exact synthetic origin; validate it before the plugin promotes the header.
 const electronAuthPlugin = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing plugin own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...plugin,
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onRequest's awaited sequencing and rejected-Promise behavior. */
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Better Auth owns and mutates the native request context. */

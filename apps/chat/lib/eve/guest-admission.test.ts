@@ -130,6 +130,7 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
   expect(
     guestRequestIpHash(
       new Request(request, {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         headers: { ...headers, "x-forwarded-for": "203.0.113.3" },
       })
     )
@@ -153,6 +154,7 @@ it("self-hosted guest quotas use only the configured proxy header", () => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("checks guest policy and ownership before reserving account/quota", async () => {
   const denied = await admitGuestCreation(request, principal, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     modelId: "premium",
   });
@@ -160,6 +162,7 @@ it("checks guest policy and ownership before reserving account/quota", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(
     await admitGuestCreation(request, principal, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     })
@@ -230,6 +233,7 @@ it("rejects changed replay content before volatile validation", async () => {
     state: "reserved",
   });
   const response = await admitGuestCreation(request, principal, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     message: "changed",
   });

@@ -136,11 +136,13 @@ vi.mock("@tanstack/react-query", () => ({
       },
       list: [
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...connector,
           requireApproval: mocks.approvalRequired,
           userId: mocks.sharedConnector ? null : connector.userId,
         },
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...connector,
           id: "global",
           name: "Shared reference server",

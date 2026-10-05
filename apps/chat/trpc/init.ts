@@ -63,8 +63,10 @@ type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 const trpc = initTRPC.context<typeof createTRPCContext>().create({
   errorFormatter({ shape, error }) {
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...shape,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...shape.data,
         zodError:
           // oxlint-disable-next-line typescript/no-deprecated -- #583: The tRPC error payload exposes flat fieldErrors; treeifyError would change the client-visible error contract.
@@ -153,6 +155,7 @@ const protectedProcedure = trpc.procedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding rest excludes id from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { id, ...rest } = ctx.user;
   if (!id) {
     console.error("User ID missing in session callback");
@@ -161,6 +164,7 @@ const protectedProcedure = trpc.procedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       // This narrows `session` to a non-nullable type.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing rest own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       user: { id, ...rest },
     },
   });

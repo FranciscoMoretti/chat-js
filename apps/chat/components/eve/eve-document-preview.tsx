@@ -82,7 +82,11 @@ export const EveDocumentPreview = ({
         followLive={isLatest}
         isReadonly={isReadonly}
         messageId={messageId}
-        result={{ ...result, id: result.documentId }}
+        result={
+          /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+          { ...result, id: result.documentId }
+          /* oxlint-enable oxc/no-rest-spread-properties */
+        }
         type={action}
       />
     );

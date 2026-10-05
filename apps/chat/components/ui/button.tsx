@@ -46,6 +46,7 @@ const Button = ({
   variant,
   size,
   asChild = false,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant, size, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {

@@ -169,6 +169,7 @@ const writeEveCopyDocuments = async (
     }
     const revisions = copy.plan.documents.flatMap((document) =>
       document.revisions.map((revision) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...revision,
         conversationId,
         createdAt: new Date(revision.createdAt),
@@ -204,6 +205,7 @@ const writeEveCopyDocuments = async (
           conversationId,
           messageIndex: checkpoint.messageIndex,
           ownerId,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing head own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...head,
         }))
       );

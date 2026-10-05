@@ -46,6 +46,7 @@ const server = () =>
         contractVersion: 1,
         id,
         kind: "tool",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (id === "extra"           ? {}           : {               codeExecutionCapabilities: {                 cancellation: "terminate",                 cleanup: "durable-allocation",                 files: "ephemeral",                 languages: ["python", "javascript"],                 timeout: "bounded",                 usage: "single-receipt",               },               codeExecutorExport: "executeCode",               slot: "codeExecution",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(id === "extra"
           ? {}
           : {

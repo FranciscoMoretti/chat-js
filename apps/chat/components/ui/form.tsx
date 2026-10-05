@@ -52,6 +52,7 @@ const FormField = <
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormField snapshots props before its repeated props.name reads and Controller forwarding; direct props changes getter counts/order.
   ...props
 }: ControllerProps<TFieldValues, TName>): ReactJSX.Element => {
   const contextValue = useReactMemo(() => ({ name: props.name }), [props.name]);
@@ -105,6 +106,7 @@ const useFormField = (): FormFieldState => {
     formMessageId: `${id}-form-item-message`,
     id,
     name: fieldContext.name,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fieldState own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...fieldState,
   };
 };
@@ -114,6 +116,7 @@ const useFormField = (): FormFieldState => {
 /* oxlint-disable react/react-in-jsx-scope -- FormItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => {
   const id = useReactId();
@@ -138,6 +141,7 @@ const FormItem = ({
 /* oxlint-disable react/react-in-jsx-scope -- FormLabel uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormLabel = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof LabelPrimitiveRoot>): ReactJSX.Element => {
   const { error, formItemId } = useFormField();
@@ -161,6 +165,7 @@ const FormLabel = ({
 
 /* oxlint-disable react/react-in-jsx-scope -- FormControl uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormControl = ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- FormControl snapshots props before useFormField and Slot forwarding; direct props changes hook/getter order.
   ...props
 }: ReactComponentProps<typeof Slot>): ReactJSX.Element => {
   const { error, formItemId, formDescriptionId, formMessageId } =
@@ -187,6 +192,7 @@ const FormControl = ({
 /* oxlint-disable react/react-in-jsx-scope -- FormDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element => {
   const { formDescriptionId } = useFormField();
@@ -209,6 +215,7 @@ const FormDescription = ({
 /* oxlint-disable react/react-in-jsx-scope -- FormMessage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormMessage = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element | null => {
   const { error, formMessageId } = useFormField();

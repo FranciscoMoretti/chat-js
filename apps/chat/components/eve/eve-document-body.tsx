@@ -12,6 +12,7 @@ import { documentUi } from "@/tools/chatjs/document-ui";
 
 export const DocumentBody = ({
   kind,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes kind from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: DocumentBodyProps & {
   kind: "text" | "code" | "sheet";

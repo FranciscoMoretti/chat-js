@@ -47,6 +47,7 @@ export const WebSearch = ({
     return <p role="alert">This search result could not be displayed.</p>;
   }
   const sources = result.data.searches.flatMap((search) =>
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     search.results.map((source) => ({ ...source, source: "web" as const }))
   );
   const uniqueSources = [

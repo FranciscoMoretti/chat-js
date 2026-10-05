@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- InputGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroup = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -73,6 +74,7 @@ const inputGroupAddonVariants = cva(
 const InputGroupAddon = ({
   className,
   align = "inline-start",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div"> &
   VariantProps<typeof inputGroupAddonVariants>): ReactJSX.Element => (
@@ -127,6 +129,7 @@ const InputGroupButton = ({
   type = "button",
   variant = "ghost",
   size = "xs",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: Omit<ReactComponentProps<typeof Button>, "size"> &
   VariantProps<typeof inputGroupButtonVariants>): ReactJSX.Element => (
@@ -148,6 +151,7 @@ const InputGroupButton = ({
 /* oxlint-disable react/react-in-jsx-scope -- InputGroupText uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupText = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"span">): ReactJSX.Element => (
   <span
@@ -167,6 +171,7 @@ const InputGroupText = ({
 /* oxlint-disable react/react-in-jsx-scope -- InputGroupInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupInput = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"input">): ReactJSX.Element => (
   <Input
@@ -188,6 +193,7 @@ const InputGroupInput = ({
 /* oxlint-disable react/react-in-jsx-scope -- InputGroupTextarea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupTextarea = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"textarea">): ReactJSX.Element => (
   <Textarea

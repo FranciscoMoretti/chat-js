@@ -189,6 +189,7 @@ test("MCP installation requires the approval schema before changing an older sca
   const files = await Promise.all(
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
     (mcpItem.files ?? []).map(async (file) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...file,
       content: await readFile(
         path.resolve(import.meta.dir, "../../../registry", file.path),
@@ -203,6 +204,7 @@ test("MCP installation requires the approval schema before changing an older sca
     type: "registry:file",
   });
   const server = Bun.serve({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing mcpItem own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fetch: () => Response.json({ ...mcpItem, files }),
     hostname: "127.0.0.1",
     port: 0,
@@ -433,6 +435,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
   const files = await Promise.all(
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
     (attachmentUploadsItem.files ?? []).map(async (file) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...file,
       content: await readFile(
         path.resolve(import.meta.dir, "../../../registry", file.path),
@@ -447,6 +450,7 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
     type: "registry:file",
   });
   const server = Bun.serve({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing attachmentUploadsItem own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fetch: () => Response.json({ ...attachmentUploadsItem, files }),
     hostname: "127.0.0.1",
     port: 0,

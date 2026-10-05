@@ -177,6 +177,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     clients.set(clientId, { redirectUris: body.redirect_uris });
     counters.registrations += 1;
     sendJson(response, 201, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing body own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...body,
       client_id: clientId,
       token_endpoint_auth_method: "none",

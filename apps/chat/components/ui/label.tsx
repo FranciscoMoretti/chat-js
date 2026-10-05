@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- Label uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Label = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof LabelPrimitiveRoot>): ReactJSX.Element => (
   <LabelPrimitiveRoot

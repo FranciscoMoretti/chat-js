@@ -172,6 +172,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
       }));
 
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...sharedOptions,
         series,
         xAxis: {
@@ -180,8 +181,10 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           nameLocation: "middle",
           scale: true,
           type: chart.x_scale === "datetime" ? "time" : "value",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
           axisLabel: {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions.axisLabel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...defaultAxisOptions.axisLabel,
             formatter:
               chart.x_scale === "datetime"
@@ -202,6 +205,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           position: "right",
           scale: true,
           type: "value",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
       };
@@ -233,6 +237,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
       }));
 
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sharedOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...sharedOptions,
         series,
         xAxis: {
@@ -240,6 +245,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           nameGap: 40,
           nameLocation: "middle",
           type: "category",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
         yAxis: {
@@ -248,6 +254,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           nameLocation: "middle",
           position: "right",
           type: "value",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
         },
       };

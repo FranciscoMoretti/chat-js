@@ -76,6 +76,7 @@ export const EveDocumentTool = ({
           return current;
         }
         return {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...current,
           content: data.content ?? "",
           conversationId,
@@ -114,6 +115,7 @@ export const EveDocumentTool = ({
       if (!completed?.success) {
         return current.previewCallId === part.toolCallId
           ? {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...current,
               isVisible: current.documentId !== "init",
               previewCallId: undefined,
@@ -180,7 +182,11 @@ export const EveDocumentTool = ({
       disabled={!isClient}
       isReadonly={isReadonly}
       messageId={messageId}
-      result={{ ...result.data, id: result.data.documentId }}
+      result={
+        /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing result.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+        { ...result.data, id: result.data.documentId }
+        /* oxlint-enable oxc/no-rest-spread-properties */
+      }
       type={part.toolName === "readDocument" ? "read" : writeAction}
     />
   );

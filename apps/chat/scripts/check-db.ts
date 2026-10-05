@@ -31,6 +31,7 @@ const CLOSE_TIMEOUT_SECONDS = 1;
 const checkDatabase = async (): Promise<void> => {
   const parsed = z
     .object({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing databaseEnvOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...databaseEnvOptions,
       DATABASE_URL: z.string().min(1),
     })
@@ -48,6 +49,7 @@ const checkDatabase = async (): Promise<void> => {
   ): Promise<void> => {
     const settings = databaseConnection(parsed.data, purpose);
     const sql = postgres(settings.url, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing settings.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...settings.options,
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,

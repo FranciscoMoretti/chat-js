@@ -81,6 +81,7 @@ const ArtifactProvider = ({
   const setMetadata = useCallback(
     (documentId: string, metadata: ArtifactMetadata | MetadataUpdater) => {
       setMetadataStore((current) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...current,
         // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Artifact metadata intentionally varies with document kind; narrowing it requires a discriminated metadata/store API migration.
         [documentId]:
@@ -167,6 +168,7 @@ const useArtifact = (): ArtifactHookValue => {
   }, [setArtifact]);
 
   const closeArtifact = useCallback((): void => {
+    /* oxlint-disable oxc/no-rest-spread-properties -- Preserve current streaming fields when hiding the artifact, or copy the initial state with idle status; the enabled eslint/prefer-object-spread rule rejects Object.assign composition. */
     setArtifact((currentArtifact) =>
       currentArtifact.status === "streaming"
         ? {
@@ -175,6 +177,7 @@ const useArtifact = (): ArtifactHookValue => {
           }
         : { ...initialArtifactData, status: "idle" }
     );
+    /* oxlint-enable oxc/no-rest-spread-properties */
   }, [setArtifact]);
 
   return useMemo(

@@ -92,6 +92,7 @@ const storeImage = async (
       mode: options.mode,
       ms: Date.now() - options.startMs,
       uploadedFilename: image.filename,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (model.multimodal ? { modelId: model.modelId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
       ...(model.multimodal ? { modelId: model.modelId } : {}),
     },
     model.multimodal
@@ -213,9 +214,11 @@ const multimodalProviderOptions = (
   google?: { responseModalities: string[] };
   openai?: { modalities: string[] };
 } => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread ((modelId.startsWith("google/") || modelId.includes("gemini")) && {     google: { responseModalities: ["TEXT", "IMAGE"] },   }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
   ...((modelId.startsWith("google/") || modelId.includes("gemini")) && {
     google: { responseModalities: ["TEXT", "IMAGE"] },
   }),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (modelId.startsWith("openai/") && {     openai: { modalities: ["text", "image"] },   }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
   ...(modelId.startsWith("openai/") && {
     openai: { modalities: ["text", "image"] },
   }),

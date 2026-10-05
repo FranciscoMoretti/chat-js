@@ -36,6 +36,7 @@ test("public configuration snippets typecheck against the installed application 
     ts.sys.readFile(file)
   );
   const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, app);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing parsed.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const options = { ...parsed.options, incremental: false };
   const host = ts.createCompilerHost(options);
   const read = host.readFile.bind(host);

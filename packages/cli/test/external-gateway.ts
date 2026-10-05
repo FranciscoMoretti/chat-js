@@ -45,6 +45,7 @@ export const externalGatewayFixture = () => {
       type: "registry:item",
     },
     root: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       files: [
         {
@@ -56,6 +57,7 @@ export const externalGatewayFixture = () => {
       ],
       meta: {
         chatjs: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base.meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...base.meta.chatjs,
           envRequirements: [{ options: [["ACME_BASE_URL", "ACME_API_KEY"]] }],
           id: "acme",

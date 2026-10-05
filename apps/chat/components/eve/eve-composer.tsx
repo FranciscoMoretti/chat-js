@@ -76,6 +76,7 @@ export const EveComposer = ({
   modelSelection,
   selectedTool,
   onToolChange,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes files, retainedModelId, retainedModelIds, modelSelection, selectedTool, onToolChange from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: Omit<
   ComponentProps<typeof ControlledChatComposer>,
@@ -111,6 +112,7 @@ export const EveComposer = ({
       {...{
         "aria-label": "Message composer",
         role: "group",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing uploads?.rootProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...uploads?.rootProps,
       }}
     >

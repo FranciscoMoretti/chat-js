@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- TooltipProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipProvider = ({
   delayDuration = 0,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes delayDuration from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: Readonly<
   Omit<ReactComponentProps<typeof TooltipPrimitiveProvider>, "children">
@@ -79,6 +80,7 @@ const TooltipContent = ({
   sideOffset = 0,
   children,
   variant = "primary",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset, children, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof TooltipPrimitiveContent> & {
   variant?: "base" | "primary";

@@ -86,6 +86,7 @@ describe("getMigrationHistoryProblem", () => {
   test("rejects an altered baseline record", () => {
     expect(
       getMigrationHistoryProblem({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseline own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         applied: [{ ...baseline, hash: "modified" }],
         available: [baseline],
         hasChatJsTables: true,

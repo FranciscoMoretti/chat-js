@@ -238,7 +238,9 @@ test("does not project a child's waiting checkpoint into the root branch", async
   };
   await conversation.events?.["session.waiting"]?.(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing waiting own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...waiting,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing waiting.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       data: { ...waiting.data, wait: "next-user-message" },
       type: "session.waiting",
     },

@@ -18,6 +18,7 @@ type ConversationProps = ComponentProps<typeof StickToBottom>;
 
 const Conversation = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ConversationProps): React.JSX.Element => (
   <StickToBottom
@@ -38,6 +39,7 @@ type ConversationContentProps = ComponentProps<typeof StickToBottom.Content>;
 
 const ConversationContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ConversationContentProps): React.JSX.Element => (
   <StickToBottom.Content
@@ -63,6 +65,7 @@ const ConversationEmptyState = ({
   description = "Start a conversation to see messages here",
   icon,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, title, description, icon, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ConversationEmptyStateProps): React.JSX.Element => (
   <div
@@ -94,6 +97,7 @@ type ConversationScrollButtonProps = ComponentProps<typeof Button>;
 
 const ConversationScrollButton = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ConversationScrollButtonProps) => {
   const { isAtBottom, scrollToBottom } = useStickToBottomContext();

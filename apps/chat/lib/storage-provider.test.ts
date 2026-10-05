@@ -48,6 +48,7 @@ test.each([
     const validUntil = Date.now() + 300_000;
     expect(mocks.issue).toHaveBeenCalledWith(
       expect.objectContaining({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...credentials,
         operations: ["get"],
         pathname: "chat/objects/object-key",

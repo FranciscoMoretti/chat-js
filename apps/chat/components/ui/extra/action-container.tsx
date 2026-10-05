@@ -14,6 +14,7 @@ type ActionContainerProps = ReactComponentProps<"div">;
 /* oxlint-disable react/react-in-jsx-scope -- ActionContainer uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainer = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ActionContainerProps): ReactJSX.Element => (
   <div
@@ -35,6 +36,7 @@ type ActionContainerLinkProps = ReactComponentProps<typeof InternalLink>;
 const ActionContainerLink = ({
   className,
   tabIndex,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, tabIndex from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ActionContainerLinkProps): ReactJSX.Element => (
   <InternalLink
@@ -54,6 +56,7 @@ type ActionContainerTopProps = ReactComponentProps<"div">;
 /* oxlint-disable react/react-in-jsx-scope -- ActionContainerTop uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainerTop = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ActionContainerTopProps): ReactJSX.Element => (
   <div

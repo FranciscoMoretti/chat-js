@@ -42,6 +42,7 @@ export const prepareEveFamilyDeletion = async (
     const inventory = await lifecycle.prepare(sessionId, async () => {
       await retireEveSessionForDeletion(ownerId, sessionId);
     });
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing inventory own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     nativeInventories.push({ sessionId, ...inventory });
     for (const id of inventory.runIds) {
       runIds.add(id);
@@ -52,6 +53,7 @@ export const prepareEveFamilyDeletion = async (
   }
   // oxlint-disable-next-line typescript/consistent-return -- #580: prepareEveFamilyDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing family own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...family,
     nativeInventories,
     runIds: [...runIds].toSorted(),

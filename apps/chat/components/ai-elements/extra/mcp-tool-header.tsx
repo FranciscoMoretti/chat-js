@@ -29,6 +29,7 @@ export const McpToolHeader = ({
   type,
   state,
   icon,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, title, type, state, icon from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: McpToolHeaderProps): React.JSX.Element => (
   <CollapsibleTrigger

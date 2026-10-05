@@ -37,12 +37,14 @@ const snapshot = [
     headRevisionId: headId,
     revisions: [
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         content: `First version: /api/files/${sourceFile}`,
         id: firstId,
         parentRevisionId: null,
       },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         content: `Document ${documentId}, previous revision ${firstId}`,
         id: headId,
@@ -107,23 +109,27 @@ it("retains files from older revisions even when the current head no longer ment
 it("rejects incomplete allocations and history instead of flattening document versions", () => {
   expect(() =>
     prepareEveCopyDocuments(snapshot, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       revisions: new Map([[headId, destinationHead]]),
     })
   ).toThrow("allocated ancestry");
   expect(() =>
     prepareEveCopyDocuments(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing snapshot[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       [{ ...snapshot[0], revisions: [snapshot[0].revisions[1]] }],
       allocations
     )
   ).toThrow("allocated ancestry");
   expect(() =>
     prepareEveCopyDocuments(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing snapshot[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       [{ ...snapshot[0], headRevisionId: firstId }],
       allocations
     )
   ).toThrow("head");
   expect(() =>
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     prepareEveCopyDocuments(snapshot, { ...allocations, files: new Map() })
   ).toThrow("Missing copied file");
 });

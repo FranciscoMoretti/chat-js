@@ -164,6 +164,7 @@ export const logicalResponseSlots = (
       selectedPath
     );
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...candidate,
       attempt,
       original,

@@ -143,6 +143,7 @@ test.each(["before-dispatch", "lost-response"])(
     expect(interrupted?.initialRequest).toEqual(command);
 
     if (failure === "before-dispatch") {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing command own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       const blockedCommand = { ...command, operationId: crypto.randomUUID() };
       const blocked = await createEveConversationOperation(
         owner,
@@ -160,6 +161,7 @@ test.each(["before-dispatch", "lost-response"])(
     }
     fail = false;
     const next = await createEveConversationOperation(owner, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing command own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...command,
       message: "new tab",
       operationId: crypto.randomUUID(),

@@ -62,6 +62,7 @@ type MessageProps = HTMLAttributes<HTMLDivElement> & {
 const Message = ({
   className,
   from,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageProps): React.JSX.Element => (
   <div
@@ -83,6 +84,7 @@ type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 const MessageContent = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageContentProps): React.JSX.Element => (
   <div
@@ -107,6 +109,7 @@ type MessageActionsProps = ComponentProps<"div">;
 const MessageActions = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageActionsProps): React.JSX.Element => (
   <div
@@ -132,6 +135,7 @@ const MessageAction = ({
   label,
   variant = "ghost",
   size = "icon-sm",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, children, label, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageActionProps): React.JSX.Element => {
   const button = (
@@ -206,6 +210,7 @@ const MessageBranch = ({
   defaultBranch = 0,
   onBranchChange,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultBranch, onBranchChange, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchProps): ReactJSX.Element => {
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
@@ -261,6 +266,7 @@ type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
 
 const MessageBranchContent = ({
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchContentProps) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
@@ -305,6 +311,7 @@ type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
 const MessageBranchSelector = ({
   className: _className,
   from: _from,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchSelectorProps): React.JSX.Element | null => {
   const { totalBranches } = useMessageBranch();
@@ -332,6 +339,7 @@ type MessageBranchPreviousProps = ComponentProps<typeof Button>;
 
 const MessageBranchPrevious = ({
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchPreviousProps): React.JSX.Element => {
   const { goToPrevious, totalBranches } = useMessageBranch();
@@ -360,6 +368,7 @@ type MessageBranchNextProps = ComponentProps<typeof Button>;
 const MessageBranchNext = ({
   children,
   className: _className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchNextProps): React.JSX.Element => {
   const { goToNext, totalBranches } = useMessageBranch();
@@ -388,6 +397,7 @@ type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
 
 const MessageBranchPage = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageBranchPageProps): React.JSX.Element => {
   const { currentBranch, totalBranches } = useMessageBranch();
@@ -414,6 +424,7 @@ type MessageResponseProps = ComponentProps<typeof Streamdown>;
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageResponse: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageResponseProps). */
 
 const MessageResponse = memo(
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ({ className, ...props }: MessageResponseProps): React.JSX.Element => (
     <Streamdown
       // oxlint-disable-next-line react/forbid-component-props -- Streamdown accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -445,6 +456,7 @@ const MessageAttachment = ({
   data,
   className,
   onRemove,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes data, className, onRemove from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageAttachmentProps): ReactJSX.Element => {
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
@@ -536,6 +548,7 @@ type MessageAttachmentsProps = ComponentProps<"div">;
 const MessageAttachments = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageAttachmentsProps): React.JSX.Element | null => {
   if (!children) {
@@ -564,6 +577,7 @@ type MessageToolbarProps = ComponentProps<"div">;
 const MessageToolbar = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: MessageToolbarProps): React.JSX.Element => (
   <div

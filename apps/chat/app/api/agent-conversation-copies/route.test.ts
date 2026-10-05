@@ -55,9 +55,13 @@ it("requires login and same origin before copy work", async () => {
  */
 it("rejects browser seeds, execution controls and oversized bodies", async () => {
   for (const body of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, seed: { messages: [] } },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, fork: {} },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, sourceSessionId: "private" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, modelId: "x".repeat(3000) },
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
@@ -75,6 +79,7 @@ it("rejects browser seeds, execution controls and oversized bodies", async () =>
 it("canonicalizes operation coordinates and returns only the owned binding", async () => {
   const response = await POST(
     request({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: input.operationId.toUpperCase(),
       sourceConversationId: input.sourceConversationId.toUpperCase(),

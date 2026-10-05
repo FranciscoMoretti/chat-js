@@ -111,11 +111,14 @@ describe("storage registry integration", () => {
       await writeFile(
         source,
         JSON.stringify({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...item,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           meta: { chatjs: { ...definition, contractVersion: 999 } },
         })
       );
       expect(resolveStorage(source, cwd)).rejects.toThrow();
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await writeFile(source, JSON.stringify({ ...item, files: [] }));
       expect(resolveStorage(source, cwd)).rejects.toThrow(
         "storage-provider.ts"

@@ -64,6 +64,7 @@ const runMaintainerBuild = async (
   let failureMessage: string | undefined;
   try {
     const preview = resolveMaintainerPreviewDatabase(source);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const env = { ...source, ...preview };
     if (preview) {
       phase = "connection";

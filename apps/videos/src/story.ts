@@ -148,6 +148,7 @@ const stateAt = (t: number, content: LaunchScript = script) => {
     family,
     following: following && (family || budget),
     followup: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing followup own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...followup,
       state: progress < 1 ? ("streaming" as const) : ("complete" as const),
       text: textAt(followup.reply, progress),

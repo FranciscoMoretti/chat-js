@@ -52,6 +52,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
     isPending,
     isError,
   } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.listConnected.queryOptions() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.listConnected.queryOptions(),
     enabled: installedFeatures.has("mcp") && isAuthenticated,
   });
@@ -78,7 +79,8 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
           }
           return old.map((connector) =>
             connector.id === newData.id
-              ? { ...connector, enabled: newData.enabled }
+              ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                { ...connector, enabled: newData.enabled }
               : connector
           );
         });

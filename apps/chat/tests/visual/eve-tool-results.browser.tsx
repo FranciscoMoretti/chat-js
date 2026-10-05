@@ -94,6 +94,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
             <section key={index}>
               <EveDocumentRunResult
                 part={{
+                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                   ...common,
                   output: createToolResult(
                     { chart, message: `Result ${index + 1}` },
@@ -150,6 +151,7 @@ test("failed research keeps validated progress alongside its error", async () =>
           isReadonly
           messageId="research"
           part={{
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...common,
             output: createToolError(0.05, [
               {
@@ -203,6 +205,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               state: "input-available",
@@ -213,9 +216,11 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               output: createToolResult(
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 { ...input, chart: "", message: "Saved revision completed" },
                 0
               ),
@@ -226,6 +231,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               output: createToolError(0),

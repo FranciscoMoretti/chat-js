@@ -22,6 +22,7 @@ const run = (command: string[]) =>
   Bun.spawnSync(command, {
     cwd: fixture,
     env: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...process.env,
       TURBO_SCM_BASE: "",
       TURBO_SCM_HEAD: "",
@@ -163,6 +164,7 @@ test.each([
       [turbo, "run", "test:scaffold", "test:unit", "--affected", "--dry=json"],
       {
         cwd: fixture,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         env: { ...process.env, TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
       }
     );

@@ -126,6 +126,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
         <Renderer
           {...common}
           tool={{
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
             input: input?.success ? input.data : undefined,
             state: value.state,
@@ -141,7 +142,11 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       return (
         <Renderer
           {...common}
-          tool={{ ...identity, input: input.data, state: value.state }}
+          tool={
+            /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+            { ...identity, input: input.data, state: value.state }
+            /* oxlint-enable oxc/no-rest-spread-properties */
+          }
         />
       );
     }
@@ -153,6 +158,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       <Renderer
         {...common}
         tool={{
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...identity,
           input: input.data,
           output: output.data,

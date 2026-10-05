@@ -17,6 +17,7 @@ const getOpenAIProviderOptions = (
   const modelName = apiModelId.split("/").pop() ?? apiModelId;
   return {
     reasoningSummary: "auto",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (modelName === "gpt-5" ||     modelName === "gpt-5-mini" ||     modelName === "gpt-5-nano"       ? { reasoningEffort: "low" }       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(modelName === "gpt-5" ||
     modelName === "gpt-5-mini" ||
     modelName === "gpt-5-nano"

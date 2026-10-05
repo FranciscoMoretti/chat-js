@@ -13,7 +13,7 @@ const Textarea = reactForwardRef<
   HTMLTextAreaElement,
   ReactComponentProps<"textarea">
 >(
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- forwardRef supplies the native textarea ref: projecting ref.current fails the textarea JSX receiver. Props preserve React/CSS scalar string & {} aliases, which remain flagged even with recursively readonly data and unchanged callable/constructor signatures.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- forwardRef supplies the native textarea ref: projecting ref.current fails the textarea JSX receiver. Props preserve React/CSS scalar string & {} aliases, which remain flagged even with recursively readonly data and unchanged callable/constructor signatures. Rest/spread: Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ({ className, ...props }, ref): ReactJSX.Element => (
     <textarea
       className={cn(

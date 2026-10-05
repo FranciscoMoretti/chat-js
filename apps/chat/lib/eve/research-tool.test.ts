@@ -53,6 +53,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   controller = new AbortController();
   context = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing testToolContext({ abortSignal: controller.signal }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...testToolContext({ abortSignal: controller.signal }),
     agent,
     agents: {},
@@ -114,6 +115,7 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     "First findings\nFollow-up findings"
   );
   expect(outputs.at(-1)).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...document, format: "report" },
     usage: { costUsd: 0 },
   });
@@ -172,8 +174,9 @@ it("returns clarification without starting research or saving a document", async
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const prepared = await mocks.prepare();
   mocks.prepare.mockResolvedValue({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...prepared,
-    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-rest-spread-properties -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Rest/spread: Keep the existing prepared.config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     config: { ...prepared.config, allow_clarification: true },
   });
   agent.mockResolvedValue({

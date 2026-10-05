@@ -189,6 +189,7 @@ test("does not retitle a forked comparison chat", async () => {
     "http://localhost:3790/api/agent-response-groups",
     {
       body: JSON.stringify({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         fork: {
           beforeTurnId: "turn_0",

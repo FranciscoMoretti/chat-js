@@ -14,11 +14,13 @@ const require = createRequire(path.resolve("package.json"));
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- webpackOverride: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 // Resolve both peers from this workspace, including imports inside hoisted Remotion packages.
 export const webpackOverride: WebpackOverrideFn = (config) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...config,
   resolve: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config.resolve own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...config.resolve,
     alias: {
-      // oxlint-disable-next-line typescript/no-misused-spread -- Remotion supplies an alias map here; converting the alternative webpack array form needs an explicit resolution-precedence policy.
+      // oxlint-disable-next-line typescript/no-misused-spread, oxc/no-rest-spread-properties -- Remotion supplies an alias map here; converting the alternative webpack array form needs an explicit resolution-precedence policy. Rest/spread: Keep the existing config.resolve?.alias own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...config.resolve?.alias,
       react: path.dirname(require.resolve("react/package.json")),
       "react-dom": path.dirname(require.resolve("react-dom/package.json")),

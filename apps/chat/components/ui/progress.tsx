@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 const Progress = ({
   className,
   value,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, value from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof ProgressPrimitiveRoot>): ReactJSX.Element => (
   <ProgressPrimitiveRoot

@@ -25,6 +25,7 @@ const ScrollBar = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>
 >(
   (
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     { className, orientation = "vertical", ...props },
     ref
   ): ReactJSX.Element => (
@@ -59,6 +60,7 @@ ScrollBar.displayName = ScrollAreaPrimitiveScrollAreaScrollbar.displayName;
 const ScrollArea = reactForwardRef<
   ReactComponentRef<typeof ScrollAreaPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveRoot>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <ScrollAreaPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- ScrollAreaPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.

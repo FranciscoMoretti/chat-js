@@ -98,8 +98,11 @@ it.each([
     eveTurnGuest.update(() => scenario === "guest");
     const principal = {
       attributes: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "selected" ? { selectedTool: "deepResearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "other-tool" ? { selectedTool: "webSearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
       },
       authenticator: "test",
@@ -116,6 +119,7 @@ it.each([
         maxRetries: 0,
         model: wrapLanguageModel({
           middleware: installedToolAvailabilityMiddleware({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...session,
             auth: {
               current: principal,

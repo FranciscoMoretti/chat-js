@@ -293,6 +293,7 @@ const Fixture = (): React.JSX.Element => {
         <ResponseChoiceCards
           // oxlint-disable-next-line oxc/no-map-spread -- #541: Attach this fixture instance's handlers without mutating shared comparison slots.
           slots={comparisonSlots.map((slot) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing slot own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...slot,
             handleSelect: (): void => setSelected(slot.id),
             selected: selected === slot.id,

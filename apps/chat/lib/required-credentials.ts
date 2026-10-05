@@ -35,7 +35,7 @@ const missingRequirement = (
       const missing = missingRequirement(group, env);
       return missing ? [missing] : [];
     });
-    // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
+    // oxlint-disable-next-line no-magic-numbers, oxc/no-rest-spread-properties -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check. Rest/spread: Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     return allOf.length > 0 ? { ...requirement, allOf } : null;
   }
   return isRequirementSatisfied(requirement, env) ? null : requirement;

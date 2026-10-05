@@ -47,6 +47,7 @@ it("uses external defaults and every environment group with --yes", async () => 
     gateway: "acme",
   };
   const entries = collectEnvChecklist({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     gatewayRequirements: definition.envRequirements,
   });
@@ -56,6 +57,7 @@ it("uses external defaults and every environment group with --yes", async () => 
   );
   expect(() => collectEnvChecklist(input)).not.toThrow();
   expect(() =>
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     collectEnvChecklist({ ...input, gatewayRequirements: [] })
   ).not.toThrow();
 });

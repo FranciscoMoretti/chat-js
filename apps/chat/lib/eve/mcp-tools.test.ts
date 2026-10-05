@@ -151,6 +151,7 @@ it("returns serializable namespaced discovery without credentials or live connec
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
   async (change) => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing change own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     mocks.get.mockResolvedValue({ ...connector, ...change });
     await expect(
       executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -223,10 +224,12 @@ it("closes on execution errors and rejects invalid input before invoking the too
  * unicorn/no-null (#570): it("permits global connectors with a separate namespace") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("permits global connectors with a separate namespace", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.list.mockResolvedValue([{ ...connector, userId: null }]);
   expect(await discoverEveMcpTools("owner", context.abortSignal)).toMatchObject(
     [{ name: "global__server__echo" }]
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValue({ ...connector, userId: null });
   expect(
     await executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -258,6 +261,7 @@ it("forwards cancellation and closes the connection once", async () => {
     "connector",
     "echo",
     { text: "test" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: cancellation.signal },
     []
   );
@@ -287,6 +291,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
       type: "object" as const,
     };
     mocks.tools.mockResolvedValue({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       echo: { ...definition, inputSchema: jsonSchema(schema) },
     });
     await expect(
@@ -314,6 +319,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
 it("retains explicitly declared draft-07 tuple validation", async () => {
   mocks.tools.mockResolvedValue({
     echo: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...definition,
       inputSchema: jsonSchema({
         $schema: "http://json-schema.org/draft-07/schema#",
@@ -350,6 +356,7 @@ it("requires native owner approval when the connection setting is enabled", asyn
     await requestEveMcpApproval("connector", "echo", { text: "test" }, context)
   ).toBe("user-approval");
   expect(execute).not.toHaveBeenCalled();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   await expect(
     executeEveMcpTool(
@@ -371,9 +378,12 @@ it("rejects a receipt from another principal", async () => {
       "echo",
       { text: "test" },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...context,
         approval: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...context.approval,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.approval.responder own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           responder: { ...context.approval.responder, principalId: "other" },
         },
       },
@@ -443,7 +453,9 @@ it("registers native per-call approval restricted to the session owner", async (
   expect(await approval.response(response)).toEqual({ status: "allowed" });
   expect(
     await approval.response({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing response own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...response,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing initiator own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       responder: { ...initiator, principalId: "other" },
     })
   ).toMatchObject({ status: "rejected" });
@@ -563,6 +575,7 @@ it("approval requests inherit cancellation", async () => {
     "connector",
     "echo",
     { text: "test" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: controller.signal }
   );
   await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
@@ -600,6 +613,7 @@ it("approval cancellation bounds connector lookup before any transport opens", a
     "connector",
     "echo",
     {},
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: controller.signal }
   );
   controller.abort(new Error("cancelled lookup"));
@@ -634,7 +648,9 @@ it("a timed-out connector does not discard completed discovery or suppress the n
   try {
     mocks.list.mockResolvedValue([
       connector,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...connector, id: "slow", nameId: "slow" },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...connector, id: "later", nameId: "later" },
     ]);
     mocks.tools
@@ -673,7 +689,9 @@ it("schema conversion cancellation stops later tool conversions after the pendin
   const laterSchema = vi.fn(() => ({ type: "object" as const }));
   try {
     mocks.tools.mockResolvedValueOnce({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       first: { ...definition, inputSchema: jsonSchema(firstSchema) },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       later: { ...definition, inputSchema: jsonSchema(laterSchema) },
     });
     const discovery = discoverEveMcpTools("owner", context.abortSignal);
@@ -697,7 +715,9 @@ it("schema conversion cancellation stops later tool conversions after the pendin
 /* oxlint-disable max-lines -- #509: This mcp-tools.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 
 it("runs without a receipt when approval is disabled for this connection", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValue({ ...connector, requireApproval: false });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   expect(
     await requestEveMcpApproval(
@@ -720,7 +740,9 @@ it("runs without a receipt when approval is disabled for this connection", async
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rechecks the connection policy when approval is enabled after request evaluation", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValueOnce({ ...connector, requireApproval: false });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   expect(
     await requestEveMcpApproval(

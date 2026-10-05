@@ -61,6 +61,7 @@ const storedTokensSchema = refreshTokensSchema
   .extend(authorizationServerPinShape)
   .loose();
 const storedClientInformationSchema = z.looseObject({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authorizationServerPinShape own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...authorizationServerPinShape,
   application_type: z.enum(["native", "web"]).optional(),
   client_id: z.string(),
@@ -257,6 +258,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       this.config.oauthClientId !== ""
     ) {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing this.clientMetadata own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...this.clientMetadata,
         client_id: this.config.oauthClientId,
         client_secret: this.config.oauthClientSecret ?? undefined,
@@ -402,6 +404,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
         this.cachedAuthData = await saveTokensAndCleanup({
           mcpConnectorId: this.config.mcpConnectorId,
           state: this.currentOAuthState,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing latestTokens own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing refreshed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           tokens: { ...latestTokens, ...refreshed },
         });
         this.committedRefreshes += 1;
@@ -475,6 +478,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     );
     if (this.cachedAuthData) {
       this.cachedAuthData = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing this.cachedAuthData own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...this.cachedAuthData,
         codeVerifier: pkceVerifier,
       };

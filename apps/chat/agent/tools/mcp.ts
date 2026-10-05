@@ -51,8 +51,10 @@ export default defineDynamic({
           Awaited<ReturnType<typeof executeEveMcpTool>>
         >
       > = {};
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding description excludes name, connectorId, remoteName from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
       for (const { name, connectorId, remoteName, ...description } of tools) {
         definitions[name] = defineTool({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing description own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...description,
           approval: {
             request: (approvalContext) =>

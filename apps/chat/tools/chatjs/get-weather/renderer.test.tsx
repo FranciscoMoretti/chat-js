@@ -54,6 +54,7 @@ test.each([
       messageId="weather-test"
       tool={{
         input: { latitude: 0, longitude: 0 },
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing weather own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing weather.current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         output: { ...weather, current: { ...weather.current, time } },
         state: "output-available",
         toolCallId: "weather-test",

@@ -65,6 +65,7 @@ const run = async (): Promise<void> => {
         'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
       ],
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
         stdio: "pipe",
         timeout: 120_000,

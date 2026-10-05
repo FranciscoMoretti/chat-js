@@ -79,6 +79,7 @@ it("requires authentication, same origin and bound ownership before native acces
  */
 it("rejects malformed coordinates before looking up the source", async () => {
   const resolvedResult4 = await POST(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     request(undefined, { ...input, beforeTurnId: "turn_-1" }),
     context
   );
@@ -99,6 +100,7 @@ it("returns readiness only after the matching immutable checkpoint is available"
   expect(await response.json()).toEqual({
     conversationId: id,
     ready: true,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
   });
   expect(mocks.capture.mock.calls[0].slice(0, 2)).toEqual([
@@ -172,6 +174,7 @@ it.each([
       checkpointRejected: true,
       conversationId: id,
       reason: "source_advanced",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
     });
     if (stage === "read") {

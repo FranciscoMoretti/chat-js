@@ -73,6 +73,7 @@ const AlertDialogPortal = (
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogOverlay forwards AlertDialogPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogOverlay = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveOverlay
@@ -97,6 +98,7 @@ const AlertDialogOverlay = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogContent forwards AlertDialogPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveContent
@@ -124,6 +126,7 @@ const AlertDialogContent = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -142,6 +145,7 @@ const AlertDialogHeader = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogFooter = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -163,6 +167,7 @@ const AlertDialogFooter = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogTitle forwards AlertDialogPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof AlertDialogPrimitiveTitle>): ReactJSX.Element => (
   <AlertDialogPrimitiveTitle
@@ -182,6 +187,7 @@ const AlertDialogTitle = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogDescription forwards AlertDialogPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveDescription
@@ -203,6 +209,7 @@ const AlertDialogDescription = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogAction forwards AlertDialogPrimitiveAction's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogAction = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveAction
@@ -223,6 +230,7 @@ const AlertDialogAction = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- AlertDialogCancel forwards AlertDialogPrimitiveCancel's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const AlertDialogCancel = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof AlertDialogPrimitiveCancel

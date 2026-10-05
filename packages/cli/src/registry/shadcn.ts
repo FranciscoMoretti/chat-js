@@ -19,6 +19,7 @@ const registryConfig = async (
     registries: {
       // oxlint-disable-next-line node/no-process-env -- CLI registry selection honors CHATJS_REGISTRY_URL for this process, then configured registries override it; moving the read to caller defaults would change this existing per-operation boundary.
       "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config.registries own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...config.registries,
     },
   };

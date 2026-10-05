@@ -51,6 +51,7 @@ export const admitGuestResponseGroup = async (
   for (const candidate of candidates) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
     const ipHash = await validateGuestCreation(request, principal, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...candidate,
       message: input.message,
       selectedTool: input.selectedTool,

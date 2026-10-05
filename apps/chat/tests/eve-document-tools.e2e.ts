@@ -322,6 +322,7 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   const conflict = await page.request.post("/api/trpc/eve.saveDocument", {
     data: {
       json: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing manualInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...manualInput,
         content: "Stale replacement",
         operationId: crypto.randomUUID(),

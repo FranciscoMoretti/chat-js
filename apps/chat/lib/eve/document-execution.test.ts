@@ -89,6 +89,7 @@ beforeEach(() => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("executes only the owned saved revision and preserves its billing receipt", async () => {
   const result = await executeEveCodeDocument(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, code: "malicious replacement", ownerId: "other" },
     context
   ).next();
@@ -112,6 +113,7 @@ it("executes only the owned saved revision and preserves its billing receipt", a
     }
   );
   expect(result.value).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...input, code: "print(42)", message: "42" },
     usage: { costUsd: 0.05 },
   });
@@ -124,7 +126,9 @@ it("executes only the owned saved revision and preserves its billing receipt", a
  */
 it.each([
   undefined,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...revision, kind: "text" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...revision, title: "unsupported.ts" },
 ])(
   "rejects unavailable or unsupported revisions before sandbox execution",
@@ -148,6 +152,7 @@ it("does not execute when cancelled during revision lookup", async () => {
   });
   await expect(
     executeEveCodeDocument(input, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       abortSignal: cancellation.signal,
     }).next()
@@ -167,6 +172,7 @@ it("retains a charged receipt when sandbox chart output is malformed", async () 
   const result = await executeEveCodeDocument(input, context).next();
   expect(result.value).toMatchObject({
     output: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       chart: "",
       message: "Execution finished, but its output has an unsupported format.",

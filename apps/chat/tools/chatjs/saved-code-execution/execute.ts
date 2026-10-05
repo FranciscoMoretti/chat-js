@@ -82,8 +82,10 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
   }
   const output = eveCodeExecutionResult.safeParse(result.output);
   yield {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
     output: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (output.success         ? output.data         : {             chart: "",             message:               "Execution finished, but its output has an unsupported format.",           }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
       ...(output.success
         ? output.data
         : {
@@ -91,6 +93,7 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
             message:
               "Execution finished, but its output has an unsupported format.",
           }),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...source,
       documentId: revision.documentId,
       revisionId: revision.id,

@@ -10,6 +10,7 @@ export const createStorageAdapter = (
     options.secure ??
     // oxlint-disable-next-line node/no-process-env -- Resolve the omitted secure option from the actual FTP_SECURE server configuration; passing explicit secure bypasses this fallback.
     (process.env.FTP_SECURE === "implicit" ? "implicit" : true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return ftp({ ...options, secure });
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -59,6 +59,7 @@ const Context = ({
   maxTokens,
   usage,
   modelId,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes usedTokens, maxTokens, usage, modelId from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextProps): ReactJSX.Element => {
   const contextValue = useMemo(
@@ -128,6 +129,7 @@ type ContextTriggerProps = ComponentProps<typeof Button>;
 
 const ContextTrigger = ({
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextTriggerProps): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
@@ -163,6 +165,7 @@ type ContextContentProps = ComponentProps<typeof HoverCardContent>;
 
 const ContextContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextContentProps): React.JSX.Element => (
   <HoverCardContent
@@ -182,6 +185,7 @@ type ContextContentHeaderProps = ComponentProps<"div">;
 const ContextContentHeader = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextContentHeaderProps): React.JSX.Element => {
   const { usedTokens, maxTokens } = useContextValue();
@@ -233,6 +237,7 @@ type ContextContentBodyProps = ComponentProps<"div">;
 const ContextContentBody = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextContentBodyProps): React.JSX.Element => (
   <div
@@ -253,6 +258,7 @@ type ContextContentFooterProps = ComponentProps<"div">;
 const ContextContentFooter = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextContentFooterProps): React.JSX.Element => {
   const { modelId, usage } = useContextValue();
@@ -323,6 +329,7 @@ const TokensWithCost = ({
 const ContextInputUsage = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextInputUsageProps) => {
   const { usage, modelId } = useContextValue();
@@ -369,6 +376,7 @@ type ContextOutputUsageProps = ComponentProps<"div">;
 const ContextOutputUsage = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextOutputUsageProps) => {
   const { usage, modelId } = useContextValue();
@@ -415,6 +423,7 @@ type ContextReasoningUsageProps = ComponentProps<"div">;
 const ContextReasoningUsage = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextReasoningUsageProps) => {
   const { usage, modelId } = useContextValue();
@@ -461,6 +470,7 @@ type ContextCacheUsageProps = ComponentProps<"div">;
 const ContextCacheUsage = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ContextCacheUsageProps) => {
   const { usage, modelId } = useContextValue();

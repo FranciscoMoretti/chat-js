@@ -116,6 +116,7 @@ const handleExceededSystemMessage = (
 
   if (typeof systemMessage.content === "string") {
     const truncatedContent = trimPrompt(systemMessage.content, maxTokens);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing systemMessage own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     return [{ ...systemMessage, content: truncatedContent }];
   }
 
@@ -160,6 +161,7 @@ const truncateStringContent = (
   const truncatedContent = lastMessage.content.slice(0, -charsToRemove);
   const trimmedContent = trimPrompt(truncatedContent, availableTokens);
 
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing lastMessage own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...lastMessage, content: trimmedContent };
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
@@ -193,6 +195,7 @@ const truncateToolResultPart = (
     return {
       tokensRemoved: partTokens - targetTokens,
       truncatedPart: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...part,
         output: {
           type: "text",
@@ -238,6 +241,7 @@ const truncateToolArrayContent = (
     tokensToRemove -= tokensRemoved;
   }
 
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing lastMessage own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...lastMessage, content };
 };
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

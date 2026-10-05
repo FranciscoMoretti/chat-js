@@ -74,6 +74,7 @@ const resolveFork = async (
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (input.checkpointId ? { checkpointId: input.checkpointId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
@@ -93,6 +94,7 @@ const creationFailure = (cause: unknown): Response => {
   }
   return Response.json(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (cause instanceof CreationConflictError ? { code: cause.code } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
       ...(cause instanceof CreationConflictError ? { code: cause.code } : {}),
       error:
         cause instanceof CreationConflictError
@@ -244,6 +246,7 @@ export const executeEveConversationCreation = async (
       {
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (error instanceof EveCreationTransportError           ? { stage: error.stage, status: error.status }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(error instanceof EveCreationTransportError
           ? { stage: error.stage, status: error.status }
           : {}),

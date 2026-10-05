@@ -103,6 +103,7 @@ const renderRegistration = (
   return grouped && declaration
     ? {
         source,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (declaration.kind === "type"           ? { type: declaration.name }           : { value: declaration.name }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(declaration.kind === "type"
           ? { type: declaration.name }
           : { value: declaration.name }),

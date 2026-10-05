@@ -25,6 +25,7 @@ const series = z.array(
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 const chartSchema = z.discriminatedUnion("type", [
   z.object({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...chartLabels,
     elements: series,
     type: z.literal("line"),
@@ -34,6 +35,7 @@ const chartSchema = z.discriminatedUnion("type", [
       .transform((value) => value ?? undefined),
   }),
   z.object({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...chartLabels,
     elements: series,
     type: z.literal("scatter"),
@@ -43,6 +45,7 @@ const chartSchema = z.discriminatedUnion("type", [
       .transform((value) => value ?? undefined),
   }),
   z.object({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...chartLabels,
     elements: z.array(
       z.object({ group: z.string(), label: z.string(), value: z.number() })

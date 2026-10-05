@@ -22,6 +22,7 @@ const gatewayEnvRequirements: Record<string, EnvRequirement[]> =
       (item: ReadonlyInput<(typeof builtInGateways)[number]>) => [
         item.meta.chatjs.id,
         item.meta.chatjs.envRequirements.map((requirement) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...requirement,
           description:
             requirement.description ??
@@ -43,6 +44,7 @@ const coreFeatureEnvRequirements: Partial<
         NonNullable<typeof mcpDefinition.envRequirements>[number]
       >
     ) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...requirement,
       description:
         requirement.description ??

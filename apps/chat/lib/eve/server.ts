@@ -34,6 +34,7 @@ const eveRequest = async (
   assertEveConfigured();
   const connection = getEveConnectionOptions(owner);
   const headers = new Headers({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...connection.headers,
     authorization: `Bearer ${connection.auth.bearer}`,
   });
@@ -48,6 +49,7 @@ const eveRequest = async (
     headers.set("content-type", "application/json");
   }
   return await fetch(new URL(path, connection.host), {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing init own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...init,
     cache: "no-store",
     headers,

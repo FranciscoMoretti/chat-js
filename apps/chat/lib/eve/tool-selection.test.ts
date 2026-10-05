@@ -47,6 +47,7 @@ vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   for (const kind of actual.installedDocumentKinds) {
     mocks.kinds.add(kind);
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
 /* oxlint-enable oxc/no-async-await */
@@ -79,7 +80,9 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
         auth: {
           current: {
             attributes: {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool ? { selectedTool } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
               ...(selectedTool ? { selectedTool } : {}),
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (principalType === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
             authenticator: "gateway",

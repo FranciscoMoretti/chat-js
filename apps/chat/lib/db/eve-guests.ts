@@ -120,6 +120,7 @@ const createEveGuest = async (input: {
     });
     const [guest] = await tx
       .insert(eveGuest)
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .values({ ...input, ownerId, remainingMessages: input.messageLimit })
       .returning();
     return guest;
@@ -259,6 +260,7 @@ const admissionGuest = async (
     [guest] = await tx
       .insert(eveGuest)
       .values({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing bootstrap own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...bootstrap,
         ownerId: input.ownerId,
         remainingMessages: bootstrap.messageLimit,
@@ -454,6 +456,7 @@ const reserveEveGuestMessages = async <T = undefined>(
         if (result.status !== "reserved" && result.status !== "replay") {
           throw new GuestBatchRejectedError(result);
         }
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         reservations.push({ operationId: input.operationId, ...result });
       }
       const admission = await persistAdmission?.(tx);

@@ -22,6 +22,7 @@ import { Button } from "./ui/button";
 export const SidebarToggle = ({
   className,
   onClick,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, onClick from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ComponentProps<typeof SidebarTrigger>): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();

@@ -14,9 +14,10 @@ const runTestProcess = async (
 ): Promise<TestProcessResult> => {
   const child = Bun.spawn([...command], {
     cwd: options.cwd,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (options.environment       ? {           // oxlint-disable-next-line node/no-process-env -- Fixture overrides must inherit the current parent environment; Bun otherwise defaults to the environment captured at process launch.           env: { ...process.env, ...options.environment },         }       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(options.environment
       ? {
-          // oxlint-disable-next-line node/no-process-env -- Fixture overrides must inherit the current parent environment; Bun otherwise defaults to the environment captured at process launch.
+          // oxlint-disable-next-line node/no-process-env, oxc/no-rest-spread-properties -- Fixture overrides must inherit the current parent environment; Bun otherwise defaults to the environment captured at process launch. Rest/spread: Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing options.environment own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           env: { ...process.env, ...options.environment },
         }
       : {}),

@@ -90,6 +90,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     turnId: "turn_0",
   };
   await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
   let [balance] = await db
     .select()
@@ -97,6 +98,7 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .where(eq(userCredit.userId, owner));
   expect(balance?.credits).toBe(49);
   const unknown = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...entry,
     costUsd: undefined,
     eventId: crypto.randomUUID(),
@@ -108,7 +110,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .from(eveUsage)
     .where(eq(eveUsage.eventId, unknown.eventId));
   expect(row?.costUsd).toBeNull();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing unknown own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(await recordEveUsage({ ...unknown, costUsd: 0.015 })).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing unknown own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await recordEveUsage({ ...unknown, costUsd: 0.015 });
   [balance] = await db
     .select()
@@ -116,10 +120,12 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .where(eq(userCredit.userId, owner));
   expect(balance?.credits).toBe(47);
   expect(await recordEveUsage(unknown)).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await expect(recordEveUsage({ ...entry, costUsd: 0.5 })).rejects.toThrow(
     "amount changed"
   );
   const precise = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...entry,
     costUsd: 0.0010000000000000002,
     eventId: crypto.randomUUID(),
@@ -315,6 +321,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(starts).toBe(2);
   await expect(
     createEveConversation(owner, operation, "replacement", start, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...fork, beforeTurnId: "turn_2" },
     })
   ).rejects.toThrow("source turn");
@@ -435,7 +442,9 @@ test.each(["codeExecution", "webSearch"])(
     await Promise.all(
       Array.from({ length: 8 }, () =>
         ingestEveUsage(owner, sessionId, {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           meta: { ...event.meta, id: crypto.randomUUID() },
         })
       )
@@ -447,10 +456,13 @@ test.each(["codeExecution", "webSearch"])(
     expect(Number(row.costUsd)).toBe(0.05);
     expect(row.chargedCents).toBe(5);
     const unknown = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...event,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...event.data,
         result: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data.result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event.data.result,
           callId: crypto.randomUUID(),
           output: "result lost its receipt",

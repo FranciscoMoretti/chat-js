@@ -107,6 +107,7 @@ export const resolveCreationRequest = async (
   ) {
     finishCreation(storage, ownerId, scope);
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing binding own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...binding, group: undefined };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

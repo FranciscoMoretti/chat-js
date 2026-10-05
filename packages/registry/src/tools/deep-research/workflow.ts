@@ -230,6 +230,7 @@ export async function* executeEveResearch(
     toolCallId: context.callId,
     type: "completed",
   });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing saved own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   yield createToolResult({ ...saved, format: "report" }, 0, [
     ...updates,
     ...searchUpdates,

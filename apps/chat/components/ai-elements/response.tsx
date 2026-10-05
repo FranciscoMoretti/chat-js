@@ -21,6 +21,7 @@ type ResponseProps = ComponentProps<typeof Streamdown>;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Response: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ResponseProps). */
 
 const Response = memo(
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ({ className, ...props }: ResponseProps): React.JSX.Element => (
     <Streamdown
       // oxlint-disable-next-line react/forbid-component-props -- Streamdown accepts className in its styling contract; preserve this caller's layout and appearance.

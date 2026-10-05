@@ -124,6 +124,7 @@ export const SocialAuthProviders = ({
       // oxlint-disable-next-line oxc/no-map-spread -- #541: Add provider IDs to view records without mutating shared authentication metadata.
     ).map((id) => ({
       id,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing AUTH_PROVIDER_METADATA[id] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...AUTH_PROVIDER_METADATA[id],
     }));
 
@@ -146,6 +147,7 @@ export const SocialAuthProviders = ({
       const result = await authClient.signIn.social({
         callbackURL,
         provider,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing signInOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...signInOptions,
         fetchOptions: {
           query,

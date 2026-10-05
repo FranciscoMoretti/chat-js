@@ -45,6 +45,7 @@ export const insertEveConversationFixtures = (
         isPinned,
         title,
         updatedAt,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding conversation excludes chatId, isPinned, title, updatedAt from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
         ...conversation
       } = fixture;
       const [parent] = conversation.parentConversationId
@@ -70,6 +71,7 @@ export const insertEveConversationFixtures = (
       // oxlint-disable-next-line eslint/no-await-in-loop -- Preserve parent-before-child insertion order and return the actual session rows.
       const [row] = await tx
         .insert(eveConversation)
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         .values({ ...conversation, chatId })
         .returning();
       inserted.push(row);

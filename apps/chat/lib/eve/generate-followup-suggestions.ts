@@ -37,6 +37,7 @@ export const generateEveFollowupSuggestions = async (
     attempted = true;
     const result = await generateText({
       model: resolved.model,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolved.modelOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...resolved.modelOptions,
       abortSignal: AbortSignal.timeout(15_000),
       maxOutputTokens: 512,

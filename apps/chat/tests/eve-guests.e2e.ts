@@ -179,6 +179,7 @@ test("concurrent replay reserves once and rejects changed request content", asyn
   expect(rates.map((rate) => rate.requests)).toEqual([1, 1]);
   expect(
     await reserveEveGuestMessage({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       requestHash: createEveGuestCredential().tokenHash,
     })
@@ -197,6 +198,7 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
   const input = request(row.ownerId);
   const results = await Promise.all(
     Array.from({ length: 6 }, () =>
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       reserveEveGuestMessage({ ...input, operationId: crypto.randomUUID() })
     )
   );
@@ -220,11 +222,13 @@ test("distinct concurrent sends cannot overspend the guest balance", async () =>
 test("IP quotas survive cookie replacement and rejected limits spend no guest balance", async () => {
   const first = await guest();
   const second = await guest();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(first.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const input = { ...request(first.ownerId), requestsPerMonth: 1 };
   const initialReservation = await reserveEveGuestMessage(input);
   expect(initialReservation.status).toBe("reserved");
   expect(
     await reserveEveGuestMessage({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
       ownerId: second.ownerId,
@@ -245,10 +249,12 @@ test("IP quotas survive cookie replacement and rejected limits spend no guest ba
 test("simultaneous guests share one IP admission limit", async () => {
   const first = await guest();
   const second = await guest();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(first.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const input = { ...request(first.ownerId), requestsPerMinute: 1 };
   const results = await Promise.all([
     reserveEveGuestMessage(input),
     reserveEveGuestMessage({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
       ownerId: second.ownerId,
@@ -370,6 +376,7 @@ test("guest provider accounting survives expiry and replay without creating mone
   expect(await recordEveUsage(evidence)).toBe(false);
   await Promise.all(
     Array.from({ length: 6 }, () =>
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing evidence own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       recordEveUsage({ ...evidence, costUsd: 0.002 })
     )
   );
@@ -407,6 +414,7 @@ test("first admission creates one guest and reserves once across different IPs",
     Array.from({ length: 6 }, () => {
       const other = request(ownerId);
       return reserveEveGuestMessage(
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         { ...input, ipHash: other.ipHash },
         bootstrap
       );
@@ -442,6 +450,7 @@ test("denied first admission creates no account or quota rows", async () => {
     const input = request(ownerId);
     const result = await reserveEveGuestMessage(
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         requestsPerMinute: denial === "rate" ? 0 : 100,
       },
@@ -514,6 +523,7 @@ test("comparison admission rolls back a fresh account when any candidate exceeds
   owners.push(ownerId);
   const first = request(ownerId);
   const result = await reserveEveGuestMessages(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     [first, { ...first, operationId: crypto.randomUUID() }],
     {
       expiresAt: new Date(Date.now() + 60_000),
@@ -552,11 +562,14 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
   expect(accepted.status).toBe("reserved");
   const result = await reserveEveGuestMessages([
     first,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...first, operationId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...first, operationId: crypto.randomUUID() },
   ]);
   expect(result).toEqual({ status: "exhausted" });
   expect(await reserveEveGuestMessage(first)).toEqual({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing accepted own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...accepted,
     status: "replay",
   });
@@ -588,6 +601,7 @@ test("failed mixed replay/new comparison leaves prior admission intact and rolls
 test("concurrent comparison retries debit each distinct candidate exactly once", async () => {
   const row = await guest(2);
   const first = request(row.ownerId);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const inputs = [first, { ...first, operationId: crypto.randomUUID() }];
   const results = await Promise.all(
     Array.from({ length: 4 }, () => reserveEveGuestMessages(inputs))
@@ -627,10 +641,12 @@ test("concurrent comparison retries debit each distinct candidate exactly once",
  */
 test("comparison rate limits roll back all candidates and reject duplicate operation IDs", async () => {
   const row = await guest(10);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request(row.ownerId) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const first = { ...request(row.ownerId), requestsPerMinute: 1 };
   expect(
     await reserveEveGuestMessages([
       first,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...first, operationId: crypto.randomUUID() },
     ])
   ).toEqual({ status: "rate-limited" });
@@ -648,6 +664,7 @@ test("comparison rate limits roll back all candidates and reject duplicate opera
   await expect(
     reserveEveGuestMessages([
       first,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...first, operationId: first.operationId.toUpperCase() },
     ])
   ).rejects.toThrow("unique operations");
@@ -681,6 +698,7 @@ test("comparison persistence failure rolls back guest identity and every quota r
     reserveEveGuestMessages(
       // oxlint-disable-next-line oxc/no-map-spread -- #541: Each guest candidate needs a distinct reservation fixture while preserving the shared first reservation.
       candidates.map((candidate) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...first,
         operationId: candidate.operationId,
       })),

@@ -132,6 +132,7 @@ const executeWithToolProgress = async function* executeWithToolProgress<
           execute({ abortSignal, publish, usage })
         );
         if (!cancelled) {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           controller.enqueue({ ...result, updates });
           controller.close();
         }

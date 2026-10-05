@@ -67,6 +67,7 @@ import { cn } from "@/lib/utils";
 const PromptInputHoverCard = ({
   openDelay = 0,
   closeDelay = 0,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes openDelay, closeDelay from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputHoverCardProps): React.JSX.Element => (
   <HoverCard
@@ -82,6 +83,7 @@ const PromptInputHoverCard = ({
 
 const PromptInputHoverCardContent = ({
   align = "start",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes align from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputHoverCardContentProps): React.JSX.Element => (
   <HoverCardContent
@@ -103,6 +105,7 @@ const PromptInput = ({
   className,
   inputGroupClassName,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inputGroupClassName, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputProps): React.JSX.Element => (
   <form
@@ -129,6 +132,7 @@ type PromptInputHeaderProps = Omit<
 
 const PromptInputHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputHeaderProps): React.JSX.Element => (
   <InputGroupAddon
@@ -150,6 +154,7 @@ type PromptInputFooterProps = Omit<
 
 const PromptInputFooter = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputFooterProps): React.JSX.Element => (
   <InputGroupAddon
@@ -168,6 +173,7 @@ type PromptInputToolsProps = HTMLAttributes<HTMLDivElement>;
 
 const PromptInputTools = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputToolsProps): React.JSX.Element => (
   <div
@@ -186,6 +192,7 @@ const PromptInputButton = ({
   variant = "ghost",
   className,
   size,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes variant, className, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputButtonProps): React.JSX.Element => {
   const newSize =
@@ -226,6 +233,7 @@ type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
 const PromptInputActionMenuTrigger = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputActionMenuTriggerProps): React.JSX.Element => (
   <DropdownMenuTrigger asChild>
@@ -253,6 +261,7 @@ type PromptInputActionMenuContentProps = ComponentProps<
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuContentProps). */
 const PromptInputActionMenuContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputActionMenuContentProps): React.JSX.Element => (
   <DropdownMenuContent
@@ -270,6 +279,7 @@ type PromptInputActionMenuItemProps = ComponentProps<typeof DropdownMenuItem>;
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenuItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: PromptInputActionMenuItemProps). */
 const PromptInputActionMenuItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputActionMenuItemProps): React.JSX.Element => (
   <DropdownMenuItem
@@ -296,6 +306,7 @@ const PromptInputSubmit = ({
   size = "icon-sm",
   status,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant, size, status, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSubmitProps): React.JSX.Element => {
   let Icon = (
@@ -409,6 +420,7 @@ const PromptInputSpeechButton = ({
   className,
   textareaRef,
   onTranscriptionChange,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, textareaRef, onTranscriptionChange from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSpeechButtonProps): ReactJSX.Element => {
   const [isListening, setIsListening] = useState(false);
@@ -538,6 +550,7 @@ type PromptInputSelectTriggerProps = ComponentProps<typeof SelectTrigger>;
 
 const PromptInputSelectTrigger = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSelectTriggerProps): React.JSX.Element => (
   <SelectTrigger
@@ -559,6 +572,7 @@ type PromptInputSelectContentProps = ComponentProps<typeof SelectContent>;
 
 const PromptInputSelectContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSelectContentProps): React.JSX.Element => (
   <SelectContent
@@ -576,6 +590,7 @@ type PromptInputSelectItemProps = ComponentProps<typeof SelectItem>;
 
 const PromptInputSelectItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSelectItemProps): React.JSX.Element => (
   <SelectItem
@@ -593,6 +608,7 @@ type PromptInputSelectValueProps = ComponentProps<typeof SelectValue>;
 
 const PromptInputSelectValue = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputSelectValueProps): React.JSX.Element => (
   <SelectValue
@@ -628,6 +644,7 @@ type PromptInputTabsListProps = HTMLAttributes<HTMLDivElement>;
 
 const PromptInputTabsList = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabsListProps): React.JSX.Element => (
   <div
@@ -644,6 +661,7 @@ type PromptInputTabProps = HTMLAttributes<HTMLDivElement>;
 
 const PromptInputTab = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabProps): React.JSX.Element => (
   <div
@@ -660,6 +678,7 @@ type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
 const PromptInputTabLabel = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabLabelProps): React.JSX.Element => (
   <>
@@ -682,6 +701,7 @@ type PromptInputTabBodyProps = HTMLAttributes<HTMLDivElement>;
 
 const PromptInputTabBody = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabBodyProps): React.JSX.Element => (
   <div
@@ -698,6 +718,7 @@ type PromptInputTabItemProps = HTMLAttributes<HTMLDivElement>;
 
 const PromptInputTabItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabItemProps): React.JSX.Element => (
   <div
@@ -717,6 +738,7 @@ type PromptInputCommandProps = ComponentProps<typeof Command>;
 
 const PromptInputCommand = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandProps): React.JSX.Element => (
   <Command
@@ -734,6 +756,7 @@ type PromptInputCommandInputProps = ComponentProps<typeof CommandInput>;
 
 const PromptInputCommandInput = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandInputProps): React.JSX.Element => (
   <CommandInput
@@ -751,6 +774,7 @@ type PromptInputCommandListProps = ComponentProps<typeof CommandList>;
 
 const PromptInputCommandList = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandListProps): React.JSX.Element => (
   <CommandList
@@ -768,6 +792,7 @@ type PromptInputCommandEmptyProps = ComponentProps<typeof CommandEmpty>;
 
 const PromptInputCommandEmpty = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandEmptyProps): React.JSX.Element => (
   <CommandEmpty
@@ -785,6 +810,7 @@ type PromptInputCommandGroupProps = ComponentProps<typeof CommandGroup>;
 
 const PromptInputCommandGroup = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandGroupProps): React.JSX.Element => (
   <CommandGroup
@@ -802,6 +828,7 @@ type PromptInputCommandItemProps = ComponentProps<typeof CommandItem>;
 
 const PromptInputCommandItem = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandItemProps): React.JSX.Element => (
   <CommandItem
@@ -819,6 +846,7 @@ type PromptInputCommandSeparatorProps = ComponentProps<typeof CommandSeparator>;
 
 const PromptInputCommandSeparator = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputCommandSeparatorProps): React.JSX.Element => (
   <CommandSeparator

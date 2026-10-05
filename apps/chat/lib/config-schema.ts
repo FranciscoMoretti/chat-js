@@ -136,6 +136,7 @@ const installedGatewaySchema = createAiSchema(gatewayType);
 
 const aiConfigSchema = installedGatewaySchema.default({
   gateway: gatewayType,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayModelDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...gatewayModelDefaults,
 });
 
@@ -493,6 +494,7 @@ const mergeToolsConfig = (
   if (!user) {
     return defaults;
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of defaults rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   const result: Record<string, unknown> = { ...defaults };
   const entries: [string, unknown][] = Object.entries(user);
   for (const [key, value] of entries) {
@@ -504,7 +506,8 @@ const mergeToolsConfig = (
       defaultValue !== null &&
       typeof defaultValue === "object" &&
       !Array.isArray(defaultValue)
-        ? { ...defaultValue, ...value }
+        ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultValue own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          { ...defaultValue, ...value }
         : value;
   }
   return result;
@@ -518,15 +521,20 @@ const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
 
   const mergedAi = {
     gateway,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...gatewayDefaults,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...aiInput,
     tools: mergeToolsConfig(gatewayDefaults.tools, aiInput?.tools),
     workflows: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...gatewayDefaults.workflows,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput?.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...aiInput?.workflows,
     },
   };
 
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return configSchema.parse({ ...input, ai: mergedAi });
 };
 

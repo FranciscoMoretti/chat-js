@@ -90,6 +90,7 @@ const multiQueryWebSearchStep = async ({
         queries: queries.map((query) => query.query),
         // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
         results: allResults.map((result) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...result,
           source: "web",
         })),

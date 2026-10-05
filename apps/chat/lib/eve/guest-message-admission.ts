@@ -79,6 +79,7 @@ const admitGuestMessage = async (
     ownerId,
     operationId: operationId.data,
     requestHash: createHash("sha256")
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .update(JSON.stringify({ kind: "message", sessionId, ...input }))
       .digest("hex"),
     ipHash,

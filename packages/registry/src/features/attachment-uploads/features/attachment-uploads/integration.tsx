@@ -127,6 +127,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       rootProps: disabled
         ? {}
         : {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getRootProps({ role: "group" }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...getRootProps({ role: "group" }),
             onPasteCapture: (
               event: React.ClipboardEvent<HTMLDivElement>

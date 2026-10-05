@@ -200,6 +200,7 @@ const serverEnvSchema = {
     .string()
     .optional()
     .describe("Secret for cleanup cron job endpoint"),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing databaseEnvOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z

@@ -41,7 +41,9 @@ const retireEveSessionForDeletion = async (
   }
   const connection = getEveConnectionOptions(ownerId);
   const client = new Client({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...connection,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     headers: { ...connection.headers, "x-chatjs-deletion": "1" },
   });
   const session = client.sessions.attach(sessionId);

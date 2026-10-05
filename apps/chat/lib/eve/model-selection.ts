@@ -53,6 +53,7 @@ const getEveModelDefinition = (
     throw new EveModelUnavailableError("This model is not available for chat.");
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The selected installed gateway determines valid model IDs at runtime; a generic gateway redesign is needed to encode that relationship.

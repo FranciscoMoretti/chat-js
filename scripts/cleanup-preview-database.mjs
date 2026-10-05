@@ -183,6 +183,7 @@ const isDeletablePreview = (branch, parentId) =>
  */
 const hasOpenPullRequest = async (github, repository, headRef) => {
   const open = await github.paginate(github.rest.pulls.list, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     head: `${repository.owner}:${headRef}`,
     per_page: OPEN_PULL_REQUEST_PAGE_SIZE,
@@ -236,6 +237,7 @@ const hasUnchangedPullRequest = (current, original, repository) =>
  */
 const checkPullRequestGate = async (github, repository, number) => {
   const { data: pull } = await github.rest.pulls.get({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     pull_number: number,
   });
@@ -341,6 +343,7 @@ const deletePreviewIfStillSafe = async ({
 }) => {
   // Refresh ownership after Neon lookup, immediately before the destructive call.
   const { data: current } = await github.rest.pulls.get({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     pull_number: number,
   });

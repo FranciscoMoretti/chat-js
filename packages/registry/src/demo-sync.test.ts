@@ -67,13 +67,16 @@ const verifyCanonicalChange = async (
   source: string
 ): Promise<void> => {
   const options = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...original,
     expected: new Map([...original.expected, ["implementation.ts", source]]),
   };
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     "Demo source drift"
   );
   await syncDemo(options);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, check: true });
 };
 /* oxlint-enable oxc/no-async-await */
@@ -107,6 +110,7 @@ test("local edits stop all writes; explicit discard restores canonical source", 
     false
   );
   expect(await readFile(options.baseline, "utf-8")).toBe(before);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, discard: true });
   const actual = await readFile(
     path.join(options.root, "implementation.ts"),
@@ -120,6 +124,7 @@ test("missing tracked files are edits and an untracked existing file is protecte
   const options = await fixture();
   await rm(path.join(options.root, "implementation.ts"));
   expect(syncDemo(options)).rejects.toThrow("Edited registry-owned demo files");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, discard: true });
   await writeFile(path.join(options.root, "new.ts"), "// user file\n");
   options.expected.set("new.ts", "// canonical file\n");
@@ -155,6 +160,7 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
       })
     )
   ).toEqual(files.map(() => "// app-owned order and extensions\n"));
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, expected: new Map() })).rejects.toThrow(
     "removal is outside demo sync scope"
   );
@@ -172,6 +178,7 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "implementation.ts"),
     "utf-8"
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, discard: true })).rejects.toThrow("symlink");
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
@@ -185,10 +192,12 @@ test("edits moved upstream can advance the baseline without discarding", async (
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     `Baseline drift: ${options.baseline}`
   );
   await syncDemo(options);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, check: true });
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
@@ -235,6 +244,7 @@ test.each(["source", "baseline"])(
     injected.assertTriggered();
     await verifyRollback(options, previous);
     await syncDemo(options);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await syncDemo({ ...options, check: true });
   }
 );

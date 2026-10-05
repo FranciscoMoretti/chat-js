@@ -47,7 +47,9 @@ it("projects visible text with stable keys for live events and restored history"
 it("indexes seeded display text while excluding reasoning, tools and system-authored input", () => {
   expect(
     eveEventSearchText({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing received own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...received,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing received.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       data: { ...received.data, kind: "execution.background_task" },
     })
   ).toEqual([]);

@@ -172,6 +172,7 @@ test.each(["step.completed", "compaction.usage"])(
   "missing %s cost blocks cursor advancement until durable provider reconciliation",
   async (type) => {
     const id = await session();
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(undefined) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const event = { ...step(undefined), type };
     transport.stream.mockImplementation(function* ({ startIndex }) {
       if (startIndex === 0) {
@@ -205,7 +206,9 @@ test("compaction attempts share per-turn rounding and replay does not double-cha
   const id = await session();
   const events = [
     step(0.004),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(0.003) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...step(0.003), type: "compaction.usage" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(0.004) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...step(0.004), type: "compaction.usage" },
   ];
   transport.stream.mockImplementation(function* ({ startIndex }) {

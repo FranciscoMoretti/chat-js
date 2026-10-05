@@ -9,6 +9,7 @@ import config from "./playwright.eve.config";
  */
 // Run against the normal application with an unauthenticated browser.
 export default defineConfig({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...config,
   testMatch: "eve-disposable-guest.e2e.ts",
 });

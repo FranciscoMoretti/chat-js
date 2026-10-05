@@ -377,6 +377,7 @@ describe("useEveFork", () => {
       // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
       await act(async () => {
         await required(fork).begin({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing userMessage() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...userMessage(),
           id: "seed_message_2",
           parts: [{ text: "A different message", type: "text" }],

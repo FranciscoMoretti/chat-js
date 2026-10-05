@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- Empty uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Empty = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -32,6 +33,7 @@ const Empty = ({
 /* oxlint-disable react/react-in-jsx-scope -- EmptyHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -67,6 +69,7 @@ const emptyMediaVariants = cva(
 const EmptyMedia = ({
   className,
   variant = "default",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div"> &
   VariantProps<typeof emptyMediaVariants>): ReactJSX.Element => (
@@ -86,6 +89,7 @@ const EmptyMedia = ({
 /* oxlint-disable react/react-in-jsx-scope -- EmptyTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -103,6 +107,7 @@ const EmptyTitle = ({
 /* oxlint-disable react/react-in-jsx-scope -- EmptyDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element => (
   <div
@@ -123,6 +128,7 @@ const EmptyDescription = ({
 /* oxlint-disable react/react-in-jsx-scope -- EmptyContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div

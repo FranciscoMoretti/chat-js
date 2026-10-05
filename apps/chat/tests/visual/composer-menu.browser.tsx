@@ -171,6 +171,7 @@ vi.mock("@tanstack/react-query", () => ({
   useMutation: () => ({ mutate: state.toggle }),
   useQuery: () => ({
     data: state.connectors.map((connector) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...connector,
       userId: state.globalConnector ? null : "fixture",
     })),
@@ -191,6 +192,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/components/internal-link", () => ({
   InternalLink: ({
     children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: React.ComponentProps<"a">): React.JSX.Element => (
     <a {...props}>{children}</a>
@@ -207,6 +209,7 @@ vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
   }>();
   return {
     composerTools: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual.composerTools own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...actual.composerTools,
       get webSearch() {
         return state.removedTool || state.missingMetadata

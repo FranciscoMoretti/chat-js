@@ -24,6 +24,7 @@ const Slider = ({
   value,
   min = 0,
   max = 100,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultValue, value, min, max from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof SliderPrimitiveRoot>): ReactJSX.Element => {
   const sliderValues = useReactMemo(() => {

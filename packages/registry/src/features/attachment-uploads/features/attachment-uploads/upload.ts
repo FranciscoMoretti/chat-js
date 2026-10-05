@@ -33,6 +33,7 @@ export const uploadAttachment = async (
     throw new Error(`Invalid upload response for ${file.name}.`);
   }
   return draftAttachment.parse({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing uploaded own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...uploaded,
     contentType: file.type,
     digest: await attachmentDigest(await file.arrayBuffer()),

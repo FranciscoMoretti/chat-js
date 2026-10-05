@@ -27,6 +27,7 @@ export const testToolContext = (
     turn: { id: "turn", sequence: 0 },
   },
   toolName: "test",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

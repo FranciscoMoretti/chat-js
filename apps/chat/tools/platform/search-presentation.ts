@@ -109,6 +109,7 @@ const executeMultiQuerySearch = async ({
     { completedSteps, resultGroups: searchResults.length, totalSteps },
     "executeMultiQuerySearch complete"
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (error ? { error } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
   return { searches: searchResults, ...(error ? { error } : {}) };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

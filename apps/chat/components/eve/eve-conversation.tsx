@@ -162,6 +162,7 @@ const EveConversation = ({
         typeof id === "string" && id !== ""
           ? snapshot.nodes.get(id)?.message
           : undefined;
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing message own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return canonical ? { ...message, parts: canonical.parts } : message;
     });
   const editingMessageId =
@@ -240,9 +241,11 @@ const EveConversation = ({
           agent.send(draftMessage(pending.message, pending.attachments), {
             headers: {
               [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (pending.modelId                 ? { "x-chatjs-selected-model": pending.modelId }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
               ...(pending.modelId
                 ? { "x-chatjs-selected-model": pending.modelId }
                 : {}),
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (pending.selectedTool                 ? { "x-chatjs-selected-tool": pending.selectedTool }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
               ...(pending.selectedTool
                 ? { "x-chatjs-selected-tool": pending.selectedTool }
                 : {}),

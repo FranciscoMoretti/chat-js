@@ -235,11 +235,13 @@ const discoverEveMcpTools = async (
             connectorSignal.throwIfAborted();
             try {
               // MCP output and approval policies are adapted explicitly below.
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding definition excludes toModelOutput from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
               const { toModelOutput: _outputAdapter, ...definition } = tool;
               // oxlint-disable-next-line no-await-in-loop -- Each connector has a bounded discovery window.
               const description = await describeMcpTool(definition);
               connectorSignal.throwIfAborted();
               descriptions.push({
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing description own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 ...description,
                 connectorId: connector.id,
                 name: modelToolName(
@@ -299,6 +301,7 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
     validateFormats: false,
   }).compile(schema);
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...tool,
     inputSchema: jsonSchema(schema, {
       validate: (value) =>

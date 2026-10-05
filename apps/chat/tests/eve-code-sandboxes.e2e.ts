@@ -75,6 +75,7 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
   ).rejects.toThrow("Reconcile");
   await expect(
     reserveEveCodeSandbox(owner, row.id, "call-1", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...provider,
       projectId: "other-project",
     })

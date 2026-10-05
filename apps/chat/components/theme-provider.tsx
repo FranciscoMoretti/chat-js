@@ -13,6 +13,7 @@ type NextProviderProps = ComponentProps<typeof NextThemesProvider>;
 
 export const ThemeProvider = ({
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: NextProviderProps): React.JSX.Element => (
   <NextThemesProvider {...props}>{children}</NextThemesProvider>

@@ -194,6 +194,7 @@ const createOwnedThread = <TMessage extends UIMessage>(
   dispatchers: DispatcherReader<TMessage>
 ): Thread<TMessage> =>
   new Thread<TMessage>({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ownOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...ownOptions,
     onData: dispatchers.onData,
     onError: dispatchers.onError,

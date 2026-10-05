@@ -159,6 +159,7 @@ it("refuses a foreign or deleted source before reservation or checkpoint access"
  */
 it("passes the same named checkpoint to readiness and native fork allocation", async () => {
   const checkpointId = crypto.randomUUID();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const named = { ...input, fork: { ...input.fork, checkpointId } };
   const resolvedResult3 = await createEveConversationOperation("owner", named);
   expect(resolvedResult3.status).toBe(200);
@@ -186,6 +187,7 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
  */
 it("persists fork intent without forwarding ChatJS metadata to Eve", async () => {
   const regeneration = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     forkKind: "regenerate",
   } satisfies Parameters<typeof createEveConversationOperation>[1];
@@ -226,6 +228,7 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
  */
 it("dispatches imported forks by message identity without requiring an execution checkpoint", async () => {
   const imported = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fork: { beforeMessageId: "seed_message_2", conversationId: "source-chat" },
   };
@@ -261,6 +264,7 @@ it("dispatches imported forks by message identity without requiring an execution
  */
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {
   await createEveConversationOperation("owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     selectedTool: "webSearch",
   });
@@ -269,6 +273,7 @@ it("forwards selected tools on creation and includes them in the reservation ide
   const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     selectedTool: "deepResearch",
   });
@@ -300,6 +305,7 @@ it("persists a compact fallback title before native creation", async () => {
  * no-magic-numbers (#517): it("journals the complete creation command before dispatch so another tab can recover uses 1, -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 it("journals the complete creation command before dispatch so another tab can recover it", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const command = { ...input, selectedTool: "webSearch" } satisfies Parameters<
     typeof createEveConversationOperation
   >[1];

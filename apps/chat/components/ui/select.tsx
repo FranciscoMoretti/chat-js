@@ -42,6 +42,7 @@ const SelectValue = SelectPrimitiveValue;
 const SelectTrigger = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveTrigger>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveTrigger
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -71,6 +72,7 @@ SelectTrigger.displayName = SelectPrimitiveTrigger.displayName;
 const SelectScrollUpButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollUpButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollUpButton>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveScrollUpButton
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveScrollUpButton accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -97,6 +99,7 @@ SelectScrollUpButton.displayName = SelectPrimitiveScrollUpButton.displayName;
 const SelectScrollDownButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollDownButton>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveScrollDownButton>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveScrollDownButton
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveScrollDownButton accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -126,6 +129,7 @@ const SelectContent = reactForwardRef<
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveContent>
 >(
   (
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, position from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     { className, children, position = "popper", ...props },
     ref
   ): ReactJSX.Element => (
@@ -168,6 +172,7 @@ SelectContent.displayName = SelectPrimitiveContent.displayName;
 const SelectLabel = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveLabel>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveLabel>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveLabel
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveLabel accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -186,6 +191,7 @@ SelectLabel.displayName = SelectPrimitiveLabel.displayName;
 const SelectItem = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveItem>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveItem>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveItem
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveItem accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -218,6 +224,7 @@ SelectItem.displayName = SelectPrimitiveItem.displayName;
 const SelectSeparator = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveSeparator>,
   ReactComponentPropsWithoutRef<typeof SelectPrimitiveSeparator>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <SelectPrimitiveSeparator
     // oxlint-disable-next-line react/forbid-component-props -- SelectPrimitiveSeparator accepts className in its styling contract; preserve this caller's layout and appearance.

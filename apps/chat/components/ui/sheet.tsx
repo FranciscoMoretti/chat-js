@@ -89,6 +89,7 @@ const SheetPortal = (
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetOverlay forwards SheetPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetOverlay = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveOverlay>): ReactJSX.Element => (
   <SheetPrimitiveOverlay
@@ -114,6 +115,7 @@ const SheetContent = ({
   className,
   children,
   side = "right",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, side from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveContent> & {
   side?: "top" | "right" | "bottom" | "left";
@@ -162,6 +164,7 @@ const SheetContent = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -180,6 +183,7 @@ const SheetHeader = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetFooter = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -198,6 +202,7 @@ const SheetFooter = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetTitle forwards SheetPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveTitle>): ReactJSX.Element => (
   <SheetPrimitiveTitle
@@ -217,6 +222,7 @@ const SheetTitle = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetDescription forwards SheetPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof SheetPrimitiveDescription>): ReactJSX.Element => (
   <SheetPrimitiveDescription

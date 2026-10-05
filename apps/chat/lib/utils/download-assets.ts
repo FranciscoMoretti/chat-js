@@ -175,6 +175,7 @@ const mapFilePart = (
     }
     if (found) {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...part,
         data: found.data,
         mediaType: part.mediaType ?? found.mediaType,
@@ -204,6 +205,7 @@ const mapImagePart = (
     }
     if (found) {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...part,
         image: found.data,
         mediaType: part.mediaType ?? found.mediaType,
@@ -256,6 +258,7 @@ const replaceFilePartUrlByBinaryDataInMessages = async (
     }
 
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing message own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...message,
       content: message.content.map(mapPart).filter(
         // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.

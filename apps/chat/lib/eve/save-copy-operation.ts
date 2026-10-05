@@ -73,6 +73,7 @@ const prepareCopyReservation = async (
   );
   try {
     return await reserveEveCopyOperation(ownerId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       plan,
       projectionHash: source.projection.projectionHash,

@@ -92,6 +92,7 @@ for (const language of ["javascript", "python"] as const) {
         name: sandbox.name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auth own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...auth,
       });
     } catch (error) {
@@ -180,6 +181,7 @@ test("native sandbox ownership is durably released after real provider cleanup",
         name: resources[0].name,
         resume: false,
         signal: AbortSignal.timeout(15_000),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolveSandboxAuth() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...resolveSandboxAuth(),
       });
     } catch (error) {

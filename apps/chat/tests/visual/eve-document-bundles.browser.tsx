@@ -83,7 +83,11 @@ test("installed text, code and sheet bundles render saved content", async () => 
               <DocumentBody
                 kind={kind}
                 title={title}
-                editorProps={{ ...editorProps, content }}
+                editorProps={
+                  /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing editorProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+                  { ...editorProps, content }
+                  /* oxlint-enable oxc/no-rest-spread-properties */
+                }
               />
             </section>
           ))}
@@ -132,7 +136,11 @@ test("a removed editor has an explicit notice in panel and inline views", async 
                 kind="text"
                 title="Notes"
                 inline={inline}
-                editorProps={{ ...editorProps, content: "Saved content" }}
+                editorProps={
+                  /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing editorProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+                  { ...editorProps, content: "Saved content" }
+                  /* oxlint-enable oxc/no-rest-spread-properties */
+                }
               />
             </section>
           ))}

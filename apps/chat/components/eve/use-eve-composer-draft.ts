@@ -95,6 +95,7 @@ export const useEveComposerDraft = (
   const setText = useCallback(
     (text: SetStateAction<string>): void =>
       update((draft) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
         text: typeof text === "function" ? text(draft.text) : text,
       })),
@@ -103,6 +104,7 @@ export const useEveComposerDraft = (
   const setAttachments = useCallback(
     (attachments: SetStateAction<DraftAttachment[]>): void =>
       update((draft) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
         attachments:
           typeof attachments === "function"
@@ -114,12 +116,14 @@ export const useEveComposerDraft = (
   const setSelectedTool = useCallback(
     (tool: SetStateAction<UiToolName | null>): void =>
       update((draft) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
         selectedTool:
           typeof tool === "function" ? tool(draft.selectedTool) : tool,
       })),
     [update]
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...value, error, loaded, setAttachments, setSelectedTool, setText };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

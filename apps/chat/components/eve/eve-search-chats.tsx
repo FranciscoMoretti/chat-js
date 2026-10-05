@@ -76,6 +76,7 @@ const SearchResults = ({
       .filter((item) => item.state === "bound")
       // oxlint-disable-next-line oxc/no-map-spread -- #541: Normalize conversation IDs without mutating cached search result records.
       .map((item) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...item,
         conversationId: item.conversationId ?? item.id,
         excerpt: "",

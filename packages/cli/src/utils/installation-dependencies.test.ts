@@ -40,6 +40,7 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
       slot: "webSearch",
       tools: [{ toolExport: "search" }],
     });
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing previous own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const next = toolDefinitionSchema.parse({ ...previous, id: "second" });
     const first = await prepareDependencyUpdate(cwd, {
       items: [
@@ -74,6 +75,7 @@ test("replacement prunes only owned, unchanged, unused dependencies", async () =
     await writeFile(
       manifest,
       JSON.stringify({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing dependencies own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         dependencies: { ...dependencies, pinned: "2" },
         private: true,
       })

@@ -32,6 +32,7 @@ const schema = z.object(getEveRuntimeEnvOptions({}));
 describe("EVE environment defaults", () => {
   it("requires an independent gateway secret even when AUTH_SECRET is present", () => {
     for (const EVE_GATEWAY_SECRET of [undefined, "", "short"]) {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       const resolved = resolveEveEnvironment({ ...base, EVE_GATEWAY_SECRET });
       expect(schema.safeParse(resolved).success).toBe(false);
       expect(
@@ -43,6 +44,7 @@ describe("EVE environment defaults", () => {
       ).toBe(false);
     }
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       resolveEveEnvironment({ ...base, AUTH_SECRET: "rotated" })
         .EVE_GATEWAY_SECRET
     ).toBe(base.EVE_GATEWAY_SECRET);
@@ -52,11 +54,13 @@ describe("EVE environment defaults", () => {
     "does not initialize PostgreSQL workflows on Vercel %s",
     (VERCEL_ENV) => {
       const source = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         DATABASE_URL: "postgres://ep-test-pooler.region.aws.neon.tech/chat",
         VERCEL: "1",
         VERCEL_ENV,
       };
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of source rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
       const worker: Record<string, string | undefined> = { ...source };
       configureWorkflowEnvironment(worker);
       expect(worker.WORKFLOW_POSTGRES_URL).toBeUndefined();
@@ -72,6 +76,7 @@ describe("EVE environment defaults", () => {
   it("uses the exact Vercel deployment ahead of app and branch aliases", () => {
     expect(
       resolveEveEnvironment({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         APP_URL: "https://production.example",
         VERCEL_BRANCH_URL: "branch.vercel.app",
@@ -79,10 +84,12 @@ describe("EVE environment defaults", () => {
       }).EVE_INTERNAL_ORIGIN
     ).toBe("https://deployment.vercel.app");
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       resolveEveEnvironment({ ...base, APP_URL: "https://self-hosted.example" })
         .EVE_INTERNAL_ORIGIN
     ).toBe("https://self-hosted.example");
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       resolveEveEnvironment({ ...base, PORT: "3110" }).EVE_INTERNAL_ORIGIN
     ).toBe("http://localhost:3110");
   });
@@ -91,6 +98,7 @@ describe("EVE environment defaults", () => {
     "derives a bare origin from %s without accepting unsafe configuration",
     (key) => {
       const resolved = resolveEveEnvironment({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         [key]: "https://example.com:8443/chat?mode=test#section",
       });
@@ -106,6 +114,7 @@ describe("EVE environment defaults", () => {
         "http://example.com/chat",
       ]) {
         expect(
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           schema.safeParse(resolveEveEnvironment({ ...base, [key]: value }))
             .success
         ).toBe(false);
@@ -116,6 +125,7 @@ describe("EVE environment defaults", () => {
   it("does not normalize an explicit origin override", () => {
     const EVE_INTERNAL_ORIGIN = "https://example.com/chat?mode=test#section";
     const resolved = resolveEveEnvironment({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       APP_URL: "https://valid.example/chat",
       EVE_INTERNAL_ORIGIN,
@@ -130,9 +140,11 @@ describe("EVE environment defaults", () => {
       EVE_INTERNAL_ORIGIN: "https://worker.example",
       WORKFLOW_POSTGRES_URL: "postgres://localhost/workflows",
     };
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(resolveEveEnvironment({ ...base, ...overrides })).toEqual(overrides);
     expect(
       resolveEveEnvironment({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         EVE_INTERNAL_ORIGIN: "",
         WORKFLOW_POSTGRES_URL: "",
@@ -140,6 +152,7 @@ describe("EVE environment defaults", () => {
     ).toEqual(resolveEveEnvironment(base));
     expect(
       schema.safeParse(
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         resolveEveEnvironment({ ...base, EVE_GATEWAY_SECRET: "short" })
       ).success
     ).toBe(false);
@@ -148,9 +161,11 @@ describe("EVE environment defaults", () => {
 
   it("uses runtime credentials for both app resolution and provider initialization", () => {
     const source = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       DATABASE_MIGRATION_URL: "postgres://direct.example/chat",
     };
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of source rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     const worker: Record<string, string | undefined> = { ...source };
     configureWorkflowEnvironment(worker);
     expect(worker.WORKFLOW_POSTGRES_URL).toBe(source.DATABASE_URL);
@@ -172,10 +187,12 @@ describe("EVE environment defaults", () => {
       "postgres://runtime@ep-test-pooler.region.aws.neon.tech/chat",
     ]) {
       const source = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         DATABASE_MIGRATION_URL: "postgres://admin:secret@direct.example/chat",
         DATABASE_URL,
       };
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of source rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
       const worker: Record<string, string | undefined> = { ...source };
       configureWorkflowEnvironment(worker);
       // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
@@ -193,6 +210,7 @@ describe("EVE environment defaults", () => {
     "postgres://db.example.com:6543/chat",
   ])("accepts direct or session connections: %s", (DATABASE_URL) => {
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       schema.safeParse(resolveEveEnvironment({ ...base, DATABASE_URL })).success
     ).toBe(true);
   });
@@ -205,11 +223,13 @@ describe("EVE environment defaults", () => {
     "postgres://db/chat?pool_mode=transaction",
   ])("rejects a known transaction pooler: %s", (DATABASE_URL) => {
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       schema.safeParse(resolveEveEnvironment({ ...base, DATABASE_URL })).success
     ).toBe(false);
     expect(
       schema.safeParse(
         resolveEveEnvironment({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...base,
           DATABASE_URL,
           WORKFLOW_POSTGRES_URL: "postgres://runtime@direct.example/chat",

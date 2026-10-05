@@ -570,7 +570,7 @@ const inheritImportedDocumentCheckpoints = async (
   }
   const copied = await tx
     .insert(eveImportedDocumentCheckpoint)
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
+    // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records. Rest/spread: Keep the existing header own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     .values(headers.map((header) => ({ ...header, conversationId })))
     .onConflictDoNothing()
     .returning({ messageIndex: eveImportedDocumentCheckpoint.messageIndex });
@@ -593,7 +593,7 @@ const inheritImportedDocumentCheckpoints = async (
   if (entries.length > 0) {
     await tx
       .insert(eveImportedDocumentCheckpointEntry)
-      // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
+      // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records. Rest/spread: Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .values(entries.map((entry) => ({ ...entry, conversationId })));
   }
 };
@@ -708,6 +708,7 @@ const inheritDocumentCheckpoints = async (
       .insert(eveDocumentCheckpoint)
       .values(
         inheritedCheckpoints.map((checkpoint) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing checkpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...checkpoint,
           conversationId,
         }))
@@ -731,7 +732,7 @@ const inheritDocumentCheckpoints = async (
       if (entries.length > 0) {
         await tx
           .insert(eveDocumentCheckpointEntry)
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
+          // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records. Rest/spread: Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           .values(entries.map((entry) => ({ ...entry, conversationId })));
       }
     }
@@ -1016,7 +1017,7 @@ const captureEveDocumentCheckpoint = async (
     if (heads.length > 0) {
       await tx
         .insert(eveDocumentCheckpointEntry)
-        // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
+        // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records. Rest/spread: Keep the existing head own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         .values(heads.map((head) => ({ ...head, turnIndex })));
     }
   });
@@ -1101,7 +1102,7 @@ const captureEveNamedDocumentCheckpoint = async (
     if (heads.length > 0) {
       await tx
         .insert(eveNamedDocumentCheckpointEntry)
-        // oxlint-disable-next-line oxc/no-map-spread -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records.
+        // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Copy checkpoint rows into a new conversation or checkpoint without mutating source records. Rest/spread: Keep the existing head own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         .values(heads.map((head) => ({ ...head, checkpointId })));
     }
   });

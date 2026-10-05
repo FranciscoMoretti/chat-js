@@ -36,7 +36,9 @@ const createProject = ({
 }) =>
   db.insert(project).values({
     createdAt: new Date(),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (icon && { icon }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(icon && { icon }),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (iconColor && { iconColor }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(iconColor && { iconColor }),
     id,
     instructions,
@@ -88,6 +90,7 @@ const updateProject = ({
 }) =>
   db
     .update(project)
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing updates own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     .set({ ...updates, updatedAt: new Date() })
     .where(eq(project.id, id));
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

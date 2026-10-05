@@ -36,12 +36,15 @@ test("Daytona installation declares its credentials and shared executor without 
 
 test("external executors need no central provider name and reject incompatible capabilities", () => {
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     toolDefinitionSchema.parse({ ...descriptor, id: "external-executor" }).id
   ).toBe("external-executor");
   expect(() =>
     toolDefinitionSchema.parse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...descriptor,
       codeExecutionCapabilities: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor.codeExecutionCapabilities own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...descriptor.codeExecutionCapabilities,
         languages: ["python"],
       },
@@ -49,8 +52,10 @@ test("external executors need no central provider name and reject incompatible c
   ).toThrow("Python and JavaScript");
   expect(() =>
     toolDefinitionSchema.parse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...descriptor,
       codeExecutionCapabilities: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing descriptor.codeExecutionCapabilities own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...descriptor.codeExecutionCapabilities,
         cleanup: "none",
       },

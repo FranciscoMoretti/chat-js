@@ -689,6 +689,7 @@ const PlaygroundSession = (): React.JSX.Element => {
     },
     transport: createPlaygroundTransport(),
   });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing thread own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const chat: PlaygroundChat = { ...thread, stoppedIds };
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendDraft's awaited sequencing and rejected-Promise behavior. */

@@ -62,6 +62,7 @@ class DiffTextNode extends TextNode {
 
   public exportJSON(): SerializedDiffTextNode {
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing super.exportJSON() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...super.exportJSON(),
       diffType: this.__diffType,
       type: "diff-text",
@@ -224,6 +225,7 @@ interface DiffEditorProps {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
   const initialConfig = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createEditorConfig() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...createEditorConfig(),
     editable: false,
     nodes: [DiffTextNode],

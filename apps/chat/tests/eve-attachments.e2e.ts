@@ -147,19 +147,24 @@ test("ChatJS upload remains durable through creation retries and message editing
     const retry = await page.request.post("/api/agent-conversations", options);
     expect(await retry.json()).toEqual(binding);
     const changed = await page.request.post("/api/agent-conversations", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...options,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         message: [
           input.message[0],
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.message[1] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           { ...input.message[1], filename: "different.png" },
         ],
       },
     });
     expect(changed.status()).toBe(409);
     const external = await page.request.post("/api/agent-conversations", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...options,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         message: [
           {

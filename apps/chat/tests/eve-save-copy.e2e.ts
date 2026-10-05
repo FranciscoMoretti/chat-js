@@ -202,6 +202,7 @@ async function fixture() {
   const first = crypto.randomUUID();
   const head = crypto.randomUUID();
   await insertEveConversationFixtures({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...source,
     firstMessage: source.title,
     operationId: crypto.randomUUID(),
@@ -290,6 +291,7 @@ async function fixture() {
     ownerId: sourceOwnerId,
   });
   mocks.source.mockResolvedValue({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...source,
     boundaries: [{ messageIndex: 0, sourceKind: "imported", sourceIndex: 0 }],
     projection,
@@ -480,6 +482,7 @@ test("uncertain storage writes retry persisted keys without taking another snaps
   await expect(
     saveEveCopyOperation(
       ownerId,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fixtureData.input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...fixtureData.input, sourceConversationId: crypto.randomUUID() },
       "https://chatjs.example"
     )

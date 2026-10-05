@@ -29,6 +29,7 @@ import {
 
 export const SignupForm = ({
   className: _className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<typeof Card>): ReactJSX.Element => {
   const searchParams = useSearchParams();

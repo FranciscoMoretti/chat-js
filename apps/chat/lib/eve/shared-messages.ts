@@ -73,17 +73,21 @@ const sharedTool = (
     };
   switch (part.state) {
     case "input-streaming": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, inputText: part.inputText, state: part.state };
     }
     case "input-available": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state };
     }
     // The read-only UI union requires an ID; this placeholder is not an approval receipt.
     case "approval-requested": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, approval: { id: "public" }, state: part.state };
     }
     case "approval-responded": {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         approval: {
           approved: part.approval.approved,
@@ -95,6 +99,7 @@ const sharedTool = (
     }
     case "output-denied": {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         approval: {
           approved: false,
@@ -105,6 +110,7 @@ const sharedTool = (
       };
     }
     case "output-error": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, errorText: part.errorText, state: part.state };
     }
     case "output-available": {
@@ -112,6 +118,7 @@ const sharedTool = (
       if (hasEveToolReceipt(part.output)) {
         if (!result.success) {
           return {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...base,
             errorText:
               "This tool result is unavailable in the shared conversation.",
@@ -119,6 +126,7 @@ const sharedTool = (
           };
         }
         return {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...base,
           output: result.data,
           partial: part.partial,
@@ -126,8 +134,10 @@ const sharedTool = (
         };
       }
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         output: part.output,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(part.outputType ? { outputType: part.outputType } : {}),
         partial: part.partial,
         state: part.state,
@@ -135,6 +145,7 @@ const sharedTool = (
     }
     default: {
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         errorText: "This tool state is unavailable in the shared conversation.",
         state: "output-error",
@@ -210,9 +221,11 @@ const sharedEveMessages = (
     const selectedTool =
       message.role === "user" ? (eveMessageTool(message) ?? "") : "";
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool === ""         ? {}         : { metadata: { custom: eveToolMetadata(selectedTool) } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
       ...(selectedTool === ""
         ? {}
         : { metadata: { custom: eveToolMetadata(selectedTool) } }),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (modelId === "" ? {} : { metadata: { modelId } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
       ...(modelId === "" ? {} : { metadata: { modelId } }),
       id: message.id,
       parts: message.parts.flatMap(sharedEvePart),

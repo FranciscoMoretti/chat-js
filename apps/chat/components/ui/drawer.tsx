@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 /* oxlint-disable react/react-in-jsx-scope -- Drawer uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Drawer = ({
   shouldScaleBackground = true,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes shouldScaleBackground from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DrawerPrimitive.Root>): ReactJSX.Element => (
   <DrawerPrimitive.Root
@@ -41,6 +42,7 @@ const DrawerClose = DrawerPrimitive.Close;
 const DrawerOverlay = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Overlay>,
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Overlay
     // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Overlay accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -59,6 +61,7 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 const DrawerContent = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Content>,
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <DrawerPortal>
     <DrawerOverlay />
@@ -85,6 +88,7 @@ DrawerContent.displayName = "DrawerContent";
 /* oxlint-disable react/react-in-jsx-scope -- DrawerHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DrawerHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
@@ -101,6 +105,7 @@ DrawerHeader.displayName = "DrawerHeader";
 /* oxlint-disable react/react-in-jsx-scope -- DrawerFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const DrawerFooter = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactHTMLAttributes<HTMLDivElement>): ReactJSX.Element => (
   <div
@@ -118,6 +123,7 @@ DrawerFooter.displayName = "DrawerFooter";
 const DrawerTitle = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Title>,
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Title>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Title
     // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Title accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -139,6 +145,7 @@ DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
 const DrawerDescription = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Description>,
   ReactComponentPropsWithoutRef<typeof DrawerPrimitive.Description>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <DrawerPrimitive.Description
     // oxlint-disable-next-line react/forbid-component-props -- DrawerPrimitive.Description accepts className in its styling contract; preserve this caller's layout and appearance.

@@ -207,6 +207,7 @@ test("an unresolved project conversation recovers after its project is deleted",
     ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
     {
       key: storageKey,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       pending: { ...operation, operationId: crypto.randomUUID() },
     }
   );

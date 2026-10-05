@@ -186,6 +186,7 @@ const recordEveUsage = async (input: {
           .where(eq(eveUsage.eventId, input.eventId));
       }
     } else {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
     // Guest admission spends message quota. Keep provider costs without granting
@@ -290,6 +291,7 @@ const withManagedUsageReconciliation = async (
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
   const settings = databaseConnection(env);
   const connection = postgres(settings.url, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing settings.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...settings.options,
     max: 1,
     prepare: false,

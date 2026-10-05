@@ -30,6 +30,7 @@ export const EveToolResult = ({
       isReadonly,
       messageId,
       tool: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...part,
         errorText: platformOutput.data.error,
         state: "output-error",
@@ -39,6 +40,7 @@ export const EveToolResult = ({
   }
   const tool = platformOutput?.success
     ? {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...part,
         output: platformOutput.data.output,
         updates: platformOutput.data.updates,

@@ -78,6 +78,7 @@ const revision = {
 } satisfies Partial<typeof eveDocumentRevision.$inferInsert>;
 // oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the root document revision before dependent branch revisions.
 await db.insert(eveDocumentRevision).values({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...revision,
   content: "First published version",
   id: rootRevision,
@@ -86,6 +87,7 @@ await db.insert(eveDocumentRevision).values({
 // oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts published and hidden revisions before assigning visible heads.
 await db.insert(eveDocumentRevision).values([
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...revision,
     content: "Second published version",
     id: visibleRevision,
@@ -93,6 +95,7 @@ await db.insert(eveDocumentRevision).values([
     parentRevisionId: rootRevision,
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...revision,
     content: "Private branch secret",
     conversationId: branchId,
@@ -101,6 +104,7 @@ await db.insert(eveDocumentRevision).values([
     parentRevisionId: rootRevision,
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...revision,
     content: "Unpublished document secret",
     documentId: hiddenDocumentId,
@@ -192,6 +196,7 @@ test("rejects a referenced private revision or a missing document instead of par
       conversationId,
       sessionId,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resources own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...resources,
         revisionIds: [privateRevision],
       },

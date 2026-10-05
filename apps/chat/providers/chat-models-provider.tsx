@@ -44,6 +44,7 @@ const ChatModelsProvider = ({
   const isAuthenticated = Boolean(session?.user);
 
   const { data: preferences } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.settings.getModelPreferences.queryOptions() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.settings.getModelPreferences.queryOptions(),
     enabled: isAuthenticated,
   });

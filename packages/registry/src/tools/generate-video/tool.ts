@@ -121,6 +121,7 @@ const videoRequest = (
   model: eveToolModelProvider.createVideoModel(modelId),
   prompt: options.prompt,
   providerOptions: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (isGoogleModel && {       google: { aspectRatio: options.aspectRatio },     }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(isGoogleModel && {
       google: { aspectRatio: options.aspectRatio },
     }),

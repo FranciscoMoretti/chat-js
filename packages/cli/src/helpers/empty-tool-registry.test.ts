@@ -79,6 +79,7 @@ test("a fresh app can type-check its renderer boundary with no optional tools", 
         nodePath.join(destination, "components/eve/eve-document-body.tsx"),
       ],
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing parsed.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...parsed.options,
         incremental: false,
         // Bun can place React and Node types at different workspace levels.

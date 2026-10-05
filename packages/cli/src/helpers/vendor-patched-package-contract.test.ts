@@ -60,6 +60,7 @@ const createFixture = async (
 test("retains template and published package metadata while pinning the maintained archive", async () => {
   const fixture = await createFixture();
   try {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fixture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await vendorPatchedPackage({ ...fixture, packageName: "maintained" });
     expect(
       await readFile(path.join(fixture.destination, "package.json"), "utf-8")
@@ -96,6 +97,7 @@ for (const installed of [
     const fixture = await createFixture(installed);
     try {
       try {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fixture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         await vendorPatchedPackage({ ...fixture, packageName: "maintained" });
         throw new Error("Expected a metadata mismatch.");
       } catch (error) {

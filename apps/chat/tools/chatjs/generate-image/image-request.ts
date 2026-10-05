@@ -122,6 +122,7 @@ const executeImageRequest = async (
         mode: options.mode,
         ms: Date.now() - options.startMs,
         selectedModel,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getErrorDebugInfo(resolvedError) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...getErrorDebugInfo(resolvedError),
       },
       "generateImage: failure"

@@ -205,27 +205,32 @@ it("accepts conversation-based forks and rejects raw native identities or invali
   const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", sessionId: "native-session" },
     }).success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_-1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(false);
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     createConversationInput.safeParse({ ...input, forkKind: "edit" }).success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
       forkKind: "regenerate",
@@ -241,11 +246,13 @@ it("allows a project for new conversations while forks inherit their existing pr
   };
   expect(createConversationInput.safeParse(input).success).toBe(true);
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     createConversationInput.safeParse({ ...input, projectId: "invalid" })
       .success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     }).success
@@ -263,12 +270,18 @@ it("accepts exactly one canonical imported fork boundary", () => {
   };
   expect(createConversationInput.parse(input)).toEqual(input);
   for (const fork of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeTurnId: "turn_0" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, checkpointId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "seed_message_02" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "seed_message_10000" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "message_2" },
   ]) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(createConversationInput.safeParse({ ...input, fork }).success).toBe(
       false
     );

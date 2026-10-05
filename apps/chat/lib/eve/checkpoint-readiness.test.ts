@@ -105,8 +105,11 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     `/eve/chat/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
   ]);
   for (const invalid of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, checkpointId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, checkpointId: undefined },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, ready: false },
   ]) {
     request.mockResolvedValueOnce(Response.json(invalid));

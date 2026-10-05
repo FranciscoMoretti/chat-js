@@ -140,6 +140,7 @@ test("compiled idle capture preserves native history and exact document revision
       if (captureRequests.length === 1) {
         await saveEveDocumentRevision(
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...document,
             content: "Later source edit",
             expectedRevisionId: original.id,
@@ -177,6 +178,7 @@ test("compiled idle capture preserves native history and exact document revision
     storageKey
   );
   expect(JSON.parse(saved ?? "null")).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing captureRequests[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fork: { conversationId: source.id, ...captureRequests[0] },
     message: followUp,
     modelIds: ["google/gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite"],
@@ -223,6 +225,7 @@ test("compiled idle capture preserves native history and exact document revision
     ).toHaveCount(2, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     expect(await birthIdentity(candidate.sessionId)).toEqual({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sourceIdentity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...sourceIdentity,
       sessionId: candidate.sessionId,
     });
@@ -369,6 +372,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
         checkpointRejected: true,
         conversationId: source.id,
         reason: "source_advanced",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing checkpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...checkpoint,
       });
       await route.fulfill({ response: rejected });
@@ -417,6 +421,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     expect(await repeated.json()).toMatchObject({
       checkpointRejected: true,
       reason: "source_advanced",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing checkpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...checkpoint,
     });
     await page

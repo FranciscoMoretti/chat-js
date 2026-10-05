@@ -29,6 +29,7 @@ const buttonGroupVariants = cva(
 const ButtonGroup = ({
   className,
   orientation,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<"div"> &
   VariantProps<typeof buttonGroupVariants>): React.JSX.Element => (
@@ -46,6 +47,7 @@ const ButtonGroup = ({
 const ButtonGroupText = ({
   className,
   asChild = false,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<"div"> & {
   asChild?: boolean;
@@ -71,6 +73,7 @@ const ButtonGroupText = ({
 const ButtonGroupSeparator = ({
   className,
   orientation = "vertical",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, orientation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<typeof Separator>): React.JSX.Element => (
   <Separator

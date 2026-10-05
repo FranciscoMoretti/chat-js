@@ -24,6 +24,7 @@ const resource = (
   organizationId: "org-a",
   process: { executeCommand: async () => ({ exitCode: 0, result: "ok" }) },
   state: "started",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
 /* oxlint-enable oxc/no-async-await */
@@ -56,6 +57,7 @@ describe("Daytona durable resource boundary", () => {
       /^https:\/\/app.daytona.io\/api#[a-f0-9]{64}$/u
     );
     const rotated = createDaytonaProvider(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...credentials, apiKey: "rotated-key" },
       { create: async () => resource(), get: async () => resource() }
     );
@@ -225,6 +227,7 @@ test("empty required credentials fail before provider allocation", () => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expect(() =>     createDaytonaProvider(       { ...credentials, organizationId: " " },       {      's required Promise and rejection contract. DaytonaClient.create resolves a resource for request cancellation. DaytonaClient.get resolves a resource for request cancellation. */
   expect(() =>
     createDaytonaProvider(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...credentials, organizationId: " " },
       {
         create: async () => resource(),

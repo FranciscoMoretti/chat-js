@@ -176,6 +176,7 @@ export const normalizeScaffoldedPackageJson = (
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
     packageJson.overrides = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing packageJson.overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...packageJson.overrides,
       "@better-auth/core": betterAuthVersion,
     };

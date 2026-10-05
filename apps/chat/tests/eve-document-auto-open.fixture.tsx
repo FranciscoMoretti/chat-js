@@ -127,11 +127,26 @@ const Fixture = ({
         >
           Fail write
         </button>
-        <button onClick={() => setPart({ ...completed })} type="button">
+        <button
+          onClick={() =>
+            setPart(
+              /* oxlint-disable oxc/no-rest-spread-properties -- Keep the fresh shallow copy of completed rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign. */
+              { ...completed }
+              /* oxlint-enable oxc/no-rest-spread-properties */
+            )
+          }
+          type="button"
+        >
           Complete write
         </button>
         <button
-          onClick={() => setPart({ ...completed, toolName: "readDocument" })}
+          onClick={() =>
+            setPart(
+              /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing completed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+              { ...completed, toolName: "readDocument" }
+              /* oxlint-enable oxc/no-rest-spread-properties */
+            )
+          }
           type="button"
         >
           Complete read
@@ -142,6 +157,7 @@ const Fixture = ({
         <button
           onClick={() =>
             setArtifact({
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing artifact own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...artifact,
               conversationId,
               documentId: existingId,

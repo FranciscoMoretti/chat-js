@@ -50,12 +50,14 @@ export const useRenameProject = () => {
             : undefined;
         if (typeof nextName === "string" && nextName !== "") {
           queryClient.setQueryData<Project | null>(detailKey, (old) =>
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             old ? { ...old, name: nextName } : old
           );
           queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
             old?.map((project) =>
               project.id === variables.id
-                ? { ...project, name: nextName }
+                ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing project own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                  { ...project, name: nextName }
                 : project
             )
           );

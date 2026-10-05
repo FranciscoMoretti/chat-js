@@ -125,6 +125,7 @@ const resolveSandboxAuth = (): SandboxAuth => {
   if (!(identity && token)) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...identity, token };
 };
 /* oxlint-enable eslint/no-undefined */
@@ -163,6 +164,7 @@ const createSandbox = (
     runtime,
     signal,
     timeout: 5 * 60 * 1000,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (auth ?? getTokenAuth()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...(auth ?? getTokenAuth()),
   });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupSandbox's awaited sequencing and rejected-Promise behavior. */
@@ -208,6 +210,7 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
       name,
       resume: false,
       signal: AbortSignal.timeout(15_000),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auth own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...auth,
     });
   } catch (error) {

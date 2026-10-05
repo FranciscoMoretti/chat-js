@@ -26,6 +26,7 @@ type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 
 const Artifact = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactProps): React.JSX.Element => (
   <div
@@ -45,6 +46,7 @@ type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactHeaderProps): React.JSX.Element => (
   <div
@@ -68,6 +70,7 @@ const ArtifactClose = ({
   children,
   size = "sm",
   variant = "ghost",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactCloseProps): React.JSX.Element => (
   <Button
@@ -100,6 +103,7 @@ type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 
 const ArtifactTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactTitleProps): React.JSX.Element => (
   <p
@@ -116,6 +120,7 @@ type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
 const ArtifactDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactDescriptionProps): React.JSX.Element => (
   <p
@@ -132,6 +137,7 @@ type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactActions = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactActionsProps): React.JSX.Element => (
   <div
@@ -158,6 +164,7 @@ const ArtifactAction = ({
   className,
   size = "sm",
   variant = "ghost",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, label, icon, children, className, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactActionProps): React.JSX.Element => {
   const button = (
@@ -209,6 +216,7 @@ type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactContentProps): React.JSX.Element => (
   <div

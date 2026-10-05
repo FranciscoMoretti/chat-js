@@ -231,6 +231,7 @@ export const buildConfigTs = (
   }>
 ): string => {
   const partial = toConfigInput(input);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding appConfig excludes ai from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
   const toolOverrides: Record<string, object> = ai.tools;
@@ -239,11 +240,14 @@ export const buildConfigTs = (
       ([name, value]: readonly [
         string,
         ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing toolOverrides[name] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ]) => [name, { ...value, ...toolOverrides[name] }]
     )
   );
   const fullConfig = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing applyDefaults(appConfig) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...applyDefaults(appConfig),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing ai own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ai: { ...defaults, ...ai, tools },
   };
 

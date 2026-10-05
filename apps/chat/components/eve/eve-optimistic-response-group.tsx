@@ -48,6 +48,7 @@ const EveOptimisticResponseGroup = ({
     operation.modelIds
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Disable the optimistic view without mutating the shared logical candidate records.
   ).map((candidate) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...candidate,
     disabled: true,
     modelName: getModelById(candidate.modelId)?.name ?? candidate.modelId,

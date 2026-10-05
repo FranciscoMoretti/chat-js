@@ -112,6 +112,7 @@ const eveMessageDelivery = {
     input: NewPendingEveMessage
   ): ActivePendingEveMessage =>
     write(storage, sessionId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
     }),
@@ -133,6 +134,7 @@ const eveMessageDelivery = {
     rejection: string,
     retryable = false
   ): PendingEveMessage & { rejection: string; retryable: boolean } =>
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing pending own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     write(storage, sessionId, { ...pending, rejection, retryable }),
   retry: (
     storage: DeliveryStorage,
@@ -149,6 +151,7 @@ const eveMessageDelivery = {
     }
     // oxlint-disable-next-line typescript/consistent-return -- #580: eveMessageDelivery has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return write(storage, sessionId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...current,
       operationId: pending.operationId,
       rejection: undefined,
@@ -173,6 +176,7 @@ const eveMessageDeliveryMetadata = (
   };
 } => ({
   chatjs: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing eveToolMetadata(selectedTool).chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...eveToolMetadata(selectedTool).chatjs,
     operationId: z.uuid().parse(operationId),
   },

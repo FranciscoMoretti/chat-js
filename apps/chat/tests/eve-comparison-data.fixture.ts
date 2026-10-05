@@ -42,6 +42,7 @@ const partialGroup: EveResponseGroupResult = {
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): completeGroup uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases. */
 const completeGroup: EveResponseGroupResult = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing partialGroup own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...partialGroup,
   candidates: [
     partialGroup.candidates[0],

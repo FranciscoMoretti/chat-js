@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("ai", async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof AI>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...(await original<typeof AI>()),
   experimental_generateVideo: mocks.generate,
 }));
@@ -78,9 +79,12 @@ it("uses the native selected model, provider options, authorized storage and cos
     principalType: "user",
   };
   const result = await generateVideoTool.execute(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, aspectRatio: "9:16", durationSeconds: 3 },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       session: { ...context.session, auth: { current, initiator: current } },
     }
   );

@@ -25,11 +25,13 @@ test("only accepts supported ChatJS attachment references", () => {
     "data:image/png;base64,eA==",
     "/api/files/../../secret",
   ]) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing attachment own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(eveMessageInput.safeParse([{ ...attachment, data }]).success).toBe(
       false
     );
   }
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing attachment own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     eveMessageInput.safeParse([{ ...attachment, mediaType: "text/html" }])
       .success
   ).toBe(false);

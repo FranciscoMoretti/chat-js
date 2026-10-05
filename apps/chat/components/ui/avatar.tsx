@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const Avatar = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveRoot>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -42,6 +43,7 @@ Avatar.displayName = AvatarPrimitiveRoot.displayName;
 const AvatarImage = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveImage>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveImage>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveImage
     // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveImage accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -60,6 +62,7 @@ AvatarImage.displayName = AvatarPrimitiveImage.displayName;
 const AvatarFallback = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveFallback>,
   ReactComponentPropsWithoutRef<typeof AvatarPrimitiveFallback>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AvatarPrimitiveFallback
     // oxlint-disable-next-line react/forbid-component-props -- AvatarPrimitiveFallback accepts className in its styling contract; preserve this caller's layout and appearance.

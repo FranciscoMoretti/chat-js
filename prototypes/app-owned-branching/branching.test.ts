@@ -308,6 +308,7 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     complete(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async capture(key, vm) {
           await provider.capture(key, vm);
@@ -364,6 +365,7 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("checkpoint not ready");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     reserve(sql, { ...capture, intent: "different-boundary" })
   ).rejects.toThrow("conflicting operation");
   await expect(
@@ -392,6 +394,7 @@ test("child creation is idempotent through lost replies, including after child c
     fork(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async restore(key, vm) {
           await provider.restore(key, vm);
@@ -406,9 +409,11 @@ test("child creation is idempotent through lost replies, including after child c
   await fork(sql, provider, request);
   const rows9 = await sql`select head from branch where id='child'`;
   expect(rows9[0]?.head).toBe("child-1");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await reserve(sql, { ...capture, id: "other" });
   await complete(sql, provider, owner, "other");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fork(sql, provider, { ...request, checkpoint: "other" })
   ).rejects.toThrow("conflicting child");
 });
@@ -536,6 +541,7 @@ test("resource grants are owner checked and retained after source branch removal
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
   await editDocument(sql, owner, "root", { doc: "revision-2" });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await reserve(sql, { ...capture, id: "later", intent: "before-next-turn" });
   await complete(sql, mockProvider(sql), owner, "later");
   await fork(sql, mockProvider(sql), {
@@ -588,6 +594,7 @@ test("deletion during child restore fences publication", async () => {
     fork(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async restore(key, vm) {
           await provider.restore(key, vm);

@@ -28,6 +28,7 @@ type SandboxRootProps = ComponentProps<typeof Collapsible>;
 
 const Sandbox = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxRootProps): React.JSX.Element => (
   <Collapsible
@@ -52,6 +53,7 @@ const SandboxHeader = ({
   className,
   title,
   state,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, title, state from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxHeaderProps): React.JSX.Element => (
   <CollapsibleTrigger
@@ -85,6 +87,7 @@ type SandboxContentProps = ComponentProps<typeof CollapsibleContent>;
 
 const SandboxContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxContentProps): React.JSX.Element => (
   <CollapsibleContent
@@ -105,6 +108,7 @@ type SandboxTabsProps = ComponentProps<typeof Tabs>;
 
 const SandboxTabs = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxTabsProps): React.JSX.Element => (
   <Tabs
@@ -122,6 +126,7 @@ type SandboxTabsBarProps = ComponentProps<"div">;
 
 const SandboxTabsBar = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxTabsBarProps): React.JSX.Element => (
   <div
@@ -141,6 +146,7 @@ type SandboxTabsListProps = ComponentProps<typeof TabsList>;
 
 const SandboxTabsList = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxTabsListProps): React.JSX.Element => (
   <TabsList
@@ -158,6 +164,7 @@ type SandboxTabsTriggerProps = ComponentProps<typeof TabsTrigger>;
 
 const SandboxTabsTrigger = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxTabsTriggerProps): React.JSX.Element => (
   <TabsTrigger
@@ -178,6 +185,7 @@ type SandboxTabContentProps = ComponentProps<typeof TabsContent>;
 
 const SandboxTabContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxTabContentProps): React.JSX.Element => (
   <TabsContent
@@ -195,6 +203,7 @@ type SandboxCodeProps = ComponentProps<typeof CodeBlock>;
 
 const SandboxCode = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxCodeProps): React.JSX.Element => (
   <CodeBlock
@@ -218,6 +227,7 @@ type SandboxOutputProps = Omit<ComponentProps<typeof CodeBlock>, "language">;
 
 const SandboxOutput = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SandboxOutputProps): React.JSX.Element => (
   <CodeBlock

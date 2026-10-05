@@ -111,6 +111,7 @@ it("locks before migration, releases before build, and passes direct credentials
 it.each(["production", "development"])(
   "only runs the normal build in %s",
   async (environment): Promise<void> => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const source = { ...preview, VERCEL_ENV: environment };
     const test = harness();
     await runMaintainerBuild(source, test.operations);
@@ -126,6 +127,7 @@ it("rejects invalid configuration before opening a connection or invoking a comm
   const test = harness();
   await expectRejection(
     runMaintainerBuild(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...preview, CHATJS_PREVIEW_PARENT_HOST: "EP-CHILD.EU.NEON.TECH" },
       test.operations
     ),

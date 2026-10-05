@@ -33,6 +33,7 @@ it("retains the original operation and model across reload, isolates owners, and
       .operationId
   ).not.toBe(first.operationId);
   finishPendingEveCopy(storage, "owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing first own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...first,
     operationId: crypto.randomUUID(),
   });

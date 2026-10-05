@@ -79,11 +79,13 @@ const CustomConnectorRow = ({
   const trpc = useTRPC();
 
   const { data: authStatus } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.checkAuth.queryOptions({ id: connector.id }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.checkAuth.queryOptions({ id: connector.id }),
     staleTime: 30_000,
   });
 
   const { isLoading: isTestingConnection, data: connectionStatus } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.testConnection.queryOptions({ id: connector.id }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.testConnection.queryOptions({ id: connector.id }),
     retry: false,
     staleTime: 30_000,
@@ -326,6 +328,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
     error,
     refetch: refetchConnectors,
   } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.list.queryOptions() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.list.queryOptions(),
     enabled: installedFeatures.has("mcp"),
   });

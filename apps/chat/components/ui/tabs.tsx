@@ -24,6 +24,7 @@ const Tabs = TabsPrimitiveRoot;
 const TabsList = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveList>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveList>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveList
     // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveList accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -45,6 +46,7 @@ TabsList.displayName = TabsPrimitiveList.displayName;
 const TabsTrigger = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveTrigger>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveTrigger
     // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -66,6 +68,7 @@ TabsTrigger.displayName = TabsPrimitiveTrigger.displayName;
 const TabsContent = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveContent>,
   ReactComponentPropsWithoutRef<typeof TabsPrimitiveContent>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <TabsPrimitiveContent
     // oxlint-disable-next-line react/forbid-component-props -- TabsPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.

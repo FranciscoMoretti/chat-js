@@ -46,6 +46,7 @@ export default defineConfig({
       name: "chat",
       testMatch: "chat.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -53,6 +54,7 @@ export default defineConfig({
       name: "reasoning",
       testMatch: "reasoning.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -60,6 +62,7 @@ export default defineConfig({
       name: "artifacts",
       testMatch: "artifacts.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -69,6 +72,7 @@ export default defineConfig({
         "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
       testMatch: /\.visual\.e2e\.ts$/u,
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },

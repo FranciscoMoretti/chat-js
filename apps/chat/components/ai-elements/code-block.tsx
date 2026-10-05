@@ -89,6 +89,7 @@ const CodeBlock = ({
   showLineNumbers = false,
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes code, language, showLineNumbers, className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: CodeBlockProps): ReactJSX.Element => {
   const [html, setHtml] = useState<string>("");
@@ -169,6 +170,7 @@ const CodeBlockCopyButton = ({
   timeout = 2000,
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes onCopy, onError, timeout, children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: CodeBlockCopyButtonProps): ReactJSX.Element => {
   const [isCopied, setIsCopied] = useState(false);

@@ -86,6 +86,7 @@ const owner = {
   principalType: "user",
 };
 const context = (): WorkflowToolContext => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing testToolContext({     callId: "research-call",     session: {       auth: { current: owner, initiator: owner },       id: "root",       turn: { id: "turn_1", sequence: 1 },     },   }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...testToolContext({
     callId: "research-call",
     session: {
@@ -153,11 +154,14 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
     prepareResearch({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx,
       session: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...ctx.session,
         auth: {
           current: owner,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           initiator: { ...owner, attributes: { chatjsGuest: "true" } },
         },
       },
@@ -166,10 +170,13 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   mocks.selected.mockReturnValue("webSearch");
   await expect(
     prepareResearch({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx,
       session: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...ctx.session,
         auth: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           current: { ...owner, attributes: {} },
           initiator: owner,
         },
@@ -186,6 +193,7 @@ it("does not save after cancellation and retains the root operation identity on 
   abort.abort(new Error("Cancelled"));
   await expect(
     saveResearchReport(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...ctx, abortSignal: abort.signal },
       { content: "Content", title: "Report" }
     )

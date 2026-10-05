@@ -138,6 +138,7 @@ const EveArtifactPanel = ({
   const setSelectedRevisionId = useCallback(
     (revisionId: string | undefined) => {
       setArtifact((current) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...current,
         followLive: revisionId === undefined,
         revisionId,
@@ -215,6 +216,7 @@ const EveArtifactPanel = ({
   };
   const selectRevision = (id: string | undefined): void => {
     setSelectedRevisionId(id);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     setArtifact((current) => ({ ...current, followLive: id === undefined }));
   };
   const restoreVersion = (): void => {
@@ -483,6 +485,7 @@ const Layout = ({
       const result = eveDocumentResult.safeParse(call.output);
       if (result.success) {
         setArtifact((current) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...current,
           content: "",
           date: result.data.date,
@@ -498,6 +501,7 @@ const Layout = ({
     }
     if (busy === false) {
       setArtifact((current) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...current,
         isVisible: current.documentId !== "init" && current.isVisible,
         previewCallId: undefined,

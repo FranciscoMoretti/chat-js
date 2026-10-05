@@ -101,6 +101,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       },
       onFinish: (event: FinishEventReader<TMessage>): void => {
         host.onFinish?.({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event,
           messages: host.getMessagePath(spec.messageId ?? spec.parentMessageId),
         });
@@ -137,6 +138,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           lastMessage?.role === "assistant"
         ) {
           chunkToEnqueue = {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chunk own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...chunk,
             messageId: chunk.messageId ?? lastMessage.id,
             messageMetadata: chunk.messageMetadata ?? lastMessage.metadata,
@@ -194,6 +196,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
       ): ReturnType<ChatTransport<TMessage>["sendMessages"]> => {
         state.resumePrefix = NO_VALUE;
         return host.transport.sendMessages({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...options,
           messageId:
             spec.messageId === NO_VALUE && options.trigger === "submit-message"
@@ -245,6 +248,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     messageId: string,
     options?: RequestReader
   ): Promise<void> {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await this.regenerate({ ...options, messageId });
   }
   /* oxlint-enable oxc/no-async-await */

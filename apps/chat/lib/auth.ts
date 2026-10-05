@@ -55,6 +55,7 @@ export const auth = betterAuth({
   ],
   secret: env.AUTH_SECRET,
 
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authSessionOptions({     baseUrl,     databaseUrl: env.DATABASE_URL,     development: env.NODE_ENV === "development",   }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...authSessionOptions({
     baseUrl,
     databaseUrl: env.DATABASE_URL,

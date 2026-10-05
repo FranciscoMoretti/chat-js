@@ -53,6 +53,7 @@ const PopoverContent = ({
   className,
   align = "center",
   sideOffset = 4,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof PopoverPrimitiveContent>): ReactJSX.Element => (
   <PopoverPrimitivePortal>

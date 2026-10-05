@@ -322,7 +322,9 @@ test("copied document history survives source deletion and supports native editi
   expect(await replay.json()).toEqual(forked);
   const changed = await page.request.post("/api/agent-conversations", {
     data: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...forkInput,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
     },
     headers: { origin },

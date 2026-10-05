@@ -62,6 +62,7 @@ it("retains paid usage when structured output cannot be read", async () => {
   const result = await generateEveFollowupSuggestions(exchange);
   expect(result?.responseMetadata).toBeUndefined();
   expect(result?.modelCalls).toEqual([
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing evidence own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { modelId: mocks.feature.default, ...evidence },
   ]);
   expect(mocks.generate).toHaveBeenCalledWith(
@@ -79,6 +80,7 @@ it("returns valid suggestions and records the configured auxiliary model", async
     return { output: { suggestions } };
   });
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing evidence own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     modelCalls: [{ modelId: mocks.feature.default, ...evidence }],
     responseMetadata: { suggestions },
   });
@@ -99,6 +101,7 @@ it("does not spend when disabled, without an answer, or before model resolution 
   expect(await generateEveFollowupSuggestions(exchange)).toBeUndefined();
   mocks.feature.enabled = true;
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing exchange own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await generateEveFollowupSuggestions({ ...exchange, assistant: "" })
   ).toBeUndefined();
   mocks.model.mockRejectedValue(new Error("Model configuration unavailable"));

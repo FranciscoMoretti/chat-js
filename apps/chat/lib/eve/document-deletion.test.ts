@@ -44,6 +44,7 @@ const identity = {
  */
 const context = testToolContext({
   session: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     auth: { current: null, initiator: { ...identity, attributes: {} } },
     id: "native-session",
     turn: { id: "turn", sequence: 1 },
@@ -86,6 +87,7 @@ it("requests native approval only for the current owned title and revision", asy
     input.documentId
   );
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     requestDocumentDeletion({ ...input, title: "Misleading title" }, context)
   ).rejects.toThrow("Document changed");
   mocks.read.mockResolvedValue(undefined);
@@ -104,15 +106,18 @@ it("requires an owner receipt before performing the conditional deletion", async
   );
   await expect(
     executeDocumentDeletion(input, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       approval: {
         requestId: "approval",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         responder: { ...identity, principalId: "other" },
       },
     })
   ).rejects.toThrow("owner's approval");
   expect(mocks.remove).not.toHaveBeenCalled();
   await executeDocumentDeletion(input, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...context,
     approval: { requestId: "approval", responder: identity },
   });
@@ -143,6 +148,7 @@ it("rechecks kind availability after approval", async () => {
   );
   await expect(
     executeDocumentDeletion(input, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       approval: { requestId: "approval", responder: identity },
     })

@@ -486,6 +486,7 @@ const PureModelSelector = ({
           }
           nextSelection = Object.fromEntries(remaining);
         } else {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           nextSelection = { ...currentCounts, [id]: 1 };
         }
 
@@ -518,6 +519,7 @@ const PureModelSelector = ({
           }
           nextSelection = Object.fromEntries(remaining);
         } else {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           nextSelection = { ...currentCounts, [id]: newCount };
         }
 
@@ -672,6 +674,7 @@ const PureModelSelector = ({
                               id={feature.key}
                               onCheckedChange={(checked) =>
                                 setFeatureFilters((prev) => ({
+                                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prev own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                                   ...prev,
                                   [feature.key]: Boolean(checked),
                                 }))

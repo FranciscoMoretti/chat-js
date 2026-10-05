@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const Checkbox = reactForwardRef<
   ReactComponentRef<typeof CheckboxPrimitiveRoot>,
   ReactComponentPropsWithoutRef<typeof CheckboxPrimitiveRoot>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <CheckboxPrimitiveRoot
     // oxlint-disable-next-line react/forbid-component-props -- CheckboxPrimitiveRoot accepts className in its styling contract; preserve this caller's layout and appearance.

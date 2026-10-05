@@ -99,6 +99,7 @@ it.each(["http://localhost:3100", "https://localhost:3100"])(
   async (baseUrl) => {
     vi.stubEnv("NODE_ENV", "development");
     const auth = betterAuth({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing authSessionOptions({         baseUrl,         databaseUrl: "postgres://dev:secret@localhost:5432/chat",         development: true,       }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...authSessionOptions({
         baseUrl,
         databaseUrl: "postgres://dev:secret@localhost:5432/chat",

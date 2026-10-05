@@ -82,6 +82,7 @@ const fixture = async (): Promise<string> => {
 const itemFiles = async (item: (typeof observabilityItems)[number]) => [
   ...(await Promise.all(
     item.files.map(async (file) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...file,
       content: await readFile(
         path.resolve(import.meta.dir, "../../../registry", file.path),
@@ -202,6 +203,7 @@ for (const item of observabilityItems) {
     );
     const files = await itemFiles(item);
     const server = Bun.serve({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fetch: () => Response.json({ ...item, files }),
       hostname: "127.0.0.1",
       port: 0,
@@ -261,6 +263,7 @@ for (const item of observabilityItems) {
     expect(syncFeatures(root)).rejects.toThrow("missing its descriptor");
     await writeFile(
       descriptor,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item.meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       JSON.stringify({ ...item.meta.chatjs, id: "mcp" })
     );
     expect(syncFeatures(root)).rejects.toThrow("id must match its directory");

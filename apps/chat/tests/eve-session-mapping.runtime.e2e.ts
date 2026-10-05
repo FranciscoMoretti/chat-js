@@ -38,6 +38,7 @@ const probe = vi.hoisted(() => ({ beforeResponse: false, dispatches: 0 }));
 vi.mock("../lib/eve/server", async (importOriginal) => {
   const actual = await importOriginal<typeof EveServer>();
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...actual,
     eveRequest: async (
       ...args: Parameters<typeof actual.eveRequest>
@@ -151,6 +152,7 @@ test("native acceptance deduplicates concurrent callers and rejects foreign or f
       );
       expect(foreign.status).toBe(401);
       const forged = await actual.eveRequest(owner, "/eve/chat/v1/session", {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing init own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...init,
         body: JSON.stringify({
           forwardedPrincipal: { current: { principalId: "foreign" } },

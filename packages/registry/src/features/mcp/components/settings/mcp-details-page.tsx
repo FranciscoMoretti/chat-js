@@ -344,7 +344,8 @@ export const McpDetailsPage = ({
           }
           return old.map((candidateConnector) =>
             candidateConnector.id === newData.id
-              ? { ...candidateConnector, enabled: newData.enabled }
+              ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                { ...candidateConnector, enabled: newData.enabled }
               : candidateConnector
           );
         });
@@ -411,12 +412,14 @@ export const McpDetailsPage = ({
     error: discoveryError,
     refetch: refetchDiscovery,
   } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.discover.queryOptions({ id: connectorId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.discover.queryOptions({ id: connectorId }),
     enabled: connector !== null,
     retry: false,
   });
 
   const { data: connectionStatus } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.testConnection.queryOptions({ id: connectorId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.testConnection.queryOptions({ id: connectorId }),
     enabled: connector !== null,
     retry: false,

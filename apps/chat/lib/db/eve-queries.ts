@@ -296,6 +296,7 @@ const getEveConversation = async (
     return undefined;
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing row.conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...row.conversation,
     chatId: row.chat.id,
     id: row.conversation.id,
@@ -709,6 +710,7 @@ const reserveEveConversation = async (
     const rows = await tx
       .insert(eveConversation)
       .values({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...value,
         chatId,
         forkCheckpointId: fork?.checkpointId,
@@ -1331,6 +1333,7 @@ const getPublicEveConversation = async (
     )
     .limit(1);
   if (row) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing row.conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     return { ...row.conversation, title: row.chat.title };
   }
   return undefined;

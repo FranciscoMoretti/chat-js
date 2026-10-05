@@ -20,7 +20,10 @@ const model: AiGatewayModel = {
 
 test("missing positive tool tags remain unknown instead of declaring no support", () => {
   expect(toModelData(model).toolCall).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, tags: ["vision"] }).toolCall).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, tags: ["tool-use"] }).toolCall).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, type: "image" }).toolCall).toBe(false);
 });

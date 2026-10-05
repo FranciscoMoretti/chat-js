@@ -131,6 +131,7 @@ it.each(["appRoot", "sessionId", "backendName"])(
     mocks.fetch.mockImplementation(() =>
       Promise.resolve(
         Response.json({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           local: { ...identity(), [field]: "different" },
           sessionId,
           snapshotVersion: 2,
@@ -157,6 +158,7 @@ it("rejects missing native evidence and mismatched local evidence", async () => 
   ).rejects.toThrow("unavailable");
   await writeFile(
     identityPath(),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...identity(), sessionId: "other" })
   );
   await expect(

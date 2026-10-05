@@ -17,6 +17,52 @@ import path from "node:path";
 
 import { syncTools } from "./sync-tools";
 
+const generatedRegistryRules: readonly string[] = [
+  "oxc/no-rest-spread-properties",
+  "import/no-named-export",
+  "import/prefer-default-export",
+  "sort-imports",
+  "import/max-dependencies",
+];
+
+/* oxlint-disable oxc/no-async-await -- Await the native linter and drain both diagnostic pipes before validating generated registry contracts. */
+const lintGeneratedRegistryComposition = async (
+  root: string
+): Promise<void> => {
+  const config = path.join(root, "registry-lint.json");
+  await writeFile(config, JSON.stringify({ rules: {} }));
+  const result = Bun.spawn({
+    cmd: [
+      path.join(import.meta.dir, "../../../../node_modules/.bin/oxlint"),
+      "-c",
+      config,
+      "--import-plugin",
+      "-A",
+      "all",
+      ...generatedRegistryRules.flatMap((rule): string[] => ["-D", rule]),
+      "--no-ignore",
+      "--report-unused-disable-directives-severity",
+      "error",
+      path.join(root, "tools/chatjs/tools.ts"),
+      path.join(root, "tools/chatjs/ui.ts"),
+    ],
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    result.exited,
+    new Response(result.stdout).text(),
+    new Response(result.stderr).text(),
+  ]);
+  /* oxlint-disable no-magic-numbers -- Zero status validates generated composition, export scopes, import order and unused directives together. */
+  expect(
+    exitCode,
+    `Native registry validation failed:\n${stdout}\n${stderr}`
+  ).toBe(0);
+  /* oxlint-enable no-magic-numbers */
+};
+/* oxlint-enable oxc/no-async-await */
+
 const roots: string[] = [];
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
@@ -76,6 +122,16 @@ const install = async (
   );
 };
 /* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Validate empty and populated generated compositions only after their isolated fixture writes and native lint complete. */
+test("generated tool and renderer composition passes native rules without unused exceptions", async (): Promise<void> => {
+  const root = await project();
+  await lintGeneratedRegistryComposition(root);
+  await install(root);
+  await syncTools(root);
+  await lintGeneratedRegistryComposition(root);
+});
+/* oxlint-enable oxc/no-async-await */
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 test("sync registers direct installs deterministically and preserves custom modules", async () => {

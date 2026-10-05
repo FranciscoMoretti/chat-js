@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 const Skeleton = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<"div">): React.JSX.Element => (
   <div

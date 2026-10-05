@@ -116,6 +116,7 @@ class VercelGateway
         const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
         if (isAiGatewayModelType(type)) {
           const model = aiGatewayModelSchema.parse(candidate);
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           models.push({ ...model, type });
         } else {
           unsupportedTypes.add(type);

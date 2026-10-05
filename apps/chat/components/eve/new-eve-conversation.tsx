@@ -149,6 +149,7 @@ export const NewEveConversation = ({
         operation,
         scope
       );
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing binding own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await openRuntime({ ...binding, operation, ownerId });
       navigating = true;
     } catch (error) {
@@ -200,7 +201,11 @@ export const NewEveConversation = ({
         status={busy ? "submitted" : "ready"}
         disabled={busy}
         draft={busy ? "" : draft}
-        files={busy ? { ...files, attachments: [] } : files}
+        files={
+          busy /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing files own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+            ? { ...files, attachments: [] }
+            : /* oxlint-enable oxc/no-rest-spread-properties */ files
+        }
         modelSelection={{
           onChange: async (value) => {
             setSelection(value);

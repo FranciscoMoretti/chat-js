@@ -150,6 +150,7 @@ const LexicalChatInput = ({
   "data-testid": testId,
   "aria-label": ariaLabel,
   ref,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding _props excludes initialValue, readOnly, onInputChange, onKeyDown, onPaste, onEnterSubmit, placeholder, autoFocus, className, "data-testid", "aria-label", ref from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ..._props
 }: LexicalChatInputProps & {
   ref?: RefObject<LexicalChatInputRef | null>;

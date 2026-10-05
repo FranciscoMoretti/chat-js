@@ -72,6 +72,7 @@ export const POST = async (request: Request): Promise<Response> => {
       body: "{}",
       cache: "no-store",
       headers: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...connection.headers,
         authorization: `Bearer ${issueGuestCredential(claims)}`,
         "content-type": "application/json",
@@ -90,6 +91,7 @@ export const POST = async (request: Request): Promise<Response> => {
   const { sessionId } = createdSession.parse(await response.json());
   return Response.json(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing claims own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       credential: issueGuestCredential({ ...claims, sessionId }),
       expiresAt: claims.expiresAt,
       sessionId,

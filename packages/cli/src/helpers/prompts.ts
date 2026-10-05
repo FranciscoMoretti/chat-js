@@ -355,6 +355,7 @@ const promptCoreFeatures = async (
   };
 
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of CORE_FEATURE_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...CORE_FEATURE_DEFAULTS };
   }
 
@@ -406,6 +407,7 @@ const promptDocumentTypes = async (
   }
 
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of DOCUMENT_TYPE_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...DOCUMENT_TYPE_DEFAULTS };
   }
 
@@ -490,6 +492,7 @@ const promptAssistantTools = async (
 
   if (skipPrompt) {
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of BUILT_IN_TOOL_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
       builtInTools: { ...BUILT_IN_TOOL_DEFAULTS },
       installableTools: [],
     };
@@ -530,6 +533,7 @@ const promptAuth = async (
   skipPrompt: boolean
 ): Promise<Record<AuthProvider, boolean>> => {
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of AUTH_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...AUTH_DEFAULTS };
   }
 

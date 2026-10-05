@@ -33,6 +33,7 @@ type ToolProps = ComponentProps<typeof Collapsible>;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Tool: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: ToolProps). */
 
 /* oxlint-disable react/forbid-component-props -- Collapsible accept the supplied styling props; preserve this composition's layout and appearance. */
+// oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 const Tool = ({ className, ...props }: ToolProps): React.JSX.Element => (
   <Collapsible
     className={cn("not-prose mb-4 w-full rounded-md border", className)}
@@ -89,6 +90,7 @@ const ToolHeader = ({
   title,
   type,
   state,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, title, type, state from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolHeaderProps): React.JSX.Element => (
   <CollapsibleTrigger
@@ -119,6 +121,7 @@ type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 /* oxlint-disable react/forbid-component-props -- CollapsibleContent accept the supplied styling props; preserve this composition's layout and appearance. */
 const ToolContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolContentProps): React.JSX.Element => (
   <CollapsibleContent
@@ -143,6 +146,7 @@ type ToolInputProps = ComponentProps<"div"> & {
 const ToolInput = ({
   className,
   input,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, input from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolInputProps): React.JSX.Element => (
   <div
@@ -172,6 +176,7 @@ const ToolOutput = ({
   className,
   output,
   errorText,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, output, errorText from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ToolOutputProps): React.JSX.Element | null => {
   if (output === undefined && !errorText) {

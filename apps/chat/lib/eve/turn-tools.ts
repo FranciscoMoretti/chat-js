@@ -57,6 +57,7 @@ const eveInstalledToolEnabled = (name: string): boolean => {
 /* oxlint-disable id-length -- id-length (#506): filterEveTools uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 const filterEveTools = <T extends object>(tools: T): Partial<T> => {
   const selected = selectedEveTools(eveTurnTool.get());
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of tools rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   const available: Partial<T> = { ...tools };
   for (const name in available) {
     if (

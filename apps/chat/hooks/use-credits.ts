@@ -15,6 +15,7 @@ export const useGetCredits = (): {
   const trpc = useTRPC();
 
   const { data: creditsData, isLoading: isLoadingCredits } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.credits.getAvailableCredits.queryOptions() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.credits.getAvailableCredits.queryOptions(),
     enabled: isAuthenticated,
   });

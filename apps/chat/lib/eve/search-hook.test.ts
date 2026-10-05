@@ -140,8 +140,10 @@ it("defers inherited history until binding and retains it if indexing fails", as
 /* oxlint-enable no-console */
 it("never indexes subagent-private text into the parent chat", async () => {
   await dispatch(restored, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...context,
     session: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context.session,
       parent: {
         callId: "call",
@@ -168,6 +170,7 @@ it("retains newly received text when scope resolution fails and retries it", asy
   await expect(
     dispatch({
       data: { message: "new text", sequence: 1, turnId: "turn_1" },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       meta: { ...restored.meta, id: "received" },
       type: "message.received",
     })
@@ -194,6 +197,7 @@ it("bounds failed retries by entry count and records how omitted events can be r
     // oxlint-disable-next-line eslint/no-await-in-loop -- Exercise successive events during an outage.
     await dispatch({
       data: { message: "retry text", sequence: index, turnId: "turn_1" },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       meta: { ...restored.meta, id: String(index) },
       type: "message.received",
     });
@@ -220,6 +224,7 @@ it("bounds failed retries by entry count and records how omitted events can be r
  */
 it("bounds pending text size and deduplicates replayed history", async () => {
   const oversized: HookEvent = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...restored,
     data: {
       messages: [
@@ -251,6 +256,7 @@ it("bounds pending text size and deduplicates replayed history", async () => {
  */
 it("automatically recovers a large restored history and the next message on a healthy database", async () => {
   await dispatch({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...restored,
     data: {
       messages: Array.from({ length: 300 }, (_, index) => ({
@@ -268,6 +274,7 @@ it("automatically recovers a large restored history and the next message on a he
       sequence: 1,
       turnId: "turn_1",
     },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing restored.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     meta: { ...restored.meta, id: "new-message" },
     type: "message.received",
   });

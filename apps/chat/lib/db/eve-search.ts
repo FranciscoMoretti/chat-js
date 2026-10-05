@@ -60,7 +60,7 @@ const writeEveSearchText = async (
       .values(
         chunks
           .slice(index, index + 100)
-          // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
+          // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           .map((entry) => ({ ...entry, conversationId, ownerId }))
       )
       .onConflictDoUpdate({
@@ -247,8 +247,9 @@ const searchEveConversations = async (
   `);
   const page = items
     .slice(0, 20)
-    // oxlint-disable-next-line oxc/no-map-spread -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records.
+    // oxlint-disable-next-line oxc/no-map-spread, oxc/no-rest-spread-properties -- #541: Construct persisted search rows and highlighted result views without mutating source chunks or query records. Rest/spread: Rest binding item excludes highlightQuery, highlightWords from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     .map(({ highlightQuery, highlightWords, ...item }) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...item,
       excerpt: highlightSearchExcerpt(
         item.excerpt,

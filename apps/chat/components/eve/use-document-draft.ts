@@ -112,7 +112,8 @@ export const useDocumentDraft = ({
       }
       update(
         current
-          ? { ...current, content }
+          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            { ...current, content }
           : {
               baseRevisionId: revision.id,
               content,
@@ -133,6 +134,7 @@ export const useDocumentDraft = ({
     busy.current = true;
     setFailure(undefined);
     const submitted = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...current,
       submittedContent: current.submittedContent ?? current.content,
     };

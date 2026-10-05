@@ -168,6 +168,7 @@ export const restoreMessageAttachments = async (
     );
     attachments.push(
       draftAttachment.parse({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing copied own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...copied,
         contentType,
         // oxlint-disable-next-line eslint/no-await-in-loop -- Digest exact historical bytes.

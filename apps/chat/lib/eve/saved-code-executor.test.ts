@@ -89,6 +89,7 @@ beforeEach(() => {
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
   const context = testToolContext();
   const results = await Array.fromAsync(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     executeEveCodeDocument({ ...input, code: "model replacement" }, context)
   );
   expect(mocks.read).toHaveBeenCalledWith(
@@ -107,6 +108,7 @@ test("executes owned saved source once, exposing only execution context and pres
   );
   expect(results).toHaveLength(1);
   expect(results[0]).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...input, code: "print(42)", message: "42" },
     usage: { costUsd: 0.05 },
   });

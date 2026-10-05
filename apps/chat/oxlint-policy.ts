@@ -41,8 +41,8 @@ export const auditedRestrictionRules = {
   "oxc/no-async-await": "error",
   // Optional chaining is required by the application coding guidance and supported by the target runtimes.
   "oxc/no-optional-chaining": "off",
-  // Modern targets support typed object composition; no-map-spread still prevents accumulator copying.
-  "oxc/no-rest-spread-properties": "off",
+  // Reviewed object composition, omitted keys and snapshot contracts are explained locally.
+  "oxc/no-rest-spread-properties": "error",
   "react-perf/jsx-no-jsx-as-prop": "error",
   // Native DOM props do not form component memoization boundaries; custom components remain checked.
   "react-perf/jsx-no-new-array-as-prop": ["error", { nativeAllowList: "all" }],

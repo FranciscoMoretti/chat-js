@@ -32,6 +32,7 @@ export const observabilityItems = [
     description,
     dependencies,
     files,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding definition excludes id, description, dependencies, files from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...definition
   }: Readonly<{
     id: string;
@@ -54,6 +55,7 @@ export const observabilityItems = [
         contractVersion: 1,
         id,
         kind: "feature",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...definition,
       }),
     },

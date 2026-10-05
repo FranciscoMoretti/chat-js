@@ -89,6 +89,7 @@ const DialogClose = (
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DialogOverlay forwards DialogPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DialogOverlay = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveOverlay>): ReactJSX.Element => (
   <DialogPrimitiveOverlay
@@ -114,6 +115,7 @@ const DialogContent = ({
   className,
   children,
   showCloseButton = true,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, showCloseButton from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveContent> & {
   showCloseButton?: boolean;
@@ -154,6 +156,7 @@ const DialogContent = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DialogHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DialogHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -172,6 +175,7 @@ const DialogHeader = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DialogFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DialogFooter = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -193,6 +197,7 @@ const DialogFooter = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DialogTitle forwards DialogPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DialogTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DialogPrimitiveTitle>): ReactJSX.Element => (
   <DialogPrimitiveTitle
@@ -212,6 +217,7 @@ const DialogTitle = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DialogDescription forwards DialogPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DialogDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DialogPrimitiveDescription

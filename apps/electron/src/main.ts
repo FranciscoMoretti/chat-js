@@ -573,7 +573,9 @@ const scheduleAuthRefresh = (): void => {
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- createWindow: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const createWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing WINDOW_DEFAULTS own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...WINDOW_DEFAULTS,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (process.platform === "darwin" || process.platform === "win32"       ? { titleBarStyle: "default" as const }       : { titleBarOverlay: true, titleBarStyle: "hidden" as const }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(process.platform === "darwin" || process.platform === "win32"
       ? { titleBarStyle: "default" as const }
       : { titleBarOverlay: true, titleBarStyle: "hidden" as const }),

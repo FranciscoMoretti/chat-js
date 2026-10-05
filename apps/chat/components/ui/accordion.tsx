@@ -26,6 +26,7 @@ const Accordion = AccordionPrimitiveRoot;
 const AccordionItem = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveItem>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveItem>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <AccordionPrimitiveItem
     // oxlint-disable-next-line react/forbid-component-props -- AccordionPrimitiveItem accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -44,6 +45,7 @@ AccordionItem.displayName = "AccordionItem";
 const AccordionTrigger = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveTrigger>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveTrigger>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <AccordionPrimitiveHeader
     // oxlint-disable-next-line react/forbid-component-props -- AccordionPrimitiveHeader accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -76,6 +78,7 @@ AccordionTrigger.displayName = AccordionPrimitiveTrigger.displayName;
 const AccordionContent = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveContent>,
   ReactComponentPropsWithoutRef<typeof AccordionPrimitiveContent>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, children, ...props }, ref): ReactJSX.Element => (
   <AccordionPrimitiveContent
     // oxlint-disable-next-line react/forbid-component-props -- AccordionPrimitiveContent accepts className in its styling contract; preserve this caller's layout and appearance.

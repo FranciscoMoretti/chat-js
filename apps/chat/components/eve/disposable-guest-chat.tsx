@@ -316,6 +316,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     setCommandError("");
     try {
       const created = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await createGuestSession(modelId)) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...(await createGuestSession(modelId)),
         firstMessage: draft.trim(),
         modelId,

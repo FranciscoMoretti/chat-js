@@ -78,6 +78,7 @@ test("a retry accepts provider-confirmed absence", async () => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unknown creation never uses absence to declare deletion complete", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resource own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.list.mockResolvedValue([{ ...resource, creationConfirmed: false }]);
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(
     "uncertain code sandbox creation"
@@ -104,6 +105,7 @@ test("provider failures retain ownership", async () => {
 test("changed provider scope cannot release a resource", async () => {
   mocks.createCleanupSession.mockReturnValue({
     deleteAndConfirmAbsent: mocks.cleanup,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     provider: { ...provider, projectId: "another-project" },
   });
   await expect(purgeEveFamilyCodeSandboxes("owner", "root")).rejects.toThrow(

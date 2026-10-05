@@ -41,6 +41,7 @@ vi.mock("server-only", () => ({}));
 const native = vi.hoisted(() => ({ attach: vi.fn(), snapshot: vi.fn() }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("eve/client", async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof EveClient>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...(await original<typeof EveClient>()),
   Client: class {
     public sessions = { attach: native.attach };
@@ -114,7 +115,9 @@ test("native assistant feedback persists, replaces a vote and stays private when
     isUpvoted: true,
     messageId: input.messageId,
   });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await voteEveMessage(owner, { ...input, type: "down" });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await voteEveMessage(owner, { ...input, type: "down" });
   expect(await getEveMessageVotes(owner, row.id)).toEqual([
     { isUpvoted: false, messageId: input.messageId },

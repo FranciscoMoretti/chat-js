@@ -196,6 +196,7 @@ test("saves without generation, recovers after source revocation and reload, and
   ).toBe(false);
   // Reproduce a crash after native acceptance but before application binding commits.
   const seed = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepareEveCopyTranscript(snapshot.events).seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...prepareEveCopyTranscript(snapshot.events).seed,
     attachments: "channel",
   };
@@ -206,6 +207,7 @@ test("saves without generation, recovers after source revocation and reload, and
       .where(eq(eveConversation.id, destination.id));
     await tx
       .update(eveConversationCopy)
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .set({ phase: "accepted", seed: { ...seed, attachments: "channel" } })
       .where(eq(eveConversationCopy.conversationId, destination.id));
   });

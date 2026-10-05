@@ -35,6 +35,7 @@ describe("EVE runtime environment", () => {
     "http://[::1]:3000",
     "http://[0:0:0:0:0:0:0:1]:3000",
   ])("allows a secure or loopback origin: %s", (EVE_INTERNAL_ORIGIN) => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(schema.safeParse({ ...valid, EVE_INTERNAL_ORIGIN }).success).toBe(
       true
     );
@@ -55,17 +56,24 @@ describe("EVE runtime environment", () => {
     "https://example.com#fragment",
     "https://user:password@example.com",
   ])("rejects an unsafe or non-origin URL: %s", (EVE_INTERNAL_ORIGIN) => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(schema.safeParse({ ...valid, EVE_INTERNAL_ORIGIN }).success).toBe(
       false
     );
   });
 
   test.each([
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, EVE_GATEWAY_SECRET: "short" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, EVE_INTERNAL_ORIGIN: "not-a-url" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, EVE_INTERNAL_ORIGIN: "https://example.com/api/eve" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, WORKFLOW_POSTGRES_URL: "not-a-url" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, EVE_INTERNAL_ORIGIN: "postgresql://localhost/eve" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing valid own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...valid, WORKFLOW_POSTGRES_URL: "https://localhost/eve" },
   ])("rejects malformed runtime configuration", (value) => {
     expect(schema.safeParse(value).success).toBe(false);
@@ -79,12 +87,15 @@ test.each(["preview", "production"])(
     const managed = z.object(
       getEveRuntimeEnvOptions({ VERCEL: "1", VERCEL_ENV })
     );
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding credentials excludes WORKFLOW_POSTGRES_URL from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     const { WORKFLOW_POSTGRES_URL: _unused, ...credentials } = valid;
     expect(managed.safeParse(credentials).success).toBe(true);
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       managed.safeParse({ ...credentials, WORKFLOW_POSTGRES_URL: "" }).success
     ).toBe(true);
     expect(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       managed.safeParse({ ...credentials, EVE_GATEWAY_SECRET: "short" }).success
     ).toBe(false);
     expect(schema.safeParse(credentials).success).toBe(false);

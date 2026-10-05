@@ -41,6 +41,7 @@ const ChatLayout = ({
   className,
   children,
   isSecondaryPanelVisible = false,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, isSecondaryPanelVisible from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutProps): ReactJSX.Element => {
   const { state: sidebarState } = useSidebar();
@@ -75,6 +76,7 @@ const ChatLayoutMain = ({
   className,
   defaultSize = 65,
   minSize = 40,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutMainProps): React.JSX.Element => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -97,6 +99,7 @@ type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 const ChatLayoutSecondary = ({
   defaultSize = 35,
   minSize = 25,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutSecondaryProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -117,6 +120,7 @@ type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
 const ChatLayoutHandle = ({
   className,
   withHandle = true,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, withHandle from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutHandleProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();

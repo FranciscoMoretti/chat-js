@@ -17,6 +17,7 @@ export const WithSkeleton = ({
   children,
   className,
   isLoading,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className, isLoading from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<"div"> & {
   isLoading?: boolean;

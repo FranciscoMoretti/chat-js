@@ -105,6 +105,7 @@ export const POST = async (
       );
     }
     return Response.json(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { conversationId: id, ready: true, ...input.data },
       { headers: { "cache-control": "no-store" } }
     );
@@ -116,6 +117,7 @@ export const POST = async (
           conversationId: id,
           error: error.message,
           reason: error.reason,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...input.data,
         },
         { headers: { "cache-control": "no-store" }, status: 409 }

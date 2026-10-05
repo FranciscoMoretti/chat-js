@@ -94,11 +94,13 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   expect(left).toEqual(right);
   await expect(
     reserveEveResponseGroup(owner, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       modelIds: [...input.modelIds].toReversed(),
     })
   ).rejects.toThrow("different message");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     reserveEveResponseGroup(owner, { ...input, message: "Different" })
   ).rejects.toThrow("different message");
   let failSecond = true;
@@ -216,7 +218,9 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   }
   await expect(
     createEveResponseGroup(owner, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...fork, conversationId: crypto.randomUUID() },
       operationId: crypto.randomUUID(),
     })
@@ -286,12 +290,14 @@ test("deleting a partial family erases group payloads and fences unstarted candi
     async (id) => `session-${id}`
   );
   const forkInput = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fork: { beforeTurnId: "turn_0", conversationId: root.id },
     operationId: crypto.randomUUID(),
   };
   const pendingFork = await reserveEveResponseGroup(owner, forkInput);
   const unrelated = await reserveEveResponseGroup(owner, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     operationId: crypto.randomUUID(),
   });
@@ -374,6 +380,7 @@ test("group reservation racing retirement cannot leave an active unstarted group
   ).toBe(true);
   await expect(
     reserveEveResponseGroup(owner, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
     })

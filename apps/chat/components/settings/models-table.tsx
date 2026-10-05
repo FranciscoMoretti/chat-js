@@ -59,6 +59,7 @@ export const ModelsTable = ({
             (preference) => preference.modelId === newData.modelId
           );
           if (idx !== -1) {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old[idx] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             return old.with(idx, { ...old[idx], enabled: newData.enabled });
           }
           return [

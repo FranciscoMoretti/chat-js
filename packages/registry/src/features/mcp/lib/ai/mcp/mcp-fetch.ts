@@ -27,6 +27,7 @@ export const mcpFetch = async (
 ): Promise<Response> => {
   const request = new Request(input, init);
   return await guardedFetch(request.url, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (request.body ? { body: await request.arrayBuffer() } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(request.body ? { body: await request.arrayBuffer() } : {}),
     headers: request.headers,
     method: request.method,

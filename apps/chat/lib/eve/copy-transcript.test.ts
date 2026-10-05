@@ -305,6 +305,7 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
     },
     "https://chatjs.example"
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
 /* oxlint-enable oxc/no-async-await */
@@ -439,6 +440,7 @@ it("externalizes six distinct inline images through durable destination allocati
   );
   const result = await materializeEveCopyTranscript(
     prepared.seed,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...allocations, inlineFiles },
     () =>
       Promise.resolve({
@@ -489,6 +491,7 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     materializeEveCopyTranscript(
       prepared.seed,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
@@ -522,6 +525,7 @@ it.each([
 it("rejects resource allocations that reuse source identities or collide", () => {
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([[sourceFile, sourceFile]]),
     })
@@ -530,6 +534,7 @@ it("rejects resource allocations that reuse source identities or collide", () =>
     rewriteEveCopyResources(
       { documentId },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         documents: new Map([[documentId, documentId.toUpperCase()]]),
       },
@@ -538,6 +543,7 @@ it("rejects resource allocations that reuse source identities or collide", () =>
   ).toThrow("fresh document identities");
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([
         [sourceFile, copiedFile],
@@ -596,6 +602,7 @@ it.each(["not-a-valid-document-id", documentId])(
       },
       "https://chatjs.example"
     );
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
   }
 );
@@ -702,6 +709,7 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
     },
     {
       id: "seed_message_1",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       parts: [{ ...tool, toolCallId: "seed_tool_0" }],
       role: "assistant",
     },

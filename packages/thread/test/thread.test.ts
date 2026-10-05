@@ -307,6 +307,7 @@ describe("Thread", (): void => {
   test("continues the selected assistant without creating a sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const assistant = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...user("assistant-1"),
       role: "assistant" as const,
     };
@@ -335,13 +336,16 @@ describe("Thread", (): void => {
   /* oxlint-enable oxc/no-async-await */
   test("keeps hidden branches when reconciling the selected path", (): void => {
     const chat = new Thread({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
     });
     chat.addMessage(user("user-2"), "assistant-1");
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-2") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     chat.addMessage({ ...user("assistant-2"), role: "assistant" }, "user-2");
 
     chat.setMessages([
       user("user-1"),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...user("assistant-1"), role: "assistant" },
       user("user-3"),
     ]);
@@ -429,6 +433,7 @@ describe("Thread", (): void => {
         nodes: [
           { message: user("user-active"), parentId: null },
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-ready") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             message: { ...user("assistant-ready"), role: "assistant" },
             parentId: null,
           },
@@ -831,6 +836,7 @@ describe("Thread", (): void => {
   test("regenerates a root assistant as a root sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       messages: [{ ...user("assistant-1"), role: "assistant" }],
       transport,
     });
@@ -856,6 +862,7 @@ describe("Thread", (): void => {
   test("does not follow regeneration after navigating to another branch", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
       transport,
     });
@@ -879,6 +886,7 @@ describe("Thread", (): void => {
   test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
       transport,
     });
@@ -894,10 +902,12 @@ describe("Thread", (): void => {
   test("regenerates an assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const assistantParent = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...user("assistant-parent"),
       role: "assistant" as const,
     };
     const assistantChild = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...user("assistant-child"),
       role: "assistant" as const,
     };
@@ -931,10 +941,12 @@ describe("Thread", (): void => {
   /* oxlint-enable oxc/no-async-await */
   test("restores assistant-to-assistant edges as tree data", (): void => {
     const assistantParent = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...user("assistant-parent"),
       role: "assistant" as const,
     };
     const assistantChild = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...user("assistant-child"),
       role: "assistant" as const,
     };

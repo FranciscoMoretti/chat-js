@@ -122,6 +122,7 @@ test("replaces an older executor descriptor but rejects newly requested provider
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-executor-upgrade-"));
   roots.push(root);
   const old = definition("previous-executor");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding oldDescriptor excludes codeExecutionCapabilities from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { codeExecutionCapabilities, ...oldDescriptor } = old;
   expect(codeExecutionCapabilities).toBeDefined();
   const directory = path.join(root, "tools/chatjs/previous-executor");
@@ -136,12 +137,14 @@ test("replaces an older executor descriptor but rejects newly requested provider
   const server = Bun.serve({
     fetch(): Response {
       const complete = definition("next-executor");
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding incomplete excludes codeExecutionCapabilities from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
       const { codeExecutionCapabilities: capabilities, ...incomplete } =
         complete;
       return Response.json({
         meta: {
           chatjs: declared
-            ? { ...incomplete, codeExecutionCapabilities: capabilities }
+            ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing incomplete own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              { ...incomplete, codeExecutionCapabilities: capabilities }
             : incomplete,
         },
         name: complete.id,

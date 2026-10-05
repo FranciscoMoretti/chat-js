@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 const Table = reactForwardRef<
   HTMLTableElement,
   ReactHTMLAttributes<HTMLTableElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <div className="relative w-full overflow-auto">
     <table
@@ -34,6 +35,7 @@ Table.displayName = "Table";
 const TableHeader = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <thead
     className={cn("[&_tr]:border-b", className)}
@@ -51,6 +53,7 @@ TableHeader.displayName = "TableHeader";
 const TableBody = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <tbody
     className={cn("[&_tr:last-child]:border-0", className)}
@@ -68,6 +71,7 @@ TableBody.displayName = "TableBody";
 const TableFooter = reactForwardRef<
   HTMLTableSectionElement,
   ReactHTMLAttributes<HTMLTableSectionElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <tfoot
     className={cn(
@@ -88,6 +92,7 @@ TableFooter.displayName = "TableFooter";
 const TableRow = reactForwardRef<
   HTMLTableRowElement,
   ReactHTMLAttributes<HTMLTableRowElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <tr
     className={cn(
@@ -108,6 +113,7 @@ TableRow.displayName = "TableRow";
 const TableHead = reactForwardRef<
   HTMLTableCellElement,
   ReactThHTMLAttributes<HTMLTableCellElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <th
     className={cn(
@@ -128,6 +134,7 @@ TableHead.displayName = "TableHead";
 const TableCell = reactForwardRef<
   HTMLTableCellElement,
   ReactTdHTMLAttributes<HTMLTableCellElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <td
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
@@ -145,6 +152,7 @@ TableCell.displayName = "TableCell";
 const TableCaption = reactForwardRef<
   HTMLTableCaptionElement,
   ReactHTMLAttributes<HTMLTableCaptionElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <caption
     className={cn("text-muted-foreground mt-4 text-sm", className)}

@@ -122,6 +122,7 @@ while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
   child = spawn(process.execPath, ["run", "dev"], {
     detached: true,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=4096" },
     stdio: "inherit",
   });

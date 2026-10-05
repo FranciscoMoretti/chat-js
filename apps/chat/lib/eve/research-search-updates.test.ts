@@ -45,6 +45,7 @@ const child = (callId: string, turnId = "turn", name = "researcher") => ({
  */
 it("restores actual search evidence only from researchers owned by this call and turn", async () => {
   const context: WorkflowToolContext = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing testToolContext({       callId: "research",       session: {         auth: {           current: null,           initiator: {             attributes: {},             authenticator: "test",             principalId: "owner",             principalType: "user",           },         },         id: "root",         turn: { id: "turn", sequence: 1 },       },     }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...testToolContext({
       callId: "research",
       session: {

@@ -164,6 +164,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
         const files = await Promise.all(
           // oxlint-disable-next-line oxc/no-map-spread -- #541: Build installation records with file contents without mutating the reusable registry manifest.
           (item.files ?? []).map(async (file) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...file,
             content: await readFile(
               path.join(registryRoot, file.path),
@@ -187,6 +188,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
             type: "registry:file",
           });
         }
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         return { ...item, dependencies: [], devDependencies: [], files };
       })
     );
@@ -247,6 +249,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
       await resolveGateway(gateway, temporary)
     );
     await configureStorageProvider(temporary, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await resolveStorage(storage.source, temporary)) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...(await resolveStorage(storage.source, temporary)),
       options: storage.options,
     });
@@ -337,6 +340,7 @@ const replaceDemoFiles = async (
       const directory = await mkdtemp(
         path.join(path.dirname(update.target), ".demo-sync-")
       );
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing update own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       staged.push({ ...update, backedUp: false, directory, installed: false });
       // oxlint-disable-next-line eslint/no-await-in-loop -- Complete each staged file before advancing to the next replacement.
       await writeFile(path.join(directory, "next"), update.content);

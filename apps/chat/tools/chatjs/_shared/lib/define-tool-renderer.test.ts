@@ -37,6 +37,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const original = await importOriginal<typeof ChatjsUI>();
   return {
     ui: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original.ui own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...original.ui,
       "tool-customEcho": defineToolRenderer({
         inputSchema: z.object({ text: z.string() }),

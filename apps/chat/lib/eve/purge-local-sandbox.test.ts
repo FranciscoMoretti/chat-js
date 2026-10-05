@@ -132,8 +132,11 @@ test("retains identities through provider failure and treats only explicit missi
 test("validates all records before deletion and rejects another session or shared template", async () => {
   const input = await fixture();
   for (const record of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, sessionKey: "other-session" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, optionsHash: 42 },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.record, snapshotName: `eve-sbx-tpl-${"a".repeat(32)}` },
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
@@ -167,6 +170,7 @@ test("validates the whole family and removes all VMs before resolving snapshot d
   const child = await fixture("b");
   await writeFile(
     child.path,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing child.record own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...child.record, sessionKey: "foreign" })
   );
   await expect(purgeLocalEveSandboxes([parent, child])).rejects.toThrow(
@@ -269,6 +273,7 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   };
   await writeFile(
     ownerPath,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...owner, writeAheadResources: undefined })
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");
@@ -282,6 +287,7 @@ test("an owned attempt that failed before provider creation can finish cleanup",
   expect(JSON.parse(await readFile(ownerPath, "utf-8"))).toEqual(owner);
   await writeFile(
     ownerPath,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...owner, sessionKey: "foreign" })
   );
   await expect(purgeLocalEveSandboxes([input])).rejects.toThrow("incomplete");

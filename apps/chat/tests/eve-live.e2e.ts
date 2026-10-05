@@ -93,6 +93,7 @@ test("real provider, native application tool and replay-safe usage ledger", asyn
   }
   const [conversation] = await db
     .select({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })
@@ -255,6 +256,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
   }
   const [conversation] = await db
     .select({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })
@@ -326,6 +328,7 @@ test("the composer selects models for initial and subsequent durable turns", asy
   await reconcileEveUsage(conversation.ownerId, conversation.sessionId);
   const [activeConversation] = await db
     .select({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getTableColumns(eveConversation) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...getTableColumns(eveConversation),
       updatedAt: eveChat.updatedAt,
     })

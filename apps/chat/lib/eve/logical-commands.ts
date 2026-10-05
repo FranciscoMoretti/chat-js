@@ -35,6 +35,7 @@ export class LogicalCommands {
     id: string,
     change: ReadonlyNativeSurface<Partial<CommandState>>
   ): void {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing this.get(id) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing change own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     this.states.set(id, { ...this.get(id), ...change });
     for (const listener of this.listeners) {
       listener();

@@ -194,6 +194,7 @@ const append = async (
   }>
 ): Promise<void> => {
   const parsed = message.parse(input.message);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding payload excludes annotation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { annotation, ...payload } = parsed;
   await sql.begin(async (tx) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);

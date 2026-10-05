@@ -73,6 +73,7 @@ export const verifyLocalEveFamilyCoverage = async (
       // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
       await verifyEveSandboxCoverage(
         connection,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing inventory own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         { ...inventory, appRoot: canonicalRoot },
         async (sessionId) => {
           const response = await fetch(

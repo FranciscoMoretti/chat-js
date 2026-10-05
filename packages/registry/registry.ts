@@ -101,6 +101,7 @@ const toolItems = (
   ({
     description,
     dependencies,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding definition excludes description, dependencies from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...definition
   }: Readonly<{
     dependencies: readonly string[];
@@ -133,6 +134,7 @@ const toolItems = (
       meta: {
         chatjs: toolDefinitionSchema.parse({
           contractVersion: 1,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...definition,
           kind: "tool",
         }),

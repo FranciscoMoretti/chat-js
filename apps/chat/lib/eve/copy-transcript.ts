@@ -105,16 +105,20 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
         throw new EveCopyNotReadyError();
       }
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         state: part.state,
         output: z.json().parse(part.output),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(part.outputType ? { outputType: part.outputType } : {}),
       };
     }
     case "output-error": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state, errorText: part.errorText };
     }
     case "output-denied": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state, reason: part.approval.reason };
     }
     default: {
@@ -254,6 +258,7 @@ const transcriptResources = (
     }
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resources own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...resources,
     documentIds: [...documents].toSorted(),
     revisionIds: [...revisions].toSorted(),
@@ -291,6 +296,7 @@ const prepareEveCopyTranscript = (
         const selectedTool = eveMessageTool(message);
         return {
           role: "user",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
           ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
           parts: message.parts.map((part) => {
             if (part.type === "text") {
@@ -311,6 +317,7 @@ const prepareEveCopyTranscript = (
       }
       return {
         role: "assistant",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(message.metadata?.modelId
           ? { modelId: message.metadata.modelId }
           : {}),

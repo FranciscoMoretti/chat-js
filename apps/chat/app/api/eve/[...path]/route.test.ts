@@ -57,6 +57,7 @@ const request = (headers: Record<string, string> = {}) =>
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:3790",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...headers,
     },
     method: "POST",

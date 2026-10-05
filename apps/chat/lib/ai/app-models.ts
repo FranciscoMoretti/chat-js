@@ -38,12 +38,14 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
 
         return [
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...model,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
             id: reasoningId,
           },
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...model,
             apiModelId: modelId,
             disabled: DISABLED_MODELS.has(modelId),
@@ -56,6 +58,7 @@ const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
       // Models without reasoning stay as-is
       return [
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...model,
           apiModelId: modelId,
           disabled: DISABLED_MODELS.has(modelId),

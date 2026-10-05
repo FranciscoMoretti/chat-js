@@ -686,6 +686,7 @@ export const mcpRouter = createTRPCRouter({
       });
 
       const updates: typeof input.updates & { nameId?: string } = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of input.updates rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...input.updates,
       };
       if (typeof updates.url === "string" && updates.url !== "") {

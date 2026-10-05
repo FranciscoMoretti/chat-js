@@ -31,6 +31,7 @@ const alertVariants = cva(
 const Alert = reactForwardRef<
   HTMLDivElement,
   ReactHTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, variant, ...props }, ref): ReactJSX.Element => (
   <div
     className={cn(alertVariants({ variant }), className)}
@@ -49,6 +50,7 @@ Alert.displayName = "Alert";
 const AlertTitle = reactForwardRef<
   HTMLParagraphElement,
   ReactHTMLAttributes<HTMLHeadingElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <>
     {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
@@ -69,6 +71,7 @@ AlertTitle.displayName = "AlertTitle";
 const AlertDescription = reactForwardRef<
   HTMLParagraphElement,
   ReactHTMLAttributes<HTMLParagraphElement>
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <div
     className={cn("text-sm [&_p]:leading-relaxed", className)}

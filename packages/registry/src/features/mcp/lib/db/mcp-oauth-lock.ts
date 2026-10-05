@@ -10,6 +10,7 @@ const MAXIMUM_OAUTH_LOCK_CONNECTIONS = 2;
 const OAUTH_REFRESH_LOCK_TIMEOUT = "40s";
 const connectionConfig = databaseConnection(env);
 const lockPool = postgres(connectionConfig.url, {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connectionConfig.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...connectionConfig.options,
   idle_timeout: OAUTH_LOCK_POOL_IDLE_TIMEOUT_SECONDS,
   max: Math.min(

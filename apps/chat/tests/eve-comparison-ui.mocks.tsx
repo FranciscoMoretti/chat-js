@@ -20,6 +20,7 @@ const fixtureModels = models
   .filter((model) => model.id === firstModel || model.id === secondModel)
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Override fixture model IDs without mutating the shared model catalog.
   .map((model) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...model,
     apiModelId: model.id,
     input: { image: true, pdf: true, text: true },

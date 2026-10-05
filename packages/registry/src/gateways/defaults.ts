@@ -133,6 +133,7 @@ const openaiDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openai"]>;
 
 const openaiCompatibleDefaults = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of openaiDefaults rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   ...openaiDefaults,
 } satisfies GatewayModelDefaults<Gateways["openai-compatible"]>;
 

@@ -64,7 +64,9 @@ it("requires reconciliation for unpriced completed calls and preserves failed-at
   expect(await ingestEveUsage("owner", "session", event)).toBe(false);
   expect(
     await ingestEveUsage("owner", "session", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...event,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       data: { ...event.data, modelCalls: [{ failed: true, modelId: "model" }] },
     })
   ).toBe(true);

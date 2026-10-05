@@ -70,6 +70,7 @@ const Reasoning = memo(
     onOpenChange,
     duration: durationProp,
     children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, isStreaming, open, defaultOpen, onOpenChange, duration, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReasoningProps) => {
     const [isOpen, setIsOpen] = useControllableState({
@@ -163,6 +164,7 @@ const getThinkingMessage = (
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 
 const ReasoningTrigger = memo(
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ({ className, children, ...props }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning();
 
@@ -208,6 +210,7 @@ const ReasoningContent = memo(
   ({
     className,
     children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReasoningContentProps): React.JSX.Element => (
     <CollapsibleContent

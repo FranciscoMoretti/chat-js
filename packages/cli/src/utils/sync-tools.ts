@@ -97,6 +97,7 @@ const registrationsFor = (
 ) =>
   definitions.flatMap((item) =>
     item.tools.map((tool) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...tool,
       id: item.id,
       key: item.slot ?? tool.toolExport,
@@ -371,7 +372,7 @@ const sourceFor = (
           name: item.toolExport,
         })),
       "tool"
-    )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
+    )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\n/* oxlint-disable oxc/no-rest-spread-properties -- Copy installed and custom tool bindings into the public registry after duplicate-key validation, preserving own-enumerable composition and binding identities. */\nexport const tools = { ...installed, ...customTools };\n/* oxlint-enable oxc/no-rest-spread-properties */\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
       renderers.flatMap((item, registrationIndex) => {
         if (
@@ -389,7 +390,7 @@ const sourceFor = (
         return [];
       }),
       "renderer"
-    )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
+    )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\n/* oxlint-disable oxc/no-rest-spread-properties -- Copy installed and custom renderer bindings into the public registry after duplicate-key validation, preserving own-enumerable composition and binding identities. */\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n/* oxlint-enable oxc/no-rest-spread-properties */\n`,
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */

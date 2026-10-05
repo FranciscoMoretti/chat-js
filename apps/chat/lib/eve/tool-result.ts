@@ -84,6 +84,7 @@ const createToolError = (
   costUsd: number | undefined,
   updates?: ToolOutput[]
 ): ToolResult<never> => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createToolResult(null, costUsd, updates) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...createToolResult(null, costUsd, updates),
   error: "The tool did not complete.",
   output: null,

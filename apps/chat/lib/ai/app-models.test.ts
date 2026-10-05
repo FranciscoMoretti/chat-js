@@ -42,16 +42,22 @@ const baseModel: ModelData = {
   type: "language",
 };
 const catalog: ModelData[] = [
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/new" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/known", owned_by: "secondary" },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...baseModel,
     id: "openai/gpt-5-mini",
     owned_by: "preferred",
     reasoning: true,
   },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/disabled", owned_by: "preferred" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/image", type: "image" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseModel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...baseModel, id: "fixture/last" },
 ];
 

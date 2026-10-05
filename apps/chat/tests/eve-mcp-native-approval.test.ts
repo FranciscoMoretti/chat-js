@@ -32,6 +32,7 @@ const actor = {
  * unicorn/no-null (#570): session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const session = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   auth: { current: null, initiator: { ...actor, attributes: {} } },
   sessionId: "session",
   turn: { id: "turn_1", sequence: 1 },
@@ -66,6 +67,7 @@ function fixture() {
   ctx.set(SessionKey, session);
   const { state } = settleDirectApprovalResponse({
     state: undefined,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     actor: { ...actor, attributes: {} },
     outcome: "allowed",
     requestId: "request",
@@ -99,6 +101,7 @@ test("native executor receives only its exact authorized session/call/tool/input
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "changed" })
     ).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ctx.set(SessionKey, { ...session, sessionId: "fork" });
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "write" })
@@ -127,6 +130,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     prepareToolApprovalReceipts(
       ctx,
       "session",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing batch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing batch.inputs[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       [{ ...batch, inputs: [{ ...batch.inputs[0], outcome: "denied" }] }],
       state
     );
@@ -244,6 +248,7 @@ test.each(["owner", "stranger"])(
       step(pending, {
         attributedInputResponses: [
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             auth: { ...actor, attributes: {}, principalId },
             response: { optionId: "approve", requestId: "request" },
           },

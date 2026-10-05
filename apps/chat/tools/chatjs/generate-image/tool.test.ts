@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
 }));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("ai", async (original) => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await original<typeof AI>()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...(await original<typeof AI>()),
   generateImage: mocks.image,
   generateText: mocks.text,
@@ -219,7 +220,9 @@ it("uses the selected native model and accounts nested model tokens", async () =
     principalType: "user",
   };
   const result = await execute({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...context,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     session: { ...context.session, auth: { current, initiator: current } },
   });
   expect(mocks.languageModel).toHaveBeenCalledWith("google/image");

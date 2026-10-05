@@ -283,9 +283,12 @@ test("reserves one immutable root and destination resources before writes, rejec
   expect(reference).toMatchObject({ key: ctx.targetKey, ownerId });
   await expect(
     reserveEveCopyOperation(ownerId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx.input,
       plan: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.input.plan own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...ctx.input.plan,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.input.plan.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         seed: { ...ctx.input.plan.seed, messages: [] },
       },
     })
@@ -306,6 +309,7 @@ test("reserves one immutable root and destination resources before writes, rejec
   );
   await expect(
     reserveEveCopyOperation(ownerId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx.input,
       operationId: messageOperation,
     })

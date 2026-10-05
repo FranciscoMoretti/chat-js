@@ -102,6 +102,7 @@ it("does not declare terminal rejection when the primary refund cannot prove non
 it("marks every multi-model edited candidate with the shared user intent", async () => {
   mocks.reserve.mockResolvedValue(group);
   await createEveResponseGroup("owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     forkKind: "edit",

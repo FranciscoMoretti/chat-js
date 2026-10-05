@@ -37,7 +37,7 @@ Breadcrumb.displayName = "Breadcrumb";
 const BreadcrumbList = reactForwardRef<
   HTMLOListElement,
   ReactComponentPropsWithoutRef<"ol">
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbList forwards ol's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLOListElement> parameter preserves React's writable current assignment and callback contract.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- BreadcrumbList forwards ol's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLOListElement> parameter preserves React's writable current assignment and callback contract. Rest/spread: Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <ol
     className={cn(
@@ -57,7 +57,7 @@ BreadcrumbList.displayName = "BreadcrumbList";
 const BreadcrumbItem = reactForwardRef<
   HTMLLIElement,
   ReactComponentPropsWithoutRef<"li">
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbItem forwards li's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLLIElement> parameter preserves React's writable current assignment and callback contract.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- BreadcrumbItem forwards li's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLLIElement> parameter preserves React's writable current assignment and callback contract. Rest/spread: Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <li
     className={cn("inline-flex items-center gap-1.5", className)}
@@ -77,7 +77,7 @@ const BreadcrumbLink = reactForwardRef<
   ReactComponentPropsWithoutRef<"a"> & {
     asChild?: boolean;
   }
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbLink forwards Comp's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLAnchorElement> parameter preserves React's writable current assignment and callback contract.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- BreadcrumbLink forwards Comp's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLAnchorElement> parameter preserves React's writable current assignment and callback contract. Rest/spread: Rest binding props excludes asChild, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ asChild, className, ...props }, ref) => {
   const Comp = asChild ? Slot : "a";
 
@@ -99,7 +99,7 @@ BreadcrumbLink.displayName = "BreadcrumbLink";
 const BreadcrumbPage = reactForwardRef<
   HTMLSpanElement,
   ReactComponentPropsWithoutRef<"span">
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbPage forwards span's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLSpanElement> parameter preserves React's writable current assignment and callback contract.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- BreadcrumbPage forwards span's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLSpanElement> parameter preserves React's writable current assignment and callback contract. Rest/spread: Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <span
     aria-current="page"
@@ -119,6 +119,7 @@ BreadcrumbPage.displayName = "BreadcrumbPage";
 const BreadcrumbSeparator = ({
   children,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"li">): ReactJSX.Element => (
   <li
@@ -141,6 +142,7 @@ BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbEllipsis forwards span's Ref<HTMLSpanElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const BreadcrumbEllipsis = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"span">): ReactJSX.Element => (
   <span

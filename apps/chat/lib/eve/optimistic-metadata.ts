@@ -35,10 +35,13 @@ const rollbackFields = <Value extends Metadata>(
   previous: Readonly<Metadata>,
   patch: Readonly<Partial<Metadata>>
 ): Value => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...current,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (patch.title !== globalThis.undefined && current.title === patch.title     ? { title: previous.title }     : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
   ...(patch.title !== globalThis.undefined && current.title === patch.title
     ? { title: previous.title }
     : {}),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (patch.isPinned !== globalThis.undefined &&   current.isPinned === patch.isPinned     ? { isPinned: previous.isPinned }     : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
   ...(patch.isPinned !== globalThis.undefined &&
   current.isPinned === patch.isPinned
     ? { isPinned: previous.isPinned }
@@ -65,11 +68,14 @@ const optimisticEveMetadata = async (
   for (const [key, data] of lists) {
     if (data) {
       cache.setQueryData(key, {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...data,
         // oxlint-disable-next-line oxc/no-map-spread -- #541: React Query updates require fresh page and item objects rather than mutating cached snapshots.
         pages: data.pages.map((page) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...page,
           items: page.items.map((item) =>
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             item.id === id ? { ...item, ...patch } : item
           ),
         })),
@@ -78,6 +84,7 @@ const optimisticEveMetadata = async (
   }
   for (const [key, data] of details) {
     if (data?.chatId === id) {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       cache.setQueryData(key, { ...data, ...patch });
     }
   }
@@ -92,8 +99,10 @@ const optimisticEveMetadata = async (
           key,
           (current) =>
             current && {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...current,
               pages: current.pages.map((page) => ({
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 ...page,
                 items: page.items.map((item) =>
                   item.id === id ? rollbackFields(item, before, patch) : item

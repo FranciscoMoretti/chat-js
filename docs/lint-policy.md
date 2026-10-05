@@ -2,14 +2,13 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The three rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+The two rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
 ## Rules awaiting source-scoped adoption
 
 | Rule | Rationale and evidence |
 | --- | --- |
 | `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
-| `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
 
 These conflicts remain part of the unfinished adoption work. Do not replace them with indiscriminate source waivers or distort code merely to satisfy opposing rules.
@@ -57,6 +56,10 @@ Remaining declaration exceptions cover one import and explain either runtime mod
 `oxc/no-async-await` is enabled. The pinned rule rejects async functions and generators for legacy-engine compatibility, while the configured Node/Bun/browser targets support them. Statement/method exceptions preserve actual awaited sequencing, rejection behavior and async iteration. All 96 findings without their own await were reviewed separately: Promise-based fixture/hooks, the durable `"use step"` compiler contract and async-generator overloads require their existing async shape. Replacing those with `Promise.resolve` also conflicts with the retained `typescript/promise-function-async` rule. No unrelated Promise safety rules were relaxed.
 
 The 2,728 findings map to 2,054 canonical scopes and 132 generated scopes. Emitted JavaScript tokens, parser diagnostics and JSDoc attachment remain unchanged. These new policy exceptions do not sign off unrelated pre-existing suppressions in the same functions.
+
+## Object composition contracts
+
+`oxc/no-rest-spread-properties` is enabled. Object compositions retain local exceptions for the opposing `eslint/prefer-object-spread` convention, ordered overrides, fresh snapshots and conditional key omission. Object bindings name the keys they exclude before forwarding the remaining properties. Twenty-five redundant sole-rest UI parameter copies were previously removed; three retain verified getter/hook/member-resolution ordering contracts. Exceptions target individual source lines or inline object/binding expressions; existing next-line rules are combined to preserve their targets. Generator templates own the two installed/custom registry composition comments. These syntax-contract reviews do not establish exhaustive dynamic caller analysis or finish unrelated existing suppression reviews.
 
 ## File-level directive limitations
 
@@ -146,7 +149,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `node/no-top-level-await` | Enforced; reviewed ESM command/test exceptions | [#539](https://github.com/FranciscoMoretti/chat-js/issues/539) |
 | `oxc/no-map-spread` | Enforced | [#541](https://github.com/FranciscoMoretti/chat-js/issues/541) |
 | `oxc/no-optional-chaining` | Off — policy | [#542](https://github.com/FranciscoMoretti/chat-js/issues/542) |
-| `oxc/no-rest-spread-properties` | Off — policy | [#543](https://github.com/FranciscoMoretti/chat-js/issues/543) |
+| `oxc/no-rest-spread-properties` | Enforced — local composition contracts | [#543](https://github.com/FranciscoMoretti/chat-js/issues/543) |
 | `promise/always-return` | Enforced | [#544](https://github.com/FranciscoMoretti/chat-js/issues/544) |
 | `promise/prefer-await-to-then` | Enforced | [#576](https://github.com/FranciscoMoretti/chat-js/issues/576) |
 | `react-perf/jsx-no-jsx-as-prop` | Enforced | [#555](https://github.com/FranciscoMoretti/chat-js/issues/555) |

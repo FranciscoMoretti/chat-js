@@ -216,6 +216,7 @@ const EveRuntimeProvider = ({
 
       // Query with staleTime 0 reloads the branch family before selecting or creating a runtime.
       const family = await queryClient.query({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.eve.branches.queryOptions({ id: identity.chatId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,
       });
@@ -228,7 +229,9 @@ const EveRuntimeProvider = ({
         controller.selectBranch(request.id);
       }
       const runtime = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing existing own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...existing,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...request,
         chatId: identity.chatId,
         controller,

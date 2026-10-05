@@ -172,6 +172,7 @@ test("document purge requires the owned family fence, erases inherited revisions
     { fork: { beforeTurnId: "turn_1", conversationId: root.id } }
   );
   await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Child revision",
     conversationId: child.id,
@@ -220,6 +221,7 @@ test("document purge requires the owned family fence, erases inherited revisions
   ]);
   await expect(
     saveEveDocumentRevision({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: crypto.randomUUID(),
     })
@@ -311,6 +313,7 @@ test("manual edits backfill inherited boundaries in old forks before adding manu
   ]);
   await saveEveDocumentRevision(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Manual on old fork",
       conversationId: child.id,
@@ -351,6 +354,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   const input = draft(chat.id);
   const original = await saveEveDocumentRevision(input);
   const manualInput = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Manual content",
     expectedRevisionId: original.id,
@@ -361,6 +365,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   expect(manual.turnIndex).toBeNull();
   await captureEveDocumentCheckpoint(owner, chat.id, 2);
   const generated = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Generated later",
     expectedRevisionId: manual.id,
@@ -408,6 +413,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   await expect(
     saveEveDocumentRevision(
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing manualInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...manualInput,
         expectedRevisionId: generated.id,
         operationId: crypto.randomUUID(),
@@ -424,6 +430,7 @@ test("manual edits backfill old native boundaries and stay isolated across neste
   expect(chatHeadAfterRejectedReplay?.id).toBe(generated.id);
   await expect(
     saveEveDocumentRevision({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing manualInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...manualInput,
       expectedRevisionId: generated.id,
       operationId: crypto.randomUUID(),
@@ -451,6 +458,7 @@ test("turn checkpoints restore exact heads, including empty state, and never cha
     )
   );
   await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Later content",
     expectedRevisionId: first.id,
@@ -576,6 +584,7 @@ test("document viewing respects visibility, revocation and fork ancestry without
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const later = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Private later version",
     expectedRevisionId: first.id,
@@ -675,11 +684,13 @@ test("native document calls replay safely and reject stale edits and cross-conve
   const edited = await executeEveDocumentTool(
     "editTextDocument",
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Updated",
       documentId: created.documentId,
       expectedRevisionId: created.revisionId,
     },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, callId: crypto.randomUUID() }
   );
   expect(
@@ -696,10 +707,12 @@ test("native document calls replay safely and reject stale edits and cross-conve
     executeEveDocumentTool(
       "editTextDocument",
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         documentId: created.documentId,
         expectedRevisionId: created.revisionId,
       },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...context, callId: crypto.randomUUID() }
     )
   ).rejects.toThrow("changed");
@@ -709,7 +722,9 @@ test("native document calls replay safely and reject stale edits and cross-conve
       "readDocument",
       { documentId: created.documentId },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...context,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         session: { ...context.session, id: other.sessionId },
       }
     )
@@ -717,6 +732,7 @@ test("native document calls replay safely and reject stale edits and cross-conve
   const cancelled = AbortSignal.abort();
   await expect(
     executeEveDocumentTool("createTextDocument", input, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...context,
       abortSignal: cancelled,
     })
@@ -742,6 +758,7 @@ test("concurrent replays create one revision and old replays never rewind the he
   );
   expect(new Set(revisions.map((revision) => revision.id)).size).toBe(1);
   const second = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Updated",
     expectedRevisionId: revisions[0].id,
@@ -757,6 +774,7 @@ test("concurrent replays create one revision and old replays never rewind the he
   );
   expect(latestDocumentHistory.at(-1)?.id).toBe(second.id);
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     saveEveDocumentRevision({ ...input, content: "Changed replay" })
   ).rejects.toThrow("replay");
 });
@@ -776,6 +794,7 @@ test("two distinct saves from the same revision cannot overwrite each other", as
   const outcomes = await Promise.allSettled(
     ["A", "B"].map((content) =>
       saveEveDocumentRevision({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         content,
         expectedRevisionId: first.id,
@@ -810,6 +829,7 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
   ).toEqual([]);
   await expect(
     saveEveDocumentRevision({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       expectedRevisionId: first.id,
       operationId: crypto.randomUUID(),
@@ -818,6 +838,7 @@ test("artifact reads and updates are scoped to owner and conversation", async ()
   ).rejects.toThrow("not found");
   await expect(
     saveEveDocumentRevision({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       conversationId: other.id,
       expectedRevisionId: first.id,
@@ -847,6 +868,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
   const input = draft(chat.id);
   const first = await saveEveDocumentRevision(input);
   const parentLater = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Parent after fork point",
     expectedRevisionId: first.id,
@@ -867,6 +889,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
   );
   expect(childHistoryAtFork.map((revision) => revision.id)).toEqual([first.id]);
   const childEdit = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Child",
     conversationId: child.id,
@@ -875,6 +898,7 @@ test("forks select the pre-turn revision and parent and child edits stay indepen
     turnIndex: 1,
   });
   await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Parent newest",
     expectedRevisionId: parentLater.id,
@@ -965,6 +989,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
       )
     );
   const newest = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Newest",
     expectedRevisionId: tail,
@@ -1010,16 +1035,19 @@ test("document references protect owned files across families and revision histo
   await registerEveStoredFile(stranger, foreignKey);
   await referenceEveFiles(owner, source.id, [key]);
   const input = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft(destination.id) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...draft(destination.id),
     content: `![image](${prefix}${key})\nForeign URL: ${prefix}${foreignKey}`,
     fileIds: [key],
   };
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     saveEveDocumentRevision({ ...input, fileIds: [foreignKey] })
   ).rejects.toThrow("unowned file");
   const revision = await saveEveDocumentRevision(input);
   expect(revision.fileIds).toEqual([key]);
   await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fileIds: [],
     content: "Image removed from latest revision",
@@ -1063,6 +1091,7 @@ test("named idle snapshots preserve manual edits across retries without changing
   await captureEveDocumentCheckpoint(owner, chat.id, 1);
   const manual = await saveEveDocumentRevision(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Idle edit",
       expectedRevisionId: original.id,
@@ -1079,6 +1108,7 @@ test("named idle snapshots preserve manual edits across retries without changing
   ]);
   await saveEveDocumentRevision(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       content: "Later edit",
       expectedRevisionId: manual.id,
@@ -1141,6 +1171,7 @@ test("named idle snapshots preserve manual edits across retries without changing
       operationId,
       "Named fork",
       async () => crypto.randomUUID(),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { fork: { ...fork, checkpointId: crypto.randomUUID() } }
     )
   ).rejects.toThrow("different");
@@ -1318,6 +1349,7 @@ test("imported forks restore the selected document boundary and exclude the late
   const input = draft(root.id);
   const original = await saveEveDocumentRevision(input);
   const later = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     content: "Later edit",
     expectedRevisionId: original.id,
@@ -1483,18 +1515,21 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await expect(
     removeEveDocumentFromConversation(
       deletion,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing scope own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...scope, ownerId: stranger },
       signal
     )
   ).rejects.toThrow("Conversation not found");
   await expect(
     removeEveDocumentFromConversation(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing deletion own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...deletion, title: "Misleading title" },
       scope,
       signal
     )
   ).rejects.toThrow("Document changed");
   const edited = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     expectedRevisionId: original.id,
     operationId: crypto.randomUUID(),
@@ -1504,6 +1539,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
   await expect(
     removeEveDocumentFromConversation(deletion, scope, signal)
   ).rejects.toThrow("Document changed");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing deletion own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const currentDeletion = { ...deletion, expectedRevisionId: edited.id };
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
   await removeEveDocumentFromConversation(currentDeletion, scope, signal);
@@ -1530,6 +1566,7 @@ test("approved deletion is scoped, revision-checked, retryable, and preserves fo
     await getEveDocumentRevision(owner, later.id, input.documentId)
   ).toBeUndefined();
   const replacement = await saveEveDocumentRevision({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     operationId: crypto.randomUUID(),
     content: "Replacement",

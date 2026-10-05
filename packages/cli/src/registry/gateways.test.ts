@@ -24,8 +24,10 @@ it("validates gateway integration metadata with the standard registry schema", a
     await writeFile(
       source,
       JSON.stringify({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...builtInGateways[0],
         meta: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing builtInGateways[0].meta.chatjs own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           chatjs: { ...builtInGateways[0].meta.chatjs, contractVersion: 999 },
         },
       })

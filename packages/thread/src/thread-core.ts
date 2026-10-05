@@ -159,6 +159,7 @@ const createMessageFromInput = async <
     };
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     id: messageId,
     metadata,
@@ -433,6 +434,7 @@ abstract class ThreadCore<
     UIMessage<Metadata, Data, Tools>
   >["regenerate"] = async ({
     messageId,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding options excludes messageId from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...options
   }: Readonly<{ messageId?: string }> & RequestReader = {}): Promise<void> => {
     const { parentMessageId, target } = this.getRegenerationTarget(messageId);
@@ -565,6 +567,7 @@ abstract class ThreadCore<
     input?: SendMessageInput<UIMessage<Metadata, Data, Tools>>,
     options?: TreeRequestReader
   ): Promise<void> => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding request excludes tree from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     const { tree, ...request } = options ?? {};
     if (!input) {
       const cursorId =
@@ -778,7 +781,9 @@ abstract class ThreadCore<
     const runSnapshot = this.#runs.getSnapshot();
     const selectedRun = this.getSelectedRunRecord(tree);
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing treeSnapshot own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...treeSnapshot,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing indexes own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
       error: selectedRun?.error,

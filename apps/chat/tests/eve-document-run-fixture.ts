@@ -31,11 +31,13 @@ const states: {
   { disabled: true, title: "Unsaved changes" },
   {
     disabled: true,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     part: { ...base, state: "input-available" },
     title: "Running",
   },
   {
     part: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       errorText: "Code document not found.",
       state: "output-error",
@@ -44,6 +46,7 @@ const states: {
   },
   {
     part: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       approval: { approved: false, id: "declined" },
       state: "output-denied",
@@ -51,6 +54,7 @@ const states: {
     title: "Declined",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     part: { ...base, output: {}, state: "output-available" },
     readOnly: true,
     title: "Malformed result",
@@ -77,6 +81,7 @@ process.stdout.write(
           { className: "rounded border p-3", key: title },
           createElement("h2", null, title),
           createElement(EveDocumentRun, {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...input,
             disabled: disabled ?? false,
             kind: "code",

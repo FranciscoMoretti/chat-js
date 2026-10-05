@@ -81,6 +81,7 @@ const DropdownMenuTrigger = (
 const DropdownMenuContent = ({
   className,
   sideOffset = 4,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveContent
@@ -126,6 +127,7 @@ const DropdownMenuItem = ({
   className,
   inset,
   variant = "default",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveItem> & {
   inset?: boolean;
@@ -155,6 +157,7 @@ const DropdownMenuCheckboxItem = ({
   className,
   children,
   checked,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, checked from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveCheckboxItem
@@ -207,6 +210,7 @@ const DropdownMenuRadioGroup = (
 const DropdownMenuRadioItem = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveRadioItem
@@ -242,6 +246,7 @@ const DropdownMenuRadioItem = ({
 const DropdownMenuLabel = ({
   className,
   inset,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveLabel> & {
   inset?: boolean;
@@ -267,6 +272,7 @@ const DropdownMenuLabel = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuSeparator forwards DropdownMenuPrimitiveSeparator's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DropdownMenuSeparator = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveSeparator
@@ -288,6 +294,7 @@ const DropdownMenuSeparator = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuShortcut forwards span's Ref<HTMLSpanElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DropdownMenuShortcut = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"span">): ReactJSX.Element => (
   <span
@@ -328,6 +335,7 @@ const DropdownMenuSubTrigger = ({
   className,
   inset,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, inset, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<typeof DropdownMenuPrimitiveSubTrigger> & {
   inset?: boolean;
@@ -359,6 +367,7 @@ const DropdownMenuSubTrigger = ({
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- DropdownMenuSubContent forwards DropdownMenuPrimitiveSubContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const DropdownMenuSubContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<
   typeof DropdownMenuPrimitiveSubContent

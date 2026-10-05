@@ -27,6 +27,7 @@ afterEach(() => vi.useRealTimers());
  * typescript/explicit-function-return-type (#560): Keep claims's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const claims = () => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing newGuestClaims("test-model") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...newGuestClaims("test-model"),
   sessionId: "session-owned",
 });
@@ -54,6 +55,7 @@ test("credentials are signed, expire, and cannot be edited to name another sessi
   const original = claims();
   const token = issueGuestCredential(original);
   expect(readGuestCredential(token)).toEqual(original);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const forged = `${Buffer.from(JSON.stringify({ ...original, sessionId: "victim" })).toString("base64url")}.${token.split(".")[1]}`;
   expect(readGuestCredential(forged)).toBeNull();
   expect(readGuestCredential(`${token}.extra`)).toBeNull();

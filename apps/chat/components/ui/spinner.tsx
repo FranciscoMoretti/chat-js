@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const Spinner = ({
   className,
   "aria-label": label = "Loading",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, "aria-label" from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: React.ComponentProps<"svg">): React.JSX.Element => (
   <output aria-label={label} className="inline-flex">

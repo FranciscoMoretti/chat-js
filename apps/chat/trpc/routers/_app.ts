@@ -17,6 +17,7 @@ import { settingsRouter } from "./settings.router";
 const appRouter = createTRPCRouter({
   credits: creditsRouter,
   eve: eveRouter,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing installedRouters own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...installedRouters,
   project: projectRouter,
   settings: settingsRouter,

@@ -37,6 +37,7 @@ const readEveCheckpoint = async (
     const ready = z
       .object({
         beforeTurnId: z.literal(beforeTurnId),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (checkpointId ? { checkpointId: z.literal(checkpointId) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
         ...(checkpointId ? { checkpointId: z.literal(checkpointId) } : {}),
         ready: z.literal(true),
         sessionId: z.literal(sessionId),

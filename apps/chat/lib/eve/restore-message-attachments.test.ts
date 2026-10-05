@@ -143,6 +143,7 @@ it("requires owned bound history and a native user message before copying", asyn
     state: "bound",
   });
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     restoreMessageAttachments("owner", { ...input, messageId: "missing" })
   ).rejects.toThrow("Message is unavailable");
   expect(mocks.reserve).not.toHaveBeenCalled();
