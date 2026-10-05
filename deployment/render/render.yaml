@@ -1,0 +1,58 @@
+# Candidate source-clone topology; read README.md before provisioning.
+# Select the non-Vercel providers in source first. This file installs no adapters.
+services:
+  - type: web
+    name: chatjs
+    runtime: node
+    plan: 1c-2g
+    numInstances: 1
+    autoDeployTrigger: "off"
+    buildCommand: bun install --frozen-lockfile && bun run --cwd apps/chat build
+    startCommand: cd apps/chat && exec node node_modules/next/dist/bin/next start --hostname 0.0.0.0 --port 10000
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: BUN_VERSION
+        value: 1.3.1
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: EVE_NEXT_PRODUCTION_PORT
+        value: "4274"
+      - key: EVE_INTERNAL_ORIGIN
+        value: http://127.0.0.1:10000
+      - key: APP_URL
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: WORKFLOW_POSTGRES_URL
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: EVE_GATEWAY_SECRET
+        generateValue: true
+      - key: CRON_SECRET
+        generateValue: true
+  - type: cron
+    name: chatjs-cleanup
+    runtime: node
+    plan: 0.5c-512mb
+    autoDeployTrigger: "off"
+    schedule: "0 2 * * *"
+    buildCommand: echo 'Dependency-free Node scheduler'
+    startCommand: node scripts/hosted-cleanup.ts
+    envVars:
+      - key: NODE_VERSION
+        value: 24.20.0
+      - key: APP_URL
+        fromService:
+          type: web
+          name: chatjs
+          envVarKey: APP_URL
+      - key: CRON_SECRET
+        fromService:
+          type: web
+          name: chatjs
+          envVarKey: CRON_SECRET

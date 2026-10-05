@@ -318,7 +318,6 @@
     "[\"apps/chat/app/api/health/route.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/app/api/health/route.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/app/api/health/route.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/app/api/health/route.ts\",\"promise/always-return\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/app/api/health/route.ts\",\"promise/avoid-new\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/app/api/mcp/oauth/callback/route.test.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 5,
     "[\"apps/chat/app/api/mcp/oauth/callback/route.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
@@ -6214,6 +6213,7 @@
     "[\"scripts/dev-supervisor.ts\",\"eslint/no-unmodified-loop-condition\",\"oxlint-disable-next-line\"]": 2,
     "[\"scripts/dev-supervisor.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 4,
     "[\"scripts/dev-supervisor.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"scripts/hosted-cleanup.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": 1,
@@ -7312,34 +7312,31 @@
     ],
     "[\"apps/chat/app/api/health/route.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "4a17f8304021ac388f305d2e061f43b5b8cdb669258725c79e33cb796b5e83c0",
-      "8f6765b56c73a889116e2a6d6074b9738dd463dc147f68faa5fa750328199d03",
-      "aca20d6a15d34913dd202d35fce0811611e2a8bfb13c2a23dc37e9c049b9020f"
+      "11493fe1b029ba9e909be98f77fe44d06491b22ca94133c53a844fd04b9add23",
+      "8aaa357d842b9438abb5e09242c2a0134f561b6f3939c8a58fac961495d7cb65"
     ],
     "[\"apps/chat/app/api/health/route.test.ts\",\"no-undefined\",\"oxlint-disable\"]": [
       "4a17f8304021ac388f305d2e061f43b5b8cdb669258725c79e33cb796b5e83c0",
-      "8f6765b56c73a889116e2a6d6074b9738dd463dc147f68faa5fa750328199d03"
+      "11493fe1b029ba9e909be98f77fe44d06491b22ca94133c53a844fd04b9add23"
     ],
     "[\"apps/chat/app/api/health/route.test.ts\",\"promise/avoid-new\",\"oxlint-disable-next-line\"]": [
       "e740d2333c2e28523a8935a8976c68149481f5b7f0d52be25289adab879e83a5"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "87f85944d29443618283eea070c1424211bf187023acd88b43bfcaf4b3eb28c2",
-      "42cea872bc5ce9ace918dfaeedf075c502670af417ead5ad3690275d0e408324"
+      "4f615793fc15e31a80a7f16777b87233cbb703e8c069bd03f72a799530f90e50"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "42cea872bc5ce9ace918dfaeedf075c502670af417ead5ad3690275d0e408324"
+      "4f615793fc15e31a80a7f16777b87233cbb703e8c069bd03f72a799530f90e50"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "42cea872bc5ce9ace918dfaeedf075c502670af417ead5ad3690275d0e408324"
+      "4f615793fc15e31a80a7f16777b87233cbb703e8c069bd03f72a799530f90e50"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": [
-      "42cea872bc5ce9ace918dfaeedf075c502670af417ead5ad3690275d0e408324"
+      "4f615793fc15e31a80a7f16777b87233cbb703e8c069bd03f72a799530f90e50"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "42cea872bc5ce9ace918dfaeedf075c502670af417ead5ad3690275d0e408324"
-    ],
-    "[\"apps/chat/app/api/health/route.ts\",\"promise/always-return\",\"oxlint-disable-next-line\"]": [
-      "a387f16c753abc8ee4ef80882827524ff2ba8cce9519640cba0926d2caba4602"
+      "4f615793fc15e31a80a7f16777b87233cbb703e8c069bd03f72a799530f90e50"
     ],
     "[\"apps/chat/app/api/health/route.ts\",\"promise/avoid-new\",\"oxlint-disable-next-line\"]": [
       "91d0a6b20442c218b7fbdcc714897a5959a9047d72d0fd122c8550e0cff6ed47"
@@ -28836,6 +28833,9 @@
     ],
     "[\"scripts/dev-supervisor.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
       "16d6b4a1add367d5ddf7905253f65aee1405d34043c506173cf77c591fc1fd54"
+    ],
+    "[\"scripts/hosted-cleanup.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
+      "79532c1c4c1dbf4ee178710678ae92bd3538213cb9469fe8fabde5b44eab92b7"
     ],
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "75c06f254c7de8573485fc374371a8ee286242b683cee40be88e6ceae424a704"

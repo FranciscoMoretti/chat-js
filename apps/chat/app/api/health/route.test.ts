@@ -7,7 +7,7 @@ vi.mock("@/lib/db/health", () => ({ checkDatabase: database }));
 vi.mock("@/lib/env", () => ({
   env: {
     EVE_INTERNAL_ORIGIN: "http://localhost:3790",
-    NODE_ENV: "development",
+    NODE_ENV: "production",
   },
 }));
 
@@ -40,7 +40,7 @@ test("reports ready only with database and Eve available", async () => {
     "fetch",
     vi
       .fn()
-      .mockResolvedValue(
+      .mockImplementation(() =>
         Response.json({ ok: true, status: "ready", workflowId: "test" })
       )
   );
@@ -66,7 +66,7 @@ test("bounds a stalled database check", async () => {
     "fetch",
     vi
       .fn()
-      .mockResolvedValue(
+      .mockImplementation(() =>
         Response.json({ ok: true, status: "ready", workflowId: "test" })
       )
   );
@@ -76,3 +76,19 @@ test("bounds a stalled database check", async () => {
   expect(resolvedResult4.status).toBe(503);
 });
 /* oxlint-enable no-magic-numbers */
+
+const unavailableStatus = 503;
+test("a failed guest worker makes the production instance unavailable", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: { readonly pathname: string }) => {
+      if (url.pathname === "/eve/guest/v1/health") {
+        throw new Error("guest process exited");
+      }
+      return Response.json({ ok: true, status: "ready", workflowId: "test" });
+    })
+  );
+  const response = await GET();
+  expect(response.status).toBe(unavailableStatus);
+  expect(await response.json()).toEqual({ status: "unavailable" });
+});
