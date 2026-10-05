@@ -22,6 +22,7 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
     <span className="text-muted-foreground text-xs">{label}</span>
   </div>
 );
+/* oxlint-disable react/jsx-no-literals -- WordCountView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
@@ -67,6 +68,7 @@ const WordCountView = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */

@@ -3,6 +3,7 @@ import React from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+/* oxlint-disable react/jsx-no-literals -- DevLoginTool renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable node/no-process-env, unicorn/no-null -- node/no-process-env: this Next.js fixture gate reads the build-time environment flag before exposing its development-only route; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -32,4 +33,5 @@ export const DevLoginTool = (): React.JSX.Element | null => {
     </a>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable node/no-process-env, unicorn/no-null */

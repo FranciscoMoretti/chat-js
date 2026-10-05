@@ -96,6 +96,7 @@ const SheetOverlay = ({
     {...props}
   />
 );
+/* oxlint-disable react/jsx-no-literals -- SheetContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -144,6 +145,7 @@ const SheetContent = ({
     </SheetPrimitiveContent>
   </SheetPortal>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 

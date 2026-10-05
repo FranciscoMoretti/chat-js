@@ -142,6 +142,7 @@ const Reasoning = memo(
 /* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
+/* oxlint-disable react/jsx-no-literals -- getThinkingMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable no-magic-numbers, no-undefined -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -157,6 +158,7 @@ const getThinkingMessage = (
   }
   return <p>Thought for {duration} seconds</p>;
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 

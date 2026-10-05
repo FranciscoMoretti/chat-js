@@ -67,6 +67,7 @@ const formatMcpError = (message: string): string => {
   }
   return message;
 };
+/* oxlint-disable react/jsx-no-literals -- DetailsSection renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -114,6 +115,8 @@ const DetailsSection = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- DiscoveryContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -264,6 +267,8 @@ const DiscoveryContent = ({
 
   return null;
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- McpDetailsPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
@@ -673,6 +678,7 @@ export const McpDetailsPage = ({
     </SettingsPageContent>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */

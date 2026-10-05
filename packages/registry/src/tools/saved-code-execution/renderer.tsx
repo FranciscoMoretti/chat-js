@@ -8,6 +8,7 @@ import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-e
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
+/* oxlint-disable react/jsx-no-literals -- SavedCodeRenderer renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
@@ -24,4 +25,5 @@ export const SavedCodeRenderer = defineToolRenderer({
       <output>Running saved code…</output>
     ),
 });
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

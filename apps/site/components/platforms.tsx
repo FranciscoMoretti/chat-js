@@ -99,6 +99,7 @@ const BrowserFrame = ({
     />
   </svg>
 );
+/* oxlint-disable react/jsx-no-literals -- Platforms renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -255,6 +256,7 @@ export const Platforms = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

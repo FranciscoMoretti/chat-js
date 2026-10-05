@@ -13,6 +13,7 @@ interface LoginPromptProps {
   description: string;
   title: string;
 }
+/* oxlint-disable react/jsx-no-literals -- LoginPrompt renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- LoginPrompt: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { title, description, className, }: LoginPromptProps). */
 
 export const LoginPrompt = ({
@@ -38,4 +39,5 @@ export const LoginPrompt = ({
     </InternalLink>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

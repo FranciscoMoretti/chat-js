@@ -59,6 +59,7 @@ const ArtifactHeader = ({
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactCloseProps = ComponentProps<typeof Button>;
+/* oxlint-disable react/jsx-no-literals -- ArtifactClose renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -90,6 +91,7 @@ const ArtifactClose = ({
     <span className="sr-only">Close</span>
   </Button>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;

@@ -14,6 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
+/* oxlint-disable react/jsx-no-literals -- ConnectorsSettingsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
@@ -26,6 +27,7 @@ const ConnectorsSettingsHeader = () => (
     </p>
   </SettingsPageHeader>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorsSettingsContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */

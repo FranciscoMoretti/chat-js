@@ -8,6 +8,7 @@ import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-e
 /* oxlint-enable sort-imports */
 
 import { eveCodeExecutionResult } from "./schemas";
+/* oxlint-disable react/jsx-no-literals -- EveDocumentRunResult renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -45,6 +46,7 @@ export const EveDocumentRunResult = ({
     <p role="alert">This saved-code result could not be displayed.</p>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable typescript/explicit-function-return-type */

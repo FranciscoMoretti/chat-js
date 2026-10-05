@@ -45,6 +45,7 @@ import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { useTRPC } from "@/trpc/react";
+/* oxlint-disable react/jsx-no-literals -- McpConnectDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -277,6 +278,7 @@ export const McpConnectDialog = ({
     </Dialog>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */

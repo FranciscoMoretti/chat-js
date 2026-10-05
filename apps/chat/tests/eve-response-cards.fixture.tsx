@@ -63,6 +63,7 @@ const candidates: EveResponseCardCandidate[] = [
     status: "awaiting-input",
   },
 ];
+/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components -- * no-magic-numbers (#517): Fixture uses 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
@@ -116,6 +117,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/only-export-components */
 const root = document.querySelector("#root");
 if (!root) {

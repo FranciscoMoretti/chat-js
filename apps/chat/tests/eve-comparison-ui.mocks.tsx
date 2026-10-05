@@ -88,6 +88,7 @@ const useRouter = () => ({
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 const usePathname = (): string => globalThis.location.pathname;
+/* oxlint-disable react/jsx-no-literals -- EveConversation renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- max-lines-per-function (#510): EveConversation keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 react-perf/jsx-no-new-function-as-prop (#557): EveConversation creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -171,6 +172,7 @@ const EveConversation = ({
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: This comparison fixture intentionally exports hook mocks and reference components from one test module; it is not a production Fast Refresh boundary. */
 export {

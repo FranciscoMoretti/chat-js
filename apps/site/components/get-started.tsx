@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
+/* oxlint-disable react/jsx-no-literals -- GetStarted renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- GetStarted: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
@@ -116,6 +117,7 @@ export const GetStarted = (): React.JSX.Element => {
     </section>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

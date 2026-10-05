@@ -4,6 +4,7 @@ import React from "react";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+/* oxlint-disable react/jsx-no-literals -- SettingsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
 export const SettingsHeader = (): React.JSX.Element => {
@@ -21,3 +22,4 @@ export const SettingsHeader = (): React.JSX.Element => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */

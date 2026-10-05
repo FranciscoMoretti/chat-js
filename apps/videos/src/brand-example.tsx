@@ -4,6 +4,7 @@ import { AbsoluteFill } from "remotion";
 /* oxlint-enable sort-imports */
 
 import { Logo } from "./shared/brand";
+/* oxlint-disable react/jsx-no-literals -- BrandExample renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- BrandExample: The prop object depends on current render/scene state; memoization needs lifecycle/dependency review and an identity-sensitive consumer. */
 export const BrandExample = (): React.JSX.Element => (
@@ -27,4 +28,5 @@ export const BrandExample = (): React.JSX.Element => (
     </p>
   </AbsoluteFill>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */

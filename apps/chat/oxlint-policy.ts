@@ -53,8 +53,8 @@ export const auditedRestrictionRules = {
   // Reviewed component styling contracts are documented beside the affected props.
   "react/forbid-component-props": "error",
   "react/jsx-max-depth": "error",
-  // UI copy has no translation-layer contract; expression wrapping would not add localization.
-  "react/jsx-no-literals": "off",
+  // Authored product, legal and fixture copy is reviewed beside its rendering declaration.
+  "react/jsx-no-literals": "error",
   "react/jsx-props-no-spreading": "error",
   "react/no-multi-comp": "error",
   "react/only-export-components": "error",

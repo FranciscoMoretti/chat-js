@@ -224,11 +224,13 @@ vi.mock("@/tools/chatjs/composer-tools", async (importOriginal) => {
 vi.mock("@/providers/default-model-provider", () => ({
   useDefaultModel: () => "fixture",
 }));
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 vi.mock("@/components/eve/eve-model-picker", () => ({
   EveModelPicker: (): React.JSX.Element => <button type="button">Model</button>,
 }));
+/* oxlint-enable react/jsx-no-literals */
 
 const originalControls = [...composerControls];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mount's awaited sequencing and rejected-Promise behavior. */
@@ -244,6 +246,7 @@ const mount = async (
   container.style.cssText = `padding:32px;width:${state.mobile ? 350 : 900}px;min-height:540px;background:#171717`;
   document.body.append(container);
   const root = createRoot(container);
+  /* oxlint-disable react/jsx-no-literals -- Fixture renders the static composer scenario caption used by this visual test. */
   const Fixture = (): ReactJSX.Element => {
     const [attachments, setAttachments] = useState(state.history);
     const files = useEveAttachments({ attachments, setAttachments });
@@ -295,6 +298,7 @@ const mount = async (
       </>
     );
   };
+  /* oxlint-enable react/jsx-no-literals */
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() => root.render(<Fixture />));
   return async (): Promise<void> => {

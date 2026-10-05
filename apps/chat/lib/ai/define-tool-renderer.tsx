@@ -48,11 +48,13 @@ const envelope = z.object({
   toolCallId: z.string(),
   updates: z.array(z.unknown()).optional(),
 });
+/* oxlint-disable react/jsx-no-literals -- InvalidResult renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/only-export-components -- * react/only-export-components (#553): InvalidResult is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const InvalidResult = (): React.JSX.Element => (
   <p role="alert">This tool result could not be displayed.</p>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep defineToolRenderer directly exported: grouping the factory in Oxlint 1.82 classifies its local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
@@ -88,6 +90,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     isReadonly: boolean;
   }>;
 }) => {
+  /* oxlint-disable react/jsx-no-literals -- ValidatedToolBody renders tool validation errors and pending-result labels; these are authored interface copy. */
   const ValidatedToolBody = ({
     tool,
     messageId,
@@ -157,6 +160,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       />
     );
   };
+  /* oxlint-enable react/jsx-no-literals */
   const ValidatedToolRenderer = (props: {
     tool: unknown;
     messageId: string;

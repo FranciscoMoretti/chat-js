@@ -2,7 +2,7 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The six rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+The five rules below remain temporarily disabled during adoption. Their rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize permanent global exclusions. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
 ## Rules awaiting source-scoped adoption
 
@@ -13,7 +13,6 @@ The six rules below remain temporarily disabled during adoption. Their rationale
 | `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
 | `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
 | `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
-| `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
 
 These conflicts remain part of the unfinished adoption work. Do not replace them with indiscriminate source waivers or distort code merely to satisfy opposing rules.
 
@@ -36,6 +35,8 @@ The earlier UI totals recorded removals achieved partly through directory exempt
 `react/react-in-jsx-scope` is enabled. Components compiled with the automatic JSX runtime retain declaration-level comments where the rule expects a classic-runtime React binding. Each changed module was checked against its actual compiler/bundler settings, and its emitted automatic-runtime JavaScript remains identical. No unused React imports were added.
 
 `react/forbid-component-props` is enabled. Reviewed `className` and `style` attributes explain their recipient's styling or layout contract. Most exceptions cover one attribute; bounded composition scopes preserve JSX text boundaries or existing directive attachment where an inline comment would change them. Compiler prop checks and source review verify the recipient contracts, and the annotation-only changes retain equivalent emitted JavaScript.
+
+`react/jsx-no-literals` is enabled. All 854 findings were reviewed as authored interface/legal/marketing/demo/fixture text or intentional punctuation and glyphs. There is no translation-layer contract in these modules. The 754 canonical findings use 182 declaration/statement scopes; 100 installed findings inherit 27 generated scopes. Nested named render helpers receive their own scopes. Text is neither wrapped in expressions nor moved into constants merely to bypass this rule. Every affected canonical and installed TSX file emits byte-identical JavaScript, preserving JSX child and whitespace semantics.
 
 ## Import ordering
 
@@ -148,7 +149,6 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `react/jsx-boolean-value` | Enforced | [#546](https://github.com/FranciscoMoretti/chat-js/issues/546) |
 | `react/jsx-filename-extension` | Enforced | [#547](https://github.com/FranciscoMoretti/chat-js/issues/547) |
 | `react/jsx-max-depth` | Enforced | [#548](https://github.com/FranciscoMoretti/chat-js/issues/548) |
-| `react/jsx-no-literals` | Off — policy | [#549](https://github.com/FranciscoMoretti/chat-js/issues/549) |
 | `react/jsx-props-no-spreading` | Enforced; reviewed forwarding expressions | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
 | `react/no-array-index-key` | Enforced | [#551](https://github.com/FranciscoMoretti/chat-js/issues/551) |
 | `react/no-multi-comp` | Enforced | [#552](https://github.com/FranciscoMoretti/chat-js/issues/552) |

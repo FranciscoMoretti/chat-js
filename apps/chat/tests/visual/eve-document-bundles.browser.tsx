@@ -58,6 +58,7 @@ const editorProps = {
   onSaveContent: () => null,
   status: "idle" as const,
 };
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 /* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership */
@@ -105,6 +106,7 @@ test("installed text, code and sheet bundles render saved content", async () => 
     container.remove();
   }
 });
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop */
@@ -152,6 +154,7 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     container.remove();
   }
 });
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
@@ -237,5 +240,6 @@ test("saved code run controls follow installed execution and retain disabled sta
     container.remove();
   }
 });
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-props-no-spreading, typescript/promise-function-async */

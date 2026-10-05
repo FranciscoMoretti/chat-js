@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { preloadQuery } from "@/trpc/preload-query";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
+/* oxlint-disable react/jsx-no-literals -- ModelsSettingsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable react/jsx-max-depth -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -63,6 +64,7 @@ const ModelsSettingsHeader = ({
     )}
   </SettingsPageHeader>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ModelsSettingsContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-disable react/no-multi-comp -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */

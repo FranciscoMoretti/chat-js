@@ -26,6 +26,7 @@ const loginPrompt = (
     description="Sign in to use this feature in your conversation."
   />
 );
+/* oxlint-disable react/jsx-no-literals -- ToolControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ToolControl = ({
@@ -79,6 +80,7 @@ const ToolControl = ({
     </DropdownMenuCheckboxItem>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const canvasTools = {

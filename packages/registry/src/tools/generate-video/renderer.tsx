@@ -12,6 +12,7 @@ type GenerateVideoTool = ToolRendererProps<
   typeof generateVideoInput,
   typeof generateVideoResult
 >["tool"];
+/* oxlint-disable react/jsx-no-literals -- GenerateVideoView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -51,6 +52,7 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable typescript/explicit-function-return-type */

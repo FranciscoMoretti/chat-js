@@ -99,6 +99,7 @@ const ContentUpdatePlugin = ({
 
   return <OnChangePlugin onChange={handleChange} />;
 };
+/* oxlint-disable react/jsx-no-literals -- PureEditor renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -153,6 +154,7 @@ const PureEditor = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */

@@ -29,6 +29,7 @@ interface SandboxComposedProps {
   state: ToolUIPart["state"];
   title?: string;
 }
+/* oxlint-disable react/jsx-no-literals -- SandboxComposed renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const SandboxComposed = ({
@@ -62,4 +63,5 @@ export const SandboxComposed = ({
     </Sandbox>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

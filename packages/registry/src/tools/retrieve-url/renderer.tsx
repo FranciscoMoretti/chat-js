@@ -39,6 +39,7 @@ const LoadingState = () => (
     </div>
   </div>
 );
+/* oxlint-disable react/jsx-no-literals -- ErrorState renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -71,6 +72,7 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
     </div>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
@@ -94,6 +96,7 @@ const getItemProperty = <T,>(
   }
   return defaultValue;
 };
+/* oxlint-disable react/jsx-no-literals -- RetrievedContentHeader renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/id-length */
 
@@ -153,6 +156,8 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- RetrievedContentDetails renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
@@ -196,6 +201,7 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */

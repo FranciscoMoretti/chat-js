@@ -28,6 +28,7 @@ import { latestDocumentRun } from "./document-runs";
 import { EveDocumentRunResult } from "./result";
 /* oxlint-enable sort-imports */
 import { documentExecutionLanguage } from "./schemas";
+/* oxlint-disable react/jsx-no-literals -- EveDocumentRun renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -106,6 +107,7 @@ export const EveDocumentRun = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */

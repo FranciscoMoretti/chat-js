@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 /* oxlint-enable sort-imports */
 import { Textarea } from "@/components/ui/textarea";
+/* oxlint-disable react/jsx-no-literals -- ProjectInstructionsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ProjectInstructionsDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; */
 
 export const ProjectInstructionsDialog = ({
@@ -88,4 +89,5 @@ export const ProjectInstructionsDialog = ({
     </DialogContent>
   </Dialog>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

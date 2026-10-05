@@ -11,6 +11,7 @@ interface ProjectMenuItemsProps {
   readonly onDelete: () => void;
   readonly onRename: () => void;
 }
+/* oxlint-disable react/jsx-no-literals -- ProjectMenuItems renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 export const ProjectMenuItems = ({
   onRename,
@@ -35,3 +36,4 @@ export const ProjectMenuItems = ({
     </DropdownMenuItem>
   </>
 );
+/* oxlint-enable react/jsx-no-literals */

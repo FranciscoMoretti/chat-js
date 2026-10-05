@@ -42,6 +42,7 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
     await import("../src/tools/word-count/renderer");
   return { getEveInstalledToolRenderer: () => Renderer };
 });
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable import/no-relative-parent-imports */
@@ -51,6 +52,7 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
 vi.mock("@/components/part/message-annotations", () => ({
   ResearchUpdates: () => <span>Search updates</span>,
 }));
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable typescript/explicit-function-return-type */
 

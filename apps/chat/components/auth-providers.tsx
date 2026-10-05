@@ -29,6 +29,7 @@ import {
 } from "@/lib/social-auth";
 
 const emptyQuery: Record<string, string> = {};
+/* oxlint-disable react/jsx-no-literals -- GoogleIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 const GoogleIcon = ({
   className,
@@ -55,6 +56,8 @@ const GoogleIcon = ({
     />
   </svg>
 );
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- VercelIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react/no-multi-comp -- VercelIcon: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
 
 const VercelIcon = ({
@@ -67,6 +70,7 @@ const VercelIcon = ({
     <path d="M12 1L24 22H0L12 1z" />
   </svg>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/no-multi-comp */
 
 interface AuthProviderDefinition {
@@ -90,6 +94,7 @@ const AUTH_PROVIDER_METADATA = {
     label: "Vercel",
   },
 } satisfies Record<SocialAuthProvider, Omit<AuthProviderDefinition, "id">>;
+/* oxlint-disable react/jsx-no-literals -- SocialAuthProviders renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, no-console, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- SocialAuthProviders: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon: Icon, id, label }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const SocialAuthProviders = ({
@@ -193,4 +198,5 @@ export const SocialAuthProviders = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-console, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */

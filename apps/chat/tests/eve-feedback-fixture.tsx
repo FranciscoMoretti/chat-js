@@ -22,6 +22,7 @@ const root = document.querySelector("#fixture");
 if (!root) {
   throw new Error("Missing fixture root");
 }
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createRoot(root).render's required Promise and rejection contract. onVote resolves an immediately completed no-op vote for the static feedback fixture. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- * react-perf/jsx-no-new-function-as-prop (#557): createRoot(root).render creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): createRoot(root).render keeps related fixture render states together; extraction changes component, state, and layout boundaries.
@@ -45,5 +46,6 @@ createRoot(root).render(
     ))}
   </main>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

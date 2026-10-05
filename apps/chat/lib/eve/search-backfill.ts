@@ -10,12 +10,17 @@ import type { EveSearchText } from "./search-text";
 /* oxlint-enable sort-imports */
 import { eveEventSearchText } from "./search-text";
 
+const SEARCH_SNAPSHOT_TIMEOUT_MS = 30_000;
+const SEARCH_INDEX_BATCH_SIZE = 100;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve backfillEveSearchConversation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, no-magic-numbers --
- * jsdoc/require-param (#534): backfillEveSearchConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): backfillEveSearchConversation uses 30_000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/**
+ * Recover from durable events, including text omitted from the bounded live retry buffer.
+ * @param {string} ownerId Owner whose EVE credentials and search index receive the recovered text.
+ * @param {string} conversationId Conversation receiving idempotent event and seed search entries.
+ * @param {string} sessionId Durable EVE session whose snapshot supplies the history.
+ * @returns {Promise<void>} Resolves after every batch is indexed; snapshot and index failures reject for a later retry.
  */
-/** Recover from durable events, including text omitted from the bounded live retry buffer. */
 export const backfillEveSearchConversation = async (
   ownerId: string,
   conversationId: string,
@@ -24,12 +29,12 @@ export const backfillEveSearchConversation = async (
   const client = new Client(getEveConnectionOptions(ownerId));
   const snapshot = await client.sessions
     .attach(sessionId)
-    .snapshot({ signal: AbortSignal.timeout(30_000) });
+    .snapshot({ signal: AbortSignal.timeout(SEARCH_SNAPSHOT_TIMEOUT_MS) });
   let batch: EveSearchText[] = [];
   for (const event of snapshot.events) {
     for (const entry of eveEventSearchText(event)) {
       batch.push(entry);
-      if (batch.length === 100) {
+      if (batch.length === SEARCH_INDEX_BATCH_SIZE) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Bound each database write while consuming the snapshot.
         await indexEveSearchText(ownerId, conversationId, batch);
         batch = [];
@@ -39,4 +44,3 @@ export const backfillEveSearchConversation = async (
   await indexEveSearchText(ownerId, conversationId, batch);
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, no-magic-numbers */

@@ -21,6 +21,7 @@ const loginPrompt = (
     description="Sign in to use this feature in your conversation."
   />
 );
+/* oxlint-disable react/jsx-no-literals -- AttachFilesControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -49,6 +50,8 @@ const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
     </DropdownMenuItem>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- TakePhotoControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
@@ -85,6 +88,7 @@ const TakePhotoControl = ({ disabled, onAttach }: ComposerControlProps) => {
     </DropdownMenuItem>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 

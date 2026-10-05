@@ -219,6 +219,7 @@ const TechCard = ({
     </div>
   );
 };
+/* oxlint-disable react/jsx-no-literals -- TechStack renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-magic-numbers */
@@ -271,6 +272,7 @@ export const TechStack = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 

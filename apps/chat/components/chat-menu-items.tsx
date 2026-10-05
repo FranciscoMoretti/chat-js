@@ -17,6 +17,7 @@ interface ChatMenuItemsProps {
   readonly onTogglePin: () => void;
   readonly showShare?: boolean;
 }
+/* oxlint-disable react/jsx-no-literals -- ChatMenuItems renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 export const ChatMenuItems = ({
   isPinned,
@@ -70,3 +71,4 @@ export const ChatMenuItems = ({
     )}
   </>
 );
+/* oxlint-enable react/jsx-no-literals */

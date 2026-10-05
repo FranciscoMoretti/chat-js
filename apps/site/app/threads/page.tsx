@@ -109,6 +109,7 @@ const architectureRows = [
     label: "Transport",
   },
 ] as const;
+/* oxlint-disable react/jsx-no-literals -- ThreadsPage renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- ThreadsPage: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
@@ -360,6 +361,7 @@ const ThreadsPage = (): React.JSX.Element => (
     <Footer />
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

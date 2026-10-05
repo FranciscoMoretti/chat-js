@@ -52,6 +52,7 @@ import { useEveDeletion } from "./eve-deletion-provider";
 import { EveShareButton, EveShareDialogContent } from "./eve-share-dialog";
 /* oxlint-enable sort-imports */
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
+/* oxlint-disable react/jsx-no-literals -- EveSharedBadge renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react/jsx-max-depth -- EveSharedBadge: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 const EveSharedBadge = (): React.JSX.Element => (
@@ -76,6 +77,7 @@ const EveSharedBadge = (): React.JSX.Element => (
     </TooltipContent>
   </Tooltip>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/jsx-max-depth */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- projectAppearance: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including project: { icon: string; iconColor: string } | undefined). */

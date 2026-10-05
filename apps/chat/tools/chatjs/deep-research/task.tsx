@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 import { UpdateTitle } from "./update-title";
+/* oxlint-disable react/jsx-no-literals -- ResearchTask renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -117,6 +118,7 @@ export const ResearchTask = ({
     </motion.div>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

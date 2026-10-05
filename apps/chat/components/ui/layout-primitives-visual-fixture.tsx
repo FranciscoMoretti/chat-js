@@ -52,6 +52,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+/* oxlint-disable react/jsx-no-literals -- LayoutPrimitivesVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth -- LayoutPrimitivesVisualFixture: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
@@ -129,4 +130,5 @@ export const LayoutPrimitivesVisualFixture = (): React.JSX.Element => (
     </section>
   </main>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth */

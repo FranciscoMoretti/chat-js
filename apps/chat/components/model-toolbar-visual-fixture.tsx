@@ -84,6 +84,7 @@ const fixtureModels = [
       models.findIndex(({ id }) => id === model.id) === index
   ),
 ];
+/* oxlint-disable react/jsx-no-literals -- ModelToolbarVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ModelToolbarVisualFixture: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
@@ -110,4 +111,5 @@ export const ModelToolbarVisualFixture = (): React.JSX.Element => (
     </main>
   </ChatModelsProvider>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

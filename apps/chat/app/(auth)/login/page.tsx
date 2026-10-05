@@ -68,6 +68,7 @@ const LoginPageContent = async ({
     </Suspense>
   );
 };
+/* oxlint-disable react/jsx-no-literals -- LoginPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -110,6 +111,7 @@ const LoginPage = ({
     </div>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { config } from "@/lib/config";
+/* oxlint-disable react/jsx-no-literals -- PrivacyPage renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
 
 /* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): PrivacyPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * react/jsx-max-depth (#548): PrivacyPage keeps related render components together; extraction changes component, state, and layout boundaries.
@@ -153,6 +154,7 @@ const PrivacyPage = (): React.JSX.Element => (
     </p>
   </main>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */

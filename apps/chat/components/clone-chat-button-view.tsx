@@ -5,6 +5,7 @@ import React from "react";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-disable react/jsx-no-literals -- CloneChatButtonView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 /* oxlint-disable react/jsx-max-depth -- CloneChatButtonView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -51,4 +52,5 @@ export const CloneChatButtonView = ({
     </Button>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/jsx-max-depth */

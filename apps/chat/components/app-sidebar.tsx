@@ -64,6 +64,7 @@ const HistorySkeleton = (): React.JSX.Element => (
     </div>
   </SidebarGroup>
 );
+/* oxlint-disable react/jsx-no-literals -- RegisteredEveProjects renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve RegisteredEveProjects's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/no-multi-comp */
@@ -82,6 +83,8 @@ const RegisteredEveProjects = async () => {
     </SidebarGroup>
   ) : null;
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- AppSidebar renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type, unicorn/no-null */
@@ -132,5 +135,6 @@ export const AppSidebar = (): React.JSX.Element => (
     </SidebarFooter>
   </Sidebar>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/forbid-component-props */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */

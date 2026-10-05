@@ -23,6 +23,7 @@ const Sparkle = ({
     <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8Z" />
   </svg>
 );
+/* oxlint-disable react/jsx-no-literals -- Hero renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- Hero: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -173,6 +174,7 @@ export const Hero = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

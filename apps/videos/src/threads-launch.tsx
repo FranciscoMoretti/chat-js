@@ -24,6 +24,7 @@ import type { LaunchScript, ReplyState, StoryState } from "./story";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./styles.css";
+/* oxlint-disable react/jsx-no-literals -- Author renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
 const Author = (): React.JSX.Element => (
@@ -34,6 +35,7 @@ const Author = (): React.JSX.Element => (
     Assistant
   </>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-disable react/no-multi-comp -- Status: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/id-length -- Status: Short coordinate/index symbols follow the local layout/animation notation and library callback contract. */
@@ -94,6 +96,7 @@ const ActionIcon = ({
     </svg>
   );
 };
+/* oxlint-disable react/jsx-no-literals -- VersionActions renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable react/no-multi-comp -- VersionActions: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
 /* oxlint-disable eslint/no-magic-numbers -- VersionActions: Frame offsets, normalized coordinates and animation constants specify this scene's timing and geometry. */
@@ -127,6 +130,8 @@ const VersionActions = ({
       </span>
     </>
   ) : null;
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- MessageActions renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable eslint/no-magic-numbers */
@@ -179,6 +184,7 @@ const MessageActions = ({
     )}
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react/no-multi-comp */
@@ -204,6 +210,7 @@ const getReplyDescription = (s: StoryState, id: "city" | "food"): string => {
   }
   return id === "city" ? "Original answer" : "Alternative answer";
 };
+/* oxlint-disable react/jsx-no-literals -- PromptMessage renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 
@@ -248,6 +255,8 @@ const PromptMessage = ({
     )}
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- Chat renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-magic-numbers */
@@ -350,6 +359,8 @@ const Chat = ({
     </div>
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- ConversationTree renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
@@ -513,6 +524,8 @@ const ConversationTree = ({
     )}
   </div>
 );
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- ThreadsLaunch renders authored authored presentation captions and demonstration labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -605,6 +618,7 @@ export const ThreadsLaunch = ({
     </AbsoluteFill>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */

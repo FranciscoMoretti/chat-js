@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/input-group";
 /* oxlint-enable sort-imports */
 import { Spinner } from "@/components/ui/spinner";
+/* oxlint-disable react/jsx-no-literals -- LintControlsVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- LintControlsVisualFixture: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
 export const LintControlsVisualFixture = (): ReactJSX.Element => {
@@ -51,4 +52,5 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

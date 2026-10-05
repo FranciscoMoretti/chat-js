@@ -18,6 +18,7 @@ const getPlanTypesLabel = ({
   }
   return "free";
 };
+/* oxlint-disable react/jsx-no-literals -- PricingSection renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -99,6 +100,8 @@ const PricingSection = ({
     </>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- TermsPage renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): TermsPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -278,6 +281,7 @@ const TermsPage = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */

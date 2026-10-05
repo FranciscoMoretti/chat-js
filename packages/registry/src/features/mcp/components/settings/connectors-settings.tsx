@@ -51,6 +51,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
+/* oxlint-disable react/jsx-no-literals -- CustomConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -251,6 +252,8 @@ const CustomConnectorRow = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- BuiltInConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -282,6 +285,8 @@ const BuiltInConnectorRow = ({ connector }: { connector: McpConnector }) => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- ConnectorsSettings renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -583,6 +588,7 @@ export const ConnectorsSettings = (): React.JSX.Element => {
     </SettingsPageContent>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */

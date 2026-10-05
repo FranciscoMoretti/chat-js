@@ -1,4 +1,5 @@
 import React from "react";
+/* oxlint-disable react/jsx-no-literals -- ThinkingMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 export const ThinkingMessage = (): React.JSX.Element => {
   const role = "assistant";
@@ -15,3 +16,4 @@ export const ThinkingMessage = (): React.JSX.Element => {
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */

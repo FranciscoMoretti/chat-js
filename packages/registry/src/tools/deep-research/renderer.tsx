@@ -14,6 +14,7 @@ import { ReasonSearchResearchProgress } from "./progress";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { researchInput, researchOutput } from "./schemas";
+/* oxlint-disable react/jsx-no-literals -- DeepResearchRenderer renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -50,6 +51,7 @@ export const DeepResearchRenderer = defineToolRenderer({
   renderProgress: ReasonSearchResearchProgress,
   updateSchema: ResearchUpdateSchema,
 });
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 

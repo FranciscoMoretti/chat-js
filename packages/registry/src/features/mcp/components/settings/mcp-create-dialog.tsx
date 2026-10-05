@@ -81,6 +81,7 @@ const mcpConnectorFormSchema = z.object({
 /* oxlint-enable eslint/no-magic-numbers */
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
+/* oxlint-disable react/jsx-no-literals -- McpCreateDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -358,6 +359,7 @@ export const McpCreateDialog = ({
     </Dialog>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

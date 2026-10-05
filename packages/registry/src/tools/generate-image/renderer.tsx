@@ -22,6 +22,7 @@ type GenerateImageTool = ToolRendererProps<
   typeof generateImageInput,
   typeof generateImageResult
 >["tool"];
+/* oxlint-disable react/jsx-no-literals -- GenerateImageView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -107,6 +108,7 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
     </>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
