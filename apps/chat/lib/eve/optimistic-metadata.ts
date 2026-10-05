@@ -75,10 +75,13 @@ const optimisticEveMetadata = async (
         pages: data.pages.map((page) => ({
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...page,
-          items: page.items.map((item) =>
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            item.id === id ? { ...item, ...patch } : item
-          ),
+          items: page.items.map((item) => {
+            if (item.id === id) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing patch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return { ...item, ...patch };
+            }
+            return item;
+          }),
         })),
       });
     }
@@ -107,9 +110,12 @@ const optimisticEveMetadata = async (
               pages: current.pages.map((page) => ({
                 // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing page own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 ...page,
-                items: page.items.map((item) =>
-                  item.id === id ? rollbackFields(item, before, patch) : item
-                ),
+                items: page.items.map((item) => {
+                  if (item.id === id) {
+                    return rollbackFields(item, before, patch);
+                  }
+                  return item;
+                }),
               })),
             }
         );
@@ -118,12 +124,13 @@ const optimisticEveMetadata = async (
     for (const [key, previous] of details) {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from previous; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (previous?.chatId === id) {
-        cache.setQueryData<Identity>(key, (current) =>
+        cache.setQueryData<Identity>(key, (current) => {
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-          current?.chatId === id
-            ? rollbackFields(current, previous, patch)
-            : current
-        );
+          if (current?.chatId === id) {
+            return rollbackFields(current, previous, patch);
+          }
+          return current;
+        });
       }
     }
   };

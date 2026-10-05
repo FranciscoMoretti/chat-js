@@ -294,16 +294,17 @@ const recordEveResponseGroupRejection = async (
       throw new Error("Response group is unavailable.");
     }
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Build updated candidate snapshots without mutating the loaded response-group record.
-    const candidates = group.candidates.map((candidate) =>
-      candidate.operationId === operationId
-        ? {
-            modelId: candidate.modelId,
-            operationId,
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (rejection ? { rejection } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
-            ...(rejection ? { rejection } : {}),
-          }
-        : candidate
-    );
+    const candidates = group.candidates.map((candidate) => {
+      if (candidate.operationId === operationId) {
+        return {
+          modelId: candidate.modelId,
+          operationId,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (rejection ? { rejection } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+          ...(rejection ? { rejection } : {}),
+        };
+      }
+      return candidate;
+    });
     await tx.update(eveResponseGroup).set({ candidates }).where(condition);
   });
 };
@@ -385,11 +386,17 @@ const getEveResponseGroup = async (
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           return { ...identity, state: "unresolved" };
         }
-        return candidate.rejection
-          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing candidate.rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+
+        if (candidate.rejection) {
+          return (
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing candidate.rejection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             { ...identity, state: "rejected", ...candidate.rejection }
-          : // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            { ...identity, state: "waiting" };
+          );
+        }
+        return (
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          { ...identity, state: "waiting" }
+        );
       }
     ),
     id: group.id,
@@ -448,9 +455,13 @@ const getEveResponseGroupForConversation = async (
       )
     );
   const boundFamily = family.flatMap(
-    (member: ReadonlyNativeSurface<(typeof family)[number]>) =>
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+    (member: ReadonlyNativeSurface<(typeof family)[number]>) => {
+      if (member.sessionId) {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
   if (boundFamily.length === EMPTY_FAMILY_SIZE) {
     return;
@@ -547,9 +558,13 @@ const getEveResponseGroupForConversation = async (
       )
     );
   const boundGroupFamilies = groupFamilies.flatMap(
-    (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) =>
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      member.sessionId ? [{ ...member, sessionId: member.sessionId }] : []
+    (member: ReadonlyNativeSurface<(typeof groupFamilies)[number]>) => {
+      if (member.sessionId) {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing member own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        return [{ ...member, sessionId: member.sessionId }];
+      }
+      return [];
+    }
   );
   const groupLineage = resolveEveResponseGroupLineage(
     conversationId,
@@ -577,10 +592,14 @@ const getEveResponseGroupForConversation = async (
         const replacement = groupLineage.replacements.get(
           candidate.operationId
         );
-        return candidate.state === "bound" && replacement
-          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing replacement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+
+        if (candidate.state === "bound" && replacement) {
+          return (
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing replacement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             { ...candidate, ...replacement }
-          : candidate;
+          );
+        }
+        return candidate;
       }
     ),
   });

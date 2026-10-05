@@ -195,7 +195,12 @@ const reconcileAllOwnerUsage = async (
   assertEveConfigured();
   const children = await listEveSubagents(ownerId);
   const positions = await getEveStreamPositions([
-    ...bindings.flatMap((row) => (row.sessionId ? [row.sessionId] : [])),
+    ...bindings.flatMap((row) => {
+      if (row.sessionId) {
+        return [row.sessionId];
+      }
+      return [];
+    }),
     ...children.map((child) => child.sessionId),
   ]);
   for (const row of bindings) {

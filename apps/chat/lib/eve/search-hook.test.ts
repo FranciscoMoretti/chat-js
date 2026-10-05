@@ -28,22 +28,22 @@ vi.mock("eve/hooks", () => ({
  * typescript/prefer-readonly-parameter-types (#565): vi.mock("eve/context") accepts current: EveSearchText[]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 vi.mock("eve/context", () => ({
-  defineState: (name: string) =>
-    name === "chatjs.search-recovery"
-      ? {
-          get: (): boolean => mocks.recovery,
-          update: (update: (current: boolean) => boolean): void => {
-            mocks.recovery = update(mocks.recovery);
-          },
-        }
-      : {
-          get: () => mocks.state,
-          update: (
-            update: (current: EveSearchText[]) => EveSearchText[]
-          ): void => {
-            mocks.state = update(mocks.state);
-          },
+  defineState: (name: string) => {
+    if (name === "chatjs.search-recovery") {
+      return {
+        get: (): boolean => mocks.recovery,
+        update: (update: (current: boolean) => boolean): void => {
+          mocks.recovery = update(mocks.recovery);
         },
+      };
+    }
+    return {
+      get: () => mocks.state,
+      update: (update: (current: EveSearchText[]) => EveSearchText[]): void => {
+        mocks.state = update(mocks.state);
+      },
+    };
+  },
 }));
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 vi.mock("./search-backfill", () => ({

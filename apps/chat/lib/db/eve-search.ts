@@ -157,12 +157,19 @@ const highlightSearchExcerpt = (
   return excerpt.replace(markedWord, (marked, word: string) => {
     const normalized = words[word] ?? word;
     const lengths = terms
-      .filter(({ prefix, text }) =>
-        prefix ? normalized.startsWith(text) : normalized === text
-      )
+      .filter(({ prefix, text }) => {
+        if (prefix) {
+          return normalized.startsWith(text);
+        }
+        return normalized === text;
+      })
       .map(({ text }) => text.length);
     const length = Math.max(0, ...lengths);
-    return length ? `⟦${word.slice(0, length)}⟧${word.slice(length)}` : marked;
+
+    if (length) {
+      return `⟦${word.slice(0, length)}⟧${word.slice(length)}`;
+    }
+    return marked;
   });
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */

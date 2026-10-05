@@ -104,9 +104,11 @@ const gatewaySessionPolicy = (path: string, method: string) => {
     method === "GET" && namedCheckpointLookupPath.exec(path)?.[1];
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const checkpointSession = ordinaryCheckpoint || namedCheckpoint;
-  return checkpointSession
-    ? { sessionId: checkpointSession }
-    : parseSessionRequest(path, method);
+
+  if (checkpointSession) {
+    return { sessionId: checkpointSession };
+  }
+  return parseSessionRequest(path, method);
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCreationReservation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */

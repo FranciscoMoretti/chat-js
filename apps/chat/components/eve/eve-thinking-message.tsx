@@ -28,7 +28,10 @@ export const EveThinkingMessage = ({
       }
       return part.type !== "step-start";
     });
-  return status === "submitted" || !hasContent ? <ThinkingMessage /> : null;
+  if (status === "submitted" || !hasContent) {
+    return <ThinkingMessage />;
+  }
+  return null;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */

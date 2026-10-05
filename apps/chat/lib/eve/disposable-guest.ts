@@ -81,7 +81,11 @@ const readGuestCredential = (
     const claims = claimsSchema.parse(
       JSON.parse(Buffer.from(payload, "base64url").toString())
     );
-    return claims.expiresAt > Date.now() ? claims : null;
+
+    if (claims.expiresAt > Date.now()) {
+      return claims;
+    }
+    return null;
   } catch {
     return null;
   }

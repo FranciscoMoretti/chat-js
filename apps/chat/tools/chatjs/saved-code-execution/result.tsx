@@ -38,14 +38,15 @@ export const EveDocumentRunResult = ({
     return <p role="alert">{result.data.error}</p>;
   }
   const output = eveCodeExecutionResult.safeParse(result.data.output);
-  return output.success ? (
-    <div className="space-y-3">
-      <p>{output.data.message}</p>
-      <CodeExecutionChart value={output.data.chart} />
-    </div>
-  ) : (
-    <p role="alert">This saved-code result could not be displayed.</p>
-  );
+  if (output.success) {
+    return (
+      <div className="space-y-3">
+        <p>{output.data.message}</p>
+        <CodeExecutionChart value={output.data.chart} />
+      </div>
+    );
+  }
+  return <p role="alert">This saved-code result could not be displayed.</p>;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */

@@ -27,10 +27,12 @@ export const resolveEvePrincipal = async (
   headers: ReadonlyNativeSurface<Headers>
 ): Promise<EvePrincipal | null> => {
   const session = await auth.api.getSession({ headers });
+
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  return session?.user
-    ? { kind: "registered", ownerId: session.user.id }
-    : null;
+  if (session?.user) {
+    return { kind: "registered", ownerId: session.user.id };
+  }
+  return null;
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

@@ -51,10 +51,14 @@ const formatRequirementDescription = (
   ) {
     return `${requirement.description} (${keys})`;
   }
-  return typeof requirement.description === "string" &&
+
+  if (
+    typeof requirement.description === "string" &&
     requirement.description !== ""
-    ? requirement.description
-    : keys;
+  ) {
+    return requirement.description;
+  }
+  return keys;
 };
 
 const authEnvRequirements: Record<keyof AuthenticationConfig, EnvRequirement> =
@@ -93,11 +97,15 @@ const isRequirementSatisfied = (
 const getMissingRequirement = (
   requirement: ReadonlyNativeSurface<EnvRequirement>,
   env: Readonly<NodeJS.ProcessEnv>
-): string | null =>
-  isRequirementSatisfied(requirement, env)
-    ? // oxlint-disable-next-line unicorn/no-null -- Missing requirements use null as the existing exported success sentinel.
+): string | null => {
+  if (isRequirementSatisfied(requirement, env)) {
+    return (
+      // oxlint-disable-next-line unicorn/no-null -- Missing requirements use null as the existing exported success sentinel.
       null
-    : formatRequirementDescription(requirement);
+    );
+  }
+  return formatRequirementDescription(requirement);
+};
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (authEnvRequirements, formatRequirementDescription, getMissingRequirement, isRequirementSatisfied); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   authEnvRequirements,

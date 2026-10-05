@@ -66,9 +66,12 @@ const rejectRequest = (
   status: number
 ): Response =>
   // A failed stream read cannot prove that an earlier POST was rejected.
-  request.method === "POST"
-    ? rejectEveCommand(message, status)
-    : Response.json({ error: message }, { status });
+  {
+    if (request.method === "POST") {
+      return rejectEveCommand(message, status);
+    }
+    return Response.json({ error: message }, { status });
+  };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

@@ -42,7 +42,11 @@ export abstract class TextSplitter implements TextSplitterParams {
   }
   private static joinDocs(docs: string[], separator: string): string | null {
     const text = docs.join(separator).trim();
-    return text === "" ? null : text;
+
+    if (text === "") {
+      return null;
+    }
+    return text;
   }
   private static addCurrentDocToResults({
     docs,

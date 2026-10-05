@@ -51,9 +51,11 @@ const resolveImageModel = async (
     );
   }
   const fallback = await findMultimodalModel(provider, defaultId);
-  return fallback.multimodal
-    ? fallback
-    : { modelId: defaultId, multimodal: false };
+
+  if (fallback.multimodal) {
+    return fallback;
+  }
+  return { modelId: defaultId, multimodal: false };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveImageModel); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */

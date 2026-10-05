@@ -67,7 +67,11 @@ const harness = (
           },
           execute: (query: string): Promise<void> => {
             step(query);
-            return query === lockQuery ? lockWait : Promise.resolve();
+
+            if (query === lockQuery) {
+              return lockWait;
+            }
+            return Promise.resolve();
           },
         };
       },

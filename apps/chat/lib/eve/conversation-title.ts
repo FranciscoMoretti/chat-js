@@ -94,9 +94,11 @@ Rules (strictly follow all):
       telemetry: { integrations: chatTelemetry, isEnabled: true },
     });
     const title = normalizeGeneratedTitle(text);
-    return title
-      ? { source: "generated", title }
-      : { source: "fallback", title: fallback };
+
+    if (title) {
+      return { source: "generated", title };
+    }
+    return { source: "fallback", title: fallback };
   } catch {
     return { source: "fallback", title: fallback };
   }

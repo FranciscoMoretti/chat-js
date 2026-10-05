@@ -104,11 +104,13 @@ const copyRequestError = (
       "Saving is taking longer than expected. Retry to recover the same copy."
     );
   }
-  return error instanceof EveCopyRequestError
-    ? error
-    : new EveCopyRequestError(
-        "Saving is unconfirmed. Retry to recover the same copy."
-      );
+
+  if (error instanceof EveCopyRequestError) {
+    return error;
+  }
+  return new EveCopyRequestError(
+    "Saving is unconfirmed. Retry to recover the same copy."
+  );
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveCopy's awaited sequencing and rejected-Promise behavior. */

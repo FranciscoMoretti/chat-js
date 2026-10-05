@@ -134,9 +134,11 @@ const filesBelow = async (
   const nested = await Promise.all(
     entries.map(async (entry) => {
       const file = path.posix.join(prefix, entry.name);
-      return entry.isDirectory()
-        ? await filesBelow(path.join(directory, entry.name), file)
-        : [file];
+
+      if (entry.isDirectory()) {
+        return await filesBelow(path.join(directory, entry.name), file);
+      }
+      return [file];
     })
   );
   return nested.flat();
@@ -198,9 +200,11 @@ const generateDemo = async (): Promise<Map<string, string>> => {
           .slice(1)
           .replace(/\.json$/u, "");
         const item = items.find((candidate) => candidate.name === name);
-        return item
-          ? Response.json(item)
-          : new Response("Not found", { status: 404 });
+
+        if (item) {
+          return Response.json(item);
+        }
+        return new Response("Not found", { status: 404 });
       },
       hostname: "127.0.0.1",
       port: 0,
@@ -444,10 +448,12 @@ const syncDemo = async (options: {
       return false;
     }
     const hash = content === null ? null : digest(content);
+
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    return record?.files[file]
-      ? hash !== record.files[file]
-      : content !== null && content !== expected.get(file);
+    if (record?.files[file]) {
+      return hash !== record.files[file];
+    }
+    return content !== null && content !== expected.get(file);
   });
   if (edited.length > 0 && !discard) {
     throw new Error(

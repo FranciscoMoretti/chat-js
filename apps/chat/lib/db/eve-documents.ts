@@ -293,17 +293,19 @@ const backfillDocumentCheckpoints = async (
       const revision = history.findLast(
         (item) => item.turnIndex !== null && item.turnIndex < turnIndex
       );
-      return revision
-        ? [
-            {
-              conversationId,
-              documentId,
-              ownerId,
-              revisionId: revision.id,
-              turnIndex,
-            },
-          ]
-        : [];
+
+      if (revision) {
+        return [
+          {
+            conversationId,
+            documentId,
+            ownerId,
+            revisionId: revision.id,
+            turnIndex,
+          },
+        ];
+      }
+      return [];
     });
     if (entries.length > 0) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Acquire and use transaction locks in a deterministic order.

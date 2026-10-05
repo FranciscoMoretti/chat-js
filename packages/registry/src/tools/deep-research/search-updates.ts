@@ -77,16 +77,19 @@ export async function researchSearchUpdates(
   const root = await client.sessions
     .attach(context.session.id)
     .snapshot(options);
-  const children = root.events.flatMap((event: InvocationEventView) =>
-    event.type === "subagent.called" &&
-    !event.data.remote &&
-    event.data.name === "researcher" &&
-    event.data.turnId === context.session.turn.id &&
-    // EVE prefixes workflow agent invocation IDs with their owning tool call ID.
-    event.data.callId.startsWith(`${context.callId}:`)
-      ? [event.data.childSessionId]
-      : []
-  );
+  const children = root.events.flatMap((event: InvocationEventView) => {
+    if (
+      event.type === "subagent.called" &&
+      !event.data.remote &&
+      event.data.name === "researcher" &&
+      event.data.turnId === context.session.turn.id &&
+      // EVE prefixes workflow agent invocation IDs with their owning tool call ID.
+      event.data.callId.startsWith(`${context.callId}:`)
+    ) {
+      return [event.data.childSessionId];
+    }
+    return [];
+  });
   const snapshots = await readResearchSnapshots(client, children, options);
   return snapshots.flatMap((snapshot: SnapshotView) =>
     snapshot.events.flatMap((event) => {
@@ -102,9 +105,11 @@ export async function researchSearchUpdates(
       }
       return (receipt.data.updates ?? []).flatMap((value: unknown) => {
         const update = ResearchUpdateSchema.safeParse(value);
-        return update.success && update.data.type === "web"
-          ? [update.data]
-          : [];
+
+        if (update.success && update.data.type === "web") {
+          return [update.data];
+        }
+        return [];
       });
     })
   );

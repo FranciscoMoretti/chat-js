@@ -18,7 +18,11 @@ export const resolveWorkflowWorld = (
     environment.VERCEL === "1" &&
     environment.VERCEL_ENV !== "development" &&
     environment.NODE_ENV !== "development";
-  return deployed ? "vercel" : "@workflow/world-postgres";
+
+  if (deployed) {
+    return "vercel";
+  }
+  return "@workflow/world-postgres";
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable node/no-process-env */

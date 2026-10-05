@@ -99,9 +99,11 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public findForApproval(approvalId: string): RunRecord<TMessage> | undefined {
     const runId = this.#runIdByApprovalId.get(approvalId);
-    return typeof runId === "string" && runId !== ""
-      ? this.#runsById.get(runId)
-      : globalThis.undefined;
+
+    if (typeof runId === "string" && runId !== "") {
+      return this.#runsById.get(runId);
+    }
+    return globalThis.undefined;
   }
 
   public getForMessage(messageId: string): RunRecord<TMessage> | undefined {
@@ -125,9 +127,11 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public findForToolCall(toolCallId: string): RunRecord<TMessage> | undefined {
     const runId = this.#runIdByToolCallId.get(toolCallId);
-    return typeof runId === "string" && runId !== ""
-      ? this.#runsById.get(runId)
-      : globalThis.undefined;
+
+    if (typeof runId === "string" && runId !== "") {
+      return this.#runsById.get(runId);
+    }
+    return globalThis.undefined;
   }
 
   public getForResponseMessage(

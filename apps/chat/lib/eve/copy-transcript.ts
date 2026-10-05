@@ -187,7 +187,11 @@ const transformFileReferences = (
       return token;
     }
     const key = keyFromFileUrl(url.href);
-    return key ? replace(key) + token.slice(candidate.length) : token;
+
+    if (key) {
+      return replace(key) + token.slice(candidate.length);
+    }
+    return token;
   });
 /* oxlint-enable init-declarations, max-statements, typescript/strict-boolean-expressions */
 /* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.

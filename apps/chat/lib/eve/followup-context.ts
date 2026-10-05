@@ -9,17 +9,15 @@ export interface FollowupContext {
 /* oxlint-enable import/no-named-export */
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (followupContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): followupContext accepts current: FollowupContext; event: HookEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Retain only the current exchange; the native event log owns history.
- * @param {FollowupContext} current Previously retained user and assistant text.
+ * @param {Readonly<FollowupContext>} current Previously retained user and assistant text.
  * @param {HookEvent} event Native turn or message event used to reset or replace the exchange.
  * @returns {FollowupContext} Current exchange with messages bounded to the context limit, or the original object for unrelated events.
  */
 export const followupContext = (
-  current: FollowupContext,
+  current: Readonly<FollowupContext>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native HookEvent includes recursive subagent/history events and mutable collections; recursive readonly instantiation exceeds the compiler limit and does not preserve the SDK input type.
   event: HookEvent
 ): FollowupContext => {
   if (event.type === "turn.started") {
@@ -45,4 +43,3 @@ export const followupContext = (
   return current;
 };
 /* oxlint-enable import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

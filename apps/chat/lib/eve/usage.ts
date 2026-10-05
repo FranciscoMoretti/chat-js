@@ -100,7 +100,11 @@ export const ingestEveUsage = async (
   });
   // A failed step has no completed-call usage receipt. Keep its evidence without
   // reporting a missing completed charge (the same policy used for failed hook calls).
-  return event.type === "step.failed" ? undefined : priced;
+
+  if (event.type === "step.failed") {
+    return undefined;
+  }
+  return priced;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

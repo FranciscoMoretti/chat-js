@@ -32,9 +32,10 @@ const fixture = (
 ): string => {
   const server = Bun.serve({
     fetch(request: ReadonlyNativeSurface<Request>) {
-      return new URL(request.url).pathname === "/api/health"
-        ? health()
-        : auth();
+      if (new URL(request.url).pathname === "/api/health") {
+        return health();
+      }
+      return auth();
     },
     hostname: "127.0.0.1",
     port: OS_ASSIGNED_PORT,

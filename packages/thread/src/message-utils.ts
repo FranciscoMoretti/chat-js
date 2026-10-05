@@ -8,7 +8,12 @@ type ReadonlyMessageValue<TValue> = TValue extends readonly unknown[]
 
 const getMessageText = (message: ReadonlyMessageValue<UIMessage>): string =>
   message.parts
-    .map((part): string => (part.type === "text" ? part.text : ""))
+    .map((part): string => {
+      if (part.type === "text") {
+        return part.text;
+      }
+      return "";
+    })
     .join("");
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getMessageText); the enabled import/no-default-export convention rejects the default-export alternative. */

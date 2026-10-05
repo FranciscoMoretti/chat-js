@@ -11,14 +11,16 @@ import { deleteDocumentInput } from "./schemas";
 export const deleteDocument = defineTool({
   approval: {
     request: (context) => requestDocumentDeletion(context.toolInput, context),
-    response: ({ responder, session }) =>
+    response: ({ responder, session }) => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      responder.principalId === session.initiator?.principalId
-        ? { status: "allowed" }
-        : {
-            reason: "Only the document owner may approve deletion.",
-            status: "rejected",
-          },
+      if (responder.principalId === session.initiator?.principalId) {
+        return { status: "allowed" };
+      }
+      return {
+        reason: "Only the document owner may approve deletion.",
+        status: "rejected",
+      };
+    },
   },
   description:
     "Request owner approval to remove a document from this conversation. Read it first and supply its exact title and revision. Call this tool to display the approval controls; do not ask for confirmation in a chat message. Execution waits for approval. Historical snapshots and other branches retain their copies; this does not permanently erase their content.",

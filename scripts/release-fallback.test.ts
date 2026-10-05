@@ -132,7 +132,11 @@ const runFallback = async (cwd: string): Promise<number> => {
   const exitCode = await child.exited;
   // These assertions only distinguish success from failure. Preserve the
   // spawnSync behavior where a signal-terminated child does not count as zero.
-  return child.signalCode ? NON_SUCCESS_EXIT_CODE : exitCode;
+
+  if (child.signalCode) {
+    return NON_SUCCESS_EXIT_CODE;
+  }
+  return exitCode;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withReleaseDirectory's awaited sequencing and rejected-Promise behavior. */

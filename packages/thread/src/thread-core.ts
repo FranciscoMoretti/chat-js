@@ -95,8 +95,12 @@ type SendMessageInput<TMessage extends UIMessage> = Parameters<
 const getInputMessageId = (input: {
   readonly id?: string;
   readonly messageId?: string;
-}): string | undefined =>
-  "id" in input ? (input.id ?? input.messageId) : input.messageId;
+}): string | undefined => {
+  if ("id" in input) {
+    return input.id ?? input.messageId;
+  }
+  return input.messageId;
+};
 
 // oxlint-disable-next-line unicorn/no-null -- MessageTree serializes the root parent/cursor as null; root traversal, attachment, and run capacity checks must retain that exact ID sentinel.
 const ROOT_MESSAGE_ID = null;
@@ -742,17 +746,29 @@ abstract class ThreadCore<
   // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
   public stopRunForMessage(messageId: string): Promise<void> {
     const run = this.getRunForMessage(messageId);
-    return run ? this.stopRun(run.id) : Promise.resolve();
+
+    if (run) {
+      return this.stopRun(run.id);
+    }
+    return Promise.resolve();
   }
 
   public getRun(runId: string): ThreadRun | undefined {
     const run = this.#runs.get(runId);
-    return run ? RunRegistry.toSnapshot(run) : NO_RUN_SNAPSHOT;
+
+    if (run) {
+      return RunRegistry.toSnapshot(run);
+    }
+    return NO_RUN_SNAPSHOT;
   }
 
   public getRunForMessage(messageId: string): ThreadRun | undefined {
     const run = this.#runs.getForMessage(messageId);
-    return run ? RunRegistry.toSnapshot(run) : NO_RUN_SNAPSHOT;
+
+    if (run) {
+      return RunRegistry.toSnapshot(run);
+    }
+    return NO_RUN_SNAPSHOT;
   }
 
   private setRunError(runId: string, error: Readonly<Error> | undefined): void {

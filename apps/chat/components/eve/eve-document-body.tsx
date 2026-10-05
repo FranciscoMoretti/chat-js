@@ -19,9 +19,10 @@ export const DocumentBody = ({
 }): React.JSX.Element => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading Body from documentUi[kind]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const Body = documentUi[kind]?.Body;
-  return Body ? (
-    <Body {...props} />
-  ) : (
+  if (Body) {
+    return <Body {...props} />;
+  }
+  return (
     <div className="p-4 text-sm">
       <output className="text-muted-foreground">
         The {kind} document editor is not installed. Install {kind}-documents to

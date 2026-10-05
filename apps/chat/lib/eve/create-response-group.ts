@@ -32,7 +32,11 @@ const readResponseGroupDraft = (
   groupId: string
 ): z.output<typeof eveResponseGroupInput> | undefined => {
   const saved = storage.getItem(recoveryKey(ownerId, groupId));
-  return saved ? eveResponseGroupInput.parse(JSON.parse(saved)) : undefined;
+
+  if (saved) {
+    return eveResponseGroupInput.parse(JSON.parse(saved));
+  }
+  return undefined;
 };
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 

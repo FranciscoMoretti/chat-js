@@ -123,9 +123,12 @@ export const purgeEvePostgresQueue = async (
         if (inventory.jobs.some((job) => job.locked)) {
           throw new Error("Wait for active queue workers before cleanup.");
         }
-        const newIds = inventory.jobs.flatMap((job) =>
-          job.runId && !known.has(job.runId) ? [job.runId] : []
-        );
+        const newIds = inventory.jobs.flatMap((job) => {
+          if (job.runId && !known.has(job.runId)) {
+            return [job.runId];
+          }
+          return [];
+        });
         if (newIds.length > 0) {
           for (const id of newIds) {
             known.add(id);

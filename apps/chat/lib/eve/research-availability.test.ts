@@ -48,7 +48,10 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
-      return mocks.text ? 1 : 0;
+      if (mocks.text) {
+        return 1;
+      }
+      return 0;
     },
   },
   installedToolNames: { has: (): boolean => mocks.research },

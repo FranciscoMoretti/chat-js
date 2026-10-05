@@ -105,6 +105,10 @@ test("installed text, code and sheet bundles render saved content", async () => 
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => container.querySelector('[role="grid"]')?.textContent)
       .toContain("Apples");
+    // Lexical imports nonempty content before its placeholder state settles.
+    await expect
+      .poll(() => container.textContent)
+      .not.toContain("Start typing...");
     await takeSnapshot("installed-document-bundles");
   } finally {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.

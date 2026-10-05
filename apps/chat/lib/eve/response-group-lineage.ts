@@ -42,10 +42,12 @@ const localTurnBoundary = (
 const laterConversation = (
   left: LineageConversation,
   right: LineageConversation
-): boolean =>
-  left.createdAt.getTime() === right.createdAt.getTime()
-    ? left.id.localeCompare(right.id) > 0
-    : left.createdAt > right.createdAt;
+): boolean => {
+  if (left.createdAt.getTime() === right.createdAt.getTime()) {
+    return left.id.localeCompare(right.id) > 0;
+  }
+  return left.createdAt > right.createdAt;
+};
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --

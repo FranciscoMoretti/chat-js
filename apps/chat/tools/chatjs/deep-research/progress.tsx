@@ -16,13 +16,17 @@ export const ReasonSearchResearchProgress = ({
   updates,
 }: {
   updates: ResearchUpdate[];
-}) =>
-  updates.length > 0 ? (
-    <ResearchProgress
-      isComplete={updates.some((update) => update.type === "completed")}
-      updates={updates}
-    />
-  ) : null;
+}) => {
+  if (updates.length > 0) {
+    return (
+      <ResearchProgress
+        isComplete={updates.some((update) => update.type === "completed")}
+        updates={updates}
+      />
+    );
+  }
+  return null;
+};
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */

@@ -18,9 +18,12 @@ export const installedToolAvailabilityMiddleware = (
   session: Parameters<ToolAvailability>[0]
 ): LanguageModelMiddleware => {
   const unavailable = new Set(
-    Object.entries(toolAvailability).flatMap(([name, available]) =>
-      available(session) ? [] : [name]
-    )
+    Object.entries(toolAvailability).flatMap(([name, available]) => {
+      if (available(session)) {
+        return [];
+      }
+      return [name];
+    })
   );
   return {
     specificationVersion: "v4",

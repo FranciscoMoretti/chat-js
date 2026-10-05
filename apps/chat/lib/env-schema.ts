@@ -140,11 +140,15 @@ const clientEnvSchema = {
  * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep playwrightDefault's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
-const playwrightDefault = (value: unknown, fallback: string) =>
-  isPlaywrightTestEnvironmentEnabled &&
-  (value === null || value === undefined || value === "")
-    ? fallback
-    : value;
+const playwrightDefault = (value: unknown, fallback: string) => {
+  if (
+    isPlaywrightTestEnvironmentEnabled &&
+    (value === null || value === undefined || value === "")
+  ) {
+    return fallback;
+  }
+  return value;
+};
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env -- no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -186,14 +190,15 @@ const serverEnvSchema = {
     .optional()
     .describe("Google OAuth client secret"),
   AUTH_SECRET: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "playwright-test-auth-secret"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "playwright-test-auth-secret";
+      }
+      return value;
+    }, z.string().min(1))
     .describe("NextAuth.js secret for signing session tokens"),
   // Optional cleanup cron job secret
   CRON_SECRET: z
@@ -204,14 +209,15 @@ const serverEnvSchema = {
   ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "postgres://postgres:postgres@127.0.0.1:5432/playwright";
+      }
+      return value;
+    }, z.string().min(1))
     .describe("Postgres connection string"),
   DAYTONA_API_KEY: z.string().optional(),
   DAYTONA_ORGANIZATION_ID: z.string().optional(),

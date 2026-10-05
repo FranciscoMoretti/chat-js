@@ -51,7 +51,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getMessage(messageId: string): TMessage | undefined {
     const message = this.#messagesById.get(messageId);
-    return message ? clone(message) : ABSENT_MESSAGE;
+
+    if (message) {
+      return clone(message);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getParentId(messageId: string): string | null | undefined {
@@ -60,9 +64,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getParent(messageId: string): TMessage | undefined {
     const parentId = this.#parentById.get(messageId);
-    return typeof parentId === "string" && parentId !== ""
-      ? this.getMessage(parentId)
-      : ABSENT_MESSAGE;
+
+    if (typeof parentId === "string" && parentId !== "") {
+      return this.getMessage(parentId);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getChildren(messageId: string | null): TMessage[] {

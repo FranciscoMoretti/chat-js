@@ -189,11 +189,15 @@ const eveMessageDeliveryMetadata = (
 typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const eveMessageOperationId = (
   event: MessageStreamEvent
-): string | undefined =>
-  event.type === "message.received"
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+): string | undefined => {
+  if (event.type === "message.received") {
+    return (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from deliveryMetadata.safeParse(...).data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
-    : undefined;
+    );
+  }
+  return undefined;
+};
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EVE_MESSAGE_OPERATION_HEADER, eveMessageDelivery, eveMessageDeliveryMetadata, eveMessageOperationId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 export {

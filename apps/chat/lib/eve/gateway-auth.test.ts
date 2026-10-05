@@ -351,11 +351,12 @@ it("does not let a seed reservation use the message operation namespace", async 
  * typescript/promise-function-async (#606): it("authorizes owned child streams without granting child mutation or cross-owner acc preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("authorizes owned child streams without granting child mutation or cross-owner access", async () => {
-  mocks.child.mockImplementation((owner, session) =>
-    owner === "owner" && session === "child"
-      ? Promise.resolve({ rootSessionId: "root" })
-      : Promise.resolve(undefined)
-  );
+  mocks.child.mockImplementation((owner, session) => {
+    if (owner === "owner" && session === "child") {
+      return Promise.resolve({ rootSessionId: "root" });
+    }
+    return Promise.resolve(undefined);
+  });
   const read = new Request("http://localhost/eve/v1/session/child/stream", {
     headers: {
       authorization: "Bearer fixture-secret",

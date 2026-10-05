@@ -105,7 +105,10 @@ const CanvasControl = (
   props: ComposerControlProps
 ): React.JSX.Element | null => {
   const tool = getCanvasTool();
-  return tool ? <ToolControl {...props} tool={tool} /> : null;
+  if (tool) {
+    return <ToolControl {...props} tool={tool} />;
+  }
+  return null;
 };
 /* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 

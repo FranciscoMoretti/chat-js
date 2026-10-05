@@ -46,17 +46,18 @@ const fixture = () => {
     ["model-a", "model-a", "model-b"]
   );
   const result: EveResponseGroupResult = {
-    candidates: operation.modelIds.map((modelId, index) =>
-      index === 0
-        ? {
-            conversationId: crypto.randomUUID(),
-            modelId,
-            operationId: crypto.randomUUID(),
-            sessionId: "native-first",
-            state: "bound",
-          }
-        : { modelId, operationId: crypto.randomUUID(), state: "unresolved" }
-    ),
+    candidates: operation.modelIds.map((modelId, index) => {
+      if (index === 0) {
+        return {
+          conversationId: crypto.randomUUID(),
+          modelId,
+          operationId: crypto.randomUUID(),
+          sessionId: "native-first",
+          state: "bound",
+        };
+      }
+      return { modelId, operationId: crypto.randomUUID(), state: "unresolved" };
+    }),
     id: crypto.randomUUID(),
   };
   return { operation, result, storage };
@@ -182,12 +183,15 @@ test("rejected secondary candidates retain the original request for their retry"
   const rejected: EveResponseGroupResult = {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...result,
-    candidates: result.candidates.map((candidate) =>
-      candidate.state === "bound"
-        ? candidate
-        : // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          { ...candidate, error: "Model unavailable", state: "rejected" }
-    ),
+    candidates: result.candidates.map((candidate) => {
+      if (candidate.state === "bound") {
+        return candidate;
+      }
+      return (
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        { ...candidate, error: "Model unavailable", state: "rejected" }
+      );
+    }),
   };
   retainResponseGroupDraft(storage, "owner", operation, rejected);
   expect(readResponseGroupDraft(storage, "owner", result.id)).toEqual(

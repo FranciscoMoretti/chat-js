@@ -17,13 +17,17 @@ export const parseDeletionSessionRequest = (
   method: string
 ): string | null => {
   const match = deletionSessionPath.exec(path);
-  return match &&
+
+  if (
+    match &&
     ((match[OPERATION_GROUP_INDEX] === "reset" && method === "POST") ||
       ((match[OPERATION_GROUP_INDEX] === "stream" ||
         match[OPERATION_GROUP_INDEX] === "sandbox-identity") &&
         method === "GET"))
-    ? match[SESSION_ID_GROUP_INDEX]
-    : null;
+  ) {
+    return match[SESSION_ID_GROUP_INDEX];
+  }
+  return null;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable unicorn/no-null */

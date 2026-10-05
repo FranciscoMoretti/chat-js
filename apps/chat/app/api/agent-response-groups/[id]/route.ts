@@ -30,11 +30,13 @@ export const GET = async (
     return new Response(null, { status: 404 });
   }
   const group = await getEveResponseGroup(principal.ownerId, id);
-  return group
-    ? Response.json(group, {
-        headers: { "cache-control": "private, no-store" },
-      })
-    : new Response(null, { status: 404 });
+
+  if (group) {
+    return Response.json(group, {
+      headers: { "cache-control": "private, no-store" },
+    });
+  }
+  return new Response(null, { status: 404 });
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

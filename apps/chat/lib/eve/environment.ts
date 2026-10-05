@@ -12,9 +12,11 @@ const resolveWorkflowDatabaseUrl = (
     return undefined;
   }
   const configuredUrl = source.WORKFLOW_POSTGRES_URL;
-  return configuredUrl === undefined || configuredUrl === ""
-    ? source.DATABASE_URL
-    : configuredUrl;
+
+  if (configuredUrl === undefined || configuredUrl === "") {
+    return source.DATABASE_URL;
+  }
+  return configuredUrl;
 };
 /* oxlint-enable no-undefined */
 

@@ -266,9 +266,12 @@ const validateCopyDocumentCheckpoints = (plan: EveCopyPlan): void => {
       checkpoint,
     ])
   );
-  const users = plan.seed.messages.flatMap((message, index) =>
-    message.role === "user" ? [index] : []
-  );
+  const users = plan.seed.messages.flatMap((message, index) => {
+    if (message.role === "user") {
+      return [index];
+    }
+    return [];
+  });
   if (
     checkpoints.size !== plan.documentCheckpoints.length ||
     checkpoints.size !== users.length ||
@@ -312,9 +315,12 @@ const validateCopyPlan = (plan: EveCopyPlan): void => {
   parseSessionTranscriptSeed(plan.seed);
   const keys = new Set<string>();
   const sourceKeys = new Set(
-    plan.files.flatMap((file) =>
-      file.source.kind === "stored" ? [file.source.key] : []
-    )
+    plan.files.flatMap((file) => {
+      if (file.source.kind === "stored") {
+        return [file.source.key];
+      }
+      return [];
+    })
   );
   for (const file of plan.files) {
     if (
@@ -398,9 +404,12 @@ const assertSourceFiles = async (
 ): Promise<void> => {
   const keys = [
     ...new Set(
-      plan.files.flatMap((file) =>
-        file.source.kind === "stored" ? [file.source.key] : []
-      )
+      plan.files.flatMap((file) => {
+        if (file.source.kind === "stored") {
+          return [file.source.key];
+        }
+        return [];
+      })
     ),
   ];
   if (keys.length === 0) {

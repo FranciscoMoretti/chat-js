@@ -33,7 +33,11 @@ export default defineDynamic({
       const searchRounds = researchSteps.get();
       // oxlint-disable-next-line eslint/no-magic-numbers -- Each started search round increments the counter by one.
       researchSteps.update((count) => count + 1);
-      return searchRounds >= MAX_RESEARCH_SEARCH_ROUNDS ? null : search;
+
+      if (searchRounds >= MAX_RESEARCH_SEARCH_ROUNDS) {
+        return null;
+      }
+      return search;
     },
   },
 });

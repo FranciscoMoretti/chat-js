@@ -201,9 +201,12 @@ const append = async (
     await requireResources(
       tx,
       input.owner,
-      payload.parts.flatMap((messagePart) =>
-        messagePart.type === "file" ? [messagePart.object] : []
-      ),
+      payload.parts.flatMap((messagePart) => {
+        if (messagePart.type === "file") {
+          return [messagePart.object];
+        }
+        return [];
+      }),
       "file"
     );
     if (hasBarrier(ownedBranchRecord.barrier)) {

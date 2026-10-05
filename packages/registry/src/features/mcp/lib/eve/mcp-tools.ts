@@ -66,10 +66,12 @@ type ValidatedMcpTool<NativeTool> = NativeTool extends Tool
 const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/u;
 const UNSAFE_TOOL_NAME = /[^a-zA-Z0-9_-]/gu;
 
-const modelToolName = (name: string): string =>
-  VALID_TOOL_NAME.test(name)
-    ? name
-    : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
+const modelToolName = (name: string): string => {
+  if (VALID_TOOL_NAME.test(name)) {
+    return name;
+  }
+  return `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
+};
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withAbort's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
@@ -305,24 +307,26 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...tool,
     inputSchema: jsonSchema(schema, {
-      validate: (value) =>
-        validate(value)
-          ? { success: true, value }
-          : {
-              error: new Error(
-                `Invalid tool input: ${
-                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slice from validate.errors; preserve one receiver evaluation, skipped accesses and the existing "schema validation failed" fallback.
-                  validate.errors
-                    ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
-                    .map(
-                      (error): string =>
-                        `${error.instancePath || "/"} ${error.message}`
-                    )
-                    .join("; ") ?? "schema validation failed"
-                }`
-              ),
-              success: false,
-            },
+      validate: (value) => {
+        if (validate(value)) {
+          return { success: true, value };
+        }
+        return {
+          error: new Error(
+            `Invalid tool input: ${
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slice from validate.errors; preserve one receiver evaluation, skipped accesses and the existing "schema validation failed" fallback.
+              validate.errors
+                ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
+                .map(
+                  (error): string =>
+                    `${error.instancePath || "/"} ${error.message}`
+                )
+                .join("; ") ?? "schema validation failed"
+            }`
+          ),
+          success: false,
+        };
+      },
     }),
   };
 };
@@ -460,7 +464,11 @@ const requestEveMcpApproval = async (
       throw new Error("MCP tool is no longer available.");
     }
     await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
-    return connector.requireApproval ? "user-approval" : "not-applicable";
+
+    if (connector.requireApproval) {
+      return "user-approval";
+    }
+    return "not-applicable";
   });
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval); the enabled import/no-default-export convention rejects the default-export alternative. */

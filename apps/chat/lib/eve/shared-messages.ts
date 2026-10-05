@@ -1,24 +1,20 @@
 import { defaultMessageReducer } from "eve/client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
+  EveDynamicToolPart,
   EveMessage,
   EveMessagePart,
   MessageStreamEvent,
 } from "eve/client";
-/* oxlint-enable sort-imports */
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+/* oxlint-enable sort-imports */
 import { responseModelReferences } from "./response-model";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolOutputSchema } from "./tool-result";
 /* oxlint-enable sort-imports */
-
-// This local view only covers EVE's plain message data; opaque tool values stay unknown.
-type ReadonlyMessageData<Value> = Value extends object
-  ? { readonly [Property in keyof Value]: ReadonlyMessageData<Value[Property]> }
-  : Value;
-
-const EMPTY_OPTION_COUNT = 0;
 
 interface SharedEveMessage {
   id: string;
@@ -43,28 +39,24 @@ const sharedModelId = (
   }
   // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
   const turnId = message.metadata?.turnId ?? "";
-  return turnId === ""
-    ? // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
-      (message.metadata?.modelId ?? "")
-    : (models.get(turnId) ?? "");
+  if (turnId === "") {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Shared message input metadata is explicitly optional; assistant messages can have no turn/model identity and use the established empty-string fallback. The app guidance prefers optional chaining.
+    return message.metadata?.modelId ?? "";
+  }
+  return models.get(turnId) ?? "";
 };
 
 /* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): sharedTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): sharedTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-lines-per-function (#510): sharedTool audits each native tool state in one privacy projection: it strips owner approval/runtime fields and validates platform result receipts before exposing display content.
+ * max-statements (#512): sharedTool audits each native tool state in one privacy projection: it strips owner approval/runtime fields and validates platform result receipts before exposing display content.
  */
 /**
  * Keep visible tool content, never the owner's approval or runtime identities.
- * @param {Extract< ReadonlyMessageData<EveMessagePart>, { type: "dynamic-tool"; } >} part Native tool state whose display content may be shared.
+ * @param {ReadonlyNativeSurface<EveDynamicToolPart>} part Native tool state whose display content may be shared.
  * @returns {EveMessagePart} A display part with approval IDs and receipt-only identities removed.
  */
 const sharedTool = (
-  part: Extract<
-    ReadonlyMessageData<EveMessagePart>,
-    {
-      type: "dynamic-tool";
-    }
-  >
+  part: ReadonlyNativeSurface<EveDynamicToolPart>
 ): EveMessagePart => {
   const base: Pick<typeof part, "type" | "toolCallId" | "toolName" | "input"> =
     {
@@ -157,9 +149,9 @@ const sharedTool = (
 };
 /* oxlint-enable max-lines-per-function, max-statements */
 
-/* oxlint-disable max-statements -- max-statements (#512): sharedEvePart keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/* oxlint-disable max-statements -- max-statements (#512): sharedEvePart whitelists public part fields, strips authorization challenges and appends display-only request/answer text; keep these privacy decisions visible under one projection. */
 const sharedEvePart = (
-  part: ReadonlyMessageData<EveMessagePart>
+  part: ReadonlyNativeSurface<EveMessagePart>
 ): EveMessagePart[] => {
   if (part.type === "text" || part.type === "reasoning") {
     return [{ state: part.state, text: part.text, type: part.type }];
@@ -183,7 +175,8 @@ const sharedEvePart = (
     const response = part.toolMetadata?.eve?.inputResponse;
     if (request) {
       parts.push({ text: request.prompt, type: "text" });
-      if (request.options && request.options.length > EMPTY_OPTION_COUNT) {
+      // oxlint-disable-next-line no-magic-numbers -- Only a nonempty options list contributes its display labels to the shared transcript.
+      if (request.options && request.options.length > 0) {
         parts.push({
           text: request.options.map((option) => option.label).join(" · "),
           type: "text",
@@ -209,19 +202,20 @@ const sharedEvePart = (
 };
 /* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): sharedEveMessages accepts events: readonly MessageStreamEvent[]; current; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const sharedEveMessages = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native MessageStreamEvent values pass unchanged to EVE reducer.reduce and responseModelReferences; readonly event collections would change those native recursive input contracts.
   events: readonly MessageStreamEvent[]
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
-  // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
+  // oxlint-disable-next-line unicorn/no-array-reduce -- Replay native events in order with the bound EVE reducer and its initial state; reduce preserves the input array length snapshot and skips sparse entries.
   const state = events.reduce(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve EVE reducer.reduce input state and event types, including mutable message parts and recursive event collections.
     (current, event) => reduceEvent(current, event),
     reducer.initial()
   );
   const models = responseModelReferences(events);
-  // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate materialized transcript messages without mutating the reducer state.
+  // oxlint-disable-next-line oxc/no-map-spread, typescript/prefer-readonly-parameter-types -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order. Native reduced message metadata is forwarded to eveMessageTool, whose Pick<EveMessage, "metadata"> contract contains mutable JSON collections.
   return state.messages.map((message): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
@@ -240,6 +234,5 @@ const sharedEveMessages = (
   });
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (sharedEveMessages, sharedEvePart); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { sharedEveMessages, sharedEvePart };
 /* oxlint-enable import/no-named-export */

@@ -113,9 +113,11 @@ const executeImageRequest = async (
       options.modelProvider,
       selectedModel
     );
-    return selection.multimodal
-      ? await runGenerateImageMultimodal(options, selection)
-      : await runGenerateImageTraditional(options, selection.modelId);
+
+    if (selection.multimodal) {
+      return await runGenerateImageMultimodal(options, selection);
+    }
+    return await runGenerateImageTraditional(options, selection.modelId);
   } catch (error) {
     const resolvedError = await resolveError(error);
     log.error(

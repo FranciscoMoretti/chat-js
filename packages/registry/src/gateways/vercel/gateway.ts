@@ -74,9 +74,11 @@ class VercelGateway
 
   private getApiKey(): string | undefined {
     const apiKey = this.env.AI_GATEWAY_API_KEY;
-    return typeof apiKey === "string" && apiKey !== ""
-      ? apiKey
-      : this.env.VERCEL_OIDC_TOKEN;
+
+    if (typeof apiKey === "string" && apiKey !== "") {
+      return apiKey;
+    }
+    return this.env.VERCEL_OIDC_TOKEN;
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */

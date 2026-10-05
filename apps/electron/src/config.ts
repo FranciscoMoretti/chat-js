@@ -19,9 +19,11 @@ const resolveAppUrl = (
   ) {
     return configuredUrl;
   }
-  return environment.NODE_ENV === "production"
-    ? config.appUrl
-    : DEFAULT_DEV_APP_URL;
+
+  if (environment.NODE_ENV === "production") {
+    return config.appUrl;
+  }
+  return DEFAULT_DEV_APP_URL;
 };
 
 // Passing the process environment here preserves lazy NODE_ENV access in the fallback.

@@ -17,7 +17,11 @@ const messageFollowupSuggestions = (
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "followup-suggestions" from message.metadata.annotations; read annotations from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     message.metadata?.annotations?.["followup-suggestions"]
   );
-  return parsed.success ? [...new Set(parsed.data.suggestions)] : [];
+
+  if (parsed.success) {
+    return [...new Set(parsed.data.suggestions)];
+  }
+  return [];
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveFollowupSuggestions, messageFollowupSuggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns */

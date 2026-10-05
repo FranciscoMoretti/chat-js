@@ -16,15 +16,17 @@ import { documentExecutionInput, eveCodeExecutionResult } from "./schemas";
 export const SavedCodeRenderer = defineToolRenderer({
   inputSchema: documentExecutionInput,
   outputSchema: eveCodeExecutionResult.extend(documentExecutionInput.shape),
-  render: ({ tool }) =>
-    tool.state === "output-available" ? (
-      <div className="space-y-3">
-        <p>{tool.output.message}</p>
-        <CodeExecutionChart value={tool.output.chart} />
-      </div>
-    ) : (
-      <output>Running saved code…</output>
-    ),
+  render: ({ tool }) => {
+    if (tool.state === "output-available") {
+      return (
+        <div className="space-y-3">
+          <p>{tool.output.message}</p>
+          <CodeExecutionChart value={tool.output.chart} />
+        </div>
+      );
+    }
+    return <output>Running saved code…</output>;
+  },
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */

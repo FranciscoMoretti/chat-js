@@ -17,7 +17,11 @@ const keyFromFileUrl = (value: string): string | null => {
       return null;
     }
     const key = url.pathname.slice(FILE_KEY_PREFIX.length);
-    return isFileStorageKey(key) ? key : null;
+
+    if (isFileStorageKey(key)) {
+      return key;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -31,9 +35,11 @@ const getFileImageProps = (
   unoptimized: boolean;
 } => {
   const key = keyFromFileUrl(value);
-  return key === null
-    ? { src: value, unoptimized: false }
-    : { src: createFileUrl(key), unoptimized: true };
+
+  if (key === null) {
+    return { src: value, unoptimized: false };
+  }
+  return { src: createFileUrl(key), unoptimized: true };
 };
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createFileUrl, FILES_PATH, getFileImageProps, isFileStorageKey, keyFromFileUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

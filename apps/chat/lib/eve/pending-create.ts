@@ -49,7 +49,11 @@ const readCreationRequest = (
   scope?: Readonly<CreationScope>
 ): z.output<typeof creationRequest> | undefined => {
   const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
+
+  if (stored) {
+    return creationRequest.parse(JSON.parse(stored));
+  }
+  return undefined;
 };
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
@@ -159,23 +163,25 @@ const prepareSelectedCreation = (
   if (saved) {
     return saved;
   }
-  return modelIds.length > SINGLE_MODEL_COUNT
-    ? prepareResponseGroupCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds,
-        scope,
-        selectedTool
-      )
-    : prepareCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds[FIRST_MODEL_INDEX],
-        scope,
-        selectedTool
-      );
+
+  if (modelIds.length > SINGLE_MODEL_COUNT) {
+    return prepareResponseGroupCreation(
+      storage,
+      ownerId,
+      draft,
+      modelIds,
+      scope,
+      selectedTool
+    );
+  }
+  return prepareCreation(
+    storage,
+    ownerId,
+    draft,
+    modelIds[FIRST_MODEL_INDEX],
+    scope,
+    selectedTool
+  );
 };
 /* oxlint-enable max-params */
 

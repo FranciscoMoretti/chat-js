@@ -322,9 +322,10 @@ const truncateMessages = (
     currentTokens
   );
 
-  return systemMessage
-    ? [systemMessage, ...truncatedMessages]
-    : truncatedMessages;
+  if (systemMessage) {
+    return [systemMessage, ...truncatedMessages];
+  }
+  return truncatedMessages;
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (calculateMessagesTokens, truncateMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */

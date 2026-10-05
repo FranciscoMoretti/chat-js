@@ -25,9 +25,11 @@ export const selectedEveTools = (
   const names = canvasTools.includes(selectedTool)
     ? canvasTools
     : [selectedTool];
-  return names.some((name) => name.endsWith("Document"))
-    ? [...names, "readDocument"]
-    : names;
+
+  if (names.some((name) => name.endsWith("Document"))) {
+    return [...names, "readDocument"];
+  }
+  return names;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null */

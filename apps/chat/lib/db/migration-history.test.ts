@@ -32,8 +32,13 @@ describe("getMigrationHistoryProblem", () => {
     );
     const baselineTables = [
       ...baselineSql.matchAll(/^CREATE TABLE "(?<table>[^"]+)"/gmu),
+    ].flatMap((match) => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading table from match.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    ].flatMap((match) => (match.groups?.table ? [match.groups.table] : []));
+      if (match.groups?.table) {
+        return [match.groups.table];
+      }
+      return [];
+    });
     expect(KNOWN_CHATJS_TABLE_NAMES).toEqual(
       expect.arrayContaining(baselineTables)
     );

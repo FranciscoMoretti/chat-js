@@ -110,9 +110,11 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
   const missing = storageEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
     .filter((value) => value !== null);
-  return missing.length > 0
-    ? { feature: `fileStorage (${storageId})`, missing }
-    : null;
+
+  if (missing.length > 0) {
+    return { feature: `fileStorage (${storageId})`, missing };
+  }
+  return null;
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -200,14 +202,16 @@ const validateInstalledItems = async (
       const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
       return mod.envRequirements.flatMap((toolEnvVar) => {
         const missing = getMissingRequirement(toolEnvVar, env);
-        return missing
-          ? [
-              {
-                feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
-                missing: [missing],
-              },
-            ]
-          : [];
+
+        if (missing) {
+          return [
+            {
+              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              missing: [missing],
+            },
+          ];
+        }
+        return [];
       });
     })
   );
