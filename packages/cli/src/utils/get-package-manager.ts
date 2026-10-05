@@ -60,13 +60,16 @@ const readDeclaredPackageManager = (
   }
 
   const [declared] = manifest.packageManager.split("@");
-  return declared === "bun" ||
+  if (
+    declared === "bun" ||
     declared === "npm" ||
     declared === "pnpm" ||
     declared === "yarn"
-    ? declared
-    : // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
-      undefined;
+  ) {
+    return declared;
+  }
+  // oxlint-disable-next-line no-undefined -- Missing or invalid package declarations return undefined; consistent-return requires a value alongside successful parsed returns.
+  return undefined;
 };
 /* oxlint-enable node/no-sync */
 

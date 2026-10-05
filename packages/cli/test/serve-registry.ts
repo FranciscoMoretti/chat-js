@@ -32,11 +32,12 @@ const server = Bun.serve({
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- These dependency names come from the registry package catalog; the indexed access preserves their pinned versions.
     if (item.dependencies) {
       // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- These dependency names come from the registry package catalog; the indexed access preserves their pinned versions.
-      item.dependencies = item.dependencies.map((dependency: string) =>
-        dependency.startsWith("@chat-js/gateways@")
-          ? `@chat-js/gateways@http://127.0.0.1:${server.port}/contracts.tgz`
-          : dependency
-      );
+      item.dependencies = item.dependencies.map((dependency: string) => {
+        if (dependency.startsWith("@chat-js/gateways@")) {
+          return `@chat-js/gateways@http://127.0.0.1:${server.port}/contracts.tgz`;
+        }
+        return dependency;
+      });
     }
     return Response.json(item);
   },

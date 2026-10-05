@@ -315,11 +315,12 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
     if (path === "/gateway.json") {
       return Response.json({
         ...external.root,
-        dependencies: external.root.dependencies.map((dependency) =>
-          dependency.startsWith("@chat-js/gateways@")
-            ? `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-            : dependency
-        ),
+        dependencies: external.root.dependencies.map((dependency) => {
+          if (dependency.startsWith("@chat-js/gateways@")) {
+            return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
+          }
+          return dependency;
+        }),
         registryDependencies: [
           `http://127.0.0.1:${registryServer.port}/adapter.json`,
         ],
@@ -364,11 +365,12 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         if (item.dependencies) {
           // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-          item.dependencies = item.dependencies.map((dependency: string) =>
-            dependency.startsWith("@chat-js/gateways@")
-              ? `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-              : dependency
-          );
+          item.dependencies = item.dependencies.map((dependency: string) => {
+            if (dependency.startsWith("@chat-js/gateways@")) {
+              return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
+            }
+            return dependency;
+          });
         }
         return Response.json(item);
       }
@@ -443,10 +445,12 @@ afterAll(async () => {
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 
-const gatewaySource = (gateway: string): string =>
-  gateway === "acme"
-    ? `http://127.0.0.1:${registryServer.port}/gateway.json`
-    : gateway;
+const gatewaySource = (gateway: string): string => {
+  if (gateway === "acme") {
+    return `http://127.0.0.1:${registryServer.port}/gateway.json`;
+  }
+  return gateway;
+};
 
 const storageArguments = (gateway: string): string[] => {
   if (gateway === "acme") {

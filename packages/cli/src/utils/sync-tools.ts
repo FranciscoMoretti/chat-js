@@ -373,17 +373,21 @@ const sourceFor = (
       "tool"
     )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\nexport const tools = { ...installed, ...customTools };\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
-      renderers.flatMap((item, registrationIndex) =>
-        typeof item.rendererExport === "string" && item.rendererExport !== ""
-          ? [
-              {
-                alias: `renderer${registrationIndex}`,
-                id: item.id,
-                name: item.rendererExport,
-              },
-            ]
-          : []
-      ),
+      renderers.flatMap((item, registrationIndex) => {
+        if (
+          typeof item.rendererExport === "string" &&
+          item.rendererExport !== ""
+        ) {
+          return [
+            {
+              alias: `renderer${registrationIndex}`,
+              id: item.id,
+              name: item.rendererExport,
+            },
+          ];
+        }
+        return [];
+      }),
       "renderer"
     )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n`,
   };

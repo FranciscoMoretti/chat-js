@@ -18,12 +18,14 @@ import type {
 } from "react";
 /* oxlint-enable sort-imports */
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Sheet: typescript/prefer-readonly-parameter-types: Radix Dialog root props preserve its existing modal state and callback contracts. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Sheet uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Sheet = (
-  props: ReactComponentProps<typeof SheetPrimitiveRoot>
+  props: Readonly<
+    Omit<ReactComponentProps<typeof SheetPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
 ): ReactJSX.Element => (
   <SheetPrimitiveRoot
     data-slot="sheet"
@@ -32,11 +34,12 @@ const Sheet = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+/* oxlint-disable react/no-multi-comp -- SheetTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetTrigger = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetTrigger forwards SheetPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
   props: ReactComponentProps<typeof SheetPrimitiveTrigger>
 ): ReactJSX.Element => (
   <SheetPrimitiveTrigger
@@ -46,12 +49,13 @@ const SheetTrigger = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SheetClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetClose uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetClose = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetClose forwards SheetPrimitiveClose's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
   props: ReactComponentProps<typeof SheetPrimitiveClose>
 ): ReactJSX.Element => (
   <SheetPrimitiveClose
@@ -61,12 +65,13 @@ const SheetClose = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SheetPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetPortal uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SheetPortal = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetPortal passes Element | DocumentFragment | null | undefined container identity unchanged to SheetPrimitivePortal, whose portal insertion uses the live native DOM surface.
   props: ReactComponentProps<typeof SheetPrimitivePortal>
 ): ReactJSX.Element => (
   <SheetPrimitivePortal
@@ -76,11 +81,12 @@ const SheetPortal = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SheetOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetOverlay uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetOverlay forwards SheetPrimitiveOverlay's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetOverlay = ({
   className,
   ...props
@@ -98,11 +104,12 @@ const SheetOverlay = ({
 );
 /* oxlint-disable react/jsx-no-literals -- SheetContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- SheetContent: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetContent forwards SheetPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetContent = ({
   className,
   children,
@@ -147,11 +154,12 @@ const SheetContent = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SheetHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetHeader forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetHeader = ({
   className,
   ...props
@@ -164,11 +172,12 @@ const SheetHeader = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
+/* oxlint-disable react/no-multi-comp -- SheetFooter: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetFooter uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetFooter forwards div's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetFooter = ({
   className,
   ...props
@@ -181,11 +190,12 @@ const SheetFooter = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SheetTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetTitle forwards SheetPrimitiveTitle's Ref<HTMLHeadingElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetTitle = ({
   className,
   ...props
@@ -199,11 +209,12 @@ const SheetTitle = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SheetDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- SheetDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SheetDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SheetDescription forwards SheetPrimitiveDescription's Ref<HTMLParagraphElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const SheetDescription = ({
   className,
   ...props
@@ -218,7 +229,7 @@ const SheetDescription = ({
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 export {
   Sheet,

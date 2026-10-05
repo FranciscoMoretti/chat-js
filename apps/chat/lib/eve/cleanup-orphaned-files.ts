@@ -15,8 +15,8 @@ type OrphanedFile = Awaited<
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupEveOrphanedFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
 
- * max-statements (#512): cleanupEveOrphanedFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): cleanupEveOrphanedFiles uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * max-statements (#512): The sweep shares batch storage, confirmed-deletion counts and accumulated failures; provider removal must finish before each owner's durable completion, while one failed batch must not starve later inventory.
+ * no-magic-numbers (#517): Zero marks empty inventory/error queues and the initial deletion subtotal; batches of 100 match the orphan-fencing query's maximum admitted key count.
   */
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
  * @param {Readonly<Date>} cutoff Objects uploaded before this time may enter the fenced orphan purge.

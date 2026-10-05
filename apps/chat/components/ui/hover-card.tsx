@@ -11,12 +11,14 @@ import type {
   JSX as ReactJSX,
 } from "react";
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- HoverCard: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCard uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const HoverCard = (
-  props: ReactComponentProps<typeof HoverCardPrimitiveRoot>
+  props: Readonly<
+    Omit<ReactComponentProps<typeof HoverCardPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
 ): ReactJSX.Element => (
   <HoverCardPrimitiveRoot
     data-slot="hover-card"
@@ -25,11 +27,12 @@ const HoverCard = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+
+/* oxlint-disable react/no-multi-comp -- HoverCardTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const HoverCardTrigger = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- HoverCardTrigger forwards HoverCardPrimitiveTrigger's Ref<HTMLAnchorElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
   props: ReactComponentProps<typeof HoverCardPrimitiveTrigger>
 ): ReactJSX.Element => (
   <HoverCardPrimitiveTrigger
@@ -39,11 +42,12 @@ const HoverCardTrigger = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- HoverCardContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- HoverCardContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- HoverCardContent forwards HoverCardPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const HoverCardContent = ({
   className,
   align = "center",
@@ -67,7 +71,7 @@ const HoverCardContent = ({
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (HoverCard, HoverCardContent, HoverCardTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 export { HoverCard, HoverCardContent, HoverCardTrigger };
 /* oxlint-enable import/no-named-export */

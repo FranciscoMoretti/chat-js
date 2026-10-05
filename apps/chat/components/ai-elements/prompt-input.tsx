@@ -62,7 +62,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- PromptInputHoverCard: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers -- PromptInputHoverCard: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 const PromptInputHoverCard = ({
   openDelay = 0,
@@ -76,7 +76,7 @@ const PromptInputHoverCard = ({
     {...props}
   />
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputHoverCardContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -208,7 +208,7 @@ const PromptInputButton = ({
 
 type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- PromptInputActionMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: PromptInputActionMenuProps). */
+/* oxlint-disable react/no-multi-comp -- PromptInputActionMenu: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 const PromptInputActionMenu = (
   props: PromptInputActionMenuProps
 ): React.JSX.Element => (
@@ -217,7 +217,7 @@ const PromptInputActionMenu = (
     {...props}
   />
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type PromptInputActionMenuTriggerProps = PromptInputButtonProps;
 

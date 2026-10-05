@@ -155,12 +155,18 @@ const generatedRegistrationSource = (source: string): string => {
   const registrations = lines.map((line) =>
     renderRegistration(line, grouped, preferDefault)
   );
-  const values = registrations.flatMap((item) =>
-    typeof item.value === "string" ? [item.value] : []
-  );
-  const types = registrations.flatMap((item) =>
-    typeof item.type === "string" ? [item.type] : []
-  );
+  const values = registrations.flatMap((item) => {
+    if (typeof item.value === "string") {
+      return [item.value];
+    }
+    return [];
+  });
+  const types = registrations.flatMap((item) => {
+    if (typeof item.type === "string") {
+      return [item.type];
+    }
+    return [];
+  });
   const rendered = `${[
     registrations
       .map((item) => item.source)

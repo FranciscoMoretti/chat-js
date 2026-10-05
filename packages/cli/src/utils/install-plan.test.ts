@@ -207,7 +207,12 @@ test.each(["registration", "finalization"] as const)(
       await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
       const registrationContents = (target: string) => {
         const file = Bun.file(path.join(root, target));
-        return file.exists().then((exists) => (exists ? file.text() : null));
+        return file.exists().then((exists) => {
+          if (exists) {
+            return file.text();
+          }
+          return null;
+        });
       };
       const oldRegistrations = await Promise.all(
         toolRegistrationTargets.map((target) => registrationContents(target))

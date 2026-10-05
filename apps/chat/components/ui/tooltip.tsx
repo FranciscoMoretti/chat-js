@@ -15,14 +15,17 @@ import type {
 } from "react";
 /* oxlint-enable sort-imports */
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipProvider = ({
   delayDuration = 0,
   ...props
-}: ReactComponentProps<typeof TooltipPrimitiveProvider>): ReactJSX.Element => (
+}: Readonly<
+  Omit<ReactComponentProps<typeof TooltipPrimitiveProvider>, "children">
+> & { readonly children: ReadonlyReactNode }): ReactJSX.Element => (
   <TooltipPrimitiveProvider
     data-slot="tooltip-provider"
     delayDuration={delayDuration}
@@ -31,12 +34,14 @@ const TooltipProvider = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-enable no-magic-numbers */
+/* oxlint-disable react/no-multi-comp -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Tooltip uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Tooltip = (
-  props: ReactComponentProps<typeof TooltipPrimitiveRoot>
+  props: Readonly<
+    Omit<ReactComponentProps<typeof TooltipPrimitiveRoot>, "children">
+  > & { readonly children?: ReadonlyReactNode }
 ): ReactJSX.Element => (
   <TooltipProvider>
     <TooltipPrimitiveRoot
@@ -47,12 +52,13 @@ const Tooltip = (
   </TooltipProvider>
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- TooltipTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipTrigger = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TooltipTrigger forwards TooltipPrimitiveTrigger's Ref<HTMLButtonElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
   props: ReactComponentProps<typeof TooltipPrimitiveTrigger>
 ): ReactJSX.Element => (
   <TooltipPrimitiveTrigger
@@ -62,11 +68,12 @@ const TooltipTrigger = (
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TooltipContent forwards TooltipPrimitiveContent's Ref<HTMLDivElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const TooltipContent = ({
   className,
   sideOffset = 0,
@@ -104,7 +111,7 @@ const TooltipContent = ({
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Tooltip, TooltipContent, TooltipProvider, TooltipTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
 /* oxlint-enable import/no-named-export */

@@ -331,7 +331,10 @@ const installPlan = async (
       // Registration can update rollback-only files. Refresh an existing baseline
       // only when the file was untouched beforehand; never bless user edits.
       if (!targets.includes(target)) {
-        return previous ? receipt[target] === hash(previous) : false;
+        if (previous) {
+          return receipt[target] === hash(previous);
+        }
+        return false;
       }
       return (
         !previous ||

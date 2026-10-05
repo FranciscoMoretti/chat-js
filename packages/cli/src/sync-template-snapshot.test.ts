@@ -49,7 +49,10 @@ const collectFileOrder = async (
         if (entry.isDirectory()) {
           return await collectFileOrder(absolute, rel);
         }
-        return entry.isFile() ? [rel] : [];
+        if (entry.isFile()) {
+          return [rel];
+        }
+        return [];
       }
     )
   );

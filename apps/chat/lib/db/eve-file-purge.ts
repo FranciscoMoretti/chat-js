@@ -5,17 +5,10 @@ import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable sort-imports */
 
-const EMPTY_COLLECTION_LENGTH = 0;
-const FIRST_ROW_INDEX = 0;
-const FIRST_ARGUMENT_INDEX = 0;
-const SINGLE_ROW_LIMIT = 1;
-
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): deletingFamilyIds accepts tx: Parameters<Parameters<typeof db.transaction>[typeof FIRST_ARGUMENT_INDEX]>[typeof FIRST_ARGUMENT_INDEX]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const deletingFamilyIds = async (
-  tx: Parameters<
-    Parameters<typeof db.transaction>[typeof FIRST_ARGUMENT_INDEX]
-  >[typeof FIRST_ARGUMENT_INDEX],
+  // oxlint-disable-next-line no-magic-numbers, typescript/prefer-readonly-parameter-types -- Tuple index zero selects the transaction callback and its transaction argument; Drizzle owns this mutable transaction capability.
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
   ownerId: string,
   rootId: string
 ): Promise<string[]> => {
@@ -32,18 +25,17 @@ const deletingFamilyIds = async (
       )
     );
   if (
-    family.length === EMPTY_COLLECTION_LENGTH ||
-    family.some((row) => row.state !== "deleting")
+    // oxlint-disable-next-line no-magic-numbers -- An absent family cannot authorize file deletion.
+    family.length === 0 ||
+    family.some((row: Readonly<{ state: string }>) => row.state !== "deleting")
   ) {
     throw new Error("The entire conversation family must be pending deletion.");
   }
-  return family.map((row) => row.id);
+  return family.map((row: Readonly<{ id: string }>) => row.id);
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyFilePurge's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): prepareEveFamilyFilePurge accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Fence exclusively referenced files before external deletion; retain references for retries.
  * @param {string} ownerId Owner whose deleting conversation family authorizes the cleanup.
@@ -54,6 +46,7 @@ const prepareEveFamilyFilePurge = async (
   ownerId: string,
   rootId: string
 ): Promise<string[]> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -84,13 +77,11 @@ const prepareEveFamilyFilePurge = async (
         )
       )
       .returning({ key: eveStoredFile.key });
-    return files.map((file) => file.key).toSorted();
+    return files.map((file: Readonly<{ key: string }>) => file.key).toSorted();
   });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveFilePurge's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): completeEveFilePurge accepts keys: readonly string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Call only after the provider confirms removal; no file identity is recycled.
  * @param {string} ownerId Owner used to scope the stored-file state update and family lock.
@@ -100,9 +91,11 @@ const completeEveFilePurge = async (
   ownerId: string,
   keys: readonly string[]
 ): Promise<void> => {
-  if (keys.length === EMPTY_COLLECTION_LENGTH) {
+  // oxlint-disable-next-line no-magic-numbers -- An empty confirmed-removal list needs no database transaction.
+  if (keys.length === 0) {
     return;
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -121,11 +114,8 @@ const completeEveFilePurge = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve releaseEveFamilyFileReferences's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls -- max-lines-per-function (#510): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): releaseEveFamilyFileReferences accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/max-nested-calls (#568): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
+/* oxlint-disable max-lines-per-function -- Keep the owner advisory lock, deleting-family validation, exclusive-file check and reference deletion visibly ordered under this transaction; extracting helpers must preserve its shared capability and error boundary. */
 /**
  * Release references only after file cleanup; retry cleanup if another family released first.
  * @param {string} ownerId Owner whose deleting family is locked while file cleanup is checked.
@@ -135,6 +125,7 @@ const releaseEveFamilyFileReferences = async (
   ownerId: string,
   rootId: string
 ): Promise<void> => {
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -149,6 +140,7 @@ const releaseEveFamilyFileReferences = async (
           notInArray(eveFileReference.conversationId, ids)
         )
       );
+    /* oxlint-disable unicorn/max-nested-calls -- The correlated exclusive-file check selects family keys and excludes outside references before deciding whether cleanup blocks release. */
     const unremovedRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveStoredFile)
@@ -166,8 +158,11 @@ const releaseEveFamilyFileReferences = async (
           notExists(outsideReference)
         )
       )
-      .limit(SINGLE_ROW_LIMIT);
-    const unremoved = unremovedRows.at(FIRST_ROW_INDEX);
+      // oxlint-disable-next-line no-magic-numbers -- One matching row is sufficient to block reference release.
+      .limit(1);
+    /* oxlint-enable unicorn/max-nested-calls */
+    // oxlint-disable-next-line no-magic-numbers -- Inspect the first row of the existence query.
+    const unremoved = unremovedRows.at(0);
     if (unremoved) {
       throw new Error(
         "File cleanup is incomplete. Retry before releasing references."
@@ -185,7 +180,7 @@ const releaseEveFamilyFileReferences = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeEveFilePurge, prepareEveFamilyFilePurge, releaseEveFamilyFileReferences); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function */
 export {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,

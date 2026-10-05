@@ -42,10 +42,12 @@ it("validates gateway integration metadata with the standard registry schema", a
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   const server = Bun.serve({
-    fetch: (request) =>
-      new URL(request.url).pathname === "/gateway.json"
-        ? Response.redirect(new URL("/target.json", request.url))
-        : Response.json(builtInGateways[0]),
+    fetch: (request) => {
+      if (new URL(request.url).pathname === "/gateway.json") {
+        return Response.redirect(new URL("/target.json", request.url));
+      }
+      return Response.json(builtInGateways[0]);
+    },
     hostname: "127.0.0.1",
     port: 0,
   });

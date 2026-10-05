@@ -13,7 +13,6 @@ import type {
 /* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Breadcrumb: typescript/prefer-readonly-parameter-types: React nav props preserve the existing forwarded ref and native event callback contracts. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Breadcrumb uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Breadcrumb = reactForwardRef<
@@ -21,6 +20,7 @@ const Breadcrumb = reactForwardRef<
   ReactComponentPropsWithoutRef<"nav"> & {
     separator?: ReactReactNode;
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Breadcrumb forwards nav's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLElement> parameter preserves React's writable current assignment and callback contract. The existing separator node prop also retains its public ReactNode contract.
 >((props, ref): ReactJSX.Element => (
   <nav
     aria-label="breadcrumb"
@@ -30,14 +30,14 @@ const Breadcrumb = reactForwardRef<
   />
 ));
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 Breadcrumb.displayName = "Breadcrumb";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbList uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbList = reactForwardRef<
   HTMLOListElement,
   ReactComponentPropsWithoutRef<"ol">
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbList forwards ol's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLOListElement> parameter preserves React's writable current assignment and callback contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <ol
     className={cn(
@@ -50,14 +50,14 @@ const BreadcrumbList = reactForwardRef<
   />
 ));
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 BreadcrumbList.displayName = "BreadcrumbList";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbItem = reactForwardRef<
   HTMLLIElement,
   ReactComponentPropsWithoutRef<"li">
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbItem forwards li's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLLIElement> parameter preserves React's writable current assignment and callback contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <li
     className={cn("inline-flex items-center gap-1.5", className)}
@@ -67,9 +67,9 @@ const BreadcrumbItem = reactForwardRef<
   />
 ));
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 BreadcrumbItem.displayName = "BreadcrumbItem";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { asChild, className, ...props }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
+/* oxlint-disable typescript/strict-boolean-expressions -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbLink = reactForwardRef<
@@ -77,6 +77,7 @@ const BreadcrumbLink = reactForwardRef<
   ReactComponentPropsWithoutRef<"a"> & {
     asChild?: boolean;
   }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbLink forwards Comp's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLAnchorElement> parameter preserves React's writable current assignment and callback contract.
 >(({ asChild, className, ...props }, ref) => {
   const Comp = asChild ? Slot : "a";
 
@@ -91,14 +92,14 @@ const BreadcrumbLink = reactForwardRef<
   );
 });
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 BreadcrumbLink.displayName = "BreadcrumbLink";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbPage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbPage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbPage = reactForwardRef<
   HTMLSpanElement,
   ReactComponentPropsWithoutRef<"span">
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbPage forwards span's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLSpanElement> parameter preserves React's writable current assignment and callback contract.
 >(({ className, ...props }, ref): ReactJSX.Element => (
   <span
     aria-current="page"
@@ -110,11 +111,11 @@ const BreadcrumbPage = reactForwardRef<
   />
 ));
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 BreadcrumbPage.displayName = "BreadcrumbPage";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbSeparator uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbSeparator forwards li's Ref<HTMLLIElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const BreadcrumbSeparator = ({
   children,
   className,
@@ -131,12 +132,13 @@ const BreadcrumbSeparator = ({
   </li>
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 /* oxlint-disable react/jsx-no-literals -- BreadcrumbEllipsis renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- BreadcrumbEllipsis: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
+/* oxlint-disable react/no-multi-comp -- BreadcrumbEllipsis: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbEllipsis uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- BreadcrumbEllipsis forwards span's Ref<HTMLSpanElement> | undefined contract, including writable current objects, native event callbacks and CSSProperties.
 const BreadcrumbEllipsis = ({
   className,
   ...props
@@ -157,7 +159,7 @@ const BreadcrumbEllipsis = ({
 );
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

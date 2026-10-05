@@ -38,7 +38,10 @@ const validationFailure = async (root: string): Promise<string> => {
     await validateCustomToolKeys(root, [definition]);
     return "Validation unexpectedly succeeded";
   } catch (error: unknown) {
-    return error instanceof Error ? error.message : String(error);
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 };
 /* oxlint-enable oxc/no-async-await */

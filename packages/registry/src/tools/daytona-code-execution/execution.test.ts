@@ -190,7 +190,10 @@ const rejectedMessage = async (pending: Promise<unknown>): Promise<string> => {
     await pending;
     return "completed";
   } catch (error) {
-    return error instanceof Error ? error.message : "unknown";
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return "unknown";
   }
 };
 /* oxlint-enable oxc/no-async-await */
@@ -234,9 +237,10 @@ test.each([false, true])(
     let calls = 0;
     state.resource.process.executeCommand = async () => {
       calls += 1;
-      return extra && calls === 1
-        ? { exitCode: 0, result: "installed" }
-        : { exitCode: 1, result: "pip: no matching distribution" };
+      if (extra && calls === 1) {
+        return { exitCode: 0, result: "installed" };
+      }
+      return { exitCode: 1, result: "pip: no matching distribution" };
     };
     const result = await executeInDaytona(
       {
