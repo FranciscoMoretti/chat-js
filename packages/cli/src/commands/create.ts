@@ -5,30 +5,11 @@ import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { buildConfigTs } from "../helpers/config-builder";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { ensureTargetEmpty } from "../helpers/ensure-target";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { collectEnvChecklist } from "../helpers/env-checklist";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { EnvVarEntry } from "../helpers/env-checklist";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureGatewayProvider } from "../helpers/gateway-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { buildConfigTs } from "#cli/helpers/config-builder";
+import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
+import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+import type { EnvVarEntry } from "#cli/helpers/env-checklist";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
 import {
   promptAssistantTools,
   promptAuth,
@@ -44,64 +25,38 @@ import {
   promptImageGenerationTool,
   promptVideoGenerationTool,
   promptCodeExecutionTool,
-} from "../helpers/prompts";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/helpers/prompts";
+/* oxlint-disable import/max-dependencies -- The create command orchestrates the CLI installation adapters and prompt catalog; keeping those dependencies explicit preserves its integration boundary. */
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
-} from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureStorageProvider } from "../helpers/storage-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { itemAddress, listTools, readItem } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { launcherPackageManager } from "../utils/get-package-manager";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { handleError } from "../utils/handle-error";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/helpers/scaffold";
+/* oxlint-enable import/max-dependencies */
+import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import { resolveGateway } from "#cli/registry/gateways";
+import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
+import { resolveStorage } from "#cli/registry/storage";
+import type { PackageManager } from "#cli/types";
+import { launcherPackageManager } from "#cli/utils/get-package-manager";
+import { handleError } from "#cli/utils/handle-error";
+import { highlighter } from "#cli/utils/highlighter";
 import {
   installPlan,
   recordInstalledSource,
   plannedSourceTargets,
-} from "../utils/install-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { planInstallation } from "../utils/installation-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { runCommand } from "../utils/run-command";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { spinner } from "../utils/spinner";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncFeatures } from "../utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/utils/install-plan";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { logger } from "#cli/utils/logger";
+import { runCommand } from "#cli/utils/run-command";
+import { spinner } from "#cli/utils/spinner";
+import { syncFeatures } from "#cli/utils/sync-features";
+import { syncTools } from "#cli/utils/sync-tools";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { toolDefinitionSchema } from "../../../registry/metadata";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { observabilityItems } from "../../../registry/src/features/observability";
 
 const resolveCreateTarget = (
   targetArg: string | undefined

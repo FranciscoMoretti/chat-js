@@ -8,9 +8,6 @@ import { toolDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 import { validateCustomToolKeys } from "./custom-tool-keys";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = pathModule;
-
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async () => {
@@ -38,16 +35,16 @@ const validationFailure = async (root: string): Promise<string> => {
 };
 
 test("preflight finds imported and spread keys without executing source", async () => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-custom-keys-"));
+  const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
-  const directory = join(root, "tools/chatjs");
+  const directory = pathModule.join(root, "tools/chatjs");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    join(directory, "shared.ts"),
+    pathModule.join(directory, "shared.ts"),
     'throw new Error("must not execute"); export const shared = {research: {}};'
   );
   await writeFile(
-    join(directory, "custom-tools.ts"),
+    pathModule.join(directory, "custom-tools.ts"),
     'import {shared} from "./shared"; export const customTools = {...shared};'
   );
   expect(await validationFailure(root)).toContain("Custom tools conflict");
@@ -55,12 +52,12 @@ test("preflight finds imported and spread keys without executing source", async 
 });
 
 test("preflight rejects dynamic keys it cannot verify", async () => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-custom-keys-"));
+  const root = await mkdtemp(pathModule.join(tmpdir(), "chatjs-custom-keys-"));
   roots.push(root);
-  const directory = join(root, "tools/chatjs");
+  const directory = pathModule.join(root, "tools/chatjs");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    join(directory, "custom-tools.ts"),
+    pathModule.join(directory, "custom-tools.ts"),
     "declare const name: string; export const customTools = {[name]: {}};"
   );
   expect(await validationFailure(root)).toContain(

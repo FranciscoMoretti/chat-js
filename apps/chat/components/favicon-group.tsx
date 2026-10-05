@@ -23,7 +23,7 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
   sources,
   maxVisible = 4,
   className,
-}) => {
+}): React.JSX.Element => {
   const visibleSources = sources.slice(0, maxVisible);
 
   return (

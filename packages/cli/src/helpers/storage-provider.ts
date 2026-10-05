@@ -3,19 +3,13 @@ import path from "node:path";
 
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { StorageSelection } from "#cli/registry/storage";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+import { preflight } from "#cli/utils/preflight";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { builtInStorage } from "../../../registry/src/storage/catalog";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { StorageSelection } from "../registry/storage";
-import { updateEnvironmentExample } from "../utils/environment-example";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
-import { generatedRegistrationSource } from "../utils/generated-registration-source";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { preflight } from "../utils/preflight";
-/* oxlint-enable import/no-relative-parent-imports */
 import type { ReadonlyInput } from "./readonly-input";
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;

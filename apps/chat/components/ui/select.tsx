@@ -54,7 +54,7 @@ const SelectTrigger = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectTrigger.displayName = SelectPrimitiveTrigger.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectScrollUpButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectScrollUpButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectScrollUpButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollUpButton>,
@@ -71,9 +71,9 @@ const SelectScrollUpButton = reactForwardRef<
     <ChevronUp className="h-4 w-4" />
   </SelectPrimitiveScrollUpButton>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectScrollUpButton.displayName = SelectPrimitiveScrollUpButton.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectScrollDownButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectScrollDownButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectScrollDownButton = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveScrollDownButton>,
@@ -90,10 +90,10 @@ const SelectScrollDownButton = reactForwardRef<
     <ChevronDown className="h-4 w-4" />
   </SelectPrimitiveScrollDownButton>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectScrollDownButton.displayName =
   SelectPrimitiveScrollDownButton.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, position = "popper", ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, position = "popper", ...props }). */
 
 const SelectContent = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveContent>,
@@ -130,9 +130,9 @@ const SelectContent = reactForwardRef<
     </SelectPrimitivePortal>
   )
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectContent.displayName = SelectPrimitiveContent.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectLabel: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectLabel = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveLabel>,
@@ -144,9 +144,9 @@ const SelectLabel = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectLabel.displayName = SelectPrimitiveLabel.displayName;
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const SelectItem = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveItem>,
@@ -169,9 +169,9 @@ const SelectItem = reactForwardRef<
     <SelectPrimitiveItemText>{children}</SelectPrimitiveItemText>
   </SelectPrimitiveItem>
 ));
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 SelectItem.displayName = SelectPrimitiveItem.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- SelectSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- SelectSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const SelectSeparator = reactForwardRef<
   ReactComponentRef<typeof SelectPrimitiveSeparator>,
@@ -183,7 +183,7 @@ const SelectSeparator = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 SelectSeparator.displayName = SelectPrimitiveSeparator.displayName;
 
 export {

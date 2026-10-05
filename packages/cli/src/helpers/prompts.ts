@@ -10,48 +10,33 @@ import {
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import {
-  AUTHENTICATION_DEFAULTS,
-  FEATURES_DEFAULTS,
-} from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { RegistryIndexItem } from "../registry/schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { StorageSelection } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { RegistryIndexItem } from "#cli/registry/schema";
+import { resolveStorage } from "#cli/registry/storage";
+import type { StorageSelection } from "#cli/registry/storage";
 import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
   CORE_FEATURE_KEYS,
   DOCUMENT_TYPE_KEYS,
   GATEWAYS,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/types";
 import type {
   AuthProvider,
   BuiltInToolKey,
   CoreFeatureKey,
   DocumentTypeKey,
   Gateway,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/types";
+import { highlighter } from "#cli/utils/highlighter";
+import { logger } from "#cli/utils/logger";
+
+import {
+  AUTHENTICATION_DEFAULTS,
+  FEATURES_DEFAULTS,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+} from "../../../../apps/chat/lib/config-schema";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import {
   authEnvRequirements,

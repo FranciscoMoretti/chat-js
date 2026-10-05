@@ -8,10 +8,9 @@ import {
 } from "@/components/ai-elements/reasoning";
 
 interface MessageReasoningProps {
-  content: string;
-  isLoading: boolean;
+  readonly content: string;
+  readonly isLoading: boolean;
 }
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- PureReasoningPart: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { isLoading, content }: MessageReasoningProps). */
 
 const PureReasoningPart = ({
   isLoading,
@@ -24,6 +23,5 @@ const PureReasoningPart = ({
     </ReasoningContent>
   </Reasoning>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export const ReasoningPart = memo(PureReasoningPart);

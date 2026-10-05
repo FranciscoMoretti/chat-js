@@ -5,13 +5,10 @@ import path from "node:path";
 
 import { resolvePackageDirectory } from "./resolve-package-directory";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
-
 it("resolves a non-hoisted package from the workspace that declares it", async () => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-package-resolution-"));
-  const app = join(root, "apps", "chat");
-  const packageDirectory = join(
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-package-resolution-"));
+  const app = path.join(root, "apps", "chat");
+  const packageDirectory = path.join(
     app,
     "node_modules",
     "@workflow",
@@ -19,18 +16,21 @@ it("resolves a non-hoisted package from the workspace that declares it", async (
   );
 
   try {
-    await mkdir(join(packageDirectory, "dist"), { recursive: true });
+    await mkdir(path.join(packageDirectory, "dist"), { recursive: true });
     await Promise.all([
-      writeFile(join(app, "package.json"), '{"name":"@chatjs/chat"}\n'),
+      writeFile(path.join(app, "package.json"), '{"name":"@chatjs/chat"}\n'),
       writeFile(
-        join(packageDirectory, "package.json"),
+        path.join(packageDirectory, "package.json"),
         JSON.stringify({
           exports: { ".": "./dist/index.js" },
           name: "@workflow/world-postgres",
           type: "module",
         })
       ),
-      writeFile(join(packageDirectory, "dist", "index.js"), "export {};\n"),
+      writeFile(
+        path.join(packageDirectory, "dist", "index.js"),
+        "export {};\n"
+      ),
     ]);
 
     expect(

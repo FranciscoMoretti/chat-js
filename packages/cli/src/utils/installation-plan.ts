@@ -4,27 +4,24 @@ import path from "node:path";
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { itemAddress, readItem } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import type { InstallationSelection } from "../../../registry/installation";
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { installationSelectionSchema } from "../../../registry/installation";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import {
   featureDefinitionSchema,
   featureIdSchema,
   toolDefinitionSchema,
   storageDefinitionSchema,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import type {
   FeatureDefinition,
   ToolDefinition,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { itemAddress, readItem } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
 import {
   registryMetadataKind,
   validateRequestedKind,

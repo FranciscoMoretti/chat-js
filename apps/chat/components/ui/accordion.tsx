@@ -32,7 +32,7 @@ const AccordionItem = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AccordionItem.displayName = "AccordionItem";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AccordionTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const AccordionTrigger = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveTrigger>,
@@ -52,9 +52,9 @@ const AccordionTrigger = reactForwardRef<
     </AccordionPrimitiveTrigger>
   </AccordionPrimitiveHeader>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 AccordionTrigger.displayName = AccordionPrimitiveTrigger.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AccordionContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const AccordionContent = reactForwardRef<
   ReactComponentRef<typeof AccordionPrimitiveContent>,
@@ -68,7 +68,7 @@ const AccordionContent = reactForwardRef<
     <div className={cn("pt-0 pb-4", className)}>{children}</div>
   </AccordionPrimitiveContent>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 AccordionContent.displayName = AccordionPrimitiveContent.displayName;
 

@@ -5,15 +5,11 @@ import path from "node:path";
 
 import ts from "typescript";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+import { installItems } from "#cli/registry/shadcn";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { mcpItem, mcpFiles } from "../../../registry/src/features/mcp";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { scaffoldFromTemplate } from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
 import { installPlan } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 /* oxlint-disable import/max-dependencies -- The feature installation contract exercises the real planner, installer, registry and scaffold together. */
@@ -368,12 +364,12 @@ test("adds the requested binding when the module already has another named impor
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async (): Promise<void> => {
   const { attachmentUploadsItem, attachmentUploadFiles } =
+    // oxlint-disable-next-line import/no-relative-parent-imports -- The integration fixture reads the canonical registry item bundled with the CLI.
     await import("../../../registry/src/features/attachment-uploads");
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-upload-install-"));
   roots.push(root);
@@ -482,7 +478,6 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

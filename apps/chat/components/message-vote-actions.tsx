@@ -3,14 +3,14 @@ import React from "react";
 import { toast } from "sonner";
 
 import { MessageAction } from "./ai-elements/message";
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react-perf/jsx-no-new-function-as-prop -- MessageVoteActions: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const MessageVoteActions = ({
   vote,
   disabled = false,
   onVote,
 }: {
-  readonly vote?: { isUpvoted: boolean };
+  readonly vote?: { readonly isUpvoted: boolean };
   readonly disabled?: boolean;
   readonly onVote: (type: "up" | "down") => Promise<unknown>;
 }): React.JSX.Element => (
@@ -49,4 +49,4 @@ export const MessageVoteActions = ({
     </MessageAction>
   </>
 );
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react-perf/jsx-no-new-function-as-prop */

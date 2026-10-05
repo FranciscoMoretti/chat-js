@@ -1,18 +1,14 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { builtInGateways } from "#cli/registry/gateways";
+import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
+
 import {
   applyDefaults,
   configDescriptionSchema,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInGateways } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
 import type { ReadonlyInput } from "./readonly-input";
 
 const defaultsFor = (

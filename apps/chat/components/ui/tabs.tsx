@@ -33,7 +33,7 @@ const TabsList = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsList.displayName = TabsPrimitiveList.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- TabsTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const TabsTrigger = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveTrigger>,
@@ -48,9 +48,9 @@ const TabsTrigger = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsTrigger.displayName = TabsPrimitiveTrigger.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- TabsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- TabsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const TabsContent = reactForwardRef<
   ReactComponentRef<typeof TabsPrimitiveContent>,
@@ -65,7 +65,7 @@ const TabsContent = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 TabsContent.displayName = TabsPrimitiveContent.displayName;
 
 export { Tabs, TabsContent, TabsList, TabsTrigger };

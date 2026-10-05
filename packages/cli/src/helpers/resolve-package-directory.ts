@@ -26,9 +26,14 @@ export const resolvePackageDirectory = async (
         pathModule.join(directory, "package.json"),
         "utf-8"
       );
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Package discovery reads only the manifest name and leaves unrelated package metadata untouched.
-      const manifest = JSON.parse(manifestSource) as { name?: string };
-      if (manifest.name === packageName) {
+      const manifest: unknown = JSON.parse(manifestSource);
+      if (
+        typeof manifest === "object" &&
+        // oxlint-disable-next-line unicorn/no-null -- JSON permits null; exclude it before checking the parsed object's name.
+        manifest !== null &&
+        "name" in manifest &&
+        manifest.name === packageName
+      ) {
         return directory;
       }
     } catch (error) {

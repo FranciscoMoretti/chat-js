@@ -30,7 +30,7 @@ const DrawerTrigger = DrawerPrimitive.Trigger;
 const DrawerPortal = DrawerPrimitive.Portal;
 
 const DrawerClose = DrawerPrimitive.Close;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- DrawerOverlay: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const DrawerOverlay = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Overlay>,
@@ -42,9 +42,9 @@ const DrawerOverlay = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- DrawerContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const DrawerContent = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Content>,
@@ -65,7 +65,7 @@ const DrawerContent = reactForwardRef<
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 DrawerContent.displayName = "DrawerContent";
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DrawerHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -93,7 +93,7 @@ const DrawerFooter = ({
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 DrawerFooter.displayName = "DrawerFooter";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- DrawerTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const DrawerTitle = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Title>,
@@ -108,9 +108,9 @@ const DrawerTitle = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 DrawerTitle.displayName = DrawerPrimitive.Title.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- DrawerDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- DrawerDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const DrawerDescription = reactForwardRef<
   ReactComponentRef<typeof DrawerPrimitive.Description>,
@@ -122,7 +122,7 @@ const DrawerDescription = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName;
 
 export {

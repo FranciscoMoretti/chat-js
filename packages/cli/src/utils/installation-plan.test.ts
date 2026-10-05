@@ -8,8 +8,6 @@ import { toolDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 import { planInstallation } from "./installation-plan";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async (): Promise<void> => {
@@ -28,7 +26,7 @@ afterEach(async (): Promise<void> => {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
   const reader = toolDefinitionSchema.parse({
     contractVersion: 1,
@@ -73,7 +71,9 @@ test("plans transitive dependencies and repairs against the complete resulting i
         { documents: false, fresh: true }
       )
     ).rejects.toThrow("--no-documents");
-    expect(await Bun.file(join(root, "package.json")).exists()).toBe(false);
+    expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
+      false
+    );
     const first = await planInstallation(root, {
       features: [],
       tools: [`${source}/text-documents.json`],
@@ -82,18 +82,18 @@ test("plans transitive dependencies and repairs against the complete resulting i
       "read-document",
       "text-documents",
     ]);
-    expect(await Bun.file(join(root, "tools/chatjs/tools.ts")).exists()).toBe(
-      false
-    );
-    const dir = join(root, "tools/chatjs/text-documents");
+    expect(
+      await Bun.file(path.join(root, "tools/chatjs/tools.ts")).exists()
+    ).toBe(false);
+    const dir = path.join(root, "tools/chatjs/text-documents");
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "chatjs.json"), JSON.stringify(documents));
+    await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
-      join(dir, "document.tsx"),
+      path.join(dir, "document.tsx"),
       "export const documentUi = {};\n"
     );
     await writeFile(
-      join(dir, "tool.ts"),
+      path.join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
     expect(planInstallation(root, { features: [], tools: [] })).rejects.toThrow(
@@ -104,7 +104,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
       tools: [`${source}/read-document.json`],
     });
     expect(repair.expected).toEqual([reader]);
-    expect(await readFile(join(dir, "tool.ts"), "utf-8")).toContain(
+    expect(await readFile(path.join(dir, "tool.ts"), "utf-8")).toContain(
       "createTextDocument"
     );
   } finally {
@@ -120,7 +120,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-feature-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
   roots.push(root);
   const server = Bun.serve({
     fetch(request): Response {
@@ -174,10 +174,10 @@ test("validates feature dependencies and exclusive storage slots before writing"
         tools: [],
       })
     ).rejects.toThrow("Selected gateway item has incompatible ChatJS metadata");
-    const dir = join(root, "features/mcp");
+    const dir = path.join(root, "features/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
-      join(dir, "chatjs.json"),
+      path.join(dir, "chatjs.json"),
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
     expect(
@@ -194,7 +194,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
       })
     ).rejects.toThrow("Only one storage provider");
     expect(
-      await Bun.file(join(root, "features/installed-routers.ts")).exists()
+      await Bun.file(path.join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);
   } finally {
     await server.stop(true);

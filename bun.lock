@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "chatjs-monorepo",
@@ -15,6 +16,7 @@
         "oxlint": "1.82.0",
         "oxlint-tsgolint": "7.0.2001",
         "playwright": "^1.59.1",
+        "postgres": "3.4.9",
         "turbo": "2.10.12",
         "typescript": "6.0.2",
         "uiverify": "^1.4.2",

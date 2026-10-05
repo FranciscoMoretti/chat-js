@@ -1,14 +1,10 @@
 import type { AuthenticationConfig } from "./config-schema";
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): SocialAuthSignInOptions preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type SocialAuthSignInOptions = {
+interface SocialAuthSignInOptions {
   disableRedirect?: boolean;
   errorCallbackURL?: string;
   newUserCallbackURL?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type SocialAuthProvider = keyof AuthenticationConfig;
 

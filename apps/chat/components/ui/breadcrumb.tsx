@@ -21,7 +21,7 @@ const Breadcrumb = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Breadcrumb.displayName = "Breadcrumb";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- BreadcrumbList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbList: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const BreadcrumbList = reactForwardRef<
   HTMLOListElement,
@@ -36,9 +36,9 @@ const BreadcrumbList = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbList.displayName = "BreadcrumbList";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- BreadcrumbItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbItem: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const BreadcrumbItem = reactForwardRef<
   HTMLLIElement,
@@ -50,9 +50,9 @@ const BreadcrumbItem = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbItem.displayName = "BreadcrumbItem";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, react/no-multi-comp -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { asChild, className, ...props }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { asChild, className, ...props }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
 
 const BreadcrumbLink = reactForwardRef<
   HTMLAnchorElement,
@@ -70,9 +70,9 @@ const BreadcrumbLink = reactForwardRef<
     />
   );
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 BreadcrumbLink.displayName = "BreadcrumbLink";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- BreadcrumbPage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbPage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const BreadcrumbPage = reactForwardRef<
   HTMLSpanElement,
@@ -86,9 +86,9 @@ const BreadcrumbPage = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbPage.displayName = "BreadcrumbPage";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- BreadcrumbSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- BreadcrumbSeparator: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const BreadcrumbSeparator = ({
   children,
@@ -104,7 +104,7 @@ const BreadcrumbSeparator = ({
     {children ?? <ChevronRight />}
   </li>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- BreadcrumbEllipsis: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 

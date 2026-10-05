@@ -6,16 +6,14 @@ import type { PackageManager } from "#cli/types";
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type PackageJson = {
+interface PackageJson {
   type?: "module" | "commonjs";
   packageManager?: string;
   scripts?: ScriptMap;
   dependencies?: DependencyMap;
   devDependencies?: DependencyMap;
   overrides?: Record<string, unknown>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [

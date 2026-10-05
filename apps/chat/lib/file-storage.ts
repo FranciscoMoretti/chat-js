@@ -12,6 +12,11 @@ import { storageOptions } from "./storage-options";
 import { createStorageAdapter } from "./storage-provider";
 
 const PATH_SEPARATOR = /[\\/]/u;
+// oxlint-disable-next-line no-control-regex -- Filename sanitization deliberately removes ASCII C0 and DEL control characters.
+const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F]/gu;
+const FILE_ID_LENGTH = 24;
+const INVENTORY_PAGE_SIZE = 100;
+const SIGNED_URL_LIFETIME_SECONDS = 300;
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): files assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -28,35 +33,26 @@ const getFiles = (): Files => {
   return files;
 };
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): sanitizeFilename uses -1, 0, 31, 127 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const sanitizeFilename = (filename: string): string => {
-  const basename = filename.split(PATH_SEPARATOR).at(-1) ?? "";
-  // oxlint-disable-next-line typescript/no-misused-spread -- #586: This transformation intentionally iterates Unicode code points; changing to graphemes or UTF-16 units would alter its existing text contract.
-  const withoutControlCharacters = [...basename]
-    .filter((character) => {
-      const code = character.codePointAt(0) ?? 0;
-      return code > 31 && code !== 127;
-    })
-    .join("");
+  const basename = filename.split(PATH_SEPARATOR).pop() ?? "";
+  const withoutControlCharacters = basename.replace(CONTROL_CHARACTERS, "");
   return withoutControlCharacters.trim() || "file";
 };
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): createFileId uses 24 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-const createFileId = (): string => nanoid(24);
-/* oxlint-enable no-magic-numbers */
+const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): uploadFileAtKey's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): uploadFileAtKey's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-params, typescript/prefer-readonly-parameter-types --
  * max-params (#511): uploadFileAtKey keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): uploadFileAtKey accepts body: Body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Internal preallocated key, recorded by the caller before external storage I/O. */
+/**
+ * Upload using a preallocated key recorded by the caller before external storage I/O.
+ * @param key - Registered file identity validated before provider access.
+ * @param filename - Original filename sanitized for the stored pathname.
+ * @param body - Upload content consumed by the storage SDK.
+ * @param contentType - Optional MIME override forwarded to storage.
+ * @returns Registered identity, provider content type, sanitized pathname and application URL.
+ */
 const uploadFileAtKey = async (
   key: string,
   filename: string,
@@ -83,7 +79,7 @@ const uploadFileAtKey = async (
     url: createFileUrl(key),
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): FileUploader accepts body: Body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -95,11 +91,7 @@ type FileUploader = (
 ) => ReturnType<typeof uploadFileAtKey>;
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable init-declarations, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * init-declarations (#507): iterateStoredFiles assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * typescript/prefer-readonly-parameter-types (#565): iterateStoredFiles accepts file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): iterateStoredFiles intentionally keeps the existing falsy-value behavior of cursor; fileId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable init-declarations -- The first inventory page has no cursor; subsequent pages use the cursor supplied by the preceding response. */
 /**
  * Resolve one provider page at a time, bounding inventory memory and DB queries.
  * @yields {{ pathname: string; uploadedAt: Date; url: string }} Registered file metadata.
@@ -112,12 +104,14 @@ const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
   let cursor: string | undefined;
   do {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each page requires the preceding cursor.
-    const page = await getFiles().list({ cursor, limit: 100 });
+    const page = await getFiles().list({ cursor, limit: INVENTORY_PAGE_SIZE });
     // oxlint-disable-next-line eslint/no-await-in-loop -- Resolve only the current inventory page.
-    const ids = await fileIdsForStorageKeys(page.items.map((file) => file.key));
+    const ids = await fileIdsForStorageKeys(
+      page.items.map((file: { readonly key: string }) => file.key)
+    );
     for (const file of page.items) {
       const fileId = ids.get(file.key);
-      if (fileId) {
+      if (typeof fileId === "string" && fileId !== "") {
         yield {
           pathname: fileId,
           uploadedAt: new Date(file.lastModified ?? Date.now()),
@@ -126,9 +120,9 @@ const iterateStoredFiles = async function* iterateStoredFiles(): AsyncGenerator<
       }
     }
     ({ cursor } = page);
-  } while (cursor);
+  } while (typeof cursor === "string" && cursor !== "");
 };
-/* oxlint-enable init-declarations, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations */
 
 const listFiles = async (): Promise<{
   files: { pathname: string; uploadedAt: Date; url: string }[];
@@ -136,13 +130,7 @@ const listFiles = async (): Promise<{
   files: await Array.fromAsync(iterateStoredFiles()),
 });
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): deleteFilesByUrls uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-undefined (#519): deleteFilesByUrls uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): deleteFilesByUrls receives SDK bulk-error callback records containing mutable FilesError objects; the caller URL list is readonly.
- * typescript/promise-function-async (#606): The storage-key map callback passes each original DB promise into Promise.all; async wrappers would change promise identity and synchronous throw timing.
- * typescript/strict-boolean-expressions (#610): deleteFilesByUrls intentionally keeps the existing falsy-value behavior of errors?.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable no-magic-numbers -- Zero in explicit empty-array checks is required by unicorn/explicit-length-check. */
 const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const keys = [
     ...new Set(
@@ -156,31 +144,28 @@ const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   }
 
   const result = await getFiles().delete(
-    await Promise.all(keys.map((key) => storageKeyForFile(key)))
+    await Promise.all(keys.map(async (key) => await storageKeyForFile(key)))
   );
-  const errors = "errors" in result ? result.errors : undefined;
-  if (errors?.length) {
+  const errors = "errors" in result ? (result.errors ?? []) : [];
+  if (errors.length > 0) {
     throw new AggregateError(
-      errors.map(({ error }) => error),
+      errors.map((failure: { readonly error: unknown }) => failure.error),
       `Failed to delete ${errors.length} stored file(s)`
     );
   }
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
- * no-undefined (#519): downloadFile uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): downloadFile accepts range?: { start: number; end?: number }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+/* oxlint-disable no-undefined -- The SDK receives no options when no byte range was requested, preserving its default download behavior. */
 const downloadFile = async (
   key: string,
-  range?: { start: number; end?: number }
+  range?: { readonly start: number; readonly end?: number }
 ): Promise<StoredFile> =>
   await getFiles().download(
     await storageKeyForFile(key),
     range ? { range } : undefined
   );
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
 const getFileMetadata = async (key: string): Promise<StoredFile> =>
   await getFiles().head(await storageKeyForFile(key));
@@ -196,7 +181,7 @@ const getFileProviderUrl = async (key: string): Promise<string | null> => {
     return null;
   }
   const value = await fileService.url(await storageKeyForFile(key), {
-    expiresIn: 300,
+    expiresIn: SIGNED_URL_LIFETIME_SECONDS,
   });
   const url = new URL(value);
   return url.protocol === "http:" || url.protocol === "https:" ? value : null;

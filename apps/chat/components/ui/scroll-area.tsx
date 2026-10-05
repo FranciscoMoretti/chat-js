@@ -44,7 +44,7 @@ const ScrollBar = reactForwardRef<
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ScrollBar.displayName = ScrollAreaPrimitiveScrollAreaScrollbar.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- ScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- ScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
 const ScrollArea = reactForwardRef<
   ReactComponentRef<typeof ScrollAreaPrimitiveRoot>,
@@ -62,7 +62,7 @@ const ScrollArea = reactForwardRef<
     <ScrollAreaPrimitiveCorner />
   </ScrollAreaPrimitiveRoot>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 ScrollArea.displayName = ScrollAreaPrimitiveRoot.displayName;
 
 export { ScrollArea, ScrollBar };

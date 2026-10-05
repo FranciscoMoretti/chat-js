@@ -60,12 +60,12 @@ const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
 };
 
 interface ProjectIconProps {
-  className?: string;
-  color: ProjectColorName;
-  icon: ProjectIconName;
-  size?: number;
+  readonly className?: string;
+  readonly color: ProjectColorName;
+  readonly icon: ProjectIconName;
+  readonly size?: number;
 }
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
 
 export const ProjectIcon = ({
   icon,
@@ -84,4 +84,4 @@ export const ProjectIcon = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

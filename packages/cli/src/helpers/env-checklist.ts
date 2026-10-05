@@ -23,16 +23,14 @@ interface EnvRequirementLike {
   readonly options: readonly (readonly string[])[];
 }
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type EnvVarEntry = {
+interface EnvVarEntry {
   /** The env var name(s), e.g. "AI_GATEWAY_API_KEY" or "AUTH_GOOGLE_ID + AUTH_GOOGLE_SECRET" */
   vars: string;
   /** Human-readable description derived from the Zod schema */
   description: string;
   /** Group key used to render "one of" alternatives together */
   oneOfGroup?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const envDescriptions = new Map(Object.entries(envVarDescriptions));
 const singleAlternative = 1;

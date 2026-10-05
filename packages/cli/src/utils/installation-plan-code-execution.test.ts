@@ -8,8 +8,6 @@ import { toolDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
 import { planInstallation } from "./installation-plan";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
 const roots: string[] = [];
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -47,16 +45,16 @@ const definition = (id: string) =>
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("rejects conflicting provider selections and permits reinstalling the selected provider", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-provider-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-provider-"));
   roots.push(root);
-  const directory = join(root, "tools/chatjs/first");
+  const directory = path.join(root, "tools/chatjs/first");
   await mkdir(directory, { recursive: true });
   await writeFile(
-    join(directory, "chatjs.json"),
+    path.join(directory, "chatjs.json"),
     JSON.stringify(definition("first"))
   );
   await writeFile(
-    join(directory, "tool.ts"),
+    path.join(directory, "tool.ts"),
     "export const executeCode = {};\n"
   );
   const server = Bun.serve({
@@ -109,17 +107,17 @@ test("rejects conflicting provider selections and permits reinstalling the selec
 /* oxlint-disable eslint/max-lines-per-function, eslint/max-statements -- The upgrade scenario preserves the old installed descriptor while testing both successful planning and pre-write rejection. */
 /* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun rejection matchers are awaited despite their void declarations. */
 test("replaces an older executor descriptor but rejects newly requested providers without capabilities", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-executor-upgrade-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-executor-upgrade-"));
   roots.push(root);
   const old = definition("previous-executor");
   const { codeExecutionCapabilities, ...oldDescriptor } = old;
   expect(codeExecutionCapabilities).toBeDefined();
-  const directory = join(root, "tools/chatjs/previous-executor");
+  const directory = path.join(root, "tools/chatjs/previous-executor");
   await mkdir(directory, { recursive: true });
   const installed = JSON.stringify(oldDescriptor);
-  await writeFile(join(directory, "chatjs.json"), installed);
+  await writeFile(path.join(directory, "chatjs.json"), installed);
   await writeFile(
-    join(directory, "tool.ts"),
+    path.join(directory, "tool.ts"),
     "export const executeCode = {};\n"
   );
   let declared = true;
@@ -159,7 +157,7 @@ test("replaces an older executor descriptor but rejects newly requested provider
     await expect(
       planInstallation(root, selection, { replace: true })
     ).rejects.toThrow("declared execution, cleanup and usage capabilities");
-    expect(await readFile(join(directory, "chatjs.json"), "utf-8")).toBe(
+    expect(await readFile(path.join(directory, "chatjs.json"), "utf-8")).toBe(
       installed
     );
   } finally {

@@ -3,11 +3,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import pathModule from "node:path";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { dirname, join, resolve } = pathModule;
-
-const repoRoot = resolve(import.meta.dir, "../../../..");
-const turbo = join(repoRoot, "node_modules/.bin/turbo");
+const repoRoot = pathModule.resolve(import.meta.dir, "../../../..");
+const turbo = pathModule.join(repoRoot, "node_modules/.bin/turbo");
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 let fixture: string;
 /* oxlint-enable eslint/init-declarations */
@@ -43,7 +40,7 @@ const git = (...args: string[]): string => {
 /* oxlint-enable eslint/no-magic-numbers */
 
 beforeAll(async (): Promise<void> => {
-  fixture = await mkdtemp(join(tmpdir(), "chatjs-turbo-affected-"));
+  fixture = await mkdtemp(pathModule.join(tmpdir(), "chatjs-turbo-affected-"));
   // Use the real task graph, workspace manifests, and lockfile without
   // installing dependencies or copying generated artifacts into the fixture.
   const files = [
@@ -63,10 +60,12 @@ beforeAll(async (): Promise<void> => {
   ];
   await Promise.all(
     files.map(async (path): Promise<void> => {
-      await mkdir(dirname(join(fixture, path)), { recursive: true });
+      await mkdir(pathModule.dirname(pathModule.join(fixture, path)), {
+        recursive: true,
+      });
       await writeFile(
-        join(fixture, path),
-        await readFile(join(repoRoot, path))
+        pathModule.join(fixture, path),
+        await readFile(pathModule.join(repoRoot, path))
       );
     })
   );
@@ -119,8 +118,8 @@ test.each([
   "scaffold affected detection for %s",
   async (path, affected): Promise<void> => {
     const base = git("rev-parse", "HEAD");
-    const target = join(fixture, path);
-    await mkdir(dirname(target), { recursive: true });
+    const target = pathModule.join(fixture, path);
+    await mkdir(pathModule.dirname(target), { recursive: true });
     const previous = await readFile(target, "utf-8").catch((): string => "");
     await writeFile(target, `${previous}\n`);
     git("add", path);

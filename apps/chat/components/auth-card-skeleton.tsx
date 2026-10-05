@@ -10,13 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface AuthCardSkeletonProps {
-  title: string;
-  description: string;
-  className?: string;
-  cardClassName?: string;
-  variant?: "form" | "device";
+  readonly title: string;
+  readonly description: string;
+  readonly className?: string;
+  readonly cardClassName?: string;
+  readonly variant?: "form" | "device";
 }
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- AuthCardSkeleton: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth -- AuthCardSkeleton: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const AuthCardSkeleton = ({
   title,
@@ -51,4 +51,4 @@ export const AuthCardSkeleton = ({
     </Card>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */

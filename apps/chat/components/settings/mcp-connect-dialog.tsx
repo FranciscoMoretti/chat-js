@@ -37,9 +37,7 @@ import type { McpConnector } from "@/lib/db/schema";
 import { useTRPC } from "@/trpc/react";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 
@@ -57,7 +55,7 @@ export const McpConnectDialog = ({
   open: boolean;
   onClose: () => void;
   connector: McpConnector | null;
-}) => {
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const [isRedirecting, setIsRedirecting] = useState(false);
   const attempt = useRef(0);
@@ -232,7 +230,5 @@ export const McpConnectDialog = ({
 
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */

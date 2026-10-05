@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { conversationBinding } from "./contracts";
 import { eveCopyInput } from "./copy-input";
 import type { EveCopyInput } from "./copy-input";
@@ -11,9 +13,7 @@ const keyFor = (ownerId: string, sourceId: string): string =>
 
 type CopyStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable max-params, typescript/strict-boolean-expressions --
- max-params (#511): preparePendingEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/strict-boolean-expressions (#610): preparePendingEveCopy intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
+/* oxlint-disable max-params -- Existing exported copy preparation API takes storage, owner, source and model separately.  */
 const preparePendingEveCopy = (
   storage: CopyStorage,
   ownerId: string,
@@ -23,7 +23,7 @@ const preparePendingEveCopy = (
   const key = keyFor(ownerId, sourceConversationId);
   const saved = storage.getItem(key);
   const input = eveCopyInput.parse(
-    saved
+    saved !== null && saved !== ""
       ? JSON.parse(saved)
       : { modelId, operationId: crypto.randomUUID(), sourceConversationId }
   );
@@ -33,10 +33,8 @@ const preparePendingEveCopy = (
   storage.setItem(key, JSON.stringify(input));
   return input;
 };
-/* oxlint-enable max-params, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params */
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- typescript/strict-boolean-expressions (#610): finishPendingEveCopy intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
 const finishPendingEveCopy = (
   storage: CopyStorage,
   ownerId: string,
@@ -45,13 +43,13 @@ const finishPendingEveCopy = (
   const key = keyFor(ownerId, input.sourceConversationId);
   const stored = storage.getItem(key);
   if (
-    stored &&
+    stored !== null &&
+    stored !== "" &&
     eveCopyInput.parse(JSON.parse(stored)).operationId === input.operationId
   ) {
     storage.removeItem(key);
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 class EveCopyRequestError extends Error {
   public readonly retryable: boolean;
@@ -68,9 +66,46 @@ class EveCopyRequestError extends Error {
   }
 }
 
-/* oxlint-disable max-statements, no-undefined --
- max-statements (#512): requestEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): requestEveCopy uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+const copyFailureSchema = z.object({
+  conversationId: z.uuid().optional(),
+  error: z.string(),
+  retryable: z.boolean().optional(),
+});
+
+const readCopyFailure = async (
+  response: ReadonlyNativeSurface<Response>
+): Promise<EveCopyRequestError> => {
+  const failure = copyFailureSchema.safeParse(
+    await response.json().catch((): void => {
+      // The failure schema rejects an absent JSON body.
+    })
+  );
+  return new EveCopyRequestError(
+    failure.success
+      ? failure.data.error
+      : "Unable to save. Sign in and retry the same copy.",
+    failure.success ? failure.data.retryable !== false : true,
+    // oxlint-disable-next-line no-undefined -- A malformed failure has no optional conversation identity; the constructor preserves absence.
+    failure.success ? failure.data.conversationId : undefined
+  );
+};
+
+const copyRequestError = (
+  error: unknown,
+  aborted: boolean
+): EveCopyRequestError => {
+  if (aborted) {
+    return new EveCopyRequestError(
+      "Saving is taking longer than expected. Retry to recover the same copy."
+    );
+  }
+  return error instanceof EveCopyRequestError
+    ? error
+    : new EveCopyRequestError(
+        "Saving is unconfirmed. Retry to recover the same copy."
+      );
+};
+
 const requestEveCopy = async (
   input: EveCopyInput
 ): Promise<z.output<typeof conversationBinding>> => {
@@ -83,41 +118,13 @@ const requestEveCopy = async (
       signal,
     });
     if (!response.ok) {
-      const failure = z
-        .object({
-          conversationId: z.uuid().optional(),
-          error: z.string(),
-          retryable: z.boolean().optional(),
-        })
-        .safeParse(
-          await response.json().catch((): void => {
-            // The failure schema rejects an absent JSON body.
-          })
-        );
-      throw new EveCopyRequestError(
-        failure.success
-          ? failure.data.error
-          : "Unable to save. Sign in and retry the same copy.",
-        failure.success ? failure.data.retryable !== false : true,
-        failure.success ? failure.data.conversationId : undefined
-      );
+      throw await readCopyFailure(response);
     }
     return conversationBinding.parse(await response.json());
   } catch (error) {
-    if (signal.aborted) {
-      throw new EveCopyRequestError(
-        "Saving is taking longer than expected. Retry to recover the same copy."
-      );
-    }
-    if (error instanceof EveCopyRequestError) {
-      throw error;
-    }
-    throw new EveCopyRequestError(
-      "Saving is unconfirmed. Retry to recover the same copy."
-    );
+    throw copyRequestError(error, signal.aborted);
   }
 };
-/* oxlint-enable max-statements, no-undefined */
 export {
   EveCopyRequestError,
   finishPendingEveCopy,

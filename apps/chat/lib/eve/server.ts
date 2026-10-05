@@ -4,13 +4,16 @@ import { env } from "@/lib/env";
 import { getEveConnectionOptions } from "./connection-options";
 import { resolveWorkflowWorld } from "./world-config";
 
-/* oxlint-disable typescript/strict-boolean-expressions -- typescript/strict-boolean-expressions (#610): assertEveConfigured intentionally keeps the existing falsy-value behavior of env.WORKFLOW_POSTGRES_URL; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const assertEveConfigured = (): void => {
   if (
     !(
-      env.EVE_INTERNAL_ORIGIN &&
-      env.EVE_GATEWAY_SECRET &&
-      (resolveWorkflowWorld(env) === "vercel" || env.WORKFLOW_POSTGRES_URL)
+      typeof env.EVE_INTERNAL_ORIGIN === "string" &&
+      env.EVE_INTERNAL_ORIGIN !== "" &&
+      typeof env.EVE_GATEWAY_SECRET === "string" &&
+      env.EVE_GATEWAY_SECRET !== "" &&
+      (resolveWorkflowWorld(env) === "vercel" ||
+        (typeof env.WORKFLOW_POSTGRES_URL === "string" &&
+          env.WORKFLOW_POSTGRES_URL !== ""))
     )
   ) {
     throw new Error(
@@ -18,11 +21,8 @@ const assertEveConfigured = (): void => {
     );
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-params (#511): eveRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/prefer-readonly-parameter-types (#565): eveRequest accepts init: RequestInit = {}; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): eveRequest intentionally keeps the existing falsy-value behavior of modelId; init.body; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable max-params, typescript/prefer-readonly-parameter-types -- Existing exported request API accepts owner, path, native request options and optional model/tool headers. Fetch RequestInit accepts mutable header tuple arrays and body streams; a deep readonly wrapper is not assignable to the native fetch contract. */
 const eveRequest = async (
   owner: string,
   path: string,
@@ -36,12 +36,13 @@ const eveRequest = async (
     ...connection.headers,
     authorization: `Bearer ${connection.auth.bearer}`,
   });
-  if (modelId) {
+  if (typeof modelId === "string" && modelId !== "") {
     headers.set("x-chatjs-model", modelId);
   }
-  if (selectedTool) {
+  if (typeof selectedTool === "string") {
     headers.set("x-chatjs-tool", selectedTool);
   }
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve fetch BodyInit presence semantics: an empty string sends no JSON content-type, while populated text, buffers and streams do.
   if (init.body) {
     headers.set("content-type", "application/json");
   }
@@ -52,5 +53,5 @@ const eveRequest = async (
     redirect: "error",
   });
 };
-/* oxlint-enable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, typescript/prefer-readonly-parameter-types */
 export { assertEveConfigured, eveRequest };

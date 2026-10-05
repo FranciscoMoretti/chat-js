@@ -21,7 +21,6 @@ import type {
 } from "@/lib/social-auth";
 
 const emptyQuery: Record<string, string> = {};
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- GoogleIcon: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
 
 const GoogleIcon = ({
   className,
@@ -48,7 +47,6 @@ const GoogleIcon = ({
     />
   </svg>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp -- VercelIcon: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className }: { className?: string }). */
 
 const VercelIcon = ({

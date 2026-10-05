@@ -38,7 +38,7 @@ const Alert = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Alert.displayName = "Alert";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AlertTitle = reactForwardRef<
   HTMLParagraphElement,
@@ -53,9 +53,9 @@ const AlertTitle = reactForwardRef<
     />
   </>
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 AlertTitle.displayName = "AlertTitle";
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AlertDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AlertDescription = reactForwardRef<
   HTMLParagraphElement,
@@ -67,7 +67,7 @@ const AlertDescription = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 AlertDescription.displayName = "AlertDescription";
 
 export { Alert, AlertDescription, AlertTitle };

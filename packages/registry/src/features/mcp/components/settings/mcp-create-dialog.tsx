@@ -68,9 +68,7 @@ const mcpConnectorFormSchema = z.object({
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -84,9 +82,9 @@ export const McpCreateDialog = ({
   open,
   onClose,
 }: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+  readonly open: boolean;
+  readonly onClose: () => void;
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
@@ -343,8 +341,6 @@ export const McpCreateDialog = ({
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

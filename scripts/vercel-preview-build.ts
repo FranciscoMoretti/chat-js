@@ -1,9 +1,8 @@
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
-/* oxlint-disable import/no-relative-parent-imports -- the ../apps/chat/node_modules/postgres import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-import type postgresType from "../apps/chat/node_modules/postgres";
-/* oxlint-enable import/no-relative-parent-imports */
+import type postgresType from "postgres";
+
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,

@@ -30,7 +30,7 @@ const Avatar = reactForwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 Avatar.displayName = AvatarPrimitiveRoot.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AvatarImage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AvatarImage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AvatarImage = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveImage>,
@@ -42,9 +42,9 @@ const AvatarImage = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 AvatarImage.displayName = AvatarPrimitiveImage.displayName;
-/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AvatarFallback: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- AvatarFallback: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
 const AvatarFallback = reactForwardRef<
   ReactComponentRef<typeof AvatarPrimitiveFallback>,
@@ -59,7 +59,7 @@ const AvatarFallback = reactForwardRef<
     {...props}
   />
 ));
-/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 AvatarFallback.displayName = AvatarPrimitiveFallback.displayName;
 
 export { Avatar, AvatarFallback, AvatarImage };

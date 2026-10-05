@@ -22,9 +22,6 @@ import {
   scaffoldFromTemplate,
 } from "./scaffold";
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = pathModule;
-
 const tempDirs: string[] = [];
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalUserAgent = process.env.npm_config_user_agent;
@@ -163,7 +160,7 @@ describe("scaffoldFromTemplate", (): void => {
     await scaffoldFromTemplate(destination);
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
     expect(manifest.dependencies.eve).toBe("npm:@chat-js/eve@0.61.0-chatjs.0");
     const archives = {
@@ -176,7 +173,9 @@ describe("scaffoldFromTemplate", (): void => {
       );
       expect(
         // oxlint-disable-next-line eslint/no-await-in-loop -- Check each generated archive against the same staged scaffold.
-        await Bun.file(join(destination, "vendor", archiveName)).exists()
+        await Bun.file(
+          pathModule.join(destination, "vendor", archiveName)
+        ).exists()
       ).toBe(true);
     }
   });
@@ -216,7 +215,7 @@ describe("scaffoldFromTemplate", (): void => {
       "vitest.eve.config.ts",
       "vitest.eve-provider.config.ts",
     ]) {
-      expect(existsSync(join(destination, file))).toBe(false);
+      expect(existsSync(pathModule.join(destination, file))).toBe(false);
     }
     for (const file of [
       "tests/chat.e2e.ts",
@@ -230,10 +229,10 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/world-config.ts",
       "vitest.config.ts",
     ]) {
-      expect(existsSync(join(destination, file))).toBe(true);
+      expect(existsSync(pathModule.join(destination, file))).toBe(true);
     }
     const playwright = await readFile(
-      join(destination, "playwright.config.ts"),
+      pathModule.join(destination, "playwright.config.ts"),
       "utf-8"
     );
     expect(playwright).not.toContain('name: "visual"');
@@ -241,16 +240,19 @@ describe("scaffoldFromTemplate", (): void => {
     expect(playwright).toContain('name: "reasoning"');
     expect(playwright).toContain('name: "artifacts"');
     const tsconfig = await readFile(
-      join(destination, "tsconfig.json"),
+      pathModule.join(destination, "tsconfig.json"),
       "utf-8"
     );
     expect(tsconfig).not.toContain("@eve-test");
     expect(tsconfig).not.toContain("@world-postgres-test");
-    const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
+    const lint = await readFile(
+      pathModule.join(destination, "oxlint.config.ts"),
+      "utf-8"
+    );
     expect(lint).not.toContain("tests/eve-fixture");
     expect(lint.match(/options: \{ typeAware: true \}/gu)).toHaveLength(1);
     const lintManifest: unknown = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     expect(lintManifest).toMatchObject({
       devDependencies: { "oxlint-tsgolint": "7.0.2001" },
@@ -260,7 +262,7 @@ describe("scaffoldFromTemplate", (): void => {
     });
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     for (const dependency of [
       "@electric-sql/pglite",
@@ -291,7 +293,7 @@ describe("scaffoldFromTemplate", (): void => {
     await scaffoldFromTemplate(destination);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["files-sdk"]).toBe("2.5.0");
@@ -300,7 +302,9 @@ describe("scaffoldFromTemplate", (): void => {
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
     expect(
-      await Bun.file(join(destination, "lib/storage-provider.ts")).exists()
+      await Bun.file(
+        pathModule.join(destination, "lib/storage-provider.ts")
+      ).exists()
     ).toBe(false);
   });
 
@@ -311,7 +315,7 @@ describe("scaffoldFromTemplate", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
       dependencies: Record<string, string>;
@@ -331,10 +335,16 @@ describe("scaffoldFromTemplate", (): void => {
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
     expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
-    expect(existsSync(join(destination, "biome.jsonc"))).toBe(false);
-    expect(existsSync(join(destination, "oxlint.config.ts"))).toBe(true);
-    expect(existsSync(join(destination, "oxfmt.config.ts"))).toBe(true);
-    expect(existsSync(join(destination, "oxlint-baseline.json"))).toBe(false);
+    expect(existsSync(pathModule.join(destination, "biome.jsonc"))).toBe(false);
+    expect(existsSync(pathModule.join(destination, "oxlint.config.ts"))).toBe(
+      true
+    );
+    expect(existsSync(pathModule.join(destination, "oxfmt.config.ts"))).toBe(
+      true
+    );
+    expect(
+      existsSync(pathModule.join(destination, "oxlint-baseline.json"))
+    ).toBe(false);
 
     for (const path of [
       "app/(chat)/api/chat",
@@ -353,14 +363,18 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/thread",
       "providers/chat-input-provider.tsx",
     ]) {
-      expect(existsSync(join(destination, path))).toBe(false);
+      expect(existsSync(pathModule.join(destination, path))).toBe(false);
     }
 
     expect(
-      existsSync(join(destination, "components/chat-header-view.tsx"))
+      existsSync(
+        pathModule.join(destination, "components/chat-header-view.tsx")
+      )
     ).toBe(true);
     expect(
-      existsSync(join(destination, "components/chat/chat-layout.tsx"))
+      existsSync(
+        pathModule.join(destination, "components/chat/chat-layout.tsx")
+      )
     ).toBe(true);
   });
 
@@ -371,7 +385,7 @@ describe("scaffoldFromTemplate", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
       scripts: Record<string, string>;
@@ -384,14 +398,26 @@ describe("scaffoldFromTemplate", (): void => {
     }
 
     expect(
-      await readFile(join(destination, "playwright.config.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "playwright.config.ts"),
+        "utf-8"
+      )
     ).toContain('command: "npm run dev"');
     expect(
-      await readFile(join(destination, "scripts", "check-env.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "scripts", "check-env.ts"),
+        "utf-8"
+      )
     ).toContain("npm run fetch:models");
     expect(
       await readFile(
-        join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
+        pathModule.join(
+          destination,
+          "lib",
+          "ai",
+          "gateways",
+          "fallback-models.ts"
+        ),
         "utf-8"
       )
     ).toContain("npm run fetch:models");
@@ -404,7 +430,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(
       await Promise.all(
         neonFiles.map((file): Promise<boolean> =>
-          Bun.file(join(destination, "scripts", file)).exists()
+          Bun.file(pathModule.join(destination, "scripts", file)).exists()
         )
       )
     ).toEqual(neonFiles.map((): boolean => false));
@@ -427,12 +453,12 @@ describe("scaffoldFromTemplate", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     ) as {
       packageManager?: string;
     };
     const workspaceConfig = await readFile(
-      join(destination, "pnpm-workspace.yaml"),
+      pathModule.join(destination, "pnpm-workspace.yaml"),
       "utf-8"
     );
 
@@ -454,34 +480,40 @@ describe("scaffoldFromTemplate", (): void => {
 
     await scaffoldFromTemplate(destination);
 
-    expect(existsSync(join(destination, "agent/tools/deepResearch.ts"))).toBe(
-      false
-    );
+    expect(
+      existsSync(pathModule.join(destination, "agent/tools/deepResearch.ts"))
+    ).toBe(false);
     for (const name of [
       "researchPlanner",
       "researcher",
       "researchCompressor",
       "researchWriter",
     ]) {
-      expect(existsSync(join(destination, "agent/subagents", name))).toBe(
-        false
-      );
+      expect(
+        existsSync(pathModule.join(destination, "agent/subagents", name))
+      ).toBe(false);
     }
     expect(
-      existsSync(join(destination, "tools", "chatjs", "get-weather"))
+      existsSync(pathModule.join(destination, "tools", "chatjs", "get-weather"))
     ).toBe(false);
     expect(
-      await readFile(join(destination, "tools", "chatjs", "tools.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "tools", "chatjs", "tools.ts"),
+        "utf-8"
+      )
     ).not.toContain("getWeather");
     expect(
-      await readFile(join(destination, "tools", "chatjs", "ui.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "tools", "chatjs", "ui.ts"),
+        "utf-8"
+      )
     ).not.toContain("GetWeatherRenderer");
   });
 
   it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
     const projectDir = makeTempDir("chat-app-fallback");
-    const templatesDir = join(getCliPackageRoot(), "templates");
-    const backupDir = join(
+    const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
+    const backupDir = pathModule.join(
       tmpdir(),
       `chat-js-cli-templates-${crypto.randomUUID()}`
     );
@@ -497,22 +529,24 @@ describe("scaffoldFromTemplate", (): void => {
         projectName: "my-chat-app",
       });
       const electronTsconfig = await readFile(
-        join(projectDir, "electron", "tsconfig.json"),
+        pathModule.join(projectDir, "electron", "tsconfig.json"),
         "utf-8"
       );
       expect(electronTsconfig).toContain('"../next-env.d.ts"');
       expect(electronTsconfig).toContain('"../electron.d.ts"');
       expect(electronTsconfig).not.toContain("../chat/");
-      expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+      expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
+        true
+      );
       const lintConfig = await readFile(
-        join(projectDir, "oxlint.config.ts"),
+        pathModule.join(projectDir, "oxlint.config.ts"),
         "utf-8"
       );
       expect(lintConfig.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
         1
       );
       const lintManifest: unknown = JSON.parse(
-        await readFile(join(projectDir, "package.json"), "utf-8")
+        await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
       );
       expect(lintManifest).toMatchObject({
         devDependencies: { "oxlint-tsgolint": "7.0.2001" },
@@ -523,23 +557,29 @@ describe("scaffoldFromTemplate", (): void => {
 
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const packageJson = JSON.parse(
-        await readFile(join(projectDir, "package.json"), "utf-8")
+        await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
       ) as {
         dependencies: Record<string, string>;
       };
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       const electronPackageJson = JSON.parse(
-        await readFile(join(projectDir, "electron", "package.json"), "utf-8")
+        await readFile(
+          pathModule.join(projectDir, "electron", "package.json"),
+          "utf-8"
+        )
       ) as {
         devDependencies: Record<string, string>;
       };
 
-      expect(existsSync(join(projectDir, "tests/eve-browser.e2e.ts"))).toBe(
-        false
-      );
+      expect(
+        existsSync(pathModule.join(projectDir, "tests/eve-browser.e2e.ts"))
+      ).toBe(false);
       expect(
         existsSync(
-          join(projectDir, "lib/db/migrations/eve-runtime-migration.test.ts")
+          pathModule.join(
+            projectDir,
+            "lib/db/migrations/eve-runtime-migration.test.ts"
+          )
         )
       ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
@@ -575,7 +615,7 @@ describe("scaffoldFromGit", (): void => {
     const destination = makeTempDir("plain-git-destination");
     await mkdir(source, { recursive: true });
     await writeFile(
-      join(source, "package.json"),
+      pathModule.join(source, "package.json"),
       JSON.stringify({ dependencies: {}, name: "plain-template" })
     );
     for (const args of [
@@ -599,7 +639,7 @@ describe("scaffoldFromGit", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     ) as { dependencies: Record<string, string> };
     expect(packageJson.dependencies).toEqual({});
   });
@@ -625,21 +665,24 @@ describe("scaffoldElectron", (): void => {
       packageManager: "npm",
       projectName: "my-chat-app",
     });
-    const electronDir = join(projectDir, "electron");
-    const nodeModules = join(electronDir, "node_modules");
+    const electronDir = pathModule.join(projectDir, "electron");
+    const nodeModules = pathModule.join(electronDir, "node_modules");
     const resolveDependency = createRequire(import.meta.url).resolve;
-    await mkdir(join(nodeModules, ".bin"), { recursive: true });
+    await mkdir(pathModule.join(nodeModules, ".bin"), { recursive: true });
     await Promise.all([
-      symlink(resolveDependency("tsx/cli"), join(nodeModules, ".bin/tsx")),
+      symlink(
+        resolveDependency("tsx/cli"),
+        pathModule.join(nodeModules, ".bin/tsx")
+      ),
       symlink(
         pathModule.dirname(resolveDependency("png2icons/package.json")),
-        join(nodeModules, "png2icons"),
+        pathModule.join(nodeModules, "png2icons"),
         "dir"
       ),
     ]);
     // Isolate app configuration so prebuild needs no environment credentials.
     await writeFile(
-      join(projectDir, "lib/config.ts"),
+      pathModule.join(projectDir, "lib/config.ts"),
       `export const config = {
         appName: "Node Prebuild",
         appPrefix: "node-prebuild",
@@ -658,7 +701,7 @@ describe("scaffoldElectron", (): void => {
     }).toEqual({ exitCode: 0, stderr: "" });
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const branding = JSON.parse(
-      await readFile(join(electronDir, "branding.json"), "utf-8")
+      await readFile(pathModule.join(electronDir, "branding.json"), "utf-8")
     );
     expect(branding).toEqual({
       appName: "Node Prebuild",
@@ -669,7 +712,7 @@ describe("scaffoldElectron", (): void => {
     });
     const icons = await Promise.all(
       ["png", "icns", "ico"].map((extension) =>
-        readFile(join(electronDir, "build", `icon.${extension}`))
+        readFile(pathModule.join(electronDir, "build", `icon.${extension}`))
       )
     );
     for (const icon of icons) {
@@ -684,9 +727,9 @@ describe("scaffoldElectron", (): void => {
       packageManager: "npm",
       projectName: "my-chat-app",
     });
-    const electronDir = join(projectDir, "electron");
+    const electronDir = pathModule.join(projectDir, "electron");
     await writeFile(
-      join(electronDir, "branding.json"),
+      pathModule.join(electronDir, "branding.json"),
       JSON.stringify({
         appName: "My Chat App",
         appPrefix: "my-chat-app",
@@ -694,7 +737,7 @@ describe("scaffoldElectron", (): void => {
       })
     );
     const source = await readFile(
-      join(electronDir, "forge.config.ts"),
+      pathModule.join(electronDir, "forge.config.ts"),
       "utf-8"
     );
     const { outputText } = ts.transpileModule(source, {
@@ -766,7 +809,10 @@ describe("scaffoldElectron", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(projectDir, "electron", "package.json"), "utf-8")
+      await readFile(
+        pathModule.join(projectDir, "electron", "package.json"),
+        "utf-8"
+      )
     ) as {
       packageManager?: string;
       devDependencies: Record<string, string>;
@@ -782,24 +828,24 @@ describe("scaffoldElectron", (): void => {
     expect(packageJson.devDependencies.esbuild).toBeDefined();
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const rootPackageJson = JSON.parse(
-      await readFile(join(projectDir, "package.json"), "utf-8")
+      await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
     ) as {
       devDependencies: Record<string, string>;
     };
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const rootTsconfig = JSON.parse(
-      await readFile(join(projectDir, "tsconfig.json"), "utf-8")
+      await readFile(pathModule.join(projectDir, "tsconfig.json"), "utf-8")
     ) as {
       exclude?: string[];
     };
     const electronTsconfig = await readFile(
-      join(projectDir, "electron", "tsconfig.json"),
+      pathModule.join(projectDir, "electron", "tsconfig.json"),
       "utf-8"
     );
     expect(electronTsconfig).toContain('"../next-env.d.ts"');
     expect(electronTsconfig).toContain('"../electron.d.ts"');
     expect(electronTsconfig).not.toContain("../chat/");
-    expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+    expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(true);
 
     expect(packageJson.devDependencies.tsx).toBe(
       rootPackageJson.devDependencies.tsx
@@ -811,7 +857,10 @@ describe("scaffoldElectron", (): void => {
     }
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
-      await readFile(join(projectDir, "electron", "README.md"), "utf-8")
+      await readFile(
+        pathModule.join(projectDir, "electron", "README.md"),
+        "utf-8"
+      )
     ).not.toContain("bun ");
   });
 
@@ -827,10 +876,13 @@ describe("scaffoldElectron", (): void => {
 
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const packageJson = JSON.parse(
-      await readFile(join(projectDir, "electron", "package.json"), "utf-8")
+      await readFile(
+        pathModule.join(projectDir, "electron", "package.json"),
+        "utf-8"
+      )
     ) as { pnpm?: unknown };
     const workspaceConfig = await readFile(
-      join(projectDir, "electron", "pnpm-workspace.yaml"),
+      pathModule.join(projectDir, "electron", "pnpm-workspace.yaml"),
       "utf-8"
     );
 

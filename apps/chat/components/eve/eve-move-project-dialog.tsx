@@ -23,9 +23,9 @@ export const EveMoveProjectDialog = ({
   onClose,
 }: {
   readonly conversation: {
-    id: string;
-    title: string;
-    projectId: string | null;
+    readonly id: string;
+    readonly title: string;
+    readonly projectId: string | null;
   };
   readonly onClose: () => void;
 }): ReactJSX.Element => {

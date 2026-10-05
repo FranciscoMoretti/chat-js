@@ -35,10 +35,10 @@ const PureSidebarChatItem = ({
   renderShareContent,
 }: {
   readonly chat: {
-    id: string;
-    title: string;
-    isPinned: boolean;
-    projectId: string | null;
+    readonly id: string;
+    readonly title: string;
+    readonly isPinned: boolean;
+    readonly projectId: string | null;
   };
   readonly isActive: boolean;
   readonly onDelete?: (chatId: string) => void;
@@ -156,7 +156,7 @@ const PureSidebarChatItem = ({
   );
 };
 /* oxlint-enable max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
+/* oxlint-disable max-statements -- SidebarChatItem: ; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including prevProps). */
 
 export const SidebarChatItem = memo(
   PureSidebarChatItem,
@@ -190,4 +190,4 @@ export const SidebarChatItem = memo(
     return true;
   }
 );
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */

@@ -11,11 +11,19 @@ import {
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
- * no-magic-numbers (#517): parseRange uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): parseRange intentionally keeps the existing falsy-value behavior of match.groups?.suffix; match.groups?.end; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): parseRange preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable no-magic-numbers, unicorn/no-null -- Byte offsets are zero-based and inclusive; null is the existing invalid-range sentinel. */
+const parseSuffixRange = (
+  suffix: string,
+  size: number
+): { end: number; start: number } | null => {
+  const length = Number(suffix);
+  return Number.isSafeInteger(length) && length > 0 && size > 0
+    ? { end: size - 1, start: Math.max(size - length, 0) }
+    : null;
+};
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
+
+/* oxlint-disable no-magic-numbers, unicorn/no-null -- Byte offsets are zero-based and inclusive; null is the existing invalid-range sentinel. */
 const parseRange = (
   value: string,
   size: number
@@ -24,14 +32,15 @@ const parseRange = (
   if (!match) {
     return null;
   }
-  if (match.groups?.suffix) {
-    const length = Number(match.groups.suffix);
-    return Number.isSafeInteger(length) && length > 0 && size > 0
-      ? { end: size - 1, start: Math.max(size - length, 0) }
-      : null;
+  const { suffix, start: rangeStart, end: rangeEnd } = match.groups ?? {};
+  if (typeof suffix === "string") {
+    return parseSuffixRange(suffix, size);
   }
-  const start = Number(match.groups?.start);
-  const requestedEnd = match.groups?.end ? Number(match.groups.end) : size - 1;
+  const start = Number(rangeStart);
+  const requestedEnd =
+    typeof rangeEnd === "string" && rangeEnd !== ""
+      ? Number(rangeEnd)
+      : size - 1;
   const end = Math.min(requestedEnd, size - 1);
   return Number.isSafeInteger(start) &&
     Number.isSafeInteger(end) &&
@@ -41,14 +50,13 @@ const parseRange = (
     ? { end, start }
     : null;
 };
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null -- * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null -- * init-declarations (#507): createFileContentResponse assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): createFileContentResponse keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): createFileContentResponse uses 206, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): createFileContentResponse uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): createFileContentResponse intentionally keeps the existing falsy-value behavior of providerUrl; rangeHeader; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): createFileContentResponse preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const createFileContentResponse = async (
   request: ReadonlyNativeSurface<Request>,
@@ -59,7 +67,7 @@ export const createFileContentResponse = async (
     const providerUrl = allowRedirect
       ? await getFileProviderUrl(key)
       : undefined;
-    if (providerUrl) {
+    if (typeof providerUrl === "string" && providerUrl !== "") {
       return new Response(null, {
         headers: {
           "Cache-Control": "private, no-store",
@@ -73,7 +81,7 @@ export const createFileContentResponse = async (
     const supportsRange = storageSupportsRange();
     let range: { start: number; end: number } | undefined;
     let fullSize: number | undefined;
-    if (rangeHeader && supportsRange) {
+    if (rangeHeader !== null && rangeHeader !== "" && supportsRange) {
       const metadata = await getFileMetadata(key);
       fullSize = metadata.size;
       const parsed = parseRange(rangeHeader, fullSize);
@@ -111,4 +119,4 @@ export const createFileContentResponse = async (
     return new Response("File download failed", { status: 500 });
   }
 };
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null */

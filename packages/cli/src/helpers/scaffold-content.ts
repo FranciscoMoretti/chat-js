@@ -7,6 +7,7 @@ import {
   researchAgentDirectories,
 } from "../../../registry/src/tools/research";
 /* oxlint-enable import/no-relative-parent-imports */
+import { isJsonObject } from "./json-object";
 
 const researchTestFiles = [
   "lib/eve/research-availability.test.ts",
@@ -139,9 +140,6 @@ interface ScaffoldPackageManifest {
 interface ScaffoldTsConfig {
   compilerOptions: { paths: Record<string, unknown> };
 }
-
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isScaffoldPackageManifest = (
   value: unknown

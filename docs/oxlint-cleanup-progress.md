@@ -1,5 +1,17 @@
 # Oxlint cleanup progress
 
+## Autonomous cleanup restarted on 2026-10-05
+
+The current goal is to enable every rule in the pinned Ultracite core, React and Next presets, fix practical violations, and retain narrowly scoped source exceptions only for concrete contracts, conflicting conventions or substantial redesigns. Minimal file-specific configuration exceptions are permitted when Oxlint cannot honor source directives. This supersedes the earlier policy accepting eleven globally disabled rules. Work stays in the existing checkout on `codex/oxlint-complete-cleanup`; commits are local and one PR will be opened only after completion.
+
+The first batch reduces current suppression entries from **10,211 to 10,030** across canonical sources and checked-in generated copies, a net reduction of **181**. It fixes CLI imports using the existing package alias, validates unknown scaffold JSON, makes owned UI inputs readonly, adds exact component return types, preserves explicit empty-value behavior in backend helpers, and simplifies filename sanitization. Five MCP component changes were applied to canonical registry sources before regenerating the installed copies. Electron icon generation now awaits filesystem operations and produces identical PNG, ICNS and ICO hashes.
+
+Stale workspace dependency links resolved older Ultracite and AI SDK versions despite a frozen install. Restoring the pinned dependency graph resolved the shared-thread type error without changing its source. A root build script now declares its existing Postgres version as a development dependency and imports its type through the package name rather than a physical workspace `node_modules` path.
+
+Full `bun lint`, all seven `bun test:types` tasks and `bun template:check` pass for this batch. The prescribed CLI `test:unit` command passes all 200 tests on Node 24, matching CI; this includes generated CommonJS/tsx Electron prebuilds. Focused backend tests pass 29 cases; preview build/environment tests pass 45 cases; Electron icon tests pass two cases. All 29 changed app components have identical emitted JavaScript syntax trees; 28 also have byte-identical emitted text. The existing MCP Chromium fixture passes 18 tests. Local MCP captures were inspected; UI Verify fleet comparison and full authenticated screens are not claimed because the required service key and application environment are unavailable.
+
+The goal remains open. Fourteen effective globally disabled rules still need adoption; broad existing suppressions remain pending individual review. The old all-110 diagnostic totals below are historical measurements, not measurements of the current checkout or the new full-preset scope.
+
 Tracking: [#503](https://github.com/FranciscoMoretti/chat-js/issues/503). Integration PR: [#646](https://github.com/FranciscoMoretti/chat-js/pull/646).
 
 The goal remains **open**. Every starting suppression must be removed by a verified code fix or canonical regeneration, or retained after individual review with a narrowly scoped explanation of its actual contract. Passing lint, an existing comment, or a completed batch does not establish completion. Substantial deferred work remains unresolved.

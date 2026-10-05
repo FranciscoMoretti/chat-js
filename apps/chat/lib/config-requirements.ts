@@ -1,4 +1,5 @@
 import type { AuthenticationConfig } from "./config-schema";
+import type { ReadonlyNativeSurface } from "./readonly-native-surface";
 
 type EnvVarName = keyof NodeJS.ProcessEnv;
 const ALTERNATIVE_SEPARATOR = /\s+or\s+/u;
@@ -19,9 +20,9 @@ interface EnvRequirement {
   runtimeAuth?: string;
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/prefer-readonly-parameter-types (#565): formatRequirementDescription accepts requirement: EnvRequirement; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): formatRequirementDescription intentionally keeps the existing falsy-value behavior of requirement.description; groupsAlreadyListed; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-const formatRequirementDescription = (requirement: EnvRequirement): string => {
+const formatRequirementDescription = (
+  requirement: ReadonlyNativeSurface<EnvRequirement>
+): string => {
   if (requirement.allOf) {
     return requirement.allOf
       .map((group) => `(${formatRequirementDescription(group)})`)
@@ -36,18 +37,24 @@ const formatRequirementDescription = (requirement: EnvRequirement): string => {
       option.split(CREDENTIAL_SEPARATOR).map((name) => name.trim())
     );
   const groupsAlreadyListed =
-    describedOptions &&
+    Array.isArray(describedOptions) &&
     normalizedCredentialGroups(describedOptions) ===
       normalizedCredentialGroups(
         requirement.options.map((option) => option.map(String))
       );
-  if (requirement.description && keys && !groupsAlreadyListed) {
+  if (
+    typeof requirement.description === "string" &&
+    requirement.description !== "" &&
+    keys !== "" &&
+    !groupsAlreadyListed
+  ) {
     return `${requirement.description} (${keys})`;
   }
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
-  return requirement.description || keys;
+  return typeof requirement.description === "string" &&
+    requirement.description !== ""
+    ? requirement.description
+    : keys;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const authEnvRequirements: Record<keyof AuthenticationConfig, EnvRequirement> =
   {
@@ -65,10 +72,9 @@ const authEnvRequirements: Record<keyof AuthenticationConfig, EnvRequirement> =
     },
   };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): isRequirementSatisfied accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; group; option; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const isRequirementSatisfied = (
-  requirement: EnvRequirement,
-  env: NodeJS.ProcessEnv
+  requirement: ReadonlyNativeSurface<EnvRequirement>,
+  env: Readonly<NodeJS.ProcessEnv>
 ): boolean => {
   if (requirement.allOf) {
     return requirement.allOf.every((group) =>
@@ -82,18 +88,15 @@ const isRequirementSatisfied = (
     )
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types (#565): getMissingRequirement accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): getMissingRequirement preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const getMissingRequirement = (
-  requirement: EnvRequirement,
-  env: NodeJS.ProcessEnv
+  requirement: ReadonlyNativeSurface<EnvRequirement>,
+  env: Readonly<NodeJS.ProcessEnv>
 ): string | null =>
   isRequirementSatisfied(requirement, env)
-    ? null
+    ? // oxlint-disable-next-line unicorn/no-null -- Missing requirements use null as the existing exported success sentinel.
+      null
     : formatRequirementDescription(requirement);
-/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export {
   authEnvRequirements,
   formatRequirementDescription,

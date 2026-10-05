@@ -19,15 +19,13 @@ const jsonOutput: z.ZodType<ToolOutput> = z.lazy(() =>
     z.record(z.string(), jsonOutput.optional()),
   ])
 );
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): base uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const TOOL_RESULT_VERSION = 1;
+
 const base = z.object({
   kind: z.literal("chatjs.tool-result"),
   updates: z.array(jsonOutput).optional(),
-  version: z.literal(1),
+  version: z.literal(TOOL_RESULT_VERSION),
 });
-/* oxlint-enable no-magic-numbers */
 
 const toolOutputSchema = z.discriminatedUnion("status", [
   base.extend({ output: jsonOutput, status: z.literal("success") }),
@@ -44,18 +42,15 @@ const usage = z.object({
 
 const toolResultSchema = z.intersection(toolOutputSchema, z.object({ usage }));
 
-/* oxlint-disable id-length, no-magic-numbers -- id-length (#506): ToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-no-magic-numbers (#517): ToolResult uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-type ToolResult<T extends ToolOutput> = {
+type ToolResult<Output extends ToolOutput> = {
   kind: "chatjs.tool-result";
-  version: 1;
+  version: typeof TOOL_RESULT_VERSION;
   usage: { costUsd?: number };
   updates?: ToolOutput[];
 } & (
-  | { status: "success"; output: T }
+  | { status: "success"; output: Output }
   | { status: "error"; output: null; error: string }
 );
-/* oxlint-enable id-length, no-magic-numbers */
 
 const hasEveToolReceipt = (value: unknown): boolean =>
   typeof value === "object" &&
@@ -63,13 +58,12 @@ const hasEveToolReceipt = (value: unknown): boolean =>
   "kind" in value &&
   value.kind === "chatjs.tool-result";
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types -- id-length (#506): createToolResult uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-typescript/prefer-readonly-parameter-types (#565): createToolResult accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const createToolResult = <T extends ToolOutput>(
-  output: T,
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Tool receipts preserve the exact mutable output and updates references returned by tools; deep readonly inputs cannot satisfy the existing mutable ToolResult contract without cloning. */
+const createToolResult = <Output extends ToolOutput>(
+  output: Output,
   costUsd: number | undefined,
   updates?: ToolOutput[]
-): ToolResult<T> => {
+): ToolResult<Output> => {
   jsonOutput.parse(output);
   usage.parse({ costUsd });
   if (updates) {
@@ -81,12 +75,11 @@ const createToolResult = <T extends ToolOutput>(
     status: "success",
     updates,
     usage: { costUsd },
-    version: 1,
+    version: TOOL_RESULT_VERSION,
   };
 };
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/prefer-readonly-parameter-types (#565): createToolError accepts updates?: ToolOutput[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): createToolError preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- Error receipts preserve the caller's mutable updates reference and serialize null output in the existing discriminated wire schema. */
 const createToolError = (
   costUsd: number | undefined,
   updates?: ToolOutput[]

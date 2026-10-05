@@ -25,10 +25,9 @@ let prebuildComplete = false;
 /* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
 /* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runBunScript: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runBunScript = (
   script: string,
-  env: Partial<NodeJS.ProcessEnv> = {}
+  env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
     env: { ...process.env, ...env },
@@ -41,7 +40,6 @@ const runBunScript = (
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
@@ -105,7 +103,6 @@ const loadBranding = (): Branding => {
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable eslint/max-lines-per-function -- createForgeConfig: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable typescript/strict-boolean-expressions -- createForgeConfig: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
@@ -150,7 +147,10 @@ const createForgeConfig = (): ForgeConfig => {
             homepage: branding.appUrl,
             icon: "./build/icon.png",
             maintainer:
-              orgName && orgEmail
+              typeof orgName === "string" &&
+              orgName !== "" &&
+              typeof orgEmail === "string" &&
+              orgEmail !== ""
                 ? `${orgName} <${orgEmail}>`
                 : (orgName ?? orgEmail ?? appName),
           },
@@ -194,7 +194,6 @@ const createForgeConfig = (): ForgeConfig => {
     },
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/max-lines-per-function */
 
 const config = createForgeConfig();
