@@ -38,13 +38,16 @@ export const updateEnvironmentExample = async (
     .filter((name) => !new RegExp(`^${name}=`, "mu").test(preserved))
     .map((name) => `${name}=`);
   const block = `${start}\n# Credentials for installed source. Fill applicable alternatives in .env.local.\n${entries.join("\n")}\n${end}`;
-  const result =
-    from !== notFound && to >= from
-      ? original.slice(startOfFile, from) +
+  if (from !== notFound && to >= from) {
+    await writeFile(
+      file,
+      original.slice(startOfFile, from) +
         block +
         original.slice(to + end.length)
-      : `${original}\n${block}\n`;
-  await writeFile(file, result);
+    );
+    return;
+  }
+  await writeFile(file, `${original}\n${block}\n`);
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

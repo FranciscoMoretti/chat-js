@@ -450,42 +450,39 @@ test("provider installation refuses inferred native dependency destinations befo
   const registry = Bun.serve({
     fetch(request): Response {
       const inferred = new URL(request.url).pathname.endsWith("ui.json");
-      return Response.json(
-        inferred
-          ? {
-              files: [
-                {
-                  content: "// replacement UI\n",
-                  path: "fixture.tsx",
-                  type: "registry:ui",
-                },
-              ],
-              name: "fixture-ui",
+      if (inferred) {
+        return Response.json({
+          files: [
+            {
+              content: "// replacement UI\n",
+              path: "fixture.tsx",
               type: "registry:ui",
-            }
-          : {
-              files: [
-                {
-                  content: "export const createStorageAdapter = () => ({});\n",
-                  path: "storage-provider.ts",
-                  target: "~/lib/storage-provider.ts",
-                  type: "registry:file",
-                },
-              ],
-              meta: {
-                chatjs: {
-                  contractVersion: 1,
-                  id: "fixture-storage",
-                  kind: "storage",
-                },
-              },
-              name: "fixture-storage",
-              registryDependencies: [
-                `http://127.0.0.1:${registry.port}/ui.json`,
-              ],
-              type: "registry:item",
-            }
-      );
+            },
+          ],
+          name: "fixture-ui",
+          type: "registry:ui",
+        });
+      }
+      return Response.json({
+        files: [
+          {
+            content: "export const createStorageAdapter = () => ({});\n",
+            path: "storage-provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
+          },
+        ],
+        meta: {
+          chatjs: {
+            contractVersion: 1,
+            id: "fixture-storage",
+            kind: "storage",
+          },
+        },
+        name: "fixture-storage",
+        registryDependencies: [`http://127.0.0.1:${registry.port}/ui.json`],
+        type: "registry:item",
+      });
     },
     hostname: "127.0.0.1",
     port: 0,

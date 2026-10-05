@@ -7,9 +7,34 @@ import { createRequire } from "node:module";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
+/* oxlint-disable oxc/no-async-await -- Probe one native manifest asynchronously; treat missing files as nonmatches while preserving other read and parse failures. */
+const hasMatchingPackageManifest = async (
+  directory: string,
+  packageName: string
+): Promise<boolean> => {
+  try {
+    const manifestSource = await readFile(
+      pathModule.join(directory, "package.json"),
+      "utf-8"
+    );
+    const manifest: unknown = JSON.parse(manifestSource);
+    return (
+      typeof manifest === "object" &&
+      manifest !== null &&
+      "name" in manifest &&
+      manifest.name === packageName
+    );
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+};
+/* oxlint-enable oxc/no-async-await */
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolvePackageDirectory); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolvePackageDirectory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
  * @param {string} packageName Package identifier to resolve through workspace dependencies.
@@ -27,29 +52,9 @@ export const resolvePackageDirectory = async (
   const filesystemRoot = pathModule.parse(directory).root;
 
   while (directory !== filesystemRoot) {
-    try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each parent depends on the resolved entry's preceding directory.
-      const manifestSource = await readFile(
-        pathModule.join(directory, "package.json"),
-        "utf-8"
-      );
-      const manifest: unknown = JSON.parse(manifestSource);
-      if (
-        typeof manifest === "object" &&
-        manifest !== null &&
-        "name" in manifest &&
-        manifest.name === packageName
-      ) {
-        return directory;
-      }
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !("code" in error) ||
-        error.code !== "ENOENT"
-      ) {
-        throw error;
-      }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect the current manifest before advancing to its parent; matches and non-missing errors stop traversal.
+    if (await hasMatchingPackageManifest(directory, packageName)) {
+      return directory;
     }
     directory = pathModule.dirname(directory);
   }
@@ -58,4 +63,3 @@ export const resolvePackageDirectory = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-statements */

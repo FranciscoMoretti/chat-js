@@ -64,11 +64,14 @@ const parseSessionRequest = (
   schema: typeof cancel | z.ZodUnion<[typeof message, typeof respond]>;
 } | null => {
   const groups = sessionPath.exec(path)?.groups;
-  const sessionId = groups?.sessionId;
+  if (!groups) {
+    return null;
+  }
+  const { sessionId } = groups;
   if (typeof sessionId !== "string") {
     return null;
   }
-  const action = groups?.operation;
+  const action = groups.operation;
   if (
     !(
       (method === "GET" && action === "stream") ||
@@ -92,13 +95,15 @@ const safeStreamQuery = (
     if (result.has(key)) {
       return null;
     }
-    if (
-      key === "startIndex"
-        ? !streamIndex.test(value)
-        : !(
-            (key === "includeTailIndex" || key === "streamControlVersion") &&
-            value === "1"
-          )
+    if (key === "startIndex") {
+      if (!streamIndex.test(value)) {
+        return null;
+      }
+    } else if (
+      !(
+        (key === "includeTailIndex" || key === "streamControlVersion") &&
+        value === "1"
+      )
     ) {
       return null;
     }
@@ -112,10 +117,13 @@ const sameOrigin = (
   origin: string
 ): boolean => {
   const supplied = request.headers.get("origin");
-  return supplied !== null && supplied !== ""
-    ? supplied === origin
-    : request.method === "GET" &&
-        request.headers.get("sec-fetch-site") !== "cross-site";
+  if (supplied !== null && supplied !== "") {
+    return supplied === origin;
+  }
+  return (
+    request.method === "GET" &&
+    request.headers.get("sec-fetch-site") !== "cross-site"
+  );
 };
 
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (parseSessionRequest, safeStreamQuery, sameOrigin); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

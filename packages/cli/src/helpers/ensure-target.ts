@@ -5,7 +5,6 @@ import { highlighter } from "#cli/utils/highlighter";
 import { logger } from "#cli/utils/logger";
 
 const FAILURE_EXIT_CODE = 1;
-const EMPTY_DIRECTORY_SIZE = 0;
 
 const rejectTarget = (messages: readonly string[]): never => {
   for (const message of messages) {
@@ -38,7 +37,8 @@ export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   }
 
   const files = await readdir(targetDir);
-  if (files.length > EMPTY_DIRECTORY_SIZE) {
+  // oxlint-disable-next-line no-magic-numbers -- A directory is empty only when its entry count is zero.
+  if (files.length > 0) {
     rejectTarget([
       `Target directory is not empty: ${highlighter.info(targetDir)}`,
       "Please choose an empty directory or remove existing files.",
