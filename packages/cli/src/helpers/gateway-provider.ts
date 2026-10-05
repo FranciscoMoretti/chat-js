@@ -1,51 +1,85 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { GatewaySelection } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
-import { updateEnvironmentExample } from "../utils/environment-example";
-import { generatedRegistrationSource } from "../utils/generated-registration-source";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { preflight } from "../utils/preflight";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { GatewaySelection } from "#cli/registry/gateways";
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+import { preflight } from "#cli/utils/preflight";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+import type { ReadonlyInput } from "./readonly-input";
+
+const JSON_INDENTATION_SPACES = 2;
+const KEYS_EQUAL = 0;
+const KEY_BEFORE = -1;
+const KEY_AFTER = 1;
+
 const sortJsonKeys = (value: unknown): unknown => {
   if (Array.isArray(value)) {
-    return value.map((nestedValue) => sortJsonKeys(nestedValue));
+    return value.map((nestedValue: unknown) => sortJsonKeys(nestedValue));
   }
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value)
-        .toSorted(([left], [right]) => {
-          if (left === right) {
-            return 0;
+        .toSorted(
+          (
+            [left]: readonly [string, unknown],
+            [right]: readonly [string, unknown]
+          ) => {
+            if (left === right) {
+              return KEYS_EQUAL;
+            }
+            return left < right ? KEY_BEFORE : KEY_AFTER;
           }
-          return left < right ? -1 : 1;
-        })
-        .map(([key, nestedValue]) => [key, sortJsonKeys(nestedValue)])
+        )
+        .map(([key, nestedValue]: readonly [string, unknown]) => [
+          key,
+          sortJsonKeys(nestedValue),
+        ])
     );
   }
   return value;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Wire the installed gateway; source and dependencies are installed by shadcn. */
+const serializedDefaults = (
+  value: unknown
+): ReturnType<typeof JSON.stringify> =>
+  // oxlint-disable-next-line unicorn/no-null -- Native null means no JSON replacer while the third argument retains existing sorted, two-space model-default source formatting.
+  JSON.stringify(sortJsonKeys(value), null, JSON_INDENTATION_SPACES);
+
+const gatewayEnvVariables = (
+  definition: ReadonlyInput<GatewaySelection["definition"]>
+): string[] => {
+  const required = definition.envRequirements.flatMap(
+    (
+      requirement: ReadonlyInput<
+        GatewaySelection["definition"]["envRequirements"][number]
+      >
+    ) => requirement.options.flat()
+  );
+  return [...new Set([...required, ...definition.optionalEnv])];
+};
+
+const gatewayDefaultsSource = (
+  definition: ReadonlyInput<GatewaySelection["definition"]>
+): string =>
+  generatedRegistrationSource(`import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
+import type { Gateway } from "./gateway";
+
+export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];
+export const gatewayModelDefaults = ${serializedDefaults(definition.defaults)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
+export const gatewayCapabilities = ${JSON.stringify(definition.capabilities)};
+export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirements)};
+export const gatewayEnvVariables = ${JSON.stringify(gatewayEnvVariables(definition))};
+`);
+
+/**
+ * Wire the installed gateway; source and dependencies are installed by shadcn.
+ * @param destination Project receiving gateway defaults, model snapshot and env keys.
+ * @param selection Resolved descriptor with defaults, capabilities and credentials.
+ */
 export const configureGatewayProvider = async (
   destination: string,
-  selection: GatewaySelection
+  selection: ReadonlyInput<GatewaySelection>
 ): Promise<void> => {
   await preflight(destination, [
     "lib/ai/gateway-model-defaults.ts",
@@ -68,15 +102,7 @@ export const configureGatewayProvider = async (
   const { definition } = selection;
   await writeFile(
     path.join(destination, "lib/ai/gateway-model-defaults.ts"),
-    generatedRegistrationSource(`import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
-import type { Gateway } from "./gateway";
-
-export const gatewayType = ${JSON.stringify(definition.id)} satisfies InstanceType<typeof Gateway>["type"];
-export const gatewayModelDefaults = ${JSON.stringify(sortJsonKeys(definition.defaults), null, 2)} satisfies GatewayModelDefaults<InstanceType<typeof Gateway>>;
-export const gatewayCapabilities = ${JSON.stringify(definition.capabilities)};
-export const gatewayEnvRequirements = ${JSON.stringify(definition.envRequirements)};
-export const gatewayEnvVariables = ${JSON.stringify([...new Set([...definition.envRequirements.flatMap((requirement) => requirement.options.flat()), ...definition.optionalEnv])])};
-`)
+    gatewayDefaultsSource(definition)
   );
   if (
     !snapshot.includes(`generatedForGateway = ${JSON.stringify(definition.id)}`)
@@ -98,10 +124,3 @@ export const models: readonly AiGatewayModel[] = [];
     ...definition.optionalEnv,
   ]);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

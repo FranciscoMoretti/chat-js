@@ -3,11 +3,10 @@ import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 import { getLangfuseEnvironment } from "./credentials";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const register: InstrumentationRegistration = async ({
   appPrefix,
   runtime,
-}) => {
+}: Readonly<{ appPrefix: string; runtime: string | undefined }>) => {
   // Browser fixtures deliberately omit optional service credentials and exports.
   if (runtime !== "nodejs" || isPlaywrightTestEnvironment()) {
     return;
@@ -22,4 +21,3 @@ export const register: InstrumentationRegistration = async ({
     traceExporter: new LangfuseExporter(environment),
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

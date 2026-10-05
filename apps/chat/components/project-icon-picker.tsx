@@ -1,6 +1,7 @@
 "use client";
 
 import { Smile } from "lucide-react";
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 
 import { ProjectIcon } from "@/components/project-icon";
@@ -25,7 +26,7 @@ interface ProjectIconPickerProps {
   onColorChange: (color: ProjectColorName) => void;
   onIconChange: (icon: ProjectIconName) => void;
 }
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ProjectIconPicker = ({
   icon,
@@ -33,7 +34,7 @@ export const ProjectIconPicker = ({
   onIconChange,
   onColorChange,
   className,
-}: ProjectIconPickerProps) => {
+}: ProjectIconPickerProps): ReactJSX.Element => {
   const displayColor = color ?? DEFAULT_PROJECT_COLOR;
 
   return (
@@ -92,4 +93,4 @@ export const ProjectIconPicker = ({
     </Popover>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

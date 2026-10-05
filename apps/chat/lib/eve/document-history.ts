@@ -2,15 +2,17 @@ import type { MessageStreamEvent } from "eve/client";
 
 const nativeTurnId = /^turn_\d+$/u;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): documentHistoryTurns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): documentHistoryTurns's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep documentHistoryTurns's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep documentHistoryTurns's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): documentHistoryTurns accepts events: readonly MessageStreamEvent[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-/** Include inherited turns: restored history does not replay turn.started. */
-export const documentHistoryTurns = (events: readonly MessageStreamEvent[]) => {
+/**
+ * Include inherited turns: restored history does not replay turn.started.
+ * @param events Native history events, including restored prefixes and their before-turn boundary.
+ * @returns Unique native turn sequences in first-seen order; invalid inherited turn IDs fail validation.
+ */
+export const documentHistoryTurns = (
+  events: readonly MessageStreamEvent[]
+): number[] => {
   const turns = new Set<number>();
   const addTurn = (turnId: string): void => {
     if (!nativeTurnId.test(turnId)) {
@@ -36,4 +38,4 @@ export const documentHistoryTurns = (events: readonly MessageStreamEvent[]) => {
   }
   return [...turns];
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

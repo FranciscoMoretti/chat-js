@@ -3,7 +3,10 @@ import { FilesError } from "files-sdk";
 
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getBaseUrl } from "@/lib/url";
+
+const HTTP_NOT_FOUND = 404;
 
 // Minimal utilities to download assets from URL-based parts and inline them.
 
@@ -14,26 +17,23 @@ interface DownloadResult {
 
 type AssetDownloadResult = DownloadResult | null;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): DownloadImplementation accepts args: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-type DownloadImplementation = (args: {
-  url: URL;
-}) => Promise<AssetDownloadResult>;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+type DownloadImplementation = (
+  args: ReadonlyNativeSurface<{
+    url: URL;
+  }>
+) => Promise<AssetDownloadResult>;
 
-/* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): defaultDownload keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): defaultDownload uses 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): defaultDownload uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): defaultDownload accepts { url, }: { url: URL; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): defaultDownload intentionally keeps the existing falsy-value behavior of key; response.headers.get("content-type"); distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): defaultDownload preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const defaultDownload = async ({
   url,
-}: {
+}: ReadonlyNativeSurface<{
   url: URL;
-}): Promise<AssetDownloadResult> => {
+}>): Promise<AssetDownloadResult> => {
   const isApplicationUrl = url.origin === new URL(getBaseUrl()).origin;
   const key = isApplicationUrl ? keyFromFileUrl(url.toString()) : null;
   if (key) {
@@ -52,7 +52,7 @@ const defaultDownload = async ({
   }
 
   const response = await fetch(url);
-  if (response.status === 404) {
+  if (response.status === HTTP_NOT_FOUND) {
     return null;
   }
   if (!response.ok) {
@@ -65,7 +65,7 @@ const defaultDownload = async ({
   const arrayBuffer = await response.arrayBuffer();
   return { data: new Uint8Array(arrayBuffer), mediaType: contentType };
 };
-/* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): toHttpUrl intentionally keeps the existing falsy-value behavior of keyFromFileUrl(value); distinguishing empty, zero, and absent states requires a domain behavior decision.
@@ -101,16 +101,16 @@ const toHttpUrl = (value: unknown): URL | null => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): downloadAssetsFromModelMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): downloadAssetsFromModelMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): downloadAssetsFromModelMessages accepts messages: ModelMessage[]; url; { url, data }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * max-statements (#512): downloadAssetsFromModelMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): downloadAssetsFromModelMessages skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/prefer-readonly-parameter-types (#565): downloadAssetsFromModelMessages accepts messages: ModelMessage[]; url; { url, data }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
  * Collects all http(s) URLs from file/image parts in the provided messages and downloads them.
- * Returns a map keyed by the normalized URL string.
+ * @param messages Model messages whose file/image parts are inspected without changing their content.
+ * @param downloadImplementation URL reader invoked once per unique normalized HTTP(S) asset.
+ * @returns Downloaded binary payloads and media types keyed by normalized URL; absent assets retain null results.
  */
 const downloadAssetsFromModelMessages = async (
   messages: ModelMessage[],
@@ -136,16 +136,21 @@ const downloadAssetsFromModelMessages = async (
 
   const urls = [...urlSet].map((url) => new URL(url));
   const downloaded = await Promise.all(
-    urls.map(async (url) => ({
+    urls.map(async (url: ReadonlyNativeSurface<URL>) => ({
       data: await downloadImplementation({ url }),
       url,
     }))
   );
   return Object.fromEntries(
-    downloaded.map(({ url, data }) => [url.toString(), data])
+    downloaded.map(
+      ({ url, data }: ReadonlyNativeSurface<(typeof downloaded)[number]>) => [
+        url.toString(),
+        data,
+      ]
+    )
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/prefer-readonly-parameter-types (#565): mapFilePart accepts part: FilePart; downloaded: Record<string, AssetDownloadResult>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

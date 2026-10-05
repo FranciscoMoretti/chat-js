@@ -3,9 +3,12 @@ import { createRequire } from "node:module";
 import pathModule from "node:path";
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/** Resolve an installed package from the workspace that declares the dependency. */
+/**
+ * Resolve an installed package from the workspace that declares the dependency.
+ * @param packageName Package identifier to resolve through workspace dependencies.
+ * @param resolveFrom Workspace directory whose package.json anchors module resolution.
+ * @returns The ancestor directory with that package's matching manifest name.
+ */
 export const resolvePackageDirectory = async (
   packageName: string,
   resolveFrom: string
@@ -42,6 +45,4 @@ export const resolvePackageDirectory = async (
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable jsdoc/require-returns */
 /* oxlint-enable eslint/max-statements */

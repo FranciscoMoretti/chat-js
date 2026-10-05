@@ -8,20 +8,57 @@ const preview = {
   name: "preview/feature",
   parent_id: "br-quiet-pine-za1aryyz",
 };
+const rootBranch = {
+  created_at: "2026-01-01T00:00:00Z",
+  default: true,
+  id: "br-root",
+  name: "main",
+  // oxlint-disable-next-line unicorn/no-null -- Exercise Neon's explicit null parent sentinel separately from an omitted parent_id in a root-branch API response.
+  parent_id: null,
+  protected: false,
+};
+interface Branch {
+  created_at: string;
+  default?: boolean;
+  id: string;
+  name: string;
+  parent_id?: string | null;
+  primary?: boolean;
+  protected?: boolean;
+}
 interface RunOptions {
   state?: string;
   repo?: string;
   open?: boolean;
-  branches?: (typeof preview & {
-    default?: boolean;
-    primary?: boolean;
-    protected?: boolean;
-  })[];
+  branches?: Branch[];
   deleteStatus?: number;
-  pages?: { branches: (typeof preview)[]; pagination: { next: string } }[];
+  pages?: { branches: Branch[]; pagination: { next: string } }[];
   stateBeforeDelete?: string;
   openBeforeDelete?: boolean;
 }
+const expectRejection = async (
+  operation: Readonly<Promise<unknown>>,
+  messageFragment?: string
+): Promise<void> => {
+  try {
+    await operation;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        typeof messageFragment === "string" &&
+        !error.message.includes(messageFragment)
+      ) {
+        throw new Error(`Unexpected rejection: ${error.message}`, {
+          cause: error,
+        });
+      }
+      return;
+    }
+    throw new Error(`Unexpected rejection: ${String(error)}`, { cause: error });
+  }
+  throw new Error("Expected the operation to reject.");
+};
+
 /* oxlint-disable eslint/max-lines-per-function -- run: The scenario deliberately keeps its setup/action/assertions and cleanup in one lifetime. */
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -110,6 +147,25 @@ describe("preview database cleanup", (): void => {
       },
     ]);
   });
+  it("accepts root branches with null or absent parent_id beside the preview", async (): Promise<void> => {
+    const absentParent = {
+      created_at: rootBranch.created_at,
+      id: rootBranch.id,
+      name: rootBranch.name,
+    };
+    const results = await Promise.all(
+      [rootBranch, absentParent].map(
+        async (root) => await run({ branches: [root, preview] })
+      )
+    );
+    for (const { calls } of results) {
+      expect(calls.map((call): string => call.method)).toEqual([
+        "GET",
+        "DELETE",
+      ]);
+      expect(calls[1]?.url).toEndWith("/br-preview");
+    }
+  });
   it.each([{ state: "open" }, { repo: "fork/repo" }, { open: true }])(
     "skips unsafe PR ownership/state %j",
     async (options): Promise<void> => {
@@ -146,24 +202,24 @@ describe("preview database cleanup", (): void => {
     expect(result).toContain("Deleted");
   });
   it("checks uniqueness across all pages and rejects looping pagination", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(
+    await expectRejection(
       run({
         pages: [
           { branches: [preview], pagination: { next: "page2" } },
           { branches: [preview], pagination: { next: "" } },
         ],
-      })
-    ).rejects.toThrow("ambiguous");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(
+      }),
+      "ambiguous"
+    );
+    await expectRejection(
       run({
         pages: [
           { branches: [preview], pagination: { next: "page2" } },
           { branches: [], pagination: { next: "page2" } },
         ],
-      })
-    ).rejects.toThrow("repeated");
+      }),
+      "repeated"
+    );
   });
   it("treats a missing branch or concurrent deletion as successful cleanup", async (): Promise<void> => {
     const absent = await run({ branches: [] });
@@ -173,6 +229,7 @@ describe("preview database cleanup", (): void => {
   });
   it.each([
     { ...preview, id: "br-quiet-pine-za1aryyz" },
+    { ...preview, parent_id: rootBranch.parent_id },
     { ...preview, parent_id: "another-parent" },
     { ...preview, default: true },
     { ...preview, primary: true },
@@ -180,19 +237,12 @@ describe("preview database cleanup", (): void => {
   ])(
     "refuses protected or unrelated branches %j",
     async (branch): Promise<void> => {
-      // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-      await expect(run({ branches: [branch] })).rejects.toThrow("Refusing");
+      await expectRejection(run({ branches: [branch] }), "Refusing");
     }
   );
   it("rejects ambiguous branch names and reports API failure", async (): Promise<void> => {
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(run({ branches: [preview, preview] })).rejects.toThrow(
-      "ambiguous"
-    );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Bun promise matchers must be awaited even though their declarations expose a void return.
-    await expect(run({ deleteStatus: 403 })).rejects.toThrow(
-      "deletion failed (403)"
-    );
+    await expectRejection(run({ branches: [preview, preview] }), "ambiguous");
+    await expectRejection(run({ deleteStatus: 403 }), "deletion failed (403)");
   });
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

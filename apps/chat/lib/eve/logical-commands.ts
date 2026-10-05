@@ -1,3 +1,5 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 /* oxlint-disable typescript/consistent-type-definitions --
  * typescript/consistent-type-definitions (#559): CommandState preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
  */
@@ -14,24 +16,24 @@ const idle: CommandState = {
   pending: false,
 };
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): LogicalCommands uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep LogicalCommands's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep LogicalCommands's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): LogicalCommands accepts change: Partial<CommandState>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /** Command locks belong to the execution session, never the selected view. */
 export class LogicalCommands {
   private readonly states = new Map<string, CommandState>();
   private readonly listeners = new Set<() => void>();
-  public get = (id: string) => this.states.get(id) ?? idle;
-  public subscribe = (listener: () => void) => {
+  public get = (id: string): CommandState => this.states.get(id) ?? idle;
+  public subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
     };
   };
-  public update(id: string, change: Partial<CommandState>): void {
+  public update(
+    id: string,
+    change: ReadonlyNativeSurface<Partial<CommandState>>
+  ): void {
     this.states.set(id, { ...this.get(id), ...change });
     for (const listener of this.listeners) {
       listener();
@@ -45,4 +47,4 @@ export class LogicalCommands {
     return true;
   }
 }
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */

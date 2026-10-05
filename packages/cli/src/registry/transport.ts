@@ -2,7 +2,18 @@
  * shadcn still owns requests, authentication, redirects, caching and resolution.
  * Serialize operations so this temporary host policy cannot leak between calls.
  */
+// Read SDK fields without changing native method signatures or return values.
+type ReadonlyNative<Value> = Value extends (
+  ...args: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? { readonly [Key in keyof Value]: ReadonlyNative<Value[Key]> }
+    : Value;
+
 let pending: Promise<void> = Promise.resolve();
+const REDIRECT_STATUS_START = 300;
+const REDIRECT_STATUS_END = 400;
 const requireSecure = (url: string, redirect = false): void => {
   const parsed = new URL(url);
   if (parsed.protocol === "https:") {
@@ -19,28 +30,28 @@ const requireSecure = (url: string, redirect = false): void => {
     "Registry requests must use HTTPS (HTTP is allowed only on loopback, without redirects)."
   );
 };
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const withRegistryTransport = <T>(
-  operation: () => Promise<T>
-): Promise<T> => {
-  const run = async (): Promise<T> => {
+export const withRegistryTransport = async <Result>(
+  operation: () => Promise<Result>
+): Promise<Result> => {
+  const run = async (): Promise<Result> => {
     const original = globalThis.fetch;
-    globalThis.fetch = new Proxy(original, {
-      apply(target, receiver, args: Parameters<typeof fetch>) {
+    globalThis.fetch = new Proxy<typeof fetch>(original, {
+      // oxlint-disable-next-line typescript/promise-function-async -- Reject an insecure URL synchronously before invoking native fetch; making this Proxy trap async would move that check into a rejected promise.
+      apply(
+        _target: unknown,
+        receiver: unknown,
+        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ProxyHandler.apply accepts a mutable native argument array; readonly tuples fail its SDK signature (any[] may have fewer elements), so retain the exact fetch tuple and forward it unchanged.
+        args: Parameters<typeof fetch>
+      ): ReturnType<typeof fetch> {
         const [input] = args;
         const url = input instanceof Request ? input.url : String(input);
         requireSecure(url);
-        return Reflect.apply(target, receiver, args).then(
-          (response: Response) => {
+        return Reflect.apply(original, receiver, args).then(
+          (response: ReadonlyNative<Response>): Response => {
             const location = response.headers.get("location");
             if (
-              response.status >= 300 &&
-              response.status < 400 &&
+              response.status >= REDIRECT_STATUS_START &&
+              response.status < REDIRECT_STATUS_END &&
               typeof location === "string" &&
               location !== ""
             ) {
@@ -57,7 +68,7 @@ export const withRegistryTransport = <T>(
       globalThis.fetch = original;
     }
   };
-  const result = (async (): Promise<T> => {
+  const result = (async (): Promise<Result> => {
     await pending;
     return await run();
   })();
@@ -65,14 +76,8 @@ export const withRegistryTransport = <T>(
     try {
       await result;
     } catch {
-      return undefined;
+      // A rejected operation must release the serialization queue.
     }
   })();
-  return result;
+  return await result;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/id-length */

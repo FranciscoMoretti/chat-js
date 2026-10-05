@@ -1,13 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-queries"; "../db/queries" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client, defaultMessageReducer } from "eve/client";
 
-import { getEveConversation } from "../db/eve-queries";
-import { saveEveMessageVote } from "../db/queries";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { saveEveMessageVote } from "@/lib/db/queries";
+
 import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): voteEveMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

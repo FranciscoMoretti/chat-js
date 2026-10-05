@@ -1,7 +1,12 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
+import type {
+  Experimental_VideoModelV4,
+  LanguageModelV4,
+  SharedV4ProviderOptions,
+} from "@ai-sdk/provider";
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-import type { LanguageModelMiddleware } from "ai";
+import type { ImageModel, LanguageModelMiddleware } from "ai";
 
 import { getActiveGateway } from "./active-gateway";
 import type { AppModelId } from "./app-models";
@@ -30,11 +35,12 @@ type ActiveGatewayVideoModelId = Parameters<
 >[0];
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-node/no-process-env (#537): getLanguageModel reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
-typescript/explicit-function-return-type (#560): Keep getLanguageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getLanguageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-const getLanguageModel = async (modelId: AppModelId) => {
+/* oxlint-disable no-magic-numbers, node/no-process-env --
+ no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+node/no-process-env (#537): getLanguageModel reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
+const getLanguageModel = async (
+  modelId: AppModelId
+): Promise<LanguageModelV4> => {
   const model = await getAppModelDefinition(modelId);
   const languageProvider = getActiveGateway().createLanguageModel(
     model.apiModelId
@@ -61,13 +67,12 @@ const getLanguageModel = async (modelId: AppModelId) => {
     model: languageProvider,
   });
 };
-/* oxlint-enable no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable no-magic-numbers, node/no-process-env */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/explicit-function-return-type (#560): Keep getImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
 typescript/prefer-readonly-parameter-types (#565): getImageModel accepts modelId: ActiveGatewayImageModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): getImageModel intentionally keeps the existing falsy-value behavior of imageModel; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-const getImageModel = (modelId: ActiveGatewayImageModelId) => {
+typescript/strict-boolean-expressions (#610): getImageModel intentionally keeps the existing falsy-value behavior of imageModel; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
+const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
   const imageModel = getActiveGateway().createImageModel(modelId);
   if (!imageModel) {
     throw new Error(
@@ -76,12 +81,13 @@ const getImageModel = (modelId: ActiveGatewayImageModelId) => {
   }
   return imageModel;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getVideoModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getVideoModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getVideoModel accepts modelId: ActiveGatewayVideoModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+typescript/prefer-readonly-parameter-types (#565): getVideoModel accepts modelId: ActiveGatewayVideoModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
+const getVideoModel = (
+  modelId: ActiveGatewayVideoModelId
+): Experimental_VideoModelV4 => {
   const videoModel = getActiveGateway().createVideoModel(modelId);
   if (!videoModel) {
     throw new Error(
@@ -90,22 +96,20 @@ const getVideoModel = (modelId: ActiveGatewayVideoModelId) => {
   }
   return videoModel;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getMultimodalImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getMultimodalImageModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 // Get a multimodal language model that can generate images via generateText
-const getMultimodalImageModel = (modelId: ActiveGatewayModelId) =>
-  getActiveGateway().createLanguageModel(modelId);
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+const getMultimodalImageModel = (
+  modelId: ActiveGatewayModelId
+): LanguageModelV4 => getActiveGateway().createLanguageModel(modelId);
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getModelProviderOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getModelProviderOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 // Model aliases removed - use getLanguageModel directly with specific model IDs
 
-const getModelProviderOptions = async (providerModelId: AppModelId) =>
+const getModelProviderOptions = async (
+  providerModelId: AppModelId
+): Promise<SharedV4ProviderOptions> =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+
 export {
   getImageModel,
   getLanguageModel,

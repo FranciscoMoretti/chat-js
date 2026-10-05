@@ -1,17 +1,14 @@
 import { experimental_generateVideo as generateVideo } from "ai";
 import { defineTool } from "eve/tools";
+import type { ToolContext } from "eve/tools";
 
-import type { ToolModelProvider } from "@/lib/ai/tool-context";
 import { config } from "@/lib/config";
 import { eveGeneratedFileUploader } from "@/lib/eve/generated-files";
 import { createEveToolCost } from "@/lib/eve/tool-cost";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { eveToolModelProvider } from "@/lib/eve/tool-models";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-import type { FileUploader } from "@/lib/file-storage";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-enable import/max-dependencies */
 
 import { generateVideoInput } from "./schemas";
 
@@ -21,9 +18,10 @@ const COST_CENTS = 50;
 const log = createModuleLogger("ai.tools.generate-video");
 const DEFAULT_ASPECT_RATIO = "16:9";
 const DEFAULT_DURATION_SECONDS = 5;
+const FIRST_SUBTYPE_INDEX = 0;
+const FIRST_PARAMETER_INDEX = 0;
 const ALLOWED_EXTENSIONS = new Set(["mp4", "webm", "mov"]);
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const resolveVideoExtension = (mediaType?: string): string => {
   if (!(typeof mediaType === "string" && mediaType !== "")) {
     return "mp4";
@@ -34,20 +32,21 @@ const resolveVideoExtension = (mediaType?: string): string => {
     return "mp4";
   }
 
-  const subtype = subtypeWithParams.split(";")[0]?.trim().toLowerCase();
-  if (!subtype) {
+  const subtype = subtypeWithParams
+    .split(";")
+    .at(FIRST_SUBTYPE_INDEX)
+    ?.trim()
+    .toLowerCase();
+  if (!(typeof subtype === "string" && subtype !== "")) {
     return "mp4";
   }
 
   const mappedSubtype = subtype === "quicktime" ? "mov" : subtype;
   return ALLOWED_EXTENSIONS.has(mappedSubtype) ? mappedSubtype : "mp4";
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const resolveVideoModel = async (
-  modelProvider: ToolModelProvider,
+  modelProvider: Readonly<typeof eveToolModelProvider>,
   selectedModel?: string
 ): Promise<string> => {
   if (typeof selectedModel === "string" && selectedModel !== "") {
@@ -61,138 +60,224 @@ const resolveVideoModel = async (
     }
   }
   const modelId = config.ai.tools.video.default;
-  if (!modelId) {
+  if (!(typeof modelId === "string" && modelId !== "")) {
     throw new Error(
       "Set ai.tools.video.default to a video model supported by your gateway."
     );
   }
   return modelId;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+type Context = Readonly<
+  Pick<ToolContext, "session"> & { abortSignal: Readonly<AbortSignal> }
+>;
+type Usage = Readonly<
+  NonNullable<
+    Parameters<typeof createEveToolCost>[typeof FIRST_PARAMETER_INDEX]
+  >
+>;
+type GenerationOptions = Readonly<{
+  abortSignal: Readonly<AbortSignal>;
+  aspectRatio: "16:9" | "9:16" | "1:1";
+  durationSeconds: number;
+  prompt: string;
+  startMs: number;
+}>;
+type Input = Readonly<{
+  prompt: string;
+  aspectRatio?: "16:9" | "9:16" | "1:1";
+  durationSeconds?: number;
+}>;
+type Integration = Readonly<{
+  costAccumulator: Readonly<ReturnType<typeof createEveToolCost>>;
+  uploadFile: ReturnType<typeof eveGeneratedFileUploader>;
+  usage: Usage;
+}>;
+type PreparedGeneration = Readonly<{
+  integration: Integration;
+  modelProvider: Readonly<typeof eveToolModelProvider>;
+  options: GenerationOptions;
+  selectedModel?: string;
+}>;
+const videoRequest = (
+  modelId: string,
+  options: GenerationOptions,
+  isGoogleModel: boolean
+): Parameters<typeof generateVideo>[typeof FIRST_PARAMETER_INDEX] => ({
+  abortSignal: options.abortSignal,
+  aspectRatio: options.aspectRatio,
+  duration: options.durationSeconds,
+  model: eveToolModelProvider.createVideoModel(modelId),
+  prompt: options.prompt,
+  providerOptions: {
+    ...(isGoogleModel && {
+      google: { aspectRatio: options.aspectRatio },
+    }),
+  },
+});
+// A completed generation followed by a storage failure is an explicit domain result.
+const storeWithDomainFailure = async (
+  upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
+  usage: Usage
+): ReturnType<ReturnType<typeof eveGeneratedFileUploader>> => {
+  try {
+    return await upload();
+  } catch {
+    return usage.fail();
+  }
+};
+const storeGeneratedResult = async (
+  upload: () => ReturnType<ReturnType<typeof eveGeneratedFileUploader>>,
+  summary: Readonly<{ modelId: string; prompt: string; startMs: number }>,
+  usage: Usage
+): Promise<{ fileId: string; prompt: string; videoUrl: string }> => {
+  const uploaded = await storeWithDomainFailure(upload, usage);
+  log.info(
+    {
+      modelId: summary.modelId,
+      ms: Date.now() - summary.startMs,
+      videoUrl: uploaded.url,
+    },
+    "generateVideo: success"
+  );
+  return {
+    fileId: uploaded.fileId,
+    prompt: summary.prompt,
+    videoUrl: uploaded.url,
+  };
+};
+const generateAndStoreVideo = async (
+  modelId: string,
+  options: GenerationOptions,
+  integration: Integration
+): Promise<{ fileId: string; prompt: string; videoUrl: string }> => {
+  const isGoogleModel =
+    modelId.startsWith("google/") || modelId.includes("gemini");
+  log.debug({ modelId }, "generateVideo: resolved model");
+  const { video } = await generateVideo(
+    videoRequest(modelId, options, isGoogleModel)
+  );
+  const hasVideo = Boolean(video);
+  if (!hasVideo) {
+    throw new Error("No video generated");
+  }
+  // Provider usage is billable even if the subsequent storage upload fails.
+  integration.costAccumulator?.addAPICost("generateVideo", COST_CENTS);
+  const buffer = Buffer.from(video.uint8Array);
+  const uploadArguments = [
+    `generated-video-${Date.now()}.${resolveVideoExtension(video.mediaType)}`,
+    buffer,
+    video.mediaType,
+  ] as const;
+  return await storeGeneratedResult(
+    async () => await integration.uploadFile(...uploadArguments),
+    { modelId, prompt: options.prompt, startMs: options.startMs },
+    integration.usage
+  );
+};
+const prepareGeneration = (
+  input: Input,
+  context: Context,
+  usage: Usage
+): PreparedGeneration => {
+  const { abortSignal } = context;
+  const costAccumulator = createEveToolCost(usage);
+  const modelProvider = eveToolModelProvider;
+  const uploadFile = eveGeneratedFileUploader(context);
+  const selected = context.session.auth.current?.attributes.modelId;
+  // oxlint-disable-next-line eslint/no-undefined -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.
+  const selectedModel = typeof selected === "string" ? selected : undefined;
+  const startMs = Date.now();
+  return {
+    integration: { costAccumulator, uploadFile, usage },
+    modelProvider,
+    options: {
+      abortSignal,
+      aspectRatio: input.aspectRatio ?? DEFAULT_ASPECT_RATIO,
+      durationSeconds: input.durationSeconds ?? DEFAULT_DURATION_SECONDS,
+      prompt: input.prompt,
+      startMs,
+    },
+    selectedModel,
+  };
+};
+
+const throwVideoFailure = (
+  error: unknown,
+  startMs: number,
+  selectedModel?: string
+): never => {
+  const errorMessage = error instanceof Error ? error.message : "";
+  const isUnsupportedVideoGateway = errorMessage.includes(
+    "does not support video models"
+  );
+
+  log.error(
+    {
+      error:
+        error instanceof Error
+          ? { message: error.message, name: error.name }
+          : error,
+      ms: Date.now() - startMs,
+      selectedModel,
+    },
+    "generateVideo: failure"
+  );
+
+  if (isUnsupportedVideoGateway) {
+    throw new Error(
+      "Video generation is not available for the active gateway.",
+      { cause: error }
+    );
+  }
+
+  throw error;
+};
+
 export const generateVideoTool = defineTool({
   description:
     "Generate a short video clip from a text prompt. Use this when the user asks to create, make, or generate a video.",
-  execute: ({ prompt, aspectRatio, durationSeconds }, context) =>
-    executeWithToolUsage(context, async (usage) => {
-      const { abortSignal } = context;
-      const costAccumulator = createEveToolCost(usage);
-      const modelProvider = eveToolModelProvider;
-      const uploadFile = eveGeneratedFileUploader(context);
-      // A completed generation followed by a storage failure is an explicit domain result.
-      const storeFile: FileUploader = async (...args) => {
-        try {
-          return await uploadFile(...args);
-        } catch {
-          return usage.fail();
-        }
-      };
-      const selected = context.session.auth.current?.attributes.modelId;
-      const selectedModel = typeof selected === "string" ? selected : undefined;
-      const startMs = Date.now();
-      const finalAspectRatio = aspectRatio ?? DEFAULT_ASPECT_RATIO;
-      const finalDurationSeconds = durationSeconds ?? DEFAULT_DURATION_SECONDS;
-
+  execute: async (
+    { prompt, aspectRatio, durationSeconds }: Input,
+    context: Context
+  ) =>
+    await executeWithToolUsage(context, async (usage: Usage) => {
+      const prepared = prepareGeneration(
+        { aspectRatio, durationSeconds, prompt },
+        context,
+        usage
+      );
       log.info(
         {
-          aspectRatio: finalAspectRatio,
-          durationSeconds: finalDurationSeconds,
+          aspectRatio: prepared.options.aspectRatio,
+          durationSeconds: prepared.options.durationSeconds,
           promptLength: prompt.length,
-          selectedModel,
+          selectedModel: prepared.selectedModel,
         },
         "generateVideo: start"
       );
-
       try {
-        if (!modelProvider) {
+        const hasModelProvider = Boolean(prepared.modelProvider);
+        if (!hasModelProvider) {
           throw new Error("Video generation requires model provider context.");
         }
-        const modelId = await resolveVideoModel(modelProvider, selectedModel);
-        const isGoogleModel =
-          modelId.startsWith("google/") || modelId.includes("gemini");
-
-        log.debug({ modelId }, "generateVideo: resolved model");
-
-        const result = await generateVideo({
-          abortSignal,
-          aspectRatio: finalAspectRatio,
-          duration: finalDurationSeconds,
-          model: modelProvider.createVideoModel(modelId),
-          prompt,
-          providerOptions: {
-            ...(isGoogleModel && {
-              google: {
-                aspectRatio: finalAspectRatio,
-              },
-            }),
-          },
-        });
-
-        const { video } = result;
-        if (!video) {
-          throw new Error("No video generated");
-        }
-
-        // Provider usage is billable even if the subsequent storage upload fails.
-        costAccumulator?.addAPICost("generateVideo", COST_CENTS);
-
-        const buffer = Buffer.from(video.uint8Array);
-        const timestamp = Date.now();
-        const ext = resolveVideoExtension(video.mediaType);
-        const filename = `generated-video-${timestamp}.${ext}`;
-        const uploaded = await storeFile(filename, buffer, video.mediaType);
-
-        log.info(
-          {
-            modelId,
-            ms: Date.now() - startMs,
-            videoUrl: uploaded.url,
-          },
-          "generateVideo: success"
+        const modelId = await resolveVideoModel(
+          prepared.modelProvider,
+          prepared.selectedModel
         );
-
-        return { fileId: uploaded.fileId, prompt, videoUrl: uploaded.url };
+        return await generateAndStoreVideo(
+          modelId,
+          prepared.options,
+          prepared.integration
+        );
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "";
-        const isUnsupportedVideoGateway = errorMessage.includes(
-          "does not support video models"
+        return throwVideoFailure(
+          error,
+          prepared.options.startMs,
+          prepared.selectedModel
         );
-
-        log.error(
-          {
-            error:
-              error instanceof Error
-                ? { message: error.message, name: error.name }
-                : error,
-            ms: Date.now() - startMs,
-            selectedModel,
-          },
-          "generateVideo: failure"
-        );
-
-        if (isUnsupportedVideoGateway) {
-          throw new Error(
-            "Video generation is not available for the active gateway.",
-            { cause: error }
-          );
-        }
-
-        throw error;
       }
     }),
   inputSchema: generateVideoInput,
   toModelOutput: toolResultToModelOutput,
 });
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */

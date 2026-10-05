@@ -1,24 +1,30 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-accordion import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as AccordionPrimitive from "@radix-ui/react-accordion";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as AccordionPrimitiveRoot,
+  Item as AccordionPrimitiveItem,
+  Trigger as AccordionPrimitiveTrigger,
+  Header as AccordionPrimitiveHeader,
+  Content as AccordionPrimitiveContent,
+} from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  ComponentRef as ReactComponentRef,
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
-const Accordion = AccordionPrimitive.Root;
+const Accordion = AccordionPrimitiveRoot;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- AccordionItem: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }). */
 
-const AccordionItem = React.forwardRef<
-  React.ComponentRef<typeof AccordionPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>
->(({ className, ...props }, ref): React.JSX.Element => (
-  <AccordionPrimitive.Item
+const AccordionItem = reactForwardRef<
+  ReactComponentRef<typeof AccordionPrimitiveItem>,
+  ReactComponentPropsWithoutRef<typeof AccordionPrimitiveItem>
+>(({ className, ...props }, ref): ReactJSX.Element => (
+  <AccordionPrimitiveItem
     className={cn("border-b", className)}
     ref={ref}
     {...props}
@@ -26,14 +32,14 @@ const AccordionItem = React.forwardRef<
 ));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 AccordionItem.displayName = "AccordionItem";
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AccordionTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AccordionTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
-const AccordionTrigger = React.forwardRef<
-  React.ComponentRef<typeof AccordionPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger>
->(({ className, children, ...props }, ref): React.JSX.Element => (
-  <AccordionPrimitive.Header className="flex">
-    <AccordionPrimitive.Trigger
+const AccordionTrigger = reactForwardRef<
+  ReactComponentRef<typeof AccordionPrimitiveTrigger>,
+  ReactComponentPropsWithoutRef<typeof AccordionPrimitiveTrigger>
+>(({ className, children, ...props }, ref): ReactJSX.Element => (
+  <AccordionPrimitiveHeader className="flex">
+    <AccordionPrimitiveTrigger
       className={cn(
         "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline [&[data-state=open]>svg]:rotate-180",
         className
@@ -43,27 +49,27 @@ const AccordionTrigger = React.forwardRef<
     >
       {children}
       <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200" />
-    </AccordionPrimitive.Trigger>
-  </AccordionPrimitive.Header>
+    </AccordionPrimitiveTrigger>
+  </AccordionPrimitiveHeader>
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AccordionContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+AccordionTrigger.displayName = AccordionPrimitiveTrigger.displayName;
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- AccordionContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
-const AccordionContent = React.forwardRef<
-  React.ComponentRef<typeof AccordionPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref): React.JSX.Element => (
-  <AccordionPrimitive.Content
+const AccordionContent = reactForwardRef<
+  ReactComponentRef<typeof AccordionPrimitiveContent>,
+  ReactComponentPropsWithoutRef<typeof AccordionPrimitiveContent>
+>(({ className, children, ...props }, ref): ReactJSX.Element => (
+  <AccordionPrimitiveContent
     className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm transition-all"
     ref={ref}
     {...props}
   >
     <div className={cn("pt-0 pb-4", className)}>{children}</div>
-  </AccordionPrimitive.Content>
+  </AccordionPrimitiveContent>
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
 
-AccordionContent.displayName = AccordionPrimitive.Content.displayName;
+AccordionContent.displayName = AccordionPrimitiveContent.displayName;
 
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

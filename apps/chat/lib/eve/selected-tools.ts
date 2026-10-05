@@ -1,8 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
-import type { UiToolName } from "../ai/types";
-/* oxlint-enable import/no-relative-parent-imports */
+import type { UiToolName } from "@/lib/ai/types";
 
 const canvasTools: UiToolName[] = [
   "createTextDocument",

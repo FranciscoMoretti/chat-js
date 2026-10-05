@@ -4,7 +4,7 @@ import { Copy, Loader2 } from "lucide-react";
 import React from "react";
 
 import { Button } from "@/components/ui/button";
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- CloneChatButtonView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth -- CloneChatButtonView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const CloneChatButtonView = ({
   isPending,
@@ -13,11 +13,11 @@ export const CloneChatButtonView = ({
   label = "Save to your chats",
   disabled = false,
 }: {
-  isPending: boolean;
-  onClick: () => void;
-  className?: string;
-  label?: string;
-  disabled?: boolean;
+  readonly isPending: boolean;
+  readonly onClick: () => void;
+  readonly className?: string;
+  readonly label?: string;
+  readonly disabled?: boolean;
 }): React.JSX.Element => (
   <div className="m-auto flex w-fit items-center justify-center px-4 py-10">
     <Button
@@ -42,4 +42,4 @@ export const CloneChatButtonView = ({
     </Button>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth */

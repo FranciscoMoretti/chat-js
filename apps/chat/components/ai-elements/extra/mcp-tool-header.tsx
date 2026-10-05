@@ -5,12 +5,9 @@ import { ChevronDownIcon, WrenchIcon } from "lucide-react";
 import React from "react";
 import type { ReactNode } from "react";
 
+import { getStatusBadge } from "@/components/ai-elements/tool";
 import { CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-/* oxlint-disable import/no-relative-parent-imports -- ../tool import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
-
-import { getStatusBadge } from "../tool";
-/* oxlint-enable import/no-relative-parent-imports */
 
 interface McpToolHeaderProps {
   title?: string;
@@ -19,7 +16,7 @@ interface McpToolHeaderProps {
   className?: string;
   icon?: ReactNode;
 }
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- McpToolHeader: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- McpToolHeader: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const McpToolHeader = ({
   className,
@@ -39,11 +36,11 @@ export const McpToolHeader = ({
     <div className="flex items-center gap-2">
       {icon ?? <WrenchIcon className="text-muted-foreground size-4" />}
       <span className="text-sm font-medium">
-        {title ?? type.split("-").slice(1).join("-")}
+        {title ?? type.replace(/^[^-]*(?:-|$)/u, "")}
       </span>
       {getStatusBadge(state)}
     </div>
     <ChevronDownIcon className="text-muted-foreground size-4 transition-transform group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */

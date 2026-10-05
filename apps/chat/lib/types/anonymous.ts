@@ -1,8 +1,4 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../config" dependency within this package instead of introducing an alias or barrel API.
- */
-import { config } from "../config";
-/* oxlint-enable import/no-relative-parent-imports */
+import { config } from "@/lib/config";
 
 const anonConfig = config.anonymous;
 

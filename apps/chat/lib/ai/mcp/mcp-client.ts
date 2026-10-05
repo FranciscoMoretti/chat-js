@@ -189,7 +189,8 @@ export class MCPClient {
         initializationOptions: { signal },
         transport: {
           authProvider: oauthProvider,
-          fetch: oauthProvider.fetch,
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- SDK FetchFunction requires unused Bun.preconnect, making this cast necessary; Node considers the same callable cast redundant. Transport invokes only guarded fetch; exposing native preconnect would bypass network policy.
+          fetch: oauthProvider.fetch as typeof globalThis.fetch,
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
           url: this.serverConfig.url,
@@ -298,7 +299,8 @@ export class MCPClient {
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(oauthProvider, {
       authorizationCode: code,
-      fetchFn: oauthProvider.fetch,
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- SDK FetchFunction requires unused Bun.preconnect, making this cast necessary; Node considers the same callable cast redundant. OAuth invokes only guarded fetch; exposing native preconnect would bypass network policy.
+      fetchFn: oauthProvider.fetch as typeof globalThis.fetch,
       serverUrl: this.serverConfig.url,
     });
 

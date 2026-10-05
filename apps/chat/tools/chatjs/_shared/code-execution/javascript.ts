@@ -1,13 +1,11 @@
 import type { CodeExecutionContext, CodeExecutionResult } from "./types";
 
+const SUCCESS_EXIT_CODE = 0;
+const MISSING_STATUS_LINE_INDEX = -1;
+const STATUS_TRAILER_LINE_COUNT = 1;
 const EXECUTION_STATUS_PREFIX = "__EXECUTION_STATUS__:";
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-const createWrappedCode = (code: string): string => {
-  // Inject user code as a string literal so backticks / ${} in user code
-  // cannot break out of the wrapper template.
-  const userCodeLiteral = JSON.stringify(code);
-  return `
+const JAVASCRIPT_EXECUTION_TEMPLATE = `
 import { inspect } from "node:util";
 
 const __formatOutput = (value) => {
@@ -25,7 +23,7 @@ const __formatOutput = (value) => {
 
 const __run = async () => {
   try {
-    const __userCode = ${userCodeLiteral};
+    const __userCode = __USER_CODE_LITERAL__;
     const __execution = await (0, eval)(
       "(async () => {\\n" +
       __userCode + "\\n" +
@@ -70,17 +68,19 @@ const __run = async () => {
 
 await __run();
 `;
-};
-/* oxlint-enable eslint/max-lines-per-function */
+
+const createWrappedCode = (code: string): string =>
+  JAVASCRIPT_EXECUTION_TEMPLATE.replace("__USER_CODE_LITERAL__", (): string =>
+    JSON.stringify(code)
+  );
 
 interface JsExecInfo {
-  success: boolean;
-  error?: { name: string; value: string; traceback: string };
+  success?: unknown;
+  error?: unknown;
 }
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const execInfoFromExitCode = (exitCode: number): JsExecInfo => {
-  if (exitCode === 0) {
+  if (exitCode === SUCCESS_EXIT_CODE) {
     return { success: true };
   }
   return {
@@ -92,67 +92,119 @@ const execInfoFromExitCode = (exitCode: number): JsExecInfo => {
     success: false,
   };
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const parseExecutionOutput = async (execResult: {
-  stdout: () => Promise<string>;
-  exitCode: number;
-}): Promise<{
+const readExecutionErrorField = (error: unknown, key: string): unknown =>
+  Reflect.get(new Object(error), key);
+
+const readExecutionError = (info: unknown): unknown => {
+  if (info === null) {
+    throw new TypeError("Sandbox execution status cannot be null.");
+  }
+  return readExecutionErrorField(info, "error");
+};
+
+const decodeExecutionTrailer = (
+  raw: string
+): { valid: true; info: unknown } | { valid: false } => {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return { info: parsed, valid: true };
+  } catch {
+    return { valid: false };
+  }
+};
+
+const findExecutionTrailer = (
+  lines: readonly string[]
+): { found: true; index: number; raw: string } | { found: false } => {
+  // The final trailer wins over user output that happens to share the prefix.
+  const index = lines.findLastIndex((line) =>
+    line.startsWith(EXECUTION_STATUS_PREFIX)
+  );
+  return index === MISSING_STATUS_LINE_INDEX
+    ? { found: false }
+    : {
+        found: true,
+        index,
+        raw: lines[index].slice(EXECUTION_STATUS_PREFIX.length),
+      };
+};
+
+const parseExecutionOutput = async (
+  execResult: Readonly<{
+    stdout: () => Promise<string>;
+    exitCode: number;
+  }>
+): Promise<{
   outputText: string;
-  execInfo: JsExecInfo;
+  execInfo: unknown;
 }> => {
   const stdout = await execResult.stdout();
   const lines = (stdout ?? "").split("\n");
-  // Search from the end so a user console.log of the prefix cannot be
-  // mistaken for the real status trailer emitted last by the wrapper.
-  const statusLineIndex = lines.findLastIndex((line) =>
-    line.startsWith(EXECUTION_STATUS_PREFIX)
-  );
+  const trailer = findExecutionTrailer(lines);
 
-  if (statusLineIndex === -1) {
+  if (!trailer.found) {
     return {
       execInfo: execInfoFromExitCode(execResult.exitCode),
       outputText: stdout ?? "",
     };
   }
 
-  const execInfoRaw = lines[statusLineIndex].slice(
-    EXECUTION_STATUS_PREFIX.length
-  );
-  let execInfo: JsExecInfo;
-  try {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
-    execInfo = JSON.parse(execInfoRaw) as JsExecInfo;
-  } catch {
+  const decoded = decodeExecutionTrailer(trailer.raw);
+  if (!decoded.valid) {
     return {
       execInfo: execInfoFromExitCode(execResult.exitCode),
       outputText: stdout ?? "",
     };
   }
-  lines.splice(statusLineIndex, 1);
+  lines.splice(trailer.index, STATUS_TRAILER_LINE_COUNT);
 
   return {
-    execInfo,
+    execInfo: decoded.info,
     outputText: lines.join("\n").trim(),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+const formatExecutionMessage = (
+  parts: Readonly<{
+    outputText: string;
+    stderr: string;
+    execInfo: unknown;
+  }>,
+  context: Readonly<{
+    log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
+    requestId: string;
+  }>
+): string => {
+  const lines = [parts.outputText, parts.stderr.trim()];
+  const executionError = readExecutionError(parts.execInfo);
+  const hasExecutionError = Boolean(executionError);
+  if (hasExecutionError) {
+    lines.push(
+      `Error: ${String(readExecutionErrorField(executionError, "name"))}: ${String(readExecutionErrorField(executionError, "value"))}`
+    );
+    context.log.error(
+      { error: executionError, requestId: context.requestId },
+      "javascript execution error"
+    );
+  }
+  return lines
+    .filter((line) => line !== "")
+    .join("\n")
+    .trim();
+};
+
 export const executeJavaScriptInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> => {
+}: Readonly<
+  Pick<CodeExecutionContext, "code" | "requestId"> & {
+    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "runCommand">>;
+    log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
+  }
+>): Promise<CodeExecutionResult> => {
   const execResult = await sandbox.runCommand({
     args: ["--input-type=module", "-e", createWrappedCode(code)],
     cmd: "node",
@@ -160,27 +212,11 @@ export const executeJavaScriptInSandbox = async ({
 
   const { outputText, execInfo } = await parseExecutionOutput(execResult);
   const stderr = await execResult.stderr();
-  const stderrTrimmed = stderr?.trim();
-  let message = "";
-
-  if (outputText) {
-    message += `${outputText}\n`;
-  }
-  if (stderrTrimmed) {
-    message += `${stderrTrimmed}\n`;
-  }
-  if (execInfo.error) {
-    message += `Error: ${execInfo.error.name}: ${execInfo.error.value}\n`;
-    log.error(
-      { error: execInfo.error, requestId },
-      "javascript execution error"
-    );
-  }
-
   return {
     chart: "",
-    message: message.trim(),
+    message: formatExecutionMessage(
+      { execInfo, outputText, stderr },
+      { log, requestId }
+    ),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/max-statements */

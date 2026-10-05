@@ -6,7 +6,7 @@ import React from "react";
 import { ProjectIcon } from "@/components/project-icon";
 import { Button } from "@/components/ui/button";
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectName). */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions -- max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectName). */
 
 export const ProjectConfig = ({
   projectName,
@@ -16,12 +16,12 @@ export const ProjectConfig = ({
   onEditInstructions,
   onRenameProject,
 }: {
-  projectName?: string;
-  projectIcon?: ProjectIconName;
-  projectColor?: ProjectColorName;
-  instructions?: string | null;
-  onEditInstructions: () => void;
-  onRenameProject: () => void;
+  readonly projectName?: string;
+  readonly projectIcon?: ProjectIconName;
+  readonly projectColor?: ProjectColorName;
+  readonly instructions?: string | null;
+  readonly onEditInstructions: () => void;
+  readonly onRenameProject: () => void;
 }): React.JSX.Element => {
   const hasInstructions = Boolean(instructions?.trim());
 
@@ -67,4 +67,4 @@ export const ProjectConfig = ({
     </div>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/strict-boolean-expressions */

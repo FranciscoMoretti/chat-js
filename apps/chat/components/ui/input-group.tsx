@@ -2,9 +2,10 @@
 
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 const InputGroup = ({
   className,
   ...props
-}: React.ComponentProps<"div">): React.JSX.Element => (
+}: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn(
       "group/input-group border-input dark:bg-input/30 relative flex w-full items-center rounded-md border shadow-xs transition-[color,box-shadow] outline-none",
@@ -67,8 +68,8 @@ const InputGroupAddon = ({
   className,
   align = "inline-start",
   ...props
-}: React.ComponentProps<"div"> &
-  VariantProps<typeof inputGroupAddonVariants>): React.JSX.Element => (
+}: ReactComponentProps<"div"> &
+  VariantProps<typeof inputGroupAddonVariants>): ReactJSX.Element => (
   <div
     className={cn(inputGroupAddonVariants({ align }), className)}
     data-align={align}
@@ -118,8 +119,8 @@ const InputGroupButton = ({
   variant = "ghost",
   size = "xs",
   ...props
-}: Omit<React.ComponentProps<typeof Button>, "size"> &
-  VariantProps<typeof inputGroupButtonVariants>): React.JSX.Element => (
+}: Omit<ReactComponentProps<typeof Button>, "size"> &
+  VariantProps<typeof inputGroupButtonVariants>): ReactJSX.Element => (
   <Button
     className={cn(inputGroupButtonVariants({ size }), className)}
     data-size={size}
@@ -135,7 +136,7 @@ const InputGroupButton = ({
 const InputGroupText = ({
   className,
   ...props
-}: React.ComponentProps<"span">): React.JSX.Element => (
+}: ReactComponentProps<"span">): ReactJSX.Element => (
   <span
     className={cn(
       "text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
@@ -151,7 +152,7 @@ const InputGroupText = ({
 const InputGroupInput = ({
   className,
   ...props
-}: React.ComponentProps<"input">): React.JSX.Element => (
+}: ReactComponentProps<"input">): ReactJSX.Element => (
   <Input
     className={cn(
       "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
@@ -168,7 +169,7 @@ const InputGroupInput = ({
 const InputGroupTextarea = ({
   className,
   ...props
-}: React.ComponentProps<"textarea">): React.JSX.Element => (
+}: ReactComponentProps<"textarea">): ReactJSX.Element => (
   <Textarea
     className={cn(
       "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",

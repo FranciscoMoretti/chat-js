@@ -1,6 +1,5 @@
-/* oxlint-disable import/max-dependencies, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "eve/client" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-billing"; "../db/eve-queries"; "../db/eve-subagents"; "../env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Settle evidence and advance durable cursors in stream order. */
 import { Client } from "eve/client";
@@ -10,14 +9,15 @@ import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   withManagedUsageReconciliation,
-} from "../db/eve-billing";
-import { listEveOwnerBindings } from "../db/eve-queries";
+} from "@/lib/db/eve-billing";
+import { listEveOwnerBindings } from "@/lib/db/eve-queries";
 import {
   advanceEveSubagentUsageCursor,
   getEveSubagent,
   listEveSubagents,
-} from "../db/eve-subagents";
-import { env } from "../env";
+} from "@/lib/db/eve-subagents";
+import { env } from "@/lib/env";
+
 import { ingestEveActivity } from "./activity";
 import { getEveConnectionOptions } from "./connection-options";
 import { recoverEveCreations } from "./recover-creations";
@@ -25,7 +25,7 @@ import { assertEveConfigured } from "./server";
 import { getEveStreamPositions } from "./stream-positions";
 import { ingestEveUsage } from "./usage";
 import { resolveWorkflowWorld } from "./world-config";
-/* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 jsdoc/require-param (#534): reconcileEveSubagentUsage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

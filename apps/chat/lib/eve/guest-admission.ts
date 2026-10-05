@@ -1,40 +1,56 @@
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:crypto" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { isIP } from "node:net";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-files"; "../db/eve-guests"; "../db/eve-queries"; "../env"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 
 import { z } from "zod";
 
-import { assertEveFilesOwned } from "../db/eve-files";
+import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import {
   commitEveGuestMessage,
   readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
-} from "../db/eve-guests";
-import { getEveConversation } from "../db/eve-queries";
-import { env } from "../env";
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
+} from "@/lib/db/eve-guests";
+import { getEveConversation } from "@/lib/db/eve-queries";
+import { env } from "@/lib/env";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+
 import type { createConversationInput } from "./contracts";
 import { eveMessageFileKeys } from "./file-references";
 import { eveGuestIpHash } from "./guest-credential";
 import { loadEveModelDefinition } from "./model-selection";
 import type { EvePrincipal } from "./principal";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
+
+type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
+  z.infer<typeof createConversationInput>
+>;
+
+const IPV6_VERSION = 6;
+const LEADING_BRACKET_LENGTH = 1;
+const TRAILING_BRACKET_INDEX = -1;
+const IPV4_OCTET_RANGE = 256;
+const MAPPED_HIGH_WORD_GROUP = 1;
+const MAPPED_LOW_WORD_GROUP = 2;
+const HTTP_CONFLICT = 409;
+const HTTP_TOO_MANY_REQUESTS = 429;
 
 const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): guestRequestIpHash's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): guestRequestIpHash's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): guestRequestIpHash uses 6, 1, -1, 256, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): guestRequestIpHash accepts request: Request; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/strict-boolean-expressions (#610): guestRequestIpHash intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; header; address; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Development never trusts caller-supplied forwarding headers. */
-const guestRequestIpHash = (request: Request): string => {
+/**
+ * Hashes a trusted canonical client address; development uses the local address.
+ * @param request Request whose configured proxy header supplies the client address outside development.
+ * @returns The keyed guest IP hash after mapped IPv6 normalization; unavailable or invalid addresses throw.
+ */
+const guestRequestIpHash = (
+  request: ReadonlyNativeSurface<Request>
+): string => {
   if (env.NODE_ENV === "development") {
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
@@ -47,42 +63,52 @@ const guestRequestIpHash = (request: Request): string => {
     throw new Error("Trusted client address is unavailable.");
   }
   const canonical =
-    isIP(address) === 6
-      ? new URL(`http://[${address}]`).hostname.slice(1, -1)
+    isIP(address) === IPV6_VERSION
+      ? new URL(`http://[${address}]`).hostname.slice(
+          LEADING_BRACKET_LENGTH,
+          TRAILING_BRACKET_INDEX
+        )
       : address;
   const mapped = MAPPED_IP.exec(canonical);
   const normalized = mapped
     ? [
-        Math.floor(Number.parseInt(mapped[1], 16) / 256),
-        Number.parseInt(mapped[1], 16) % 256,
-        Math.floor(Number.parseInt(mapped[2], 16) / 256),
-        Number.parseInt(mapped[2], 16) % 256,
+        Math.floor(
+          Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) / IPV4_OCTET_RANGE
+        ),
+        Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
+        Math.floor(
+          Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) / IPV4_OCTET_RANGE
+        ),
+        Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
       ].join(".")
     : canonical;
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): validateGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): validateGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep validateGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep validateGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): validateGuestCreation accepts request: Request; principal: Extract< EvePrincipal, { kind: "guest"; } >; input: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): validateGuestCreation intentionally keeps the existing falsy-value behavior of input.projectId; source.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Checks guest policy and ownership before reserving quota. */
+/**
+ * Checks guest policy, source ownership, and model/file availability before quota reservation.
+ * @param request Request used to resolve the trusted client-address hash.
+ * @param principal Guest ownership and credential identity used for source/file checks.
+ * @param input Creation request whose model, tool, project, fork, and attachments are validated.
+ * @returns The trusted IP hash, or a response rejecting the request before quota is reserved.
+ */
 const validateGuestCreation = async (
-  request: Request,
-  principal: Extract<
-    EvePrincipal,
-    {
-      kind: "guest";
-    }
+  request: ReadonlyNativeSurface<Request>,
+  principal: Readonly<
+    Extract<
+      EvePrincipal,
+      {
+        kind: "guest";
+      }
+    >
   >,
-  input: z.infer<typeof createConversationInput>
-) => {
+  input: ReadonlyGuestCreationInput
+): Promise<string | Response> => {
   if (
     input.projectId ||
     !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
@@ -139,28 +165,36 @@ const validateGuestCreation = async (
   }
   return ipHash;
 };
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): admitGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): admitGuestCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): admitGuestCreation uses 409, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep admitGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep admitGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): admitGuestCreation accepts request: Request; principal: Extract< EvePrincipal, { kind: "guest"; } >; input: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): admitGuestCreation intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Creation replays use eve's native operation ID; this must not wrap raw follow-up sends. */
+/**
+ * Admits a creation under its native operation identity, preserving quota on matching replays.
+ * @param request Request used to resolve trusted admission evidence for a new reservation.
+ * @param principal Guest identity whose operation content and session quota are checked.
+ * @param input Original creation request hashed to prevent replaying different operation content.
+ * @returns A reserved/replayed quota identity or an admission error response; follow-up sends use a separate path.
+ */
 const admitGuestCreation = async (
-  request: Request,
-  principal: Extract<
-    EvePrincipal,
-    {
-      kind: "guest";
-    }
+  request: ReadonlyNativeSurface<Request>,
+  principal: Readonly<
+    Extract<
+      EvePrincipal,
+      {
+        kind: "guest";
+      }
+    >
   >,
-  input: z.infer<typeof createConversationInput>
-) => {
+  input: ReadonlyGuestCreationInput
+): Promise<
+  | Response
+  | Extract<
+      Awaited<ReturnType<typeof reserveEveGuestMessage>>,
+      { status: "reserved" | "replay" }
+    >
+> => {
   const requestHash = createHash("sha256")
     .update(JSON.stringify(input))
     .digest("hex");
@@ -172,7 +206,7 @@ const admitGuestCreation = async (
     if (existing.requestHash !== requestHash) {
       return Response.json(
         { error: "This operation has different content." },
-        { status: 409 }
+        { status: HTTP_CONFLICT }
       );
     }
     return { reservationId: existing.reservationId, status: "replay" } as const;
@@ -208,24 +242,23 @@ const admitGuestCreation = async (
           : "Guest message limit reached. Sign in to continue.",
     },
     {
-      status: reservation.status === "conflict" ? 409 : 429,
+      status:
+        reservation.status === "conflict"
+          ? HTTP_CONFLICT
+          : HTTP_TOO_MANY_REQUESTS,
     }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- max-params (#511): settleGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-typescript/explicit-function-return-type (#560): Keep settleGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep settleGuestCreation's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): settleGuestCreation accepts response: Response; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-unicorn/no-null (#570): settleGuestCreation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-disable max-params -- max-params (#511): settleGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 // oxlint-disable-next-line typescript/consistent-return -- #580: settleGuestCreation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
 const settleGuestCreation = async (
-  response: Response,
+  response: ReadonlyNativeSurface<Response>,
   ownerId: string,
   operationId: string,
   reservationId: string
-) => {
+): Promise<boolean | undefined> => {
   if (response.ok) {
     await commitEveGuestMessage(ownerId, operationId, reservationId);
   } else {
@@ -233,7 +266,9 @@ const settleGuestCreation = async (
       await response
         .clone()
         .json()
-        .catch(() => null)
+        .catch((): void => {
+          // Missing JSON cannot satisfy the required creationRejected object.
+        })
     );
     // A terminal rejection of an existing operation does not prove non-admission.
     // Keep ambiguous quota through deletion and failures to commit the accepted turn.
@@ -242,7 +277,7 @@ const settleGuestCreation = async (
     }
   }
 };
-/* oxlint-enable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-params */
 export {
   admitGuestCreation,
   guestRequestIpHash,

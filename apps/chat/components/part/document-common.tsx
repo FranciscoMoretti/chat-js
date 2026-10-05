@@ -1,4 +1,5 @@
 import { File, Loader2, Pencil } from "lucide-react";
+import type { JSX as ReactJSX } from "react";
 import React, { memo } from "react";
 
 import { useDocumentConversation } from "@/components/eve/eve-document-context";
@@ -59,7 +60,7 @@ interface DocumentToolResultProps {
   };
   type: "create" | "update" | "read";
 }
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- PureDocumentToolResult: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null -- PureDocumentToolResult: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureDocumentToolResult = ({
   disabled = false,
@@ -68,7 +69,7 @@ const PureDocumentToolResult = ({
   result,
   isReadonly: _isReadonly,
   messageId,
-}: DocumentToolResultProps) => {
+}: DocumentToolResultProps): ReactJSX.Element => {
   const { setArtifact } = useArtifact();
   const conversationId = useDocumentConversation();
 
@@ -93,7 +94,7 @@ const PureDocumentToolResult = ({
       type="button"
     >
       <div className="text-muted-foreground">
-        {(() => {
+        {((): ReactJSX.Element | null => {
           if (type === "create" || type === "read") {
             return <File size={16} />;
           }
@@ -109,7 +110,7 @@ const PureDocumentToolResult = ({
     </button>
   );
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 const DocumentToolResult = memo(PureDocumentToolResult);
 
@@ -118,13 +119,13 @@ interface DocumentToolCallProps {
   isReadonly: boolean;
   type: "create" | "update" | "read";
 }
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureDocumentToolCall: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including args.title); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- PureDocumentToolCall: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including args.title); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const PureDocumentToolCall = ({
   type,
   args,
   isReadonly: _isReadonly,
-}: DocumentToolCallProps) => {
+}: DocumentToolCallProps): ReactJSX.Element => {
   const { setArtifact } = useArtifact();
 
   return (
@@ -140,7 +141,7 @@ const PureDocumentToolCall = ({
     >
       <div className="flex flex-row items-start gap-3">
         <div className="text-muted-foreground mt-1">
-          {(() => {
+          {((): ReactJSX.Element | null => {
             if (type === "create" || type === "read") {
               return <File size={16} />;
             }
@@ -162,7 +163,7 @@ const PureDocumentToolCall = ({
     </button>
   );
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const DocumentToolCall = memo(PureDocumentToolCall, () => true);
 /* oxlint-disable react/only-export-components -- #620: Consumers import DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */

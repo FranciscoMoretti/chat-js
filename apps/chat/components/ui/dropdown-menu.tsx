@@ -1,33 +1,45 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-dropdown-menu import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-/* oxlint-enable import/no-namespace */
+import {
+  Root as DropdownMenuPrimitiveRoot,
+  Portal as DropdownMenuPrimitivePortal,
+  Trigger as DropdownMenuPrimitiveTrigger,
+  Content as DropdownMenuPrimitiveContent,
+  Group as DropdownMenuPrimitiveGroup,
+  Item as DropdownMenuPrimitiveItem,
+  CheckboxItem as DropdownMenuPrimitiveCheckboxItem,
+  ItemIndicator as DropdownMenuPrimitiveItemIndicator,
+  RadioGroup as DropdownMenuPrimitiveRadioGroup,
+  RadioItem as DropdownMenuPrimitiveRadioItem,
+  Label as DropdownMenuPrimitiveLabel,
+  Separator as DropdownMenuPrimitiveSeparator,
+  Sub as DropdownMenuPrimitiveSub,
+  SubTrigger as DropdownMenuPrimitiveSubTrigger,
+  SubContent as DropdownMenuPrimitiveSubContent,
+} from "@radix-ui/react-dropdown-menu";
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- DropdownMenu: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DropdownMenu = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Root
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+}: ReactComponentProps<typeof DropdownMenuPrimitiveRoot>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveRoot data-slot="dropdown-menu" {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- DropdownMenuPortal: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DropdownMenuPortal = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Portal
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitivePortal
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitivePortal data-slot="dropdown-menu-portal" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -35,10 +47,10 @@ const DropdownMenuPortal = ({
 
 const DropdownMenuTrigger = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Trigger
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveTrigger
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveTrigger data-slot="dropdown-menu-trigger" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -48,11 +60,11 @@ const DropdownMenuContent = ({
   className,
   sideOffset = 4,
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Content
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveContent
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitivePortal>
+    <DropdownMenuPrimitiveContent
       className={cn(
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md",
         className
@@ -61,7 +73,7 @@ const DropdownMenuContent = ({
       sideOffset={sideOffset}
       {...props}
     />
-  </DropdownMenuPrimitive.Portal>
+  </DropdownMenuPrimitivePortal>
 );
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -69,10 +81,10 @@ const DropdownMenuContent = ({
 
 const DropdownMenuGroup = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Group
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveGroup
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveGroup data-slot="dropdown-menu-group" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -83,11 +95,11 @@ const DropdownMenuItem = ({
   inset,
   variant = "default",
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+}: ReactComponentProps<typeof DropdownMenuPrimitiveItem> & {
   inset?: boolean;
   variant?: "default" | "destructive";
-}): React.JSX.Element => (
-  <DropdownMenuPrimitive.Item
+}): ReactJSX.Element => (
+  <DropdownMenuPrimitiveItem
     className={cn(
       "data-[variant=destructive]:*:[svg]:!text-destructive focus:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -107,10 +119,10 @@ const DropdownMenuCheckboxItem = ({
   children,
   checked,
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.CheckboxItem
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.CheckboxItem
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveCheckboxItem
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveCheckboxItem
     checked={checked}
     className={cn(
       "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -120,12 +132,12 @@ const DropdownMenuCheckboxItem = ({
     {...props}
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-      <DropdownMenuPrimitive.ItemIndicator>
+      <DropdownMenuPrimitiveItemIndicator>
         <CheckIcon className="size-4" />
-      </DropdownMenuPrimitive.ItemIndicator>
+      </DropdownMenuPrimitiveItemIndicator>
     </span>
     {children}
-  </DropdownMenuPrimitive.CheckboxItem>
+  </DropdownMenuPrimitiveCheckboxItem>
 );
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -133,10 +145,10 @@ const DropdownMenuCheckboxItem = ({
 
 const DropdownMenuRadioGroup = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.RadioGroup
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.RadioGroup
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveRadioGroup
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveRadioGroup
     data-slot="dropdown-menu-radio-group"
     {...props}
   />
@@ -149,10 +161,10 @@ const DropdownMenuRadioItem = ({
   className,
   children,
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.RadioItem
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.RadioItem
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveRadioItem
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveRadioItem
     className={cn(
       "focus:bg-accent focus:text-accent-foreground relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-2 pl-8 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -161,12 +173,12 @@ const DropdownMenuRadioItem = ({
     {...props}
   >
     <span className="pointer-events-none absolute left-2 flex size-3.5 items-center justify-center">
-      <DropdownMenuPrimitive.ItemIndicator>
+      <DropdownMenuPrimitiveItemIndicator>
         <CircleIcon className="size-2 fill-current" />
-      </DropdownMenuPrimitive.ItemIndicator>
+      </DropdownMenuPrimitiveItemIndicator>
     </span>
     {children}
-  </DropdownMenuPrimitive.RadioItem>
+  </DropdownMenuPrimitiveRadioItem>
 );
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -176,10 +188,10 @@ const DropdownMenuLabel = ({
   className,
   inset,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Label> & {
+}: ReactComponentProps<typeof DropdownMenuPrimitiveLabel> & {
   inset?: boolean;
-}): React.JSX.Element => (
-  <DropdownMenuPrimitive.Label
+}): ReactJSX.Element => (
+  <DropdownMenuPrimitiveLabel
     className={cn(
       "px-2 py-1.5 text-sm font-medium data-[inset]:pl-8",
       className
@@ -196,10 +208,10 @@ const DropdownMenuLabel = ({
 const DropdownMenuSeparator = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Separator
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Separator
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveSeparator
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveSeparator
     className={cn("bg-border -mx-1 my-1 h-px", className)}
     data-slot="dropdown-menu-separator"
     {...props}
@@ -212,7 +224,7 @@ const DropdownMenuSeparator = ({
 const DropdownMenuShortcut = ({
   className,
   ...props
-}: React.ComponentProps<"span">): React.JSX.Element => (
+}: ReactComponentProps<"span">): ReactJSX.Element => (
   <span
     className={cn(
       "text-muted-foreground ml-auto text-xs tracking-widest",
@@ -228,10 +240,8 @@ const DropdownMenuShortcut = ({
 
 const DropdownMenuSub = ({
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.Sub
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />
+}: ReactComponentProps<typeof DropdownMenuPrimitiveSub>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveSub data-slot="dropdown-menu-sub" {...props} />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -242,10 +252,10 @@ const DropdownMenuSubTrigger = ({
   inset,
   children,
   ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.SubTrigger> & {
+}: ReactComponentProps<typeof DropdownMenuPrimitiveSubTrigger> & {
   inset?: boolean;
-}): React.JSX.Element => (
-  <DropdownMenuPrimitive.SubTrigger
+}): ReactJSX.Element => (
+  <DropdownMenuPrimitiveSubTrigger
     className={cn(
       "focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       className
@@ -256,7 +266,7 @@ const DropdownMenuSubTrigger = ({
   >
     {children}
     <ChevronRightIcon className="ml-auto size-4" />
-  </DropdownMenuPrimitive.SubTrigger>
+  </DropdownMenuPrimitiveSubTrigger>
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -265,10 +275,10 @@ const DropdownMenuSubTrigger = ({
 const DropdownMenuSubContent = ({
   className,
   ...props
-}: React.ComponentProps<
-  typeof DropdownMenuPrimitive.SubContent
->): React.JSX.Element => (
-  <DropdownMenuPrimitive.SubContent
+}: ReactComponentProps<
+  typeof DropdownMenuPrimitiveSubContent
+>): ReactJSX.Element => (
+  <DropdownMenuPrimitiveSubContent
     className={cn(
       "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 bg-popover text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in z-50 min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-hidden rounded-md border p-1 shadow-lg",
       className

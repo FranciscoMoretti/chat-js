@@ -1,21 +1,19 @@
 import { z } from "zod";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
+const NONEMPTY_ADDRESS_LENGTH = 1;
+const registryAddressSchema = z.string().min(NONEMPTY_ADDRESS_LENGTH);
+const storageSelectionSchema = z.strictObject({
+  options: z.record(z.string(), z.unknown()).default({}),
+  source: registryAddressSchema,
+});
+
 /** Registry addresses, not runtime flags. Creation and demo sync use the same input. */
 const installationSelectionSchema = z.strictObject({
-  features: z.array(z.string().min(1)).default([]),
-  gateway: z.string().min(1).optional(),
-  storage: z
-    .strictObject({
-      options: z.record(z.string(), z.unknown()).default({}),
-      source: z.string().min(1),
-    })
-    .optional(),
-  tools: z.array(z.string().min(1)).default([]),
+  features: z.array(registryAddressSchema).default([]),
+  gateway: registryAddressSchema.optional(),
+  storage: storageSelectionSchema.optional(),
+  tools: z.array(registryAddressSchema).default([]),
 });
-/* oxlint-enable unicorn/max-nested-calls */
-/* oxlint-enable eslint/no-magic-numbers */
 
 type InstallationSelection = z.infer<typeof installationSelectionSchema>;
 

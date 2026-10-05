@@ -1,10 +1,6 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../file-url" dependency within this package instead of introducing an alias or barrel API.
- */
 import { z } from "zod";
 
-import { isFileStorageKey } from "../file-url";
-/* oxlint-enable import/no-relative-parent-imports */
+import { isFileStorageKey } from "@/lib/file-url";
 
 interface DocumentAssistantRequest {
   message: string;

@@ -4,36 +4,40 @@
 import { createHash } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): eveCodeSandboxName's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveCodeSandboxName's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): eveCodeSandboxName uses 0, 48 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): eveCodeSandboxName accepts { ownerId, sessionId, callId, provider, }: { ownerId: string | undefined; sessionId: ; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveCodeSandboxName intentionally keeps the existing falsy-value behavior of ownerId?.trim(); sessionId?.trim(); distinguishing empty, zero, and absent states requires a domain behavior decision.
+const DIGEST_PREFIX_START = 0;
+const SANDBOX_DIGEST_LENGTH = 48;
+
+/**
+ * Stable provider identity without exposing account IDs in resource names.
+ * @param options Native tool call and provider identity used to isolate a code-execution sandbox.
+ * @param options.ownerId Authenticated account identity; absent or blank values are rejected.
+ * @param options.sessionId Native session identity; absent or blank values are rejected.
+ * @param options.callId Native tool-call identity for this execution.
+ * @param options.provider Provider deployment coordinates included in the sandbox digest.
+ * @param options.provider.teamId Provider team identity; blank values are rejected.
+ * @param options.provider.projectId Provider project identity; blank values are rejected.
+ * @returns A stable sandbox name with a truncated SHA-256 digest of the original identity values.
  */
-/** Stable provider identity without exposing account IDs in resource names. */
 export const eveCodeSandboxName = ({
   ownerId,
   sessionId,
   callId,
   provider,
 }: {
-  ownerId: string | undefined;
-  sessionId: string | undefined;
-  callId: string;
-  provider: {
-    teamId: string;
-    projectId: string;
+  readonly ownerId: string | undefined;
+  readonly sessionId: string | undefined;
+  readonly callId: string;
+  readonly provider: {
+    readonly teamId: string;
+    readonly projectId: string;
   };
 }): string => {
   if (
-    !(
-      ownerId?.trim() &&
-      sessionId?.trim() &&
-      callId.trim() &&
-      provider.teamId.trim() &&
-      provider.projectId.trim()
-    )
+    (ownerId?.trim() ?? "") === "" ||
+    (sessionId?.trim() ?? "") === "" ||
+    callId.trim() === "" ||
+    provider.teamId.trim() === "" ||
+    provider.projectId.trim() === ""
   ) {
     throw new Error(
       "Code execution requires an authenticated native tool call."
@@ -51,6 +55,5 @@ export const eveCodeSandboxName = ({
       ])
     )
     .digest("hex");
-  return `chatjs-code-${digest.slice(0, 48)}`;
+  return `chatjs-code-${digest.slice(DIGEST_PREFIX_START, SANDBOX_DIGEST_LENGTH)}`;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

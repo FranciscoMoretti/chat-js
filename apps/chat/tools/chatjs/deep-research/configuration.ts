@@ -1,8 +1,14 @@
 import { config } from "@/lib/config";
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-export const getDeepResearchConfig = () => {
+export const getDeepResearchConfig = (): {
+  allow_clarification: typeof config.ai.tools.deepResearch.allowClarification;
+  compression_model: typeof config.ai.tools.deepResearch.defaultModel;
+  final_report_model: typeof config.ai.tools.deepResearch.finalReportModel;
+  max_concurrent_research_units: typeof config.ai.tools.deepResearch.maxConcurrentResearchUnits;
+  max_researcher_iterations: typeof config.ai.tools.deepResearch.maxResearcherIterations;
+  research_model: typeof config.ai.tools.deepResearch.defaultModel;
+  search_api_max_queries: typeof config.ai.tools.deepResearch.maxSearchQueries;
+} => {
   const options = config.ai.tools.deepResearch;
   return {
     allow_clarification: options.allowClarification,
@@ -14,5 +20,3 @@ export const getDeepResearchConfig = () => {
     search_api_max_queries: options.maxSearchQueries,
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */

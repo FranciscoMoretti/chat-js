@@ -1,14 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-copy-dispatch"; "../db/eve-deletion"; "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
- */
-import { rejectUnacceptedEveCopy } from "../db/eve-copy-dispatch";
+import { rejectUnacceptedEveCopy } from "@/lib/db/eve-copy-dispatch";
 import {
   completeEveConversationDeletion,
   getEveDeletionState,
-} from "../db/eve-deletion";
-import { purgeEveFamilyDocuments } from "../db/eve-documents";
+} from "@/lib/db/eve-deletion";
+import { purgeEveFamilyDocuments } from "@/lib/db/eve-documents";
+
 import { purgeEveFamilyFiles } from "./purge-files";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable jsdoc/require-param, max-statements --
  * jsdoc/require-param (#534): deleteUnacceptedEveCopy's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.

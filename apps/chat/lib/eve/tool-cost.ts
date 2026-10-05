@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/active-gateway"; "../ai/to-model-data"; "../credits/cost-accumulator" dependency within this package instead of introducing an alias or barrel API.
- */
-import { getActiveGateway } from "../ai/active-gateway";
-import { toModelData } from "../ai/to-model-data";
-import type { UsageInfo } from "../credits/cost-accumulator";
+import { getActiveGateway } from "@/lib/ai/active-gateway";
+import { toModelData } from "@/lib/ai/to-model-data";
+import type { UsageInfo } from "@/lib/credits/cost-accumulator";
+
 import { createToolUsage } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): tokenCost uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

@@ -44,6 +44,7 @@ const writeFixture = async (temporary: string, file: string): Promise<void> => {
 const childDeadlineMs = 10_000;
 const testDeadlineMs = 30_000;
 const diagnosticFailureExit = 1;
+const diagnosticLocation = /^(?<filename>.+?):\d+:\d+:/u;
 
 const assertDiagnostics = (
   output: string,
@@ -51,9 +52,13 @@ const assertDiagnostics = (
   files: readonly string[]
 ): void => {
   for (const file of files) {
-    const diagnostics = output
-      .split("\n")
-      .filter((line): boolean => line.includes(`/${file}:`));
+    const diagnostics = output.split("\n").filter((line): boolean => {
+      const filename = diagnosticLocation.exec(line)?.groups?.filename;
+      return (
+        filename === path.relative(cwd, file) ||
+        filename?.endsWith(`/${file}`) === true
+      );
+    });
     expect(diagnostics, `${cwd}: ${file}`).not.toEqual([]);
     expect(
       diagnostics.some((line): boolean =>

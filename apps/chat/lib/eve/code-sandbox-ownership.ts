@@ -1,13 +1,10 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-code-sandboxes" dependency within this package instead of introducing an alias or barrel API.
- */
 import {
   confirmEveCodeSandboxCreation,
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
-} from "../db/eve-code-sandboxes";
+} from "@/lib/db/eve-code-sandboxes";
+
 import { resolveEveConversationScope } from "./conversation-scope";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
  * init-declarations (#507): eveCodeSandboxOwnership assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.

@@ -4,9 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- useGetCredits: ; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
-export const useGetCredits = () => {
+export const useGetCredits = (): {
+  credits: number | undefined;
+  isLoadingCredits: boolean;
+} => {
   const { data: session } = useSession();
   const isAuthenticated = Boolean(session?.user);
   const trpc = useTRPC();
@@ -21,4 +23,3 @@ export const useGetCredits = () => {
     isLoadingCredits: isAuthenticated && isLoadingCredits,
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

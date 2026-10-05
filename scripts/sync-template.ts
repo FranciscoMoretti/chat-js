@@ -22,6 +22,9 @@ const join = (...segments: readonly string[]): string => path.join(...segments);
 const relative = (from: string, to: string): string => path.relative(from, to);
 const resolve = (...segments: readonly string[]): string =>
   path.resolve(...segments);
+const MANIFEST_INDENT_SPACES = 2;
+const EMPTY_IMPORT_LIST_LENGTH = 0;
+const FAILURE_EXIT_STATUS = 1;
 const rootDir = resolve(import.meta.dir, "..");
 const isCheck = process.argv.includes("--check");
 const rootPackageJsonPath = join(rootDir, "package.json");
@@ -65,21 +68,20 @@ const TEMPLATE_STRIPPED_IMPORTS = [
 
 /* oxlint-disable eslint/max-statements -- applyTemplateTransforms: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- applyTemplateTransforms: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable eslint/no-magic-numbers -- applyTemplateTransforms: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable unicorn/no-null -- applyTemplateTransforms: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/promise-function-async -- applyTemplateTransforms: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const applyTemplateTransforms = async (destination: string): Promise<void> => {
   await normalizeScaffoldContent(destination);
 
   // Delete excluded files
   await Promise.all(
-    TEMPLATE_REMOVED_FILES.map((file): Promise<void> =>
-      rm(join(destination, file), { force: true })
+    TEMPLATE_REMOVED_FILES.map(
+      async (file): Promise<void> =>
+        await rm(join(destination, file), { force: true })
     )
   );
 
   // Strip imports that reference removed files
-  if (TEMPLATE_STRIPPED_IMPORTS.length > 0) {
+  if (TEMPLATE_STRIPPED_IMPORTS.length > EMPTY_IMPORT_LIST_LENGTH) {
     const headerPath = join(destination, "components", "header-actions.tsx");
     let content = await readFile(headerPath, "utf-8");
     for (const imp of TEMPLATE_STRIPPED_IMPORTS) {
@@ -125,11 +127,12 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     packageManager?: string;
   };
   packageJson.packageManager = rootPackageJson.packageManager;
-  await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  await writeFile(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
+  );
 };
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -181,16 +184,13 @@ const copyTemplate = async (destination: string): Promise<void> => {
 /* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
-/* oxlint-disable eslint/no-magic-numbers -- assertSynced: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- assertSynced: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- assertSynced: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const assertSynced = async (
   label: string,
   actualDir: string,
   copyFn: (dest: string) => Promise<void>
 ): Promise<boolean> => {
   const templateStats = await stat(actualDir).catch(() => null);
-  if (!templateStats?.isDirectory()) {
+  if (templateStats?.isDirectory() !== true) {
     console.error(
       `${label}: template folder missing. Run \`bun template:sync\`.`
     );
@@ -209,10 +209,16 @@ const assertSynced = async (
   await rm(tempParent, { force: true, recursive: true });
 
   const expectedEntries = [...expectedSnapshot.entries()].toSorted(
-    (leftEntry, rightEntry): number => leftEntry[0].localeCompare(rightEntry[0])
+    (
+      [leftPath]: readonly [string, string],
+      [rightPath]: readonly [string, string]
+    ): number => leftPath.localeCompare(rightPath)
   );
   const actualEntries = [...actualSnapshot.entries()].toSorted(
-    (leftEntry, rightEntry): number => leftEntry[0].localeCompare(rightEntry[0])
+    (
+      [leftPath]: readonly [string, string],
+      [rightPath]: readonly [string, string]
+    ): number => leftPath.localeCompare(rightPath)
   );
 
   if (JSON.stringify(expectedEntries) !== JSON.stringify(actualEntries)) {
@@ -224,14 +230,10 @@ const assertSynced = async (
   console.log(`${label}: template is synced.`);
   return true;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- sync-template.ts: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
 /* oxlint-disable eslint/no-console -- sync-template.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 if (isCheck) {
   const results = await Promise.all([
@@ -239,7 +241,7 @@ if (isCheck) {
     assertSynced("electron", electronTemplateDir, copyElectronTemplate),
   ]);
   if (results.some((ok): boolean => !ok)) {
-    process.exit(1);
+    process.exit(FAILURE_EXIT_STATUS);
   }
 } else {
   await copyTemplate(templateDir);
@@ -248,4 +250,3 @@ if (isCheck) {
   console.log("Synced templates/electron from apps/electron.");
 }
 /* oxlint-enable eslint/no-console */
-/* oxlint-enable eslint/no-magic-numbers */

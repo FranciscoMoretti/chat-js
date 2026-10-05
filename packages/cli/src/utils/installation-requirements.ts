@@ -93,7 +93,7 @@ const validateMedia = (
   }
 };
 
-export const validateProviderRequirements = async (
+const validateProviderRequirements = async (
   cwd: string,
   target: {
     readonly gateway?: MediaGateway;
@@ -113,4 +113,48 @@ export const validateProviderRequirements = async (
     const gateway = target.gateway ?? (await installedMediaGateway(cwd));
     validateMedia(mediaConsumers, gateway);
   }
+};
+
+const validateCodeExecutionRequirements = (
+  definition: Readonly<{
+    slot?: string;
+    codeExecutorExport?: string;
+    codeExecutionCapabilities?: unknown;
+  }>
+): void => {
+  if (
+    definition.slot === "codeExecution" &&
+    ((definition.codeExecutorExport ?? "") === "" ||
+      typeof definition.codeExecutionCapabilities !== "object" ||
+      definition.codeExecutionCapabilities === null)
+  ) {
+    throw new Error(
+      "Selected codeExecution provider requires a typed executor and declared execution, cleanup and usage capabilities."
+    );
+  }
+};
+
+const registryMetadataKind = (metadata: unknown): unknown =>
+  typeof metadata === "object" &&
+  metadata !== null &&
+  "kind" in metadata &&
+  metadata.kind;
+
+const validateRequestedKind = (
+  source: string,
+  kind: string | undefined,
+  actual: unknown
+): void => {
+  if (typeof kind === "string" && kind !== "" && kind !== actual) {
+    throw new Error(
+      `Selected ${kind} item has incompatible ChatJS metadata: ${source}`
+    );
+  }
+};
+
+export {
+  registryMetadataKind,
+  validateRequestedKind,
+  validateProviderRequirements,
+  validateCodeExecutionRequirements,
 };

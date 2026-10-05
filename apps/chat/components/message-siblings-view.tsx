@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import React from "react";
 
 import { Action } from "@/components/ai-elements/actions";
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- MessageSiblingsView: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/jsx-max-depth -- MessageSiblingsView: ; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const MessageSiblingsView = ({
   index,
@@ -13,11 +13,11 @@ export const MessageSiblingsView = ({
   onPrevious,
   onNext,
 }: {
-  index: number;
-  count: number;
-  disabled?: boolean;
-  onPrevious: () => void;
-  onNext: () => void;
+  readonly index: number;
+  readonly count: number;
+  readonly disabled?: boolean;
+  readonly onPrevious: () => void;
+  readonly onNext: () => void;
 }): React.JSX.Element => (
   <div className="flex items-center justify-center gap-1">
     {count > 1 && (
@@ -45,4 +45,4 @@ export const MessageSiblingsView = ({
     )}
   </div>
 );
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/jsx-max-depth */

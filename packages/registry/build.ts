@@ -1,7 +1,7 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun-only registry builder deletes and writes its dist directory and registry.json using asynchronous filesystem operations. */
 import { mkdir, rm, writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- This Bun-only registry builder joins output paths below import.meta.dir using the host platform filesystem separator. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -10,23 +10,30 @@ import { format } from "oxfmt";
 
 import { registry } from "./registry";
 
+const JSON_INDENTATION = 2;
+const FORMATTED_LINE_WIDTH = 80;
+const SUCCESS_EXIT_CODE = 0;
+const NO_FORMATTING_ERRORS = 0;
+
 const cwd = import.meta.dir;
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 await Promise.all(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The build appends descriptor files to each mutable Shadcn RegistryItem before serializing registry.json.
   registry.items.map(async (item) => {
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    const metadata = item.meta?.chatjs;
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    if (metadata?.kind === "tool" || metadata?.kind === "feature") {
+    const metadata: unknown = item.meta?.chatjs;
+    if (
+      typeof metadata === "object" &&
+      metadata &&
+      "kind" in metadata &&
+      (metadata.kind === "tool" || metadata.kind === "feature")
+    ) {
       const sourcePath = `dist/source/${item.name}.json`;
       const formatted = await format(sourcePath, JSON.stringify(metadata), {
-        printWidth: 80,
-        tabWidth: 2,
+        printWidth: FORMATTED_LINE_WIDTH,
+        tabWidth: JSON_INDENTATION,
       });
-      if (formatted.errors.length > 0) {
+      if (formatted.errors.length > NO_FORMATTING_ERRORS) {
         throw new Error(`Could not format registry descriptor: ${item.name}`);
       }
       await writeFile(path.join(cwd, sourcePath), formatted.code);
@@ -34,7 +41,6 @@ await Promise.all(
       item.files.push({
         path: sourcePath,
         target:
-          // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
           metadata.kind === "feature"
             ? `~/features/${item.name}/chatjs.json`
             : `~/tools/chatjs/${item.name}/chatjs.json`,
@@ -43,16 +49,11 @@ await Promise.all(
     }
   })
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 await writeFile(
   path.join(cwd, "registry.json"),
-  `${JSON.stringify(registry, null, 2)}\n`
+  // oxlint-disable-next-line unicorn/no-null -- JSON.stringify accepts null as its identity replacer; no metadata fields are filtered or transformed.
+  `${JSON.stringify(registry, null, JSON_INDENTATION)}\n`
 );
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable unicorn/no-null */
 const process = spawn(
   [
     "bunx",
@@ -65,8 +66,6 @@ const process = spawn(
   ],
   { cwd, stderr: "inherit", stdout: "inherit" }
 );
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-if ((await process.exited) !== 0) {
+if ((await process.exited) !== SUCCESS_EXIT_CODE) {
   throw new Error("shadcn registry build failed");
 }
-/* oxlint-enable eslint/no-magic-numbers */

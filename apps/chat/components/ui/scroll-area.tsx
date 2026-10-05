@@ -1,25 +1,31 @@
 "use client";
 
-/* oxlint-disable import/no-namespace -- @radix-ui/react-scroll-area import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-/* oxlint-enable import/no-namespace */
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import * as React from "react";
-/* oxlint-enable import/no-namespace */
+import {
+  ScrollAreaScrollbar as ScrollAreaPrimitiveScrollAreaScrollbar,
+  ScrollAreaThumb as ScrollAreaPrimitiveScrollAreaThumb,
+  Root as ScrollAreaPrimitiveRoot,
+  Viewport as ScrollAreaPrimitiveViewport,
+  Corner as ScrollAreaPrimitiveCorner,
+} from "@radix-ui/react-scroll-area";
+import { forwardRef as reactForwardRef } from "react";
+import type {
+  ComponentRef as ReactComponentRef,
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ScrollBar: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, orientation = "vertical", ...props }). */
 
-const ScrollBar = React.forwardRef<
-  React.ComponentRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
+const ScrollBar = reactForwardRef<
+  ReactComponentRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>,
+  ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveScrollAreaScrollbar>
 >(
   (
     { className, orientation = "vertical", ...props },
     ref
-  ): React.JSX.Element => (
-    <ScrollAreaPrimitive.ScrollAreaScrollbar
+  ): ReactJSX.Element => (
+    <ScrollAreaPrimitiveScrollAreaScrollbar
       className={cn(
         "flex touch-none transition-colors select-none",
         orientation === "vertical" &&
@@ -32,31 +38,31 @@ const ScrollBar = React.forwardRef<
       ref={ref}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb className="bg-border relative flex-1 rounded-full" />
-    </ScrollAreaPrimitive.ScrollAreaScrollbar>
+      <ScrollAreaPrimitiveScrollAreaThumb className="bg-border relative flex-1 rounded-full" />
+    </ScrollAreaPrimitiveScrollAreaScrollbar>
   )
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
+ScrollBar.displayName = ScrollAreaPrimitiveScrollAreaScrollbar.displayName;
+/* oxlint-disable typescript/prefer-readonly-parameter-types, react/no-multi-comp -- ScrollArea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }). */
 
-const ScrollArea = React.forwardRef<
-  React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref): React.JSX.Element => (
-  <ScrollAreaPrimitive.Root
+const ScrollArea = reactForwardRef<
+  ReactComponentRef<typeof ScrollAreaPrimitiveRoot>,
+  ReactComponentPropsWithoutRef<typeof ScrollAreaPrimitiveRoot>
+>(({ className, children, ...props }, ref): ReactJSX.Element => (
+  <ScrollAreaPrimitiveRoot
     className={cn("relative overflow-hidden", className)}
     ref={ref}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitiveViewport className="h-full w-full rounded-[inherit]">
       {children}
-    </ScrollAreaPrimitive.Viewport>
+    </ScrollAreaPrimitiveViewport>
     <ScrollBar />
-    <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
+    <ScrollAreaPrimitiveCorner />
+  </ScrollAreaPrimitiveRoot>
 ));
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
+/* oxlint-enable typescript/prefer-readonly-parameter-types, react/no-multi-comp */
+ScrollArea.displayName = ScrollAreaPrimitiveRoot.displayName;
 
 export { ScrollArea, ScrollBar };

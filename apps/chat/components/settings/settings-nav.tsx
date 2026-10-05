@@ -1,22 +1,31 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import type { JSX as ReactJSX } from "react";
 import React from "react";
 
 import { InternalLink } from "@/components/internal-link";
+import type { SettingsItem } from "@/components/settings/settings-item";
 import { cn } from "@/lib/utils";
 import { settingsItems } from "@/settings-items";
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- SettingsNav: ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item). */
+
+type ReadonlyNavItem = Readonly<
+  Pick<SettingsItem, "href" | "label" | "isVisible">
+> & {
+  readonly icon: (props: {
+    readonly className: string;
+  }) => ReturnType<SettingsItem["icon"]>;
+};
 
 export const SettingsNav = ({
   orientation = "vertical",
 }: {
-  orientation?: "horizontal" | "vertical";
-}) => {
+  readonly orientation?: "horizontal" | "vertical";
+}): ReactJSX.Element => {
   const pathname = usePathname();
 
   const navItems = settingsItems.filter(
-    (item) => !item.isVisible || item.isVisible()
+    (item: ReadonlyNavItem) => !item.isVisible || item.isVisible()
   );
 
   return (
@@ -26,7 +35,7 @@ export const SettingsNav = ({
         orientation === "vertical" ? "w-56 flex-col" : "flex-row"
       )}
     >
-      {navItems.map(({ href, label, icon: Icon }) => {
+      {navItems.map(({ href, label, icon: Icon }: ReadonlyNavItem) => {
         const isActive =
           href === "/settings"
             ? pathname === "/settings"
@@ -49,4 +58,3 @@ export const SettingsNav = ({
     </nav>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

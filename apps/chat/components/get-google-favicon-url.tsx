@@ -1,10 +1,14 @@
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers -- getGoogleFaviconUrl: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 128);  */
+const defaultFaviconSizePx = 128;
+
 /**
- * Gets a favicon URL via Google's favicon service for any URL/hostname
+ * Gets a favicon URL via Google's favicon service for any URL/hostname.
+ * @param urlOrHostname URL or hostname whose favicon is requested.
+ * @param size Requested icon size in pixels.
+ * @returns Service URL, or empty text when URL parsing fails.
  */
 export const getGoogleFaviconUrl = (
   urlOrHostname: string,
-  size = 128
+  size = defaultFaviconSizePx
 ): string => {
   try {
     const hostname = urlOrHostname.includes("://")
@@ -15,4 +19,3 @@ export const getGoogleFaviconUrl = (
     return "";
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */

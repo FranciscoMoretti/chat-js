@@ -6,22 +6,48 @@ import type {
   UIMessage,
 } from "ai";
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadRun = {
+type MessageMetadata<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer Metadata, infer _Data, infer _Tools>
+    ? Metadata
+    : never;
+type MessageData<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer Data, infer _Tools>
+    ? Data
+    : never;
+type MessageTools<TMessage extends UIMessage> =
+  TMessage extends UIMessage<infer _Metadata, infer _Data, infer Tools>
+    ? Tools
+    : never;
+
+// Thread construction follows the SDK message shape, preserving metadata, data,
+// and tools without promising arbitrary extensions the SDK cannot construct.
+type CanonicalMessage<TMessage extends UIMessage> = UIMessage<
+  MessageMetadata<TMessage>,
+  MessageData<TMessage>,
+  MessageTools<TMessage>
+>;
+
+const FIRST_PARAMETER_INDEX = 0;
+const TREE_SNAPSHOT_VERSION = 1;
+
+// Keep exported aliases closed and implicitly assignable to dictionary readers.
+// Pick copies the private interface shape without exposing declaration merging.
+interface ThreadRunShape {
   error: Error | undefined;
   id: string;
   status: ChatStatus;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadRunHandle = {
+type ThreadRun = Pick<ThreadRunShape, keyof ThreadRunShape>;
+
+interface ThreadRunHandleShape {
   readonly finished: Promise<void>;
   readonly id: string;
   getSnapshot: () => ThreadRun | undefined;
   stop: () => Promise<void>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
+
+type ThreadRunHandle = Pick<ThreadRunHandleShape, keyof ThreadRunHandleShape>;
 
 type TreeSendOptions = ChatRequestOptions & {
   tree?: {
@@ -30,40 +56,50 @@ type TreeSendOptions = ChatRequestOptions & {
   };
 };
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = {
+interface ThreadStartRunOptionsShape<TMessage extends UIMessage> {
   follow?: boolean;
   from?: string | null;
-  message?: Parameters<AbstractChat<TMessage>["sendMessage"]>[0];
+  message?: Parameters<
+    AbstractChat<TMessage>["sendMessage"]
+  >[typeof FIRST_PARAMETER_INDEX];
   request?: ChatRequestOptions;
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type ThreadConcurrency = {
+type ThreadStartRunOptions<TMessage extends UIMessage = UIMessage> = Pick<
+  ThreadStartRunOptionsShape<TMessage>,
+  keyof ThreadStartRunOptionsShape<TMessage>
+>;
+
+interface ThreadConcurrencyShape {
   maxActiveRuns?: number;
   maxActiveRunsPerMessage?: number;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-type MessageTreeNode<TMessage extends UIMessage = UIMessage> = {
+type ThreadConcurrency = Pick<
+  ThreadConcurrencyShape,
+  keyof ThreadConcurrencyShape
+>;
+
+interface MessageTreeNodeShape<TMessage extends UIMessage> {
   message: TMessage;
   parentId: string | null;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep the published snapshot/run alias closed to declaration merging; changing public type forms requires the API audit tracked in #622. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = {
+type MessageTreeNode<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeNodeShape<TMessage>,
+  keyof MessageTreeNodeShape<TMessage>
+>;
+
+interface MessageTreeSnapshotShape<TMessage extends UIMessage> {
   cursorId: string | null;
   nodes: MessageTreeNode<TMessage>[];
-  version: 1;
-};
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/consistent-type-definitions */
+  version: typeof TREE_SNAPSHOT_VERSION;
+}
+
+type MessageTreeSnapshot<TMessage extends UIMessage = UIMessage> = Pick<
+  MessageTreeSnapshotShape<TMessage>,
+  keyof MessageTreeSnapshotShape<TMessage>
+>;
 
 type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
   MessageTreeSnapshot<TMessage> & {
@@ -79,7 +115,6 @@ type ThreadStateSnapshot<TMessage extends UIMessage = UIMessage> =
     treeStatus: ChatStatus;
   };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 interface ThreadState<TMessage extends UIMessage = UIMessage> {
   getSnapshot: () => ThreadStateSnapshot<TMessage>;
   subscribe: (listener: () => void) => () => void;
@@ -89,24 +124,29 @@ interface ThreadState<TMessage extends UIMessage = UIMessage> {
    */
   update: (
     updater: (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The exported updater permits synchronous mutation of its SDK message arrays and returns that same mutable snapshot; readonly collections reject existing updater operations.
       snapshot: ThreadStateSnapshot<TMessage>
     ) => ThreadStateSnapshot<TMessage>
   ) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type ThreadInitialState<TMessage extends UIMessage> =
   | { initialTree: MessageTreeSnapshot<TMessage>; messages?: never }
   | { initialTree?: never; messages?: TMessage[] };
 
 type ThreadInit<TMessage extends UIMessage = UIMessage> = Omit<
-  ChatInit<TMessage>,
+  ChatInit<CanonicalMessage<TMessage>>,
   "messages"
 > & {
   concurrency?: ThreadConcurrency;
-} & ThreadInitialState<TMessage>;
+} & ThreadInitialState<CanonicalMessage<TMessage>> &
+  ThreadInitialState<TMessage>;
 
 export type {
+  CanonicalMessage,
+  MessageMetadata,
+  MessageData,
+  MessageTools,
   ThreadRun,
   ThreadRunHandle,
   TreeSendOptions,

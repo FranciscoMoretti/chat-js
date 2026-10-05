@@ -16,29 +16,53 @@ import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
 } from "@/lib/db/mcp-queries";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies.
 import type { McpConnector } from "@/lib/db/schema";
-/* oxlint-enable import/max-dependencies */
-import { describeMcpTool, executeMcpTool } from "@/lib/eve/mcp-adapter";
 import { eveMcpResult } from "@/lib/eve/mcp-result";
 import { createModuleLogger } from "@/lib/logger";
 
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
+
+type ReadonlyNativeSurface<Value> = Value extends (
+  ...parameters: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? {
+        readonly [Property in keyof Value]: ReadonlyNativeSurface<
+          Value[Property]
+        >;
+      }
+    : Value;
+
 const log = createModuleLogger("eve.mcp");
+
+const FIRST_CHARACTER_INDEX = 0;
+const TOOL_NAME_PREFIX_LENGTH = 51;
+const TOOL_NAME_HASH_LENGTH = 12;
+const CONNECTOR_DISCOVERY_TIMEOUT_MS = 10_000;
+const MCP_APPROVAL_TIMEOUT_MS = 30_000;
+const MAXIMUM_VALIDATION_ERRORS = 3;
+type ValidatedMcpTool<NativeTool> = NativeTool extends Tool
+  ? Omit<NativeTool, "inputSchema"> & {
+      inputSchema: ReturnType<
+        typeof jsonSchema<Record<string, NonNullable<unknown>>>
+      >;
+    }
+  : never;
 
 const VALID_TOOL_NAME = /^[a-zA-Z0-9_-]{1,64}$/u;
 const UNSAFE_TOOL_NAME = /[^a-zA-Z0-9_-]/gu;
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+
 const modelToolName = (name: string): string =>
   VALID_TOOL_NAME.test(name)
     ? name
-    : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(0, 51)}_${createHash("sha256").update(name).digest("hex").slice(0, 12)}`;
-/* oxlint-enable eslint/no-magic-numbers */
+    : `${name.replace(UNSAFE_TOOL_NAME, "_").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_PREFIX_LENGTH)}_${createHash("sha256").update(name).digest("hex").slice(FIRST_CHARACTER_INDEX, TOOL_NAME_HASH_LENGTH)}`;
 
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const withAbort = async <T>(
   operation: () => Promise<T>,
-  signal: AbortSignal
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): Promise<T> => {
   signal.throwIfAborted();
   const aborted = Promise.withResolvers<never>();
@@ -50,16 +74,14 @@ const withAbort = async <T>(
     signal.removeEventListener("abort", cancel);
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const assertConnector = (
   connector: McpConnector | undefined,
   ownerId: string
-) => {
+): McpConnector => {
   if (
     !(
       installedFeatures.has("mcp") &&
@@ -74,20 +96,19 @@ const assertConnector = (
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const withConnector = async <T>(
   connector: McpConnector,
   signal: AbortSignal,
   run: (tools: Record<string, Tool>) => Promise<T>
-) => {
+): Promise<T> => {
   signal.throwIfAborted();
   const client = new MCPClient(connector.id, connector.name, {
     oauthClientId: connector.oauthClientId,
@@ -120,29 +141,38 @@ const withConnector = async <T>(
     await close();
   }
 };
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/id-length */
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
+
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
+
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/** Only serializable descriptions leave discovery; no credentials or open clients enter a workflow closure. */
+/**
+ * Discovers serializable MCP descriptions while closing every opened connector client.
+ * @param ownerId Authenticated owner whose enabled connectors may be discovered; absence yields no tools.
+ * @param signal Discovery cancellation boundary combined with each connector's connection timeout.
+ * @returns Safe model tool names and serializable remote descriptions/identities for durable use.
+ */
 const discoverEveMcpTools = async (
   ownerId: string | undefined,
   signal: AbortSignal
-) => {
+): Promise<
+  (Awaited<ReturnType<typeof describeMcpTool>> & {
+    name: string;
+    connectorId: string;
+    remoteName: string;
+  })[]
+> => {
   if (
     !(
       typeof ownerId === "string" &&
@@ -176,7 +206,7 @@ const discoverEveMcpTools = async (
     }
     const connectorSignal = AbortSignal.any([
       signal,
-      AbortSignal.timeout(10_000),
+      AbortSignal.timeout(CONNECTOR_DISCOVERY_TIMEOUT_MS),
     ]);
     try {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Finish the scoped connector operation before releasing its client.
@@ -230,19 +260,15 @@ const discoverEveMcpTools = async (
 };
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
+
 /* oxlint-enable eslint/no-continue */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable jsdoc/require-returns */
+
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const validateMcpTool = async (tool: Tool) => {
+const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   const schema = await asSchema(tool.inputSchema).jsonSchema;
   // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
   const Validator =
@@ -263,7 +289,7 @@ const validateMcpTool = async (tool: Tool) => {
               error: new Error(
                 `Invalid tool input: ${
                   validate.errors
-                    ?.slice(0, 3)
+                    ?.slice(FIRST_CHARACTER_INDEX, MAXIMUM_VALIDATION_ERRORS)
                     .map(
                       (error): string =>
                         `${error.instancePath || "/"} ${error.message}`
@@ -277,8 +303,6 @@ const validateMcpTool = async (tool: Tool) => {
   };
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -298,10 +322,10 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
+
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
+
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -311,7 +335,7 @@ const executeEveMcpTool = async (
   input: unknown,
   context: Pick<ToolContext, "session" | "callId" | "abortSignal" | "approval">,
   messages: readonly ModelMessage[]
-) => {
+): Promise<ReturnType<typeof eveMcpResult.parse>> => {
   const ownerId = context.session.auth.initiator?.principalId;
   if (!(typeof ownerId === "string" && ownerId !== "")) {
     throw new Error("MCP tools require an authenticated owner.");
@@ -364,19 +388,25 @@ const executeEveMcpTool = async (
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
+
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
+
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/** Native request evaluation; only serializable identifiers enter durable callbacks. */
+/**
+ * Evaluates current MCP approval policy using serializable identifiers and a temporary client.
+ * @param connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
+ * @param remoteName Exact remote tool name whose availability and schema are rechecked.
+ * @param input Tool input validated before its current approval policy is evaluated.
+ * @param context Native session authentication, call identity, and cancellation evidence.
+ * @param messages Model history supplied to the tool's approval callback.
+ * @returns Whether the current tool requires user approval; the temporary client closes on all paths.
+ */
 const requestEveMcpApproval = async (
   connectorId: string,
   remoteName: string,
@@ -389,7 +419,7 @@ const requestEveMcpApproval = async (
   }
   const signal = AbortSignal.any([
     context.abortSignal,
-    AbortSignal.timeout(30_000),
+    AbortSignal.timeout(MCP_APPROVAL_TIMEOUT_MS),
   ]);
   const connector = assertConnector(
     await withAbort(() => getMcpConnectorById({ id: connectorId }), signal),
@@ -405,10 +435,8 @@ const requestEveMcpApproval = async (
 };
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable jsdoc/require-param */
+
 /* oxlint-enable eslint/max-params */
-/* oxlint-enable jsdoc/require-returns */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export { discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval };

@@ -1,5 +1,6 @@
 "use client";
 
+import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   createContext,
   useCallback,
@@ -7,7 +8,6 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import type { ReactNode } from "react";
 
 import type { ArtifactMetadata, UIArtifact } from "@/lib/artifacts/types";
 
@@ -53,9 +53,13 @@ const ArtifactContext = createContext<ArtifactContextType | undefined>(
   undefined
 );
 /* oxlint-enable no-undefined */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- ArtifactProvider: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: ReactNode }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- ArtifactProvider:   typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: ReactNode }); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const ArtifactProvider = ({ children }: { children: ReactNode }) => {
+const ArtifactProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}): ReactJSX.Element => {
   const [artifactState, setArtifactState] =
     useState<UIArtifact>(initialArtifactData);
   const [metadataStore, setMetadataStore] = useState<MetadataStore>({});
@@ -102,32 +106,38 @@ const ArtifactProvider = ({ children }: { children: ReactNode }) => {
     </ArtifactContext.Provider>
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable typescript/explicit-function-return-type -- useArtifactContext: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const useArtifactContext = () => {
+const useArtifactContext = (): ArtifactContextType => {
   const context = useContext(ArtifactContext);
   if (!context) {
     throw new Error("Artifact hooks must be used within ArtifactProvider");
   }
   return context;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships. */
 
-const useArtifactSelector = <Selected,>(selector: Selector<Selected>) => {
+const useArtifactSelector = <Selected,>(
+  selector: Selector<Selected>
+): Selected => {
   const { artifact } = useArtifactContext();
 
   const selectedValue = useMemo(() => selector(artifact), [artifact, selector]);
 
   return selectedValue;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --   typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including currentArtifact); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const useArtifact = () => {
+interface ArtifactHookValue {
+  artifact: UIArtifact;
+  closeArtifact: () => void;
+  metadata: ArtifactMetadata;
+  resetArtifact: () => void;
+  setArtifact: ArtifactContextType["setArtifact"];
+  setMetadata: (metadataArg: ArtifactMetadata | MetadataUpdater) => void;
+}
+
+const useArtifact = (): ArtifactHookValue => {
   const {
     artifact,
     setArtifact,
@@ -142,7 +152,7 @@ const useArtifact = () => {
   );
 
   const setMetadata = useCallback(
-    (metadataArg: ArtifactMetadata | MetadataUpdater) => {
+    (metadataArg: ArtifactMetadata | MetadataUpdater): void => {
       if (artifact.documentId) {
         setMetadataStore(artifact.documentId, metadataArg);
       }
@@ -150,11 +160,11 @@ const useArtifact = () => {
     [artifact.documentId, setMetadataStore]
   );
 
-  const resetArtifact = useCallback(() => {
+  const resetArtifact = useCallback((): void => {
     setArtifact(initialArtifactData);
   }, [setArtifact]);
 
-  const closeArtifact = useCallback(() => {
+  const closeArtifact = useCallback((): void => {
     setArtifact((currentArtifact) =>
       currentArtifact.status === "streaming"
         ? {
@@ -177,7 +187,7 @@ const useArtifact = () => {
     [artifact, setArtifact, metadata, setMetadata, resetArtifact, closeArtifact]
   );
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: Consumers import ArtifactProvider, useArtifact, useArtifactSelector from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ArtifactProvider, useArtifact, useArtifactSelector };
 /* oxlint-enable react/only-export-components */

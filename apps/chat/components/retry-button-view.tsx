@@ -5,16 +5,15 @@ import React from "react";
 
 import { Action } from "@/components/ai-elements/actions";
 import { cn } from "@/lib/utils";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- RetryButtonView: ; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const RetryButtonView = ({
   onRetry,
   disabled = false,
   className,
 }: {
-  onRetry: () => void;
-  disabled?: boolean;
-  className?: string;
+  readonly onRetry: () => void;
+  readonly disabled?: boolean;
+  readonly className?: string;
 }): React.JSX.Element => (
   <Action
     className={cn(
@@ -28,4 +27,3 @@ export const RetryButtonView = ({
     <RefreshCcw className="h-3.5 w-3.5" />
   </Action>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

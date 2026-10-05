@@ -3,16 +3,19 @@ import { and, eq, inArray, ne, notExists, notInArray, sql } from "drizzle-orm";
 import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * no-magic-numbers (#517): deletingFamilyIds uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep deletingFamilyIds's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): deletingFamilyIds accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
+const EMPTY_COLLECTION_LENGTH = 0;
+const FIRST_ROW_INDEX = 0;
+const FIRST_ARGUMENT_INDEX = 0;
+const SINGLE_ROW_LIMIT = 1;
+
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): deletingFamilyIds accepts tx: Parameters<Parameters<typeof db.transaction>[typeof FIRST_ARGUMENT_INDEX]>[typeof FIRST_ARGUMENT_INDEX]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const deletingFamilyIds = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Parameters<
+    Parameters<typeof db.transaction>[typeof FIRST_ARGUMENT_INDEX]
+  >[typeof FIRST_ARGUMENT_INDEX],
   ownerId: string,
   rootId: string
-) => {
+): Promise<string[]> => {
   const family = await tx
     .select({
       id: eveConversation.id,
@@ -25,20 +28,27 @@ const deletingFamilyIds = async (
         eq(eveConversation.chatId, rootId)
       )
     );
-  if (family.length === 0 || family.some((row) => row.state !== "deleting")) {
+  if (
+    family.length === EMPTY_COLLECTION_LENGTH ||
+    family.some((row) => row.state !== "deleting")
+  ) {
     throw new Error("The entire conversation family must be pending deletion.");
   }
   return family.map((row) => row.id);
 };
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): prepareEveFamilyFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): prepareEveFamilyFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep prepareEveFamilyFilePurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep prepareEveFamilyFilePurge's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): prepareEveFamilyFilePurge accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Fence exclusively referenced files before external deletion; retain references for retries. */
-const prepareEveFamilyFilePurge = async (ownerId: string, rootId: string) =>
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): prepareEveFamilyFilePurge accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Fence exclusively referenced files before external deletion; retain references for retries.
+ * @param ownerId Owner whose deleting conversation family authorizes the cleanup.
+ * @param rootId Shared family root; every family member must already be pending deletion.
+ * @returns Sorted storage keys fenced for removal, excluding files still referenced outside the family.
+ */
+const prepareEveFamilyFilePurge = async (
+  ownerId: string,
+  rootId: string
+): Promise<string[]> =>
   await db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
@@ -71,17 +81,19 @@ const prepareEveFamilyFilePurge = async (ownerId: string, rootId: string) =>
       .returning({ key: eveStoredFile.key });
     return files.map((file) => file.key).toSorted();
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): completeEveFilePurge's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): completeEveFilePurge uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): completeEveFilePurge accepts keys: string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Call only after the provider confirms removal; no file identity is recycled. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): completeEveFilePurge accepts keys: readonly string[]; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Call only after the provider confirms removal; no file identity is recycled.
+ * @param ownerId Owner used to scope the stored-file state update and family lock.
+ * @param keys Provider-confirmed removed keys; only deleting rows are marked permanently deleted.
+ */
 const completeEveFilePurge = async (
   ownerId: string,
-  keys: string[]
+  keys: readonly string[]
 ): Promise<void> => {
-  if (keys.length === 0) {
+  if (keys.length === EMPTY_COLLECTION_LENGTH) {
     return;
   }
   await db.transaction(async (tx) => {
@@ -100,15 +112,16 @@ const completeEveFilePurge = async (
       );
   });
 };
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- jsdoc/require-param (#534): releaseEveFamilyFileReferences's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): releaseEveFamilyFileReferences uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+/* oxlint-disable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls -- max-lines-per-function (#510): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): releaseEveFamilyFileReferences accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): releaseEveFamilyFileReferences intentionally keeps the existing falsy-value behavior of unremoved; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): releaseEveFamilyFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-/** Release references only after file cleanup; retry cleanup if another family released first. */
+/**
+ * Release references only after file cleanup; retry cleanup if another family released first.
+ * @param ownerId Owner whose deleting family is locked while file cleanup is checked.
+ * @param rootId Family root whose references are released only after all exclusive files are removed.
+ */
 const releaseEveFamilyFileReferences = async (
   ownerId: string,
   rootId: string
@@ -127,7 +140,7 @@ const releaseEveFamilyFileReferences = async (
           notInArray(eveFileReference.conversationId, ids)
         )
       );
-    const [unremoved] = await tx
+    const unremovedRows = await tx
       .select({ key: eveStoredFile.key })
       .from(eveStoredFile)
       .where(
@@ -144,7 +157,8 @@ const releaseEveFamilyFileReferences = async (
           notExists(outsideReference)
         )
       )
-      .limit(1);
+      .limit(SINGLE_ROW_LIMIT);
+    const unremoved = unremovedRows.at(FIRST_ROW_INDEX);
     if (unremoved) {
       throw new Error(
         "File cleanup is incomplete. Retry before releasing references."
@@ -160,7 +174,7 @@ const releaseEveFamilyFileReferences = async (
       );
   });
 };
-/* oxlint-enable jsdoc/require-param, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
 export {
   completeEveFilePurge,
   prepareEveFamilyFilePurge,

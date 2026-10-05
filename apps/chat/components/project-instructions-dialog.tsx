@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- ProjectInstructionsDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including error). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ProjectInstructionsDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; */
 
 export const ProjectInstructionsDialog = ({
   open,
@@ -24,14 +24,14 @@ export const ProjectInstructionsDialog = ({
   isPending,
   error,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  projectName?: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  onSave: () => void;
-  isPending: boolean;
-  error?: string;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly projectName?: string;
+  readonly value: string;
+  readonly onValueChange: (value: string) => void;
+  readonly onSave: () => void;
+  readonly isPending: boolean;
+  readonly error?: string;
 }): React.JSX.Element => (
   <Dialog
     onOpenChange={(next) => {
@@ -56,12 +56,14 @@ export const ProjectInstructionsDialog = ({
           autoFocus
           className="min-h-[200px] resize-none"
           disabled={isPending}
-          onChange={(event) => onValueChange(event.target.value)}
+          onChange={(event: { readonly target: { readonly value: string } }) =>
+            onValueChange(event.target.value)
+          }
           placeholder="Enter project instructions..."
           value={value}
         />
       </div>
-      {error && <p role="alert">{error}</p>}
+      {typeof error === "string" && error !== "" && <p role="alert">{error}</p>}
       <DialogFooter>
         <Button
           disabled={isPending}
@@ -78,4 +80,4 @@ export const ProjectInstructionsDialog = ({
     </DialogContent>
   </Dialog>
 );
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

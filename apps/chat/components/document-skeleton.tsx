@@ -3,12 +3,11 @@
 import React from "react";
 
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- DocumentSkeleton: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const DocumentSkeleton = ({
   artifactKind: _artifactKind,
 }: {
-  artifactKind: ArtifactKind;
+  readonly artifactKind: ArtifactKind;
 }): React.JSX.Element => (
   <div className="flex w-full flex-col gap-4">
     <div className="bg-muted-foreground/20 h-12 w-1/2 animate-pulse rounded-lg" />
@@ -20,7 +19,6 @@ const DocumentSkeleton = ({
     <div className="bg-muted-foreground/20 h-5 w-2/3 animate-pulse rounded-lg" />
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp -- InlineDocumentSkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 

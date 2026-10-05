@@ -1,6 +1,6 @@
 import React from "react";
-import type { ReactNode } from "react";
 
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 
 const WelcomeMessage = (): React.JSX.Element => (
@@ -11,14 +11,14 @@ const WelcomeMessage = (): React.JSX.Element => (
   </div>
 );
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatWelcomeView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- ChatWelcomeView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 export const ChatWelcomeView = ({
   children,
   className,
 }: {
-  children: ReactNode;
-  className?: string;
+  readonly children: ReadonlyReactNode;
+  readonly className?: string;
 }): React.JSX.Element => (
   <div
     className={cn(
@@ -34,4 +34,4 @@ export const ChatWelcomeView = ({
     </div>
   </div>
 );
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp */

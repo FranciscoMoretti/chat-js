@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import type { JSX as ReactJSX } from "react";
 import React, { Suspense } from "react";
 
 import { ModelsSettings } from "@/components/settings/models-settings";
@@ -8,14 +9,15 @@ import {
 } from "@/components/settings/settings-page";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { preloadQuery } from "@/trpc/preload-query";
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
 
-/* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/jsx-max-depth -- ModelsSettingsHeader: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const ModelsSettingsHeader = ({
   showRegistryLink = false,
 }: {
-  showRegistryLink?: boolean;
+  readonly showRegistryLink?: boolean;
 }): React.JSX.Element => (
   <SettingsPageHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
     <div>
@@ -45,14 +47,15 @@ const ModelsSettingsHeader = ({
     )}
   </SettingsPageHeader>
 );
-/* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/explicit-function-return-type -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
+/* oxlint-enable react/jsx-max-depth */
+/* oxlint-disable react/no-multi-comp -- ModelsSettingsContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
-const ModelsSettingsContent = async () => {
+const ModelsSettingsContent = async (): Promise<ReactJSX.Element> => {
   const queryClient = getQueryClient();
-  // oxlint-disable-next-line typescript/no-deprecated -- #583: Keep the v5 prefetch API and its error-swallowing hydration semantics across locked and freshly scaffolded Query versions.
-  await queryClient.prefetchQuery(
-    trpc.settings.getModelPreferences.queryOptions()
+
+  // Preloading populates the settings hydration cache and intentionally swallows preload failures.
+  await preloadQuery(
+    queryClient.query(trpc.settings.getModelPreferences.queryOptions())
   );
 
   return (
@@ -64,7 +67,7 @@ const ModelsSettingsContent = async () => {
     </HydrateClient>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/explicit-function-return-type */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp -- ModelsSettingsPage: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
@@ -85,7 +88,5 @@ const ModelsSettingsPage = (): React.JSX.Element => (
   </Suspense>
 );
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/jsx-max-depth, react/no-multi-comp */
-/* oxlint-disable import/no-default-export -- page route: import/no-default-export: Next.js loads this route entry point through its required default export. */
-
+// oxlint-disable-next-line import/no-default-export -- Next.js 16.3 discovers this page module and create-component-tree selects its default component ModelsSettingsPage.
 export default ModelsSettingsPage;
-/* oxlint-enable import/no-default-export */

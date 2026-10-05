@@ -1,12 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types" dependency within this package instead of introducing an alias or barrel API.
- */
 /* oxlint-disable eslint/sort-keys -- Schema order defines persisted admission hashes; retain the original wire representation. */
 import { z } from "zod";
 
-import { frontendToolsSchema } from "../ai/types";
+import { frontendToolsSchema } from "@/lib/ai/types";
+
 import { eveMessageInput } from "./message-input";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): eveForkInput uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const eveForkInput = z.union([

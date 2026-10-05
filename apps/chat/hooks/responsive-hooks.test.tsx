@@ -20,59 +20,59 @@ const originalMatchMedia = Object.getOwnPropertyDescriptor(
 );
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Value: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { value }: { value: boolean }). */
 
-const Value = ({ value }: { value: boolean }): React.JSX.Element => (
+const Value = ({ value }: { readonly value: boolean }): React.JSX.Element => (
   <output>{String(value)}</output>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp -- MountedValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MountedValue = ({
   onValue,
 }: {
-  onValue?: (value: boolean) => void;
+  readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useMounted();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
+/* oxlint-disable react/no-multi-comp -- MobileValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onValue }: { onValue?: (value: boolean) => void }). */
 
 const MobileValue = ({
   onValue,
 }: {
-  onValue?: (value: boolean) => void;
+  readonly onValue?: (value: boolean) => void;
 }): React.JSX.Element => {
   const value = useIsMobile();
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable react/no-multi-comp -- MediaQueryValue: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const MediaQueryValue = ({
   onValue,
   query,
 }: {
-  onValue?: (value: boolean) => void;
-  query: string;
+  readonly onValue?: (value: boolean) => void;
+  readonly query: string;
 }): React.JSX.Element => {
   const value = useMediaQuery(query);
   onValue?.(value);
   return <Value value={value} />;
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- installMatchMedia: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable id-length, typescript/explicit-function-return-type -- installMatchMedia: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 const installMatchMedia = ({
   initialMatches,
   innerWidth,
 }: {
-  initialMatches: boolean;
-  innerWidth: number;
+  readonly initialMatches: boolean;
+  readonly innerWidth: number;
 }) => {
   let matches = initialMatches;
   const listeners = new Set<() => void>();
@@ -107,7 +107,7 @@ const installMatchMedia = ({
     addEventListener,
     browserWindow,
     removeEventListener,
-    setMatches(nextMatches: boolean) {
+    setMatches(nextMatches: boolean): void {
       matches = nextMatches;
       for (const listener of listeners) {
         listener();
@@ -115,7 +115,7 @@ const installMatchMedia = ({
     },
   };
 };
-/* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 afterEach(() => {
   if (originalMatchMedia) {

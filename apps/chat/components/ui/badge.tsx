@@ -1,8 +1,9 @@
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-/* oxlint-disable import/no-namespace -- react import: import/no-namespace: the React or primitive namespace carries the library component and type contract. */
-import type * as React from "react";
-/* oxlint-enable import/no-namespace */
+import type {
+  HTMLAttributes as ReactHTMLAttributes,
+  JSX as ReactJSX,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ const badgeVariants = cva(
 
 interface BadgeProps
   extends
-    React.HTMLAttributes<HTMLDivElement>,
+    ReactHTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Badge: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, variant, ...props }: BadgeProps). */
@@ -37,7 +38,7 @@ const Badge = ({
   className,
   variant,
   ...props
-}: BadgeProps): React.JSX.Element => (
+}: BadgeProps): ReactJSX.Element => (
   <div className={cn(badgeVariants({ variant }), className)} {...props} />
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

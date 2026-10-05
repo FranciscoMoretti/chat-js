@@ -12,15 +12,22 @@ type InstalledGateway = InstanceType<typeof Gateway>;
 
 type GatewayType = typeof gatewayType;
 
-/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): GatewayProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-type GatewayProvider = GatewayProviderBase<
-  GatewayType,
-  Parameters<InstalledGateway["createLanguageModel"]>[0],
-  Parameters<InstalledGateway["createImageModel"]>[0],
-  Parameters<InstalledGateway["createVideoModel"]>[0]
+const MODEL_ID_PARAMETER_INDEX = 0;
+
+// Derive the installed adapter's parameter types before applying its selected
+// gateway type. Unsupported factories keep never, and provider-specific IDs
+// remain narrow even when the reference gateway currently accepts strings.
+type InstalledProviderContract<
+  Provider extends GatewayProviderBase<string, never, never, never>,
+  SelectedType extends string,
+> = GatewayProviderBase<
+  SelectedType,
+  Parameters<Provider["createLanguageModel"]>[typeof MODEL_ID_PARAMETER_INDEX],
+  Parameters<Provider["createImageModel"]>[typeof MODEL_ID_PARAMETER_INDEX],
+  Parameters<Provider["createVideoModel"]>[typeof MODEL_ID_PARAMETER_INDEX]
 >;
-/* oxlint-enable no-magic-numbers */
+
+type GatewayProvider = InstalledProviderContract<InstalledGateway, GatewayType>;
 
 /* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): GatewayModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */

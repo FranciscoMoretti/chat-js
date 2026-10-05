@@ -1,25 +1,35 @@
 import { guardedFetch } from "guarded-fetch";
 
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/** Covers transport, discovery and OAuth requests with the same network policy. */
+type ReadonlyNativeSurface<Value> = Value extends (
+  ...parameters: readonly never[]
+) => unknown
+  ? Value
+  : Value extends object
+    ? {
+        readonly [Property in keyof Value]: ReadonlyNativeSurface<
+          Value[Property]
+        >;
+      }
+    : Value;
+const MCP_NETWORK_TIMEOUT_MS = 30_000;
+
+/** Covers transport, discovery and OAuth requests with the same network policy.
+ * @param input - Native URL or request to protect with the MCP network policy.
+ * @param init - Native request overrides applied by the Request constructor.
+ * @returns The response from the guarded transport.
+ */
 export const mcpFetch = async (
-  input: string | URL | Request,
-  init?: RequestInit
+  input: string | ReadonlyNativeSurface<URL | Request>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Request receives RequestInit unchanged; readonly nested header tuples are not assignable to its HeadersInit receiver, and eager normalization changes getter/iterator evaluation order.
+  init?: Readonly<RequestInit>
 ): Promise<Response> => {
   const request = new Request(input, init);
   return await guardedFetch(request.url, {
-    body: request.body ? await request.arrayBuffer() : undefined,
+    ...(request.body ? { body: await request.arrayBuffer() } : {}),
     headers: request.headers,
     method: request.method,
     opaqueErrors: true,
     signal: request.signal,
-    timeoutMs: 30_000,
+    timeoutMs: MCP_NETWORK_TIMEOUT_MS,
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable jsdoc/require-returns */

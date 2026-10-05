@@ -1,63 +1,32 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+import { afterAll, expect, test } from "bun:test";
+/* oxlint-disable import/no-nodejs-modules -- Create, snapshot, and remove a real temporary Git repository; Bun.file alone does not allocate temporary directories or create/remove directory trees. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- Use the host OS temporary directory for disposable fixtures; a hardcoded /tmp path or direct TMPDIR read is not portable. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
+import { runTestProcess } from "./features/test-runtime";
+import {
+  jsonObject,
+  jsonString,
+  taskList,
+  parseAffectedTaskNames,
+  findTask,
+  parseJsonObject,
+} from "./test-json";
+import type { TaskPlan } from "./test-json";
+
+const SUCCESS_EXIT_CODE = 0;
+const EXPECTED_AFFECTED_EXIT = 1;
+const EXPECTED_DEMO_CHECK_TASKS = 1;
+
 const repoRoot = path.resolve(import.meta.dir, "../../..");
 const turbo = path.join(repoRoot, "node_modules/.bin/turbo");
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-let fixture: string;
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const git = (...args: string[]) => {
-  const result = Bun.spawnSync(["git", ...args], { cwd: fixture });
-  if (result.exitCode !== 0) {
-    throw new Error(result.stderr.toString());
-  }
-  return result.stdout.toString().trim();
-};
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const run = (...args: string[]) => {
-  const result = Bun.spawnSync([turbo, "run", ...args, "--dry=json"], {
-    cwd: fixture,
-    env: { ...process.env, TURBO_SCM_BASE: "", TURBO_SCM_HEAD: "" },
-  });
-  if (result.exitCode !== 0) {
-    throw new Error(result.stderr.toString());
-  }
-  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  return JSON.parse(result.stdout.toString());
-};
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable typescript/explicit-function-return-type */
-
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-beforeAll(async () => {
-  fixture = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
+const copyFixtureFiles = async (directory: string): Promise<void> => {
   const files = [
     "turbo.json",
     "bun.lock",
@@ -76,109 +45,126 @@ beforeAll(async () => {
   ];
   await Promise.all(
     files.map(async (file) => {
-      await mkdir(path.dirname(path.join(fixture, file)), { recursive: true });
+      await mkdir(path.dirname(path.join(directory, file)), {
+        recursive: true,
+      });
       await writeFile(
-        path.join(fixture, file),
+        path.join(directory, file),
         await readFile(path.join(repoRoot, file))
       );
     })
   );
   // Every baseline-owned copy must participate, including generated indexes.
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const baseline = JSON.parse(
+  const baseline = parseJsonObject(
     await readFile(
       path.join(repoRoot, "packages/registry/demo-baseline.json"),
       "utf-8"
     )
   );
   await Promise.all(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    Object.keys(baseline.files).map(async (file) => {
-      const target = path.join(fixture, "apps/chat", file);
+    Object.keys(jsonObject(baseline.files)).map(async (file) => {
+      const target = path.join(directory, "apps/chat", file);
       await mkdir(path.dirname(target), { recursive: true });
       await writeFile(target, "// fixture owned copy\n");
     })
   );
-  for (const args of [
-    ["init", "-b", "main"],
-    ["add", "."],
-  ]) {
-    const result = Bun.spawnSync(["git", ...args], { cwd: fixture });
-    if (result.exitCode !== 0) {
-      throw new Error(result.stderr.toString());
-    }
+};
+
+const gitIn = async (
+  directory: string,
+  ...args: readonly string[]
+): Promise<string> => {
+  const result = await runTestProcess(["git", ...args], { cwd: directory });
+  if (result.exitCode !== SUCCESS_EXIT_CODE) {
+    throw new Error(result.stderr);
   }
-  const committed = Bun.spawnSync(
-    [
-      "git",
-      "-c",
-      "user.name=Demo task test",
-      "-c",
-      "user.email=demo-test@example.invalid",
-      "commit",
-      "-m",
-      "Baseline",
-    ],
-    { cwd: fixture }
+  return result.stdout.trim();
+};
+
+const initializeGitFixture = async (directory: string): Promise<void> => {
+  await gitIn(directory, "init", "-b", "main");
+  await gitIn(directory, "add", ".");
+  await gitIn(
+    directory,
+    "-c",
+    "user.name=Demo task test",
+    "-c",
+    "user.email=demo-test@example.invalid",
+    "commit",
+    "-m",
+    "Baseline"
   );
-  if (committed.exitCode !== 0) {
-    throw new Error(committed.stderr.toString());
+};
+
+const createFixture = async (): Promise<string> => {
+  const directory = await mkdtemp(path.join(tmpdir(), "chatjs-demo-turbo-"));
+  try {
+    await copyFixtureFiles(directory);
+    await initializeGitFixture(directory);
+    return directory;
+  } catch (error) {
+    await rm(directory, { force: true, recursive: true });
+    throw error;
   }
-});
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+};
+
+const fixture = await createFixture();
+
+const git = async (...args: readonly string[]): Promise<string> => {
+  const output = await gitIn(fixture, ...args);
+  return output;
+};
+
+const run = async (...args: readonly string[]): Promise<TaskPlan> => {
+  const result = await runTestProcess([turbo, "run", ...args, "--dry=json"], {
+    cwd: fixture,
+    environment: { TURBO_SCM_BASE: "", TURBO_SCM_HEAD: "" },
+  });
+  if (result.exitCode !== SUCCESS_EXIT_CODE) {
+    throw new Error(result.stderr);
+  }
+  return { tasks: taskList(result.stdout) };
+};
+
+const registryTask = async (
+  taskName: string
+): Promise<TaskPlan["tasks"][number]> => {
+  const { tasks } = await run(taskName, "--filter=@chat-js/registry");
+  return findTask(tasks, `@chat-js/registry#${taskName}`);
+};
+
+const taskHash = async (taskName: string): Promise<string> => {
+  const selected = await registryTask(taskName);
+  return jsonString(selected.hash);
+};
+
 afterAll(async () => {
   await rm(fixture, { force: true, recursive: true });
 });
 
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("demo check hashes every owned copy and never restores app files; sync is uncached", async () => {
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const plan = run("demo:check", "--filter=@chat-js/registry");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const task = plan.tasks.find(
-    (item: { taskId: string }) => item.taskId === "@chat-js/registry#demo:check"
-  );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const baseline = JSON.parse(
+  const task = await registryTask("demo:check");
+  const baseline = parseJsonObject(
     await readFile(
       path.join(repoRoot, "packages/registry/demo-baseline.json"),
       "utf-8"
     )
   );
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    Object.keys(baseline.files).filter(
-      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      (file) => !Object.hasOwn(task.inputs, `../../apps/chat/${file}`)
+    Object.keys(jsonObject(baseline.files)).filter(
+      (file) =>
+        !Object.hasOwn(jsonObject(task.inputs), `../../apps/chat/${file}`)
     )
   ).toEqual([]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(task.dependencies).toEqual([]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  expect(task.resolvedTaskDefinition.cache).toBe(true);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  expect(task.resolvedTaskDefinition.outputs).toEqual([]);
-  expect(
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    run("demo:sync", "--filter=@chat-js/registry").tasks[0]
-      .resolvedTaskDefinition.cache
-  ).toBe(false);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const unit = run("test:unit", "--filter=@chat-js/registry").tasks.find(
-    (item: { taskId: string }) => item.taskId === "@chat-js/registry#test:unit"
-  );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+  expect(jsonObject(task.resolvedTaskDefinition).cache).toBe(true);
+  expect(jsonObject(task.resolvedTaskDefinition).outputs).toEqual([]);
+  const sync = await registryTask("demo:sync");
+  expect(jsonObject(sync.resolvedTaskDefinition).cache).toBe(false);
+  const unit = await registryTask("test:unit");
   expect(unit.dependencies).toContain("@chat-js/registry#demo:check");
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 test.each([
   ["packages/registry/src/tools/word-count/tool.ts", true],
   ["packages/registry/registry.ts", true],
@@ -202,39 +188,64 @@ test.each([
   ["apps/chat/node_modules/example/index.js", false],
   ["apps/docs/index.mdx", false],
 ])("demo task hash invalidation for %s", async (file, invalidates) => {
-  const hash = () =>
-    // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    run("demo:check", "--filter=@chat-js/registry").tasks[0].hash;
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const before = hash();
+  const before = await taskHash("demo:check");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed input\n`);
-  expect(hash() === before).toBe(!invalidates);
+  expect((await taskHash("demo:check")) === before).toBe(!invalidates);
 });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("CI affected query and execution select demo checking for canonical and demo edits", async () => {
-  for (const file of [
-    "packages/registry/src/tools/word-count/tool.ts",
-    "apps/chat/tools/chatjs/word-count/tool.ts",
-  ]) {
-    const base = git("rev-parse", "HEAD");
+const affectedTaskNames = async (base: string): Promise<readonly string[]> => {
+  const query = await runTestProcess(
+    [
+      turbo,
+      "query",
+      "affected",
+      "--tasks",
+      "test:unit",
+      "demo:check",
+      "--base",
+      base,
+      "--head",
+      "HEAD",
+      "--exit-code",
+    ],
+    { cwd: fixture }
+  );
+  expect(query.exitCode, query.stderr).toBe(EXPECTED_AFFECTED_EXIT);
+  return parseAffectedTaskNames(query.stdout);
+};
+
+const verifyAffectedExecution = async (base: string): Promise<void> => {
+  const execution = await runTestProcess(
+    [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
+    {
+      cwd: fixture,
+      environment: { TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
+    }
+  );
+  expect(execution.exitCode, execution.stderr).toBe(SUCCESS_EXIT_CODE);
+  expect(
+    taskList(execution.stdout).filter(
+      (item) => item.taskId === "@chat-js/registry#demo:check"
+    )
+  ).toHaveLength(EXPECTED_DEMO_CHECK_TASKS);
+};
+
+test.each([
+  "packages/registry/src/tools/word-count/tool.ts",
+  "apps/chat/tools/chatjs/word-count/tool.ts",
+])(
+  "CI affected query and execution select demo checking for %s",
+  async (file) => {
+    const base = await git("rev-parse", "HEAD");
     const target = path.join(fixture, file);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each commit defines a separate CI change boundary.
     await writeFile(target, `// CI change ${base}\n`);
-    git("add", file);
-    git(
+    await git("add", file);
+    await git(
       "-c",
       "user.name=Demo task test",
       "-c",
@@ -243,94 +254,33 @@ test("CI affected query and execution select demo checking for canonical and dem
       "-m",
       "CI input change"
     );
-    const query = Bun.spawnSync(
-      [
-        turbo,
-        "query",
-        "affected",
-        "--tasks",
-        "test:unit",
-        "demo:check",
-        "--base",
-        base,
-        "--head",
-        "HEAD",
-        "--exit-code",
-      ],
-      { cwd: fixture }
+    expect(await affectedTaskNames(base)).toContain(
+      "@chat-js/registry#demo:check"
     );
-    expect(query.exitCode, query.stderr.toString()).toBe(1);
-    expect(
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      JSON.parse(query.stdout.toString()).data.affectedTasks.items.map(
-        (item: { fullName: string }) => item.fullName
-      )
-    ).toContain("@chat-js/registry#demo:check");
-    const execution = Bun.spawnSync(
-      [turbo, "run", "test:unit", "demo:check", "--affected", "--dry=json"],
-      {
-        cwd: fixture,
-        env: { ...process.env, TURBO_SCM_BASE: base, TURBO_SCM_HEAD: "HEAD" },
-      }
-    );
-    expect(execution.exitCode, execution.stderr.toString()).toBe(0);
-    expect(
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      JSON.parse(execution.stdout.toString()).tasks.filter(
-        (item: { taskId: string }) =>
-          item.taskId === "@chat-js/registry#demo:check"
-      )
-    ).toHaveLength(1);
+    await verifyAffectedExecution(base);
   }
-});
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable node/no-process-env */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+);
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each([
   "packages/cli/src/utils/installation-plan.ts",
   "packages/gateways/src/definition.ts",
 ])("registry typecheck invalidates for imported source %s", async (file) => {
-  const hash = () =>
-    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    run("test:types", "--filter=@chat-js/registry").tasks.find(
-      (item: { taskId: string }) =>
-        item.taskId === "@chat-js/registry#test:types"
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-    ).hash;
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const before = hash();
+  const before = await taskHash("test:types");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
   await writeFile(target, `${previous}\n// changed type boundary\n`);
-  expect(hash()).not.toBe(before);
+  expect(await taskHash("test:types")).not.toBe(before);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-test("registry typecheck restores gateway declaration outputs on cache hits", () => {
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const { tasks } = run("test:types", "--filter=@chat-js/registry");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const registry = tasks.find(
-    (item: { taskId: string }) => item.taskId === "@chat-js/registry#test:types"
-  );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  const gateways = tasks.find(
-    (item: { taskId: string }) => item.taskId === "@chat-js/gateways#test:types"
-  );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+test("registry typecheck restores gateway declaration outputs on cache hits", async () => {
+  const { tasks } = await run("test:types", "--filter=@chat-js/registry");
+  const registry = findTask(tasks, "@chat-js/registry#test:types");
+  const gateways = findTask(tasks, "@chat-js/gateways#test:types");
   expect(registry.dependencies).toContain("@chat-js/gateways#test:types");
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  expect(gateways.resolvedTaskDefinition.outputs).toEqual(["dist/**"]);
+  expect(jsonObject(gateways.resolvedTaskDefinition).outputs).toEqual([
+    "dist/**",
+  ]);
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -1,9 +1,7 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../eve/copy-boundaries" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, eq, inArray, sql } from "drizzle-orm";
 
-import type { EveCopyBoundary } from "../eve/copy-boundaries";
+import type { EveCopyBoundary } from "@/lib/eve/copy-boundaries";
+
 import { db } from "./client";
 import {
   eveConversation,
@@ -14,7 +12,6 @@ import {
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
 } from "./schema";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

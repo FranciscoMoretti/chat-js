@@ -12,15 +12,10 @@ const mocks = vi.hoisted(() => ({
   guest: false,
   selected: false,
 }));
-/* oxlint-disable id-length, typescript/explicit-function-return-type --
- * id-length (#506): vi.mock("eve/tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/tools", () => ({
-  defineDynamic: <T>(value: T) => value,
-  defineTool: <T>(value: T) => value,
+  defineDynamic: <Value>(value: Value): Value => value,
+  defineTool: <Value>(value: Value): Value => value,
 }));
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
 vi.mock("./mcp-tools", () => ({
   discoverEveMcpTools: mocks.discover,
   executeEveMcpTool: mocks.execute,

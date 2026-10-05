@@ -3,12 +3,9 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { scaffoldFromTemplate } from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { installItems } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
+import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+import { installItems } from "#cli/registry/shadcn";
+
 import { installPlan, recordInstalledSource } from "./install-plan";
 import { planInstallation } from "./installation-plan";
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
@@ -102,8 +99,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await installPlan(root, first, {}, async (): Promise<void> => {
       await syncTools(root, { expected: first.expected });
     });
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       planInstallation(root, { features: [], tools: [source("second")] })
     ).rejects.toThrow("--replace");
     const plan = await planInstallation(
@@ -116,8 +112,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
       old,
       "// my implementation\nexport const executeCode = {};\n"
     );
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       installPlan(root, plan, {}, async (): Promise<void> => {
         await syncTools(root);
       })
@@ -143,8 +138,7 @@ test("explicit provider replacement preserves unrelated installations and refuse
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
     ).toContain("extra");
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    registry.stop(true);
+    await registry.stop(true);
   }
 }, 30_000);
 /* oxlint-enable eslint/max-lines-per-function */
@@ -305,8 +299,7 @@ test("native shadcn source can be composed without overwriting or blessing user 
     const tools = await syncTools(root, { checkOnly: true });
     expect(tools.map((tool): string => tool.id)).toEqual(["first"]);
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    registry.stop(true);
+    await registry.stop(true);
   }
 }, 30_000);
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -393,8 +386,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     );
     expect(await readFile(receiptFile, "utf-8")).toBe(baseline);
     let registered = false;
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       installPlan(
         root,
         storagePlan,
@@ -408,8 +400,7 @@ test("registration refreshes untouched rollback baselines without blessing user 
     expect(registered).toBe(false);
     expect(await readFile(file, "utf-8")).toContain("user storage notes");
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    registry.stop(true);
+    await registry.stop(true);
   }
 }, 30_000);
 /* oxlint-enable eslint/no-magic-numbers */
@@ -487,8 +478,7 @@ test("provider installation refuses inferred native dependency destinations befo
       { replace: true }
     );
     let registered = false;
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       installPlan(root, plan, {}, (): Promise<void> => {
         registered = true;
         return Promise.reject(new Error("registration must not run"));
@@ -508,15 +498,13 @@ test("provider installation refuses inferred native dependency destinations befo
       "utf-8"
     );
     expect(receipt).not.toContain("components/ui/fixture.tsx");
-    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
-    await expect(
+    expect(
       installPlan(root, native, { overwrite: true }, (): Promise<void> =>
         Promise.resolve()
       )
     ).rejects.toThrow("No source was installed");
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    registry.stop(true);
+    await registry.stop(true);
   }
 }, 30_000);
 /* oxlint-enable typescript/promise-function-async */
