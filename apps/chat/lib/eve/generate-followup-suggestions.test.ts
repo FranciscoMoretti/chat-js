@@ -50,9 +50,9 @@ beforeEach(() => {
  * typescript/explicit-function-return-type (#560): Keep it("retains paid usage when structured output cannot be read")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 it("retains paid usage when structured output cannot be read", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
+  mocks.generate.mockImplementation(({ onStepEnd }) => {
     // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    onStepFinish(evidence);
+    onStepEnd(evidence);
     return {
       get output() {
         throw new Error("Malformed suggestions");
@@ -76,9 +76,9 @@ it("retains paid usage when structured output cannot be read", async () => {
 /* oxlint-enable typescript/explicit-function-return-type */
 
 it("returns valid suggestions and records the configured auxiliary model", async () => {
-  mocks.generate.mockImplementation(({ onStepFinish }) => {
+  mocks.generate.mockImplementation(({ onStepEnd }) => {
     // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This generate-followup-suggestions fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    onStepFinish(evidence);
+    onStepEnd(evidence);
     return { output: { suggestions } };
   });
   expect(await generateEveFollowupSuggestions(exchange)).toEqual({

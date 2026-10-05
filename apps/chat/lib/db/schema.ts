@@ -74,7 +74,6 @@ type UserCredit = InferSelectModel<typeof userCredit>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const userModelPreference = pgTable(
   "UserModelPreference",
   {
@@ -89,19 +88,16 @@ const userModelPreference = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    UserModelPreference_user_id_idx: index(
-      "UserModelPreference_user_id_idx"
-    ).on(columns.userId),
-    pk: primaryKey({ columns: [columns.userId, columns.modelId] }),
-  })
+  (columns) => [
+    index("UserModelPreference_user_id_idx").on(columns.userId),
+    primaryKey({ columns: [columns.userId, columns.modelId] }),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): project accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const project = pgTable(
   "Project",
   {
@@ -119,10 +115,10 @@ const project = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    Project_id_user: unique("Project_id_user").on(columns.id, columns.userId),
-    Project_user_id_idx: index("Project_user_id_idx").on(columns.userId),
-  })
+  (columns) => [
+    unique("Project_id_user").on(columns.id, columns.userId),
+    index("Project_user_id_idx").on(columns.userId),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -268,7 +264,6 @@ const verification = pgTable("verification", {
 });
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpConnector = pgTable(
   "McpConnector",
   {
@@ -292,25 +287,20 @@ const mcpConnector = pgTable(
     // Null = global.
     userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(
-      columns.userId
-    ),
-    McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
+  (columns) => [
+    index("McpConnector_user_id_idx").on(columns.userId),
+    index("McpConnector_user_name_id_idx").on(columns.userId, columns.nameId),
+    uniqueIndex("McpConnector_user_name_id_unique").on(
       columns.userId,
       columns.nameId
     ),
-    McpConnector_user_name_id_unique: uniqueIndex(
-      "McpConnector_user_name_id_unique"
-    ).on(columns.userId, columns.nameId),
-  })
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type McpConnector = InferSelectModel<typeof mcpConnector>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {
@@ -333,14 +323,10 @@ const mcpOAuthSession = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (columns) => ({
-    McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
-      columns.mcpConnectorId
-    ),
-    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(
-      columns.state
-    ),
-  })
+  (columns) => [
+    index("McpOAuthSession_connector_idx").on(columns.mcpConnectorId),
+    index("McpOAuthSession_state_idx").on(columns.state),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 

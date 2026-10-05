@@ -8,7 +8,6 @@ import type { EveMessageInput } from "./message-input";
 /* oxlint-enable sort-imports */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 
-const EMPTY_ATTACHMENT_COUNT = 0;
 const HEX_RADIX = 16;
 const HEX_BYTE_WIDTH = 2;
 
@@ -50,7 +49,8 @@ const draftMessage = (
   text: string,
   attachments: readonly Readonly<DraftAttachment>[]
 ): EveMessageInput => {
-  if (attachments.length === EMPTY_ATTACHMENT_COUNT) {
+  // oxlint-disable-next-line no-magic-numbers -- A draft without attachments retains the native text-only input shape.
+  if (attachments.length === 0) {
     return eveMessageInput.parse(text);
   }
   return eveMessageInput.parse([
@@ -65,16 +65,15 @@ const draftMessage = (
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve attachmentDigest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): attachmentDigest accepts bytes: ArrayBuffer; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const attachmentDigest = async (bytes: ArrayBuffer): Promise<string> =>
+const attachmentDigest = async (
+  bytes: Readonly<ArrayBuffer>
+): Promise<string> =>
   Array.from(
     new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)),
     (byte) => byte.toString(HEX_RADIX).padStart(HEX_BYTE_WIDTH, "0")
   ).join("");
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (attachmentDigest, draftAttachment, draftMessage, restoreDraft); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { attachmentDigest, draftAttachment, draftMessage, restoreDraft };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (DraftAttachment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

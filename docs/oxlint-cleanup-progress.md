@@ -132,6 +132,14 @@ The attachment component adds one guarded return with unchanged inferred signatu
 
 Full lint, all seven type-check tasks, all 203 CLI unit tests (1,102 assertions), template parity and 65 focused app tests pass. Serial native lint reports only the six established cross-environment assertion warnings. The exception total is **19,992**, down ten. The final globally disabled rule and broader original exception review remain open; no PR has been opened.
 
+The seventeenth batch fixes the deprecated followup-generation callback: pinned AI SDK code resolves `onStepEnd` and `onStepFinish` to the same callback, and configured model options contain no competing callback override. Real SDK billing coverage verifies paid usage remains recorded before invalid structured output is read. Controlled fixtures now invoke the supported key. Readonly followup/digest inputs, authored accounting/activity documentation and parameter-local native exceptions complete review of eighteen original source scopes; test-file scopes outside the callback edit remain unreviewed. Eight focused tests pass.
+
+Skeleton, Separator and Badge receive review of 21 original rule occurrences. Native prop exceptions are confined to their destructured parameters, with actual React ref/DOM/open-string contracts checked. Whole-repository reference searches find no consumers of BadgeProps or badgeVariants exports; those exports are removed while their internal definitions and all executable component bodies remain unchanged. The stale Fast Refresh exception is removed. The two annotation-only primitives emit byte-identical JavaScript, and all component signatures are unchanged.
+
+Four deprecated Drizzle object-form table configuration callbacks become arrays of the same ordered constraint/index expressions. Actual Drizzle Kit metadata for all 34 tables is identical, and migration generation produces no SQL. A renamed-index negative control produces two migration statements. The check loads native custom column types with an inert environment solely for metadata inspection; it never connects to a database or invokes encryption. Actual app TypeScript checks compare all 43 value/type exports, including select/insert aliases, with no differences or semantic errors. Other original schema suppressions remain pending review.
+
+Full lint, all seven type-check tasks, all 203 CLI tests (1,102 assertions), template parity and the focused tests pass. Serial native diagnostics match the six previously verified cross-environment warnings exactly. The exception total is **19,984**, down eight. The final globally disabled rule and broader original review remain unfinished; no PR has been opened.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records
