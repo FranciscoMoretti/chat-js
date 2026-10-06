@@ -1,14 +1,16 @@
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (textPdf); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
- * jsdoc/require-param (#534): textPdf's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): textPdf's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
  * max-statements (#512): textPdf keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): textPdf uses 0, 1, 10 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/explicit-function-return-type (#560): Keep textPdf's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep textPdf's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/** Minimal, valid PDF fixture with selectable text and an accurate xref table. */
+/**
+ * Builds a minimal valid, single-page PDF fixture with selectable text and an accurate xref table.
+ * @param {string} text Text to place in the PDF content stream.
+ * @returns {Buffer<ArrayBuffer>} Encoded PDF file bytes.
+ */
 export function textPdf(text: string) {
   const stream = `BT /F1 18 Tf 50 700 Td (${text}) Tj ET`;
   const objects = [
@@ -34,4 +36,4 @@ export function textPdf(text: string) {
   return Buffer.from(result);
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */

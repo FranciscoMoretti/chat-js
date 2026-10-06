@@ -35,9 +35,7 @@ const inputSchema = z
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): POST uses 15_000, 202 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -45,7 +43,13 @@ const inputSchema = z
  * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of source?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** The caller retains this checkpoint identity before posting and on ambiguous failure. */
+/**
+ * Requests checkpoint capture for a bound source conversation.
+ * On an ambiguous response, the caller must retain this request for a same-request retry.
+ * @param {Request} request Same-origin request containing checkpoint identity and turn data.
+ * @param {{ params: Promise<{ id: string }> }} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} JSON confirming readiness or explaining rejection or uncertainty.
+ */
 export const POST = async (
   request: Request,
   context: {
@@ -135,4 +139,4 @@ export const POST = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

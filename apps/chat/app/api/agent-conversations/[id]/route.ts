@@ -61,10 +61,14 @@ const deletionStatus = (state: string) => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Status only; reading never resumes deletion or exposes conversation payloads. */
+/**
+ * Returns deletion status without resuming cleanup or exposing conversation payloads.
+ * @param {Request} request Same-origin status request.
+ * @param {Context} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} No-store JSON containing the conversation family root and status.
+ */
 const GET = async (request: Request, context: Context): Promise<Response> => {
   const result = await authorize(request, context);
   if (result instanceof Response) {
@@ -80,15 +84,20 @@ const GET = async (request: Request, context: Context): Promise<Response> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DELETE's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --
 max-lines-per-function (#510): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): DELETE accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Erases the conversation family through the verified local-provider coordinator. */
+/**
+ * Deletes an owned conversation family through the local-provider coordinator.
+ * Unaccepted copies are removed directly; accepted conversations are fenced and erased locally.
+ * @param {Request} request Same-origin deletion request.
+ * @param {Context} context Route parameters containing the conversation or chat ID.
+ * @returns {Promise<Response>} No-store JSON with deletion status, or an error response.
+ */
 const DELETE = async (
   request: Request,
   context: Context
@@ -166,6 +175,6 @@ const DELETE = async (
 };
 /* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (DELETE, GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { DELETE, GET };
 /* oxlint-enable import/no-named-export */

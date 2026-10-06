@@ -43,16 +43,16 @@ const PROJECT_ROUTE_PATTERN =
   /^\/project\/(?<projectId>[^/]+)(?:\/chat\/(?<chatId>[^/]+))?$/u;
 const CHAT_ROUTE_PATTERN = /^\/chat\/(?<chatId>[^/]+)$/u;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): parseChatIdFromPathname's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): parseChatIdFromPathname's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): parseChatIdFromPathname keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/strict-boolean-expressions (#610): parseChatIdFromPathname intentionally keeps the existing falsy-value behavior of shareId; projectGroups?.projectId; chatId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): parseChatIdFromPathname preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /**
- * Parse a Next.js pathname into the chat route shape.
- * Unknown paths are passthrough routes and must not become draft chats.
+ * Parses a Next.js pathname into its chat route shape.
+ * Unknown paths remain passthrough routes and do not become draft chats.
+ * @param {string | null} pathname Browser pathname, or null when it is unavailable.
+ * @returns {ParsedChatIdFromPathname} The matched share, project, chat, home, or passthrough route.
  */
 const parseChatIdFromPathname = (
   pathname: string | null
@@ -92,7 +92,7 @@ const parseChatIdFromPathname = (
   return { id: null, projectId: null, source: null, type: "passthrough" };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (parseChatIdFromPathname); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, typescript/strict-boolean-expressions, unicorn/no-null */
 export { parseChatIdFromPathname };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ChatRouteSource, ParsedChatIdFromPathname); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

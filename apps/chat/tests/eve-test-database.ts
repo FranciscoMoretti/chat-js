@@ -1,11 +1,16 @@
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (assertEveTestDatabase); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): assertEveTestDatabase's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable node/no-process-env, typescript/strict-boolean-expressions --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/strict-boolean-expressions (#610): assertEveTestDatabase intentionally keeps the existing falsy-value behavior of isolated; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/** Remote acceptance tests require both an explicit opt-in and an isolated target. */
+/**
+ * Allows local PostgreSQL test targets and validates explicit opt-in for remote targets.
+ * Remote use requires the configured isolated URL to match the target URL.
+ * @param {string} databaseUrl Database URL the test suite will use.
+ * @returns {void} Completes when the target passes the safety checks.
+ * @throws {Error} When a remote target lacks opt-in or does not match the isolated URL.
+ */
 export function assertEveTestDatabase(databaseUrl: string): void {
   const url = new URL(databaseUrl);
   if (
@@ -27,4 +32,4 @@ export function assertEveTestDatabase(databaseUrl: string): void {
   }
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable jsdoc/require-param, node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable node/no-process-env, typescript/strict-boolean-expressions */

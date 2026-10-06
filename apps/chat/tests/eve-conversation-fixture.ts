@@ -24,16 +24,19 @@ type ConversationFixture = Omit<
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (insertEveConversationFixtures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve insertEveConversationFixtures's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): insertEveConversationFixtures's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): insertEveConversationFixtures's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * typescript/explicit-function-return-type (#560): Keep insertEveConversationFixtures's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/explicit-module-boundary-types (#562): Keep insertEveConversationFixtures's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): insertEveConversationFixtures accepts input: ConversationFixture | ConversationFixture[]; tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): insertEveConversationFixtures preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): insertEveConversationFixtures intentionally keeps the existing falsy-value behavior of conversation.parentConversationId; title; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Seed metadata and session membership together, including parent-first batches. */
+/**
+ * Inserts conversation fixture rows and their chat metadata in one transaction.
+ * Parent-first batches inherit their parent's chat ID; other fixtures receive a new chat ID.
+ * @param {ConversationFixture | ConversationFixture[]} input One fixture or an ordered batch of fixtures.
+ * @returns {Promise<(typeof eveConversation.$inferSelect)[]>} The inserted conversation rows in input order.
+ */
 export const insertEveConversationFixtures = (
   input: ConversationFixture | ConversationFixture[]
 ) =>
@@ -84,4 +87,4 @@ export const insertEveConversationFixtures = (
   });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

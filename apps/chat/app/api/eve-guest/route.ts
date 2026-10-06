@@ -27,9 +27,7 @@ const createdSession = z.object({
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): POST uses 60_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -37,8 +35,12 @@ const createdSession = z.object({
  * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; host; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** The creation credential stays on the server. The browser receives only a
- * session-scoped credential, which it keeps in memory. */
+/**
+ * Starts a guest Eve session and returns a browser-safe, session-scoped credential.
+ * The creation credential remains server-side; the client keeps the guest credential in memory.
+ * @param {Request} request Same-origin request containing the selected guest model.
+ * @returns {Promise<Response>} JSON with the guest session details, or an error response.
+ */
 export const POST = async (request: Request): Promise<Response> => {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
@@ -102,4 +104,4 @@ export const POST = async (request: Request): Promise<Response> => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

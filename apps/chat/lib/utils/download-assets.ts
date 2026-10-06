@@ -226,16 +226,17 @@ const mapImagePart = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceFilePartUrlByBinaryDataInMessages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): replaceFilePartUrlByBinaryDataInMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): replaceFilePartUrlByBinaryDataInMessages's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): replaceFilePartUrlByBinaryDataInMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): replaceFilePartUrlByBinaryDataInMessages uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): replaceFilePartUrlByBinaryDataInMessages accepts messages: ModelMessage[]; part: TextPart | ImagePart | FilePart; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
- * Inlines any URL-based file/image parts within ModelMessage[] by replacing the URLs
- * with downloaded binary data. This ensures providers receive actual bytes.
+ * Replaces downloadable URL-based image and file content in model messages with binary data.
+ * Other message parts are preserved, and image or file parts with failed downloads are omitted.
+ * @param {ModelMessage[]} messages Messages whose remote assets should be downloaded.
+ * @param {DownloadImplementation} [downloadImplementation] Downloader used for each asset.
+ * @returns {Promise<ModelMessage[]>} Messages with fetched binary content in place of URLs.
  */
 const replaceFilePartUrlByBinaryDataInMessages = async (
   messages: ModelMessage[],
@@ -298,7 +299,7 @@ const replaceFilePartUrlByBinaryDataInMessages = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (replaceFilePartUrlByBinaryDataInMessages); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { replaceFilePartUrlByBinaryDataInMessages };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (DownloadImplementation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
