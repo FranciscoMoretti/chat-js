@@ -30,6 +30,11 @@ interface CommentDirective {
   readonly rules: readonly string[];
 }
 
+// Preserve native compiler members while reading the recursive parent graph.
+interface CompilerNodeReader extends Readonly<Omit<ts.Node, "parent">> {
+  readonly parent: CompilerNodeReader;
+}
+
 // Parse literals before scanning comments so strings, regexes, templates and JSX
 // text cannot become suppression directives. Offsets remain UTF-16 code units.
 const maskLiterals = (source: string, filename: string): string => {
@@ -42,8 +47,7 @@ const maskLiterals = (source: string, filename: string): string => {
   const masked = Array.from({ length: source.length }, (character, index) =>
     source.charAt(index)
   );
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Compiler Nodes are mutable library interfaces; this visitor only reads their positions and syntax kind.
-  const visit = (node: ts.Node): void => {
+  const visit = (node: CompilerNodeReader): void => {
     if (
       ts.isStringLiteralLike(node) ||
       ts.isRegularExpressionLiteral(node) ||
@@ -183,7 +187,7 @@ const withoutDirectives = (
   return characters.join("");
 };
 
-// Compiler-owned mutable Nodes are read-only inputs; only source positions are collected.
+// Compiler-owned nodes retain their identity; only source positions are collected.
 const functionScope = (
   source: string,
   filename: string,
@@ -196,8 +200,7 @@ const functionScope = (
     true
   );
   const scopes: FunctionSourceScope[] = [];
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Compiler Nodes expose mutable library interfaces; this traversal only reads syntax and positions.
-  const visit = (node: ts.Node): void => {
+  const visit = (node: CompilerNodeReader): void => {
     if (ts.isFunctionLike(node) && "body" in node && node.body) {
       const declaration =
         // oxlint-disable-next-line no-ternary -- Keep declaration as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.

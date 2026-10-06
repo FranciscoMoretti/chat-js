@@ -74,10 +74,12 @@ const toolEnvironmentSchema = z.object({
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): validateGatewayKey uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): validateGatewayKey accepts env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): gatewayEnvRequirements.map infers a mutable requirement parameter; readonly wrapping would require an API type change in the generated defaults module.
  * unicorn/no-null (#570): validateGatewayKey preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateGatewayKey = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   const gateway: string = config.ai.gateway;
   const missing = gatewayEnvRequirements
     .map((requirement) => getMissingRequirement(requirement, env))
@@ -94,10 +96,12 @@ const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): validateStorage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): validateStorage accepts env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): storageEnvRequirements.map infers a mutable EnvRequirement parameter; readonly wrapping would require a source-type change in the storage options module.
  * unicorn/no-null (#570): validateStorage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateStorage = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   if (
     !(
       installedFeatures.has("attachment-uploads") ||
@@ -118,13 +122,14 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-statements, no-continue, typescript/strict-boolean-expressions --
  * max-statements (#512): validateAuthentication keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): validateAuthentication skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/prefer-readonly-parameter-types (#565): validateAuthentication accepts env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): validateAuthentication intentionally keeps the existing falsy-value behavior of missing; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
+const validateAuthentication = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
   const errors: ValidationError[] = [];
 
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
@@ -162,14 +167,14 @@ const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   return errors;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements, no-continue, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): validateInstalledItems accepts env: NodeJS.ProcessEnv; entry; toolEnvVar; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): The readdir callback receives mutable Node Dirent entries and parsed toolEnvVar values; readonly wrapping would require narrowing those external library/schema object contracts.
  * typescript/strict-boolean-expressions (#610): validateInstalledItems intentionally keeps the existing falsy-value behavior of missing; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const validateInstalledItems = async (
-  env: NodeJS.ProcessEnv,
+  env: Readonly<NodeJS.ProcessEnv>,
   directory: "tools/chatjs" | "features"
 ): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, directory);
@@ -222,12 +227,13 @@ const validateInstalledItems = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): validateBaseUrl accepts env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): validateBaseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): validateBaseUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateBaseUrl = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
   if (!isProduction) {
     return null;
@@ -246,7 +252,7 @@ const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
     ],
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): checkGatewaySnapshot preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
