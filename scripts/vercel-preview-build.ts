@@ -20,7 +20,6 @@ const POSTGRES_MAX_LIFETIME_SECONDS = 0;
 const POSTGRES_CLOSE_TIMEOUT_SECONDS = 5;
 const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 interface BuildOperations {
   openDatabase: (url: string) => {
     close: () => Promise<void>;
@@ -28,10 +27,9 @@ interface BuildOperations {
   };
   run: (
     command: "db:migrate" | "build",
-    env: NodeJS.ProcessEnv
+    env: Readonly<NodeJS.ProcessEnv>
   ) => Promise<void>;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 const formatBuildFailure = (phase: string, error: unknown): string => {
@@ -57,10 +55,9 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
 
 /* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runMaintainerBuild: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runMaintainerBuild = async (
-  source: NodeJS.ProcessEnv,
-  operations: BuildOperations
+  source: Readonly<NodeJS.ProcessEnv>,
+  operations: Readonly<BuildOperations>
 ): Promise<void> => {
   let phase = "validation";
   let failureMessage: string | undefined;
@@ -114,14 +111,12 @@ const runMaintainerBuild = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable node/no-process-env -- vercel-preview-build.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-console -- vercel-preview-build.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- vercel-preview-build.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 if (import.meta.main) {
   try {
     const require = createRequire(
@@ -149,7 +144,7 @@ if (import.meta.main) {
           },
         };
       },
-      run: async (command, env): Promise<void> => {
+      run: async (command, env: Readonly<NodeJS.ProcessEnv>): Promise<void> => {
         const child = Bun.spawn(["bun", "run", command], {
           cwd: fileURLToPath(new URL("../apps/chat/", import.meta.url)),
           env,
@@ -178,7 +173,6 @@ if (import.meta.main) {
   }
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runMaintainerBuild); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable node/no-process-env */

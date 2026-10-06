@@ -9,11 +9,10 @@ const [archive, addressFile] = process.argv.slice(2);
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const server = Bun.serve({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
-  async fetch(request) {
+  async fetch(request: Readonly<Pick<Request, "url">>) {
     const path = new URL(request.url).pathname;
     if (path === "/contracts.tgz") {
       return new Response(Bun.file(archive));
@@ -46,7 +45,6 @@ const server = Bun.serve({
   port: 0,
 });
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 const temporaryAddressFile = `${addressFile}.tmp`;

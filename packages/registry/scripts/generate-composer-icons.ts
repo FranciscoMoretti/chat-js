@@ -9,13 +9,11 @@ import * as lucide from "lucide-react";
 /* oxlint-enable import/no-namespace */
 
 const components = new Set<unknown>(Object.values(lucide.icons));
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- Reflect all Lucide module exports, including aliases, to generate the exact available icon catalog.
 const names = Object.entries(lucide)
-  .filter(([, value]) => components.has(value))
-  .map(([name]) => name)
+  .filter(([, value]: readonly [string, unknown]) => components.has(value))
+  .map(([name]: readonly [string, unknown]) => name)
   .toSorted();
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 // oxlint-disable-next-line node/no-top-level-await -- This Bun build executable finishes writing the generated icon inventory before the registry build starts.
 await writeFile(
   new URL("../composer-icons.generated.ts", import.meta.url),

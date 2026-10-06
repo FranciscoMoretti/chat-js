@@ -1,5 +1,9 @@
 import "server-only";
 import { and, desc, eq, or, sql } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps this erased Drizzle type import after the runtime named import; sort-imports requires the opposite local-name order. */
+import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
+/* oxlint-enable sort-imports */
+import type { GetSelectTableName } from "drizzle-orm/query-builders/select.types";
 
 import { db } from "./client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -161,9 +165,6 @@ const upsertUserModelPreference = async ({
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types --
-typescript/explicit-function-return-type (#560): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Reads vote state for messages in one bound conversation owned by the user.
  * Public sharing does not grant access to these owner-only votes.
@@ -171,7 +172,23 @@ typescript/explicit-module-boundary-types (#562): Keep getEveMessageVotes's retu
  * @param {string} conversationId Bound conversation to read.
  * @returns {PromiseLike<Pick<typeof eveVote.$inferSelect, "isUpvoted" | "messageId">[]>} Lazy owner-filtered query. Await it or consume it with .then or .execute to read matching rows; Drizzle query methods remain available before consumption.
  */
-const getEveMessageVotes = (ownerId: string, conversationId: string) =>
+const getEveMessageVotes = (
+  ownerId: string,
+  conversationId: string
+): PgSelectWithout<
+  PgSelectBase<
+    GetSelectTableName<typeof eveVote>,
+    Pick<typeof eveVote, "isUpvoted" | "messageId">,
+    "partial",
+    Record<
+      | GetSelectTableName<typeof eveVote>
+      | GetSelectTableName<typeof eveConversation>,
+      "not-null"
+    >
+  >,
+  false,
+  "where"
+> =>
   db
     .select({ isUpvoted: eveVote.isUpvoted, messageId: eveVote.messageId })
     .from(eveVote)
@@ -184,7 +201,6 @@ const getEveMessageVotes = (ownerId: string, conversationId: string) =>
       )
     );
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveMessageVote's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 /* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
 max-params (#511): saveEveMessageVote keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

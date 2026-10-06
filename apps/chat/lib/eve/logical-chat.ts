@@ -49,17 +49,16 @@ type LogicalChatSnapshot = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): logicalNativeId accepts message: EveMessage; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): logicalNativeId intentionally keeps the existing falsy-value behavior of custom; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from message.metadata.custom; read custom from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const custom = message.metadata?.custom?.chatjs;
   if (
     message.role === "user" &&
-    custom &&
     typeof custom === "object" &&
+    custom !== null &&
     "operationId" in custom &&
     typeof custom.operationId === "string"
   ) {
@@ -67,7 +66,7 @@ const logicalNativeId = (sessionId: string, message: EveMessage): string => {
   }
   return JSON.stringify([sessionId, message.id]);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const aliasKey = (branchId: string, messageId: string): string =>
   JSON.stringify([branchId, messageId]);

@@ -605,15 +605,15 @@ The disjoint type-only lane removes four memberships: `installation-contracts.ts
 
 ### Current workspace inventory and execution plan
 
-The current explicit baseline contains 20,817 suppression memberships across 1,402 source paths with at least one membership. The recognized generated ChatJS mirror subtree, `apps/chat/tools/chatjs/`, contributes 1,030 memberships across 97 paths; the remaining 19,787 memberships across 1,305 paths are authored or not-yet-classified. Templates are generated or checked separately and are not included in this baseline classification. These are current exception counts, not semantic review counts. A successful lint run proves that active rules pass; it does not mark a retained or unreviewed scope as reviewed.
+The current explicit baseline contains 20,802 suppression memberships across 1,402 source paths with at least one membership. The recognized generated ChatJS mirror subtree, `apps/chat/tools/chatjs/`, contributes 1,030 memberships across 97 paths; the remaining 19,772 memberships across 1,305 paths are authored or not-yet-classified. Templates are generated or checked separately and are not included in this baseline classification. These are current exception counts, not semantic review counts. A successful lint run proves that active rules pass; it does not mark a retained or unreviewed scope as reviewed.
 
 The largest actionable rule groups currently present are:
 
 | Rule | Memberships | Paths | Known ChatJS mirror memberships / paths |
 | --- | --: | --: | --: |
-| `typescript/prefer-readonly-parameter-types` | 1,471 | 654 | 77 / 46 |
-| `typescript/explicit-function-return-type` | 411 | 251 | 55 / 34 |
-| `typescript/strict-boolean-expressions` | 354 | 240 | 16 / 13 |
+| `typescript/prefer-readonly-parameter-types` | 1,460 | 649 | 77 / 46 |
+| `typescript/explicit-function-return-type` | 410 | 251 | 55 / 34 |
+| `typescript/strict-boolean-expressions` | 351 | 240 | 16 / 13 |
 | `import/no-relative-parent-imports` | 245 | 184 | 0 / 0 |
 | `no-magic-numbers` | 882 | 395 | 10 / 8 |
 
@@ -657,3 +657,30 @@ The two TextSplitter parameter scopes are narrowed around the actual mutable buf
 | `packages/registry/scripts/demo-sync.ts` | `e83cb68a11071d2aaff34aca98899feb3d469fcaabd6db41dc1eb4facb25981f` |
 
 Focused type-aware Oxlint with unused-directive reporting and Oxfmt pass on all changed sources. The relevant chat Vitest suites pass 61/61 tests; `bun lint`, all seven `bun test:types` tasks, and `bun template:check` pass. `bun template:sync` restored chat-app template parity and produced no additional tracked template files. The full objective and all unreviewed scopes remain active.
+
+### Batch 66: explicit input predicates and readonly readers
+
+This batch changes 12 source files: four Lane A files and eight disjoint readonly files. The explicit baseline falls 20,817→20,802 (−15 memberships). Lane A removes three `typescript/strict-boolean-expressions` memberships and two JSDoc `require-returns` memberships from `queries.ts`; the Drizzle votes annotation adds one precise `sort-imports` scope because the pinned formatter and linter order the erased import differently, for a net four-membership reduction. The readonly lane removes 11 `typescript/prefer-readonly-parameter-types` memberships; `external-gateway.ts` only gets a corrected reason because its generated registry callback still lacks a validated finite projection.
+
+In `guest-admission.ts`, `guestRequestIpHash` now tests the deployment URL, configured header, and trimmed address with explicit string/empty checks; Node's `isIP` result is compared to a named invalid sentinel, and the IPv4-mapped conversion tests the regex result against `null`. These retain empty-value fallback/rejection behavior and remove that function's strict-boolean membership. In `eve-guests.ts`, the first reservation input is checked as an object before its fields are read; an empty input list still takes the existing custom error path. In `logical-chat.ts`, the unknown `custom` metadata value is narrowed directly to a non-null object before checking its `operationId`; primitives and `null` still take the existing fallback path. CLI independently reviewed the unknown-value condition, including arrays and proxies, and confirmed the same values reach the existing `in` check.
+
+The query annotation in `queries.ts` describes the lazy `getEveMessageVotes` builder using the native Drizzle select types. It retains the selection and query methods, the absent-row representation, and exact same-checker assignability to the inferred return. The JSDoc attachment and comment-stripped emitted JavaScript are unchanged. In the readonly lane, the subprocess command array, HTTP request's consumed `url`, Lucide entry tuple, child-process row data, snapshot limiter inputs, package manifest callback rows, and build environment/options are annotated at the fields actually read. The generator's existing `no-unsafe-call` diagnostic is unchanged and remains separately suppressed at its existing write boundary.
+
+The current source hashes are recorded below. Scoped typed Oxlint with unused-directive reporting and Oxfmt pass for all changed source files. Full `bun lint`, all seven `bun test:types` tasks, and `bun template:check` pass after `bun template:sync`. Chat Vitest suites pass 21/21; registry `demo-sync.test.ts` passes 11/11; CLI `test:unit` passes 203/203 with Node v24.20.0. The default Node runner emits a `DEP0205` warning that breaks one existing assertion requiring empty stderr; rerunning under the repository's Node 24 runner removes that environment mismatch. Directly invoking `test/run-command.ts`, `serve-registry.ts`, and `external-gateway.ts` as tests is invalid: these are fixture scripts, and `serve-registry.ts` expects an address-file argument. That exploratory invocation was discarded and its generated `packages/cli/undefined.tmp` fixture was removed.
+
+| Source | SHA-256 | Scope delta |
+| --- | --- | --: |
+| `apps/chat/lib/db/eve-guests.ts` | `febaec3c0c47554baabec78dc336f91af0c63f00f67d57a5a545527473fef8d3` | −1 strict-boolean |
+| `apps/chat/lib/db/queries.ts` | `f3dfcbe82f0fd0d882badfc41d6190bd7082071551b650a9836fac54999414e6` | −2 returns, +1 sort-imports |
+| `apps/chat/lib/eve/guest-admission.ts` | `028b99d3ba479ee937236ca8528e395d2146097a2617552d3b83aaac7e1f1c39` | −1 strict-boolean |
+| `apps/chat/lib/eve/logical-chat.ts` | `f8f2f628ff65642f9589815d9593935879bb659a12e86a397a049831e7a63f2d` | −1 strict-boolean |
+| `packages/cli/test/run-command.ts` | `efef210512bc9edafa8c9b775b9d76bb21d800565ec84fe8fbaa2e5c9deb7249` | −1 readonly |
+| `packages/cli/test/serve-registry.ts` | `ec546554b444ee4a2b497ea5601dfaf6f2f48eeb64d7c8ae7c76ad4189f52ad5` | −1 readonly |
+| `packages/cli/test/external-gateway.ts` | `02f1dd53d9490871c383da3a318bd7f6ff5f2c8ebce15fd65920df1f3fdc19d1` | reason only |
+| `packages/registry/scripts/generate-composer-icons.ts` | `9495ecb613270a40cebc2d18e514dbe919d2c25f2915e0af512d67431a20cc1e` | −1 readonly |
+| `scripts/dev-supervisor.ts` | `ccd6e59898368bab5c99bb73d53b9eb8f7d2f0c8f96239047f04399c2fbeecc9` | −1 readonly |
+| `scripts/sync-template-snapshot.ts` | `16b767e4ed37477d08fa5e02a24f147393fbd56f659e88c3bc3b21c8f09472a3` | −3 readonly |
+| `scripts/test-eve-package.ts` | `376efbc5930932791a6542c3398b9aad68b478b84a42d450236d1d0c84525344` | −1 readonly |
+| `scripts/vercel-preview-build.ts` | `06fa676b5b9029659533e183d9750930bea87f3764d5738e4c6c8c98cc467454` | −3 readonly |
+
+Batch 66's retained memberships in these files are not whole-file signoffs. The baseline update changes only the reviewed paths above. Other Lane A files, the CLI-owned EVE setup metrics, and all unrelated inventory entries remain outside this batch and keep their existing reviewed/unresolved/unreviewed status.

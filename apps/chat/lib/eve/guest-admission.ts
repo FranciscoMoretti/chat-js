@@ -45,6 +45,7 @@ type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
 >;
 
 const IPV6_VERSION = 6;
+const INVALID_IP_VERSION = 0;
 const LEADING_BRACKET_LENGTH = 1;
 const TRAILING_BRACKET_INDEX = -1;
 const IPV4_OCTET_RANGE = 256;
@@ -55,8 +56,7 @@ const HTTP_TOO_MANY_REQUESTS = 429;
 
 const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): guestRequestIpHash intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; header; address; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable no-undefined -- no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Hashes a trusted canonical client address; development uses the local address.
  * @param {ReadonlyNativeSurface<Request>} request Request whose configured proxy header supplies the client address outside development.
@@ -69,13 +69,23 @@ const guestRequestIpHash = (
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
   // https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for
-  // oxlint-disable-next-line no-ternary -- Keep header as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const header = env.VERCEL_URL
-    ? "x-vercel-forwarded-for"
-    : env.TRUSTED_CLIENT_IP_HEADER;
-  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from request.headers.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep address as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const address = header ? request.headers.get(header)?.trim() : undefined;
-  if (!(address && isIP(address)) || address.includes("%")) {
+  const header =
+    // oxlint-disable-next-line no-ternary -- Preserve the empty-string fallback between deployment and trusted-client header names.
+    typeof env.VERCEL_URL === "string" && env.VERCEL_URL !== ""
+      ? "x-vercel-forwarded-for"
+      : env.TRUSTED_CLIENT_IP_HEADER;
+  const address =
+    // oxlint-disable-next-line no-ternary -- Preserve the absent-header result without changing the undefined return contract.
+    typeof header === "string" && header !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the missing-header result while retaining the existing trimmed value.
+        request.headers.get(header)?.trim()
+      : undefined;
+  if (
+    typeof address !== "string" ||
+    address === "" ||
+    isIP(address) === INVALID_IP_VERSION ||
+    address.includes("%")
+  ) {
     throw new Error("Trusted client address is unavailable.");
   }
   const canonical =
@@ -87,23 +97,27 @@ const guestRequestIpHash = (
         )
       : address;
   const mapped = MAPPED_IP.exec(canonical);
-  // oxlint-disable-next-line no-ternary -- Keep normalized as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const normalized = mapped
-    ? [
-        Math.floor(
-          Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) / IPV4_OCTET_RANGE
-        ),
-        Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
-        Math.floor(
-          Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) / IPV4_OCTET_RANGE
-        ),
-        Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
-      ].join(".")
-    : canonical;
+  const normalized =
+    // oxlint-disable-next-line no-ternary -- Preserve lazy IPv4-mapped address conversion while leaving ordinary IPv4/IPv6 text untouched.
+    mapped === null
+      ? canonical
+      : [
+          Math.floor(
+            Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) /
+              IPV4_OCTET_RANGE
+          ),
+          Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) %
+            IPV4_OCTET_RANGE,
+          Math.floor(
+            Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) /
+              IPV4_OCTET_RANGE
+          ),
+          Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
+        ].join(".");
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateGuestCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

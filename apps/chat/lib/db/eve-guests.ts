@@ -407,12 +407,11 @@ class GuestBatchRejectedError extends Error {
 }
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveGuestMessages's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): reserveEveGuestMessages uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 moving it below executable initialization can obscure ordering and API ownership.
 max-statements (#512): reserveEveGuestMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): reserveEveGuestMessages accepts inputs: GuestReservationInput[]; bootstrap?: GuestBootstrap; tx: GuestTransaction; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): reserveEveGuestMessages intentionally keeps the existing falsy-value behavior of first; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+*/
 /**
  * Comparisons admit every candidate or none, including first-guest account creation.
  * @param {GuestReservationInput[]} inputs Candidate operations sharing one owner, address and quota policy.
@@ -426,7 +425,7 @@ const reserveEveGuestMessages = async <T = undefined>(
   persistAdmission?: (tx: GuestTransaction) => Promise<T>
 ): Promise<GuestBatchResult<T>> => {
   const [first] = inputs;
-  if (!first) {
+  if (typeof first !== "object" || first === null) {
     throw new Error("Guest admission requires at least one operation.");
   }
   const operations = new Set<string>();
@@ -474,7 +473,7 @@ const reserveEveGuestMessages = async <T = undefined>(
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve commitEveGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, max-statements, typescript/prefer-readonly-parameter-types */
 
 const commitEveGuestMessage = async (
   ownerId: string,

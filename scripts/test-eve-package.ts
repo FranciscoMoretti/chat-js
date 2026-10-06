@@ -51,38 +51,50 @@ const run = (args: readonly string[], cwd = root): Buffer =>
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable unicorn/no-null -- test-eve-package.ts: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- test-eve-package.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/promise-function-async -- test-eve-package.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 try {
   // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable finishes temporary manifest rewrites before installing the local package.
   await Promise.all(
     originals
-      .filter(({ file }): boolean => manifestPaths.includes(file))
-      .map(({ content, file }): Promise<void> => {
-        const manifest: unknown = JSON.parse(content);
-        if (
-          typeof manifest !== "object" ||
-          manifest === null ||
-          !("dependencies" in manifest) ||
-          typeof manifest.dependencies !== "object" ||
-          manifest.dependencies === null
-        ) {
-          throw new Error(`Expected dependencies in ${file}`);
+      .filter(({ file }: Readonly<(typeof originals)[number]>): boolean =>
+        manifestPaths.includes(file)
+      )
+      .map(
+        ({
+          content,
+          file,
+        }: Readonly<(typeof originals)[number]>): Promise<void> => {
+          const manifest: unknown = JSON.parse(content);
+          if (
+            typeof manifest !== "object" ||
+            manifest === null ||
+            !("dependencies" in manifest) ||
+            typeof manifest.dependencies !== "object" ||
+            manifest.dependencies === null
+          ) {
+            throw new Error(`Expected dependencies in ${file}`);
+          }
+          Object.assign(manifest.dependencies, { eve: `file:${archive}` });
+          return writeFile(
+            path.join(root, file),
+            `${JSON.stringify(manifest, null, MANIFEST_INDENTATION_SPACES)}\n`
+          );
         }
-        Object.assign(manifest.dependencies, { eve: `file:${archive}` });
-        return writeFile(
-          path.join(root, file),
-          `${JSON.stringify(manifest, null, MANIFEST_INDENTATION_SPACES)}\n`
-        );
-      })
+      )
   );
   run(["install", "--ignore-scripts"]);
   // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable restores manifest declarations after dependency installation.
   await Promise.all(
     originals
-      .filter(({ file }): boolean => manifestPaths.includes(file))
-      .map(({ content, file }): Promise<void> =>
-        writeFile(path.join(root, file), content)
+      .filter(({ file }: Readonly<(typeof originals)[number]>): boolean =>
+        manifestPaths.includes(file)
+      )
+      .map(
+        ({
+          content,
+          file,
+        }: Readonly<(typeof originals)[number]>): Promise<void> =>
+          writeFile(path.join(root, file), content)
       )
   );
   run(["lint"]);
@@ -113,11 +125,14 @@ try {
   // Local tarball paths and their lockfile entries must never leak into a PR.
   // oxlint-disable-next-line node/no-top-level-await -- This Bun package-validation executable awaits restoration of manifests and lockfile even when validation fails.
   await Promise.all(
-    originals.map(({ content, file }): Promise<void> =>
-      writeFile(path.join(root, file), content)
+    originals.map(
+      ({
+        content,
+        file,
+      }: Readonly<(typeof originals)[number]>): Promise<void> =>
+        writeFile(path.join(root, file), content)
     )
   );
 }
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */

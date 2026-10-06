@@ -24,7 +24,6 @@ type SnapshotOptions = {
 /* oxlint-disable eslint/max-statements -- SnapshotIoLimiter: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/id-length -- SnapshotIoLimiter: The local index/OS/library binding retains its conventional API notation. */
 /* oxlint-disable unicorn/no-null -- SnapshotIoLimiter: The SDK/wire/OS contract uses null as an explicit absence value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- SnapshotIoLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 class SnapshotIoLimiter {
   private activeOperations = NO_OPERATIONS;
   private readonly concurrency: number;
@@ -37,7 +36,7 @@ class SnapshotIoLimiter {
   public constructor({
     concurrency,
     onActiveOperationsChange,
-  }: SnapshotOptions) {
+  }: Readonly<SnapshotOptions>) {
     this.concurrency = concurrency ?? SNAPSHOT_CONCURRENCY;
     if (
       !Number.isInteger(this.concurrency) ||
@@ -81,23 +80,21 @@ class SnapshotIoLimiter {
   /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectSnapshotWithLimiter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshotWithLimiter: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/promise-function-async -- collectSnapshotWithLimiter: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const collectSnapshotWithLimiter = async (
   dir: string,
   prefix: string,
-  limiter: SnapshotIoLimiter
+  limiter: Readonly<SnapshotIoLimiter>
 ): Promise<Map<string, string>> => {
   const entries = await limiter.run(() =>
     readdir(dir, { withFileTypes: true })
   );
   const snapshots = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       const absolute = join(dir, entry.name);
       // oxlint-disable-next-line no-ternary -- Keep rel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
@@ -122,19 +119,16 @@ const collectSnapshotWithLimiter = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- collectSnapshot: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 /* oxlint-disable typescript/promise-function-async -- collectSnapshot: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const collectSnapshot = (
   dir: string,
   prefix = "",
-  options: SnapshotOptions = {}
+  options: Readonly<SnapshotOptions> = {}
 ): Promise<Map<string, string>> =>
   collectSnapshotWithLimiter(dir, prefix, new SnapshotIoLimiter(options));
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (collectSnapshot, SNAPSHOT_CONCURRENCY); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { collectSnapshot, SNAPSHOT_CONCURRENCY };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (SnapshotOptions); the enabled import/no-default-export convention rejects the default-export alternative. */

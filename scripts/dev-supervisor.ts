@@ -44,7 +44,6 @@ const hasChildProcessId = (pid: number | undefined): pid is number =>
   typeof pid === "number" && pid !== NO_CHILD_PID && !Number.isNaN(pid);
 /* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const trackChildren = (): void => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const childPid = child?.pid;
@@ -64,7 +63,9 @@ const trackChildren = (): void => {
         started: started.join(" "),
       };
     });
-  const alive = new Map(rows.map((row) => [row.pid, row.started]));
+  const alive = new Map(
+    rows.map((row: Readonly<(typeof rows)[number]>) => [row.pid, row.started])
+  );
   for (const [pid, started] of descendants) {
     if (alive.get(pid) !== started) {
       descendants.delete(pid);
@@ -93,7 +94,6 @@ const trackChildren = (): void => {
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
 const terminate = (signal: NodeJS.Signals): void => {
