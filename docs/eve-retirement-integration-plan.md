@@ -1,6 +1,6 @@
 # Lane D shared integration plan
 
-Reviewed final A `12dfce419`, B `19a4035fbf6184910374824911e6cec206add286`, and C `db96edc6d` atop `8296d3ef9`. No lane commit or runtime patch has been integrated; production dependencies remain unchanged.
+Reviewed final A `12dfce419`, B `19a4035fbf6184910374824911e6cec206add286`, and C `1a359d1f8081a3d358e0234eb8d8c977d6972b72` atop `db96edc6d` and `8296d3ef9`. No lane commit or runtime patch has been integrated; production dependencies remain unchanged.
 
 ## Shared support and conflicting restart observations
 
@@ -15,7 +15,7 @@ A's `tests/eve-retirement-lane-a/lint-exception-additions.json` matches its fina
 - Default exports, native Node imports, ordered awaited scenarios and SDK-owned callback types are fixture boundaries. Numeric/function-size and template inference exceptions stay local.
 - The two `.mjs` internal-runtime probes contribute 27 occurrences; their unsafe/template-expression waivers remain research-only boundaries, not precedent for production code. The added installed dynamic proof introduces no unsafe waivers.
 
-C's `experiments/eve-delivery-correlation/lint-exception-additions.json` matches its final files: **100 occurrences across 15 files, 44 rule/directive records**, no missing reasons or `no-unsafe-*` waivers. SHA-256: `f9534d8ea9d80d5e1b44e2fd4c71a2b214261a57856bbd92ecce5a7890ffbf86`. Scoped Node/SDK, ordered-loop, default-export, mock callback and JSON-wire roundtrip exceptions are justified for these experiments.
+C's `experiments/eve-delivery-correlation/lint-exception-additions.json` matches its final files: **102 occurrences across 15 files, 46 rule/directive records**, no missing reasons or `no-unsafe-*` waivers. SHA-256: `10efc4200c9ca18fa7ff525fde79038b0a75ef169ea8eb7d4c17f13d527c8797`. Scoped Node/SDK, ordered-loop, default-export, mock callback and JSON-wire roundtrip exceptions are justified for these experiments. The two added `require-await` records cover an async HTTP route that returns only the serving process ID. Recomputed counts, fingerprints and reasons match the final snapshot exactly. C now SHA-256-verifies the shared controller from `7a312a544`, asserts detached-server state cleanup and distinct HTTP serving PIDs across its completed-world restart. Its final evidence reports stock 84516 → 84771 and experimental 84470 → 84706, with one follow-up dispatch and no resend; this remains completed-world replay evidence.
 
 B has no lane manifest: shell and patch-text artifacts do not add executable-root exception entries. Materialized patched fixtures still require their own type/proof checks before promotion. These snapshots are review aids; verify hashes against the exact integrated commits and never overwrite the central budget with a lane-only snapshot.
 
