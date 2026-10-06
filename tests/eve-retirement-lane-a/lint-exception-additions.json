@@ -1,0 +1,168 @@
+{
+  "counts": {
+    "[\"tests/eve-retirement-lane-a/fixture/agent/agent.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/agent/channels/eve.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/agent/tools/delete-document.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/agent/tools/delete-document.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-lane-a/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-console\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-assignment\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-call\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-member-access\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-return\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-argument\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/restrict-template-expressions\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/require-await\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/require-await\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-assignment\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-call\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-member-access\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-return\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-argument\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/restrict-template-expressions\",\"oxlint-disable\"]": 1
+  },
+  "missingReasons": {},
+  "scopeFingerprints": {
+    "[\"tests/eve-retirement-lane-a/fixture/agent/agent.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
+      "7e1d64ac734d5e9bd6ad8ac42240ccf9a4e543d7f2f1249ad241b46df6d38406"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "fe1b1a7059cf1943e69ae16e3134e9dfbc24cc7adc22b260e9fa617452243f06"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/agent/channels/eve.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "35c9fd22cdee354c91d7ca8bf368e5241bf8a904af17a26a309d2afa5c6443d0"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "2e1001f397f7bd57755b14495761d52d97681b5c2d4d9f3225767087b35a018b"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/agent/tools/delete-document.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "b8fc6dbb386bd09098d47d2f0199527ff314ac3f6db64044875e3786e6019fbd"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/agent/tools/delete-document.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "991d70edb8bf2ff98fb23346a104a804884a85d8b9bcc6a486be9083860ee0e5"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "b231756f80062272b7419673b6a9f1683e93175b5994c1dff051ff22e4ef3bc1"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
+      "c533773f7385e21dd63c6033457455d6af593b15350246a3b329f4445da21e55"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "c533773f7385e21dd63c6033457455d6af593b15350246a3b329f4445da21e55"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
+      "c533773f7385e21dd63c6033457455d6af593b15350246a3b329f4445da21e55"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "23679237cb5e0e0bcd3962e3e8a39d501e46e1241a9fb435f38973a60bbdac0e"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/deletion.eval.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "a23780f9f84af9822d13db0125ffcd64a23d0b0acbe4cc8d8c389ad02230a474"
+    ],
+    "[\"tests/eve-retirement-lane-a/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "987791be08ca36dfed003d2a35e0221a8e187c157b4c71b1de8b1ac8a8b09034"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-console\",\"oxlint-disable\"]": [
+      "531d9df09dfbdb8ed705294b823b117a51b4f1472bc92c0a39841b98189cc869"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
+      "43ecebdc957b6299d21a44a92f93e2f02225187981681db1467cd5eb04921cb4"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
+      "b8922bd032d50db6cedb5358c11b845136f92d7e32b89680fecd19ae9bfacea8"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"unicorn/no-null\",\"oxlint-disable\"]": [
+      "b8922bd032d50db6cedb5358c11b845136f92d7e32b89680fecd19ae9bfacea8"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "ca49806fd6d39a77f8fa90cc4e2ea20f8cfd50f356a9c2160756a09e69d6d82e"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-assignment\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-call\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-member-access\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-return\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/no-unsafe-argument\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-deletion.proof.mjs\",\"typescript/restrict-template-expressions\",\"oxlint-disable\"]": [
+      "64f37cc2999b53ad99449b28872a399522df4a1679d4abce866f48b682b2a75d"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "bb9d47563809356f8da6fe5056e957b7b744f9eeb4217095fecd79d2da9c529b"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
+      "bb9d47563809356f8da6fe5056e957b7b744f9eeb4217095fecd79d2da9c529b"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
+      "5cfee6cf4b931dd9dffb890c58a9e44cc5824eca1dd349968bb81a3af99a4ab3"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/require-await\",\"oxlint-disable\"]": [
+      "b7142b7955790ad79263f91df0738696a3ad4215487082e544e9d2fdcb518495"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/require-await\",\"oxlint-disable\"]": [
+      "b7142b7955790ad79263f91df0738696a3ad4215487082e544e9d2fdcb518495"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "44ea5209261ee2a6d0d71eb5befb6fdcc6bc5c427953e1895d458c22a52a01e3"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
+      "44ea5209261ee2a6d0d71eb5befb6fdcc6bc5c427953e1895d458c22a52a01e3"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
+      "5d0318ed0e10da611c6b54dc48b585c6b5869ad09cd86167f92dc44f1db5184f"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"unicorn/no-null\",\"oxlint-disable\"]": [
+      "5d0318ed0e10da611c6b54dc48b585c6b5869ad09cd86167f92dc44f1db5184f"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "fdaf50c2a16dda9aaaeb4303feb35f1233df47455dac9df302e3d99585f27a1f"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-assignment\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-call\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-member-access\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-return\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/no-unsafe-argument\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ],
+    "[\"tests/eve-retirement-lane-a/native-fixture.mjs\",\"typescript/restrict-template-expressions\",\"oxlint-disable\"]": [
+      "da9c418482e673c06fad57e807c7f650b052ccb8d2ca4f7948d1d967eacb19fa"
+    ]
+  },
+  "version": 1
+}
