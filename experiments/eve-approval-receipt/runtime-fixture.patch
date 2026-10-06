@@ -1,0 +1,585 @@
+diff --git a/runtime-proof.mjs b/runtime-proof.mjs
+new file mode 100644
+--- /dev/null
++++ b/runtime-proof.mjs
+@@ -0,0 +1,370 @@
++import assert from "node:assert/strict";
++import { spawn } from "node:child_process";
++import {
++  cp,
++  mkdtemp,
++  readFile,
++  rm,
++  symlink,
++  writeFile,
++} from "node:fs/promises";
++import { tmpdir } from "node:os";
++import path from "node:path";
++import { pathToFileURL } from "node:url";
++
++const [dependencies, mode] = process.argv.slice(2);
++assert.ok(dependencies && ["stock", "patched"].includes(mode));
++const { Client } = await import(
++  pathToFileURL(
++    path.join(dependencies, "node_modules/eve/dist/src/client/index.js")
++  )
++);
++const app = await mkdtemp(path.join(tmpdir(), "lane-b-workflow-"));
++await cp(new URL("./runtime-fixture", import.meta.url), app, {
++  recursive: true,
++});
++await symlink(
++  path.join(dependencies, "node_modules"),
++  path.join(app, "node_modules")
++);
++await writeFile(
++  path.join(app, "package.json"),
++  JSON.stringify({
++    type: "module",
++    dependencies: { eve: "0.71.3", ai: "7.0.106" },
++  })
++);
++const file = (name) => path.join(app, name);
++const put = (name, value) => writeFile(file(name), value);
++const rows = async (name) => {
++  try {
++    return (await readFile(file(name), "utf8"))
++      .trim()
++      .split("\n")
++      .filter(Boolean)
++      .map(JSON.parse);
++  } catch (e) {
++    if (e.code === "ENOENT") return [];
++    throw e;
++  }
++};
++const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
++async function until(check, label, timeout = 60000) {
++  const start = Date.now();
++  while (Date.now() - start < timeout) {
++    const value = await check();
++    if (value) return value;
++    await delay(100);
++  }
++  throw new Error("Timed out: " + label);
++}
++let worker,
++  url,
++  logs = "";
++async function start(resume = false) {
++  logs = "";
++  worker = spawn(
++    process.execPath,
++    [
++      path.join(dependencies, "node_modules/eve/bin/eve.js"),
++      "dev",
++      "--no-ui",
++      "--host",
++      "127.0.0.1",
++      "--port",
++      "0",
++      "--no-default-extensions",
++      ...(resume ? ["--resume"] : []),
++    ],
++    {
++      cwd: app,
++      env: {
++        PATH:
++          path.dirname(process.execPath) + ":/opt/homebrew/bin:/usr/bin:/bin",
++        HOME: app,
++        NODE_ENV: "development",
++        EVE_MOCK_AUTHORED_MODELS: "0",
++        WORKFLOW_INLINE_OWNERSHIP_LEASE_SECONDS: "1",
++        DOCKER_HOST: "unix://" + file("no-docker.sock"),
++      },
++      stdio: ["ignore", "pipe", "pipe"],
++    }
++  );
++  worker.stdout.on("data", (b) => (logs += b));
++  worker.stderr.on("data", (b) => (logs += b));
++  url = await until(
++    () => logs.match(/http:\/\/127\.0\.0\.1:\d+/)?.[0],
++    "startup"
++  );
++}
++async function stop(crash = false) {
++  if (!worker || worker.exitCode !== null || worker.signalCode !== null) return;
++  const stopped = new Promise((resolve) => worker.once("exit", resolve));
++  worker.kill(crash ? "SIGKILL" : "SIGTERM");
++  const stopping = worker;
++  const timer = setTimeout(() => stopping.kill("SIGKILL"), 10000);
++  await stopped;
++  clearTimeout(timer);
++  if (crash)
++    await until(async () => {
++      try {
++        await readFile(file(".eve/dev-server-state.v1.json"));
++        return false;
++      } catch (e) {
++        return e.code === "ENOENT";
++      }
++    }, "dev ownership release");
++}
++async function create() {
++  return await new Client({ host: url }).sessions.create({ message: "hello" });
++}
++async function required() {
++  await put("policy.txt", "required");
++  const made = await create();
++  const waiting = await made.response.result();
++  assert.equal(waiting.inputRequests.length, 1);
++  return { made, waiting };
++}
++function checkEntry(entry) {
++  assert.equal(entry.caller.principalId, "owner");
++  assert.equal(entry.connector, "original");
++  assert.deepEqual(entry.input, {
++    label: "HELLO:original",
++    amount: 2,
++    mode: "safe",
++  });
++  if (mode === "patched")
++    assert.equal(entry.receipt.responder.principalId, "owner");
++  else assert.equal(entry.receipt, undefined);
++}
++const watchdog = setTimeout(() => {
++  worker?.kill("SIGKILL");
++  console.error("Runtime proof timeout:", app);
++  process.exit(1);
++}, 180000);
++const results = [];
++try {
++  await put("connector.txt", "original");
++  await put("suffix.txt", ":original");
++  await put("policy.txt", "flip");
++  await start();
++
++  async function invoke(name) {
++    const response = await fetch(url + "/proof/invoke", {
++      method: "POST",
++      headers: { "content-type": "application/json" },
++      body: JSON.stringify({ name }),
++    });
++    assert.equal(response.status, 200);
++    return await response.json();
++  }
++  await put("policy.txt", "required");
++  assert.equal((await invoke("static-gate")).status, "approval-required");
++  await put("policy.txt", "flip");
++  const outOfTurn = await invoke("static-gate");
++  assert.equal(outOfTurn.status, "completed");
++  assert.equal(outOfTurn.output.blocked, true);
++  assert.equal(outOfTurn.output.caller.principalId, "owner");
++  assert.equal((await rows("invoke-effects.jsonl")).length, 0);
++  assert.equal((await invoke("conditional")).status, "failed");
++  results.push(
++    "invokeTool: required approval blocks, policy flip has no receipt, dynamic name is unavailable"
++  );
++  await put("policy.txt", "flip");
++  const flipped = await create();
++  await flipped.response.result();
++  assert.equal((await rows("effects.jsonl")).length, 0);
++  assert.equal((await rows("entries.jsonl")).at(-1).receipt, undefined);
++  assert.equal(
++    (await rows("entries.jsonl")).at(-1).caller.principalId,
++    "owner"
++  );
++  results.push("policy flip: owner caller without consent blocked");
++  const { made, waiting } = await required();
++  const requestPid = (await rows("requests.jsonl")).at(-1).pid;
++  await stop(true);
++  await start(true);
++  const restored = new Client({ host: url }).sessions.attach(
++    made.session.state.sessionId,
++    { streamIndex: made.session.state.streamIndex }
++  );
++  await (
++    await restored.respond(
++      waiting.inputRequests.map((request) => ({
++        requestId: request.requestId,
++        optionId: "approve",
++      }))
++    )
++  ).result();
++  let entry = (await rows("entries.jsonl")).at(-1);
++  assert.notEqual(entry.pid, requestPid);
++  checkEntry(entry);
++  assert.equal(
++    (await rows("effects.jsonl")).length,
++    mode === "patched" ? 1 : 0
++  );
++  results.push(
++    "actual Workflow restart before response: original dynamic closure and transformed input retained"
++  );
++
++  const changed = await required();
++  await stop(true);
++  await put("connector.txt", "replacement");
++  await start(true);
++  const changedSession = new Client({ host: url }).sessions.attach(
++    changed.made.session.state.sessionId,
++    { streamIndex: changed.made.session.state.streamIndex }
++  );
++  await (
++    await changedSession.respond(
++      changed.waiting.inputRequests.map((request) => ({
++        requestId: request.requestId,
++        optionId: "approve",
++      }))
++    )
++  ).result();
++  const changedEntry = (await rows("entries.jsonl")).at(-1);
++  assert.equal(changedEntry.connector, "replacement");
++  assert.equal(changedEntry.receipt, undefined);
++  assert.equal(
++    (await rows("effects.jsonl")).length,
++    mode === "patched" ? 1 : 0
++  );
++  results.push(
++    "step discovery replaced connector behind same name: old consent fails closed"
++  );
++  // A new session starts with original values again. Crash after the runtime
++  // supplied the settled receipt but before the fixture remote effect begins.
++  await put("connector.txt", "original");
++  await put("suffix.txt", ":original");
++  const cancelled = await required();
++  await (
++    await cancelled.made.session.respond(
++      cancelled.waiting.inputRequests.map((request) => ({
++        requestId: request.requestId,
++        optionId: "cancel",
++      }))
++    )
++  ).result();
++  assert.equal(
++    (await rows("effects.jsonl")).length,
++    mode === "patched" ? 1 : 0
++  );
++  results.push("owner cancellation: zero new effects");
++  const beforeCandidate = await required();
++  const responseCount = (await rows("responses.jsonl")).length;
++  const entryCount = (await rows("entries.jsonl")).length;
++  await put("pause-response", "1");
++  const candidateAbort = new AbortController();
++  const candidateResponse = await beforeCandidate.made.session.respond(
++    beforeCandidate.waiting.inputRequests.map((request) => ({
++      requestId: request.requestId,
++      optionId: "approve",
++    })),
++    { signal: candidateAbort.signal }
++  );
++  void candidateResponse.result().catch(() => undefined);
++  await until(
++    async () => (await rows("responses.jsonl")).length > responseCount,
++    "candidate authorizer entry"
++  );
++  const candidatePid = (await rows("responses.jsonl")).at(-1).pid;
++  assert.equal((await rows("entries.jsonl")).length, entryCount);
++  candidateAbort.abort();
++  await stop(true);
++  await rm(file("pause-response"));
++  await start(true);
++  await until(
++    async () => (await rows("entries.jsonl")).length > entryCount,
++    "candidate settlement after Workflow restart"
++  );
++  const candidateEntry = (await rows("entries.jsonl")).at(-1);
++  assert.notEqual(candidateEntry.pid, candidatePid);
++  checkEntry(candidateEntry);
++  if (mode === "patched")
++    assert.equal(
++      candidateEntry.receipt.requestId,
++      beforeCandidate.waiting.inputRequests[0].requestId
++    );
++  await until(
++    async () => mode === "stock" || (await rows("effects.jsonl")).length === 2,
++    "candidate effect"
++  );
++  results.push(
++    "actual Workflow restart after candidate ingestion, before settlement: authorization resumes without resending"
++  );
++  const second = await required();
++  const before = (await rows("entries.jsonl")).length;
++  await put("pause-before-effect", "1");
++  const streamAbort = new AbortController();
++  const response = await second.made.session.respond(
++    second.waiting.inputRequests.map((request) => ({
++      requestId: request.requestId,
++      optionId: "approve",
++    })),
++    { signal: streamAbort.signal }
++  );
++  void response.result().catch(() => undefined);
++  await until(
++    async () => (await rows("entries.jsonl")).length > before,
++    "executor after settlement"
++  );
++  entry = (await rows("entries.jsonl")).at(-1);
++  checkEntry(entry);
++  const enteredPid = entry.pid;
++  const settledReceipt = entry.receipt;
++  if (mode === "patched")
++    assert.equal(
++      settledReceipt.requestId,
++      second.waiting.inputRequests[0].requestId
++    );
++  streamAbort.abort();
++  await stop(true);
++  await rm(file("pause-before-effect"));
++  await start(true);
++  await until(
++    async () => {
++      const all = await rows("entries.jsonl");
++      return all.length > before + 1 && all.at(-1).pid !== enteredPid;
++    },
++    "Workflow replay of interrupted executor",
++    90000
++  );
++  entry = (await rows("entries.jsonl")).at(-1);
++  checkEntry(entry);
++  assert.deepEqual(entry.receipt, settledReceipt);
++  await until(
++    async () => mode === "stock" || (await rows("effects.jsonl")).length === 3,
++    "effect after replay"
++  );
++  assert.equal(
++    (await rows("effects.jsonl")).length,
++    mode === "patched" ? 3 : 0
++  );
++  results.push(
++    mode === "patched"
++      ? "actual Workflow restart after settlement: interrupted callback replay reconstructs exact receipt"
++      : "actual Workflow restart after settlement: caller remains owner, missing receipt still blocks effect"
++  );
++  await writeFile(
++    file("proof-results.json"),
++    JSON.stringify(
++      {
++        mode,
++        results,
++        entries: await rows("entries.jsonl"),
++        effects: await rows("effects.jsonl"),
++      },
++      null,
++      2
++    )
++  );
++  console.log(JSON.stringify({ mode, results, evidence: app }, null, 2));
++} catch (error) {
++  await writeFile(file("failure.log"), logs);
++  console.error("Retained failure evidence:", app);
++  throw error;
++} finally {
++  await stop();
++  clearTimeout(watchdog);
++}
+diff --git a/runtime-fixture/agent/agent.ts b/runtime-fixture/agent/agent.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/agent.ts
+@@ -0,0 +1,19 @@
++import { defineAgent } from "eve";
++import { mockModel } from "eve/evals";
++export default defineAgent({
++  defaultTools: false,
++  description: "Conditional approval runtime proof",
++  model: mockModel(({ toolResults, lastUserMessage }) =>
++    toolResults.length
++      ? "done"
++      : {
++          toolCalls: [
++            {
++              name: "conditional",
++              input: { label: lastUserMessage, amount: "2" },
++            },
++          ],
++        }
++  ),
++  modelContextWindowTokens: 128000,
++});
+diff --git a/runtime-fixture/agent/channels/eve.ts b/runtime-fixture/agent/channels/eve.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/channels/eve.ts
+@@ -0,0 +1,11 @@
++import { eveChannel } from "eve/channels/eve";
++
++// oxlint-disable-next-line import/no-default-export -- EVE discovers channels through their default exports.
++export default eveChannel({
++  auth: () => ({
++    attributes: {},
++    authenticator: "retirement-fixture",
++    principalId: "owner",
++    principalType: "user",
++  }),
++});
+diff --git a/runtime-fixture/agent/channels/invoke.ts b/runtime-fixture/agent/channels/invoke.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/channels/invoke.ts
+@@ -0,0 +1,23 @@
++import { defineChannel, POST } from "eve/channels";
++export default defineChannel({
++  routes: [
++    POST("/proof/invoke", async (request, { invokeTool }) => {
++      const { name } = await request.json();
++      return Response.json(
++        await invokeTool(
++          name,
++          { label: "invoke" },
++          {
++            auth: {
++              attributes: {},
++              authenticator: "retirement-fixture",
++              principalId: "owner",
++              principalType: "user",
++            },
++            signal: request.signal,
++          }
++        )
++      );
++    }),
++  ],
++});
+diff --git a/runtime-fixture/agent/instructions.md b/runtime-fixture/agent/instructions.md
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/instructions.md
+@@ -0,0 +1,1 @@
++Call the conditional tool once, then finish.
+diff --git a/runtime-fixture/agent/tools/mcp.ts b/runtime-fixture/agent/tools/mcp.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/tools/mcp.ts
+@@ -0,0 +1,90 @@
++import {
++  appendFileSync,
++  existsSync,
++  readFileSync,
++  writeFileSync,
++} from "node:fs";
++import { setTimeout } from "node:timers/promises";
++
++import { defineDynamic, defineTool } from "eve/tools";
++import { z } from "zod";
++
++// Disposable files are the fixture's policy source and remote-effect spy.
++export default defineDynamic({
++  events: {
++    "step.started": () => {
++      const connector = readFileSync("connector.txt", "utf8");
++      const suffix = readFileSync("suffix.txt", "utf8");
++      return {
++        conditional: defineTool({
++          description: "Fixture MCP effect",
++          inputSchema: z.object({
++            label: z
++              .string()
++              .transform((value) => value.toUpperCase() + suffix),
++            amount: z.coerce.number(),
++            mode: z.string().default("safe"),
++          }),
++          approval: {
++            request(ctx) {
++              const policy = readFileSync("policy.txt", "utf8");
++              appendFileSync(
++                "requests.jsonl",
++                JSON.stringify({
++                  connector,
++                  input: ctx.toolInput,
++                  pid: process.pid,
++                }) + "\n"
++              );
++              if (policy === "flip") {
++                writeFileSync("policy.txt", "required");
++                return "not-applicable";
++              }
++              return policy === "required" ? "user-approval" : "not-applicable";
++            },
++            async response({ response }) {
++              appendFileSync(
++                "responses.jsonl",
++                JSON.stringify({
++                  pid: process.pid,
++                  decision: response.decision,
++                }) + "\n"
++              );
++              while (existsSync("pause-response")) await setTimeout(50);
++              return response.principal.principalId === "owner"
++                ? { status: "allowed" }
++                : { status: "rejected", reason: "owner only" };
++            },
++          },
++          async execute(input, ctx) {
++            const receipt = ("approval" in ctx ? ctx.approval : undefined) as
++              | {
++                  requestId: string;
++                  responder: { principalId: string; authenticator: string };
++                }
++              | undefined;
++            const evidence = {
++              connector,
++              input,
++              receipt,
++              caller: ctx.session.auth.current,
++              pid: process.pid,
++              callId: ctx.callId,
++            };
++            appendFileSync("entries.jsonl", JSON.stringify(evidence) + "\n");
++            while (existsSync("pause-before-effect")) await setTimeout(50);
++            ctx.abortSignal.throwIfAborted();
++            if (
++              readFileSync("policy.txt", "utf8") === "required" &&
++              (receipt?.responder.principalId !== "owner" ||
++                receipt.responder.authenticator !== "retirement-fixture")
++            )
++              return { blocked: "missing exact consent", ...evidence };
++            appendFileSync("effects.jsonl", JSON.stringify(evidence) + "\n");
++            return { effect: true, ...evidence };
++          },
++        }),
++      };
++    },
++  },
++});
+diff --git a/runtime-fixture/agent/tools/static-gate.ts b/runtime-fixture/agent/tools/static-gate.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-fixture/agent/tools/static-gate.ts
+@@ -0,0 +1,36 @@
++import { readFileSync, writeFileSync, appendFileSync } from "node:fs";
++
++import { defineTool } from "eve/tools";
++import { z } from "zod";
++export default defineTool({
++  description:
++    "Static counterpart of conditional MCP gate for invokeTool coverage",
++  inputSchema: z.object({ label: z.string() }),
++  approval: {
++    request() {
++      const policy = readFileSync("policy.txt", "utf8");
++      if (policy === "flip") {
++        writeFileSync("policy.txt", "required");
++        return "not-applicable";
++      }
++      return policy === "required" ? "user-approval" : "not-applicable";
++    },
++  },
++  execute(input, ctx) {
++    ctx.abortSignal.throwIfAborted();
++    const receipt = ("approval" in ctx ? ctx.approval : undefined) as
++      | {
++          requestId: string;
++          responder: { principalId: string; authenticator: string };
++        }
++      | undefined;
++    if (
++      readFileSync("policy.txt", "utf8") === "required" &&
++      (receipt?.responder.principalId !== "owner" ||
++        receipt.responder.authenticator !== "retirement-fixture")
++    )
++      return { blocked: true, caller: ctx.session.auth.current };
++    appendFileSync("invoke-effects.jsonl", JSON.stringify(input) + "\n");
++    return { effect: true };
++  },
++});

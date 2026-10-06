@@ -1,6 +1,6 @@
 # Execution-scoped approval receipts for conditional tools
 
-Local upstream proposal draft; not published or accepted upstream. Baseline: EVE 0.71.2, commit `143fe5717aa8a77d64185c00d1dbb363f307882f`.
+Local upstream proposal draft; not published or accepted upstream. Baseline: EVE 0.71.3, commit `fab8ba1424eddfdedd6a177cac21710258da0e81`.
 
 A dynamically discovered MCP tool can require no consent when its approval request policy runs, then require consent when the executor reloads connector policy. Removing the executor's receipt gate lets that call perform its effect without the newly required consent. Requiring consent for every MCP call changes product behavior. Freezing policy at request time loses the final authorization check.
 
@@ -36,7 +36,7 @@ Reuse EVE's narrow responder identity. Do not expose credentials, attributes, ap
 
 `receipt.patch` narrowly backports the fork's receipt projection to the release: private ephemeral map, preparation from the current resolved input batch and durable settlement, and injection through `createToolExecuteWithAuth`. It also clears the map on harness entry and consumes a matching receipt at callback-context construction. These two additions prevent stale authority surviving an early return and reuse by another callback in the same invocation. Replay constructs a fresh map rather than consuming an application ledger.
 
-This is a local experiment, not a supported removal. The patch uses the resolved runtime tool name and structural equality of request action input with executor input. It does **not** yet establish durable dynamic closure identity or general schema-transform equivalence. Those are explicit implementation/proof gaps, not relaxed contract terms. The narrow public property needs upstream review, documentation, supported distribution and compatibility proof before ChatJS can adopt it.
+This is a local experiment, not a supported removal. The real compiled `step.started` fixture found a name-reuse gap in the first backport: rediscovery could substitute another connector closure. The patch now snapshots persisted dynamic metadata before refresh and checks it again at receipt retrieval. The replacement-connector test fails closed. The unchanged-tool tests pass across real Workflow local-world restarts, including Zod transformation, coercion and defaulting. See the README for exact proof boundaries. Full metadata comparison also invalidates receipts when non-authority closure data changes; preserving the approved callback binding or defining a runtime-owned stable identity is an upstream integration requirement. Arbitrary source revision migration and ChatJS’s Postgres backend remain unproven. The narrow public property still needs upstream review, documentation, supported distribution and compatibility proof before ChatJS can adopt it.
 
 ## Why the alternatives do not establish authority
 
@@ -44,4 +44,6 @@ A response callback is a candidate authorization decision, not proof it won sett
 
 ## Review and integration gates
 
-Keep ChatJS's current fork adapter and execution-time policy/owner checks. Port the proof cases to upstream's supported runtime harness and cover compiled dynamic discovery, transformed input, Workflow-world persistence and every reachable executor route. Verify the supported release consumed by ChatJS, not just an upstream merge. No application ledger, blanket MCP consent, workflow redesign, automatic resend or upstream publishing is part of this patch.
+Keep ChatJS's current fork adapter and execution-time policy/owner checks. Adopt the supplied real-runtime cases upstream, preserving the compiled dynamic discovery, transformed-input, local-world SIGKILL/restart and out-of-turn invocation proofs. Cover remaining deployment/backend compatibility and every reachable executor route. Verify the supported release consumed by ChatJS, not just an upstream merge. No application ledger, blanket MCP consent, workflow redesign, automatic resend or upstream publishing is part of this patch.
+
+EVE 0.71.3’s approver-as-caller propagation is useful execution context, but does not by itself establish consent: an ordinary owner call also has that caller. The executable false-to-true counterexample and `invokeTool` case explicitly distinguish these facts.

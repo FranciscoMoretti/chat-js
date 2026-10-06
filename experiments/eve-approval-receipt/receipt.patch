@@ -1,14 +1,19 @@
 diff --git a/packages/eve/src/context/tool-approval-receipts.ts b/packages/eve/src/context/tool-approval-receipts.ts
 new file mode 100644
-index 0000000..16ab0a8
+index 0000000..1ab64b3
 --- /dev/null
 +++ b/packages/eve/src/context/tool-approval-receipts.ts
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,102 @@
 +import { isDeepStrictEqual } from "node:util";
 +
 +import { contextStorage, type AlsContext } from "#context/container.js";
 +import { ContextKey } from "#context/key.js";
-+import { SessionKey } from "#context/keys.js";
++import {
++  SessionKey,
++  SessionDynamicToolMetadataKey,
++  TurnDynamicToolMetadataKey,
++  StepDynamicToolMetadataKey,
++} from "#context/keys.js";
 +import {
 +  getApprovalAuditState,
 +  type ApprovalResponderIdentity,
@@ -23,6 +28,7 @@ index 0000000..16ab0a8
 +
 +type Entry = {
 +  readonly input: unknown;
++  readonly dynamicIdentity: unknown;
 +  readonly receipt: ToolApprovalReceipt;
 +  readonly sessionId: string;
 +  readonly toolName: string;
@@ -57,6 +63,7 @@ index 0000000..16ab0a8
 +      if (matches.length !== 1 || matches[0]?.outcome !== "allowed") continue;
 +      receipts.set(callId, {
 +        input: structuredClone(request.action.input),
++        dynamicIdentity: structuredClone(dynamicIdentity(ctx, request.action.toolName)),
 +        receipt: Object.freeze({
 +          requestId: request.requestId,
 +          responder: Object.freeze({ ...matches[0].actor }),
@@ -81,13 +88,23 @@ index 0000000..16ab0a8
 +    entry === undefined ||
 +    entry.sessionId !== ctx.require(SessionKey).sessionId ||
 +    entry.toolName !== toolName ||
-+    !isDeepStrictEqual(entry.input, input)
++    !isDeepStrictEqual(entry.input, input) ||
++    !isDeepStrictEqual(entry.dynamicIdentity, dynamicIdentity(ctx, toolName))
 +  ) {
 +    return undefined;
 +  }
 +  // A replay rebuilds this ephemeral map; another callback in this invocation cannot reuse it.
 +  ctx.get(ToolApprovalReceiptsKey)?.delete(callId);
 +  return entry.receipt;
++}
++
++/** Discovery can reuse a name for another closure while resuming approval. */
++function dynamicIdentity(ctx: AlsContext, toolName: string): unknown {
++  return [
++    SessionDynamicToolMetadataKey,
++    TurnDynamicToolMetadataKey,
++    StepDynamicToolMetadataKey,
++  ].map((key) => (ctx.get(key) ?? []).filter((metadata) => metadata.name === toolName));
 +}
 diff --git a/packages/eve/src/execution/tool-auth.ts b/packages/eve/src/execution/tool-auth.ts
 index 2f72e47..a81cf11 100644
@@ -108,10 +125,10 @@ index 2f72e47..a81cf11 100644
      };
 diff --git a/packages/eve/src/harness/receipt.lane-b.integration.test.ts b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
 new file mode 100644
-index 0000000..62b8e88
+index 0000000..7f982ba
 --- /dev/null
 +++ b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
-@@ -0,0 +1,392 @@
+@@ -0,0 +1,421 @@
 +import { jsonSchema } from "ai";
 +import { MockLanguageModelV4 } from "ai/test";
 +import { expect, it, vi } from "vitest";
@@ -504,8 +521,37 @@ index 0000000..62b8e88
 +  expect(f.effect).not.toHaveBeenCalled();
 +  expect(getApprovalAuditState(result.session.state).settlements).toHaveLength(0);
 +});
++
++import { StepDynamicToolMetadataKey } from "#context/keys.js";
++it.each([false, true])("dynamic closure changed=%s", async (changed) => {
++  const ctx = createApprovalContext();
++  const metadata = {
++    name: "mcp",
++    description: "test",
++    inputSchema: { type: "object" as const },
++    resolverSlug: "mcp",
++    entryKey: "mcp",
++    callbacks: { execute: { closure: { connector: "original" } } },
++  };
++  ctx.set(StepDynamicToolMetadataKey, [metadata]);
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(ctx, "generate-approval-resume-session", [batch], state);
++  if (changed)
++    ctx.set(StepDynamicToolMetadataKey, [
++      { ...metadata, callbacks: { execute: { closure: { connector: "replacement" } } } },
++    ]);
++  await contextStorage.run(ctx, async () => {
++    expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 }) !== undefined).toBe(!changed);
++  });
++});
 diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
-index 66ba6be..f531198 100644
+index 5245166..b75e978 100644
 --- a/packages/eve/src/harness/tool-loop.ts
 +++ b/packages/eve/src/harness/tool-loop.ts
 @@ -1,3 +1,4 @@
@@ -513,7 +559,7 @@ index 66ba6be..f531198 100644
  import { declinedSignInEvents, withdrawHeldSignIns } from "#harness/held-requests.js";
  import { setTimeout as delay } from "node:timers/promises";
  import { GenerationSteering } from "#harness/generation-steering.js";
-@@ -509,6 +510,7 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+@@ -511,6 +512,7 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
 
      let emissionState = getHarnessEmissionState(session.state);
      const store = contextStorage.getStore();
@@ -521,7 +567,7 @@ index 66ba6be..f531198 100644
      if (store !== undefined && !store.has(StaticModelReferenceKey)) {
        store.setVirtualContext(
          StaticModelReferenceKey,
-@@ -904,6 +906,9 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+@@ -906,6 +908,9 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
        session,
        stepInput: coordinated.stepInput,
      });

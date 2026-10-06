@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+if [[ -n "${EVE_TEST_NODE:-}" ]]; then export PATH="$(dirname "$EVE_TEST_NODE"):$PATH"; fi
 
 # Run from any directory. A fresh temporary clone is the only modified checkout.
 proof_dir="$(cd "$(dirname "$0")" && pwd)"
@@ -7,7 +8,7 @@ source_repo="${1:-https://github.com/vercel/eve.git}"
 experiment_dir="$(mktemp -d "${TMPDIR:-/tmp}/chatjs-approval-proof.XXXXXX")"
 git clone --no-hardlinks "$source_repo" "$experiment_dir/eve"
 cd "$experiment_dir/eve"
-git checkout --detach 143fe5717aa8a77d64185c00d1dbb363f307882f
+git checkout --detach fab8ba1424eddfdedd6a177cac21710258da0e81
 python3 - <<'PY'
 import json
 import re
@@ -20,7 +21,7 @@ for line in section.splitlines():
     if match:
         catalog[match[1] or match[2]] = match[3]
 # Pin the proof's real AI SDK dependencies rather than re-resolving their ranges.
-catalog.update({'ai': '7.0.128', '@ai-sdk/provider': '4.0.22', '@ai-sdk/provider-utils': '5.0.54'})
+catalog.update({'ai': '7.0.106', '@ai-sdk/provider': '4.0.17', '@ai-sdk/provider-utils': '5.0.44'})
 path = root / 'package.json'
 package = json.loads(path.read_text())
 package.update({'workspaces': ['packages/*'], 'catalog': catalog, 'overrides': {'zod': '4.5.4'}})
