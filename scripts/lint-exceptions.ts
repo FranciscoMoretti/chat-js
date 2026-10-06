@@ -1,8 +1,9 @@
 import ts from "typescript";
 
-const ZERO = 0;
-const ONE = 1;
-const TWO = 2;
+const COMMENT_DELIMITER_LENGTH = 2;
+const JSON_INDENT_SPACES = 2;
+const SUCCESS_EXIT_CODE = 0;
+const REASON_SEPARATOR = "--";
 const BASELINE_VERSION = 1;
 
 interface ExceptionBaseline {
@@ -56,7 +57,8 @@ const maskLiterals = (source: string, filename: string): string => {
       node.kind === ts.SyntaxKind.TemplateTail ||
       ts.isJsxText(node)
     ) {
-      for (let index = node.getStart(tree); index < node.end; index += ONE) {
+      // oxlint-disable-next-line no-magic-numbers -- Advance exactly one UTF-16 code unit while preserving every original source offset.
+      for (let index = node.getStart(tree); index < node.end; index += 1) {
         if (masked[index] !== "\n" && masked[index] !== "\r") {
           masked[index] = " ";
         }
@@ -106,11 +108,13 @@ const readComments = (source: string, filename: string): SourceComment[] => {
 
 const readDirectives = (source: string, filename: string): CommentDirective[] =>
   readComments(source, filename).flatMap(({ start, end, multiline }) => {
+    /* oxlint-disable no-magic-numbers -- Single-line comments have no closing-delimiter adjustment; subtract zero while preserving the end position. */
     const comment = source.slice(
-      start + TWO,
+      start + COMMENT_DELIMITER_LENGTH,
       // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      end - (multiline ? TWO : ZERO)
+      end - (multiline ? COMMENT_DELIMITER_LENGTH : 0)
     );
+    /* oxlint-enable no-magic-numbers */
     const match =
       /^\s*(?<engine>eslint|oxlint)-(?<kind>disable(?:-next-line|-line)?|enable)\b(?<body>[\s\S]*)$/u.exec(
         comment
@@ -122,29 +126,31 @@ const readDirectives = (source: string, filename: string): CommentDirective[] =>
       return [];
     }
     const { engine = "", kind = "", body = "" } = match.groups;
-    const separator = body.indexOf("--");
+    /* oxlint-disable no-magic-numbers -- Directive positions use a zero-based prefix; indexOf returns -1 when the reason separator is absent. */
+    const separator = body.indexOf(REASON_SEPARATOR);
     return [
       {
         end,
         engine,
         kind,
-        line: source.slice(ZERO, start).split("\n").length,
+        line: source.slice(0, start).split("\n").length,
         reason:
           // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          separator === -ONE
+          separator === -1
             ? ""
             : body
-                .slice(separator + TWO)
+                .slice(separator + REASON_SEPARATOR.length)
                 .replaceAll(/^\s*\*\s?/gmu, "")
                 .trim(),
         // oxlint-disable-next-line no-ternary -- Keep trim receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        rules: (separator === -ONE ? body : body.slice(ZERO, separator))
+        rules: (separator === -1 ? body : body.slice(0, separator))
           .trim()
           .split(/[\s,]+/u)
           .filter(Boolean),
         start,
       },
     ];
+    /* oxlint-enable no-magic-numbers */
   });
 
 interface SourceScope {
@@ -178,7 +184,8 @@ const withoutDirectives = (
     source.charAt(index)
   );
   for (const directive of directives) {
-    for (let index = directive.start; index < directive.end; index += ONE) {
+    // oxlint-disable-next-line no-magic-numbers -- Advance exactly one UTF-16 code unit while preserving every original source offset.
+    for (let index = directive.start; index < directive.end; index += 1) {
       if (characters[index] !== "\n" && characters[index] !== "\r") {
         characters[index] = " ";
       }
@@ -223,44 +230,49 @@ const functionScope = (
   const startingHere = scopes.filter(
     (scope) => scope.anchor >= target.start && scope.anchor < target.end
   );
+  /* oxlint-disable no-magic-numbers -- Read the zero-based first candidate with at(0), which preserves the possibly absent result required by the guard. */
   const first = startingHere
     .toSorted((left, right) => left.start - right.start)
-    .at(ZERO);
+    .at(0);
+  /* oxlint-enable no-magic-numbers */
   if (first) {
     return {
       end: Math.max(...startingHere.map((scope) => scope.end)),
       start: first.start,
     };
   }
-  return (
-    scopes.toSorted(
-      (left, right) => left.end - left.start - (right.end - right.start)
-    )[ZERO] ?? target
+  const [smallest] = scopes.toSorted(
+    (left, right) => left.end - left.start - (right.end - right.start)
   );
+  return smallest ?? target;
 };
 
 const lineScope = (
   source: string,
   directive: CommentDirective
 ): SourceScope => {
+  /* oxlint-disable no-magic-numbers -- Source indices start at zero; add one to skip a newline, and indexOf returns -1 when no newline exists. */
+
   const start =
     // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     directive.kind === "disable-next-line"
-      ? source.indexOf("\n", directive.end) + ONE
-      : source.lastIndexOf("\n", directive.start) + ONE;
+      ? source.indexOf("\n", directive.end) + 1
+      : source.lastIndexOf("\n", directive.start) + 1;
   const finalLineStart =
     // oxlint-disable-next-line no-ternary -- Keep finalLineStart as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     directive.kind === "disable-next-line" ? start : directive.end;
   const newline = source.indexOf("\n", finalLineStart);
   return {
     // oxlint-disable-next-line no-ternary -- Keep end as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    end: newline < ZERO ? source.length : newline,
+    end: newline === -1 ? source.length : newline,
     start:
       // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      start === ZERO && directive.kind === "disable-next-line"
+      start === 0 && directive.kind === "disable-next-line"
         ? source.length
         : start,
   };
+
+  /* oxlint-enable no-magic-numbers */
 };
 
 const normalizeScope = (value: string): string =>
@@ -271,11 +283,13 @@ const occurrenceIdentity = (
   scope: SourceScope,
   line: boolean
 ): number => {
+  /* oxlint-disable no-magic-numbers -- Occurrence ordinals begin at zero; the prefix begins at index zero and splitting repeated text creates one extra initial segment. */
+
   const covered = cleanSource.slice(scope.start, scope.end).trim();
   if (!covered) {
-    return ZERO;
+    return 0;
   }
-  const prefix = cleanSource.slice(ZERO, scope.start);
+  const prefix = cleanSource.slice(0, scope.start);
   if (line && !covered.includes("\n")) {
     return prefix
       .split("\n")
@@ -283,7 +297,9 @@ const occurrenceIdentity = (
   }
   // Compare repeated covered regions after removing directives and normalizing
   // whitespace; ordinary inserted lines do not change the occurrence ordinal.
-  return normalizeScope(prefix).split(normalizeScope(covered)).length - ONE;
+  return normalizeScope(prefix).split(normalizeScope(covered)).length - 1;
+
+  /* oxlint-enable no-magic-numbers */
 };
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Fingerprint each real directive with its reason, covered scope, repeated-source identity and closure boundary in one policy pass.
@@ -304,7 +320,8 @@ const readExceptions = (
             candidate.start > directive.start &&
             candidate.kind === "enable" &&
             candidate.engine === directive.engine &&
-            (candidate.rules.length === ZERO || candidate.rules.includes(rule))
+            // oxlint-disable-next-line no-magic-numbers -- An enable directive with zero named rules closes every rule from the same engine.
+            (candidate.rules.length === 0 || candidate.rules.includes(rule))
         );
         const physicalScope =
           // oxlint-disable-next-line no-ternary -- Keep physicalScope as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -314,7 +331,7 @@ const readExceptions = (
             : lineScope(source, directive);
         let scope = physicalScope;
         if (FILE_METRICS.has(rule.replace(/^eslint\//u, ""))) {
-          scope = { end: source.length, start: ZERO };
+          scope = { end: source.length, start: 0 };
         } else if (
           directive.kind !== "disable" &&
           FUNCTION_METRICS.has(rule.replace(/^eslint\//u, ""))
@@ -368,24 +385,26 @@ const snapshotExceptions = (
     ([left]: readonly [string, string], [right]: readonly [string, string]) =>
       left.localeCompare(right)
   )) {
+    /* oxlint-disable no-magic-numbers -- An empty rule list has length zero; missing counters start at zero and each membership or missing reason adds one. */
     for (const exception of readExceptions(source, filename)) {
-      if (exception.rules.length === ZERO) {
+      if (exception.rules.length === 0) {
         errors.push(
           `${filename}:${exception.line}: blanket ${exception.directive} is forbidden`
         );
       }
       for (const rule of new Set(exception.rules)) {
         const key = JSON.stringify([filename, rule, exception.directive]);
-        counts[key] = (counts[key] ?? ZERO) + ONE;
+        counts[key] = (counts[key] ?? 0) + 1;
         const fingerprint = exception.scopeFingerprints[rule];
         if (fingerprint) {
           (scopeFingerprints[key] ??= []).push(fingerprint);
         }
         if (!exception.reason) {
-          missingReasons[key] = (missingReasons[key] ?? ZERO) + ONE;
+          missingReasons[key] = (missingReasons[key] ?? 0) + 1;
         }
       }
     }
+    /* oxlint-enable no-magic-numbers */
   }
   return { baseline, errors };
 };
@@ -397,35 +416,41 @@ const checkExceptions = (
 ): string[] => {
   const snapshot = snapshotExceptions(files);
   const { errors } = snapshot;
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
   for (const [key, count] of Object.entries(snapshot.baseline.counts)) {
-    if (count > (baseline.counts[key] ?? ZERO)) {
+    if (count > (baseline.counts[key] ?? 0)) {
       errors.push(
-        `Exception count increased ${key}: ${baseline.counts[key] ?? ZERO} -> ${count}`
+        `Exception count increased ${key}: ${baseline.counts[key] ?? 0} -> ${count}`
       );
     }
   }
+  /* oxlint-enable no-magic-numbers */
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
   for (const [key, count] of Object.entries(snapshot.baseline.missingReasons)) {
-    if (count > (baseline.missingReasons[key] ?? ZERO)) {
+    if (count > (baseline.missingReasons[key] ?? 0)) {
       errors.push(
-        `Missing reason after -- ${key}: ${baseline.missingReasons[key] ?? ZERO} -> ${count}`
+        `Missing reason after -- ${key}: ${baseline.missingReasons[key] ?? 0} -> ${count}`
       );
     }
   }
+  /* oxlint-enable no-magic-numbers */
+  /* oxlint-disable no-magic-numbers -- indexOf returns -1 for an unknown fingerprint; splice removes exactly one matched prior occurrence. */
   for (const [key, fingerprints] of Object.entries(
     snapshot.baseline.scopeFingerprints
   )) {
     const remaining = [...(baseline.scopeFingerprints[key] ?? [])];
     for (const fingerprint of fingerprints) {
       const index = remaining.indexOf(fingerprint);
-      if (index === -ONE) {
+      if (index === -1) {
         errors.push(
           `Exception scope or reason changed ${key}: ${fingerprint}; review and explicitly update baseline`
         );
       } else {
-        remaining.splice(index, ONE);
+        remaining.splice(index, 1);
       }
     }
   }
+  /* oxlint-enable no-magic-numbers */
   return errors;
 };
 
@@ -435,7 +460,8 @@ const isCounts = (value: unknown): value is Record<string, number> => {
   }
   return Object.values(value).every(
     (count) =>
-      typeof count === "number" && Number.isSafeInteger(count) && count >= ZERO
+      // oxlint-disable-next-line no-magic-numbers -- Persisted budget counters must be nonnegative integers; zero is valid.
+      typeof count === "number" && Number.isSafeInteger(count) && count >= 0
   );
 };
 
@@ -486,20 +512,24 @@ const reviewBaselineUpdate = (
 ): string[] => {
   const snapshot = snapshotExceptions(files);
   const { errors } = snapshot;
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
   for (const [key, count] of Object.entries(snapshot.baseline.counts)) {
-    if (!allowNew && count > (prior.counts[key] ?? ZERO)) {
+    if (!allowNew && count > (prior.counts[key] ?? 0)) {
       errors.push(
         `Baseline exception count increased ${key}; review the new exception and use --write-baseline --allow-new`
       );
     }
   }
+  /* oxlint-enable no-magic-numbers */
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
   for (const [key, count] of Object.entries(snapshot.baseline.missingReasons)) {
-    if (count > (prior.missingReasons[key] ?? ZERO)) {
+    if (count > (prior.missingReasons[key] ?? 0)) {
       errors.push(
         `Baseline updates cannot introduce missing reasons ${key}; add a reason after --`
       );
     }
   }
+  /* oxlint-enable no-magic-numbers */
   return errors;
 };
 
@@ -516,7 +546,7 @@ const main = async (): Promise<void> => {
     new Response(result.stdout).text(),
     new Response(result.stderr).text(),
   ]);
-  if (exitCode !== ZERO) {
+  if (exitCode !== SUCCESS_EXIT_CODE) {
     throw new Error(stderr);
   }
   const filenames = [...new Set(inventory.split("\0"))]
@@ -541,13 +571,14 @@ const main = async (): Promise<void> => {
         ...reviewBaselineUpdate(files, prior, Bun.argv.includes("--allow-new"))
       );
     }
-    if (snapshot.errors.length > ZERO) {
+    // oxlint-disable-next-line no-magic-numbers -- Any positive number of accumulated violations prevents a successful audit or baseline write.
+    if (snapshot.errors.length > 0) {
       throw new Error(snapshot.errors.join("\n"));
     }
     await Bun.write(
       baselinePath,
       // oxlint-disable-next-line unicorn/no-null -- Pass null as the no-op replacer while applying indentation without changing values.
-      `${JSON.stringify(snapshot.baseline, null, TWO)}\n`
+      `${JSON.stringify(snapshot.baseline, null, JSON_INDENT_SPACES)}\n`
     );
     await Bun.write(
       Bun.stdout,
@@ -559,7 +590,8 @@ const main = async (): Promise<void> => {
     files,
     parseBaseline(await Bun.file(baselinePath).text())
   );
-  if (errors.length > ZERO) {
+  // oxlint-disable-next-line no-magic-numbers -- Any positive number of accumulated violations prevents a successful audit or baseline write.
+  if (errors.length > 0) {
     throw new Error(errors.join("\n"));
   }
   await Bun.write(

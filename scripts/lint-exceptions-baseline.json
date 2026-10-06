@@ -10612,6 +10612,8 @@
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": 1,
+    "[\"scripts/lint-exceptions.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 6,
+    "[\"scripts/lint-exceptions.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 11,
     "[\"scripts/lint-exceptions.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 10,
     "[\"scripts/lint-exceptions.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": 2,
     "[\"scripts/lint-exceptions.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
@@ -52596,38 +52598,59 @@
     "[\"scripts/lint-exceptions.test.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": [
       "6277a7c6d914d14193e3a03ed46cc9997196bb1bf4052166c19287547b17b085"
     ],
+    "[\"scripts/lint-exceptions.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "051f511898fab353c307e5c6479dc13fa560599ae6e12ef0ce26875194f31235",
+      "ebe3e8e8bb265f35f82d007fcebb0e7c66b65cc38344ce8b08f6a8234a9c161a",
+      "fad3ca80fcd0f66cd75db5fcee8f85aa5f75efb37184a97bd829dfc87eaa868f",
+      "86b41f1daa1c94619064131da70c8c29742ddfc8376c125ef5adb4731b83dbd1",
+      "f685c16f2b26b66f7207a27aec0d17af5218942b825003491eb4db1ae46cf92c",
+      "c29a6a9c10591e41eddb9d2f7888de70af70731e6001bacd7d46f8b8a73f3644"
+    ],
+    "[\"scripts/lint-exceptions.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
+      "252f8a98273b13f70079788f31f94e14b5a01476e15fb646d7f00cfdcdae2615",
+      "7af911ee436a08eeb5f39a79ce8fb464f50da7de1b464820a83869806fbc54f4",
+      "9a54edeedce56aa41d4aeebf4e58b9a27f54a319768adafbd106b91d2fec1a8e",
+      "78de3b67372d74d8b0c51e454106eae196967a57362debbe9c9427a2f2cfddd3",
+      "7f8e39a7ba10b4122db8f74fad8168e85e8ff58dc5c465b8632446b3c01edc9b",
+      "53cdd84ff08dabfd688f9cae02291e8662480ef67c30748bf4440b3ed3d9e745",
+      "4a7a477136e01e0e7a2381923d79ca23e3a80e8b7f41b0eee5b53def4827b989",
+      "1fb831922287b8806d15c020f64e7c8d92672bf1cbec9a7de4987b7051cf9fb7",
+      "c6eb9c1a2839f426dda7557a850ff4da347446439ac6633b4ee694c015fae51e",
+      "64a2783edb9d0f8e6c174e9f824203509e3ab7fe1bb6b20c8f310d3beee63562",
+      "fc435cb77146e5a5dd47efb95e10985edf04a2593660e898b5ceb3f5d1f2bf78"
+    ],
     "[\"scripts/lint-exceptions.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
-      "0104b5f207d02fe5133bdfdce49bf2ffbe52d29a3a838395db26f4b925019850",
-      "2f8e55b10e535242ccb0a8b3a2253a9e118720a5c05f2f44febd6db2baea8dd2",
-      "46fdf85f6ab9b05183fd6e5a025ca734bb07640bd902ac04e2e5e29be128c209",
+      "dca42702a501ad67453d58a3509a16cb1f6207ad1592a39fe64a18e22bff6287",
+      "1babf4ff288bd6a50a621d013a206c00d6a5d3a915f6c70162c69143611546e6",
+      "0f3d7a77cadc7c7dbc7dd4b8878a17ea55687f25b82c089038c70229af804271",
       "24b2615ba319e001a565e81464c537df05cc98a3a245c6eafc02a1c2d5d08349",
       "15d9b67545a3650b66c56d4d20c25adcb6438ca5dec7741c1bf78f38d4868c96",
       "6e8ff74b511ad0dfc0dc92d6c018e99989b01cf98dd9df926b807d32873d7b60",
-      "ed03d2a449ff014db44bd2d64f031064eaf2d6556d66ca72a3eecb5505e5101e",
-      "4886fb51da7636111865ab531b7102201653fe258914b2b83d2479af99196b7e",
+      "e5d774897e6fa98684f49969009dcdbda8d4ef0ee7f64e50dcc7c49283a93720",
+      "b757f5f4f4dac66335b9440ac3848d07e0e43e134b13508e300dee77c3d0bad8",
       "6f5048edfa42f25fbb0b63ecd9ae7b3d1cec4157db858c3dc0b95d855b5949b2",
       "fdbc2349cd33a0e64af044959e136cdd3b000d88327bde718dd4247b0a9eed68"
     ],
     "[\"scripts/lint-exceptions.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": [
-      "506badb06bc3aa68f1c10835bf599fd151623228cfeb98ced35d75a72eafda35",
-      "0153c6200943b2f619f1be02b40c6d003d3871bed70c01f85e8742794821fae5"
+      "38f3e8046b1fdb0d64af0a01fb15f0ca639d4debe7a96b0834c17183c3ec5b54",
+      "3c41c4455f9e770f98f2e5400a88c6c73cd19c0a795c0503d7e3491d15d56a0a"
     ],
     "[\"scripts/lint-exceptions.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "18f718d75f0843ea9996c608136fd44cee710c7a4f698ebd6e027efeb7cde1b8"
     ],
     "[\"scripts/lint-exceptions.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": [
-      "fdaee1ec0f441b1c1fc827148597570776acf3c6bbc9f4c88f3c3edef7cf0d8b",
-      "2fe8f06382b89949693ef9175ef5474c9b06a677d19e2f18016a6ca9ad1ae788",
-      "0153c6200943b2f619f1be02b40c6d003d3871bed70c01f85e8742794821fae5"
+      "36a67bd75c47a4b0d40bf623798d8d4bee818dd1c084c9d2f26b0507c99e55c3",
+      "ee820ed55417aed8b20062116dea8bbef9e32dd18f83764a727d543399a8f14c",
+      "3c41c4455f9e770f98f2e5400a88c6c73cd19c0a795c0503d7e3491d15d56a0a"
     ],
     "[\"scripts/lint-exceptions.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "aed96d6a458b30577015cfbf5a4e06b7a1158e3e302923a6ba58a52208768a80"
+      "36eeee17363cff1f3798a9b7da82f0eef75a7122e51789c14cffcd3b091f4cc5"
     ],
     "[\"scripts/lint-exceptions.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
       "1399815f285d98d1966b6a2eecaec877e5b79615a293d181ac2ab1df873b6f07"
     ],
     "[\"scripts/lint-exceptions.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
-      "99fc2d3775a55867e2760356179463f7f72828789961154a337d921eacd0aaa7"
+      "eb0d490cf1a24503dad839d560d3a3bf0a2d4d68b4db525e9fbe1605281f696f"
     ],
     "[\"scripts/lint-exceptions.ts\",\"node/no-top-level-await\",\"oxlint-disable-next-line\"]": [
       "68d16a39faed9fcda9a09473d77e93e9c185ad424ab819cf9a985e6a1b5316ef"
@@ -52637,7 +52660,7 @@
       "45258ebfd9bf7b40b3fddbf5de6382eae9225e0bf6ce80e98622e3ed9afe18e5"
     ],
     "[\"scripts/lint-exceptions.ts\",\"eslint/max-lines\",\"oxlint-disable\"]": [
-      "ee7d97ea0634ae8d4e8a5cc1eca1f2ed8630129c164ebc12bb2283dd677765da"
+      "7d9b4a7ea0410a121e3fdb5c3b015f62e2ded3bc47b685e3d939ebff51de94bb"
     ],
     "[\"scripts/lint-runtime-policy.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": [
       "f275cef71d5a469bb273e8ba398f2f21c8d03390793364b10e9159f213b90161",
