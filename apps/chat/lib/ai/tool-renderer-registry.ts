@@ -1,7 +1,6 @@
 import type { ToolUIPart } from "ai";
-import { createElement } from "react";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ComponentType, FunctionComponent, ReactElement } from "react";
+import type { ComponentType, FunctionComponent } from "react";
 /* oxlint-enable sort-imports */
 
 import { ui } from "@/tools/chatjs/ui";
@@ -66,29 +65,10 @@ const getEveInstalledToolRenderer = (
   }
 };
 
-/* oxlint-disable unicorn/no-null -- React renders no installed component when registry lookup is absent; preserve the established null result. */
-/** Create the installed tool element while retaining the selected discriminator's prop correlation.
- * @param {ToolType} type Installed discriminator selecting the corresponding renderer.
- * @param {ToolRendererProps<ToolType>} props Original native tool data and display ownership forwarded to React.
- * @returns {ReactElement<ToolRendererProps<ToolType>> | null} The installed renderer element with its original props, or null when absent.
- */
-const renderInstalledTool = <ToolType extends InstalledToolType>(
-  type: ToolType,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native tool-part JSON collections and callback props are forwarded directly to React.createElement; preserve the installed component input contract.
-  props: ToolRendererProps<ToolType>
-): ReactElement<ToolRendererProps<ToolType>> | null => {
-  const Renderer = toolRendererRegistry[type];
-  if (Renderer) {
-    return createElement(Renderer, props);
-  }
-  return null;
-};
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveInstalledToolRenderer, isInstalledToolType, renderInstalledTool, toolRendererRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable unicorn/no-null */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getEveInstalledToolRenderer, isInstalledToolType, toolRendererRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   getEveInstalledToolRenderer,
   isInstalledToolType,
-  renderInstalledTool,
   toolRendererRegistry,
 };
 /* oxlint-enable import/no-named-export */

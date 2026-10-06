@@ -34,8 +34,9 @@ import { codeExecutionInput, codeExecutionResult } from "./schemas";
 const COST_CENTS = 5;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const observeCleanup = async (pending: Promise<void>): Promise<void> => {
+const observeCleanup = async (
+  pending: Readonly<Promise<void>>
+): Promise<void> => {
   try {
     await pending;
   } catch {

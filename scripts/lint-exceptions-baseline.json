@@ -3125,8 +3125,6 @@
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/ai/types.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/types.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 3,
@@ -7094,7 +7092,6 @@
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 6,
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 5,
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": 3,
-    "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 6,
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 4,
@@ -7660,12 +7657,12 @@
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 7,
@@ -7690,7 +7687,6 @@
     "[\"apps/chat/tools/chatjs/workflow-types.ts\",\"typescript/consistent-type-definitions\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/workflow-types.ts\",\"import/no-named-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/platform/documents/types.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tools/platform/research-updates-schema.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/platform/research-updates-schema.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/platform/search-presentation.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/platform/search-presentation.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
@@ -9492,7 +9488,6 @@
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 6,
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 5,
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": 3,
-    "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 6,
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 4,
@@ -10034,12 +10029,12 @@
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 7,
@@ -22959,7 +22954,7 @@
       "e312f293bad417e227280e28f7c7c2fc4a5df06b8b4b7f33f444209ea1d13fbe"
     ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"sort-imports\",\"oxlint-disable\"]": [
-      "8ddfb7ca3bdb18cbb2cbbeaa359d21935d51ff984a0d6427213664d8d1a46aaf",
+      "bd4db70e1724933010ec7057dd477e7b0182c986d63d03d48d95f60e4531e8f4",
       "bbe7767ef3f1575cc3f6a48247ad5e9cfbbe5dae15a9d6bad269c0778416817a",
       "489255e185e1398febe438d01e7505a880bdd207d42ac2f33e1ab1a9a44b6a23"
     ],
@@ -22969,14 +22964,8 @@
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "1a8a657639768cd01d7c584b618000d7ea5daab809bf348f60281aa541a7597f"
     ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "b1c90b6bacc6c96e80bc3f006422ef1ac7faf79259bf207d452f72feac68fc2f"
-    ],
-    "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
-      "23366986e098dac5786d391b2fc45b9c85b1c81b6f9d65d40807d3ec892e46d1"
-    ],
     "[\"apps/chat/lib/ai/tool-renderer-registry.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "d21ebcfef0a79222c3d1f1025226cc04c5fdf2007ebfca4df65074d4fe7fb4c7",
+      "f9f3009adeff895fc1db89012a03bc53be980e5ea54793576181270605db6652",
       "2ca8bfbaace925ddd4b26dff8bdce7a2f8cd54b6e6af61f1da2603faea580ea5"
     ],
     "[\"apps/chat/lib/ai/types.ts\",\"sort-imports\",\"oxlint-disable\"]": [
@@ -37857,34 +37846,34 @@
       "239731aebff18571d87a81626475838c8ca1852bf1a3ad96f8d65e46db98d0e7"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "a0bf42a88b269c5388d23d29900b6ee99effeaed16e4a552c602c5a3a43b55be"
+      "5444a386c9ae5b3a99ac39730ce1e29013262e47f09368a9d98a37c00b93c1f6"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
-      "9857f56b56ea4db38427b8b77699920b8ddd981107a8c00c137f91c194e46b31"
+      "fef97a2b6403bb79a5f4a3b0e8e9a5d21779bdc229aee2d66634402b902d0b88"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "bca826c4ec69269aa6b0730a1d201df200fb49c226c4d76be7292e3157f72d31",
-      "771c2845f7324045b7180f35a1786d4e4446131a2dcd819945472a76b993e85c",
-      "90fc9799655b3a691d972837b02c205015042069d060ccbaa3d85f7e255f2021"
+      "8ff349f4e32a7dee6534de0ebe28f7cdc4350f57f71f2b1c5cbcc6604088a87a",
+      "34e50dc5657f0aa61f53a02a1604e3f9545c38ec2db2025c0ec888fcac66f3aa"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "967169bf33ed47884eae2a4866714bef0e6924f4339a2923025071c12c518894"
+      "f4093f6afc2c91069b9b9a79fc205bca158fe502312c7aaed434c4bf5cf86813"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "3760592fe0d844c8cbb1e5354cc7f9da85f9db86206dc57ecab97831a67971eb"
+      "7bc98296e1d52023e14cb4ea200ac4ee6d2a70031e2ad5c92278b1816967eb50"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "3760592fe0d844c8cbb1e5354cc7f9da85f9db86206dc57ecab97831a67971eb"
+      "7bc98296e1d52023e14cb4ea200ac4ee6d2a70031e2ad5c92278b1816967eb50"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"no-console\",\"oxlint-disable\"]": [
-      "3760592fe0d844c8cbb1e5354cc7f9da85f9db86206dc57ecab97831a67971eb",
-      "1288a7c45fc8f8e3ec118717d890f4e0a152094de73d5cdee7cbbecbbea4a106"
+      "7bc98296e1d52023e14cb4ea200ac4ee6d2a70031e2ad5c92278b1816967eb50",
+      "b9787e4c8a40dabd3731553458d5d9b9c6cf4e1044d7c150307bc0772c3adc30"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "3760592fe0d844c8cbb1e5354cc7f9da85f9db86206dc57ecab97831a67971eb"
+      "7bc98296e1d52023e14cb4ea200ac4ee6d2a70031e2ad5c92278b1816967eb50"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
-      "3760592fe0d844c8cbb1e5354cc7f9da85f9db86206dc57ecab97831a67971eb"
+      "7bc98296e1d52023e14cb4ea200ac4ee6d2a70031e2ad5c92278b1816967eb50"
     ],
     "[\"apps/chat/tests/native-research-runtime.ts\",\"node/no-top-level-await\",\"oxlint-disable-next-line\"]": [
       "95c0d8727a55b3a7a1dcd0f68c257d1d91cc0ed7f5ef62cc680a99781f3b6a4d"
@@ -38775,50 +38764,42 @@
       "5a184a197f2fd4131157e7de6555501505cf8d331fb91b15f15bc9a22726dbd2"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "dcf8d587c3e2e5d17b4abbd2b84095eaacf67d414662aced6b5b94c840a95386",
-      "fa7593eb85f6884bd3954b977beb2fee150d7d51be3f78fcc65933669ff787ad",
-      "73994e073b448188e77c2e26abfef98662ef0b86575be1c4a0dfbd4ec501bf46",
-      "f80a5eb934640a6b19950834755fdf392ce2089bb1e41fd91397f2a7a4acaea4",
-      "5fa34668b5c75c1e6fdaff7c2a1a9be9b7bc80bd0e1d2f51bdec7d40e765fbf3",
-      "d7006ec8c6fa5f1688a5ee0a78a43341b7e97118c3ba6cd709b03df954378a5d"
+      "7e7dc8e446af9c5410d719d86fa5d45775757cdfb3dd0816982f7942655a0cad",
+      "3822a1c2754d627892dbabe5642377cb1efe82a63cb0c732f35f3578adff6e4b",
+      "faeddbafb7457dbda60f640a5ae72448438798782af12a103e6dea327e05d8dd",
+      "5dfe17107d1a2fcf001b0f6fb44cb3b07f28b005385656f382c5387b0f217dbc",
+      "2dc596c2cbaf55a5796e389d45b1217e794bc023478a61786e5787b3c2a5ea72",
+      "00a050dca745283e0a6002d059ae7ad349e70386daa65c2b73cceb2b29ee8f60"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "7ef2a0eae1ec37b2c95549a4e3a9e628448c103f85575da92c5f3a6137eef1c4",
-      "775687ea70ab1fece050c66c4d82c4f9056207bab042888e5c56ec06cb10243f",
-      "67f27c66ae29bef5555639d2865622751be5dcb88636a6b2c10ffa10ef1113de",
-      "1394c4ce0834d3bc1153df38a927ba1469cff7ba7458ac670c2e640133e3f886",
-      "82bc5f6b05de7f5ebaa537bfb96e5850cb0bfdeb0f90dc22b91967e6ad2f039e"
+      "17cddd46edeb2300d7d0a9df3eeeb1f9f31c1abf22280a197f28aa203b43f6db",
+      "041499199a8590758e33ca2d754c82aaa0f38215071fca82be7ca9b7de32b04b",
+      "0772717a9027a9efa0e808c802db7949607bf149e0d77a1f1a1876baf448e5c7",
+      "e1005f963a93682176f72a25b9111bf316e1994c9e5282a7a99224844108c9d5",
+      "5e13c836b1959e60e9296e5829198897b3cbbffcef056f35ca738501b0aacd4d"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": [
-      "5a2c9a27198a2c94b8691278aadb525febb4dae8669451c6e72c233f1a4bb1c2",
-      "7b7ac37553016458e9821373de1be9def974bd131ca17a7142de078e24269e43",
-      "44b327422120a284f6bffd15973f0a8154646b48d062f573cd4b1e95753ebbc0"
-    ],
-    "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "be6cc7369e590225137d77fb2cf5476f02adcf2703983a94114bb8eb3c2cf09d",
-      "a817f6bb542c014671f047dd848445203a8fe07f48467203c4ede375d8ff4e30",
-      "092c2a4bcc9fd5e08de355805839e6364976e0fb1525435ad291f35c3aeeb7f1",
-      "71a2a2474d27f62c6bdf7e04ca79b6ecc6551300177a729cf75290a29729c35a",
-      "27a5f13e13a02c445eb133faddacf428e0610392c4ef67e4197bf60f4b7a0997",
-      "143ce120040f9eeffdf7fd38db33038855048cbfec95685f3ad752889f1c9f3e"
+      "646d604955137bf9dbc44908cef67d9f393710b68aa6ad64cf7c25bf93c7bc32",
+      "d0b67c97fd94837bd3cad9bf5cc1a6389eaa9da7fdeb32db12fb26cdc5ac4803",
+      "717eb363fabd0411f72c48e7454af7078e3f36a0b75b77878e2e6f9a75dc8dab"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "ae4001f2c85950cc4ea238c1a42c5cc4a717407060b41ff30bea712490c547a9",
       "7b74b7bf7c192ba13ff8eaaaec8ee3d45308ca9a2aaece8485d8880ab1c46438"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "858be2fb211116c6e9a453287d5535d296380e5eaf2347d7df7789cc443828fd",
-      "c347a3ca5c23d59c0b0aaccc7893c89979fcbafa51bfd95f02ecf653bf9663a3",
-      "89efd88cb101c32e1e3e34a5f6dc256bbfad0fcdd880631e4670fd85218ee76d"
+      "7c79bba054fe09cfc3b5be554fa45e551a9a5d64ad873b7510048e5bd9513f56",
+      "be3a0cfc48f6281611c54be9bcf358fea2db4b7278b0d37b4b2a1dc7c6d99c16",
+      "584f7d63498b660c86a7ac23784a0a2e035dcd6a63a12dc14b1ba7be744d54c6"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "9e5d2a03b5d663c90dc0dc59813ed5493b2fc685fad6f0c46ec57d4c3e22ba04",
-      "88d67d921d60b20b1e3a458f5affdc973247c0334f0d8bde8963855bce73a913",
-      "d56ca3351d5b7f576fbe4085077b38809bc10732c9701c0d92641ba1ac827f07",
-      "04d30d972182a6d3139dab1402df4265d4a45352df142b8c70134a9279c214f9"
+      "435f02be6e8d1591ffaba5cffd6197845e25ee0a9a7a89e2b205c9517a3d556a",
+      "977614b2cc0c38b00a4843ba984acb1088af80908c1e2e21570cd0e030108208",
+      "7984093b7541fab8616e4ec3befef8272798703ceb4f750fb493fe74493418b5",
+      "28f13842192ae213e6141fd3fb836a1756ff0e2d5da4a220b82dc0d0bbbb4be8"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "e58e80c609be0f82604feb5d616016f1bcc3256e4e6e0189e1a069bfc38b1cf8"
+      "7628da46b048ce941a9b292046fcc60ef64036c28ffd10f1fe771be208f78a42"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": [
       "3fefa6a5171ed2143c9af3ec4cd2e70d833274f6597135ce56a217094bf4986a"
@@ -38830,13 +38811,13 @@
       "232c7a0e5360f97c02a71e212053f11c5b319110daaa5be1b59489b9655c1a03"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "cfa552db4f78d6803d9cd9099a6a261b9a1540845b6c3fedc3904b3969c4daf5"
+      "abc01335fa3383b6165e7b654b5dca58b104f64ce8c0c6c699a6832412fe6343"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "cfa552db4f78d6803d9cd9099a6a261b9a1540845b6c3fedc3904b3969c4daf5"
+      "abc01335fa3383b6165e7b654b5dca58b104f64ce8c0c6c699a6832412fe6343"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/python.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "8a70dbedfe68c257e15c8f0d4f9ef1dbc72f60699bbd9edf2584537f517c5fbc"
+      "be5a2f06947e1b613f30679e1717f53d3f7b96a709ebfc8e452da05cda9e9291"
     ],
     "[\"apps/chat/tools/chatjs/_shared/code-execution/types.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "bd0684e5749cea52804e98a58d015bf0189e4c1ae3d7dbb7d642c87637881df4"
@@ -40813,15 +40794,11 @@
       "791ad01a9845f8e527f093c478e0384d4b05502e79e4352a5cf68072f27dc15a"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "9b6ce5af6d465a5719a824e2f6d922c6db5502f36dbb86b2b891f7d3a3b4d72a"
+      "e2b26895bf4fa57113dc8967256f46ab05170a0f1c08c85eb55221fb0127407c"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "1b00f19470197e41e097e73180b919031c056203e4ea0f5e8cf53b2ae61710e8",
+      "b688359ba29ac3fc72060c94ccdf43ca450be6f202e1b6295bd07f93d1edffca",
       "1a6c602f56a81cd57da58f90caa8ef8640d4e8234b80d2e7686ec662dc01ee81"
-    ],
-    "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "68563a5bce75d781388dfe6fd85e6fe8408a711d2128142c1bb219c58d661b18",
-      "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "3358572c4c55e81d440bf7614afe639d351b38c913e1c84566771ea3e4aeb37d"
@@ -40837,6 +40814,9 @@
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
       "6fa4640638eaf4a74dac3dc3aeaece48c314c8455a9793bac56d1105d47c90db"
+    ],
+    "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "868d497c2c0a9e46efe8db6689395d2635e2bc7a726e26700bca2fc1f957b231"
@@ -40921,9 +40901,6 @@
     ],
     "[\"apps/chat/tools/platform/documents/types.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "b6d12f1bcf031a8caf6c50d433792a8078d80a650105fb07a9e54d96865a938f"
-    ],
-    "[\"apps/chat/tools/platform/research-updates-schema.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": [
-      "baf3bf44edb727ba996f08b59a85c8a71531df088ee7c1243e62f4a66bc23e89"
     ],
     "[\"apps/chat/tools/platform/research-updates-schema.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "5c7511ebcd189890240790f659aab82a866943281a0a96118d3df2a0ce986c6a",
@@ -48139,50 +48116,42 @@
       "5a184a197f2fd4131157e7de6555501505cf8d331fb91b15f15bc9a22726dbd2"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "dcf8d587c3e2e5d17b4abbd2b84095eaacf67d414662aced6b5b94c840a95386",
-      "fa7593eb85f6884bd3954b977beb2fee150d7d51be3f78fcc65933669ff787ad",
-      "73994e073b448188e77c2e26abfef98662ef0b86575be1c4a0dfbd4ec501bf46",
-      "f80a5eb934640a6b19950834755fdf392ce2089bb1e41fd91397f2a7a4acaea4",
-      "5fa34668b5c75c1e6fdaff7c2a1a9be9b7bc80bd0e1d2f51bdec7d40e765fbf3",
-      "d7006ec8c6fa5f1688a5ee0a78a43341b7e97118c3ba6cd709b03df954378a5d"
+      "7e7dc8e446af9c5410d719d86fa5d45775757cdfb3dd0816982f7942655a0cad",
+      "3822a1c2754d627892dbabe5642377cb1efe82a63cb0c732f35f3578adff6e4b",
+      "faeddbafb7457dbda60f640a5ae72448438798782af12a103e6dea327e05d8dd",
+      "5dfe17107d1a2fcf001b0f6fb44cb3b07f28b005385656f382c5387b0f217dbc",
+      "2dc596c2cbaf55a5796e389d45b1217e794bc023478a61786e5787b3c2a5ea72",
+      "00a050dca745283e0a6002d059ae7ad349e70386daa65c2b73cceb2b29ee8f60"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "7ef2a0eae1ec37b2c95549a4e3a9e628448c103f85575da92c5f3a6137eef1c4",
-      "775687ea70ab1fece050c66c4d82c4f9056207bab042888e5c56ec06cb10243f",
-      "67f27c66ae29bef5555639d2865622751be5dcb88636a6b2c10ffa10ef1113de",
-      "1394c4ce0834d3bc1153df38a927ba1469cff7ba7458ac670c2e640133e3f886",
-      "82bc5f6b05de7f5ebaa537bfb96e5850cb0bfdeb0f90dc22b91967e6ad2f039e"
+      "17cddd46edeb2300d7d0a9df3eeeb1f9f31c1abf22280a197f28aa203b43f6db",
+      "041499199a8590758e33ca2d754c82aaa0f38215071fca82be7ca9b7de32b04b",
+      "0772717a9027a9efa0e808c802db7949607bf149e0d77a1f1a1876baf448e5c7",
+      "e1005f963a93682176f72a25b9111bf316e1994c9e5282a7a99224844108c9d5",
+      "5e13c836b1959e60e9296e5829198897b3cbbffcef056f35ca738501b0aacd4d"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-params\",\"oxlint-disable\"]": [
-      "5a2c9a27198a2c94b8691278aadb525febb4dae8669451c6e72c233f1a4bb1c2",
-      "7b7ac37553016458e9821373de1be9def974bd131ca17a7142de078e24269e43",
-      "44b327422120a284f6bffd15973f0a8154646b48d062f573cd4b1e95753ebbc0"
-    ],
-    "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "be6cc7369e590225137d77fb2cf5476f02adcf2703983a94114bb8eb3c2cf09d",
-      "a817f6bb542c014671f047dd848445203a8fe07f48467203c4ede375d8ff4e30",
-      "092c2a4bcc9fd5e08de355805839e6364976e0fb1525435ad291f35c3aeeb7f1",
-      "71a2a2474d27f62c6bdf7e04ca79b6ecc6551300177a729cf75290a29729c35a",
-      "27a5f13e13a02c445eb133faddacf428e0610392c4ef67e4197bf60f4b7a0997",
-      "143ce120040f9eeffdf7fd38db33038855048cbfec95685f3ad752889f1c9f3e"
+      "646d604955137bf9dbc44908cef67d9f393710b68aa6ad64cf7c25bf93c7bc32",
+      "d0b67c97fd94837bd3cad9bf5cc1a6389eaa9da7fdeb32db12fb26cdc5ac4803",
+      "717eb363fabd0411f72c48e7454af7078e3f36a0b75b77878e2e6f9a75dc8dab"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "ae4001f2c85950cc4ea238c1a42c5cc4a717407060b41ff30bea712490c547a9",
       "7b74b7bf7c192ba13ff8eaaaec8ee3d45308ca9a2aaece8485d8880ab1c46438"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "858be2fb211116c6e9a453287d5535d296380e5eaf2347d7df7789cc443828fd",
-      "c347a3ca5c23d59c0b0aaccc7893c89979fcbafa51bfd95f02ecf653bf9663a3",
-      "89efd88cb101c32e1e3e34a5f6dc256bbfad0fcdd880631e4670fd85218ee76d"
+      "7c79bba054fe09cfc3b5be554fa45e551a9a5d64ad873b7510048e5bd9513f56",
+      "be3a0cfc48f6281611c54be9bcf358fea2db4b7278b0d37b4b2a1dc7c6d99c16",
+      "584f7d63498b660c86a7ac23784a0a2e035dcd6a63a12dc14b1ba7be744d54c6"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "9e5d2a03b5d663c90dc0dc59813ed5493b2fc685fad6f0c46ec57d4c3e22ba04",
-      "88d67d921d60b20b1e3a458f5affdc973247c0334f0d8bde8963855bce73a913",
-      "d56ca3351d5b7f576fbe4085077b38809bc10732c9701c0d92641ba1ac827f07",
-      "04d30d972182a6d3139dab1402df4265d4a45352df142b8c70134a9279c214f9"
+      "435f02be6e8d1591ffaba5cffd6197845e25ee0a9a7a89e2b205c9517a3d556a",
+      "977614b2cc0c38b00a4843ba984acb1088af80908c1e2e21570cd0e030108208",
+      "7984093b7541fab8616e4ec3befef8272798703ceb4f750fb493fe74493418b5",
+      "28f13842192ae213e6141fd3fb836a1756ff0e2d5da4a220b82dc0d0bbbb4be8"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "e58e80c609be0f82604feb5d616016f1bcc3256e4e6e0189e1a069bfc38b1cf8"
+      "7628da46b048ce941a9b292046fcc60ef64036c28ffd10f1fe771be208f78a42"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": [
       "3fefa6a5171ed2143c9af3ec4cd2e70d833274f6597135ce56a217094bf4986a"
@@ -48194,13 +48163,13 @@
       "232c7a0e5360f97c02a71e212053f11c5b319110daaa5be1b59489b9655c1a03"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "cfa552db4f78d6803d9cd9099a6a261b9a1540845b6c3fedc3904b3969c4daf5"
+      "abc01335fa3383b6165e7b654b5dca58b104f64ce8c0c6c699a6832412fe6343"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "cfa552db4f78d6803d9cd9099a6a261b9a1540845b6c3fedc3904b3969c4daf5"
+      "abc01335fa3383b6165e7b654b5dca58b104f64ce8c0c6c699a6832412fe6343"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/python.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "8a70dbedfe68c257e15c8f0d4f9ef1dbc72f60699bbd9edf2584537f517c5fbc"
+      "be5a2f06947e1b613f30679e1717f53d3f7b96a709ebfc8e452da05cda9e9291"
     ],
     "[\"packages/registry/src/tools/_shared/code-execution/types.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "bd0684e5749cea52804e98a58d015bf0189e4c1ae3d7dbb7d642c87637881df4"
@@ -50069,15 +50038,11 @@
       "791ad01a9845f8e527f093c478e0384d4b05502e79e4352a5cf68072f27dc15a"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "9b6ce5af6d465a5719a824e2f6d922c6db5502f36dbb86b2b891f7d3a3b4d72a"
+      "e2b26895bf4fa57113dc8967256f46ab05170a0f1c08c85eb55221fb0127407c"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "1b00f19470197e41e097e73180b919031c056203e4ea0f5e8cf53b2ae61710e8",
+      "b688359ba29ac3fc72060c94ccdf43ca450be6f202e1b6295bd07f93d1edffca",
       "1a6c602f56a81cd57da58f90caa8ef8640d4e8234b80d2e7686ec662dc01ee81"
-    ],
-    "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "68563a5bce75d781388dfe6fd85e6fe8408a711d2128142c1bb219c58d661b18",
-      "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "3358572c4c55e81d440bf7614afe639d351b38c913e1c84566771ea3e4aeb37d"
@@ -50093,6 +50058,9 @@
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
       "6fa4640638eaf4a74dac3dc3aeaece48c314c8455a9793bac56d1105d47c90db"
+    ],
+    "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "868d497c2c0a9e46efe8db6689395d2635e2bc7a726e26700bca2fc1f957b231"

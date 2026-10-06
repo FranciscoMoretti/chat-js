@@ -9,25 +9,19 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
   status: z.enum(["running", "completed"]),
 });
 
-/* oxlint-disable unicorn/max-nested-calls --
- * unicorn/max-nested-calls (#568): WebSearchSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+const SearchResultItemSchema = z.object({
+  content: z.string(),
+  source: z.enum(["web", "academic", "x"]),
+  title: z.string(),
+  // Optional `tweetId` field, currently disabled.
+  url: z.string(),
+});
+
 const WebSearchSchema = TaskUpdateSchema.extend({
   queries: z.array(z.string()),
-  results: z
-    .array(
-      z.object({
-        content: z.string(),
-        source: z.enum(["web", "academic", "x"]),
-        title: z.string(),
-        // Optional `tweetId` field, currently disabled.
-        url: z.string(),
-      })
-    )
-    .optional(),
+  results: z.array(SearchResultItemSchema).optional(),
   type: z.literal("web"),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
 type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 

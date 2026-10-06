@@ -355521,6 +355521,268 @@
         "The four wrappers retain their existing async-await scopes because the promise-chain alternative conflicts with the effective production rules.",
         "This evidence extends the pinned historical inventory; it does not change the inventory snapshot commit or claim all inherited memberships were audited."
       ]
+    },
+    {
+      "review": "image-video-async-exception-source-audit",
+      "snapshotCommit": "eb02c1816",
+      "sourceFiles": 7,
+      "canonicalMemberships": 20,
+      "sourceHashesVerifiedAgainstCurrentTree": true,
+      "effectiveRules": {
+        "source": "bunx oxlint --print-config for image-generation.ts and generate-video/tool.ts",
+        "deny": [
+          "oxc/no-async-await",
+          "promise/prefer-await-to-then",
+          "typescript/promise-function-async"
+        ],
+        "finding": "All three are denied by merged production config; test overrides do not apply to these source files."
+      },
+      "scopeDispositions": [
+        {
+          "path": "packages/registry/src/tools/generate-image/image-errors.ts",
+          "sourceSha256": "25f153c6ae938513cfacda04ba39bc6cc95d80cb42fd25a8f90227f35e704e7f",
+          "line": 25,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "cf54887b21e9870616e55d403bc6b7feaf5e7a010e65efcb6a4b50a1826c5dd9",
+          "function": "resolveError",
+          "status": "justified",
+          "evidence": "Detects thenables, awaits Promise.resolve inside try/catch, and converts rejection to the resolved error value; rejection handling depends on await in try. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-errors.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 54,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "9474082eef6435fa34f646b3baf4e63d0f0b290ca651a3cd663b8dd4fc2d09fe",
+          "function": "traditionalPrompt",
+          "status": "justified",
+          "evidence": "Returns prompt unchanged outside edit mode; edit mode awaits image collection before returning the prompt/images result. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 75,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "88ad3d56210a3d0e20130edcb29ee2dd5b32c82c34b9782f82f244308a54a5ef",
+          "function": "storeImage",
+          "status": "justified",
+          "evidence": "Awaits storage before logging success and returning stored identifiers; upload rejection skips success logging and propagates. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 111,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "bd1406914365c5f19770cd210fb8f3cb9aae327a5cd16ead6f5dd930e96417f8",
+          "function": "runGenerateImageTraditional",
+          "status": "justified",
+          "evidence": "Sequences prompt preparation, provider generation, billing, then storage; storage can fail after provider usage was charged. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 158,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "2293d4be069d6231aca6f6f956b78b845daeb69d31b682a46f952d3642f67af2",
+          "function": "multimodalContent",
+          "status": "justified",
+          "evidence": "Awaits image collection only for edit mode before mapping buffers and building ordered model content. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 184,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "06c33674a6d195ec8c5eecfbccee657a9890e77c986668cbb573a8af7c3b5131",
+          "function": "storeMultimodalImage",
+          "status": "justified",
+          "evidence": "Builds the uploaded image descriptor synchronously, then returns the storage promise through an async function; caller awaits it inside provider error handling. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-generation.ts",
+          "sourceSha256": "0dbb92029f94ac8fdeb6ad7111132bb2dd84fe2a5b884d5f0d710dea05c461de",
+          "line": 233,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "3e0c51b09455f801fd640a089a0568bf154c605383e1a37f4077eac15d489ad4",
+          "function": "runGenerateImageMultimodal",
+          "status": "justified",
+          "evidence": "Sequences multimodal content, provider generation, cost recording, image selection, and storage; missing image throws before storage. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-generation.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-input.ts",
+          "sourceSha256": "fe64a2dfd2ba6989a64ff7b9728da1d303013f8cb55e2b8ce134a9ad2e3aa1ef",
+          "line": 12,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "a861de033efc3582c6de550d125ee789204236f0e0186752922b73d2042cd6c5",
+          "function": "fetchImageBuffer",
+          "status": "justified",
+          "evidence": "Returns inline data as an async result; otherwise validates URL/key, awaits download, then awaits body bytes. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-input.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-input.ts",
+          "sourceSha256": "fe64a2dfd2ba6989a64ff7b9728da1d303013f8cb55e2b8ce134a9ad2e3aa1ef",
+          "line": 41,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "f5238509bdbe263b554242f0c0964c9a325aa76daa4adee5251d997993a869e5",
+          "function": "collectEditImages",
+          "status": "justified",
+          "evidence": "Constructs Promise.all in deterministic last-generated-then-attachment order; fetches run concurrently and results preserve input order. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-input.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-model.ts",
+          "sourceSha256": "f91697897c7e5ee8487a08c2a7e311c205bfb27e20c90e8cd8374b84e1dea972",
+          "line": 13,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "d1cfdb9d1a514a4110250fb62294e681c8967339f7640812bf6b8a8bc24d74a4",
+          "function": "findMultimodalModel",
+          "status": "justified",
+          "evidence": "Awaits dynamic model lookup and catches registry absence to select the dedicated-model fallback. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-model.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-model.ts",
+          "sourceSha256": "f91697897c7e5ee8487a08c2a7e311c205bfb27e20c90e8cd8374b84e1dea972",
+          "line": 38,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "1e3aeeea396c2553f89ee1b073af6d463f5fc71b9e770647e28cda0134f56f88",
+          "function": "resolveImageModel",
+          "status": "justified",
+          "evidence": "Awaits selected-model lookup, then only on miss reads and awaits configured fallback lookup. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-model.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-request.ts",
+          "sourceSha256": "4bdae6b761a9f70f6bdca809cb7321d2bb26768ab71a9ead6345fc75aacc3143",
+          "line": 57,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "848ac15b6858bf85d3fddb5aac3ec8ba5fad3fba73b4079169b7adcdc231cdee",
+          "function": "storeFile",
+          "status": "justified",
+          "evidence": "Awaits upload inside try/catch and converts rejected upload into usage.fail domain result. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-request.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-request.ts",
+          "sourceSha256": "4bdae6b761a9f70f6bdca809cb7321d2bb26768ab71a9ead6345fc75aacc3143",
+          "line": 98,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "ceb285bb7cc14fff37f10628ab6da68080ad1acaeda58d58cddaf2d4a9d58e9d",
+          "function": "executeImageRequest",
+          "status": "justified",
+          "evidence": "Awaits model resolution and generation branch; catch awaits error normalization, logs it, then rethrows normalized error. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-request.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/image-request.ts",
+          "sourceSha256": "4bdae6b761a9f70f6bdca809cb7321d2bb26768ab71a9ead6345fc75aacc3143",
+          "line": 140,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "cd5dbf61152a58e476e416f62cee62223ce61d5682b8012d57f6af8c428081db",
+          "function": "runImageRequest",
+          "status": "justified",
+          "evidence": "Awaits image request inside executeWithToolUsage's async callback so usage handling wraps the complete operation. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/image-request.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-image/tool.ts",
+          "sourceSha256": "1aef1dd0e99b8eaac7897ebf4ad181bb4c08cf1db16ff2fb7fd857b280cc1d0f",
+          "line": 17,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "179d05aab024ac31dcd34d1a521e9d4cf2da95b33baa3176b66988777ea6b661",
+          "function": "generateImageTool",
+          "status": "justified",
+          "evidence": "Tool execute callback awaits runImageRequest and exposes its resolved result/rejection through the tool wrapper. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-image/tool.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-video/tool.ts",
+          "sourceSha256": "3dc2d1de085c5645333261feabb2bd1ebd0d9b73f605202b90883c552a2d6bb1",
+          "line": 63,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "b509d4e724cd060bd3026c2233351c277f1d5029614196ed730cd7c083c4bea4",
+          "function": "resolveVideoModel",
+          "status": "justified",
+          "evidence": "Awaits model lookup inside try/catch; absent, unsupported, or failed lookup falls through to configured default validation. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-video/tool.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-video/tool.ts",
+          "sourceSha256": "3dc2d1de085c5645333261feabb2bd1ebd0d9b73f605202b90883c552a2d6bb1",
+          "line": 135,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "4fe6389e335169a5f8096bf3359354ffa91f79c13951539c6084681859d67793",
+          "function": "storeWithDomainFailure",
+          "status": "justified",
+          "evidence": "Awaits upload inside try/catch; rejected storage is converted to usage.fail rather than escaping. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-video/tool.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-video/tool.ts",
+          "sourceSha256": "3dc2d1de085c5645333261feabb2bd1ebd0d9b73f605202b90883c552a2d6bb1",
+          "line": 148,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "65c9e172cde0c103089058ced9fb134f9a0e8ff9d32ff5aac84da566941032cf",
+          "function": "storeGeneratedResult",
+          "status": "justified",
+          "evidence": "Awaits domain-aware storage before logging success and constructing public result; failed storage skips success log. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-video/tool.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-video/tool.ts",
+          "sourceSha256": "3dc2d1de085c5645333261feabb2bd1ebd0d9b73f605202b90883c552a2d6bb1",
+          "line": 170,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "11b4a13086ece420fed4ebfcff26bc89635b497699957087d5d27e7d02d137d5",
+          "function": "generateAndStoreVideo",
+          "status": "justified",
+          "evidence": "Awaits provider generation before validation, billing, byte conversion, and storage; ordering controls billing and failure behavior. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-video/tool.ts",
+          "mirrorByteIdentical": true
+        },
+        {
+          "path": "packages/registry/src/tools/generate-video/tool.ts",
+          "sourceSha256": "3dc2d1de085c5645333261feabb2bd1ebd0d9b73f605202b90883c552a2d6bb1",
+          "line": 265,
+          "rule": "oxc/no-async-await",
+          "fingerprint": "7025d055bc5a1336df6f78649c1f3d9e39fa8db01fe664d83be820ffa97f9ece",
+          "function": "generateVideoTool",
+          "status": "justified",
+          "evidence": "Awaits executeWithToolUsage and its nested async operation; outer catch maps failures through throwVideoFailure. Effective production print-config denies oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async; the promise-chain alternative conflicts with both active Promise rules.",
+          "generatedMirror": "apps/chat/tools/chatjs/generate-video/tool.ts",
+          "mirrorByteIdentical": true
+        }
+      ],
+      "limitations": [
+        "This record covers only the 20 listed async scopes, not other memberships in the seven files.",
+        "Generated mirror bytes were verified equal to canonical source for all seven pairs; memberships remain a separate generated-source inventory concern."
+      ]
     }
   ]
 }
