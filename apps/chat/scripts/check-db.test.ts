@@ -1,27 +1,27 @@
 /* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import { execFileSync } from "node:child_process";; import { mkdtempSync, rmSync } from "node:fs";; import { tmpdir } from "node:os";; import path from "node:path";; import { fileURLToPath } from "node:url";; its Node runtime boundary deliberately permits these built-ins.
+ * import/no-nodejs-modules (#529): This test uses Node child-process, filesystem, OS, path, and URL APIs to run check-db.ts from a fresh temporary working directory, inspect its exit status and stderr, and clean up the directory; these operations require the Node CLI test boundary.
  */
 import { execFileSync } from "node:child_process";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax; formatting the lint-sorted order restores this diagnostic. */
 import { mkdtempSync, rmSync } from "node:fs";
 /* oxlint-enable sort-imports */
 import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding name; formatting the lint-sorted order restores this diagnostic. */
 import path from "node:path";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding name; formatting the lint-sorted order restores this diagnostic. */
 import { fileURLToPath } from "node:url";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax; formatting the lint-sorted order restores this diagnostic. */
 import { expect, it } from "vitest";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-statements, no-magic-numbers, node/no-sync --
- * max-statements (#512): it("reports failed endpoint names without exposing connection credentials") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it("reports failed endpoint names without exposing connection credentials") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * node/no-sync (#538): it("reports failed endpoint names without exposing connection credentials") uses mkdtempSync(path.join(tmpdir(), "chatjs-check-db-")); execFileSync( process.execPath, [ fileURLToPath(import.meta.resolve("tsx/c; rmSync(cwd, { force: true, recursive: true }) within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
+ * max-statements (#512): This single scenario has 16 statements across fixture creation, child invocation, error narrowing, assertions, and cleanup; one-use helpers would add indirection without creating a reusable test contract.
+ * no-magic-numbers (#517): The test asserts child-process exit status 1, the exact failure status reported by the CLI; a named constant would not remove the magic-number diagnostic.
+ * node/no-sync (#538): The test synchronously creates/removes its temporary directory and waits for the CLI subprocess so the exit status and stderr are available before cleanup; an async rewrite needs awaited filesystem and subprocess error handling.
  */
 it("reports failed endpoint names without exposing connection credentials", () => {
   const cwd = mkdtempSync(path.join(tmpdir(), "chatjs-check-db-"));

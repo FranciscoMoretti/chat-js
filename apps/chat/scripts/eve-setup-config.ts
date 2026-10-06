@@ -1,10 +1,9 @@
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveSetup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
-/* oxlint-disable init-declarations, max-statements, typescript/prefer-readonly-parameter-types --
- * init-declarations (#507): resolveEveSetup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-statements (#512): resolveEveSetup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): resolveEveSetup accepts issue; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable init-declarations, max-statements --
+ * init-declarations (#507): URL parsing assigns target in the try block; the catch exits by throwing the normalized error, so later hostname classification only runs after definite assignment and needs no undefined sentinel.
+ * max-statements (#512): This 17-statement workflow preserves ordered world selection, URL validation, and normalized URL-error behavior; extracting URL validation remains pending separate error-boundary review.
  */
 export const resolveEveSetup = (
   world: string,
@@ -30,7 +29,7 @@ export const resolveEveSetup = (
   );
   if (!validated.success) {
     throw new Error(
-      `WORKFLOW_POSTGRES_URL must be a direct or session PostgreSQL URL. ${validated.error.issues.map((issue) => issue.message).join(" ")}`
+      `WORKFLOW_POSTGRES_URL must be a direct or session PostgreSQL URL. ${validated.error.issues.map((issue: { readonly message: string }) => issue.message).join(" ")}`
     );
   }
   let target: URL;
@@ -52,4 +51,4 @@ export const resolveEveSetup = (
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable init-declarations, max-statements */

@@ -1,11 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection" dependency within this package instead of introducing an alias or barrel API.
- */
 import { config } from "dotenv";
 import postgres from "postgres";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-relative-parent-imports -- Node/tsx loads this CommonJS compatibility entrypoint from the test harness and does not resolve the @ alias here; retain the package-relative module path used by the runtime test. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps external imports before the local module, while Oxlint sort-imports requires multiple named bindings before single-binding imports; formatting the lint-sorted order restores this diagnostic. */
 import { databaseConnection, databaseEnvOptions } from "../lib/db/connection";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
@@ -18,13 +16,12 @@ const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkDatabase's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env --
  * max-lines-per-function (#510): checkDatabase keeps runtime and migration connection checks with their deadline and cleanup; explicit Promise return annotations put this cohesive operation at 51 lines.
  * max-statements (#512): checkDatabase keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkDatabase emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): checkDatabase uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): checkDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-void-return (#611): checkDatabase's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 const checkDatabase = async (): Promise<void> => {
   const parsed = z
@@ -52,13 +49,15 @@ const checkDatabase = async (): Promise<void> => {
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,
     });
-    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The deadline asynchronously closes the SQL connection before signaling failure; preserving timeout cleanup requires this callback lifecycle.
-    const deadline = setTimeout(async () => {
+    const closeAfterDeadline = async (): Promise<void> => {
       try {
         await sql.end({ timeout: 0 });
       } catch {
         // The timeout closes the client before the query result is relevant.
       }
+    };
+    const deadline = setTimeout(() => {
+      void closeAfterDeadline();
     }, CHECK_DEADLINE_MS);
     try {
       await sql`select 1`;
@@ -85,14 +84,13 @@ const checkDatabase = async (): Promise<void> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env */
 
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
- * no-console (#514): void (async () => { try { await checkDatabase(); } catc emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await checkDatabase(); } catc's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-console --
+ * no-console (#514): The command reports invalid configuration and connection failures through console.error.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: The Node/tsx diagnostic runner loads this CommonJS-scoped entrypoint; keep its asynchronous startup inside an IIFE.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await checkDatabase();
   } catch {
@@ -103,4 +101,4 @@ void (async () => {
   }
 })();
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable no-console */

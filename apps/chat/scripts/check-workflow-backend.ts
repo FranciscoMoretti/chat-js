@@ -1,6 +1,6 @@
 import postgres from "postgres";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps the external postgres import before this local helper, while sort-imports requires alphabetic ordering by the different local binding names. */
 import { databaseConnection } from "@/lib/db/connection";
 /* oxlint-enable sort-imports */
 import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
@@ -8,7 +8,7 @@ import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ * node/no-process-env (#537): check captures DATABASE_MIGRATION_URL and DATABASE_URL from process.env at the process/configuration boundary before constructing the migration connection.
  */
 const check = async (): Promise<void> => {
   const world = resolveWorkflowWorld();
@@ -30,7 +30,7 @@ const check = async (): Promise<void> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 /* oxlint-disable no-console --
- * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * no-console (#514): the build-eve caller relies on this CLI's stderr error and nonzero exit status to stop subsequent builds when the compatibility check fails.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.
 void (async (): Promise<void> => {
