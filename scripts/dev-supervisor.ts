@@ -154,13 +154,14 @@ while (!stopping) {
       backoff = INITIAL_RESTART_BACKOFF_MS;
     } catch {
       failures += FAILED_STARTUP_INCREMENT;
+      const unreadyForMs = Date.now() - lastReadyAt;
       if (
-        shouldRestartAfterReadinessFailures(
-          failures,
-          Date.now() - lastReadyAt,
-          wasReady,
-          failedStartups
-        )
+        shouldRestartAfterReadinessFailures({
+          consecutiveFailures: failures,
+          failedStartups,
+          hasBeenReady: wasReady,
+          unreadyForMs,
+        })
       ) {
         console.error(
           "Readiness remained unavailable through the recovery grace period; restarting the local runtime"

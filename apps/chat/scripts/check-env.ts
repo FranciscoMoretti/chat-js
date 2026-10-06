@@ -49,6 +49,8 @@ import { installedToolNames } from "../tools/chatjs/installed-features";
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
 
+type RequirementInput = Parameters<typeof getMissingRequirement>["0"];
+
 interface ValidationError {
   feature: string;
   missing: string[];
@@ -72,9 +74,8 @@ const toolEnvironmentSchema = z.object({
 });
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): validateGatewayKey uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): gatewayEnvRequirements.map infers a mutable requirement parameter; readonly wrapping would require an API type change in the generated defaults module.
  * unicorn/no-null (#570): validateGatewayKey preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const validateGatewayKey = (
@@ -82,7 +83,9 @@ const validateGatewayKey = (
 ): ValidationError | null => {
   const gateway: string = config.ai.gateway;
   const missing = gatewayEnvRequirements
-    .map((requirement) => getMissingRequirement(requirement, env))
+    .map((requirement: RequirementInput) =>
+      getMissingRequirement(requirement, env)
+    )
     .filter((value) => value !== null);
   if (missing.length === 0) {
     return null;
@@ -92,11 +95,10 @@ const validateGatewayKey = (
     missing,
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): validateStorage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): storageEnvRequirements.map infers a mutable EnvRequirement parameter; readonly wrapping would require a source-type change in the storage options module.
  * unicorn/no-null (#570): validateStorage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const validateStorage = (
@@ -112,7 +114,9 @@ const validateStorage = (
     return null;
   }
   const missing = storageEnvRequirements
-    .map((requirement) => getMissingRequirement(requirement, env))
+    .map((requirement: RequirementInput) =>
+      getMissingRequirement(requirement, env)
+    )
     .filter((value) => value !== null);
 
   if (missing.length > 0) {
@@ -120,7 +124,7 @@ const validateStorage = (
   }
   return null;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-continue, typescript/strict-boolean-expressions --
  * max-statements (#512): validateAuthentication keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
