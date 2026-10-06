@@ -85,6 +85,8 @@ After `bun install --frozen-lockfile --ignore-scripts` in this worktree, shared 
 
 ## Remaining dependency and integration gates
 
+[Comparison with Lane D’s callback-restart probe and upstream binding recommendation](RESTART-COMPARISON.md) explains why B’s accelerated-lease executor-entry success does not supersede D’s unresolved settled-hook recovery failure.
+
 EVE 0.71.3 exposes caller propagation, **not** the proposed exact-consent receipt. Caller identity is also present for unapproved owner calls, as the runtime counterexample demonstrates. A supported receipt contract and release remain the upstream blocker.
 
 Lane D can consume these fixtures without changing its harness checkout. Before production removal, upstream needs the receipt API and invariant tests, then ChatJS needs the supported release, adapter integration, full checks and compatibility with its patched Postgres world and existing runs. Code revision migration and all other fork consumers remain separate gates. The experiment does not authorize old closures across arbitrary deployed source changes.
