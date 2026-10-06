@@ -15,10 +15,9 @@ import { assertEveConfigured } from "./server";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopySource's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
- * no-magic-numbers (#517): readPublicEveCopySource uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): readPublicEveCopySource intentionally keeps the existing falsy-value behavior of row?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+const PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS = 15_000;
+const PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH = 100;
+
 export const readPublicEveCopySource = async (
   id: string
 ): Promise<{
@@ -30,18 +29,25 @@ export const readPublicEveCopySource = async (
   title: string;
 }> => {
   const row = await getPublicEveConversation(id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!row?.sessionId) {
+  if (
+    typeof row !== "object" ||
+    typeof row.sessionId !== "string" ||
+    row.sessionId === ""
+  ) {
     throw new Error("Shared conversation is unavailable.");
   }
   assertEveConfigured();
   const client = new Client(getEveConnectionOptions(row.ownerId));
   const snapshot = await client.sessions
     .attach(row.sessionId)
-    .snapshot({ signal: AbortSignal.timeout(15_000) });
+    .snapshot({ signal: AbortSignal.timeout(PUBLIC_COPY_SNAPSHOT_TIMEOUT_MS) });
   const current = await getPublicEveConversation(id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (current?.sessionId !== row.sessionId || current.ownerId !== row.ownerId) {
+  if (
+    typeof current !== "object" ||
+    typeof current.sessionId !== "string" ||
+    current.sessionId !== row.sessionId ||
+    current.ownerId !== row.ownerId
+  ) {
     throw new Error("Shared conversation is unavailable.");
   }
   return {
@@ -50,9 +56,11 @@ export const readPublicEveCopySource = async (
     ownerId: row.ownerId,
     projection: prepareEveCopyTranscript(snapshot.events),
     sessionId: row.sessionId,
-    title: row.title ?? row.firstMessage.slice(0, 100),
+    title:
+      row.title ??
+      // oxlint-disable-next-line no-magic-numbers -- Zero selects the first character for String#slice prefix extraction; keep the preview bounded from its beginning.
+      row.firstMessage.slice(0, PUBLIC_COPY_TITLE_PREVIEW_MAX_LENGTH),
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */

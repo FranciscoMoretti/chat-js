@@ -4649,9 +4649,7 @@
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/purge-code-sandboxes.test.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/purge-code-sandboxes.test.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/purge-code-sandboxes.test.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 7,
@@ -29237,23 +29235,16 @@
       "333c9f9beb9154fa87e9d0a6fbaafa1a0fa192a83f88a1500d61f9802c27cf6f"
     ],
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "9c7c0e68db5ef482cf949ff098bd36ad330e7da0bf3733030ec6edb54bc431ae"
+      "5de31490461cc3aae9aa13c3c14e8222314e57721b58769f74ae6356a4532374"
     ],
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "9c7c0e68db5ef482cf949ff098bd36ad330e7da0bf3733030ec6edb54bc431ae"
+      "5de31490461cc3aae9aa13c3c14e8222314e57721b58769f74ae6356a4532374"
     ],
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "5e37eac8f3b734aa1d8b793674d2843e59c057eb8f98834d8cb73ecb2211b5da"
+      "579a266467d949b99d80f4d88c78ded44e961e6855b726d9ae4f20f4a78c7ada"
     ],
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "aa45680b292296b659edc4ec3360bfaf9c24d594569d9dfeaa94a7e0f1549f0c"
-    ],
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "aa45680b292296b659edc4ec3360bfaf9c24d594569d9dfeaa94a7e0f1549f0c"
-    ],
-    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "1426c84c8ee989dade7d8404b99a3b626c987d0f0b0b080a97448f7a28ec2fe0",
-      "69f44ba68b69c1bd76e73fc2f9640c0e2c4cdf0cef796a18742d2163da96ef3d"
+    "[\"apps/chat/lib/eve/public-copy-source.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "252b9372cafb46e9b5e79a4129cf4ff27e8f273f7200bbc71f236b1e6ce614f1"
     ],
     "[\"apps/chat/lib/eve/purge-code-sandboxes.test.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
       "98277d429c0720d5901be1d6a904c3ac38d943f2caff9684d84f30aeec6698fc"
