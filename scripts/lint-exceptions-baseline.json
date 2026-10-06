@@ -5508,7 +5508,6 @@
     "[\"apps/chat/scripts/check-env.ts\",\"sort-imports\",\"oxlint-disable\"]": 7,
     "[\"apps/chat/scripts/check-env.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 5,
     "[\"apps/chat/scripts/check-env.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 4,
-    "[\"apps/chat/scripts/check-env.ts\",\"max-statements\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 2,
@@ -5516,6 +5515,7 @@
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/restrict-template-expressions\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/scripts/check-env.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"no-console\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/scripts/check-env.ts\",\"node/no-top-level-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
@@ -32417,7 +32417,7 @@
       "d0dd6dcaf3fc136986832f7212fae880df82d2b44a70ef8df86e5e91d1d2828c"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "72c3258b91023ef291c6c211b48e089426dc8b2d2f2bac2ffd34597577739f06"
+      "66e8140d1445164e5fe8121da6bbeb711ec836f175b59e1f6f682be6d4c1efd4"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "2a4f5bf072d369cbfae7ebac51d8decc042642980c0f959199de5952737f6524"
@@ -32444,15 +32444,11 @@
       "208a43d4b235aba35ca432401fe79d8f01776d07e4b011e0bb5e773971e8040c",
       "39fe380b92a3f10baaa82a6e2bffab1e4d5abeace7f6de180dbec1396d9e2e69"
     ],
-    "[\"apps/chat/scripts/check-env.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "f773d409c058e5d9deef228831464397d62467cac71fc0648cb0397bd25035a4",
-      "6ca3ea874a07505de2925ea1eabc0718acca919dd8c7b21b9a79c49ea9dc67be"
-    ],
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
       "dd1ee195f4964489c73a09797a76acc3c3d58faad6514feccf0b57c0008f96d0"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "4bb7a1e7f7b8c27295d161ff68fc9f75d7e6143db2f4349d3cae1a53414958e3",
+      "acde0ecb852e2b255d44597237de2450adf87a343fbb53235b8753ac322eb128",
       "ff3f631dc6b83238d3e275e81f10d6450ca44025a96fb8e6b81ce306864152c2"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
@@ -32474,6 +32470,9 @@
       "5ceb77cfd44b8c9df7978549b302273853dcc536a6af02b7e053ae4f2ff89278"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
+      "6ca3ea874a07505de2925ea1eabc0718acca919dd8c7b21b9a79c49ea9dc67be"
+    ],
+    "[\"apps/chat/scripts/check-env.ts\",\"max-statements\",\"oxlint-disable\"]": [
       "6ca3ea874a07505de2925ea1eabc0718acca919dd8c7b21b9a79c49ea9dc67be"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"no-console\",\"oxlint-disable\"]": [

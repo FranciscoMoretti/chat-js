@@ -122,28 +122,24 @@ const validateStorage = (
 };
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-statements -- validateAuthentication retains its ordered provider diagnostics followed by the aggregate enabled-provider check; this metric scope remains pending a cohesive boundary review. */
 const validateAuthentication = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys widens the keys of the owned authentication requirement record to string; this assertion retains its AuthenticationConfig provider keys without duplicating the provider list.
   const authKeys = Object.keys(
     authEnvRequirements
   ) as (keyof typeof authEnvRequirements)[];
-  for (const provider of authKeys) {
-    if (config.authentication[provider]) {
-      const requirement = authEnvRequirements[provider];
-      const missing = getMissingRequirement(requirement, env);
-      if (typeof missing === "string" && missing !== "") {
-        errors.push({
-          feature: `authentication.${provider}`,
-          missing: [missing],
-        });
-      }
+  const errors = authKeys.flatMap((provider): ValidationError[] => {
+    if (!config.authentication[provider]) {
+      return [];
     }
-  }
+    const requirement = authEnvRequirements[provider];
+    const missing = getMissingRequirement(requirement, env);
+    if (typeof missing === "string" && missing !== "") {
+      return [{ feature: `authentication.${provider}`, missing: [missing] }];
+    }
+    return [];
+  });
 
   const hasAuth = authKeys.some((provider) => {
     if (!config.authentication[provider]) {
@@ -162,7 +158,6 @@ const validateAuthentication = (
   return errors;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
 /* oxlint-disable typescript/strict-boolean-expressions -- The missing requirement result is string or null; the current truthy branch excludes both null and empty descriptions. */
 const validateInstalledItems = async (
