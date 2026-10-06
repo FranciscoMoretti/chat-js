@@ -1,0 +1,302 @@
+diff --git a/packages/eve/src/channel/adapter.ts b/packages/eve/src/channel/adapter.ts
+index 34266b9..6e98611 100644
+--- a/packages/eve/src/channel/adapter.ts
++++ b/packages/eve/src/channel/adapter.ts
+@@ -202,6 +202,7 @@ export function defaultDeliverResult(payload: DeliverPayload): StepInput | undef
+         {
+           inputResponses: payload.inputResponses,
+           message: payload.message,
++          correlationIds: payload.correlationId === undefined ? undefined : [payload.correlationId],
+           context: payload.context,
+           outputSchema: payload.outputSchema,
+         },
+diff --git a/packages/eve/src/channel/session.ts b/packages/eve/src/channel/session.ts
+index 7817fe1..79de476 100644
+--- a/packages/eve/src/channel/session.ts
++++ b/packages/eve/src/channel/session.ts
+@@ -36,6 +36,8 @@ import type { JsonObject } from "#shared/json.js";
+ import { toChannelLocalContinuationToken } from "#shared/continuation-token.js";
+ import { attachClientContext, readClientContext } from "#internal/client-context.js";
+ 
++import { parseCorrelationId } from "#internal/message-correlation.js";
++
+ /** Immutable-ID handle for one exact durable session. */
+ export interface Session {
+   readonly id: string;
+@@ -71,6 +73,7 @@ interface SessionDeliveryOptions {
+ 
+ /** Options for sending a message through a fixed session handle. */
+ export type SessionSendOptions = SessionDeliveryOptions & {
++  readonly correlationId?: string;
+   /** Initial workflow title for a prewarmed session. */
+   readonly title?: string;
+   readonly turnPolicy?: TurnPolicy;
+@@ -107,10 +110,13 @@ export function createSession(
+       const delivery = createDelivery(metadata);
+       const caller = sessionCallbackToTurnCaller(options.callback);
+       const payload = attachClientContext<{
++        correlationId?: string;
+         context?: readonly string[];
+         message: string | UserContent | undefined;
+         outputSchema?: JsonObject;
+       }>({ message: serializeUrlFilePartsInMessage(message) }, readClientContext(options));
++      const correlationId = parseCorrelationId(options.correlationId);
++      if (correlationId !== undefined) payload.correlationId = correlationId;
+       if (options.context !== undefined) payload.context = options.context;
+       if (options.outputSchema !== undefined) payload.outputSchema = options.outputSchema;
+       const commandWithoutCaller = {
+diff --git a/packages/eve/src/channel/types.ts b/packages/eve/src/channel/types.ts
+index 8159f1c..cc5a3ac 100644
+--- a/packages/eve/src/channel/types.ts
++++ b/packages/eve/src/channel/types.ts
+@@ -170,6 +170,7 @@ export interface TurnCaller {
+  * attachments and other multimodal input straight to the harness.
+  */
+ export interface DeliverPayload {
++  readonly correlationId?: string;
+   readonly inputResponses?: readonly InputResponse[];
+   readonly message?: string | UserContent;
+   readonly context?: readonly string[];
+@@ -495,6 +496,7 @@ export interface RunInput {
+   readonly initiatorAuth?: SessionAuthContext | null;
+   readonly input: {
+     /** Omitted only when creating a conversation session before its first turn. */
++    readonly correlationId?: string;
+     readonly message?: string | UserContent;
+     readonly context?: readonly string[];
+     readonly outputSchema?: JsonObject;
+diff --git a/packages/eve/src/client/session.ts b/packages/eve/src/client/session.ts
+index 7592873..b607ac4 100644
+--- a/packages/eve/src/client/session.ts
++++ b/packages/eve/src/client/session.ts
+@@ -455,6 +455,7 @@ function createMessageBody(
+ ): Record<string, unknown> | null {
+   const body: Record<string, unknown> = {};
+   if (input.message !== undefined) body.message = input.message;
++  if (input.correlationId !== undefined) body.correlationId = input.correlationId;
+   if (input.inputResponses !== undefined && input.inputResponses.length > 0) {
+     body.inputResponses = input.inputResponses;
+   }
+diff --git a/packages/eve/src/client/types.ts b/packages/eve/src/client/types.ts
+index 57adc98..3792e51 100644
+--- a/packages/eve/src/client/types.ts
++++ b/packages/eve/src/client/types.ts
+@@ -118,6 +118,7 @@ export interface CreateSessionOptions {
+ 
+ /** Options shared by message sends and HITL responses on a client session. */
+ export interface SendTurnOptions<TOutput = unknown> {
++  readonly correlationId?: string;
+   /** Policy for a message sent while the fixed session has an active turn. */
+   readonly turnPolicy?: TurnPolicy;
+ 
+diff --git a/packages/eve/src/eve-channel/create-request.ts b/packages/eve/src/eve-channel/create-request.ts
+index 9f8c238..5c00d1d 100644
+--- a/packages/eve/src/eve-channel/create-request.ts
++++ b/packages/eve/src/eve-channel/create-request.ts
+@@ -7,6 +7,7 @@ import type { JsonObject } from "#shared/json.js";
+ export interface ParsedCreateBody {
+   callback?: SessionCallback;
+   capabilities?: SessionCapabilities;
++  correlationId?: string;
+   message?: string | UserContent;
+   context?: readonly string[];
+   operationId?: string;
+diff --git a/packages/eve/src/eve-channel/index.ts b/packages/eve/src/eve-channel/index.ts
+index b632e07..e20403d 100644
+--- a/packages/eve/src/eve-channel/index.ts
++++ b/packages/eve/src/eve-channel/index.ts
+@@ -334,6 +334,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+             input: attachClientContext(
+               {
+                 message: body.message,
++                correlationId: body.correlationId,
+                 context: messageResult.context,
+                 outputSchema: body.outputSchema,
+               },
+@@ -409,6 +410,7 @@ export function eveChannel(input: EveChannelInput): EveChannel {
+           const session = attachSession(sessionId);
+           const options = attachClientContext(
+             {
++              correlationId: body.correlationId,
+               auth: dispatchAuth,
+               callback: body.callback,
+               context,
+diff --git a/packages/eve/src/eve-channel/request.ts b/packages/eve/src/eve-channel/request.ts
+index a2164d0..2d65ee3 100644
+--- a/packages/eve/src/eve-channel/request.ts
++++ b/packages/eve/src/eve-channel/request.ts
+@@ -64,6 +64,18 @@ export async function deriveOperationContinuationToken(input: {
+   return `eve:op:${hex.slice(0, 32)}`;
+ }
+ 
++import { parseCorrelationId } from "#internal/message-correlation.js";
++
++function correlationField(payload: Record<string, unknown>, message: unknown): string | undefined | Response {
++  try {
++    const id = parseCorrelationId(payload.correlationId);
++    if (id !== undefined && message === undefined) throw new TypeError("correlationId requires a message");
++    return id;
++  } catch (error) {
++    return Response.json({ error: String(error), ok: false }, { status: 400 });
++  }
++}
++
+ export function parseCreateBody(input: Record<string, unknown>): ParsedCreateBody | Response {
+   const legacy = splitLegacyTaskFields(input);
+   const { payload } = legacy;
+@@ -75,6 +87,8 @@ export function parseCreateBody(input: Record<string, unknown>): ParsedCreateBod
+   }
+   const message = parseMessageField(payload.message);
+   if (message instanceof Response) return message;
++  const correlationId = correlationField(payload, message);
++  if (correlationId instanceof Response) return correlationId;
+ 
+   const context = parseClientContextField(payload.clientContext);
+   if (context instanceof Response) return context;
+@@ -114,6 +128,7 @@ export function parseCreateBody(input: Record<string, unknown>): ParsedCreateBod
+     context,
+     outputSchema,
+   };
++  if (correlationId !== undefined) result.correlationId = correlationId;
+   if (message !== undefined) result.message = message;
+   if (typeof rawOperationId === "string") result.operationId = rawOperationId;
+   if (protocolVersion !== undefined) result.protocolVersion = protocolVersion;
+@@ -124,6 +139,7 @@ export function parseCreateBody(input: Record<string, unknown>): ParsedCreateBod
+ }
+ 
+ interface ParsedSessionMessageBody {
++  correlationId?: string;
+   callback?: SessionCallback;
+   message?: string | UserContent;
+   inputResponses?: readonly ValidatedInputResponse[];
+@@ -141,6 +157,8 @@ export function parseSessionMessageBody(
+ 
+   const message = parseMessageField(payload.message);
+   if (message instanceof Response) return message;
++  const correlationId = correlationField(payload, message);
++  if (correlationId instanceof Response) return correlationId;
+   const callback = parseCallbackField(payload.callback);
+   if (callback instanceof Response) return callback;
+   const inputResponses = parseInputResponses(payload.inputResponses);
+@@ -170,6 +188,7 @@ export function parseSessionMessageBody(
+   }
+ 
+   return {
++    correlationId,
+     callback,
+     message,
+     inputResponses,
+diff --git a/packages/eve/src/execution/session/entry.ts b/packages/eve/src/execution/session/entry.ts
+index 17667d3..41195ed 100644
+--- a/packages/eve/src/execution/session/entry.ts
++++ b/packages/eve/src/execution/session/entry.ts
+@@ -247,6 +247,7 @@ function createInitialDelivery(
+       attachClientContext(
+         {
+           message: input.input.message,
++          correlationId: input.input.correlationId,
+           context: input.input.context,
+           outputSchema: input.input.outputSchema,
+           state: input.input.state,
+diff --git a/packages/eve/src/execution/session/turn-step.ts b/packages/eve/src/execution/session/turn-step.ts
+index e229512..bf7074c 100644
+--- a/packages/eve/src/execution/session/turn-step.ts
++++ b/packages/eve/src/execution/session/turn-step.ts
+@@ -297,7 +297,7 @@ async function runSessionStep(input: TurnStepInput): Promise<DurableStepResult>
+             : defaultDeliverResult(payload);
+ 
+           if (result !== undefined && result !== null) {
+-            results.push(result);
++            results.push({ ...result, correlationIds: payload.message !== undefined && result.message !== undefined && payload.correlationId !== undefined ? [payload.correlationId] : undefined });
+           }
+         }
+       } catch (error) {
+diff --git a/packages/eve/src/harness/emission.ts b/packages/eve/src/harness/emission.ts
+index c63bfff..88dbc26 100644
+--- a/packages/eve/src/harness/emission.ts
++++ b/packages/eve/src/harness/emission.ts
+@@ -102,6 +102,7 @@ export async function emitTurnPreamble(
+     await emitFn(
+       createMessageReceivedEvent({
+         message: input.message,
++        correlationIds: input.correlationIds,
+         sequence: state.sequence,
+         turnId,
+       }),
+diff --git a/packages/eve/src/harness/messages.ts b/packages/eve/src/harness/messages.ts
+index 5962cfd..60efa15 100644
+--- a/packages/eve/src/harness/messages.ts
++++ b/packages/eve/src/harness/messages.ts
+@@ -167,6 +167,7 @@ export function coalesceTurnInputs(a: StepInput, b: StepInput): StepInput {
+ 
+   const result: {
+     attributedInputResponses?: StepInput["attributedInputResponses"];
++    correlationIds?: readonly string[];
+     inputResponses?: readonly InputResponse[];
+     message?: string | UserContent;
+     context?: readonly string[];
+@@ -183,6 +184,11 @@ export function coalesceTurnInputs(a: StepInput, b: StepInput): StepInput {
+ 
+   if (message !== undefined) {
+     result.message = message;
++    const ids = [
++      ...(normalizeUserContent(a.message) === undefined ? [] : a.correlationIds ?? []),
++      ...(normalizeUserContent(b.message) === undefined ? [] : b.correlationIds ?? []),
++    ];
++    if (ids.length > 0) result.correlationIds = ids;
+   }
+ 
+   if (context !== undefined) {
+diff --git a/packages/eve/src/harness/types.ts b/packages/eve/src/harness/types.ts
+index 863d16a..f002693 100644
+--- a/packages/eve/src/harness/types.ts
++++ b/packages/eve/src/harness/types.ts
+@@ -152,6 +152,7 @@ export interface AttributedInputResponse {
+ }
+ 
+ export interface StepInput {
++  readonly correlationIds?: readonly string[];
+   /** Internal responder-bound input produced at the delivery boundary. */
+   readonly attributedInputResponses?: readonly AttributedInputResponse[];
+   readonly inputResponses?: readonly InputResponse[];
+diff --git a/packages/eve/src/internal/message-correlation.ts b/packages/eve/src/internal/message-correlation.ts
+new file mode 100644
+index 0000000..c69c0ce
+--- /dev/null
++++ b/packages/eve/src/internal/message-correlation.ts
+@@ -0,0 +1,8 @@
++/** Experimental caller correlation, never authority or model context. */
++export function parseCorrelationId(value: unknown): string | undefined {
++  if (value === undefined) return undefined;
++  if (typeof value !== "string" || !/^[A-Za-z0-9_-]{1,128}$/.test(value)) {
++    throw new TypeError("correlationId must contain 1–128 ASCII letters, digits, underscores or hyphens");
++  }
++  return value;
++}
+diff --git a/packages/eve/src/protocol/message.ts b/packages/eve/src/protocol/message.ts
+index 71108e3..b20cd78 100644
+--- a/packages/eve/src/protocol/message.ts
++++ b/packages/eve/src/protocol/message.ts
+@@ -203,6 +203,7 @@ export interface TurnStartedStreamEvent {
+  */
+ export interface MessageReceivedStreamEvent {
+   data: {
++    correlationIds?: readonly string[];
+     message: string;
+     parts?: readonly MessageReceivedPart[];
+     sequence: number;
+@@ -988,12 +989,14 @@ export function createTurnStartedEvent(input: {
+  * consumers while preserving the authored turn content upstream.
+  */
+ export function createMessageReceivedEvent(input: {
++  readonly correlationIds?: readonly string[];
+   readonly message: string | UserContent;
+   readonly sequence: number;
+   readonly turnId: string;
+ }): MessageReceivedStreamEvent {
+   return {
+     data: {
++      ...(input.correlationIds === undefined ? {} : { correlationIds: input.correlationIds }),
+       message: summarizeUserContent(input.message),
+       parts: projectUserContentParts(input.message),
+       sequence: input.sequence,
