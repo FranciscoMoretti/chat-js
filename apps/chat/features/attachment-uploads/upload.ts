@@ -7,9 +7,8 @@ import { attachmentDigest, draftAttachment } from "@/lib/eve/draft";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const uploadAttachment = async (
-  file: File
+  file: Readonly<File>
 ): Promise<z.infer<typeof draftAttachment>> => {
   const body = new FormData();
   body.append("file", file);
@@ -43,5 +42,4 @@ export const uploadAttachment = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */

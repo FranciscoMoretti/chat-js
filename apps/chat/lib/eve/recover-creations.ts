@@ -18,9 +18,8 @@ import { executeEveConversationCreation } from "./execute-conversation-creation"
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForConcurrentBinding's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): waitForConcurrentBinding uses 8, 1, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): waitForConcurrentBinding intentionally keeps the existing falsy-value behavior of current.sessionId; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
  * Wait for an identified lock contender without dispatching the command again.
@@ -38,11 +37,11 @@ const waitForConcurrentBinding = async (
     // oxlint-disable-next-line eslint/no-await-in-loop -- Re-read durable state after each bounded wait.
     const current = await getEveCreation(ownerId, operationId);
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    if (current?.state === "bound" && current.sessionId) {
+    if (current?.state === "bound" && current.sessionId !== "") {
       return true;
     }
     if (
-      !current ||
+      typeof current !== "object" ||
       current.state === "deleted" ||
       current.state === "deleting"
     ) {
@@ -54,7 +53,7 @@ const waitForConcurrentBinding = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (recoverEveCreations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recoverEveCreations's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-continue, no-magic-numbers --
  * max-statements (#512): recoverEveCreations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

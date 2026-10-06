@@ -48,8 +48,11 @@ const sdkPackage = z
 /* oxlint-enable node/no-sync */
 
 const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
+type StorageEnvironmentRequirementReader = Readonly<{
+  description: string;
+  options: readonly (readonly Readonly<{ key: string }>[])[];
+}>;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInStorage); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
 ).map((id) => {
@@ -81,7 +84,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         configKeys: provider.env.config ?? [],
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
-          (requirement) => ({
+          (requirement: StorageEnvironmentRequirementReader) => ({
             description: requirement.description,
             options: requirement.options.map((option) =>
               option.map(({ key }) => key)
@@ -90,8 +93,11 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.env.optional; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
-        optionalEnv: provider.env.optional?.map(({ key }) => key) ?? [],
+        optionalEnv:
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.env.optional; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
+          provider.env.optional?.map(
+            ({ key }: Readonly<{ key: string }>) => key
+          ) ?? [],
       }),
     },
     name: `${id}-storage`,
@@ -100,4 +106,3 @@ export const builtInStorage = PROVIDER_NAMES.filter(
   };
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -753,3 +753,24 @@ Baseline fingerprints changed only for these 12 reviewed paths. Final source SHA
 | `packages/registry/visual/charts-finished.ts` | `037cca81a39b4d33dcdea11bb3831d412310a0ba4368214d9aef91c3e6084281` | 0 |
 
 The changed sources pass scoped type-aware Oxlint with unused-directive reporting and Oxfmt. The app type check passes; `channel-files.test.ts` and `env-schema.test.ts` pass 35/35, upload-preparation tests pass 5/5, and `sync-tools.test.ts` passes 22 tests with 86 assertions. Full `bun lint`, all seven `bun test:types` tasks, Node 24 `bun run test:unit` (nine tasks; CLI 203 tests/1,102 assertions and registry 117 tests), `bun template:check`, and registry `demo:check` (32 assertions) pass. The generated MCP OAuth app candidate was first found to be only a mirror edit; its exact proven return annotations were moved to the canonical registry source before regeneration and final gates. The overall cleanup objective remains active; this entry dispositions only the 12 paths above.
+
+### Batch 72: make EVE sentinel predicates explicit
+
+The baseline falls 20,670→20,661 (−9 memberships) across eight changed source or generated paths. Three app predicates lose `typescript/strict-boolean-expressions`: `waitForConcurrentBinding` checks the actual empty-string session sentinel and treats an absent row as non-object; `localTurnBoundary` distinguishes null/empty parent IDs and null/empty fork-message IDs while retaining the original short-circuit property-read order; `getPublicEveTranscript` checks the database reader's absent-row result and nullable/empty session ID before attaching a session. The response-group helper has another independent strict-boolean membership in its lineage resolver, so its file total changes 16→15 rather than losing every membership of that rule. `public-conversation.ts` also removes one optional-chaining membership because the explicit row guard makes the next property read safe.
+
+The canonical registry upload function's readonly input boundary and matching generated app mirror each remove one membership. `storage/catalog.ts` removes one readonly membership from its finite read-only callback shape. The execution-sandbox canonical source and mirror each remove one explicit-return membership; the `tokenClaims` return now states its exact `{ projectId: string; teamId: string } | undefined` outcomes. `bun demo:sync --discard` regenerated the two app mirrors; each is byte-identical to its canonical source. No template source changed.
+
+The baseline fingerprints changed only for these eight paths. Final source SHA-256 values and all-rule membership deltas are:
+
+| Source | SHA-256 | Membership delta |
+| --- | --- | --: |
+| `apps/chat/features/attachment-uploads/upload.ts` | `4c497fe92532d5ef2005d4fcbd2f33df7c05bf5cae393cb2fe79fd0bb823fd39` | −1 |
+| `apps/chat/lib/eve/public-conversation.ts` | `8b90afb93d88c836fc1d4bea286af77971baff44b55f33d63222bd31c7e7f742` | −2 |
+| `apps/chat/lib/eve/recover-creations.ts` | `13cd50d184b84c77a416fa6a58bd5578ca6b2a8c661f7fd0e13e276dcfd59d85` | −1 |
+| `apps/chat/lib/eve/response-group-lineage.ts` | `7a170fd6b1865fbc61c5e5593033005226f2e03368ed0758890d4796d95f96a2` | −1 |
+| `apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts` | `449198eee983eff2bf549dc7cc3c2777c595f569befc3d2a33b5a4d8b285048d` | −1 |
+| `packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts` | `4c497fe92532d5ef2005d4fcbd2f33df7c05bf5cae393cb2fe79fd0bb823fd39` | −1 |
+| `packages/registry/src/storage/catalog.ts` | `b1b5c7f92c7ce97ac0b1f1ab87ff2fa86370444cbb406c6b8fe9ed7f1ae5aeda` | −1 |
+| `packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts` | `449198eee983eff2bf549dc7cc3c2777c595f569befc3d2a33b5a4d8b285048d` | −1 |
+
+Scoped type-aware Oxlint with unused-directive reporting, Oxfmt, and the app TypeScript check pass. Focused chat tests pass 43/43; the two directly affected recovery/lineage suites account for 8 of those tests. Registry upload and catalog tests pass 47/47 with 52 assertions. Full `bun lint`, all seven `bun test:types` tasks, `bun template:check`, and Node 24 `bun run test:unit` pass; the full unit command completes nine workspace tasks, including 203 CLI tests/1,102 assertions, 956 chat tests, and 117 registry tests. Only the eight paths above are dispositioned by this batch; other current memberships retain their previous status.

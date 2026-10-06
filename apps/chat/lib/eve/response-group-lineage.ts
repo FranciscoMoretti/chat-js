@@ -23,18 +23,19 @@ interface EveResponseGroupLineage {
   >;
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): localTurnBoundary intentionally keeps the existing falsy-value behavior of conversation.forkMessageId; conversation.parentConversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const localTurnBoundary = (
   conversation: LineageConversation
 ): string | null => {
-  if (!conversation.parentConversationId || conversation.forkMessageId) {
+  const { parentConversationId } = conversation;
+  if (parentConversationId === null || parentConversationId === "") {
+    return "turn_0";
+  }
+  const { forkMessageId } = conversation;
+  if (forkMessageId !== null && forkMessageId !== "") {
     return "turn_0";
   }
   return conversation.forkTurnId;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): laterConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

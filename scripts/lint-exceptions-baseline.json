@@ -2801,7 +2801,6 @@
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/features/attachment-uploads/upload.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/features/installed-instrumentation.ts\",\"sort-imports\",\"oxlint-disable-next-line\"]": 1,
@@ -4589,9 +4588,7 @@
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/public-conversation.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/public-conversation.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -4695,7 +4692,6 @@
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/recover-creations.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 5,
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -4804,12 +4800,12 @@
     "[\"apps/chat/lib/eve/response-group-lineage.test.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.test.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.test.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 3,
-    "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-continue\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"eslint/complexity\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 3,
@@ -7614,7 +7610,6 @@
     "[\"apps/chat/tools/chatjs/ui.ts\",\"import/prefer-default-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
@@ -7629,6 +7624,7 @@
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 3,
+    "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/python.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/vercel-code-execution/python.test.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
@@ -9033,7 +9029,6 @@
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/features/langfuse/credentials.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -9426,7 +9421,6 @@
     "[\"packages/registry/src/storage/catalog.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/storage/catalog.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/storage/catalog.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/storage/catalog.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/storage/catalog.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/storage/cloudinary/storage-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/storage/cloudinary/storage-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -10039,7 +10033,6 @@
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 4,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
@@ -10054,6 +10047,7 @@
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/no-deprecated\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 3,
+    "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/vercel-code-execution/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/vercel-code-execution/renderer.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
@@ -21768,19 +21762,16 @@
       "4fea1ac542ab73222e4bb61b5e2f9857af61d00de7732e85a6d41f8f2b15e17b"
     ],
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "fa51e50b36b0ef68255ba2f6618d1eee2b19c30cbf2f34a2ae13402a83c94aa4"
+      "d8e98fb60761298e980d800ae97a7a48d33013ed51c2ef37511514ba97335641"
     ],
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "fa51e50b36b0ef68255ba2f6618d1eee2b19c30cbf2f34a2ae13402a83c94aa4"
+      "d8e98fb60761298e980d800ae97a7a48d33013ed51c2ef37511514ba97335641"
     ],
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "725bb534f73af46c10c7497b41d35e6c875c23ab12b7269e12c9a33a413b1a05"
+      "2eb2a289f54da3e35a473ee1b834a90051b0e2df52090bad69ca82c2b4b97a19"
     ],
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "2e7b35104b49bdd15dc16c977bd590ed6d799d2ed63e047a5250198faa2b839d"
-    ],
-    "[\"apps/chat/features/attachment-uploads/upload.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "3ce52dd7ba012ad6f465ecbca30f7137cd1616885aa16c96beac6b96a6b48d0e"
+      "e93b433072488da52cd3966a787c3679616b032a8045c720cd8b31eb4c934fba"
     ],
     "[\"apps/chat/features/attachment-uploads/upload.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "067b401777b78370844340560233511c6ffc84d7f320eeb95044708a39887053"
@@ -28886,25 +28877,19 @@
       "6e9877c96f6b9ba3624ff873ab4c942e62ead0d7aa1976d7a101c5ad84456ce6"
     ],
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "26bc8a5bb47b44b8aa1bc2d2677d1ec13a6f95d1fa61163284d4f81fe938d16c"
+      "784f8652e0b64730e37b72c5a4c815faa06dbde33b159ef7d553172aff4fa15f"
     ],
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "26bc8a5bb47b44b8aa1bc2d2677d1ec13a6f95d1fa61163284d4f81fe938d16c"
+      "784f8652e0b64730e37b72c5a4c815faa06dbde33b159ef7d553172aff4fa15f"
     ],
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "451c4400148da16298cf23e04be3073c8824ae02f9e1c9c6f45dd2d1a294f3bf"
+      "2ebc6c2be50ed74dde3139477475ebae041973c61ed7ba17e134c0d354cf2b11"
     ],
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "06754c8f355d58baa6b0bde13521795652b04e406eb1fc1040faec36d45442ce"
-    ],
-    "[\"apps/chat/lib/eve/public-conversation.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "06754c8f355d58baa6b0bde13521795652b04e406eb1fc1040faec36d45442ce"
+      "1aca191861d800e321b9b53df44dbfae702e0c5079cb84251b0d150b94938c3f"
     ],
     "[\"apps/chat/lib/eve/public-conversation.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "06754c8f355d58baa6b0bde13521795652b04e406eb1fc1040faec36d45442ce"
-    ],
-    "[\"apps/chat/lib/eve/public-conversation.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "1426c84c8ee989dade7d8404b99a3b626c987d0f0b0b080a97448f7a28ec2fe0"
+      "1aca191861d800e321b9b53df44dbfae702e0c5079cb84251b0d150b94938c3f"
     ],
     "[\"apps/chat/lib/eve/public-copy-source.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "d9d2b0ddcdb29d640009cc7536575b826fcccf4ee99e39de6d11ca59ba51f091",
@@ -29327,15 +29312,12 @@
       "fe50113964f13b574629bac7c0d011ad311f3bdbb4324bd359d20d21f26522d4"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "682ba598a2b2e30c527a4640cfa3d4a378a1a999e5b15d29f6db06c7e9619d7f",
-      "1481008c6a21b72af2bac1a851d37ccefcacf0cdcc28ed31e4fcf4d6c04a8199"
+      "854ed6f4017b3e04e035973b470e4550f721573a8d1c100866f9bba1a64f3bdd",
+      "e73a3de8bc76553e3631ec3e059e9659fd8168b7b8e82a1b1b9d297fc5f8106f"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "ba5a6acb9254a7a707917537f9a5a096a1f312ec5a59609c5061944467f94430",
+      "f72d6410b5309897de28f26133e5963e874ca05548b083869480fd396fbf3cc5",
       "661df9ee5f7fb9da3df4fa1d9acb4e20b1e62bb59ef671fe3c20e2acf9cbe2f5"
-    ],
-    "[\"apps/chat/lib/eve/recover-creations.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "ba5a6acb9254a7a707917537f9a5a096a1f312ec5a59609c5061944467f94430"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "b8d3901a78fa67fe5ccd79fd51418a1e3ae28443ee6a3beba6cdad7d879d3a87",
@@ -29345,13 +29327,13 @@
       "c80c1f4983d4df437830dd43a95720d8dbc479d59b1a0322f702d1676e08595a"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "b2be510a07615f72ca44e1461209613852d6a901ca7980d81e201b2615cba2fa"
+      "447d458ca9373c546c9cb5e71796fe8bb747b445b0c189c6fe82cdef32b64b86"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "a08784ddc21c3ef8da0ec4ed39bb363591c981df6f778db9a2aad69799165152"
+      "7ff7f0ac671950408607acaca0f8ffd36cb6a360c554eeba033b300621e25fbf"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "a08784ddc21c3ef8da0ec4ed39bb363591c981df6f778db9a2aad69799165152"
+      "7ff7f0ac671950408607acaca0f8ffd36cb6a360c554eeba033b300621e25fbf"
     ],
     "[\"apps/chat/lib/eve/recover-creations.ts\",\"max-statements\",\"oxlint-disable\"]": [
       "661df9ee5f7fb9da3df4fa1d9acb4e20b1e62bb59ef671fe3c20e2acf9cbe2f5"
@@ -29740,10 +29722,6 @@
       "e97c9650f5ea03dab1df2862c6dfafcb31b25e3353ea71b783719c9796d51012",
       "9b378ceda66b1199edfa7be7de3a4ae8a12c34682dd665f3d7d3bd145ef3b81b"
     ],
-    "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "0be940e0ca92304dfd6c029ed1e39b0a00985ee345a135cda99ba4a53d3fb854",
-      "b1188c9eafe4bbfbab4cd3ec693d47953150ccf7b7e4378c0cf65faf6f6de078"
-    ],
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "4dbdfa22fe2e0a8cfd7e8a5e60f49237a46a934da7dd23f74b973fe48451d3b0",
       "b1188c9eafe4bbfbab4cd3ec693d47953150ccf7b7e4378c0cf65faf6f6de078"
@@ -29758,6 +29736,9 @@
       "b1188c9eafe4bbfbab4cd3ec693d47953150ccf7b7e4378c0cf65faf6f6de078"
     ],
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"no-undefined\",\"oxlint-disable\"]": [
+      "b1188c9eafe4bbfbab4cd3ec693d47953150ccf7b7e4378c0cf65faf6f6de078"
+    ],
+    "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "b1188c9eafe4bbfbab4cd3ec693d47953150ccf7b7e4378c0cf65faf6f6de078"
     ],
     "[\"apps/chat/lib/eve/response-group-lineage.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
@@ -40615,25 +40596,21 @@
       "09b58adbe5b4a97609e7c447355a99490ee930c74375468f352c2dcd490ae791"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "bb941271c2b28cbb9e391d59e9cdba003dcdf47d66b4db6b4b4461253c7a826c",
+      "73f473f102f67888de76a63027e13ca63a7660c34c42e9cff0a737e1b466caaf",
       "d6c86cc48c733c100d916e6ea19bcd5e4505a22b0f4d7f36dc3d51b38f0887aa"
     ],
-    "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "4d2a420e85c4b5bb278d66d40487d6fbf80ada9d598806c760b41302e8f2fab6",
-      "644a24bd739d7c31280c9d07a4d335d3ceff91871cbd83af0628d2901747ef25"
-    ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "e545a24290761416aff6eb339607cc5eddc2c0eca34a42f4b97c3b3afca66017",
+      "72d5c8804c707dc90479fadbd0e2808602a90c81e593d2290e0e82246f7a09f6",
       "7d6558a48d6c1d8545e8420f6fcea279ce58b60b47de91fb528e35711a487685",
       "dbfc302b90680932f23242556436634f89e544b43cfbe622da5b48be2aa8da4d",
       "3f20b06a0eea2a1b48b9264afa84da3112e21c0301bb1b12ba624270885a39c0"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": [
-      "3b9d1ac2182dbf019edc07ec30a04e03aaa2657a8bbf8efe6b30e80cd0df9a66",
+      "7c4af8b1ffbe8c0d55289ba2491189e9d527234f3035fe27cad625a67a212c04",
       "88582b92911ca46f39e6e88f7ea74f2b9f10cc9d671a9bac4862b2f40c293e83"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "9140670f84ad5a829433f96c4443348af1c1d87d07801f41c9779cf8e54c0df8"
+      "f0b92438f544439e275e7f79b81f835b897c4054791f1134f38737d9bee6d91b"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "91fad03bbb1d73f300f78405e2fae48a913b820a28643d2011f713503f595ecd",
@@ -40673,6 +40650,9 @@
       "7a573636de2df3cb1e2e7824fca3590c5b7fa16af93ae81d80325f7b6cb1168d",
       "ca37ca9c984f61f243d77db4ec4924028c21b5b2cabbae9aee9a756bcdd198ea",
       "b1abbb749a6d6615b6c024f5d314e1ec7f967655e8aaf36a7435a9d4568c5f03"
+    ],
+    "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
+      "644a24bd739d7c31280c9d07a4d335d3ceff91871cbd83af0628d2901747ef25"
     ],
     "[\"apps/chat/tools/chatjs/vercel-code-execution/execution-sandbox.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "291a6539a5c29d38c0ac1d7f953739fb230caf2268c2d942a0c9b0c9c0a71016",
@@ -46383,19 +46363,16 @@
       "4fea1ac542ab73222e4bb61b5e2f9857af61d00de7732e85a6d41f8f2b15e17b"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "fa51e50b36b0ef68255ba2f6618d1eee2b19c30cbf2f34a2ae13402a83c94aa4"
+      "d8e98fb60761298e980d800ae97a7a48d33013ed51c2ef37511514ba97335641"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "fa51e50b36b0ef68255ba2f6618d1eee2b19c30cbf2f34a2ae13402a83c94aa4"
+      "d8e98fb60761298e980d800ae97a7a48d33013ed51c2ef37511514ba97335641"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "725bb534f73af46c10c7497b41d35e6c875c23ab12b7269e12c9a33a413b1a05"
+      "2eb2a289f54da3e35a473ee1b834a90051b0e2df52090bad69ca82c2b4b97a19"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "2e7b35104b49bdd15dc16c977bd590ed6d799d2ed63e047a5250198faa2b839d"
-    ],
-    "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "3ce52dd7ba012ad6f465ecbca30f7137cd1616885aa16c96beac6b96a6b48d0e"
+      "e93b433072488da52cd3966a787c3679616b032a8045c720cd8b31eb4c934fba"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "067b401777b78370844340560233511c6ffc84d7f320eeb95044708a39887053"
@@ -47908,16 +47885,13 @@
       "6ac107097c68ec18fe10fa35c64640486daecb9027560745765a187cdddcd67a"
     ],
     "[\"packages/registry/src/storage/catalog.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "60bfc5df04de50c3b39153418ea41e93236c201b9d9b57ec59c9169438a6a268"
+      "bfdcff6ca64b8981581199d18c3052fadb1c50a954eab55b18becfe84cbae990"
     ],
     "[\"packages/registry/src/storage/catalog.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "60bfc5df04de50c3b39153418ea41e93236c201b9d9b57ec59c9169438a6a268"
-    ],
-    "[\"packages/registry/src/storage/catalog.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "9c21a0b25bdd3fad254f7a647712bc543a7e2a336fbf9b70860c8236749dc35e"
+      "bfdcff6ca64b8981581199d18c3052fadb1c50a954eab55b18becfe84cbae990"
     ],
     "[\"packages/registry/src/storage/catalog.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "348ba3d186c368bceed116c09330391d7c933ecc6b6b99967df742c7480d88db"
+      "02e717d1a85f7a5b9a2d45250067d73f0b4eeb91e40b9810fca77f74be16f512"
     ],
     "[\"packages/registry/src/storage/cloudinary/storage-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "ccd59fd961350c3948d2e8c58252b5958afbc520d52f14ac7e43ea35871bea88"
@@ -50038,25 +50012,21 @@
       "09b58adbe5b4a97609e7c447355a99490ee930c74375468f352c2dcd490ae791"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "bb941271c2b28cbb9e391d59e9cdba003dcdf47d66b4db6b4b4461253c7a826c",
+      "73f473f102f67888de76a63027e13ca63a7660c34c42e9cff0a737e1b466caaf",
       "d6c86cc48c733c100d916e6ea19bcd5e4505a22b0f4d7f36dc3d51b38f0887aa"
     ],
-    "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "4d2a420e85c4b5bb278d66d40487d6fbf80ada9d598806c760b41302e8f2fab6",
-      "644a24bd739d7c31280c9d07a4d335d3ceff91871cbd83af0628d2901747ef25"
-    ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "e545a24290761416aff6eb339607cc5eddc2c0eca34a42f4b97c3b3afca66017",
+      "72d5c8804c707dc90479fadbd0e2808602a90c81e593d2290e0e82246f7a09f6",
       "7d6558a48d6c1d8545e8420f6fcea279ce58b60b47de91fb528e35711a487685",
       "dbfc302b90680932f23242556436634f89e544b43cfbe622da5b48be2aa8da4d",
       "3f20b06a0eea2a1b48b9264afa84da3112e21c0301bb1b12ba624270885a39c0"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": [
-      "3b9d1ac2182dbf019edc07ec30a04e03aaa2657a8bbf8efe6b30e80cd0df9a66",
+      "7c4af8b1ffbe8c0d55289ba2491189e9d527234f3035fe27cad625a67a212c04",
       "88582b92911ca46f39e6e88f7ea74f2b9f10cc9d671a9bac4862b2f40c293e83"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "9140670f84ad5a829433f96c4443348af1c1d87d07801f41c9779cf8e54c0df8"
+      "f0b92438f544439e275e7f79b81f835b897c4054791f1134f38737d9bee6d91b"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "91fad03bbb1d73f300f78405e2fae48a913b820a28643d2011f713503f595ecd",
@@ -50096,6 +50066,9 @@
       "7a573636de2df3cb1e2e7824fca3590c5b7fa16af93ae81d80325f7b6cb1168d",
       "ca37ca9c984f61f243d77db4ec4924028c21b5b2cabbae9aee9a756bcdd198ea",
       "b1abbb749a6d6615b6c024f5d314e1ec7f967655e8aaf36a7435a9d4568c5f03"
+    ],
+    "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
+      "644a24bd739d7c31280c9d07a4d335d3ceff91871cbd83af0628d2901747ef25"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "291a6539a5c29d38c0ac1d7f953739fb230caf2268c2d942a0c9b0c9c0a71016",
