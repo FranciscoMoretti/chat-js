@@ -1,0 +1,551 @@
+diff --git a/packages/eve/src/context/tool-approval-receipts.ts b/packages/eve/src/context/tool-approval-receipts.ts
+new file mode 100644
+index 0000000..16ab0a8
+--- /dev/null
++++ b/packages/eve/src/context/tool-approval-receipts.ts
+@@ -0,0 +1,85 @@
++import { isDeepStrictEqual } from "node:util";
++
++import { contextStorage, type AlsContext } from "#context/container.js";
++import { ContextKey } from "#context/key.js";
++import { SessionKey } from "#context/keys.js";
++import {
++  getApprovalAuditState,
++  type ApprovalResponderIdentity,
++} from "#harness/approval-candidates.js";
++import type { ResolvedInputBatch } from "#harness/input-request-resolution.js";
++import type { SessionStateMap } from "#harness/types.js";
++
++export interface ToolApprovalReceipt {
++  readonly requestId: string;
++  readonly responder: ApprovalResponderIdentity;
++}
++
++type Entry = {
++  readonly input: unknown;
++  readonly receipt: ToolApprovalReceipt;
++  readonly sessionId: string;
++  readonly toolName: string;
++};
++
++const ToolApprovalReceiptsKey = new ContextKey<Map<string, Entry>>(
++  "eve.runtime.toolApprovalReceipts",
++);
++
++/** Only approvals resolved in this harness invocation can authorize execution. */
++export function prepareToolApprovalReceipts(
++  ctx: AlsContext,
++  sessionId: string,
++  batches: readonly ResolvedInputBatch[] | undefined,
++  state: SessionStateMap | undefined,
++): void {
++  const settlements = getApprovalAuditState(state).settlements;
++  const receipts = new Map<string, Entry>();
++  const seen = new Set<string>();
++  for (const batch of batches ?? []) {
++    for (const input of batch.inputs) {
++      const request = input.request;
++      if (request.kind !== "tool-approval") continue;
++      const callId = request.action.callId;
++      if (seen.has(callId)) {
++        receipts.delete(callId);
++        continue;
++      }
++      seen.add(callId);
++      if (input.outcome !== "approved") continue;
++      const matches = settlements.filter((entry) => entry.requestId === request.requestId);
++      if (matches.length !== 1 || matches[0]?.outcome !== "allowed") continue;
++      receipts.set(callId, {
++        input: structuredClone(request.action.input),
++        receipt: Object.freeze({
++          requestId: request.requestId,
++          responder: Object.freeze({ ...matches[0].actor }),
++        }),
++        sessionId,
++        toolName: request.action.toolName,
++      });
++    }
++  }
++  ctx.setVirtualContext(ToolApprovalReceiptsKey, receipts);
++}
++
++export function getToolApprovalReceipt(
++  callId: string,
++  toolName: string,
++  input: unknown,
++): ToolApprovalReceipt | undefined {
++  const ctx = contextStorage.getStore();
++  if (ctx === undefined) return undefined;
++  const entry = ctx.get(ToolApprovalReceiptsKey)?.get(callId);
++  if (
++    entry === undefined ||
++    entry.sessionId !== ctx.require(SessionKey).sessionId ||
++    entry.toolName !== toolName ||
++    !isDeepStrictEqual(entry.input, input)
++  ) {
++    return undefined;
++  }
++  // A replay rebuilds this ephemeral map; another callback in this invocation cannot reuse it.
++  ctx.get(ToolApprovalReceiptsKey)?.delete(callId);
++  return entry.receipt;
++}
+diff --git a/packages/eve/src/execution/tool-auth.ts b/packages/eve/src/execution/tool-auth.ts
+index 2f72e47..a81cf11 100644
+--- a/packages/eve/src/execution/tool-auth.ts
++++ b/packages/eve/src/execution/tool-auth.ts
+@@ -1,3 +1,4 @@
++import { getToolApprovalReceipt } from "#context/tool-approval-receipts.js";
+ import { buildBaseToolContext } from "#context/build-base-tool-context.js";
+ import type { SessionAuthContext } from "#channel/types.js";
+ import type { ApprovalResponseAuth } from "#approval/definition.js";
+@@ -17,6 +18,7 @@ export function createToolExecuteWithAuth<TInput>(input: ToolExecuteWithAuthInpu
+     const ctx: ToolContext = {
+       ...buildBaseToolContext({ options, toolName: input.scope }),
+       messages: options.messages,
++      approval: getToolApprovalReceipt(options.toolCallId, input.scope, toolInput),
+       getToken: auth.getToken,
+       requireAuth: auth.requireAuth,
+     };
+diff --git a/packages/eve/src/harness/receipt.lane-b.integration.test.ts b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
+new file mode 100644
+index 0000000..62b8e88
+--- /dev/null
++++ b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
+@@ -0,0 +1,392 @@
++import { jsonSchema } from "ai";
++import { MockLanguageModelV4 } from "ai/test";
++import { expect, it, vi } from "vitest";
++import { createApprovalContext, usage } from "#internal/testing/approval-resume.js";
++import { contextStorage } from "#context/container.js";
++import { createToolLoopHarness } from "#harness/tool-loop.js";
++import { createToolExecuteWithAuth } from "#execution/tool-auth.js";
++import type { HarnessSession } from "#harness/types.js";
++vi.mock("#runtime/attributes/emit.js", () => ({ setEveAttributes: vi.fn(async () => {}) }));
++const call = {
++  type: "tool-call" as const,
++  toolCallId: "call-1",
++  toolName: "mcp",
++  input: JSON.stringify({ value: 1 }),
++};
++function session(): HarnessSession {
++  return {
++    sessionId: "generate-approval-resume-session",
++    continuationToken: "http:receipt",
++    agent: {
++      modelReference: { id: "receipt" },
++      system: "test",
++      tools: [{ name: "mcp", description: "test", inputSchema: { type: "object" } }],
++    },
++    history: [{ kind: "user", role: "user", content: "act" }],
++    compaction: { recentWindowSize: 10, threshold: 100000 },
++  };
++}
++
++import { appendPendingInputBatch } from "#harness/input-requests.js";
++import { setHarnessEmissionState } from "#harness/emission.js";
++import { AuthKey } from "#context/keys.js";
++import { getApprovalAuditState } from "#harness/approval-candidates.js";
++import type { ToolContext } from "#tools/definition.js";
++const request = {
++  requestId: "approval-1",
++  kind: "tool-approval" as const,
++  display: "confirmation" as const,
++  allowFreeform: false,
++  prompt: "Approve",
++  options: [
++    { id: "approve", label: "Yes" },
++    { id: "cancel", label: "No" },
++  ],
++  action: { kind: "tool-call" as const, callId: "call-1", toolName: "mcp", input: { value: 1 } },
++};
++function pendingSession() {
++  return appendPendingInputBatch({
++    event: { sequence: 1, stepIndex: 1, turnId: "turn-1" },
++    session: setHarnessEmissionState(session(), {
++      sequence: 1,
++      stepIndex: 1,
++      turnId: "turn-1",
++      sessionStarted: true,
++    }),
++    requests: [request],
++    responseAuthRequiredRequestIds: ["approval-1"],
++    responseMessages: [
++      {
++        role: "assistant",
++        content: [
++          { ...call, input: { value: 1 } },
++          { type: "tool-approval-request", approvalId: "approval-1", toolCallId: "call-1" },
++        ],
++      },
++    ],
++  });
++}
++function resumeFixture() {
++  const effect = vi.fn();
++  const receipts: ToolContext["approval"][] = [];
++  const execute = createToolExecuteWithAuth({
++    scope: "mcp",
++    execute: async (_input, ctx) => {
++      receipts.push(ctx.approval);
++      ctx.abortSignal.throwIfAborted();
++      if (ctx.approval?.responder.principalId !== "user-1")
++        throw new Error("missing owner consent");
++      effect();
++      return "ok";
++    },
++  });
++  const runtime = createToolLoopHarness({
++    resolveModel: async () =>
++      new MockLanguageModelV4({
++        provider: "eve-integration-mock",
++        modelId: "receipt",
++        doGenerate: {
++          content: [{ type: "text", text: "done" }],
++          finishReason: { raw: undefined, unified: "stop" },
++          usage,
++          warnings: [],
++        },
++      }),
++    tools: new Map([
++      [
++        "mcp",
++        {
++          name: "mcp",
++          description: "test",
++          inputSchema: jsonSchema({ type: "object" }),
++          approval: {
++            request: () => "user-approval",
++            response: ({ response }) =>
++              response.principal.principalId === "user-1" &&
++              response.principal.issuer === "test" &&
++              response.principal.authenticator === "test"
++                ? { status: "allowed" }
++                : { status: "rejected", reason: "owner only" },
++          },
++          execute,
++        },
++      ],
++    ]),
++  });
++  return { runtime, effect, receipts };
++}
++it.each([
++  ["user-1", "approve", 1],
++  ["user-1", "cancel", 0],
++  ["foreign", "approve", 0],
++  ["foreign", "cancel", 0],
++] as const)("authenticated %s %s => effects %s", async (principalId, optionId, count) => {
++  const f = resumeFixture();
++  const ctx = createApprovalContext();
++  const auth = { ...ctx.require(AuthKey), principalId };
++  let result = await contextStorage.run(ctx, () =>
++    f.runtime(pendingSession(), {
++      attributedInputResponses: [{ auth, response: { requestId: "approval-1", optionId } }],
++    }),
++  );
++  for (let i = 0; i < 3 && typeof result.next === "function"; i++) {
++    const next = result.next;
++    result = await contextStorage.run(createApprovalContext(), () =>
++      next(structuredClone(result.session)),
++    );
++  }
++  expect(f.effect).toHaveBeenCalledTimes(count);
++  if (count)
++    expect(f.receipts).toEqual([
++      {
++        requestId: "approval-1",
++        responder: {
++          authenticator: "test",
++          issuer: "test",
++          principalId: "user-1",
++          principalType: "user",
++        },
++      },
++    ]);
++  if (principalId === "foreign")
++    expect(getApprovalAuditState(result.session.state).settlements).toHaveLength(0);
++});
++
++it.each([
++  ["cancel", "approve", 0],
++  ["approve", "cancel", 1],
++] as const)("winner %s defeats later %s", async (first, second, count) => {
++  const f = resumeFixture(),
++    ctx = createApprovalContext(),
++    auth = ctx.require(AuthKey);
++  let result = await contextStorage.run(ctx, () =>
++    f.runtime(pendingSession(), {
++      attributedInputResponses: [
++        { auth, response: { requestId: "approval-1", optionId: first } },
++        { auth, response: { requestId: "approval-1", optionId: second } },
++      ],
++    }),
++  );
++  for (let i = 0; i < 3 && typeof result.next === "function"; i++) {
++    const next = result.next;
++    result = await contextStorage.run(createApprovalContext(), () =>
++      next(structuredClone(result.session)),
++    );
++  }
++  expect(f.effect).toHaveBeenCalledTimes(count);
++  const audit = getApprovalAuditState(result.session.state);
++  expect(audit.settlements).toHaveLength(1);
++  expect(audit.settlements[0]?.outcome).toBe(first === "approve" ? "allowed" : "cancelled");
++  expect(audit.candidateHistory.some((c) => c.status === "stale" && c.decision === second)).toBe(
++    true,
++  );
++});
++
++import {
++  getToolApprovalReceipt,
++  prepareToolApprovalReceipts,
++} from "#context/tool-approval-receipts.js";
++import { settleDirectApprovalResponse } from "#harness/approval-candidates.js";
++import { SessionKey } from "#context/keys.js";
++const batch = {
++  event: { sequence: 1, stepIndex: 1, turnId: "turn-1" },
++  inputs: [{ outcome: "approved" as const, request }],
++};
++it.each([
++  "call",
++  "tool",
++  "input",
++  "session",
++  "missing-settlement",
++  "cancelled",
++  "duplicate",
++  "historical-only",
++  "reused",
++  "new-context",
++] as const)("no receipt for %s", async (kind) => {
++  const ctx = createApprovalContext();
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: kind === "cancelled" ? "cancelled" : "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(
++    ctx,
++    "generate-approval-resume-session",
++    kind === "historical-only" ? [] : kind === "duplicate" ? [batch, batch] : [batch],
++    kind === "missing-settlement" ? undefined : state,
++  );
++  if (kind === "session") ctx.set(SessionKey, { ...ctx.require(SessionKey), sessionId: "other" });
++  await contextStorage.run(kind === "new-context" ? createApprovalContext() : ctx, async () => {
++    if (kind === "reused")
++      expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 })).toBeDefined();
++    expect(
++      getToolApprovalReceipt(
++        kind === "call" ? "other" : "call-1",
++        kind === "tool" ? "other" : "mcp",
++        kind === "input" ? { value: 2 } : { value: 1 },
++      ),
++    ).toBeUndefined();
++  });
++});
++it("receipt captures input and responder immutably, independent of object key order", async () => {
++  const ctx = createApprovalContext();
++  const auth = ctx.require(AuthKey);
++  const state = settleDirectApprovalResponse({
++    actor: auth,
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  const input = { a: 1, b: 2 };
++  const prepared = {
++    ...batch,
++    inputs: [
++      {
++        outcome: "approved" as const,
++        request: { ...request, action: { ...request.action, input } },
++      },
++    ],
++  };
++  prepareToolApprovalReceipts(ctx, "generate-approval-resume-session", [prepared], state);
++  input.a = 3;
++  await contextStorage.run(ctx, async () => {
++    const receipt = getToolApprovalReceipt("call-1", "mcp", { b: 2, a: 1 });
++    expect(receipt?.responder).toEqual({
++      authenticator: "test",
++      issuer: "test",
++      principalId: "user-1",
++      principalType: "user",
++    });
++    expect(Object.isFrozen(receipt)).toBe(true);
++    expect(Object.isFrozen(receipt?.responder)).toBe(true);
++  });
++});
++
++import { coordinateApprovalDelivery } from "#harness/approval-delivery-coordinator.js";
++import { readFileSync, writeFileSync } from "node:fs";
++const checkpoint = process.env.LANE_B_CHECKPOINT;
++const checkpointPhase = process.env.LANE_B_PHASE;
++it.skipIf(!checkpoint)("process checkpoint", async () => {
++  const ctx = createApprovalContext(),
++    f = resumeFixture();
++  if (checkpointPhase === "ingest") {
++    const result = await contextStorage.run(ctx, () =>
++      f.runtime(pendingSession(), {
++        attributedInputResponses: [
++          {
++            auth: ctx.require(AuthKey),
++            response: { requestId: "approval-1", optionId: "approve" },
++          },
++        ],
++      }),
++    );
++    expect(f.effect).not.toHaveBeenCalled();
++    expect(getApprovalAuditState(result.session.state).activeCandidates).toHaveLength(1);
++    writeFileSync(checkpoint!, JSON.stringify(result.session));
++  } else if (checkpointPhase === "settle") {
++    const saved = JSON.parse(readFileSync(checkpoint!, "utf8"));
++    const tools = new Map([
++      [
++        "mcp",
++        {
++          name: "mcp",
++          description: "test",
++          inputSchema: jsonSchema({ type: "object" }),
++          approval: {
++            request: () => "user-approval" as const,
++            response: ({ response }: any) =>
++              response.principal.principalId === "user-1" &&
++              response.principal.issuer === "test" &&
++              response.principal.authenticator === "test"
++                ? { status: "allowed" as const }
++                : { status: "rejected" as const, reason: "owner only" },
++          },
++        },
++      ],
++    ]);
++    const result = await contextStorage.run(ctx, () =>
++      coordinateApprovalDelivery({ session: saved, tools }),
++    );
++    expect(getApprovalAuditState(result.session.state).settlements[0]?.outcome).toBe("allowed");
++    expect(f.effect).not.toHaveBeenCalled();
++    writeFileSync(checkpoint!, JSON.stringify(result.session));
++  } else if (checkpointPhase === "execute") {
++    const saved = JSON.parse(readFileSync(checkpoint!, "utf8"));
++    await contextStorage.run(ctx, () => f.runtime(saved));
++    expect(f.effect).toHaveBeenCalledOnce();
++    expect(f.receipts[0]?.responder.principalId).toBe("user-1");
++  }
++});
++
++it("aborted executor blocks the effect despite exact receipt", async () => {
++  const ctx = createApprovalContext();
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(ctx, "generate-approval-resume-session", [batch], state);
++  const effect = vi.fn(),
++    controller = new AbortController();
++  controller.abort(new Error("cancelled"));
++  const execute = createToolExecuteWithAuth({
++    scope: "mcp",
++    execute: async (_input, toolContext) => {
++      expect(toolContext.approval).toBeDefined();
++      toolContext.abortSignal.throwIfAborted();
++      effect();
++    },
++  });
++  await contextStorage.run(ctx, async () => {
++    await expect(
++      execute({ value: 1 }, { toolCallId: "call-1", messages: [], abortSignal: controller.signal }),
++    ).rejects.toThrow("cancelled");
++  });
++  expect(effect).not.toHaveBeenCalled();
++});
++it("new harness step clears leftover authority even on an early park", async () => {
++  const ctx = createApprovalContext();
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(ctx, "generate-approval-resume-session", [batch], state);
++  const f = resumeFixture();
++  await contextStorage.run(ctx, async () => {
++    await f.runtime(pendingSession());
++    expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 })).toBeUndefined();
++  });
++  expect(f.effect).not.toHaveBeenCalled();
++});
++
++it("same principal id from another issuer is rejected by owner policy", async () => {
++  const f = resumeFixture(),
++    ctx = createApprovalContext();
++  let result = await contextStorage.run(ctx, () =>
++    f.runtime(pendingSession(), {
++      attributedInputResponses: [
++        {
++          auth: { ...ctx.require(AuthKey), issuer: "foreign" },
++          response: { requestId: "approval-1", optionId: "approve" },
++        },
++      ],
++    }),
++  );
++  for (let i = 0; i < 3 && typeof result.next === "function"; i++) {
++    const next = result.next;
++    result = await contextStorage.run(createApprovalContext(), () =>
++      next(structuredClone(result.session)),
++    );
++  }
++  expect(f.effect).not.toHaveBeenCalled();
++  expect(getApprovalAuditState(result.session.state).settlements).toHaveLength(0);
++});
+diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
+index 66ba6be..f531198 100644
+--- a/packages/eve/src/harness/tool-loop.ts
++++ b/packages/eve/src/harness/tool-loop.ts
+@@ -1,3 +1,4 @@
++import { prepareToolApprovalReceipts } from "#context/tool-approval-receipts.js";
+ import { declinedSignInEvents, withdrawHeldSignIns } from "#harness/held-requests.js";
+ import { setTimeout as delay } from "node:timers/promises";
+ import { GenerationSteering } from "#harness/generation-steering.js";
+@@ -509,6 +510,7 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+
+     let emissionState = getHarnessEmissionState(session.state);
+     const store = contextStorage.getStore();
++    if (store !== undefined) prepareToolApprovalReceipts(store, session.sessionId, undefined, undefined);
+     if (store !== undefined && !store.has(StaticModelReferenceKey)) {
+       store.setVirtualContext(
+         StaticModelReferenceKey,
+@@ -904,6 +906,9 @@ export function createToolLoopHarness(config: ToolLoopHarnessConfig): StepFn {
+       session,
+       stepInput: coordinated.stepInput,
+     });
++    if (store !== undefined) {
++      prepareToolApprovalReceipts(store, session.sessionId, pending.resolvedInputs, pending.session.state);
++    }
+     if (pending.outcome === "unresolved") {
+       // The coordination batch owns the assistant messages. Once that batch
+       // resolves, commit its results before the still-pending HITL batch parks.
+diff --git a/packages/eve/src/tools/definition.ts b/packages/eve/src/tools/definition.ts
+index 0091635..f674cef 100644
+--- a/packages/eve/src/tools/definition.ts
++++ b/packages/eve/src/tools/definition.ts
+@@ -1,3 +1,4 @@
++import type { ToolApprovalReceipt } from "#context/tool-approval-receipts.js";
+ import type { ModelMessage, ToolExecutionOptions } from "ai";
+ import type {
+   StandardJSONSchemaV1,
+@@ -171,6 +172,8 @@ export interface ToolInputRequestOptions {
+  * `defineWorkflowTool`.
+  */
+ export type ToolContext = SessionContext & {
++  /** Exact human approval for this execution; absent for automatic approval. */
++  readonly approval?: ToolApprovalReceipt;
+   /**
+    * Aborts when the work this tool is doing is cancelled: the active turn
+    * for an ordinary tool, the durable run for a workflow tool. In a workflow
