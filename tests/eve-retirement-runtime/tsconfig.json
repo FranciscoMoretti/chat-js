@@ -9,5 +9,5 @@
     "target": "ESNext",
     "types": ["bun"]
   },
-  "include": ["run.ts", "fixture/**/*.ts"]
+  "include": ["*.ts", "fixture/**/*.ts", "restart-fixture/**/*.ts"]
 }

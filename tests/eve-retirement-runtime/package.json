@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "bun run run.ts",
-    "test:types": "tsc --noEmit"
+    "test:types": "tsc --noEmit",
+    "test:restart": "bun run restart.ts"
   },
   "dependencies": {
     "ai": "7.0.106",

@@ -6254,6 +6254,12 @@
     "[\"scripts/vercel-preview-build.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": 1,
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-runtime/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"tests/eve-retirement-runtime/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"tests/eve-retirement-runtime/fixture/agent/tools/record.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
@@ -6264,8 +6270,31 @@
     "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"tests/eve-retirement-runtime/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
-    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
-    "[\"tests/eve-retirement-runtime/run.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/channels/eve.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/control.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart-fixture/control.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1
   },
   "missingReasons": {},
   "scopeFingerprints": {
@@ -28988,6 +29017,24 @@
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
       "844e34a0a4cc4d1aa34f45a88b057d41e0dd0759e4791c10f69ce8b99c7f8269"
     ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "5ca2917aa4fc36c418952d37ee422e6055b52d9830c6503004cd466b869d85a5"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"max-statements\",\"oxlint-disable\"]": [
+      "8656edd52ee6348bd1537f3817bef6e1f0015a47aca5ca2ba03429f4bdca201c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
+      "8656edd52ee6348bd1537f3817bef6e1f0015a47aca5ca2ba03429f4bdca201c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
+      "8656edd52ee6348bd1537f3817bef6e1f0015a47aca5ca2ba03429f4bdca201c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
+      "8656edd52ee6348bd1537f3817bef6e1f0015a47aca5ca2ba03429f4bdca201c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
+      "314fa5adf1259b8b1ca3d212448783161aeb9144d0e9276802b5427647b948ab"
+    ],
     "[\"tests/eve-retirement-runtime/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
       "66e761f6a2447f308f6a8dac79d150723129949fe95b95f64e882e5a831c9fcb"
     ],
@@ -29018,11 +29065,81 @@
     "[\"tests/eve-retirement-runtime/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
       "987791be08ca36dfed003d2a35e0221a8e187c157b4c71b1de8b1ac8a8b09034"
     ],
-    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "0aa761b70ef06d561e8821e89db5e9fc5960e6898ed7263433e8418e5d9cdd5d"
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"no-undefined\",\"oxlint-disable\"]": [
+      "8b20d6f336ff44ee407f9266fc2326446b1874dd7f1a677fdf0013efeff12fb0"
     ],
-    "[\"tests/eve-retirement-runtime/run.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
-      "1fad2f2c79b619c2930372a83e6d497692945db006dacda0c63013d622dfcd63"
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "2f997424c8314781ca037a91c2264b1b0fd3b1231f76e655a5488c0e8e9495b9"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
+      "cb453666857a3e41cc1d5020496b728cff34988967d372f383fd99117be04d25"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
+      "cb453666857a3e41cc1d5020496b728cff34988967d372f383fd99117be04d25"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
+      "92fbc1d06a847765eb9e96324723db3e60ff512b9b658d681604954d438f894f"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-statements\",\"oxlint-disable\"]": [
+      "8e854d9906c887c86d62ea3a844202e9f715b7be19fff78f4febb929ee066225"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
+      "8e854d9906c887c86d62ea3a844202e9f715b7be19fff78f4febb929ee066225"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
+      "8e854d9906c887c86d62ea3a844202e9f715b7be19fff78f4febb929ee066225"
+    ],
+    "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
+      "8e854d9906c887c86d62ea3a844202e9f715b7be19fff78f4febb929ee066225"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "c78bd7d51b72e8b5dac9687b54fe74b3df7a0b9d34377ef917039c508e0ff251"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/channels/eve.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "edc961ab461f760c155145951411273f01ceb85b99b261e0ad5264029e55e440"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "29bf3b1cf1a367838bcd381869dc41ad2a0bb551719a6e5a62afb4fd1fc78c39"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
+      "8e120000d01fbee0ee4b5fd6bfefbd8961a5eb072020cc48696c4ab569c61f94"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "6df86edb77aa612ddcfb0871f979a16e9d30c7e6e190a508593b87c95db5d630"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/hooks/settlement.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "86c82bfb38a8167306a07608e2a60430bb7b36c40707152738232e0ad3a6f4bd"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "df28d486fe6a1f46d5cb439a7b4dbdde116eeba5dcbcc4c51231ed5086969ee0"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
+      "518750068dfea2706134654dc367cdbfc81ba25d954814574923046d25de2ba8"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "7035df8e404ba14ee6eb3e681eb6a4e99b313df08fd96e67a3d3b23830895604"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/agent/tools/connector.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "6b67328a8789c4a413207b076923cf5910e728b33804bfd7010acdc8011f0ca3"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/control.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "32ae960b80ca4994e9945bb4341ff5de5d83d17323cb4a837c530acdd85cc1ed"
+    ],
+    "[\"tests/eve-retirement-runtime/restart-fixture/control.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
+      "ac573b1562252dfcd2e098ea3933c271b83fcc3aa7951f996af51b5f3a3d4785"
+    ],
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "cb6072ba0c09c97e325bd52f56e4a90e47b82fe7b5521a284a46a2ee5fec0b5c"
+    ],
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "471a30ffc7a5d1d169bf398586ab245c42b3927a2eef6c7fd84130b91bc52b40",
+      "beb39c0e78373ebb2e1ecd1c5e8bded0adc97cef7973ab4631ca57bd60c38eb7"
+    ],
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
+      "40e4978d15aa1b5c23dd6852035a0c4fe3fb0903b2b1456e28f85fb87d33e3a1"
+    ],
+    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "5a5f7684ff119786010395b9a47c15aca0c87d1309e5846499508d9c7ad517fc"
     ]
   },
   "version": 1
