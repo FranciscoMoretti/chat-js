@@ -3,31 +3,38 @@ import {
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "@/lib/db/eve-code-sandboxes";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { resolveEveConversationScope } from "./conversation-scope";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCodeSandboxOwnership); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * init-declarations (#507): eveCodeSandboxOwnership assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * jsdoc/require-param (#534): eveCodeSandboxOwnership's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveCodeSandboxOwnership's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-lines-per-function (#510): eveCodeSandboxOwnership keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep eveCodeSandboxOwnership's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveCodeSandboxOwnership's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveCodeSandboxOwnership accepts context: { callId: string; session?: { id: string; auth: { initiator?: { p; provider: { teamId: string; projectId: string; }; signal?: AbortSignal; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+interface CodeSandboxOwnership {
+  created: (name: string) => Promise<void>;
+  release: () => Promise<void>;
+  reserve: (
+    provider: { readonly teamId: string; readonly projectId: string },
+    signal?: ReadonlyNativeSurface<AbortSignal>
+  ) => Promise<string>;
+}
+
+/**
+ * Track the allocation intent owned by one native tool invocation, including failed creates.
+ * @param {{ readonly callId: string; readonly session?: { readonly id: string; readonly auth: { readonly initiator?: { readonly principalId: string } | null } } }} context - Tool call and native session identity used to authorize and reserve its sandbox.
+ * @returns {CodeSandboxOwnership} Callbacks that reserve, confirm and release the same durable allocation intent.
  */
-/** One native tool invocation owns one allocation intent, including failed creates. */
+// oxlint-disable-next-line max-lines-per-function -- The three allocation callbacks currently close over one reservation and invocation context; further decomposition of this shared-state boundary remains under review.
 export const eveCodeSandboxOwnership = (context: {
-  callId: string;
-  session?: {
-    id: string;
-    auth: {
-      initiator?: {
-        principalId: string;
+  readonly callId: string;
+  readonly session?: {
+    readonly id: string;
+    readonly auth: {
+      readonly initiator?: {
+        readonly principalId: string;
       } | null;
     };
   };
-}) => {
+}): CodeSandboxOwnership => {
+  // oxlint-disable-next-line init-declarations -- No allocation exists until reserve succeeds; explicit undefined initialization conflicts with no-undefined.
   let reservation:
     | {
         ownerId: string;
@@ -64,11 +71,8 @@ export const eveCodeSandboxOwnership = (context: {
     /* oxlint-enable oxc/no-async-await */
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserve's awaited sequencing and rejected-Promise behavior. */
     async reserve(
-      provider: {
-        teamId: string;
-        projectId: string;
-      },
-      signal?: AbortSignal
+      provider: { readonly teamId: string; readonly projectId: string },
+      signal?: ReadonlyNativeSurface<AbortSignal>
     ): Promise<string> {
       if (!context.session) {
         throw new Error("Code execution requires a native session.");
@@ -93,4 +97,3 @@ export const eveCodeSandboxOwnership = (context: {
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */

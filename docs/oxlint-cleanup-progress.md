@@ -194,6 +194,12 @@ Deletion-state lookup now returns an explicit private receipt derived from the a
 
 Full lint, all seven type tasks, all 203 CLI tests (1,102 assertions), 46 focused app tests and regenerated template parity pass. The deletion helper suite also passes after the final receipt change. Native typed/unused output matches the same six established warnings. Live PostgreSQL e2e scenarios were not run. Suppression entries total **19,857**, down eight. No PR has been opened; final conditional adoption and original-scope review continue.
 
+The twenty-fifth batch removes five original sandbox-ownership documentation/return/readonly entries. The existing native readonly surface models cancellation while owned context/provider fields become readonly readers; callback properties remain mutable and actual public types are mutually assignable. Emitted JavaScript is byte-identical. Initialization is scoped to the genuinely absent allocation binding; the shared-closure size decision is narrowed but remains under review.
+
+Deletion finalization gains concrete owner/route documentation and two native-schema readonly row projections. Twelve original scopes were examined: native transaction compatibility, explicit persisted null clears, first-row existence limits and ordered content checks now have exact local explanations. A mapped Readonly transaction demonstrably fails with TS2345 because it loses protected schema/index members needed by the native tombstone helper. Transaction size and duplicated predicate nesting remain unresolved, with meaningful phase/predicate refactors being investigated; narrowing is not counted as proving those exceptions necessary. Runtime syntax and public types remain unchanged.
+
+Full lint, all seven type tasks, 32 focused tests and regenerated template parity pass. Native typed/unused diagnostics exactly match the six established warnings. These erased annotations/comments do not warrant another full CLI run; the latest runtime-changing checkpoint retains its 203-test CLI pass. Entries total **19,863**, a net increase of six from splitting broad scopes despite the verified fixes. Live PostgreSQL e2e and full authenticated application coverage are not claimed.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records
