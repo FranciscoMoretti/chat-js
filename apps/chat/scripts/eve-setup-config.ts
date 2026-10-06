@@ -41,7 +41,7 @@ export const resolveEveSetup = (
   try {
     target = new URL(validated.data ?? "");
     decodeURIComponent(target.hostname);
-    if (!target.hostname || target.pathname === "/") {
+    if (!target.hostname || target.pathname === "" || target.pathname === "/") {
       throw new Error("Missing database host or name");
     }
   } catch {

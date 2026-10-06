@@ -32532,19 +32532,19 @@
       "3b77a343164cc04b5427c9e5b987eccb3d754067d9e03464720833f33f46da25"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "ac7fadda15eba737526c9dd4488ed8b4caf160b8b1e4664cda5868c16d9525a2"
+      "12067a136ca8301b902630ba018c77148250151a093459577a643e3a93e1bb1f"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "ac7fadda15eba737526c9dd4488ed8b4caf160b8b1e4664cda5868c16d9525a2"
+      "12067a136ca8301b902630ba018c77148250151a093459577a643e3a93e1bb1f"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "1f3802dee0714013c3e45cbe1ee5b70687d63685e39b361aa00d61b4013e90f0"
+      "543fc2fd0812bb37893b942e2175e8abcda4750f647c61da7ce432d48f588880"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "1f3802dee0714013c3e45cbe1ee5b70687d63685e39b361aa00d61b4013e90f0"
+      "543fc2fd0812bb37893b942e2175e8abcda4750f647c61da7ce432d48f588880"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "1f3802dee0714013c3e45cbe1ee5b70687d63685e39b361aa00d61b4013e90f0"
+      "543fc2fd0812bb37893b942e2175e8abcda4750f647c61da7ce432d48f588880"
     ],
     "[\"apps/chat/scripts/eve-setup.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "2ac7e98b8cd7d95250913d9d26a4c1a7774f9fb13934f5d6267079309b9e6dd2"
