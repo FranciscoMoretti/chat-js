@@ -5,12 +5,25 @@ import path from "node:path";
 
 /* oxlint-enable import/no-nodejs-modules */
 import { Client } from "eve/client";
+import { z } from "zod";
 
 import { createPersistentRuntime } from "./persistent-runtime";
 
 const crashAtCallbacks = process.argv.includes("--callbacks");
 const swapConnector = process.argv.includes("--swap-connector");
-const runtime = await createPersistentRuntime("restart-fixture");
+const useDefaultLease = process.argv.includes("--default-lease");
+const crashTestLeaseSeconds = 1;
+const runtime = await createPersistentRuntime(
+  "restart-fixture",
+  // oxlint-disable-next-line no-undefined -- The optional experimental installation is absent: this probe always uses the published package.
+  undefined,
+  crashAtCallbacks && !useDefaultLease
+    ? { inlineOwnershipLeaseSeconds: crashTestLeaseSeconds }
+    : {}
+);
+const processMarker = z.object({ pid: z.number().int().positive() });
+const noSettledProcess = 0;
+let settledPid = noSettledProcess;
 await Bun.write(
   Bun.stdout,
   `Persistent runtime fixture: ${runtime.directory}\n`
@@ -65,11 +78,15 @@ try {
     { optionId: "approve", requestId: approval.requestId },
   ]);
   if (crashAtCallbacks) {
-    await runtime.waitForMarker("candidate");
+    const candidate = processMarker.parse(
+      await runtime.waitForMarker("candidate")
+    );
     await runtime.crash();
     await runtime.release("candidate");
     await runtime.start();
-    await runtime.waitForMarker("settled");
+    const settled = processMarker.parse(await runtime.waitForMarker("settled"));
+    assert.notEqual(settled.pid, candidate.pid);
+    settledPid = settled.pid;
     const settledSnapshot = await session.snapshot();
     assert.ok(
       settledSnapshot.events.some(
@@ -91,10 +108,15 @@ try {
   }
   const effect = await runtime.waitForMarker("effect");
   await Bun.write(Bun.stdout, `Effect: ${JSON.stringify(effect)}\n`);
+  const effectProcess = processMarker.parse(effect);
+  if (crashAtCallbacks) {
+    assert.notEqual(effectProcess.pid, settledPid);
+  }
   assert.deepEqual(effect, {
     callId: approval.action.callId,
     connectorIdentity: "original",
     input: expectedInput,
+    pid: effectProcess.pid,
     sessionId: session.state.sessionId,
     toolName: approval.action.toolName,
   });

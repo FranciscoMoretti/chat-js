@@ -7,6 +7,8 @@ import { open, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /* oxlint-enable import/no-nodejs-modules */
+import { z } from "zod";
+
 import { createRuntimeFixture } from "./fixture";
 
 const pollIntervalMs = 100;
@@ -41,9 +43,35 @@ const createPersistentRuntime = async (
   experimentalInstallation?: {
     readonly nodeModules: string;
     readonly provenance: string;
-  }
+  },
+  recovery: { readonly inlineOwnershipLeaseSeconds?: number } = {}
 ) => {
   const fixture = await createRuntimeFixture(source, experimentalInstallation);
+  const maximumLeaseSeconds = 900;
+  const inlineOwnershipLeaseSeconds = z
+    .number()
+    .int()
+    .min(one)
+    .max(maximumLeaseSeconds)
+    .optional()
+    .parse(recovery.inlineOwnershipLeaseSeconds);
+  const environment = {
+    ...fixture.environment,
+    ...(inlineOwnershipLeaseSeconds === undefined
+      ? {}
+      : {
+          WORKFLOW_INLINE_OWNERSHIP_LEASE_SECONDS: String(
+            inlineOwnershipLeaseSeconds
+          ),
+        }),
+  };
+  await writeFile(
+    path.join(fixture.directory, "recovery-policy.json"),
+    JSON.stringify({
+      inlineOwnershipLeaseSeconds:
+        inlineOwnershipLeaseSeconds ?? "runtime-default-860",
+    })
+  );
   const reservation = Bun.serve({
     fetch: () => new Response("reserved"),
     hostname: "127.0.0.1",
@@ -68,6 +96,15 @@ const createPersistentRuntime = async (
       process.kill(-state.running.pid, "SIGKILL");
     }
     await state.running.exited;
+    // EVE's detached server closes asynchronously on CLI IPC disconnect.
+    // Do not release barriers or reuse its port while that owner can still run.
+    await until(async () =>
+      (await Bun.file(
+        path.join(fixture.directory, ".eve/dev-server-state.v1.json")
+      ).exists())
+        ? undefined
+        : true
+    );
     delete state.running;
   };
 
@@ -96,7 +133,7 @@ const createPersistentRuntime = async (
       {
         cwd: fixture.directory,
         detached: true,
-        env: fixture.environment,
+        env: environment,
         stdio: ["ignore", log.fd, log.fd],
       }
     );

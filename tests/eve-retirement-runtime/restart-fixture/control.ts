@@ -9,7 +9,7 @@ const mark = async (name: string, value: unknown): Promise<void> => {
 };
 
 const barrier = async (name: string, value: unknown): Promise<void> => {
-  await mark(name, value);
+  await mark(name, { pid: process.pid, value });
   const pollIntervalMs = 100;
   /* oxlint-disable eslint/no-await-in-loop -- The fixture pauses this exact callback until the driver releases its barrier or kills the process. */
   for (;;) {

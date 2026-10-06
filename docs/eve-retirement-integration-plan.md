@@ -1,29 +1,29 @@
 # Lane D shared integration plan
 
-This plan reviews A `7890d3ff3`, B's provisional `135c8a8f1`, and C `8296d3ef9`. No lane commit or runtime patch has been integrated. Updated commits requested by the parent supersede those review points.
+Reviewed final A `12dfce419`, B `19a4035fbf6184910374824911e6cec206add286`, and C `db96edc6d` atop `8296d3ef9`. No lane commit or runtime patch has been integrated; production dependencies remain unchanged.
 
-## Shared support ready for relay
+## Shared support and conflicting restart observations
 
-Use [persistent runtime controls](../tests/eve-retirement-runtime/RESTART.md) for actual process death and `eve dev --resume` with the same local world. The shared launcher pins EVE 0.71.3 and AI SDK 7.0.106. Alternate, separately built installations are explicitly labeled experimental. B's source-only checkpoint proof does not become a Workflow proof until run through a compiled/persistent boundary; C's fresh-client replay similarly does not become process restart merely by reattaching a client.
+Use the corrected [persistent runtime controls](../tests/eve-retirement-runtime/RESTART.md), retaining the isolated EVE 0.71.3 / AI SDK 7.0.106 installation. D's prior callback timeout used the default 860-second ownership lease with a 60-second wait and did not wait for the detached server to close. B's final runner uses a one-second lease and waits for server-state removal. D now matches those controls, checks different process IDs and retains its one-effect assertion. The corrected callback case passes. B's later barrier is inside the executor after receipt context; D's is inside the settlement hook. This resolves the apparent contradiction without adopting B's experimental patch.
 
-Lane D's executable evidence finds a same-name dynamic connector replacement after a parked approval, and an uncompleted continuation within 60 seconds after killing inside settlement callbacks. Relay these failures to B; retain the receipt adapter. For C, first verify receipt replay after restarting an idle/completed session, then exercise queued non-materialization separately. An in-flight interrupted step may expose the same recovery limitation; absence of a receipt during a timeout is not rejection or terminal cancellation.
+The same-name dynamic connector replacement counterexample remains independent. Retain the receipt adapter pending an accepted replacement. C's final completed-world restart is a distinct, narrower boundary than in-flight recovery; absent receipts are not terminal cancellation. Neither lane establishes production Postgres, old durable-run compatibility or exactly-once external effects.
 
-## A's exception review
+## Final scoped exception review
 
-A's lane-only JSON has **40 rule/directive entries across seven files**, not eight. Thirteen entries apply to five compiled fixture files; 27 apply to two `.mjs` internal-runtime probes. All include reasons and scope fingerprints; `missingReasons` is empty.
+A's `tests/eve-retirement-lane-a/lint-exception-additions.json` matches its final files: **60 occurrences across 14 files**, no missing reasons. SHA-256: `06359a3fa6b234ca581738441c2bb928985e2f240b93f9b4e137e3c775cb70d0`.
 
-- EVE-required default exports, native test Node imports, ordered awaited scenario steps and SDK-owned callback types are expected fixture boundaries. Keep their scopes restricted to these tests.
-- Scenario numeric literals and function-size exceptions are acceptable only for the bounded proof sequence they describe. Do not copy them into production deletion code.
-- The two `.mjs` probes dynamically load internals from two different runtime distributions. Their `no-unsafe-*` / template-expression waivers reflect that untyped boundary, not approval to weaken application types. Keep those probes explicitly classified as research evidence; use typed public/compiled fixtures for the installed-path acceptance proof.
-- Recompute fingerprints after A finishes the actual installed dynamic-path proof. The present JSON is a review aid, not a baseline file to overwrite D's shared budget with.
+- Default exports, native Node imports, ordered awaited scenarios and SDK-owned callback types are fixture boundaries. Numeric/function-size and template inference exceptions stay local.
+- The two `.mjs` internal-runtime probes contribute 27 occurrences; their unsafe/template-expression waivers remain research-only boundaries, not precedent for production code. The added installed dynamic proof introduces no unsafe waivers.
 
-C should produce the same lane-only additions format for unavoidable scoped Node, default-export, ordered-loop and SDK callback exceptions, while fixing ordinary unsafe typing/style directly. C must not edit the shared baseline. Prefer no new exceptions where a typed public interface works.
+C's `experiments/eve-delivery-correlation/lint-exception-additions.json` matches its final files: **100 occurrences across 15 files, 44 rule/directive records**, no missing reasons or `no-unsafe-*` waivers. SHA-256: `f9534d8ea9d80d5e1b44e2fd4c71a2b214261a57856bbd92ecce5a7890ffbf86`. Scoped Node/SDK, ordered-loop, default-export, mock callback and JSON-wire roundtrip exceptions are justified for these experiments.
+
+B has no lane manifest: shell and patch-text artifacts do not add executable-root exception entries. Materialized patched fixtures still require their own type/proof checks before promotion. These snapshots are review aids; verify hashes against the exact integrated commits and never overwrite the central budget with a lane-only snapshot.
 
 ## Integration sequence (only after parent authorization)
 
 1. Parent supplies each final worktree/commit and which artifact is approved for integration. Do not cherry-pick B/C's provisional runtime patches as a dependency replacement.
 2. Integrate the shared controller before feature fixtures, retaining the isolated manifest/lockfile. A's fixture may consume the shared installation; B/C experiments must use separate installations with explicit provenance.
-3. Bring in one lane at a time. Review its production diff separately from experimental/runtime proof code. A remains blocked until the actual installed dynamic path and guarded database mutation are covered; a static authored tool or internal `invokeTool` call is insufficient.
+3. Bring in one lane at a time. Review its production diff separately from experimental/runtime proof code. Review A's final installed dynamic-path proof and guarded database mutation coverage; a static authored tool or internal `invokeTool` call alone is insufficient.
 4. Read that lane's scoped exceptions and regenerate the central budget from final integrated source with `bun scripts/lint-exceptions.ts --write-baseline --allow-new`. Inspect the diff: only reviewed lane/shared files may gain entries, counts or fingerprints. Do not replace the central JSON with a lane-only snapshot or silently bless unrelated waivers.
 5. Run `bun lint:exceptions`, targeted `bunx oxlint <lane paths>`, explicit isolated fixture type checks, each lane's real-runtime commands, `bun lint`, and `bun test:types`. Root Turbo type checks do not cover packages outside workspace globs. Record expected negative probes as failures/counterexamples, not green acceptance tests.
 6. Keep each proven removal independently reviewable. Do not switch production EVE/Workflow until the [complete inventory](eve-retirement-inventory.md), old durable runs and patched Postgres adapter pass their own gates.

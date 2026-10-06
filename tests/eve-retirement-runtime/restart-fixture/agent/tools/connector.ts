@@ -44,6 +44,7 @@ export default defineDynamic({
               callId: context.callId,
               connectorIdentity,
               input,
+              pid: process.pid,
               sessionId: context.session.id,
               toolName: context.toolName,
             };
