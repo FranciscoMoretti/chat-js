@@ -5532,7 +5532,6 @@
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"no-console\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/scripts/check-workflow-backend.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.test.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
@@ -5542,7 +5541,6 @@
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/scripts/eve-setup-config.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
@@ -32366,10 +32364,10 @@
       "90fc9799655b3a691d972837b02c205015042069d060ccbaa3d85f7e255f2021"
     ],
     "[\"apps/chat/scripts/build-eve.ts\",\"no-console\",\"oxlint-disable\"]": [
-      "72b0345fda28bb08d5716b21a351de0a74d270a4ea9ee8edfc8c2e2435e0ea47"
+      "34089b7f8ece40c9ca94240febf1f2e4f943048a2ad5b06eabde82aaf76394c8"
     ],
     "[\"apps/chat/scripts/build-eve.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
-      "fea08bebd57a1e5df765cb33477c08e57442aaef92de45012850409903261c74"
+      "3fe7177e656bae1c35d85f7239f76438e8b7b80184fe1655916709e206cc167e"
     ],
     "[\"apps/chat/scripts/build-eve.ts\",\"node/no-sync\",\"oxlint-disable\"]": [
       "d027a44044a26af65bbb4f5557bdcc73792c5e53eea26b808112eae68688ef89",
@@ -32542,19 +32540,16 @@
     ],
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "306b752169834dd9dd30b2901286b299de18ea69aead225446087d5767f01cf6",
-      "b8feb793eae69216de954c727c58e0db400ef0ec1a82b9fe019470377fd5318e"
+      "454637c6b7da650fd4d88dedcf45eb8cb4fe2fc16eb9d2bfba827b909537c066"
     ],
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
       "7344f3295ec8f09d053c3f8eb521cf2e6776e5a5d41e4fbe9e8057d690d6aa7e"
     ],
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"no-console\",\"oxlint-disable\"]": [
-      "d4915e0006cfe6ac4f3ea52fa426ac0402c9922f198eb189032eb791ec0c66ca"
-    ],
-    "[\"apps/chat/scripts/check-workflow-backend.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "d4915e0006cfe6ac4f3ea52fa426ac0402c9922f198eb189032eb791ec0c66ca"
+      "ce19d2edf1ca0505bb36c2d046c03190d1a60096c388b5aa982a134fb40c05ec"
     ],
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": [
-      "46216dc54474ef1e2f21bc949c4568b78ebb1846387fedc89fdb69d7fb6ad25c"
+      "94cc2e12b87cb7c9a8ee93b45904421b440615674be37fb252c1a5b8fc657312"
     ],
     "[\"apps/chat/scripts/eve-setup-config.test.ts\",\"no-undefined\",\"oxlint-disable\"]": [
       "9515fd57ea2dd5d825d8a8e2c3e05de0be8f1c012a1502ed9f48e8131faaa722"
@@ -32563,25 +32558,22 @@
       "3b77a343164cc04b5427c9e5b987eccb3d754067d9e03464720833f33f46da25"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "6cede4830d3c9d09f5e34b5d7f12c69f66f6fc4c23d283696360fd9574ed348c"
+      "4be5f3f46407489ef711ccad966ce05d025edb67b21a3d89c33661e842cb114f"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "6cede4830d3c9d09f5e34b5d7f12c69f66f6fc4c23d283696360fd9574ed348c"
+      "4be5f3f46407489ef711ccad966ce05d025edb67b21a3d89c33661e842cb114f"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"init-declarations\",\"oxlint-disable\"]": [
-      "128a18e55a2d2eb6d5491028562bc78c479520e3fc422e957a430e4ffaea3c4a"
+      "f2c0787ff47796e9d873f1472ef495a2e227edc6a49f3dd1dc891194ccefe1b5"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "128a18e55a2d2eb6d5491028562bc78c479520e3fc422e957a430e4ffaea3c4a"
+      "f2c0787ff47796e9d873f1472ef495a2e227edc6a49f3dd1dc891194ccefe1b5"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "128a18e55a2d2eb6d5491028562bc78c479520e3fc422e957a430e4ffaea3c4a"
+      "f2c0787ff47796e9d873f1472ef495a2e227edc6a49f3dd1dc891194ccefe1b5"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "128a18e55a2d2eb6d5491028562bc78c479520e3fc422e957a430e4ffaea3c4a"
-    ],
-    "[\"apps/chat/scripts/eve-setup-config.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "128a18e55a2d2eb6d5491028562bc78c479520e3fc422e957a430e4ffaea3c4a"
+      "f2c0787ff47796e9d873f1472ef495a2e227edc6a49f3dd1dc891194ccefe1b5"
     ],
     "[\"apps/chat/scripts/eve-setup.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "2ac7e98b8cd7d95250913d9d26a4c1a7774f9fb13934f5d6267079309b9e6dd2"

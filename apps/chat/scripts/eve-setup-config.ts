@@ -5,12 +5,11 @@ import { getEveRuntimeEnvOptions } from "../lib/env-schema";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveSetup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * init-declarations (#507): resolveEveSetup assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): resolveEveSetup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): resolveEveSetup uses 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): resolveEveSetup accepts issue; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): resolveEveSetup intentionally keeps the existing falsy-value behavior of databaseUrl; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 export const resolveEveSetup = (
   world: string,
@@ -26,7 +25,7 @@ export const resolveEveSetup = (
       `ChatJS setup does not support world "${world}". Add and verify its setup and lifecycle support before using it.`
     );
   }
-  if (!databaseUrl) {
+  if (typeof databaseUrl !== "string" || databaseUrl === "") {
     throw new Error(
       "Set WORKFLOW_POSTGRES_URL to a direct or session PostgreSQL runtime URL, or provide DATABASE_URL as the fallback."
     );

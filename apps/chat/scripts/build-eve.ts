@@ -14,7 +14,7 @@ import { resolveWorkflowWorld } from "../lib/eve/world-config";
  * no-console (#514): console.log emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  */
 console.log(
-  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  // oxlint-disable-next-line no-ternary -- Keep backend selection in the template interpolation; direct if/else triggers pinned unicorn/prefer-ternary.
   `Workflow backend: ${resolveWorkflowWorld() === "vercel" ? "Vercel (managed)" : "PostgreSQL (local/self-hosted)"}`
 );
 /* oxlint-enable no-console */

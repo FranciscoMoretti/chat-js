@@ -33,12 +33,11 @@ const check = async (): Promise<void> => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
+/* oxlint-disable no-console --
  * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await check(); } catch (error's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await check();
   } catch (error) {
