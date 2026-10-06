@@ -5,15 +5,17 @@ import { registerEveSubagent } from "@/lib/db/eve-subagents";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
+
+const NO_USAGE_COST_USD = 0;
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ingestEveUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ingestEveUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): ingestEveUsage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): ingestEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): ingestEveUsage accepts event: MessageStreamEvent; attribution?: { sessionId: string; turnId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -44,8 +46,11 @@ export const ingestEveUsage = async (
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
       const priced = await recordEveUsage({
-        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation, skipped accesses and the existing (call.failed === true ? 0 : undefined) fallback. The app guidance prefers optional chaining.; no-ternary: Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        costUsd: call.usage?.costUsd ?? (call.failed === true ? 0 : undefined),
+        costUsd:
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation and the failed-call fallback. The app guidance prefers optional chaining.
+          call.usage?.costUsd ??
+          // oxlint-disable-next-line no-ternary -- Keep the failed-call fallback lazy; if/else assignment conflicts with pinned unicorn/prefer-ternary.
+          (call.failed === true ? NO_USAGE_COST_USD : undefined),
         eventId: `${eventId}:model-call:${index}`,
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading generationId from call.providerMetadata.gateway; read gateway from call.providerMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         generationId: call.providerMetadata?.gateway?.generationId,
@@ -71,8 +76,9 @@ export const ingestEveUsage = async (
     // oxlint-disable-next-line no-ternary -- Keep recordedCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;
     return await recordEveUsage({
-      // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      costUsd: event.data.status === "rejected" ? 0 : recordedCost,
+      costUsd:
+        // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        event.data.status === "rejected" ? NO_USAGE_COST_USD : recordedCost,
       eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
       ownerId,
       sessionId: billingSession,
@@ -88,8 +94,12 @@ export const ingestEveUsage = async (
     return undefined;
   }
   const priced = await recordEveUsage({
-    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    costUsd: event.type === "step.failed" ? 0 : event.data.usage?.costUsd,
+    costUsd:
+      // oxlint-disable-next-line no-ternary -- Failed steps use a zero-cost value; other events use optional usage. The selected value remains lazy.
+      event.type === "step.failed"
+        ? NO_USAGE_COST_USD
+        : // oxlint-disable-next-line oxc/no-optional-chaining -- Step usage is optional and must remain undefined when absent; the app guidance prefers optional chaining.
+          event.data.usage?.costUsd,
     eventId,
     generationId:
       // oxlint-disable-next-line no-ternary -- Keep generationId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -112,4 +122,4 @@ export const ingestEveUsage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types */

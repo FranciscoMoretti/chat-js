@@ -100,7 +100,14 @@ it("retains failed-step evidence without reporting an unpriced completed call", 
   );
 });
 /* oxlint-enable oxc/no-async-await */
-const toolEvent = (output: unknown, id = "event-one"): MessageStreamEvent => ({
+const toolEvent = (
+  output: unknown,
+  id = "event-one",
+  status: Extract<
+    MessageStreamEvent,
+    { type: "action.result" }
+  >["data"]["status"] = "completed"
+): MessageStreamEvent => ({
   data: {
     result: {
       callId: "call-external",
@@ -109,7 +116,7 @@ const toolEvent = (output: unknown, id = "event-one"): MessageStreamEvent => ({
       toolName: "externalPaidTool",
     },
     sequence: 1,
-    status: "completed",
+    status,
     stepIndex: 0,
     turnId: "turn_1",
   },
@@ -143,6 +150,18 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
   expect(record.mock.calls[0]).toEqual(record.mock.calls[1]);
   expect(record.mock.calls[0][0]).toEqual({
     costUsd: 0.02,
+    eventId: "eve-tool:session:call-external",
+    ownerId: "owner",
+    sessionId: "session",
+    turnId: "turn_1",
+  });
+  await ingestEveUsage(
+    "owner",
+    "session",
+    toolEvent(output, "rejected-event", "rejected")
+  );
+  expect(record.mock.calls[2][0]).toEqual({
+    costUsd: 0,
     eventId: "eve-tool:session:call-external",
     ownerId: "owner",
     sessionId: "session",
