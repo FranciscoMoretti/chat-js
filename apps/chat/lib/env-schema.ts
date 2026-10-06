@@ -137,11 +137,10 @@ const clientEnvSchema = {
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep playwrightDefault's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
-const playwrightDefault = (value: unknown, fallback: string) => {
+const playwrightDefault = (value: unknown, fallback: string): unknown => {
   if (
     isPlaywrightTestEnvironmentEnabled &&
     (value === null || value === undefined || value === "")
@@ -150,7 +149,7 @@ const playwrightDefault = (value: unknown, fallback: string) => {
   }
   return value;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env -- no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

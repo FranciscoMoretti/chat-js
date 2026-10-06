@@ -107,11 +107,10 @@ const registrationsFor = (
 /* oxlint-enable typescript/explicit-function-return-type */
 
 type Registration = ReturnType<typeof registrationsFor>[number];
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const registrationKey = (item: Registration): string => item.key;
+const registrationKey = (item: Readonly<Pick<Registration, "key">>): string =>
+  item.key;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readToolDefinition's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
