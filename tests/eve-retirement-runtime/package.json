@@ -1,0 +1,18 @@
+{
+  "name": "chatjs-eve-retirement-runtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun run run.ts",
+    "test:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "ai": "7.0.106",
+    "eve": "0.71.3",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "typescript": "6.0.2"
+  }
+}

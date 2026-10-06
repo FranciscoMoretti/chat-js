@@ -6253,7 +6253,19 @@
     "[\"scripts/vercel-preview-build.ts\",\"eslint/no-console\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"scripts/vercel-preview-build.ts\",\"typescript/no-unsafe-assignment\",\"oxlint-disable-next-line\"]": 1,
-    "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1
+    "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/agent/tools/record.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/agent/tools/record.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"max-statements\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
+    "[\"tests/eve-retirement-runtime/run.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1
   },
   "missingReasons": {},
   "scopeFingerprints": {
@@ -28975,6 +28987,42 @@
     ],
     "[\"scripts/vercel-preview-environment.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
       "844e34a0a4cc4d1aa34f45a88b057d41e0dd0759e4791c10f69ce8b99c7f8269"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "66e761f6a2447f308f6a8dac79d150723129949fe95b95f64e882e5a831c9fcb"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "cf8902cbac5c08feac0c047a9a5dd785ebd73b887fa59b9f65f11b89f5340933"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/agent/tools/record.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "eef7b93f625431e8502591eb810edd61ca7577d2f39b674feb0ad4b19f5b1e19"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/agent/tools/record.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "90ed2c31c6fa90b4f006a2af067bb9fdb20a0da39de39fd58a04594c4f183f2c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "3b399424283543bbe8233a7769440247dca176d2c9aed286d070b0506dc5ca82"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"max-statements\",\"oxlint-disable\"]": [
+      "4c9be0465d0741835e51b614ab406e8edf087edbaf16630c545988745200ccae"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "4c9be0465d0741835e51b614ab406e8edf087edbaf16630c545988745200ccae"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
+      "4c9be0465d0741835e51b614ab406e8edf087edbaf16630c545988745200ccae"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/baseline.eval.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "5a63236dfc5cad5f9de0e806325f0a1bdc68035ee25463b9e31cf662563f706c"
+    ],
+    "[\"tests/eve-retirement-runtime/fixture/evals/evals.config.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
+      "987791be08ca36dfed003d2a35e0221a8e187c157b4c71b1de8b1ac8a8b09034"
+    ],
+    "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
+      "0aa761b70ef06d561e8821e89db5e9fc5960e6898ed7263433e8418e5d9cdd5d"
+    ],
+    "[\"tests/eve-retirement-runtime/run.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
+      "1fad2f2c79b619c2930372a83e6d497692945db006dacda0c63013d622dfcd63"
     ]
   },
   "version": 1
