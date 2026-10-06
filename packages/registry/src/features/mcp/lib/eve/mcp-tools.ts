@@ -92,7 +92,6 @@ const withAbort = async <T>(
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/id-length */
 
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const assertConnector = (
   connector: McpConnector | undefined,
@@ -101,8 +100,8 @@ const assertConnector = (
   if (
     !(
       installedFeatures.has("mcp") &&
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enabled from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      connector?.enabled &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the optional access and one enabled-property read while treating only database true as enabled.
+      connector?.enabled === true &&
       (connector.userId === ownerId || connector.userId === null)
     )
   ) {
@@ -112,7 +111,6 @@ const assertConnector = (
   return connector;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withConnector's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -336,13 +334,13 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling asSchema(...).validate; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   const validated = await asSchema(tool.inputSchema).validate?.(input);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from validated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  if (!validated?.success) {
-    if (validated && !validated.success) {
+  if (validated?.success !== true) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Read the discriminant optionally so absence keeps the generic invalid-input error path.
+    if (validated?.success === false) {
       throw validated.error;
     }
     throw new Error("Invalid tool input.");
@@ -350,7 +348,6 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveMcpTool's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */

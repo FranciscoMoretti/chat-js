@@ -3067,18 +3067,16 @@
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable-next-line\"]": 8,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 13,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 6,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 14,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 6,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 11,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 7,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-sse-refresh.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-sse-refresh.test.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
@@ -3104,7 +3102,6 @@
     "[\"apps/chat/lib/ai/providers.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/lib/ai/providers.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/ai/providers.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/providers.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/providers.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/ai/providers.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/stream-errors.test.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 1,
@@ -4440,9 +4437,8 @@
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 7,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"eslint/id-length\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/lib/eve/mcp-tools.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 7,
-    "[\"apps/chat/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 7,
+    "[\"apps/chat/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 8,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
@@ -5031,9 +5027,8 @@
     "[\"apps/chat/lib/eve/tool-models.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/no-unnecessary-type-assertion\",\"oxlint-disable-next-line\"]": 2,
-    "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/eve/tool-result.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-result.test.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/tool-result.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
@@ -9245,18 +9240,16 @@
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 4,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable-next-line\"]": 8,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 13,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 6,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 14,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 6,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 11,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": 7,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": 1,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/oauth-authorization-required-error.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/oauth-authorization-required-error.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -9289,9 +9282,8 @@
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 7,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"eslint/id-length\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 7,
-    "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 7,
+    "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 8,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
@@ -22743,76 +22735,106 @@
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "6d2e45a47213f708b438a4211605fa9529b32550ecb2c17e829060156d49c623",
       "4f5c4b4d218ae483d37bf20861f0ec3c41490fcc646fc00c2cb2d9dd6391a7da",
-      "4bc342b7bdc97129bcad939e97f9c2a7ac5004a7288b9bdefd999bdf128ebfc3",
+      "beb986b17802d762abd29ecfcc01b889fa4b97385a8d978ddbff43152721c3d8",
       "187b1a8582676575be98d22958e0edcc027214a4e006cdd5c9de57dcf98f68b2"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
+      "2fda81a2a4fee5a4f59e808726dbe801c77588aff5b70f43be47cfc9f84e2a32"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
+      "2fda81a2a4fee5a4f59e808726dbe801c77588aff5b70f43be47cfc9f84e2a32"
     ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "c947bf251f29a85bedfe75d1dbafaaafde8a6ed1f31f541e94540006d05134b3"
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "a73b4844235c1b49e0ac3ddc3df2e9f1945bc85fab488b12ecbf373c5d769aec",
+      "2ee7035ea15e98ccff8db7e5110ea5296ba1f833aa8b7e9875d43f731fe1a5e8",
+      "73a1fba00f407aa09cc3e94e21e312126b1f4fbce27fdbafc3e2049a6686bcf4",
+      "0e464561f25ac67d519051bb93fac1f71e9cb925868dece9b10e416150fb3dd8",
+      "8fe3f18d5e301cf72c20ee576ec781ad5f6a29963194e55f4b11c114e06b7629",
+      "fcbfd87af99e41e48b6e1d928ccb7af1b0445282de682fb3417d543dbc9d4b3a",
+      "6387162e5dec3d08c018a24d1e549cbc41be8cbad4ebd72a9252a30f0108629b",
+      "50c17bc53712038e1a6d9b9faee47e4539a5e8e5993a63830839b9563da5bbee"
     ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "15e7e5e57ce91888fa86cd74dc7f4278ce2057c9551925286fc3efbf16886ca1"
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
+      "8ade0137dc43c2b0f08efaef8bffdf24e3a37d8e363194f73ada8ed6a37c1468",
+      "997227c0bfee5e0caef01c23e20de672c9d2671daed83806e692eefad113626d",
+      "7c69ccd93b384233c6c0a5d241b896c8faa5590dc1503f52f572a6ebb6f1b3b2",
+      "1d782681bc9c88400c0c9790e7853c2e2b8fe7c6f401796e99c9708dfb2b008f",
+      "85fde7dc8e7fcc6652ab4d5e1534516a74f60f8eee09e27944d1f87d85e94aa8",
+      "ee6db6810ed0c6be7c2735ad148f0a3905e9e681c4145880878a43dbb31c353a",
+      "70e9e724fe8accb57e11a3a070ad72e2c2c8d100ccd958d4abd2fac9f7a54c16",
+      "cb959867f28396d042c6bc0034d78834cf461803c448fac4c3f246d423b650ec",
+      "81f68dcdda1ce1c7ebdd01f4bc6e334b6c2dd757ca6acce5517c8326f09c4afe",
+      "c240fcee587010a2c79676f7f7538d9e3fa58879b84d8ec5dc3171b90b0da41c",
+      "af8a9f3b7e6559c93859f2ee72b828b409f74b4c6a48c01ec8f0f5d6eaaf0022",
+      "880a976c3ac7a8de95463199355009e9974be2f38ed1ef63bea23bc0fe39a2d4",
+      "8b31d1ad1ff81b7744febd46ffc1e1efc903fc230d09a704e7e181ea0b490f7f"
     ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "79a3201abdb4fa49d504c191258aa04dbfb625dd1937b68492151018fe94bd8a"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "f002fdf66245857e3ac71e11c4e45b6f8e5489445fd0ddddbbd0d890fb428d43"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "b0273fd0b70bd1cf27d3e8227417b1a91b910269c54c2dd7ae8b094c08524987"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "21679b7a84feaefd3a144a47f4c105c93356dc32747b96a0ef1e266ec15bbef0"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "2240ac1173f5c5ff23bccba1962642897069167cd18fef19f2207fd2588ee9fa"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "eddd5f030033d953e66698e2792249fd35fe0b8a8ca2f15c42d526b688b84edd"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "d505887a8812dd86a3a04e8ec5ac8045646b7cbabbfa77fd5a1d7946ca1227e3"
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "7b09ca29686a06bad3ba4b6db412fa0b3d4da1c8e1743cf9c8b5372699fb53c7",
+      "bee4db81d933b764d0e222dbbd9a5241fdfb02de4a495d505ef6118a46bb1bbb",
+      "31f7ee93d09e5b5c2d92e3a27f3c3cee1b8a18a581b123e090ce1e4004593a6d",
+      "c1e565b4d0b72814d1e06042b1a91cc291628f2c1534dd93e58c929634f27841",
+      "a4e34f3dcd93001c0af3dcfe81c41276e0377e920c19d6f7d5e6a79b90df2db2",
+      "e15769cca963aecf8bee356ebf376513ebb1f8c575cc509bf6c158e82fd32a1f"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "9a65a9b6b83cab5ab19552f72995055af4e786fc0b801a1e7132a64932079609",
-      "146a42c67bda867d240899675abffe2a923a91ffcbe0426454c0968206caa301",
+      "58a7c8130adbfb2249af148d21c8cfd0a07fc76561b5e5115f3a32e3d31bf10b",
+      "ca597bf25eed8609c63e2997bd8f3271b0bb68ef48091758a47e03410b6f23bf",
       "b0b6d1a5956d1f610f456517a34b4bcdcba1551b750ded6b4d84cb32f91f7112",
-      "f0a5bc98d52f66afa0f4720a51d2dd0d1163a0e24bc0fc4683dd6c99b18ad6ae",
-      "acd7abf0b74726f5ba86b1b9deaadab9ead73905a1f7673383a8516417cb9867",
-      "4f4eae4cb44e39d841b7613510a510e7935931e7371b5498a1066ea3dce15f68",
+      "de8a23aeffa28f7127135195bc9967badcddfc9d271dff76a33080079bc488dc",
+      "29b644631a3d22b7f52baf65ba6234f4c48ae39b708f77699e1103ebb71ee8b2",
+      "f4bcf332c1d36f0b0ffc48bd60af79880657efe760e2938ffb898187ee5d4a78",
       "563f95070b4b1bd508b29780acd4975eefda051e063adeff3e343e57ad347dbe",
-      "2feb5d8bd723bc3a74d0c48aa240c281137af1b3147bea48ad5c5f9f59122023",
-      "347c024a5815f4a6a8b1e7f9a13d876577397fb0607842f9312ce9fa4609e11c",
-      "c6c45cb3f393a42007950e1e558244c56e63a3e2b9d5035592d699998ae83d06",
-      "8180da5429b1dc0317bbc0d85345eea38bc3873369e0c3974c8fd10f1da5080b",
-      "f0ba0cfa471836bcbec1f2e42bb0225de123c19064cf3b2c45b51739b28e82a2",
-      "cfe87060eed113e5c12d843ea6dc2689a51d0488056acfbb64b561f95ca61844",
-      "c4bef0369f19817e69599249ebb8bc966d057cd60b652b27a751d8b08f9019f4"
+      "8cbf22328d8b9c41151cfe2a98822c52401b68c71757a04738c80e8a455f919b",
+      "7db9328dd2411b63efc2e2428eb609e41ce2c5fbeb2522107af399f3f32c34bd",
+      "ae1b461ba6ecddd2f0cfbc2d996d64af0898bc2c4184e3e002b27c9b2670f72c",
+      "4ff64193c830fa31ee35904997cf568808f63bff4a67d812e5dbb208f9a658a0",
+      "d67bf816ae269c282a6b7c1328876e7f2b8be0bd4411e1c339e81d593b1ad6d6",
+      "3bd923f61b0b1273e2dc10c2578eecd1f2dc4a1846d0d0e8a371d46757965f48",
+      "2469553e098febe96c15ed1f8873b1cd88434aa024eb384ec9211fea4ccf25de"
+    ],
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "61e94d876f8757e25630260bf94589042f0436da423bc2b299b68873671f12d3",
+      "22bc630a2f59013d98a4211e8b488bf2b948ae94a44140a83d7849a33fac8706",
+      "57af43d0249247f10209e0fd3ae8b51d437776ad4c7cf37110b633037ba59217",
+      "b05b37531867a829a93ac023fd7ddf84567465c29842a2265d6ad83a96a2aa16",
+      "a88f4e50d2a0d250dd307b32db4737179895eed1ac5cbf3eb55d4f78501aefe3",
+      "0e55757a727b6324e06457eaa0a3c34f3e9568fdad4272b9c14fc970f313ae80"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "e2adf9f5dfc1eceb1c94bb65e1b73c36b95e0ccc216133f706ec0f005bb6e312",
       "c1f37816fa04d432656329f873df42b469d9ab621f44e23722b28ea8b8556070",
       "85bb46e62c51da6c4134396a95fd0f7a1fdd4efe4d86bd609c0440a1a017ba9d",
       "da87497f69ca6d3ee5ad8037c36e02c969153850a6fcf6b141cb0b51f02c1904",
-      "cfe9fc580c44037865390c7d4e76b8e3b717b160980d552ed31c37d952f492e0",
-      "bfccf5921ea8474da1343d2e657dd27392c08e3c3fc2f1a1017e10554c1f5f55",
-      "c1513410709c168eae4f72d67221568c1ef6c5ed8c4047538c9ebfb105a1327e",
-      "6e2f99f845729f309c4dcec842f9812e5921974764f95813c64144933fae2e5e",
+      "f15f19e18bf2551647f26294de637b067d203fae55690c541555f26990a9d496",
+      "78bcf7162445afa198781cf94f5146ce6c08cc909086f6196eed130474d79774",
+      "9564d77cafeaba2a52f2fa286a6fc1b705db13b72d7861bd9b055f92352418f2",
+      "402dd600af0b67cfbc95df5449e0a0e20fe416a0f862bf963786be8a78f31a8d",
       "fe0f137626e13f9d80f2d1aff80a4379b6ad7891af69b91b9c0b351e8c9e1e3d",
       "af92352c07bfa0e0374684f5bd9721d5c4628d3032a4f1b6231bb787e6075410",
-      "b0de5244df01162cbd27a3290e062221925e8afaafefd5dc47b6d5fc93faa8bb"
+      "40716a4fc4f678fb7da87c3f94de52376bf653f5b6ed8377b9bec93067c93627"
+    ],
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
+      "a2376be97424b9a7cc15f5569f5ebefd725e3f6ea9864be398aacc326ee776d6",
+      "70ff20165ed7f318b180e925439f0e2864449ca9db4381c807eb7e3f27a88c97",
+      "4c005b06ddb6154a5b5ccea7610ce8757946f9522a431a64888a239f1eefd903",
+      "7f4d8913bcc76ffe0f399f6a581680bf2c537dfab54fa8629cde5d860a011e5b",
+      "14d8b97ac37387fc81c8bac6406992fb8359a130bc012dfd9d0d6c82a75c44e6",
+      "ffba5534a5ae4afccbce1523c0a1632ecf0b05afee38096f17ae4c1037542439",
+      "84ba991ff1cc4254af00cf6edf011aa4b81e5a36400e220d944d854b61d1a84d"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "e22e370b1fe5e45e4b23b660cc69ade5d0972f56d2caa641cec679be23ec52c3"
     ],
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
+      "afa2f6328848a2bc599c7178be86b87a509d681bc113d688d7e03da6f6873a36"
+    ],
+    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": [
+      "402dd600af0b67cfbc95df5449e0a0e20fe416a0f862bf963786be8a78f31a8d",
+      "40716a4fc4f678fb7da87c3f94de52376bf653f5b6ed8377b9bec93067c93627"
+    ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "0a56ce2685875b471eb2dfbd5ec5b45a752d6b8ae3052c8c315a7a7499979dd1"
+      "d377d39b0ff3d3044965d5af4e67341ba5676d957962a8185377e1073c43b3eb"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-sse-refresh.test.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "2863b53a4f3536201fed17b8ee6357fa091454b2342d8d9ef29e2fb82176cb2d"
@@ -22893,9 +22915,6 @@
     ],
     "[\"apps/chat/lib/ai/providers.ts\",\"node/no-process-env\",\"oxlint-disable\"]": [
       "fb9f8d6e8a5e98c63544f921d8db26856c5160a803da95bd4d23607097b05055"
-    ],
-    "[\"apps/chat/lib/ai/providers.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "d2c55324c3ea10cea15834eb1b39ba1f23c3a7ea3abe88793880b40227b5b2af"
     ],
     "[\"apps/chat/lib/ai/providers.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "3f074eb821e4c19c28b53a70095481877745c088464328a01e6c2710fa5767d2"
@@ -28316,39 +28335,36 @@
       "8028a75cbc14c987c3f806cfd54294e99997df392c3d922d99c13f8085c29016"
     ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": [
-      "0c06830dab9ac8d83b9d08932dc446f3cb189052ede50de5ad680c55b5a8414a"
+      "20313fedf664b2b0fc235994afd5d187ddf9b0c6ee6aff8b0a8f0a68f4f03201"
     ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "ca208b0994a105b6b2628031fe03aaac0c39eb57d3605bee1ec7db2e89166a1a",
-      "35ad078d9abf960d9c8813221021d5080019923e79cf4b8aa30293a25a5d5303",
+      "c51d1b6db5cd96f543250d4f08fcf9518262ec10863083d11b1da25e4425c703",
       "a131570e388c5d1a9685f07980ce8d40008769eee295d9a3dbb1344441b1b521",
       "9fdefde84894b6238426f88627972a183b592456237a5c2f6bf09ab412a303e7",
-      "a0523381f49501a36d90a0cc00a2cbc79145298ea22892d17745e735033e7ecb",
-      "f5d8b4a480f5c49fe555eb3978e103d36589c5df326dd9f190cb2c5ab3a7ce35",
+      "71b388c0528c1550b8279f3f817c04f735deeab4c99b76a970d0d97945167dbb",
+      "816d55500f7e17a00b1062558536fb9f7dcec16b6936a3ecc423d245f6897e84",
       "4b1a87ab7cae50d9a188edcd002aff89e5baf4b74d7afaa31e22c9c82eda4438"
     ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"eslint/id-length\",\"oxlint-disable\"]": [
       "5dffed5ad38d705c01f956cef198ce81e9af9568d872892fc8c569204279397d",
       "6a3eb85c9c35d56ad9deccb9faf655777e5d593d3260ed74fce881e6d93a2e3a"
     ],
-    "[\"apps/chat/lib/eve/mcp-tools.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "6900bae1aeaa2fa648eec16a78c2f9b6c359beed8d00bb0d39ebc7e6f55f40cd",
-      "a6942d856fa196efbd946e1035ed40150b20e2054cd7d00c5fe401d0dee4aa3b"
-    ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "4e6860ce98c410b5e309d8f0b97e64221b0fcfa1d86a1c5be94c17ef7e064532",
+      "0cd7810793b52c0c0661e5e32d3443ac615afb86cb25a8df783da4eaf39c31e1",
       "99054b420550348a88ef2ac95cfe9545c29eb9b2cb9cbacd7ca3a17656189418",
       "5074bf689ed85db7249261518966193c7e7eb2cfe03fd507ff6cc2df23d6c00f",
       "f141eec15b219184376ac40d88072fc31f56c01b1a41b8fc6bb39139c2417e10",
-      "3731a05d8ed1d19aa3bd959439b6c74db6a0eb0fbb710a9f79a05fe589e6c290",
+      "0ec07ec7a1017e202b2fcf8f863341096bd5d11afa30f1941e6ece2cb86615c7",
       "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8",
       "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e"
     ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "8cf0f392f95a2d7ec904c5640ad77c4795ec03436db4cd2e4fc9761b78b04325",
+      "8bd31c53cb749378cab9c5fa1c3698d4b92f8668cb75b4dae016e10d1cf55da6",
       "ec3954f21ab0b56473ce07f251392b81605e01025c125f982e7547a909149efa",
       "756d3ff9c26d221e4b828cc8b83494b59d827b4dd73e506e22585fcc581002ba",
-      "eb635105473fa192a60b46918d600d1830da9d521d130e6863b32ac2a8684ca5",
+      "d6f5794339ea5af4043feef49e18d112677e9b9fc51b3b56d43638d1e9721c1c",
+      "9df17a02a3ae41682d10c70663992923166c2561ed81bd7207c7751bc0640e2b",
       "d9cd158f8a0bae2be748f96fa34979f9f91fa707949ef9c9cbac29fe68b4ac17",
       "c41debca4b0ec4bda5df20d9e8c9e4c926be7c7bd20d64e7764e88309fcac6aa",
       "4f05a87dc025290b451e0083f1ebfae3b64f9a7ce04cdf16937f1731c34d47b2"
@@ -28401,7 +28417,7 @@
       "821d9de853d6bb65f4c08ed0169f40eab4707dec8ebe7135317f4a15d4553b60"
     ],
     "[\"apps/chat/lib/eve/mcp-tools.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "d8d629cdb3beb5d5696a5bd098b6fb9914d04a5b81ce7f043a1f6c2b1fe8e0d9"
+      "4e8d5d6839161e2d8a3dda944c3f8d6c760ac3ac8f3a1396b7f0b4b5299a4cbf"
     ],
     "[\"apps/chat/lib/eve/message-delivery.test.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "1b5830c44c8862567568f3cd446673402df96d57a0babfa68d6257f2b9cb5093"
@@ -30583,28 +30599,23 @@
       "184aac254acb6e4bc88baf1249ca1ae438881a14be0b05b08da80261c8727bd5"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "45e2d455e7f6ce5fe7183c916ccc0561af6bdc546083b4b5c9689ec47e32e103"
+      "4a53c73fea593c4799e9fee70e3113df2f07b620f9a167d80a8a87ffff098fc3"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "45e2d455e7f6ce5fe7183c916ccc0561af6bdc546083b4b5c9689ec47e32e103"
+      "4a53c73fea593c4799e9fee70e3113df2f07b620f9a167d80a8a87ffff098fc3"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "8b8795b9f567c8eb6fb8926903fc1772769b80e8f72ae67fb6e244891ec4bf2e"
+      "26845beac90954f42046aec71bde1d370da670aae35b53f061f8a922ce057566"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "1fa688ad4729e353a1880a8d7e3406b52018459d67b90c4774c74ee267dc7e85"
-    ],
-    "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "1fa688ad4729e353a1880a8d7e3406b52018459d67b90c4774c74ee267dc7e85"
+      "97bccbd961d0a81bf00b47ae395e30ecb2c8ed7e8b8af69d0c88700aac039f21"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/no-unnecessary-type-assertion\",\"oxlint-disable-next-line\"]": [
-      "06820a7fa93358b1a47be1f06efd59224c27f293b7d47981ad393ec135e61d03",
-      "2402d0b7112f41c9a0fdf1ba5e6948f1200d5d49d7c42fe659cd0c81a40c6378"
+      "1680156232d41b034740cbbfc639c39fa764445955acd840637346d392713d62",
+      "3aa4ffc65ab721a40dc5fffe88d0a4524e5223aa0235a62f1fcaf595e3eeadb3"
     ],
     "[\"apps/chat/lib/eve/tool-models.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
-      "06820a7fa93358b1a47be1f06efd59224c27f293b7d47981ad393ec135e61d03",
       "a916f5a882e433a96d179f989aa9c7e1b65f56a884e926990fd0de738026fdf4",
-      "2402d0b7112f41c9a0fdf1ba5e6948f1200d5d49d7c42fe659cd0c81a40c6378",
       "a53f237dcdf0cb08df9bcf396bcc466c5955cc0f2390ca79ec03cb633c671926"
     ],
     "[\"apps/chat/lib/eve/tool-result.test.ts\",\"sort-imports\",\"oxlint-disable\"]": [
@@ -47211,76 +47222,106 @@
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "6d2e45a47213f708b438a4211605fa9529b32550ecb2c17e829060156d49c623",
       "4f5c4b4d218ae483d37bf20861f0ec3c41490fcc646fc00c2cb2d9dd6391a7da",
-      "4bc342b7bdc97129bcad939e97f9c2a7ac5004a7288b9bdefd999bdf128ebfc3",
+      "beb986b17802d762abd29ecfcc01b889fa4b97385a8d978ddbff43152721c3d8",
       "187b1a8582676575be98d22958e0edcc027214a4e006cdd5c9de57dcf98f68b2"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
+      "2fda81a2a4fee5a4f59e808726dbe801c77588aff5b70f43be47cfc9f84e2a32"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
+      "2fda81a2a4fee5a4f59e808726dbe801c77588aff5b70f43be47cfc9f84e2a32"
     ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "c947bf251f29a85bedfe75d1dbafaaafde8a6ed1f31f541e94540006d05134b3"
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "a73b4844235c1b49e0ac3ddc3df2e9f1945bc85fab488b12ecbf373c5d769aec",
+      "2ee7035ea15e98ccff8db7e5110ea5296ba1f833aa8b7e9875d43f731fe1a5e8",
+      "73a1fba00f407aa09cc3e94e21e312126b1f4fbce27fdbafc3e2049a6686bcf4",
+      "0e464561f25ac67d519051bb93fac1f71e9cb925868dece9b10e416150fb3dd8",
+      "8fe3f18d5e301cf72c20ee576ec781ad5f6a29963194e55f4b11c114e06b7629",
+      "fcbfd87af99e41e48b6e1d928ccb7af1b0445282de682fb3417d543dbc9d4b3a",
+      "6387162e5dec3d08c018a24d1e549cbc41be8cbad4ebd72a9252a30f0108629b",
+      "50c17bc53712038e1a6d9b9faee47e4539a5e8e5993a63830839b9563da5bbee"
     ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "15e7e5e57ce91888fa86cd74dc7f4278ce2057c9551925286fc3efbf16886ca1"
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": [
+      "8ade0137dc43c2b0f08efaef8bffdf24e3a37d8e363194f73ada8ed6a37c1468",
+      "997227c0bfee5e0caef01c23e20de672c9d2671daed83806e692eefad113626d",
+      "7c69ccd93b384233c6c0a5d241b896c8faa5590dc1503f52f572a6ebb6f1b3b2",
+      "1d782681bc9c88400c0c9790e7853c2e2b8fe7c6f401796e99c9708dfb2b008f",
+      "85fde7dc8e7fcc6652ab4d5e1534516a74f60f8eee09e27944d1f87d85e94aa8",
+      "ee6db6810ed0c6be7c2735ad148f0a3905e9e681c4145880878a43dbb31c353a",
+      "70e9e724fe8accb57e11a3a070ad72e2c2c8d100ccd958d4abd2fac9f7a54c16",
+      "cb959867f28396d042c6bc0034d78834cf461803c448fac4c3f246d423b650ec",
+      "81f68dcdda1ce1c7ebdd01f4bc6e334b6c2dd757ca6acce5517c8326f09c4afe",
+      "c240fcee587010a2c79676f7f7538d9e3fa58879b84d8ec5dc3171b90b0da41c",
+      "af8a9f3b7e6559c93859f2ee72b828b409f74b4c6a48c01ec8f0f5d6eaaf0022",
+      "880a976c3ac7a8de95463199355009e9974be2f38ed1ef63bea23bc0fe39a2d4",
+      "8b31d1ad1ff81b7744febd46ffc1e1efc903fc230d09a704e7e181ea0b490f7f"
     ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "79a3201abdb4fa49d504c191258aa04dbfb625dd1937b68492151018fe94bd8a"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "f002fdf66245857e3ac71e11c4e45b6f8e5489445fd0ddddbbd0d890fb428d43"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "b0273fd0b70bd1cf27d3e8227417b1a91b910269c54c2dd7ae8b094c08524987"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "21679b7a84feaefd3a144a47f4c105c93356dc32747b96a0ef1e266ec15bbef0"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "2240ac1173f5c5ff23bccba1962642897069167cd18fef19f2207fd2588ee9fa"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "eddd5f030033d953e66698e2792249fd35fe0b8a8ca2f15c42d526b688b84edd"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "d505887a8812dd86a3a04e8ec5ac8045646b7cbabbfa77fd5a1d7946ca1227e3"
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "7b09ca29686a06bad3ba4b6db412fa0b3d4da1c8e1743cf9c8b5372699fb53c7",
+      "bee4db81d933b764d0e222dbbd9a5241fdfb02de4a495d505ef6118a46bb1bbb",
+      "31f7ee93d09e5b5c2d92e3a27f3c3cee1b8a18a581b123e090ce1e4004593a6d",
+      "c1e565b4d0b72814d1e06042b1a91cc291628f2c1534dd93e58c929634f27841",
+      "a4e34f3dcd93001c0af3dcfe81c41276e0377e920c19d6f7d5e6a79b90df2db2",
+      "e15769cca963aecf8bee356ebf376513ebb1f8c575cc509bf6c158e82fd32a1f"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "9a65a9b6b83cab5ab19552f72995055af4e786fc0b801a1e7132a64932079609",
-      "146a42c67bda867d240899675abffe2a923a91ffcbe0426454c0968206caa301",
+      "58a7c8130adbfb2249af148d21c8cfd0a07fc76561b5e5115f3a32e3d31bf10b",
+      "ca597bf25eed8609c63e2997bd8f3271b0bb68ef48091758a47e03410b6f23bf",
       "b0b6d1a5956d1f610f456517a34b4bcdcba1551b750ded6b4d84cb32f91f7112",
-      "f0a5bc98d52f66afa0f4720a51d2dd0d1163a0e24bc0fc4683dd6c99b18ad6ae",
-      "acd7abf0b74726f5ba86b1b9deaadab9ead73905a1f7673383a8516417cb9867",
-      "4f4eae4cb44e39d841b7613510a510e7935931e7371b5498a1066ea3dce15f68",
+      "de8a23aeffa28f7127135195bc9967badcddfc9d271dff76a33080079bc488dc",
+      "29b644631a3d22b7f52baf65ba6234f4c48ae39b708f77699e1103ebb71ee8b2",
+      "f4bcf332c1d36f0b0ffc48bd60af79880657efe760e2938ffb898187ee5d4a78",
       "563f95070b4b1bd508b29780acd4975eefda051e063adeff3e343e57ad347dbe",
-      "2feb5d8bd723bc3a74d0c48aa240c281137af1b3147bea48ad5c5f9f59122023",
-      "347c024a5815f4a6a8b1e7f9a13d876577397fb0607842f9312ce9fa4609e11c",
-      "c6c45cb3f393a42007950e1e558244c56e63a3e2b9d5035592d699998ae83d06",
-      "8180da5429b1dc0317bbc0d85345eea38bc3873369e0c3974c8fd10f1da5080b",
-      "f0ba0cfa471836bcbec1f2e42bb0225de123c19064cf3b2c45b51739b28e82a2",
-      "cfe87060eed113e5c12d843ea6dc2689a51d0488056acfbb64b561f95ca61844",
-      "c4bef0369f19817e69599249ebb8bc966d057cd60b652b27a751d8b08f9019f4"
+      "8cbf22328d8b9c41151cfe2a98822c52401b68c71757a04738c80e8a455f919b",
+      "7db9328dd2411b63efc2e2428eb609e41ce2c5fbeb2522107af399f3f32c34bd",
+      "ae1b461ba6ecddd2f0cfbc2d996d64af0898bc2c4184e3e002b27c9b2670f72c",
+      "4ff64193c830fa31ee35904997cf568808f63bff4a67d812e5dbb208f9a658a0",
+      "d67bf816ae269c282a6b7c1328876e7f2b8be0bd4411e1c339e81d593b1ad6d6",
+      "3bd923f61b0b1273e2dc10c2578eecd1f2dc4a1846d0d0e8a371d46757965f48",
+      "2469553e098febe96c15ed1f8873b1cd88434aa024eb384ec9211fea4ccf25de"
+    ],
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
+      "61e94d876f8757e25630260bf94589042f0436da423bc2b299b68873671f12d3",
+      "22bc630a2f59013d98a4211e8b488bf2b948ae94a44140a83d7849a33fac8706",
+      "57af43d0249247f10209e0fd3ae8b51d437776ad4c7cf37110b633037ba59217",
+      "b05b37531867a829a93ac023fd7ddf84567465c29842a2265d6ad83a96a2aa16",
+      "a88f4e50d2a0d250dd307b32db4737179895eed1ac5cbf3eb55d4f78501aefe3",
+      "0e55757a727b6324e06457eaa0a3c34f3e9568fdad4272b9c14fc970f313ae80"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "e2adf9f5dfc1eceb1c94bb65e1b73c36b95e0ccc216133f706ec0f005bb6e312",
       "c1f37816fa04d432656329f873df42b469d9ab621f44e23722b28ea8b8556070",
       "85bb46e62c51da6c4134396a95fd0f7a1fdd4efe4d86bd609c0440a1a017ba9d",
       "da87497f69ca6d3ee5ad8037c36e02c969153850a6fcf6b141cb0b51f02c1904",
-      "cfe9fc580c44037865390c7d4e76b8e3b717b160980d552ed31c37d952f492e0",
-      "bfccf5921ea8474da1343d2e657dd27392c08e3c3fc2f1a1017e10554c1f5f55",
-      "c1513410709c168eae4f72d67221568c1ef6c5ed8c4047538c9ebfb105a1327e",
-      "6e2f99f845729f309c4dcec842f9812e5921974764f95813c64144933fae2e5e",
+      "f15f19e18bf2551647f26294de637b067d203fae55690c541555f26990a9d496",
+      "78bcf7162445afa198781cf94f5146ce6c08cc909086f6196eed130474d79774",
+      "9564d77cafeaba2a52f2fa286a6fc1b705db13b72d7861bd9b055f92352418f2",
+      "402dd600af0b67cfbc95df5449e0a0e20fe416a0f862bf963786be8a78f31a8d",
       "fe0f137626e13f9d80f2d1aff80a4379b6ad7891af69b91b9c0b351e8c9e1e3d",
       "af92352c07bfa0e0374684f5bd9721d5c4628d3032a4f1b6231bb787e6075410",
-      "b0de5244df01162cbd27a3290e062221925e8afaafefd5dc47b6d5fc93faa8bb"
+      "40716a4fc4f678fb7da87c3f94de52376bf653f5b6ed8377b9bec93067c93627"
+    ],
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable-next-line\"]": [
+      "a2376be97424b9a7cc15f5569f5ebefd725e3f6ea9864be398aacc326ee776d6",
+      "70ff20165ed7f318b180e925439f0e2864449ca9db4381c807eb7e3f27a88c97",
+      "4c005b06ddb6154a5b5ccea7610ce8757946f9522a431a64888a239f1eefd903",
+      "7f4d8913bcc76ffe0f399f6a581680bf2c537dfab54fa8629cde5d860a011e5b",
+      "14d8b97ac37387fc81c8bac6406992fb8359a130bc012dfd9d0d6c82a75c44e6",
+      "ffba5534a5ae4afccbce1523c0a1632ecf0b05afee38096f17ae4c1037542439",
+      "84ba991ff1cc4254af00cf6edf011aa4b81e5a36400e220d944d854b61d1a84d"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/consistent-return\",\"oxlint-disable-next-line\"]": [
       "e22e370b1fe5e45e4b23b660cc69ade5d0972f56d2caa641cec679be23ec52c3"
     ],
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
+      "afa2f6328848a2bc599c7178be86b87a509d681bc113d688d7e03da6f6873a36"
+    ],
+    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": [
+      "402dd600af0b67cfbc95df5449e0a0e20fe416a0f862bf963786be8a78f31a8d",
+      "40716a4fc4f678fb7da87c3f94de52376bf653f5b6ed8377b9bec93067c93627"
+    ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "0a56ce2685875b471eb2dfbd5ec5b45a752d6b8ae3052c8c315a7a7499979dd1"
+      "d377d39b0ff3d3044965d5af4e67341ba5676d957962a8185377e1073c43b3eb"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/oauth-authorization-required-error.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "130db7da4fd9e011d5a9e81afd8f508d7d4f814b6addd5095d1b1d734e79e423"
@@ -47404,39 +47445,36 @@
       "8028a75cbc14c987c3f806cfd54294e99997df392c3d922d99c13f8085c29016"
     ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"import/max-dependencies\",\"oxlint-disable-next-line\"]": [
-      "0c06830dab9ac8d83b9d08932dc446f3cb189052ede50de5ad680c55b5a8414a"
+      "20313fedf664b2b0fc235994afd5d187ddf9b0c6ee6aff8b0a8f0a68f4f03201"
     ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "ca208b0994a105b6b2628031fe03aaac0c39eb57d3605bee1ec7db2e89166a1a",
-      "35ad078d9abf960d9c8813221021d5080019923e79cf4b8aa30293a25a5d5303",
+      "c51d1b6db5cd96f543250d4f08fcf9518262ec10863083d11b1da25e4425c703",
       "a131570e388c5d1a9685f07980ce8d40008769eee295d9a3dbb1344441b1b521",
       "9fdefde84894b6238426f88627972a183b592456237a5c2f6bf09ab412a303e7",
-      "a0523381f49501a36d90a0cc00a2cbc79145298ea22892d17745e735033e7ecb",
-      "f5d8b4a480f5c49fe555eb3978e103d36589c5df326dd9f190cb2c5ab3a7ce35",
+      "71b388c0528c1550b8279f3f817c04f735deeab4c99b76a970d0d97945167dbb",
+      "816d55500f7e17a00b1062558536fb9f7dcec16b6936a3ecc423d245f6897e84",
       "4b1a87ab7cae50d9a188edcd002aff89e5baf4b74d7afaa31e22c9c82eda4438"
     ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"eslint/id-length\",\"oxlint-disable\"]": [
       "5dffed5ad38d705c01f956cef198ce81e9af9568d872892fc8c569204279397d",
       "6a3eb85c9c35d56ad9deccb9faf655777e5d593d3260ed74fce881e6d93a2e3a"
     ],
-    "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "6900bae1aeaa2fa648eec16a78c2f9b6c359beed8d00bb0d39ebc7e6f55f40cd",
-      "a6942d856fa196efbd946e1035ed40150b20e2054cd7d00c5fe401d0dee4aa3b"
-    ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "4e6860ce98c410b5e309d8f0b97e64221b0fcfa1d86a1c5be94c17ef7e064532",
+      "0cd7810793b52c0c0661e5e32d3443ac615afb86cb25a8df783da4eaf39c31e1",
       "99054b420550348a88ef2ac95cfe9545c29eb9b2cb9cbacd7ca3a17656189418",
       "5074bf689ed85db7249261518966193c7e7eb2cfe03fd507ff6cc2df23d6c00f",
       "f141eec15b219184376ac40d88072fc31f56c01b1a41b8fc6bb39139c2417e10",
-      "3731a05d8ed1d19aa3bd959439b6c74db6a0eb0fbb710a9f79a05fe589e6c290",
+      "0ec07ec7a1017e202b2fcf8f863341096bd5d11afa30f1941e6ece2cb86615c7",
       "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8",
       "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e"
     ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "8cf0f392f95a2d7ec904c5640ad77c4795ec03436db4cd2e4fc9761b78b04325",
+      "8bd31c53cb749378cab9c5fa1c3698d4b92f8668cb75b4dae016e10d1cf55da6",
       "ec3954f21ab0b56473ce07f251392b81605e01025c125f982e7547a909149efa",
       "756d3ff9c26d221e4b828cc8b83494b59d827b4dd73e506e22585fcc581002ba",
-      "eb635105473fa192a60b46918d600d1830da9d521d130e6863b32ac2a8684ca5",
+      "d6f5794339ea5af4043feef49e18d112677e9b9fc51b3b56d43638d1e9721c1c",
+      "9df17a02a3ae41682d10c70663992923166c2561ed81bd7207c7751bc0640e2b",
       "d9cd158f8a0bae2be748f96fa34979f9f91fa707949ef9c9cbac29fe68b4ac17",
       "c41debca4b0ec4bda5df20d9e8c9e4c926be7c7bd20d64e7764e88309fcac6aa",
       "4f05a87dc025290b451e0083f1ebfae3b64f9a7ce04cdf16937f1731c34d47b2"
@@ -47489,7 +47527,7 @@
       "821d9de853d6bb65f4c08ed0169f40eab4707dec8ebe7135317f4a15d4553b60"
     ],
     "[\"packages/registry/src/features/mcp/lib/eve/mcp-tools.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "d8d629cdb3beb5d5696a5bd098b6fb9914d04a5b81ce7f043a1f6c2b1fe8e0d9"
+      "4e8d5d6839161e2d8a3dda944c3f8d6c760ac3ac8f3a1396b7f0b4b5299a4cbf"
     ],
     "[\"packages/registry/src/features/mcp/lib/nuqs/mcp-search-params.server.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "90222b3ef3457587dafac82576f500776bcb019d7fb1fe6b91968ca488969d7d"
