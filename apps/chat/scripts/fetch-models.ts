@@ -1,21 +1,18 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { writeFileSync } from "node:fs";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/active-gateway" dependency within this package instead of introducing an alias or barrel API.
+/* oxlint-disable import/no-nodejs-modules --
+ * import/no-nodejs-modules (#529): This executable writes its generated source through Node’s promise-based filesystem API.
  */
-import { writeFileSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getActiveGateway } from "../lib/ai/active-gateway";
+import { getActiveGateway } from "@/lib/ai/active-gateway";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchAndSaveModels's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-console, no-magic-numbers, node/no-sync, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable no-console, no-magic-numbers, unicorn/no-null --
  * no-console (#514): fetchAndSaveModels emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): fetchAndSaveModels uses 0, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * node/no-sync (#538): fetchAndSaveModels uses writeFileSync("lib/ai/models.generated.ts", fileContent) within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
- * typescript/strict-boolean-expressions (#610): fetchAndSaveModels intentionally keeps the existing falsy-value behavior of models; distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): fetchAndSaveModels preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
+ * no-magic-numbers (#517): 0 denotes the empty model-list check and 2 is the generated JSON indentation width; both preserve the existing output format.
+ * unicorn/no-null (#570): JSON.stringify receives null as the no-replacer argument to preserve values while applying generated-source indentation.
  */
 const fetchAndSaveModels = async (): Promise<void> => {
   const gateway = getActiveGateway();
@@ -23,7 +20,7 @@ const fetchAndSaveModels = async (): Promise<void> => {
   console.log(`Fetching models from '${gateway.type}' gateway...`);
   const models = await gateway.fetchModels();
 
-  if (!models || models.length === 0) {
+  if (models.length === 0) {
     throw new Error("No models returned from gateway");
   }
 
@@ -34,13 +31,13 @@ export const generatedForGateway = "${gateway.type}";
 export const models = ${JSON.stringify(models, null, 2)} as const satisfies readonly AiGatewayModel[];
 `;
 
-  writeFileSync("lib/ai/models.generated.ts", fileContent);
+  await writeFile("lib/ai/models.generated.ts", fileContent);
   console.log(
     `Wrote ${models.length} models from '${gateway.type}' gateway to lib/ai/models.generated.ts`
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, no-magic-numbers, node/no-sync, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable no-console, no-magic-numbers, unicorn/no-null */
 
 // oxlint-disable-next-line node/no-top-level-await -- This executable completes model fetching and file publication before the command finishes.
 await fetchAndSaveModels();

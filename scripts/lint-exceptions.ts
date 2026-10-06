@@ -64,19 +64,21 @@ const maskLiterals = (source: string, filename: string): string => {
   return masked.join("");
 };
 
-// oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- The lexical pass retains comment positions and directive parsing together so masked syntax and original source offsets cannot diverge.
-const readDirectives = (
-  source: string,
-  filename: string
-): CommentDirective[] => {
-  const masked = maskLiterals(source, filename);
+interface SourceComment {
+  readonly start: number;
+  readonly end: number;
+  readonly multiline: boolean;
+}
+
+// Discover real comment spans without interpreting their directive bodies.
+const readComments = (source: string, filename: string): SourceComment[] => {
   const scanner = ts.createScanner(
     ts.ScriptTarget.Latest,
     false,
     ts.LanguageVariant.Standard,
-    masked
+    maskLiterals(source, filename)
   );
-  const directives: CommentDirective[] = [];
+  const comments: SourceComment[] = [];
   for (
     let token = scanner.scan();
     token !== ts.SyntaxKind.EndOfFileToken;
@@ -88,20 +90,33 @@ const readDirectives = (
     ) {
       const start = scanner.getTokenStart();
       const end = scanner.getTokenEnd();
-      const comment = source.slice(
-        start + TWO,
-        // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        end - (token === ts.SyntaxKind.MultiLineCommentTrivia ? TWO : ZERO)
+      comments.push({
+        end,
+        multiline: token === ts.SyntaxKind.MultiLineCommentTrivia,
+        start,
+      });
+    }
+  }
+  return comments;
+};
+
+const readDirectives = (source: string, filename: string): CommentDirective[] =>
+  readComments(source, filename).flatMap(({ start, end, multiline }) => {
+    const comment = source.slice(
+      start + TWO,
+      // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      end - (multiline ? TWO : ZERO)
+    );
+    const match =
+      /^\s*(?<engine>eslint|oxlint)-(?<kind>disable(?:-next-line|-line)?|enable)\b(?<body>[\s\S]*)$/u.exec(
+        comment
       );
-      const match =
-        /^\s*(?<engine>eslint|oxlint)-(?<kind>disable(?:-next-line|-line)?|enable)\b(?<body>[\s\S]*)$/u.exec(
-          comment
-        );
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from match; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      if (match?.groups) {
-        const { engine = "", kind = "", body = "" } = match.groups;
-        const separator = body.indexOf("--");
-        directives.push({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from match; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+    if (match?.groups) {
+      const { engine = "", kind = "", body = "" } = match.groups;
+      const separator = body.indexOf("--");
+      return [
+        {
           end,
           engine,
           kind,
@@ -120,12 +135,11 @@ const readDirectives = (
             .split(/[\s,]+/u)
             .filter(Boolean),
           start,
-        });
-      }
+        },
+      ];
     }
-  }
-  return directives;
-};
+    return [];
+  });
 
 interface SourceScope {
   readonly start: number;
@@ -527,7 +541,7 @@ const main = async (): Promise<void> => {
     }
     await Bun.write(
       baselinePath,
-      // oxlint-disable-next-line unicorn/no-null -- JSON.stringify requires a null replacer to request indented output without replacing values.
+      // oxlint-disable-next-line unicorn/no-null -- Pass null as the no-op replacer while applying indentation without changing values.
       `${JSON.stringify(snapshot.baseline, null, TWO)}\n`
     );
     await Bun.write(
