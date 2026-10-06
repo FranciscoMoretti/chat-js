@@ -5514,7 +5514,6 @@
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/scripts/check-env.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 6,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/prefer-nullish-coalescing\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/restrict-template-expressions\",\"oxlint-disable-next-line\"]": 1,
@@ -32423,7 +32422,7 @@
       "d0dd6dcaf3fc136986832f7212fae880df82d2b44a70ef8df86e5e91d1d2828c"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "e606f2f43387d2c8cb3287a36f53c548aa46d80e3d4470dbb1eb224385a5649c"
+      "fa16e83ad74b7de4baa9be7ebd030f8acb3cd607e6cd06bb3814bad5de59e740"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "2a4f5bf072d369cbfae7ebac51d8decc042642980c0f959199de5952737f6524"
@@ -32459,18 +32458,15 @@
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "42b97e422b1edb78a2fa97faa320d604d08558cde3b386908dbd216d19e26a6b",
-      "52dc713fe27d50b410afd35ab447c5f3b4582d164f2d8d32cda02a5f406aa059",
+      "c11f4cbce929d5ed304cf2fcbd2b2846cf0e341f1f68920db512779bb7a8da51",
       "208a43d4b235aba35ca432401fe79d8f01776d07e4b011e0bb5e773971e8040c"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
       "f41e68ed88e9b061c9dd245e9748ebe1bfd12ed3fdb88b421afbc838b5cbb1bf"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "56a6534c86ec1409a32028fcd118b78a56138f7dcc7e34e949e0c83aa6e21c0d",
+      "f2bbd64623ff1f42343cf07c527143b2bf8b9fb78790092c01d5d523cca82ab7",
       "ff3f631dc6b83238d3e275e81f10d6450ca44025a96fb8e6b81ce306864152c2"
-    ],
-    "[\"apps/chat/scripts/check-env.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "52dc713fe27d50b410afd35ab447c5f3b4582d164f2d8d32cda02a5f406aa059"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "9bb62a72cb45168e416359a4b10810a893969867a162fa574c526d189f1a7cb9",

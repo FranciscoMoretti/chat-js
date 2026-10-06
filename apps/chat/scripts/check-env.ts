@@ -169,10 +169,7 @@ const validateAuthentication = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): The readdir callback receives mutable Node Dirent entries and parsed toolEnvVar values; readonly wrapping would require narrowing those external library/schema object contracts.
- * typescript/strict-boolean-expressions (#610): validateInstalledItems intentionally keeps the existing falsy-value behavior of missing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable typescript/strict-boolean-expressions -- The missing requirement result is string or null; the current truthy branch excludes both null and empty descriptions. */
 const validateInstalledItems = async (
   env: Readonly<NodeJS.ProcessEnv>,
   directory: "tools/chatjs" | "features"
@@ -191,7 +188,7 @@ const validateInstalledItems = async (
       throw error;
     });
   const toolErrors = await Promise.all(
-    entries.map(async (entry): Promise<ValidationError[]> => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       if (!entry.isDirectory() || entry.name.startsWith("_")) {
         return [];
       }
@@ -205,7 +202,7 @@ const validateInstalledItems = async (
 
       const toolSource = await fs.readFile(toolPath, "utf-8");
       const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
-      return mod.envRequirements.flatMap((toolEnvVar) => {
+      return mod.envRequirements.flatMap((toolEnvVar: RequirementInput) => {
         const missing = getMissingRequirement(toolEnvVar, env);
 
         if (missing) {
@@ -225,7 +222,7 @@ const validateInstalledItems = async (
   return toolErrors.flat();
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): validateBaseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
