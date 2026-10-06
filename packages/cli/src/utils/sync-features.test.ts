@@ -171,7 +171,6 @@ test("partial MCP installation cannot register routes", async (): Promise<void> 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("MCP installation requires the approval schema before changing an older scaffold", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-mcp-install-"));
   roots.push(root);
@@ -190,14 +189,16 @@ test("MCP installation requires the approval schema before changing an older sca
   ).toContain('"McpConnector"');
   const files = await Promise.all(
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
-    (mcpItem.files ?? []).map(async (file) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...file,
-      content: await readFile(
-        path.resolve(import.meta.dir, "../../../registry", file.path),
-        "utf-8"
-      ),
-    }))
+    (mcpItem.files ?? []).map(
+      async (file: Readonly<NonNullable<typeof mcpItem.files>[number]>) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        ...file,
+        content: await readFile(
+          path.resolve(import.meta.dir, "../../../registry", file.path),
+          "utf-8"
+        ),
+      })
+    )
   );
   files.push({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from mcpItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -256,7 +257,6 @@ test("MCP installation requires the approval schema before changing an older sca
 }, 30_000);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -406,7 +406,6 @@ test("adds the requested binding when the module already has another named impor
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("core scaffold omits uploads; shadcn add registers uploads alongside MCP and sync preserves user order", async (): Promise<void> => {
   const { attachmentUploadsItem, attachmentUploadFiles } =
     // oxlint-disable-next-line import/no-relative-parent-imports -- The integration fixture reads the canonical registry item bundled with the CLI.
@@ -438,14 +437,18 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
   }
   const files = await Promise.all(
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Load file contents into independent installation fixtures without mutating registry metadata.
-    (attachmentUploadsItem.files ?? []).map(async (file) => ({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...file,
-      content: await readFile(
-        path.resolve(import.meta.dir, "../../../registry", file.path),
-        "utf-8"
-      ),
-    }))
+    (attachmentUploadsItem.files ?? []).map(
+      async (
+        file: Readonly<NonNullable<typeof attachmentUploadsItem.files>[number]>
+      ) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        ...file,
+        content: await readFile(
+          path.resolve(import.meta.dir, "../../../registry", file.path),
+          "utf-8"
+        ),
+      })
+    )
   );
   files.push({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from attachmentUploadsItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -520,7 +523,6 @@ test("core scaffold omits uploads; shadcn add registers uploads alongside MCP an
 }, 30_000);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

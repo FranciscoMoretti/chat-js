@@ -53,7 +53,6 @@ const definition = (id: string) =>
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("rejects conflicting provider selections and permits reinstalling the selected provider", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-provider-"));
   roots.push(root);
@@ -68,7 +67,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     "export const executeCode = {};\n"
   );
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       // oxlint-disable-next-line no-ternary -- Keep id as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const id = new URL(request.url).pathname.includes("second")
         ? "second"
@@ -99,7 +98,13 @@ test("rejects conflicting provider selections and permits reinstalling the selec
       { fresh: true }
     );
     expect(
-      fresh.replacements.map(({ previous }): string => previous.id)
+      fresh.replacements.map(
+        ({
+          previous,
+        }: {
+          readonly previous: { readonly id: string };
+        }): string => previous.id
+      )
     ).toEqual([]);
     const reinstall = await planInstallation(root, {
       features: [],
@@ -113,7 +118,6 @@ test("rejects conflicting provider selections and permits reinstalling the selec
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

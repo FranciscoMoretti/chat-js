@@ -42,6 +42,14 @@ it("uses PostgreSQL locally and propagates lookup failures", async () => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
+it("rejects an empty local workflow URL before loading PostgreSQL", async () => {
+  mocks.env.WORKFLOW_POSTGRES_URL = "";
+  await expect(getEveStreamPositions(["session"])).rejects.toThrow(
+    "Configure WORKFLOW_POSTGRES_URL for local workflows."
+  );
+  expect(mocks.positions).not.toHaveBeenCalled();
+});
+
 it("never queries PostgreSQL on Vercel, including when a stale URL remains", async () => {
   mocks.env.VERCEL = "1";
   mocks.env.VERCEL_ENV = "production";

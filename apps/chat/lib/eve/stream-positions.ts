@@ -15,8 +15,10 @@ export const getEveStreamPositions = async (
   if (resolveWorkflowWorld(env) === "vercel" || sessionIds.length === 0) {
     return new Map<string, number>();
   }
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Missing or empty local workflow URL must reject before loading the PostgreSQL adapter.
-  if (!env.WORKFLOW_POSTGRES_URL) {
+  if (
+    typeof env.WORKFLOW_POSTGRES_URL !== "string" ||
+    env.WORKFLOW_POSTGRES_URL === ""
+  ) {
     throw new Error("Configure WORKFLOW_POSTGRES_URL for local workflows.");
   }
   const { getEvePostgresStreamPositions } =

@@ -1,7 +1,6 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  Experimental_VideoModelV4,
   LanguageModelV4,
   SharedV4ProviderOptions,
 } from "@ai-sdk/provider";
@@ -35,14 +34,7 @@ type ActiveGatewayImageModelId = Parameters<
   InstalledGateway["createImageModel"]
 >[0];
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): ActiveGatewayVideoModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type ActiveGatewayVideoModelId = Parameters<
-  InstalledGateway["createVideoModel"]
->[0];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getLanguageModel's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, node/no-process-env --
  no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -93,19 +85,6 @@ const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-const getVideoModel = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed adapter preserves its SDK string-literal suggestions and open string intersection; model IDs are primitive strings with no mutable fields.
-  modelId: ActiveGatewayVideoModelId
-): Experimental_VideoModelV4 => {
-  const videoModel = getActiveGateway().createVideoModel(modelId);
-  if (!videoModel) {
-    throw new Error(
-      `Gateway '${getActiveGateway().type}' does not support video models.`
-    );
-  }
-  return videoModel;
-};
-
 // Get a multimodal language model that can generate images via generateText
 const getMultimodalImageModel = (
   modelId: ActiveGatewayModelId
@@ -118,13 +97,12 @@ const getModelProviderOptions = async (
   providerModelId: AppModelId
 ): Promise<SharedV4ProviderOptions> =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getImageModel, getLanguageModel, getModelProviderOptions, getMultimodalImageModel, getVideoModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getImageModel, getLanguageModel, getModelProviderOptions, getMultimodalImageModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
 export {
   getImageModel,
   getLanguageModel,
   getModelProviderOptions,
   getMultimodalImageModel,
-  getVideoModel,
 };
 /* oxlint-enable import/no-named-export */

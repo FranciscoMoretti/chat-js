@@ -34,7 +34,6 @@ afterEach(async (): Promise<void> => {
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
@@ -53,7 +52,7 @@ test("plans transitive dependencies and repairs against the complete resulting i
     tools: [{ toolExport: "createTextDocument" }],
   });
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
       // oxlint-disable-next-line no-ternary -- Keep definition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const definition = isReader ? reader : documents;
@@ -90,10 +89,11 @@ test("plans transitive dependencies and repairs against the complete resulting i
       features: [],
       tools: [`${source}/text-documents.json`],
     });
-    expect(first.expected.map((item): string => item.id).toSorted()).toEqual([
-      "read-document",
-      "text-documents",
-    ]);
+    expect(
+      first.expected
+        .map((item: { readonly id: string }): string => item.id)
+        .toSorted()
+    ).toEqual(["read-document", "text-documents"]);
     expect(
       await Bun.file(path.join(root, "tools/chatjs/tools.ts")).exists()
     ).toBe(false);
@@ -125,19 +125,17 @@ test("plans transitive dependencies and repairs against the complete resulting i
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
   roots.push(root);
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
         // oxlint-disable-next-line no-ternary -- Keep chatjs as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -180,10 +178,11 @@ test("validates feature dependencies and exclusive storage slots before writing"
       features: [`${source}/mcp.json`, `${source}/langfuse.json`],
       tools: [],
     });
-    expect(plan.features.map((feature) => feature.id).toSorted()).toEqual([
-      "langfuse",
-      "mcp",
-    ]);
+    expect(
+      plan.features
+        .map((feature: { readonly id: string }): string => feature.id)
+        .toSorted()
+    ).toEqual(["langfuse", "mcp"]);
     expect(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
@@ -218,7 +217,6 @@ test("validates feature dependencies and exclusive storage slots before writing"
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

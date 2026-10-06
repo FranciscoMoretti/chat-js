@@ -49,7 +49,6 @@ test("provider replacement recognizes literal wrappers and refuses unknown insta
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("gateway replacement edits only the active root config discriminator", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-config-"));
   roots.push(root);
@@ -57,7 +56,9 @@ test("gateway replacement edits only the active root config discriminator", asyn
     'const unrelated = { ai: { gateway: "other" } };\nconst config = defineConfig({ ai: { gateway: "openai", models: { chat: "chosen" } }, extra: { ai: { gateway: "nested" } } });\nexport default config;\n';
   await writeFile(path.join(root, "chat.config.ts"), original);
   const item = builtInGateways.find(
-    (gateway) => gateway.meta.chatjs.id === "vercel"
+    (gateway: {
+      readonly meta: { readonly chatjs: { readonly id: string } };
+    }) => gateway.meta.chatjs.id === "vercel"
   );
   if (!item) {
     throw new Error("Missing Vercel fixture");
@@ -110,12 +111,10 @@ test("gateway replacement edits only the active root config discriminator", asyn
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],   ['{ ai: { gateway: "o's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each([
   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],
   ['{ ai: { gateway: "openai" }, ...loadConfig() }', false],
@@ -132,7 +131,9 @@ test.each([
     roots.push(root);
     const file = path.join(root, "chat.config.ts");
     const item = builtInGateways.find(
-      (gateway) => gateway.meta.chatjs.id === "vercel"
+      (gateway: {
+        readonly meta: { readonly chatjs: { readonly id: string } };
+      }) => gateway.meta.chatjs.id === "vercel"
     );
     if (!item) {
       throw new Error("Missing Vercel fixture");
@@ -153,5 +154,4 @@ test.each([
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
