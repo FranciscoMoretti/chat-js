@@ -102,7 +102,6 @@ const fixture = async (): Promise<string> => {
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -149,7 +148,9 @@ test("explicit provider replacement preserves unrelated installations and refuse
       }
     );
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["extra", "second"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
     expect(
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
@@ -161,7 +162,6 @@ test("explicit provider replacement preserves unrelated installations and refuse
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["registration", "finalization"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -171,7 +171,6 @@ test("explicit provider replacement preserves unrelated installations and refuse
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each(["registration", "finalization"] as const)(
   "failed %s restores previous provider source, manifest, receipts and lockfiles",
   async (phase): Promise<void> => {
@@ -276,7 +275,9 @@ test.each(["registration", "finalization"] as const)(
         }
       );
       const tools = await syncTools(root, { checkOnly: true });
-      expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
+      expect(
+        tools.map((tool: { readonly id: string }): string => tool.id)
+      ).toEqual(["second"]);
     } finally {
       // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
       registry.stop(true);
@@ -286,7 +287,6 @@ test.each(["registration", "finalization"] as const)(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -296,7 +296,6 @@ test.each(["registration", "finalization"] as const)(
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -323,14 +322,15 @@ test("native shadcn source can be composed without overwriting or blessing user 
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["first"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["first"]);
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 

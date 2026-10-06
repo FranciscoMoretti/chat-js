@@ -486,7 +486,6 @@ const syncFeatures = async (
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Only fresh scaffolds use defaults. Cloning and sync never call this function.
 const initializeFeatureUi = async (cwd: string): Promise<void> => {
   await initializeObservability(cwd);
@@ -552,36 +551,41 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
           continue;
         }
         const array = declaration.initializer;
-        const entries = array.elements.filter((entry): boolean => {
-          if (
-            ts.isSpreadElement(entry) &&
-            entry.expression.getText(parsed) === `${symbol}.controls`
-          ) {
-            return false;
+        const entries = array.elements.filter(
+          (entry: ReadonlyNative<ts.Expression>): boolean => {
+            if (
+              ts.isSpreadElement(entry) &&
+              entry.expression.getText(parsed) === `${symbol}.controls`
+            ) {
+              return false;
+            }
+            if (ts.isIdentifier(entry)) {
+              return entry.text !== symbol;
+            }
+            return (
+              !ts.isObjectLiteralExpression(entry) ||
+              !entry.properties.some(
+                (prop: ReadonlyNative<ts.ObjectLiteralElementLike>): boolean =>
+                  ts.isPropertyAssignment(prop) &&
+                  ts.isIdentifier(prop.initializer) &&
+                  prop.initializer.text === symbol
+              )
+            );
           }
-          if (ts.isIdentifier(entry)) {
-            return entry.text !== symbol;
-          }
-          return (
-            !ts.isObjectLiteralExpression(entry) ||
-            !entry.properties.some(
-              (prop): boolean =>
-                ts.isPropertyAssignment(prop) &&
-                ts.isIdentifier(prop.initializer) &&
-                prop.initializer.text === symbol
-            )
-          );
-        });
+        );
         edits.push({
           end: array.end,
           start: array.getStart(parsed),
-          text: `[\n${entries.map((entry): string => `${entry.getText(parsed)},`).join("\n")}\n]`,
+          text: `[\n${entries.map((entry: ReadonlyNative<ts.Expression>): string => `${entry.getText(parsed)},`).join("\n")}\n]`,
         });
       }
     }
     let content = source;
     for (const edit of edits.toSorted(
-      (leftEdit, rightEdit): number => rightEdit.start - leftEdit.start
+      (
+        leftEdit: Readonly<{ start: number }>,
+        rightEdit: Readonly<{ start: number }>
+      ): number => rightEdit.start - leftEdit.start
     )) {
       content =
         content.slice(0, edit.start) + edit.text + content.slice(edit.end);
@@ -593,7 +597,6 @@ const initializeFeatureUi = async (cwd: string): Promise<void> => {
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertSupportedFeatureInstallation, initializeFeatureUi, syncFeatures); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-lines-per-function */

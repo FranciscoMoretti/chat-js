@@ -78,13 +78,15 @@ const fixture = async (): Promise<string> => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve itemFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const itemFiles = async (item: {
+interface ReadonlyObservabilityItem {
   readonly files: readonly Readonly<
     (typeof observabilityItems)[number]["files"][number]
   >[];
   readonly meta: { readonly chatjs: unknown };
   readonly name: string;
-}) => [
+}
+
+const itemFiles = async (item: ReadonlyObservabilityItem) => [
   ...(await Promise.all(
     item.files.map(async (file) => ({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -105,23 +107,26 @@ const itemFiles = async (item: {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
+type ReadonlyObservabilityFile = Readonly<{
+  content: string;
+  target: string;
+}>;
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Every subset protects omission as well as independent installation.
 for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   const selected = observabilityItems.filter(
-    (_, index): number => Math.floor(mask / 2 ** index) % 2
+    (_: unknown, index): number => Math.floor(mask / 2 ** index) % 2
   );
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-  test(`generates only installed observability imports: ${selected.map((item): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
+  test(`generates only installed observability imports: ${selected.map((item: { readonly name: string }): string => item.name).join(", ") || "none"}`, async (): Promise<void> => {
     const root = await fixture();
     await Promise.all(
-      selected.map(async (item): Promise<void> => {
+      selected.map(async (item: ReadonlyObservabilityItem): Promise<void> => {
         const files = await itemFiles(item);
         await Promise.all(
-          files.map(async (file): Promise<void> => {
+          files.map(async (file: ReadonlyObservabilityFile): Promise<void> => {
             const target = path.join(root, file.target.replace(/^~\//u, ""));
             await mkdir(path.dirname(target), { recursive: true });
             await writeFile(target, file.content);
@@ -163,7 +168,6 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
   });
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
@@ -171,7 +175,6 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const item of observabilityItems) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -193,10 +196,11 @@ for (const item of observabilityItems) {
       expect(manifest.dependencies[dependency]).toBeUndefined();
     }
     const descriptors = await Promise.all(
-      observabilityItems.map((feature): Promise<boolean> =>
-        Bun.file(
-          path.join(root, `features/${feature.name}/chatjs.json`)
-        ).exists()
+      observabilityItems.map(
+        (feature: { readonly name: string }): Promise<boolean> =>
+          Bun.file(
+            path.join(root, `features/${feature.name}/chatjs.json`)
+          ).exists()
       )
     );
     expect(descriptors).toEqual(observabilityItems.map((): boolean => false));
@@ -239,7 +243,7 @@ for (const item of observabilityItems) {
       );
       expect(registration).toContain(`"${item.name}"`);
       for (const feature of observabilityItems.filter(
-        (candidate): boolean => candidate !== item
+        (candidate: ReadonlyObservabilityItem): boolean => candidate !== item
       )) {
         expect(registration).not.toContain(`"${feature.name}"`);
       }
@@ -258,7 +262,7 @@ for (const item of observabilityItems) {
     const root = await fixture();
     const files = await itemFiles(item);
     await Promise.all(
-      files.map(async (file): Promise<void> => {
+      files.map(async (file: ReadonlyObservabilityFile): Promise<void> => {
         const target = path.join(root, file.target.replace(/^~\//u, ""));
         await mkdir(path.dirname(target), { recursive: true });
         await writeFile(target, file.content);
@@ -280,7 +284,6 @@ for (const item of observabilityItems) {
   /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

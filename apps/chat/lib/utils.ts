@@ -5,9 +5,13 @@ import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+type ClassNameInput =
+  | Exclude<ClassValue, object>
+  | Readonly<Record<string, unknown>>
+  | readonly ClassNameInput[];
+
+const cn = (...inputs: readonly ClassNameInput[]): string =>
+  twMerge(clsx(inputs));
 
 const generateUUID = (): string => uuidv7();
 

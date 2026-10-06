@@ -5,7 +5,7 @@ import { eveStoredFile } from "./schema";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storageKeyForFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): storageKeyForFile intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision.
+ * typescript/strict-boolean-expressions (#610): The Drizzle query's first selected row is absent when no file matches; keep its ordinary missing-file Error and first-row check. A direct undefined check conflicts with no-undefined, while the native typeof guard triggers prefer-type-error and a length/index check adds numeric exceptions.
  */
 /**
  * File references use the stable record key; only storage sees storageKey.
