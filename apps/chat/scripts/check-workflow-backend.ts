@@ -1,15 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection"; "../lib/db/workflow-backend"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- */
 import postgres from "postgres";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { databaseConnection } from "../lib/db/connection";
+import { databaseConnection } from "@/lib/db/connection";
 /* oxlint-enable sort-imports */
-import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
+import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
@@ -46,4 +42,4 @@ void (async (): Promise<void> => {
   }
 })();
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable no-console */

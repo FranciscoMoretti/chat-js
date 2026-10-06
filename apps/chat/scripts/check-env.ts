@@ -11,22 +11,22 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { config as loadEnvConfig } from "dotenv";
 /* oxlint-enable sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { installedFeatures } from "@/features/installed";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { gatewayEnvRequirements } from "@/lib/ai/gateway-model-defaults";
 /* oxlint-enable sort-imports */
 import { generatedForGateway } from "@/lib/ai/models.generated";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import {
   authEnvRequirements,
   getMissingRequirement,
@@ -36,10 +36,10 @@ import {
 import { databaseEnvOptions } from "@/lib/db/connection";
 import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
 import { resolveEveEnvironment } from "@/lib/eve/environment";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { storageEnvRequirements, storageId } from "@/lib/storage-options";
 /* oxlint-enable sort-imports */
 import { installedToolNames } from "@/tools/chatjs/installed-features";

@@ -1,14 +1,13 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { spawnSync } from "node:child_process";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
 import { spawnSync } from "node:child_process";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
 /* oxlint-enable sort-imports */
 
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-console --
  * no-console (#514): console.log emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
