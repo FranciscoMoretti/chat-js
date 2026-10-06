@@ -544,3 +544,18 @@ The `check-db.ts` review covers only its removed readonly callback scope; its re
 `validateAuthentication` now uses `flatMap` to produce zero or one missing-requirement diagnostic for each enabled provider. The `authKeys` array still comes from native `Object.keys`, so provider enumeration and output order stay the same; the aggregate enabled-provider check still runs afterward. The source-extracted differential retains 527 combinations, getter/error controls, exact outer `ValidationError[]` signature, and inverted-guard mutant rejection. The private errors array is still returned as a mutable array. This removes only the function's `max-statements` membership and adds no waiver; check-env falls 37→36 and the repository total falls 20,852→20,851. Source SHA-256 changes `d5248476…`→`d3ab53e7…`. Native type-aware Oxlint with unused-directive reporting and Oxfmt pass; `bun lint`, all seven `bun test:types` tasks, and `bun template:check` pass. Evidence: `/tmp/chatjs-auth-workflow/`.
 
 Current check-env coverage is 36 memberships from its 48-membership source `3b161519…`: 34 reviewed retains and two unresolved `checkEnv` metric scopes. The auth assertion is retained based on the four-error TS7053 no-assertion control; the auth statement-count scope was removed in Batch 57. The seven sort-import scopes have reproduced formatter-conflict evidence. Other check-env scopes remain as previously dispositioned and were not reassessed by Batch 57.
+
+The ten-file `apps/chat/scripts` partition after Batch 57 was counted with `readExceptions` from `scripts/lint-exceptions.ts` at HEAD `d83a5447…` (126 memberships total):
+
+| File | Current memberships | Reviewed scope status |
+| --- | --: | --- |
+| `backfill-eve-search.ts` | 20 | One prior `typescript/strict-boolean-expressions` predicate was removed with a six-case controlled comparison; its 20 current memberships have not had a full-file reassessment. |
+| `build-eve.ts` | 8 | The parent-import scope was removed and its no-ternary reason was corrected against the pinned rule; the other seven current memberships were not fully reassessed. |
+| `check-db.test.ts` | 8 | No exception scope has been reassessed. The focused test has the documented source-equivalent temporary-cwd `tsx` resolution failure. |
+| `check-db.ts` | 17 | One prior strict-boolean scope and the readonly Zod issue-path scope were removed; the 17 current memberships have not had a full-file reassessment. |
+| `check-env.ts` | 36 | 34 reviewed retains and two unresolved `checkEnv` metric scopes, as detailed above. |
+| `check-workflow-backend.ts` | 6 | The explicit-return exception and its unmatched closing token were removed, then the parent-import scope was removed; the six current memberships were not fully reassessed. |
+| `eve-setup-config.test.ts` | 1 | Its `no-undefined` membership has not been reassessed. |
+| `eve-setup-config.ts` | 5 | One strict-boolean scope and one parent-import scope were removed; the five current memberships were not fully reassessed. |
+| `eve-setup.ts` | 18 | No exception scope has been reassessed; operational setup and database entrypoints remain unrun. |
+| `fetch-models.ts` | 7 | Parent-import, sync-write, and redundant array-truthiness scopes were removed using resolution and controlled-adapter evidence; the seven remaining scopes have not had a full-file reassessment. |
