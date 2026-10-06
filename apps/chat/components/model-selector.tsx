@@ -771,11 +771,13 @@ const PureModelSelector = ({
                           ? (delta): void => handleCountChange(model.id, delta)
                           : undefined
                       }
-                      onSelect={() =>
-                        useMultipleModels
-                          ? toggleMultiModel(model.id)
-                          : selectSingleModel(model.id)
-                      }
+                      onSelect={() => {
+                        if (useMultipleModels) {
+                          toggleMultiModel(model.id);
+                          return;
+                        }
+                        selectSingleModel(model.id);
+                      }}
                       selectionControl={
                         useMultipleModels ? (
                           <Checkbox

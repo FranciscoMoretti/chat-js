@@ -51,18 +51,22 @@ export const useRenameProject = () => {
             ? variables.updates.name
             : undefined;
         if (typeof nextName === "string" && nextName !== "") {
-          queryClient.setQueryData<Project | null>(detailKey, (old) =>
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            old ? { ...old, name: nextName } : old
-          );
+          queryClient.setQueryData<Project | null>(detailKey, (old) => {
+            if (old) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return { ...old, name: nextName };
+            }
+            return old;
+          });
           queryClient.setQueryData<Project[] | undefined>(listKey, (old) =>
             // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from old; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-            old?.map((project) =>
-              project.id === variables.id
-                ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing project own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-                  { ...project, name: nextName }
-                : project
-            )
+            old?.map((project) => {
+              if (project.id === variables.id) {
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing project own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+                return { ...project, name: nextName };
+              }
+              return project;
+            })
           );
         }
         return { detail, previous };

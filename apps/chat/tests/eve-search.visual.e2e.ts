@@ -282,24 +282,25 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
       const batchResults: readonly unknown[] = data;
       await recent.promise;
       await route.fulfill({
-        json: procedures.map((procedure, procedureIndex) =>
-          procedure === "eve.list"
-            ? {
-                result: {
-                  data: serialize({
-                    items: Array.from({ length: 8 }, (_, index) => ({
-                      conversationId: `branch-${index}`,
-                      createdAt: "2026-09-25T10:00:00Z",
-                      id: `chat-${index}`,
-                      state: "bound",
-                      title: `Recent conversation ${index + 1}`,
-                    })),
-                    nextCursor: null,
-                  }),
-                },
-              }
-            : batchResults[procedureIndex]
-        ),
+        json: procedures.map((procedure, procedureIndex) => {
+          if (procedure === "eve.list") {
+            return {
+              result: {
+                data: serialize({
+                  items: Array.from({ length: 8 }, (_, index) => ({
+                    conversationId: `branch-${index}`,
+                    createdAt: "2026-09-25T10:00:00Z",
+                    id: `chat-${index}`,
+                    state: "bound",
+                    title: `Recent conversation ${index + 1}`,
+                  })),
+                  nextCursor: null,
+                }),
+              },
+            };
+          }
+          return batchResults[procedureIndex];
+        }),
         response,
       });
     }

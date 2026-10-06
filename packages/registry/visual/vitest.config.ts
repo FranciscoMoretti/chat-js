@@ -14,9 +14,9 @@ import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { playwright } from "@vitest/browser-playwright";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Oxfmt groups playwright after @vitest/browser-playwright; sort-imports instead requires this multiple-name type declaration before the single-name runtime declaration.
+import type { Page, Route } from "playwright";
 import { defineConfig } from "vitest/config";
-/* oxlint-enable sort-imports */
 
 const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)
@@ -30,6 +30,10 @@ export default defineConfig({
   define: { IS_REACT_ACT_ENVIRONMENT: "true", "process.env": "{}" },
   optimizeDeps: {
     include: [
+      "@trpc/server/observable",
+      "next/dist/shared/lib/app-router-context.shared-runtime",
+      "next/link",
+      "next/navigation",
       "@lexical/react/LexicalPlainTextPlugin",
       "@radix-ui/react-checkbox",
       "@radix-ui/react-dialog",
@@ -67,6 +71,25 @@ export default defineConfig({
   },
   test: {
     browser: {
+      commands: {
+        /* oxlint-disable oxc/no-async-await -- Install the fixture's external logo response before rendering and await each native Playwright route fulfillment. */
+        modelAssets: async ({
+          page,
+        }: {
+          readonly page: Readonly<Pick<Page, "route">>;
+        }): Promise<void> => {
+          await page.route(
+            "https://models.dev/**",
+            async (route: Readonly<Pick<Route, "fulfill">>): Promise<void> => {
+              await route.fulfill({
+                body: '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><rect x="2" y="2" width="12" height="12" fill="currentColor"/></svg>',
+                contentType: "image/svg+xml",
+              });
+            }
+          );
+        },
+        /* oxlint-enable oxc/no-async-await */
+      },
       enabled: true,
       headless: true,
       instances: [{ browser: "chromium" }],

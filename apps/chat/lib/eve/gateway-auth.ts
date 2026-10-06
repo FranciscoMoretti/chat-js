@@ -84,12 +84,14 @@ const authorizeDeletionRequest = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): gatewaySessionPolicy uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep gatewaySessionPolicy's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): gatewaySessionPolicy intentionally keeps the existing falsy-value behavior of compactionSession; ordinaryCheckpoint; checkpointSession; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-const gatewaySessionPolicy = (path: string, method: string) => {
+const gatewaySessionPolicy = (
+  path: string,
+  method: string
+): ReturnType<typeof parseSessionRequest> | { sessionId: string } => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from compactionPath.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const compactionSession = method === "POST" && compactionPath.exec(path)?.[1];
   if (compactionSession) {
@@ -111,7 +113,7 @@ const gatewaySessionPolicy = (path: string, method: string) => {
   return parseSessionRequest(path, method);
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCreationReservation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null -- * typescript/strict-boolean-expressions (#610): readCreationReservation intentionally keeps the existing falsy-value behavior of reservation; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): readCreationReservation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
@@ -148,15 +150,14 @@ const readCreationReservation = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readGatewayAttributes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null -- * max-statements (#512): readGatewayAttributes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): readGatewayAttributes uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep readGatewayAttributes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): readGatewayAttributes intentionally keeps the existing falsy-value behavior of modelId; reservationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): readGatewayAttributes preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readGatewayAttributes = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string
-) => {
+): Promise<Record<string, string> | null> => {
   const modelId = request.headers.get("x-chatjs-model") ?? undefined;
   if (modelId) {
     await loadEveModelDefinition(modelId);
@@ -189,7 +190,7 @@ const readGatewayAttributes = async (
   return attributes;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-statements, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const guestAttributesAllowed = (
   expiresAt: ReadonlyNativeSurface<Date>,
@@ -231,15 +232,20 @@ const ownsGatewaySession = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateEveGateway's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params */
 
-/* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): authenticateEveGateway keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep authenticateEveGateway's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): authenticateEveGateway intentionally keeps the existing falsy-value behavior of owner; guest; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): authenticateEveGateway preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 export const authenticateEveGateway = async (
   request: ReadonlyNativeSurface<Request>
-) => {
+): Promise<{
+  attributes: Record<string, string>;
+  authenticator: string;
+  issuer: string;
+  principalId: string;
+  principalType: string;
+  subject: string;
+} | null> => {
   if (!env.EVE_GATEWAY_SECRET) {
     return null;
   }
@@ -308,4 +314,4 @@ export const authenticateEveGateway = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions, unicorn/no-null */

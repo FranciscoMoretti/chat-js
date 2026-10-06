@@ -26,6 +26,20 @@ import {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
+/** Select the requested root or joined member while retaining the owner filter.
+ * @param {string} ownerId - Owner required for either identity alternative.
+ * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @returns {ReturnType<typeof and>} Native Drizzle owner-and-identity predicate, with the root alternative evaluated before the member alternative.
+ */
+const ownerVisibleEveIdentityCondition = (
+  ownerId: string,
+  conversationId: string
+): ReturnType<typeof and> =>
+  and(
+    eq(eveChat.ownerId, ownerId),
+    or(eq(eveChat.id, conversationId), eq(eveConversation.id, conversationId))
+  );
+
 /**
  * Final application stage. The internal coordinator must confirm native payload,
  * sandbox and file removal before calling this; this is not a deletion endpoint.
@@ -56,13 +70,7 @@ const completeEveConversationDeletion = async (
             eq(eveConversation.id, routeId)
           )
         )
-        .where(
-          and(
-            eq(eveChat.ownerId, ownerId),
-            // oxlint-disable-next-line unicorn/max-nested-calls -- Match either the root chat or the owner-visible member within the joined identity query; keep the existing ordered Drizzle predicate composition.
-            or(eq(eveChat.id, routeId), eq(eveConversation.id, routeId))
-          )
-        );
+        .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
       // oxlint-disable-next-line typescript/strict-boolean-expressions -- The first owner-visible identity row is absent when the native query returns an empty array; keep the existing falsy-row failure boundary.
       if (!identity) {
         throw new Error("Conversation identity is unavailable.");
@@ -206,17 +214,7 @@ const getEveDeletionState = async (
         eq(eveConversation.id, conversationId)
       )
     )
-    .where(
-      and(
-        eq(eveChat.ownerId, ownerId),
-        or(
-          // oxlint-disable-next-line unicorn/max-nested-calls -- The owner-filtered joined identity accepts a root chat ID or a member conversation ID in the existing OR predicate.
-          eq(eveChat.id, conversationId),
-          // oxlint-disable-next-line unicorn/max-nested-calls -- Preserve the member-ID alternative in that same owner-visible joined identity predicate.
-          eq(eveConversation.id, conversationId)
-        )
-      )
-    )
+    .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
     // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
     .limit(1);
   // oxlint-disable-next-line typescript/strict-boolean-expressions -- Array destructuring can yield no identity despite Drizzle unchecked-index inference; preserve the missing-receipt guard.
