@@ -159,19 +159,26 @@ const completeEveConversationDeletion = async (
   });
 };
 /* oxlint-enable oxc/no-async-await */
+interface EveDeletionState {
+  rootId: typeof eveChat.$inferSelect.id;
+  state: typeof eveConversation.$inferSelect.state;
+}
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveDeletionState's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable jsdoc/require-param, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- jsdoc/require-param (#534): getEveDeletionState's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveDeletionState's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-no-magic-numbers (#517): getEveDeletionState uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-no-undefined (#519): getEveDeletionState uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep getEveDeletionState's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveDeletionState's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- no-magic-numbers (#517): getEveDeletionState uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/strict-boolean-expressions (#610): getEveDeletionState intentionally keeps the existing falsy-value behavior of row; member; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): getEveDeletionState keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
-/** Includes identity tombstones so owners can retry and inspect completed deletion. */
-const getEveDeletionState = async (ownerId: string, conversationId: string) => {
+/** Read the owner-visible root and native deletion state, including identity tombstones.
+ * @param {string} ownerId - Owner required by both identity and member queries.
+ * @param {string} conversationId - Root chat ID or member conversation ID to inspect.
+ * @returns {Promise<EveDeletionState | undefined>} Root identity and state, or no receipt when the owner has no matching identity or member.
+ */
+const getEveDeletionState = async (
+  ownerId: string,
+  conversationId: string
+): Promise<EveDeletionState | undefined> => {
   const [row] = await db
     .select({
       chatId: eveChat.id,
@@ -197,10 +204,10 @@ const getEveDeletionState = async (ownerId: string, conversationId: string) => {
     )
     .limit(1);
   if (!row) {
-    return;
+    // oxlint-disable-next-line no-undefined -- Missing owner-visible identity has no deletion-state receipt.
+    return undefined;
   }
   if (row.state) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return { rootId: row.chatId, state: row.state };
   }
   const [member] = await db
@@ -213,11 +220,14 @@ const getEveDeletionState = async (ownerId: string, conversationId: string) => {
       )
     )
     .limit(1);
-  // oxlint-disable-next-line typescript/consistent-return -- #580: getEveDeletionState has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
-  return member ? { rootId: row.chatId, state: member.state } : undefined;
+  if (!member) {
+    // oxlint-disable-next-line no-undefined -- An identity without an owner-visible member has no deletion-state receipt.
+    return undefined;
+  }
+  return { rootId: row.chatId, state: member.state };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (completeEveConversationDeletion, getEveDeletionState); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 export { completeEveConversationDeletion, getEveDeletionState };
 /* oxlint-enable import/no-named-export */

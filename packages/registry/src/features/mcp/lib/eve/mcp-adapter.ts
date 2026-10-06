@@ -40,9 +40,13 @@ const describeMcpTool = async <TInput, TOutput>(
       JSON.parse(
         JSON.stringify(
           await schema.jsonSchema,
-          (key: string, value: unknown): unknown =>
-            // oxlint-disable-next-line eslint/no-undefined -- JSON.stringify requires the undefined replacer result to omit the executable ~standard schema metadata while preserving all other JSON values.
-            key === "~standard" ? undefined : value
+          (key: string, value: unknown): unknown => {
+            if (key === "~standard") {
+              // oxlint-disable-next-line eslint/no-undefined -- JSON.stringify requires an undefined replacer result to omit executable Standard Schema metadata; other values are returned unchanged.
+              return undefined;
+            }
+            return value;
+          }
         )
       )
     );

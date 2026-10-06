@@ -341,9 +341,10 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
   const validated = await asSchema(tool.inputSchema).validate?.(input);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from validated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (!validated?.success) {
-    throw validated && !validated.success
-      ? validated.error
-      : new Error("Invalid tool input.");
+    if (validated && !validated.success) {
+      throw validated.error;
+    }
+    throw new Error("Invalid tool input.");
   }
 };
 /* oxlint-enable oxc/no-async-await */

@@ -18,11 +18,9 @@ const context = defineState<FollowupContext>(
   () => ({ assistant: "", user: "" })
 );
 
-/* oxlint-disable import/no-default-export, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/no-default-export, typescript/prefer-readonly-parameter-types --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
- * no-undefined (#519): default export uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): default export accepts event; current; _event; hookContext; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): default export preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 export default defineHook({
   events: {
@@ -30,13 +28,19 @@ export default defineHook({
       context.update((current) => followupContext(current, event)),
     "message.received": (event) =>
       context.update((current) => followupContext(current, event)),
-    "turn.completed": (_event, hookContext) =>
+    "turn.completed": (
+      _event,
+      hookContext
+    ): ReturnType<typeof generateEveFollowupSuggestions> | undefined => {
       // Suggestions are actions for the user-facing branch, not a background task.
-      hookContext.session.parent
-        ? undefined
-        : generateEveFollowupSuggestions(context.get()),
+      if (hookContext.session.parent) {
+        // oxlint-disable-next-line no-undefined -- A child turn produces no followup action; preserve the hook's synchronous undefined result and the parent-turn branch's original Promise identity.
+        return undefined;
+      }
+      return generateEveFollowupSuggestions(context.get());
+    },
     "turn.started": (event) =>
       context.update((current) => followupContext(current, event)),
   },
 });
-/* oxlint-enable import/no-default-export, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/no-default-export, typescript/prefer-readonly-parameter-types */

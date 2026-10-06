@@ -54,21 +54,25 @@ const owners: string[] = [];
 const ips: string[] = [];
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findEveGuest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
- * no-undefined (#519): findEveGuest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep findEveGuest's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): findEveGuest intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-async function findEveGuest(tokenHash: string) {
+async function findEveGuest(
+  tokenHash: string
+): Promise<typeof eveGuest.$inferSelect | undefined> {
   const [row] = await db
     .select()
     .from(eveGuest)
     .where(eq(eveGuest.tokenHash, tokenHash));
-  return row && row.expiresAt > new Date() ? row : undefined;
+  if (row && row.expiresAt > new Date()) {
+    return row;
+  }
+  // oxlint-disable-next-line no-undefined -- No matching unexpired guest preserves the optional fixture result; no row fields or clock are read when the row is absent.
+  return undefined;
 }
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve guest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type --
  * no-magic-numbers (#517): guest uses 10, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

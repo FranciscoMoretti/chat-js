@@ -122,10 +122,45 @@ afterAll(async () => {
   await db.delete(user).where(inArray(user.id, owners));
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * max-statements (#512): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): beforeEach uses -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): beforeEach accepts urls: string[]; file: Blob; init?: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+const installNativeCopyRequestMock = (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mocks.request.mockImplementation's awaited sequencing and rejected-Promise behavior. */
+  mocks.request.mockImplementation(
+    // oxlint-disable-next-line max-statements -- The native copy request fixture models operation lookup and seed dispatch in one ordered 16-statement handler; preserve per-beforeEach handler allocation and mock state visibility.
+    async (owner: string, path: string, init?: { readonly body?: unknown }) => {
+      if (path.startsWith("/eve/chat/v1/operation/")) {
+        const url = new URL(path, "http://fixture.invalid");
+        if (url.searchParams.get("kind") !== "seed") {
+          throw new Error("Wrong native operation namespace");
+        }
+        // oxlint-disable-next-line no-magic-numbers -- The operation identity is the final segment of the native operation lookup path.
+        const operationId = url.pathname.split("/").at(-1);
+        const saved = mocks.native.get(`${owner}/${operationId}`);
+        if (saved) {
+          return Response.json({ sessionId: saved.sessionId });
+        }
+        return Response.json(
+          { code: "eve_operation_not_found" },
+          { status: 404 }
+        );
+      }
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      if (typeof init?.body !== "string") {
+        throw new TypeError("Expected a JSON copy request body");
+      }
+      const body = z
+        .strictObject({ operationId: z.uuid(), seed: z.literal(true) })
+        .parse(JSON.parse(init.body));
+      const seed = await resolveAcceptedEveCopySeed(owner, body.operationId);
+      const native = { seed, sessionId: crypto.randomUUID() };
+      mocks.native.set(`${owner}/${body.operationId}`, native);
+      return Response.json({ sessionId: native.sessionId });
+    }
+  );
+  /* oxlint-enable oxc/no-async-await */
+};
+
+/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
+ * typescript/prefer-readonly-parameter-types (#565): The remaining upload fixture receives file: Blob and stores that exact native file in the mutable Blob map; this original native-file parameter contract is outside the request-handler guard conversion.
  * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): beforeEach intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
@@ -133,7 +168,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   mocks.files.clear();
   mocks.native.clear();
-  mocks.remove.mockImplementation((urls: string[]) => {
+  mocks.remove.mockImplementation((urls: readonly string[]) => {
     for (const url of urls) {
       const key = keyFromFileUrl(url);
       if (key) {
@@ -153,37 +188,10 @@ beforeEach(() => {
     mocks.files.set(key, file);
     return Promise.resolve();
   });
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mocks.request.mockImplementation's awaited sequencing and rejected-Promise behavior. */
-  mocks.request.mockImplementation(
-    async (owner: string, path: string, init?: RequestInit) => {
-      if (path.startsWith("/eve/chat/v1/operation/")) {
-        const url = new URL(path, "http://fixture.invalid");
-        if (url.searchParams.get("kind") !== "seed") {
-          throw new Error("Wrong native operation namespace");
-        }
-        const operationId = url.pathname.split("/").at(-1);
-        const saved = mocks.native.get(`${owner}/${operationId}`);
-        return saved
-          ? Response.json({ sessionId: saved.sessionId })
-          : Response.json({ code: "eve_operation_not_found" }, { status: 404 });
-      }
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      if (typeof init?.body !== "string") {
-        throw new TypeError("Expected a JSON copy request body");
-      }
-      const body = z
-        .strictObject({ operationId: z.uuid(), seed: z.literal(true) })
-        .parse(JSON.parse(init.body));
-      const seed = await resolveAcceptedEveCopySeed(owner, body.operationId);
-      const native = { seed, sessionId: crypto.randomUUID() };
-      mocks.native.set(`${owner}/${body.operationId}`, native);
-      return Response.json({ sessionId: native.sessionId });
-    }
-  );
-  /* oxlint-enable oxc/no-async-await */
+  installNativeCopyRequestMock();
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
  * max-lines-per-function (#510): fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
