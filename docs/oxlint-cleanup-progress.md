@@ -555,7 +555,7 @@ The ten-file `apps/chat/scripts` partition after Batch 57 was counted with `read
 | `check-db.ts` | 14 | Three scopes were removed by the timer callback and IIFE annotation changes; 12 are reviewed retains and two function metrics remain unresolved. The parent-relative import is retained because the Node/tsx test consumer does not resolve the `@` alias. |
 | `check-env.ts` | 36 | 34 reviewed retains and two unresolved `checkEnv` metric scopes, as detailed above. |
 | `check-workflow-backend.ts` | 6 | All six current memberships were reviewed: formatter/sort ordering, awaited transaction cleanup and entrypoint handling, environment reads, CLI diagnostics, and the CommonJS/tsx top-level-await constraint. |
-| `eve-setup-config.test.ts` | 1 | Its `no-undefined` membership has not been reassessed. |
+| `eve-setup-config.test.ts` | 0 | The `no-undefined` membership was removed by testing omitted and empty URLs as separate cases; both preserve the missing-URL behavior. |
 | `eve-setup-config.ts` | 4 | One strict-boolean scope, one parent-import scope, and the readonly Zod issue callback membership were removed. Two export-style memberships are reviewed retains; `init-declarations` and the 17-statement workflow remain unresolved pending a URL error-boundary extraction review. |
 | `eve-setup.ts` | 18 | No exception scope has been reassessed; operational setup and database entrypoints remain unrun. |
 | `fetch-models.ts` | 7 | Parent-import, sync-write, and redundant array-truthiness scopes were removed using resolution and controlled-adapter evidence; the seven remaining scopes have not had a full-file reassessment. |
@@ -568,4 +568,8 @@ In `apps/chat/scripts/eve-setup-config.ts`, the Zod issue callback now accepts o
 
 Malformed reasons in `check-db.test.ts`, `build-eve.ts`, and `check-workflow-backend.ts` are corrected against their fixture, command, and import behavior. Sort-import suppressions on these scripts were tested without the directives: Oxlint reports the ordering conflicts, and pinned Oxfmt restores the existing import order without clearing them. These edits change no memberships. The corrected check-db Vitest fixture passes 1/1; setup plus check-db tests pass 17/17. The explicit baseline reflects only the reviewed scopes, and repository memberships fall 20,851→20,847. Full `bun lint`, all seven `bun test:types` tasks, and `bun template:check` pass. Evidence: `/tmp/check-db-current-proof.json`, `/tmp/check-db-timeout-independent-proof.json`, `/tmp/check-db-review-ledger.json`, and the setup source probe recorded in this batch.
 
-At Batch 58, the ten app-script files have 122 memberships. The partition above distinguishes reviewed retains, unresolved scopes, and modules whose remaining memberships have not had full-file review; successful lint is not treated as completion evidence.
+At Batch 58, the ten app-script files had 122 memberships. The partition above distinguishes reviewed retains, unresolved scopes, and modules whose remaining memberships have not had full-file review; successful lint is not treated as completion evidence.
+
+### Batch 59: test omitted setup configuration without `undefined`
+
+In `apps/chat/scripts/eve-setup-config.test.ts`, the `no-undefined` exception is removed. The test now calls `resolveEveSetup(world)` for the omitted URL case and separately passes an empty string, preserving both existing inputs and expected error text without representing absence as a value. The focused Vitest suite passes 16 tests; type-aware Oxlint with unused-directive reporting and Oxfmt pass. The file falls 1→0, and the explicit baseline changes only this reviewed fingerprint, reducing repository memberships 20,847→20,846. The ten app-script files now have 121 memberships.

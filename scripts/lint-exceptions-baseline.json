@@ -5520,7 +5520,6 @@
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"node/no-process-env\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"no-console\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/scripts/eve-setup-config.test.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"init-declarations\",\"oxlint-disable\"]": 1,
@@ -32484,9 +32483,6 @@
     ],
     "[\"apps/chat/scripts/check-workflow-backend.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": [
       "94cc2e12b87cb7c9a8ee93b45904421b440615674be37fb252c1a5b8fc657312"
-    ],
-    "[\"apps/chat/scripts/eve-setup-config.test.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "9515fd57ea2dd5d825d8a8e2c3e05de0be8f1c012a1502ed9f48e8131faaa722"
     ],
     "[\"apps/chat/scripts/eve-setup-config.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "97b0c10940f2b602fd41b4c23b5f53b71b297cb6155f31bd5a17260b8fa9845d"
