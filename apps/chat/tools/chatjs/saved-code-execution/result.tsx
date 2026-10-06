@@ -2,8 +2,9 @@
 import type { EveMessagePart } from "eve/client";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Oxfmt groups these imports by source path, while the native rule orders type and value bindings differently; the import order still preserves runtime evaluation. */
 import { toolOutputSchema } from "@/lib/eve/tool-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 /* oxlint-enable sort-imports */
 
@@ -15,12 +16,11 @@ import { eveCodeExecutionResult } from "./schemas";
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const EveDocumentRunResult = ({
   part,
-}: {
+}: ReadonlyNativeSurface<{
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-}) => {
+}>) => {
   if (part.state === "output-error") {
     return <p role="alert">{part.errorText}</p>;
   }
@@ -50,8 +50,6 @@ export const EveDocumentRunResult = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */

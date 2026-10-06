@@ -353,21 +353,20 @@ const writeEveGeneratedFile = async <T>(
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retainEveDocumentFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, max-params, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): retainEveDocumentFiles accepts tx: Parameters<Parameters<typeof db.transaction>[0]>[0]; fileIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-params, no-magic-numbers -- max-params (#511): retainEveDocumentFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+no-magic-numbers (#517): retainEveDocumentFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 /**
  * Caller holds the owner family lock and has authorized the document revision.
- * @param {Parameters<Parameters<typeof db.transaction>[0]>[0]} tx - Caller transaction holding the owner family lock.
+ * @param {Readonly<Pick<typeof db, "select" | "insert">>} tx - Caller transaction holding the owner family lock.
  * @param {string} ownerId - Owner required for every active document file.
  * @param {string} conversationId - Conversation that retains the document references.
- * @param {string[]} fileIds - Storage keys referenced by the authorized revision.
+ * @param {readonly string[]} fileIds - Storage keys referenced by the authorized revision.
  */
 const retainEveDocumentFiles = async (
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: Readonly<Pick<typeof db, "select" | "insert">>,
   ownerId: string,
   conversationId: string,
-  fileIds: string[]
+  fileIds: readonly string[]
 ): Promise<void> => {
   const candidates = [...new Set(fileIds)];
   if (candidates.some((id) => !isFileStorageKey(id))) {
@@ -396,7 +395,7 @@ const retainEveDocumentFiles = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveFilesOwned, canReadEveFile, isEveFileUnavailable, referenceEveFiles, registerEveStoredFile, reserveEveGeneratedFile, reserveEveUpload, retainEveDocumentFiles, writeEveGeneratedFile, writeEveUpload); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params, no-magic-numbers */
 export {
   assertEveFilesOwned,
   canReadEveFile,
