@@ -1,11 +1,14 @@
 import { Maximize2, Minimize2 } from "lucide-react";
 import React from "react";
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { cn } from "@/lib/utils";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 // Type-only imports
-import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
+import type {
+  ResearchUpdate,
+  WebSearchUpdate,
+} from "@/tools/platform/research-updates-schema";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ResearchTask } from "./task";
@@ -31,32 +34,41 @@ const updateName = {
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchProgress = ({
   updates,
   isComplete,
-}: {
+}: ReadonlyNativeSurface<{
   updates: ResearchUpdate[];
   isComplete: boolean;
-}) => {
+}>) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
   // oxlint-disable-next-line no-ternary -- Keep lastUpdate as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const lastUpdate = updates.length > 0 ? updates.at(-1) : null;
 
   const searchCount = React.useMemo(
-    (): number => updates.filter((update) => update.type === "web").length,
+    (): number =>
+      updates.filter(
+        (update: ReadonlyNativeSurface<ResearchUpdate>) => update.type === "web"
+      ).length,
     [updates]
   );
 
   const sourceCount = React.useMemo(
     (): number =>
       updates
-        .filter((update) => update.type === "web")
+        .filter(
+          (update: ReadonlyNativeSurface<ResearchUpdate>) =>
+            update.type === "web"
+        )
         .reduce(
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading length from update.results; preserve one receiver evaluation, skipped accesses and the existing 0 fallback.
-          (acc, update): number => acc + (update.results?.length ?? 0),
+          (
+            acc: number,
+            update: ReadonlyNativeSurface<WebSearchUpdate>
+          ): number =>
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the source.results nullish check and 0 fallback while counting references.
+            acc + (update.results?.length ?? 0),
           0
         ),
     [updates]
@@ -76,10 +88,12 @@ export const ResearchProgress = ({
   const timeSpent = React.useMemo((): number => {
     if (isComplete) {
       const progressUpdates = updates.filter(
-        (update) => update.type === "started" || update.type === "completed"
+        (update: ReadonlyNativeSurface<ResearchUpdate>) =>
+          update.type === "started" || update.type === "completed"
       );
       const completedUpdate = progressUpdates.find(
-        (update) => update.type === "completed"
+        (update: ReadonlyNativeSurface<ResearchUpdate>) =>
+          update.type === "completed"
       );
 
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading timestamp from completedUpdate; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -156,7 +170,6 @@ export const ResearchProgress = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 

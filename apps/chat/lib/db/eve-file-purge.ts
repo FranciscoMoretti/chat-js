@@ -5,10 +5,20 @@ import { db } from "./client";
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
 /* oxlint-enable sort-imports */
 
+type TransactionCallback = Extract<
+  Parameters<typeof db.transaction>[number],
+  (...parameters: readonly never[]) => unknown
+>;
+type FilePurgeTransaction = Parameters<TransactionCallback>[number];
+
+type FilePurgeReadTransaction = Readonly<Pick<FilePurgeTransaction, "select">>;
+type FilePurgeWriteTransaction = Readonly<
+  Pick<FilePurgeTransaction, "execute" | "select" | "update" | "delete">
+>;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletingFamilyIds's awaited sequencing and rejected-Promise behavior. */
 const deletingFamilyIds = async (
-  // oxlint-disable-next-line no-magic-numbers, typescript/prefer-readonly-parameter-types -- Tuple index zero selects the transaction callback and its transaction argument; Drizzle owns this mutable transaction capability.
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  tx: FilePurgeReadTransaction,
   ownerId: string,
   rootId: string
 ): Promise<string[]> => {
@@ -46,8 +56,7 @@ const prepareEveFamilyFilePurge = async (
   ownerId: string,
   rootId: string
 ): Promise<string[]> =>
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -95,8 +104,7 @@ const completeEveFilePurge = async (
   if (keys.length === 0) {
     return;
   }
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );
@@ -125,8 +133,7 @@ const releaseEveFamilyFileReferences = async (
   ownerId: string,
   rootId: string
 ): Promise<void> => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle owns the mutable transaction capability; this callback performs its lock and query operations.
-  await db.transaction(async (tx) => {
+  await db.transaction(async (tx: FilePurgeWriteTransaction) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
     );

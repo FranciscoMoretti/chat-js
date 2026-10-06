@@ -4,8 +4,10 @@ import React from "react";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDocumentTool } from "@/components/eve/eve-document-tool";
 /* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order while placing erased type imports beside their helper. */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
 /* oxlint-enable sort-imports */
 
@@ -21,11 +23,16 @@ import { researchInput, researchOutput } from "./schemas";
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,
   outputSchema: researchOutput,
-  render: ({ tool, messageId, isReadonly }) => {
+  render: ({
+    tool,
+    messageId,
+    isReadonly,
+  }: ReadonlyNativeSurface<
+    ToolRendererProps<typeof researchInput, typeof researchOutput>
+  >) => {
     // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const result = tool.state === "output-available" ? tool.output : undefined;
     let content = <output>Researching…</output>;
@@ -56,7 +63,6 @@ export const DeepResearchRenderer = defineToolRenderer({
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable eslint/no-undefined */

@@ -47,13 +47,13 @@ class DiffTextNode extends TextNode {
     return "diff-text";
   }
 
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Lexical's static TextNode.clone override must retain its native TextNode input to preserve the subclass static contract while this implementation reads the subclass diffType field. */
-  public static clone(node: DiffTextNode): DiffTextNode {
+  public static clone(
+    node: Readonly<Pick<DiffTextNode, "__text" | "__key" | "__diffType">>
+  ): DiffTextNode {
     const newNode = new DiffTextNode(node.__text, node.__key);
     newNode.__diffType = node.__diffType;
     return newNode;
   }
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
   public static importJSON(
     serializedNode: ReadonlyNativeSurface<SerializedDiffTextNode>
@@ -85,7 +85,7 @@ class DiffTextNode extends TextNode {
     return this.__diffType;
   }
 
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- The Lexical override receives native EditorConfig/LexicalEditor contracts and forwards both references unchanged to TextNode.createDOM. */
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.createDOM caches class-name arrays on the original config.theme.text object. Its optional editor argument is forwarded unchanged as the native LexicalEditor, including private nominal members. */
   public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
@@ -119,7 +119,7 @@ class DiffTextNode extends TextNode {
   }
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.updateDOM receives the original mutable DOM node and editor config; it updates that DOM node in place. */
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.updateDOM receives the original previous native node, mutates the original DOM subtree and caches theme class names on the original config. Deep readonly projections fail those native receiver contracts; shallow views retain nested mutable fields. */
   public updateDOM(
     prevNode: DiffTextNode,
     dom: HTMLElement,

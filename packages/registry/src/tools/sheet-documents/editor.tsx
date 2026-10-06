@@ -30,9 +30,6 @@ interface SheetEditorProps {
 
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Papa Parse requires a mutable outer data array; copying it only to widen this private reader would change array identity and add work. */
-const generateCsv = (data: (string | number)[][]): string => unparse(data);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -157,7 +154,7 @@ const PureSpreadsheetEditor = ({
           )
     );
 
-    const newCsvContent = generateCsv(updatedData);
+    const newCsvContent = unparse(updatedData);
     saveContent(newCsvContent, true);
   };
 

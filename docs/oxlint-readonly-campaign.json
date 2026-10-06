@@ -6338,8 +6338,8 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f9b93e334f80831546a5d2b5bf759007ae2b9903ce87ce5f07afadec6d5d8dc8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed with a finite read-only transaction select view. Actual typed/unused Oxlint and app tsc pass; emitted JS is byte-identical.",
       "provenance": "unknown"
     },
     {
@@ -6348,8 +6348,8 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "078a6cb8aa65178a9af79595b3d84ba97fb1881633e3010f74f54246f4fc2bb4",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed by a finite readonly transaction capability view over the exact execute/select/update/delete methods this callback invokes; actual app tsc and type-aware Oxlint pass with runtime emission unchanged.",
       "provenance": "unknown"
     },
     {
@@ -6358,8 +6358,8 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "3b819531b810c84f06e62fefb47c88b94f57054b5e12d2fbd35fe1d27e89e1d8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed by the same finite native transaction capability used by the database callback; preserves the native transaction receiver and emits identical JavaScript.",
       "provenance": "unknown"
     },
     {
@@ -6368,8 +6368,8 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a320f9bebb73e9ef9724428e77736a9b6de533d9dacea437f53c79688a05117e",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed by the finite readonly transaction method view. Actual type-aware lint and app type check pass; retry and cleanup orchestration tests pass 4/4.",
       "provenance": "unknown"
     },
     {
@@ -11521,8 +11521,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: progress panel reads update fields and forwards the same updates object; full Registry/app types and gallery capture pass.",
       "provenance": "unknown"
     },
     {
@@ -11531,8 +11531,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: progress component reads the update record fields and retains the same update object identity; Registry/app types and paired browser capture pass.",
       "provenance": "unknown"
     },
     {
@@ -11541,8 +11541,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: renderer progress props use a readonly reader accepted by the actual defineToolRenderer consumer; full Registry/app types pass.",
       "provenance": "unknown"
     },
     {
@@ -11886,8 +11886,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
-      "status": "unreviewed",
-      "evidence": "Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
+      "status": "fixed",
+      "evidence": "Fixed: removed the private single-call generateCsv pass-through and now invokes PapaParse unparse directly with the same matrix object and call order.",
       "provenance": "unknown"
     },
     {
@@ -11946,8 +11946,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
-      "status": "unreviewed",
-      "evidence": "Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
+      "status": "justified",
+      "evidence": "Justified at the exact overridden Lexical hooks: native removal control reports five readonly findings, and deep/shallow controls fail assignability for mutable EditorConfig theme arrays, LexicalEditor private nominal members, polymorphic previous-node identity, and the original mutating DOM receiver. The clone input is independently fixed with a finite scalar reader. Remaining local scopes are limited to createDOM/updateDOM.",
       "provenance": "unknown"
     },
     {
@@ -13643,8 +13643,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: progress panel reads update fields and forwards the same updates object; full Registry/app types and gallery capture pass.",
       "provenance": "canonical-source"
     },
     {
@@ -13653,8 +13653,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: progress component reads the update record fields and retains the same update object identity; Registry/app types and paired browser capture pass.",
       "provenance": "canonical-source"
     },
     {
@@ -13663,8 +13663,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Fixed: renderer progress props use a readonly reader accepted by the actual defineToolRenderer consumer; full Registry/app types pass.",
       "provenance": "canonical-source"
     },
     {
@@ -13903,8 +13903,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
-      "status": "unresolved",
-      "evidence": "Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
+      "status": "fixed",
+      "evidence": "Fixed: removed the private single-call generateCsv pass-through and now invokes PapaParse unparse directly with the same matrix object and call order.",
       "provenance": "canonical-source"
     },
     {
@@ -13954,8 +13954,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
-      "status": "unresolved",
-      "evidence": "Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
+      "status": "justified",
+      "evidence": "Justified at the exact overridden Lexical hooks: native removal control reports five readonly findings, and deep/shallow controls fail assignability for mutable EditorConfig theme arrays, LexicalEditor private nominal members, polymorphic previous-node identity, and the original mutating DOM receiver. The clone input is independently fixed with a finite scalar reader. Remaining local scopes are limited to createDOM/updateDOM.",
       "provenance": "canonical-source"
     },
     {
@@ -14878,14 +14878,14 @@
     }
   ],
   "latestReview": {
-    "sourceCommit": "79fb41c60",
-    "originalMembershipsReviewed": 182,
+    "sourceCommit": "0a9cb78ca",
+    "originalMembershipsReviewed": 192,
     "statusCounts": {
-      "fixed": 160,
-      "justified": 11,
-      "unresolved": 11
+      "fixed": 172,
+      "justified": 13,
+      "unresolved": 7
     },
-    "note": "The immutable d7a93408 denominator is unchanged. This update records the EVE guest readers, five Registry document renderers/editors, and MCP tool/router readers. Direct authored-source dispositions and verified generated-mirror inheritances are reported separately. Two document editor boundaries and two MCP SDK input boundaries remain unresolved; narrowed descendant directives and the new visual-test metric obligation are tracked separately from original campaign membership.",
+    "note": "The immutable d7a93408 denominator is unchanged. This update records the EVE file-purge transaction reader, three deep-research progress readers, and the reviewed sheet/DiffView boundaries. Direct source review and verified generated-mirror inheritance remain separate. The DiffView original scope is justified only at the narrowed native Lexical override hooks; remaining readonly scopes and new fixture metric obligations are tracked independently.",
     "currentSourceHashes": {
       "apps/chat/lib/ai/to-model-data.ts": "0465aa3bd25deae2920db03dc91b7becc8daa315b8c98b3d4acff422845006a7",
       "apps/chat/lib/ai/tool-context.ts": "cb9b98f21726ece37244855956aee41ce4f69ffa00c135bcb167bd765937a7c1",
@@ -14957,31 +14957,38 @@
       "apps/chat/lib/eve/mcp-tools.ts": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
       "packages/registry/src/features/mcp/lib/eve/mcp-tools.ts": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
       "packages/registry/src/tools/code-documents/editor.tsx": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
-      "packages/registry/src/tools/sheet-documents/editor.tsx": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+      "packages/registry/src/tools/sheet-documents/editor.tsx": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
       "packages/registry/src/tools/text-documents/editor.tsx": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
-      "packages/registry/src/tools/text-documents/diffview.tsx": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+      "packages/registry/src/tools/text-documents/diffview.tsx": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
       "packages/registry/src/tools/saved-code-execution/renderer.tsx": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde",
       "apps/chat/tools/chatjs/code-documents/editor.tsx": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
-      "apps/chat/tools/chatjs/sheet-documents/editor.tsx": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+      "apps/chat/tools/chatjs/sheet-documents/editor.tsx": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
       "apps/chat/tools/chatjs/text-documents/editor.tsx": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
-      "apps/chat/tools/chatjs/text-documents/diffview.tsx": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
-      "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde"
+      "apps/chat/tools/chatjs/text-documents/diffview.tsx": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
+      "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde",
+      "apps/chat/lib/db/eve-file-purge.ts": "93f359d16ceca0e9cb3aa0837ff2ca6635e53512618ff76d16b10651c4bc9c06",
+      "packages/registry/src/tools/deep-research/progress.tsx": "03fe654720249888c4462c3f088e77057ced21be8f257331c55aa8223f9ff3d2",
+      "packages/registry/src/tools/deep-research/progress-panel.tsx": "37815a114a6a491fb15b01449fdf604c30a4b1d69a658cc57fdf19a685caa68e",
+      "packages/registry/src/tools/deep-research/renderer.tsx": "c982f57150675ffeb2d46565e8cf4dcf96cb1585831ff578dd3fd1f6e5ece93d",
+      "apps/chat/tools/chatjs/deep-research/progress.tsx": "03fe654720249888c4462c3f088e77057ced21be8f257331c55aa8223f9ff3d2",
+      "apps/chat/tools/chatjs/deep-research/progress-panel.tsx": "37815a114a6a491fb15b01449fdf604c30a4b1d69a658cc57fdf19a685caa68e",
+      "apps/chat/tools/chatjs/deep-research/renderer.tsx": "c982f57150675ffeb2d46565e8cf4dcf96cb1585831ff578dd3fd1f6e5ece93d"
     },
     "directReview": {
-      "sourceHead": "79fb41c60",
-      "originalMembershipsReviewed": 132,
+      "sourceHead": "0a9cb78ca",
+      "originalMembershipsReviewed": 139,
       "statusCounts": {
-        "fixed": 118,
-        "justified": 8,
-        "unresolved": 6
+        "fixed": 126,
+        "justified": 9,
+        "unresolved": 4
       }
     },
     "inheritedMirrorReview": {
-      "membershipCount": 50,
+      "membershipCount": 53,
       "statusCounts": {
-        "fixed": 42,
-        "justified": 3,
-        "unresolved": 5
+        "fixed": 46,
+        "justified": 4,
+        "unresolved": 3
       },
       "evidence": "Verified bun demo:sync mappings and byte-identical source/mirror SHA-256 for every listed inherited record. Firecrawl is canonical-only because it has no selected generated mirror.",
       "records": [
@@ -15620,16 +15627,16 @@
           "directive": "oxlint-disable",
           "rule": "typescript/prefer-readonly-parameter-types",
           "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
-          "status": "unresolved",
-          "evidence": "Inherited canonical disposition: Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/sheet-documents/editor.tsx after verified demo:sync mapping and byte-identical source hash 38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450. Fixed: removed the private single-call generateCsv pass-through and now invokes PapaParse unparse directly with the same matrix object and call order.",
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
-            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
-            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "canonicalSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
+            "mirrorSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
             "campaignFingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/sheet-documents/editor.tsx",
@@ -15642,11 +15649,11 @@
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
-            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
-            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "canonicalSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
+            "mirrorSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
             "campaignFingerprint": "663168f13c655051deb760d8f84890440137f788e0f2155e041ef4118dc6886f"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/sheet-documents/editor.tsx",
@@ -15659,11 +15666,11 @@
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
-            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
-            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "canonicalSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
+            "mirrorSourceSha256": "38cbad97713fded1e40d94db8c536996d52ce0b42e13169369feeae5fee4e450",
             "campaignFingerprint": "f8738717a9c4915b5eaa9fbb111691525f71cd4adbd5af6cd47162f28dc53a44"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/text-documents/editor.tsx",
@@ -15722,16 +15729,16 @@
           "directive": "oxlint-disable",
           "rule": "typescript/prefer-readonly-parameter-types",
           "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
-          "status": "unresolved",
-          "evidence": "Inherited canonical disposition: Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
+          "status": "justified",
+          "evidence": "Inherited from packages/registry/src/tools/text-documents/diffview.tsx after verified demo:sync mapping and byte-identical source hash 338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160. Justified at the exact overridden Lexical hooks: native removal control reports five readonly findings, and deep/shallow controls fail assignability for mutable EditorConfig theme arrays, LexicalEditor private nominal members, polymorphic previous-node identity, and the original mutating DOM receiver. The clone input is independently fixed with a finite scalar reader. Remaining local scopes are limited to createDOM/updateDOM.",
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
-            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
-            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "canonicalSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
+            "mirrorSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
             "campaignFingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
@@ -15744,11 +15751,11 @@
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
-            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
-            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "canonicalSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
+            "mirrorSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
             "campaignFingerprint": "9b19c674ba1ca635ad8bd55952f17622ce7ca5c631b8284536393efc4c37feed"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
@@ -15761,11 +15768,11 @@
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
-            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
-            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "canonicalSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
+            "mirrorSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
             "campaignFingerprint": "3ab6b2be4dd915c64e1f280bb2dcab3175e6593a79a4db330da293fcf46c09b8"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
@@ -15778,11 +15785,11 @@
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
-            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
-            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "canonicalSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
+            "mirrorSourceSha256": "338d1eae8c8ff6114122cad02e48b361d0c79ef7c8eb753b7c24025b73af4160",
             "campaignFingerprint": "d01b9cdbf61c20c25df8c834c0c4ed172daddf30529f3d23628529621585ab17"
           },
-          "reviewedAtSourceHead": "79fb41c60"
+          "reviewedAtSourceHead": "0a9cb78ca"
         },
         {
           "path": "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx",
@@ -15834,14 +15841,65 @@
             "campaignFingerprint": "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e"
           },
           "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/deep-research/progress.tsx",
+          "line": 14,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/deep-research/progress.tsx after verified demo:sync mapping and byte-identical SHA-256 03fe654720249888c4462c3f088e77057ced21be8f257331c55aa8223f9ff3d2.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/deep-research/progress.tsx",
+            "canonicalSourceSha256": "03fe654720249888c4462c3f088e77057ced21be8f257331c55aa8223f9ff3d2",
+            "mirrorSourceSha256": "03fe654720249888c4462c3f088e77057ced21be8f257331c55aa8223f9ff3d2",
+            "campaignFingerprint": "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741"
+          },
+          "reviewedAtSourceHead": "0a9cb78ca"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/deep-research/progress-panel.tsx",
+          "line": 34,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/deep-research/progress-panel.tsx after verified demo:sync mapping and byte-identical SHA-256 37815a114a6a491fb15b01449fdf604c30a4b1d69a658cc57fdf19a685caa68e.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/deep-research/progress-panel.tsx",
+            "canonicalSourceSha256": "37815a114a6a491fb15b01449fdf604c30a4b1d69a658cc57fdf19a685caa68e",
+            "mirrorSourceSha256": "37815a114a6a491fb15b01449fdf604c30a4b1d69a658cc57fdf19a685caa68e",
+            "campaignFingerprint": "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40"
+          },
+          "reviewedAtSourceHead": "0a9cb78ca"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/deep-research/renderer.tsx",
+          "line": 24,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/deep-research/renderer.tsx after verified demo:sync mapping and byte-identical SHA-256 c982f57150675ffeb2d46565e8cf4dcf96cb1585831ff578dd3fd1f6e5ece93d.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/deep-research/renderer.tsx",
+            "canonicalSourceSha256": "c982f57150675ffeb2d46565e8cf4dcf96cb1585831ff578dd3fd1f6e5ece93d",
+            "mirrorSourceSha256": "c982f57150675ffeb2d46565e8cf4dcf96cb1585831ff578dd3fd1f6e5ece93d",
+            "campaignFingerprint": "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac"
+          },
+          "reviewedAtSourceHead": "0a9cb78ca"
         }
       ]
     },
     "combinedStatusCounts": {
-      "fixed": 160,
-      "justified": 11,
-      "unresolved": 11,
-      "unreviewed": 1191
+      "fixed": 172,
+      "justified": 13,
+      "unresolved": 7,
+      "unreviewed": 1181
     },
     "deletedPaths": {
       "apps/chat/lib/utils/download-assets.ts": {
@@ -15857,6 +15915,6 @@
         "originalReadonlyMemberships": 0
       }
     },
-    "unreviewedCount": 1191
+    "unreviewedCount": 1181
   }
 }

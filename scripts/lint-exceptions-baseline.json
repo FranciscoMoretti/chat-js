@@ -3328,8 +3328,7 @@
     "[\"apps/chat/lib/db/eve-documents.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 4,
-    "[\"apps/chat/lib/db/eve-file-purge.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 5,
-    "[\"apps/chat/lib/db/eve-file-purge.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/lib/db/eve-file-purge.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -6914,8 +6913,9 @@
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": 2,
-    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": 1,
+    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": 4,
+    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/tests/visual/eve-tool-results.browser.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/tests/visual/eve-tool-results.browser.tsx\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tests/visual/eve-tool-results.browser.tsx\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
@@ -7128,7 +7128,6 @@
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 2,
@@ -7140,7 +7139,6 @@
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/prompts.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -7148,7 +7146,6 @@
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/tools/chatjs/deep-research/schemas.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/deep-research/schemas.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -7425,7 +7422,6 @@
     "[\"apps/chat/tools/chatjs/sheet-documents/document.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/document.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
-    "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
@@ -7483,8 +7479,8 @@
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/no-underscore-dangle\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 2,
+    "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
@@ -9549,7 +9545,6 @@
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": 4,
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 2,
@@ -9561,7 +9556,6 @@
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/prompts.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
@@ -9569,7 +9563,6 @@
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/registry/src/tools/deep-research/schemas.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/deep-research/schemas.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -9829,7 +9822,6 @@
     "[\"packages/registry/src/tools/sheet-documents/document.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/document.tsx\",\"react/jsx-props-no-spreading\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"sort-imports\",\"oxlint-disable\"]": 4,
-    "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
@@ -9879,8 +9871,8 @@
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/no-underscore-dangle\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 2,
+    "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
@@ -23747,26 +23739,19 @@
       "4551f94fc76c4d9a2b2b51756516a56f4a6d821b2920ba28d2200e0be6244d06"
     ],
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "3fd160aab10da969ce31689c372e56ac5218531d10e48e64407659a63e35edef",
-      "7a077318ccd0590d45f81f6b0ebe00a68f027a2838510673a10a04430c350d3c",
-      "0948a19e47cc8e9ace636cbc492342428f6b039f56c1a5a5789d4b57a9c1546b",
-      "1dd83b5008eedffbd5122776abfcd67c7f2716f5db21f8acdb3772a02dd5450e"
+      "648605bede3fc47c23b73292f1a207191be8f94928632c4c52a99b356103ee18",
+      "aff0cab4f7391823265a545fe3b5351e30536a7196a56717e1102af1995ac85f",
+      "44faebcc6f295d15965e15c878b157023b8a433b02ebf26208d9402dff5f626c",
+      "ce895df8ed888e453d60bc0e0d02680c8acfee1f8367311fa30219000b9f4fe4"
     ],
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
-      "f9b93e334f80831546a5d2b5bf759007ae2b9903ce87ce5f07afadec6d5d8dc8",
       "a78741322fd433a08f7f1b80b584f8f587cce0a63dc26139eb11b404245fdeee",
       "0a3936df40be668c974e26f2090dcf182223396c24ca89dec86b18d62071d2a9",
       "a5b20493ee70a1487d542c3f0ba217162ae9515d29d18d0afd7c27b909ce44ee",
       "a113db26e47f5e95141bf076dd63a224992cd91495e0347ea6e63eed13ac65d5"
     ],
-    "[\"apps/chat/lib/db/eve-file-purge.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
-      "f9b93e334f80831546a5d2b5bf759007ae2b9903ce87ce5f07afadec6d5d8dc8",
-      "078a6cb8aa65178a9af79595b3d84ba97fb1881633e3010f74f54246f4fc2bb4",
-      "3b819531b810c84f06e62fefb47c88b94f57054b5e12d2fbd35fe1d27e89e1d8",
-      "a320f9bebb73e9ef9724428e77736a9b6de533d9dacea437f53c79688a05117e"
-    ],
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "0a02fcdc9e231009d5e893b9b9547c39c74d0887bb6d45a2e7f1ceaf491e0f7e"
+      "1163fb393d0032f41c6244d45327b82451368205f413ca20bf9c1f507c434763"
     ],
     "[\"apps/chat/lib/db/eve-file-purge.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": [
       "7e68e2adaa9df2ebdbee7711b079e1494105aa45eb378fd81c38a36916fc04b2"
@@ -37926,17 +37911,24 @@
       "9a99df1b3e97b954c6877c74484b42846f97989628aa1cf951e7381da720072f"
     ],
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"max-statements\",\"oxlint-disable\"]": [
-      "c5e5d2db8594c56ef9f0b3c65390317d443165893d80815d95b872b01bf7ace0"
+      "4bdd947ed6afdf20a8b79fb23c5724f4fb4a6cd67fba795fb0e928a452af8bfd"
     ],
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "c5e5d2db8594c56ef9f0b3c65390317d443165893d80815d95b872b01bf7ace0"
+      "4bdd947ed6afdf20a8b79fb23c5724f4fb4a6cd67fba795fb0e928a452af8bfd"
+    ],
+    "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable-next-line\"]": [
+      "fc692ba0e789c5fbc17dbd55661c8fc00f3de3c01eab9368da3841b09f09e0d3"
     ],
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/await-thenable\",\"oxlint-disable-next-line\"]": [
       "d338276022fdb197e61d0c7ee627ebb6b13205d2dcb0fe16f2f65d0455cadd82",
+      "286caef3bcef842b914c8f216f9cb9bb86b56b6229cd325b2beca38499a50679",
+      "eac5afc35aa74ca6ab717117fd58a4e5485b45bbd944bfbbdcd8627992992f5b",
       "54e7e47cb90a2df63f4b6c54147ba2f651309a38dad4bdab0a1a53469f27ab61"
     ],
     "[\"apps/chat/tests/visual/eve-research-tasks.browser.tsx\",\"typescript/no-confusing-void-expression\",\"oxlint-disable-next-line\"]": [
       "d338276022fdb197e61d0c7ee627ebb6b13205d2dcb0fe16f2f65d0455cadd82",
+      "286caef3bcef842b914c8f216f9cb9bb86b56b6229cd325b2beca38499a50679",
+      "eac5afc35aa74ca6ab717117fd58a4e5485b45bbd944bfbbdcd8627992992f5b",
       "54e7e47cb90a2df63f4b6c54147ba2f651309a38dad4bdab0a1a53469f27ab61"
     ],
     "[\"apps/chat/tests/visual/eve-tool-results.browser.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
@@ -38721,38 +38713,35 @@
       "1f50b2b1c4b6cfc000d296fe74c1fcb2104aec6fe214e163dfb7b5aa39774bac"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
-      "90891f199abda23f38f32b3f63aeab02e4573a317891ced6f4402aa8e24574a9",
+      "e5782d88337c227f3cda9f5c81901be1ec6eda57d3b65f8a233d725c8dcec04f",
       "7a4038b582f2aec103b5ffa5daa0cdebccb7772270504f9d9a7abfd3500fa9a6"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "32c4933705e70f7b589c46c29e56cfe8bbe0500a95cde58cd32db29e84c1da96"
+      "dba9ffa0a71b4df7bdaf83590856f00c330944f9c2d9864506efc43b43afd62c"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "32c4933705e70f7b589c46c29e56cfe8bbe0500a95cde58cd32db29e84c1da96"
+      "dba9ffa0a71b4df7bdaf83590856f00c330944f9c2d9864506efc43b43afd62c"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "d365675fc6bee83b5e7333556ae2d5168018bc4e9c95e3b33b95653fa8bcda54"
+      "28446bf37fe2a38d3c5641b7f75e87db710e6cfd9b980106d8a8ce132f170af3"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "4046bcab6e358e64b431b6b374a5848b324f78318bbaa134ad1eea90d0a4b8d4"
+      "977a92eca20a4e34ec60098ffb725094e3736fc3dfb6fb05a06306aacc4b06c3"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "f1899d3ab79b2e400656e163b825c59b1521b9e71c93d687d7feab524032e649"
+      "08b8fd77daef095abad76b8729ccfa52c344de9fb004495036fc5596fde500ad"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "f70ed95fa5c9ef37b4197083931b29e2bc14542e7bebd02d4346c834c8e61861"
+      "8f9629fa8dd226d5978b5b85fd4794e7176f6fb4642487f0f84dc35d5c5f75ff"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "e0906669316d1a669490a1b2e7211807bee170c54755ca3f59d4c9eeed3d16db"
+      "2632e532714a94abb0407ad946147a9fb933eebd788a7b6ba57d6d2eebf166fe"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": [
-      "4281e7785a0f0811c50088ce2ff1060e8239990cec68c9bc425135f16b4e86cd"
-    ],
-    "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40"
+      "b1d408a2a5d60cd3516b5e6d2c75c62debf9fa00f02ae655ffbd2269db8cb79b"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "b1c8a57548d769436c7c9c6eeed95708d295ee4af6f9fa16df953fb8b36032e2"
+      "cad9a310394c31979d5a2ee3d11418c9cec06728abb8254e681e271fb32db3f4"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "bef5edd5951a6d350f09092ba1c9a45ab4b1b26acc0b4a4836362c623ef6e84a",
@@ -38761,7 +38750,7 @@
       "b328b49afaa781b36ca2feb97a49f745a8fa1790ed4f984c9853001fd696ff49"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "28584334c413bd93dbaee771160354f81ed8a5ec01c8f60aea6c365199ba6c9d",
+      "8980cdaf1503ec75ba2611e12a87f11ef0917053fbef2f6ae7d4e1faadf331fc",
       "02927c0e7063a03c6a73a5008fa464d133aab83473b56d000068d15a443f72d6"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress-panel.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
@@ -38772,52 +38761,46 @@
       "2e4875369780157ce9cca6f5cb12ca96ba5949c4712619b45d5d8fa22f752652"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "df828b636f082c20a5d3b6ea485db04067d74728504b44cefec6698f3c69aba1"
+      "2475afb85d71e86632502683e6b582dc6f9dff7ea83e7b49e08b17c388e5957e"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "df828b636f082c20a5d3b6ea485db04067d74728504b44cefec6698f3c69aba1"
+      "2475afb85d71e86632502683e6b582dc6f9dff7ea83e7b49e08b17c388e5957e"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "2ca9b3631cebebad3650fcdc1e9e91d1482475deaf8d68a391305000cfc9cefa"
+      "9151f3e25316a265be381347b510dc1bea6f6a01bd2e6a6a4089023ae595fbd7"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "042949fcd97e28c5d8bd1056d4706bea478fcfc903306e48cbb17b94b9a4b871"
+      "08dfd99faabe247f9044b7215106682da0537710bc23ae27d22f66f1fb7b19cb"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "bd319c5b888280b632a8857f0dd62a02b0bac6a75e998d9bfe41d76e460b7170"
+      "1efc744004ae2cae3c0d390ed9cca1443f492de42fd753abdef4891b471bf9e0"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "72bab5f7ab20f7676b4fad194ad1ccff2abcd358b9dc8e4e7329adec2c030fc8"
-    ],
-    "[\"apps/chat/tools/chatjs/deep-research/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741"
+      "3c008dafdb60506929fc7afcba88386b293616ddc3ca2d45e711e10527eab3c6"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/prompts.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "ad0114e5a806b5e6c582fe0c6277138388991cdaf45f0850a7fd020d4b384cc6"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "b4dae74db40131a0fa00c41769ab820f2f8a759d82a57cd3709b9e60b6ea55fc",
-      "df588b86132f2989f7033c2637612e86caa732585fba672dd377552b52854c34",
+      "05041ededff76c297bf6ed5ee92d93fd76074a6e727cff5912a68125782db59a",
       "804802d6e09d0da24763636cf248c57bb633190578d9b32f84af06bb66ba1aa2",
       "6f6fbb7d276095196a7137cb8cc0412198f6813554e9c983c08ef7ef1f28f54a"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "9408833705135dcc01b2cc319108a6bbb5f256cdc95bfb1a66f73e26cf7463e9"
+      "775e27d9ef03778c3e17ca692d62b0f26a9e8f65e4cde402acadc8d571d43784"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "9408833705135dcc01b2cc319108a6bbb5f256cdc95bfb1a66f73e26cf7463e9"
+      "775e27d9ef03778c3e17ca692d62b0f26a9e8f65e4cde402acadc8d571d43784"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": [
-      "7c74357bda5a4abbfa78ce6e3f5959c44b50817356b85a3e4aa7ec3d65c24d41"
+      "6fcbba0bf8721b26b567428def10572505472c9df980fd82f1ab8781a62fe287"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "88cbb840bf25f20ffbacfe0ba04edb7d18d011385bbb9b347237e063f687d47f"
+      "c9fb18989626be9a4ac8813198c7804a6d3f011622333979c88044f5683d0274"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "dafd01a6bf248a783ac4e35ccf9f10460722027917626ed30e3cb1b6919da996"
-    ],
-    "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac"
+      "b2fce16eeae74b30c35f7ce9714b38361a455e04035475cac8a2dacebdef3bd6"
     ],
     "[\"apps/chat/tools/chatjs/deep-research/renderer.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "bbcddc8c3c1915e1bd8e2cdb5123f6dce602680d187f03c8a35f01331218dd7a",
@@ -39826,35 +39809,32 @@
       "09139746f5507ea196639c86fc58313070400a9621d988976066410f4daf1728",
       "7c8eb3e71bc20889227c3070e86834ca5e3d36b2eb69d626337daf1d8272a2e9"
     ],
-    "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "74dde0579d8d0146f5436b6dd2f465ad5eb3e492a155e941f9abb51e6b91ca85"
-    ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "2198d5406288d2e00919393aed683e39b7d52b4c77ef0895e150dbd0441c934f"
+      "161d8f2237a4f9029cdb30b77c45149de590c2efeec19a879feee061305e8058"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "6d82e968304a894e4b5cbeaf33f6294efbc31fd5e83a54850e5b0eb0e5aa5340"
+      "f82bc5b98c41276edf3f99c2ac1020f583e948bb853afc6d7eceaa34a5195284"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "b5c59dcc9f4c02037d2a44cce7212cbb2dc811950b0359bd501818004e868206"
+      "1e3c8246906ec48c28d46efae00ab33c67809a3a5bb6558660de2804cad30efc"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "75e2707be167bfd3a9dca318840d26c29fa991bb80d37a70ee0788432083e26d"
+      "7c1758f7ff285c74420eb501ecb714cc343271d50f44d8aa31f22e14793f4224"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/id-length\",\"oxlint-disable\"]": [
-      "6c67727c3e493d36c6bab8e31566e7d91387ec32ed8a365bae62acc8b25eb4b0"
+      "1f0d5a13165b3f751381a59da41de1a81aa70d69cf932ef348f6e21e52b9a8b6"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "42e73653fc4ebd55ba50bc2ff218d8dcaafd7010470b964f92d830bbcb532131"
+      "525fde8520721a44f593984a2c0e88812902abb6831eeb7b130927c4352048e0"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "94340d079a71d47750fb4a477a3a2c82e136314d7273f44a65e8b7c16977cd78"
+      "125e528a9f6b3736e067a959e4b5118d41de5f907f57dd971c0265e8d7f700eb"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": [
-      "2686ee59a9f2f2a124b191f4d4ea645199a62dd6af3f3a099e99532accedeb46"
+      "26479ac24d6afd78f4b9227341787d98dc7c455d8ca6bae21223f9f141df1123"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "b1b38c84a9386fd3ffb3d80641c7ec85d06ba6e37cce4f22893edf1ca01d1f05"
+      "189e235dd43270930d6e26ac9fd5e4880abcb42a914a8b4aa3b56e12f5fcf5f5"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/editor.tsx\",\"oxc/no-map-spread\",\"oxlint-disable-next-line\"]": [
       "6ed41a7287c1906846a0f5ce1d8f1cc9ba1fa2a54ec0a10f62f0ffa644310db9"
@@ -40008,26 +39988,25 @@
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "0282e92b7d3c9ae54ae72dd621ba09b190861e76a34491bbbc56435919ce60ed",
-      "deffb5085ba4fadf87172aef38129212e74e42ff6581678b21a62e8e096b4ab9"
+      "eb480461551ba9ed65b23428e9f5b6ac37f1a2d207ab0927e3cc913d27faccc6"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "70e36306e5b720967190b4453916eb2dcc7e41408bd364c23b6b3e787c255751",
+      "5fda72ea4380c3bfd68e31c0dea046935e669cd3d63cd025e3b3ce9647202e20",
       "10d91a40bafe4f9c39383cc6dfbfd554125d93b0a192b77c7cf5267696c75909"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/no-underscore-dangle\",\"oxlint-disable\"]": [
-      "ae4087753cd050ebc1df55feb3d85465bb9cac8c47a296a98261a778eadb16ae"
+      "800298584f125d8f6d9007eebf2dc8995fabcdb7de27042a7546efce5dd8c0ea"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "efb896a5b900e4a156de29e30df10785a7e18c0623c058099e19ec32f65d4917"
-    ],
-    "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "03c2a04c0a876956143e4bf489cb84d5580d6a097314cc17c5af2ed9f302cded",
-      "5d07902849bcaf0afe349661751ff5775057bf3d84668223676b9a2155a51771",
-      "93c15a07cd5e723d81706e8316b9fafc6a9c8fb0b321342f948425ec4c069765"
+      "6dcc3c32dd50124d259b67479b24ba3e3ed1affebb270ba99307c5125da81d2b"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "83cb3a66f7d489ea36081d880724ccf4d4f783d36f1851cc9ca53a1af3615cbc",
       "a0c138e1120e7d499a826708cabccf9b54a7d877a152522985bb6435bf064fc5"
+    ],
+    "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "8fb4a088e10d7016512927abc608ab307674c1986e8a00da9d7f24b3f449e417",
+      "b5051d33666c88b8596627dc90a514f49c66be14e5fec1c287f33b10d18944a4"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
       "5b58880741a49609b99afaeff5bdf088856846454afdc1083733f34451f9f50f"
@@ -40051,7 +40030,7 @@
       "0e57646dca264240a4b3b588a82f56ebeef8a1d7f0e9681a330cfbac133a3c2f"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
-      "15eb98d75eb3644870f0f5c28a76b9a9f11aa2493f1caa5b36a4007493950ab5"
+      "aacfd5889df185510704ef2c56613bd7d4cdece1f692c515c0c0cceb2049b2b1"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/diffview.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
       "a3b88a6566df95f6363d3df1c04260d1167d7b19995d76126caf0f11f8410cdd"
@@ -48174,38 +48153,35 @@
       "1f50b2b1c4b6cfc000d296fe74c1fcb2104aec6fe214e163dfb7b5aa39774bac"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
-      "90891f199abda23f38f32b3f63aeab02e4573a317891ced6f4402aa8e24574a9",
+      "e5782d88337c227f3cda9f5c81901be1ec6eda57d3b65f8a233d725c8dcec04f",
       "7a4038b582f2aec103b5ffa5daa0cdebccb7772270504f9d9a7abfd3500fa9a6"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "32c4933705e70f7b589c46c29e56cfe8bbe0500a95cde58cd32db29e84c1da96"
+      "dba9ffa0a71b4df7bdaf83590856f00c330944f9c2d9864506efc43b43afd62c"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "32c4933705e70f7b589c46c29e56cfe8bbe0500a95cde58cd32db29e84c1da96"
+      "dba9ffa0a71b4df7bdaf83590856f00c330944f9c2d9864506efc43b43afd62c"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "d365675fc6bee83b5e7333556ae2d5168018bc4e9c95e3b33b95653fa8bcda54"
+      "28446bf37fe2a38d3c5641b7f75e87db710e6cfd9b980106d8a8ce132f170af3"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "4046bcab6e358e64b431b6b374a5848b324f78318bbaa134ad1eea90d0a4b8d4"
+      "977a92eca20a4e34ec60098ffb725094e3736fc3dfb6fb05a06306aacc4b06c3"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "f1899d3ab79b2e400656e163b825c59b1521b9e71c93d687d7feab524032e649"
+      "08b8fd77daef095abad76b8729ccfa52c344de9fb004495036fc5596fde500ad"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "f70ed95fa5c9ef37b4197083931b29e2bc14542e7bebd02d4346c834c8e61861"
+      "8f9629fa8dd226d5978b5b85fd4794e7176f6fb4642487f0f84dc35d5c5f75ff"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "e0906669316d1a669490a1b2e7211807bee170c54755ca3f59d4c9eeed3d16db"
+      "2632e532714a94abb0407ad946147a9fb933eebd788a7b6ba57d6d2eebf166fe"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"react/jsx-max-depth\",\"oxlint-disable\"]": [
-      "4281e7785a0f0811c50088ce2ff1060e8239990cec68c9bc425135f16b4e86cd"
-    ],
-    "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "e9cdce170b8666072a3d1f16daf5e36a5fbbf6627ce6691b080a777e06d2fe40"
+      "b1d408a2a5d60cd3516b5e6d2c75c62debf9fa00f02ae655ffbd2269db8cb79b"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "b1c8a57548d769436c7c9c6eeed95708d295ee4af6f9fa16df953fb8b36032e2"
+      "cad9a310394c31979d5a2ee3d11418c9cec06728abb8254e681e271fb32db3f4"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "bef5edd5951a6d350f09092ba1c9a45ab4b1b26acc0b4a4836362c623ef6e84a",
@@ -48214,7 +48190,7 @@
       "b328b49afaa781b36ca2feb97a49f745a8fa1790ed4f984c9853001fd696ff49"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
-      "28584334c413bd93dbaee771160354f81ed8a5ec01c8f60aea6c365199ba6c9d",
+      "8980cdaf1503ec75ba2611e12a87f11ef0917053fbef2f6ae7d4e1faadf331fc",
       "02927c0e7063a03c6a73a5008fa464d133aab83473b56d000068d15a443f72d6"
     ],
     "[\"packages/registry/src/tools/deep-research/progress-panel.tsx\",\"react/forbid-component-props\",\"oxlint-disable-next-line\"]": [
@@ -48225,52 +48201,46 @@
       "2e4875369780157ce9cca6f5cb12ca96ba5949c4712619b45d5d8fa22f752652"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "df828b636f082c20a5d3b6ea485db04067d74728504b44cefec6698f3c69aba1"
+      "2475afb85d71e86632502683e6b582dc6f9dff7ea83e7b49e08b17c388e5957e"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "df828b636f082c20a5d3b6ea485db04067d74728504b44cefec6698f3c69aba1"
+      "2475afb85d71e86632502683e6b582dc6f9dff7ea83e7b49e08b17c388e5957e"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "2ca9b3631cebebad3650fcdc1e9e91d1482475deaf8d68a391305000cfc9cefa"
+      "9151f3e25316a265be381347b510dc1bea6f6a01bd2e6a6a4089023ae595fbd7"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "042949fcd97e28c5d8bd1056d4706bea478fcfc903306e48cbb17b94b9a4b871"
+      "08dfd99faabe247f9044b7215106682da0537710bc23ae27d22f66f1fb7b19cb"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "bd319c5b888280b632a8857f0dd62a02b0bac6a75e998d9bfe41d76e460b7170"
+      "1efc744004ae2cae3c0d390ed9cca1443f492de42fd753abdef4891b471bf9e0"
     ],
     "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "72bab5f7ab20f7676b4fad194ad1ccff2abcd358b9dc8e4e7329adec2c030fc8"
-    ],
-    "[\"packages/registry/src/tools/deep-research/progress.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "6fbfd987def72242aeacc9466118f20367bf06559cfd4623e3b604346662e741"
+      "3c008dafdb60506929fc7afcba88386b293616ddc3ca2d45e711e10527eab3c6"
     ],
     "[\"packages/registry/src/tools/deep-research/prompts.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
       "ad0114e5a806b5e6c582fe0c6277138388991cdaf45f0850a7fd020d4b384cc6"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "b4dae74db40131a0fa00c41769ab820f2f8a759d82a57cd3709b9e60b6ea55fc",
-      "df588b86132f2989f7033c2637612e86caa732585fba672dd377552b52854c34",
+      "05041ededff76c297bf6ed5ee92d93fd76074a6e727cff5912a68125782db59a",
       "804802d6e09d0da24763636cf248c57bb633190578d9b32f84af06bb66ba1aa2",
       "6f6fbb7d276095196a7137cb8cc0412198f6813554e9c983c08ef7ef1f28f54a"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "9408833705135dcc01b2cc319108a6bbb5f256cdc95bfb1a66f73e26cf7463e9"
+      "775e27d9ef03778c3e17ca692d62b0f26a9e8f65e4cde402acadc8d571d43784"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "9408833705135dcc01b2cc319108a6bbb5f256cdc95bfb1a66f73e26cf7463e9"
+      "775e27d9ef03778c3e17ca692d62b0f26a9e8f65e4cde402acadc8d571d43784"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"react/jsx-no-literals\",\"oxlint-disable\"]": [
-      "7c74357bda5a4abbfa78ce6e3f5959c44b50817356b85a3e4aa7ec3d65c24d41"
+      "6fcbba0bf8721b26b567428def10572505472c9df980fd82f1ab8781a62fe287"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "88cbb840bf25f20ffbacfe0ba04edb7d18d011385bbb9b347237e063f687d47f"
+      "c9fb18989626be9a4ac8813198c7804a6d3f011622333979c88044f5683d0274"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "dafd01a6bf248a783ac4e35ccf9f10460722027917626ed30e3cb1b6919da996"
-    ],
-    "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "392815a6f2aa9720b113c66b74349827b125d284b1dfafa4b608a7d3265345ac"
+      "b2fce16eeae74b30c35f7ce9714b38361a455e04035475cac8a2dacebdef3bd6"
     ],
     "[\"packages/registry/src/tools/deep-research/renderer.tsx\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "bbcddc8c3c1915e1bd8e2cdb5123f6dce602680d187f03c8a35f01331218dd7a",
@@ -49200,35 +49170,32 @@
       "09139746f5507ea196639c86fc58313070400a9621d988976066410f4daf1728",
       "7c8eb3e71bc20889227c3070e86834ca5e3d36b2eb69d626337daf1d8272a2e9"
     ],
-    "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "74dde0579d8d0146f5436b6dd2f465ad5eb3e492a155e941f9abb51e6b91ca85"
-    ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "2198d5406288d2e00919393aed683e39b7d52b4c77ef0895e150dbd0441c934f"
+      "161d8f2237a4f9029cdb30b77c45149de590c2efeec19a879feee061305e8058"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "6d82e968304a894e4b5cbeaf33f6294efbc31fd5e83a54850e5b0eb0e5aa5340"
+      "f82bc5b98c41276edf3f99c2ac1020f583e948bb853afc6d7eceaa34a5195284"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "b5c59dcc9f4c02037d2a44cce7212cbb2dc811950b0359bd501818004e868206"
+      "1e3c8246906ec48c28d46efae00ab33c67809a3a5bb6558660de2804cad30efc"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "75e2707be167bfd3a9dca318840d26c29fa991bb80d37a70ee0788432083e26d"
+      "7c1758f7ff285c74420eb501ecb714cc343271d50f44d8aa31f22e14793f4224"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/id-length\",\"oxlint-disable\"]": [
-      "6c67727c3e493d36c6bab8e31566e7d91387ec32ed8a365bae62acc8b25eb4b0"
+      "1f0d5a13165b3f751381a59da41de1a81aa70d69cf932ef348f6e21e52b9a8b6"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "42e73653fc4ebd55ba50bc2ff218d8dcaafd7010470b964f92d830bbcb532131"
+      "525fde8520721a44f593984a2c0e88812902abb6831eeb7b130927c4352048e0"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"react-perf/jsx-no-new-object-as-prop\",\"oxlint-disable\"]": [
-      "94340d079a71d47750fb4a477a3a2c82e136314d7273f44a65e8b7c16977cd78"
+      "125e528a9f6b3736e067a959e4b5118d41de5f907f57dd971c0265e8d7f700eb"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"react-perf/jsx-no-new-function-as-prop\",\"oxlint-disable\"]": [
-      "2686ee59a9f2f2a124b191f4d4ea645199a62dd6af3f3a099e99532accedeb46"
+      "26479ac24d6afd78f4b9227341787d98dc7c455d8ca6bae21223f9f141df1123"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "b1b38c84a9386fd3ffb3d80641c7ec85d06ba6e37cce4f22893edf1ca01d1f05"
+      "189e235dd43270930d6e26ac9fd5e4880abcb42a914a8b4aa3b56e12f5fcf5f5"
     ],
     "[\"packages/registry/src/tools/sheet-documents/editor.tsx\",\"oxc/no-map-spread\",\"oxlint-disable-next-line\"]": [
       "6ed41a7287c1906846a0f5ce1d8f1cc9ba1fa2a54ec0a10f62f0ffa644310db9"
@@ -49354,26 +49321,25 @@
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "0282e92b7d3c9ae54ae72dd621ba09b190861e76a34491bbbc56435919ce60ed",
-      "deffb5085ba4fadf87172aef38129212e74e42ff6581678b21a62e8e096b4ab9"
+      "eb480461551ba9ed65b23428e9f5b6ac37f1a2d207ab0927e3cc913d27faccc6"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "70e36306e5b720967190b4453916eb2dcc7e41408bd364c23b6b3e787c255751",
+      "5fda72ea4380c3bfd68e31c0dea046935e669cd3d63cd025e3b3ce9647202e20",
       "10d91a40bafe4f9c39383cc6dfbfd554125d93b0a192b77c7cf5267696c75909"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/no-underscore-dangle\",\"oxlint-disable\"]": [
-      "ae4087753cd050ebc1df55feb3d85465bb9cac8c47a296a98261a778eadb16ae"
+      "800298584f125d8f6d9007eebf2dc8995fabcdb7de27042a7546efce5dd8c0ea"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "efb896a5b900e4a156de29e30df10785a7e18c0623c058099e19ec32f65d4917"
-    ],
-    "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "03c2a04c0a876956143e4bf489cb84d5580d6a097314cc17c5af2ed9f302cded",
-      "5d07902849bcaf0afe349661751ff5775057bf3d84668223676b9a2155a51771",
-      "93c15a07cd5e723d81706e8316b9fafc6a9c8fb0b321342f948425ec4c069765"
+      "6dcc3c32dd50124d259b67479b24ba3e3ed1affebb270ba99307c5125da81d2b"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "83cb3a66f7d489ea36081d880724ccf4d4f783d36f1851cc9ca53a1af3615cbc",
       "a0c138e1120e7d499a826708cabccf9b54a7d877a152522985bb6435bf064fc5"
+    ],
+    "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "8fb4a088e10d7016512927abc608ab307674c1986e8a00da9d7f24b3f449e417",
+      "b5051d33666c88b8596627dc90a514f49c66be14e5fec1c287f33b10d18944a4"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": [
       "5b58880741a49609b99afaeff5bdf088856846454afdc1083733f34451f9f50f"
@@ -49397,7 +49363,7 @@
       "0e57646dca264240a4b3b588a82f56ebeef8a1d7f0e9681a330cfbac133a3c2f"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"react/no-multi-comp\",\"oxlint-disable\"]": [
-      "15eb98d75eb3644870f0f5c28a76b9a9f11aa2493f1caa5b36a4007493950ab5"
+      "aacfd5889df185510704ef2c56613bd7d4cdece1f692c515c0c0cceb2049b2b1"
     ],
     "[\"packages/registry/src/tools/text-documents/diffview.tsx\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
       "a3b88a6566df95f6363d3df1c04260d1167d7b19995d76126caf0f11f8410cdd"
