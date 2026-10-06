@@ -200,6 +200,7 @@ test.each([undefined, "1"])(
         pull(controller): void {
           chunksRead += 1;
           controller.enqueue(
+            // oxlint-disable-next-line no-ternary -- Keep controller.enqueue argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chunksRead === 1
               ? new TextEncoder().encode(
                   '--upload\r\nContent-Disposition: form-data; name="file"; filename="large.png"\r\nContent-Type: image/png\r\n\r\n'

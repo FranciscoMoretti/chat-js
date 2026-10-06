@@ -111,10 +111,12 @@ const prepareAdd = async (
   ) {
     throw new Error("--storage-config requires --storage-provider.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep gateway as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const gateway = hasNonEmptyValue(options.gateway)
     ? await resolveGateway(options.gateway, cwd)
     : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
       undefined;
+  // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const storage = hasNonEmptyValue(options.storageProvider)
     ? await resolveStorage(options.storageProvider, cwd)
     : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
@@ -128,6 +130,7 @@ const prepareAdd = async (
       features: [],
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from gateway; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       gateway: gateway?.source,
+      // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       storage: storage
         ? { options: storage.options, source: storage.source }
         : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
@@ -148,12 +151,14 @@ const prepareAdd = async (
   );
   const selectedGateway =
     gateway ??
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (gatewayItem
       ? await resolveGateway(plan.sources[plan.items.indexOf(gatewayItem)], cwd)
       : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
         undefined);
   const selectedStorage =
     storage ??
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (storageItem
       ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
       : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
@@ -174,6 +179,7 @@ const prepareAdd = async (
       >): boolean => kind === "storage" && previous === next
     );
   const configEdit =
+    // oxlint-disable-next-line no-ternary -- Keep configEdit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     gatewayChange && selectedGateway
       ? await gatewayConfigEdit(cwd, selectedGateway)
       : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
@@ -314,15 +320,20 @@ export const add = new Command("add")
               );
             },
             managedTargets: [
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedStorage && !keepStorageOptions
                 ? ["lib/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
             rollbackTargets: [
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(hasNonEmptyValue(configEdit) ? ["chat.config.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway || selectedStorage ? [".env.example"] : []),
             ],
           },

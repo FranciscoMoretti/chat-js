@@ -144,12 +144,14 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   agent.mockImplementation((name: string) => {
     if (name === "researchPlanner") {
       return Promise.resolve(
+        // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         agent.mock.calls.length === 1
           ? { research_brief: "Brief", title: "Report" }
           : { complete: false, topics: ["Topic"] }
       );
     }
     return Promise.resolve(
+      // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       name === "researchWriter"
         ? { content: "Content", title: "Report" }
         : { findings: "Evidence" }

@@ -189,6 +189,7 @@ const ReasoningTrigger = memo(
               // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
               className={cn(
                 "size-4 transition-transform",
+                // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 isOpen ? "rotate-180" : "rotate-0"
               )}
             />

@@ -68,6 +68,7 @@ export const EveModelPicker = ({
             return;
           }
           const model =
+            // oxlint-disable-next-line no-ternary -- Keep model as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             typeof selection === "string" ? getModelById(selection) : undefined;
           if (model) {
             await changeModel(model.id);

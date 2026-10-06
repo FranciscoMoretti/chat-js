@@ -52,6 +52,7 @@ const Button = ({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
   }): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
 
   return (

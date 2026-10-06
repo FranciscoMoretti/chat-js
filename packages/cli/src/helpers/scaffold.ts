@@ -400,6 +400,7 @@ const scaffoldFromTemplate = async (
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
 
+  // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
@@ -558,6 +559,7 @@ const scaffoldElectron = async (
   const destination = pathModule.join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
+  // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) =>

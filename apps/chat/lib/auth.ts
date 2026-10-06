@@ -32,6 +32,7 @@ import { getBaseUrl } from "./url";
 const baseUrl =
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
   env.APP_URL ||
+  // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   (process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl());
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (auth); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env, typescript/strict-boolean-expressions */
@@ -51,6 +52,7 @@ export const auth = betterAuth({
   plugins: [
     lastLoginMethod(),
     nextCookies(),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
   ],
   secret: env.AUTH_SECRET,
@@ -71,6 +73,7 @@ export const auth = betterAuth({
     const vercelSecret = env.VERCEL_APP_CLIENT_SECRET;
 
     const google =
+      // oxlint-disable-next-line no-ternary -- Keep google as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof googleId === "string" &&
       googleId.length > 0 &&
       typeof googleSecret === "string" &&
@@ -79,6 +82,7 @@ export const auth = betterAuth({
         : undefined;
 
     const github =
+      // oxlint-disable-next-line no-ternary -- Keep github as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof githubId === "string" &&
       githubId.length > 0 &&
       typeof githubSecret === "string" &&
@@ -87,6 +91,7 @@ export const auth = betterAuth({
         : undefined;
 
     const vercel =
+      // oxlint-disable-next-line no-ternary -- Keep vercel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof vercelId === "string" &&
       vercelId.length > 0 &&
       typeof vercelSecret === "string" &&
@@ -99,8 +104,10 @@ export const auth = betterAuth({
   trustedOrigins: [
     baseUrl,
     // Vercel URL for preview branches
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(env.VERCEL_URL ? [`https://${env.VERCEL_URL}`] : []),
     config.appUrl,
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(config.desktopApp.enabled ? ELECTRON_TRUSTED_ORIGINS : []),
   ],
 });

@@ -39,6 +39,7 @@ export const insertEveConversationFixtures = (
 ) =>
   db.transaction(async (tx) => {
     const inserted: (typeof eveConversation.$inferSelect)[] = [];
+    // oxlint-disable-next-line no-ternary -- Keep loop iterable as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     for (const fixture of Array.isArray(input) ? input : [input]) {
       const {
         chatId: requestedChatId,
@@ -48,6 +49,7 @@ export const insertEveConversationFixtures = (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding conversation excludes chatId, isPinned, title, updatedAt from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
         ...conversation
       } = fixture;
+      // oxlint-disable-next-line no-ternary -- Keep [parent] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const [parent] = conversation.parentConversationId
         ? // oxlint-disable-next-line eslint/no-await-in-loop -- Later fixture rows may depend on a parent inserted earlier in this transaction.
           await tx
@@ -65,6 +67,7 @@ export const insertEveConversationFixtures = (
           isPinned,
           ownerId: conversation.ownerId,
           title: title ?? conversation.firstMessage,
+          // oxlint-disable-next-line no-ternary -- Keep titleStatus as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           titleStatus: title ? "manual" : "fallback",
           updatedAt,
         })

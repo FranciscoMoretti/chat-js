@@ -441,6 +441,7 @@ test("concurrent family cleanup cannot abandon a shared file", async () => {
     .where(eq(eveFileReference.key, key));
   expect(references).toHaveLength(1);
   const remaining =
+    // oxlint-disable-next-line no-ternary -- Keep remaining as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     references[0].conversationId === first.id
       ? firstRow.chatId
       : secondRow.chatId;

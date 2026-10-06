@@ -80,6 +80,7 @@ afterAll(async () => {
 async function fixture(parent?: string): Promise<string> {
   const id = crypto.randomUUID();
   runIds.push(id);
+  // oxlint-disable-next-line no-ternary -- Keep query.json argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   await query`insert into workflow.workflow_runs(id, name, deployment_id, status, attributes) values (${id}, 'purge-fixture', 'fixture', 'completed', ${query.json(parent ? { $parentRunId: parent } : {})})`;
   await query`insert into workflow.workflow_stream_chunks(id, stream_id, run_id, data, eof) values (${crypto.randomUUID()}, ${id}, ${id}, ${Buffer.from("private payload")}, true)`;
   await query`insert into workflow.workflow_events(id, run_id, type) values (${crypto.randomUUID()}, ${id}, 'step_completed')`;

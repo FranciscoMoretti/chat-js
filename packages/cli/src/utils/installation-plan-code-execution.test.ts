@@ -69,6 +69,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
   );
   const server = Bun.serve({
     fetch(request): Response {
+      // oxlint-disable-next-line no-ternary -- Keep id as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const id = new URL(request.url).pathname.includes("second")
         ? "second"
         : "first";
@@ -142,6 +143,7 @@ test("replaces an older executor descriptor but rejects newly requested provider
         complete;
       return Response.json({
         meta: {
+          // oxlint-disable-next-line no-ternary -- Keep chatjs as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           chatjs: declared
             ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing incomplete own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               { ...incomplete, codeExecutionCapabilities: capabilities }

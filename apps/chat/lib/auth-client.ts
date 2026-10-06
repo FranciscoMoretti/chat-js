@@ -30,6 +30,7 @@ const electronAuthPlugin = electronProxyClient({
 const authClient = createAuthClient({
   plugins: [
     lastLoginMethodClient(),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(config.desktopApp.enabled ? [electronAuthPlugin] : []),
   ],
 });

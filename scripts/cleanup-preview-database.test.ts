@@ -111,6 +111,7 @@ const run = async ({
               data: {
                 closed_at: "2026-09-29T00:00:00Z",
                 head: { ref: "feature", repo: { full_name: repo } },
+                // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 state: (getCount += 1) === 1 ? state : stateBeforeDelete,
               },
             }),
@@ -125,6 +126,7 @@ const run = async ({
     request: (url: string, options: RequestInit) => {
       calls.push({ method: options.method ?? "GET", url });
       return Promise.resolve(
+        // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         options.method === "DELETE"
           ? new Response(null, { status: deleteStatus })
           : Response.json(pages[(pageIndex += 1) - 1])

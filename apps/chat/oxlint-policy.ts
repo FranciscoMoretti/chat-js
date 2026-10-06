@@ -2,7 +2,7 @@ import type { OxlintConfig } from "oxlint";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (auditedRestrictionRules); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 // Audited policy is shared by the repository and generated apps.
-// Deliberate policy exclusions are documented here; retained-rule exceptions belong beside the source.
+// Reviewed rule conflicts and contract exceptions belong beside the source.
 export const auditedRestrictionRules = {
   "id-length": "error",
   "import/exports-last": "error",
@@ -29,8 +29,8 @@ export const auditedRestrictionRules = {
   "no-continue": "error",
   "no-magic-numbers": "error",
   "no-restricted-properties": "error",
-  // Value-selecting ternaries are allowed; no-nested-ternary still limits nesting.
-  "no-ternary": "off",
+  // Guard returns are preferred; conflicts with prefer-ternary are explained at each value-selection site.
+  "no-ternary": "error",
   "no-undefined": "error",
   "no-underscore-dangle": "error",
   "node/no-process-env": "error",

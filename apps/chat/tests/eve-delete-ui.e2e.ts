@@ -105,10 +105,13 @@ for (const width of [1280, 390]) {
       deletes += 1;
       await db
         .update(eveConversation)
+        // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         .set({ state: deletes === 1 ? "deleting" : "deleted" })
         .where(eq(eveConversation.id, id));
       await route.fulfill({
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         json: { rootId: id, status: deletes === 1 ? "pending" : "deleted" },
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         status: deletes === 1 ? 202 : 200,
       });
     });

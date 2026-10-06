@@ -64,12 +64,13 @@ const registerEveSubagent = async (
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
+  // oxlint-disable-next-line no-ternary -- Keep parent as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const parent = root
     ? undefined
     : await getEveSubagent(ownerId, parentSessionId);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading conversationId from parent; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining.
   const conversationId = root?.id ?? parent?.conversationId;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep rootTurnId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const rootTurnId = root ? parentTurnId : parent?.rootTurnId;
   if (!conversationId || !rootTurnId || sessionId === parentSessionId) {
     throw new Error("Native child has no owned parent conversation.");
@@ -118,6 +119,7 @@ const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
+        // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );

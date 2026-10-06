@@ -68,7 +68,7 @@ const ElectronBrowserSignIn = ({
           className="mr-2 size-4"
         />
         {buttonLabel}
-      </Button>
+      </Button /* oxlint-disable no-ternary -- Keep the opened browser-sign-in status as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
 
       {opened ? (
         <p className="text-muted-foreground text-center text-sm">
@@ -76,7 +76,7 @@ const ElectronBrowserSignIn = ({
           access, allow it to keep your session saved securely.
         </p>
       ) : null}
-    </div>
+    </div /* oxlint-enable no-ternary */>
   );
 };
 /* oxlint-enable react/jsx-no-literals */
@@ -144,17 +144,20 @@ const ElectronTransferUser = ({
         }}
         type="button"
       >
-        {isPending ? (
-          <>
-            <LoaderCircle
-              // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="mr-2 size-4 animate-spin"
-            />
-            Connecting…
-          </>
-        ) : (
-          "Continue to desktop app"
-        )}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          isPending ? (
+            <>
+              <LoaderCircle
+                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mr-2 size-4 animate-spin"
+              />
+              Connecting…
+            </>
+          ) : (
+            "Continue to desktop app"
+          )
+        }
       </Button>
 
       <Button

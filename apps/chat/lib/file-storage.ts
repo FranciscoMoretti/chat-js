@@ -160,6 +160,7 @@ const deleteFilesByUrls = async (urls: readonly string[]): Promise<void> => {
   const result = await getFiles().delete(
     await Promise.all(keys.map(async (key) => await storageKeyForFile(key)))
   );
+  // oxlint-disable-next-line no-ternary -- Keep errors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const errors = "errors" in result ? (result.errors ?? []) : [];
   if (errors.length > 0) {
     throw new AggregateError(
@@ -179,6 +180,7 @@ const downloadFile = async (
 ): Promise<StoredFile> =>
   await getFiles().download(
     await storageKeyForFile(key),
+    // oxlint-disable-next-line no-ternary -- Keep getFiles().download argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     range ? { range } : undefined
   );
 /* oxlint-enable oxc/no-async-await */

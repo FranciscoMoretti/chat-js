@@ -57,14 +57,17 @@ export const ProjectIconPicker = ({
           type="button"
           variant="outline"
         >
-          {icon ? (
-            <ProjectIcon color={displayColor} icon={icon} size={18} />
-          ) : (
-            <Smile
-              // oxlint-disable-next-line react/forbid-component-props -- Smile accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-muted-foreground size-[18px]"
-            />
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            icon ? (
+              <ProjectIcon color={displayColor} icon={icon} size={18} />
+            ) : (
+              <Smile
+                // oxlint-disable-next-line react/forbid-component-props -- Smile accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-muted-foreground size-[18px]"
+              />
+            )
+          }
         </Button>
       </PopoverTrigger>
       <PopoverContent

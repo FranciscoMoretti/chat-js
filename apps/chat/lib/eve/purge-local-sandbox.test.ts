@@ -221,6 +221,7 @@ test("retains resources created before metadata and across replacements", async 
     await writeFile(
       nodePath.join(directory, `${name}.json`),
       JSON.stringify({
+        // oxlint-disable-next-line no-ternary -- Keep kind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         kind: name === snapshot ? "snapshot" : "sandbox",
         name,
         sessionKey: input.sessionKey,

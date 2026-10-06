@@ -174,6 +174,7 @@ export const EveHistoryList = ({
     return true;
   });
   const { rename, pin } = useEveMetadataMutations();
+  // oxlint-disable-next-line no-ternary -- Keep grouped as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const grouped = projectId
     ? [{ items: filtered, label: "" }]
     : [
@@ -190,7 +191,7 @@ export const EveHistoryList = ({
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
-      // oxlint-disable-next-line react/forbid-component-props -- SidebarGroup accepts className in its styling contract; preserve this caller's layout and appearance.
+      // oxlint-disable-next-line react/forbid-component-props, no-ternary -- SidebarGroup accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
     >
       {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
@@ -228,7 +229,7 @@ export const EveHistoryList = ({
                         chat={item}
                         onDelete={() => openDeletion(item)}
                         onMoveProject={
-                          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+                          // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onMoveProject JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                           session?.user && item.state === "bound"
                             ? () => setMoving(item)
                             : undefined
@@ -262,7 +263,7 @@ export const EveHistoryList = ({
                     key={item.id}
                     onDelete={() => openDeletion(item)}
                     onMoveProject={
-                      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+                      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onMoveProject JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       session?.user && item.state === "bound"
                         ? () => setMoving(item)
                         : undefined
@@ -298,9 +299,11 @@ export const EveHistoryList = ({
           <p>Could not load conversations.</p>
           <Button
             onClick={() => {
-              void (history.isFetchNextPageError
-                ? history.fetchNextPage()
-                : history.refetch());
+              if (history.isFetchNextPageError) {
+                void history.fetchNextPage();
+              } else {
+                void history.refetch();
+              }
             }}
             size="sm"
             variant="ghost"
@@ -321,11 +324,14 @@ export const EveHistoryList = ({
           size="sm"
           variant="ghost"
         >
-          {history.isFetchingNextPage ? "Loading…" : "Load more conversations"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            history.isFetchingNextPage ? "Loading…" : "Load more conversations"
+          }
         </Button>
       )}
       {!(filtered.length > 0 || history.isPending || history.isError) &&
-        (projectId ? (
+        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (projectId /* oxlint-enable no-ternary */ ? (
           <div className="border-border/60 rounded-xl border px-4 py-6">
             <p className="text-foreground text-sm font-medium">
               No chats in this project

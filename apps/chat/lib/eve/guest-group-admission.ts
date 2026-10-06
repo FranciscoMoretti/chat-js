@@ -24,12 +24,10 @@ import type { eveResponseGroupInput } from "./response-group-input";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): admitGuestResponseGroup keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): admitGuestResponseGroup uses 0, 409, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep admitGuestResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep admitGuestResponseGroup's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): admitGuestResponseGroup accepts request: Request; principal: Extract< EvePrincipal, { kind: "guest"; } >; input: z.infer<typeof eveResponseGroupInput>; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): admitGuestResponseGroup preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -42,7 +40,17 @@ export const admitGuestResponseGroup = async (
     }
   >,
   input: z.infer<typeof eveResponseGroupInput>
-) => {
+): Promise<
+  | Response
+  | {
+      reservations: {
+        operationId: string;
+        reservationId: string;
+        status: "reserved" | "replay";
+      }[];
+      group: Awaited<ReturnType<typeof reserveEveResponseGroupInTransaction>>;
+    }
+> => {
   const candidates = eveResponseGroupCandidates(
     input.operationId,
     input.modelIds
@@ -92,13 +100,15 @@ export const admitGuestResponseGroup = async (
   return Response.json(
     {
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         result.status === "conflict"
           ? "This comparison has different content."
           : "Guest message limit reached. Sign in to continue.",
     },
+    // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     { status: result.status === "conflict" ? 409 : 429 }
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

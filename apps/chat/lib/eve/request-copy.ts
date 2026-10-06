@@ -27,6 +27,7 @@ const preparePendingEveCopy = (
   const key = keyFor(ownerId, sourceConversationId);
   const saved = storage.getItem(key);
   const input = eveCopyInput.parse(
+    // oxlint-disable-next-line no-ternary -- Keep eveCopyInput.parse argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     saved !== null && saved !== ""
       ? JSON.parse(saved)
       : { modelId, operationId: crypto.randomUUID(), sourceConversationId }
@@ -86,11 +87,13 @@ const readCopyFailure = async (
     })
   );
   return new EveCopyRequestError(
+    // oxlint-disable-next-line no-ternary -- Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success
       ? failure.data.error
       : "Unable to save. Sign in and retry the same copy.",
+    // oxlint-disable-next-line no-ternary -- Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success ? failure.data.retryable !== false : true,
-    // oxlint-disable-next-line no-undefined -- A malformed failure has no optional conversation identity; the constructor preserves absence.
+    // oxlint-disable-next-line no-undefined, no-ternary -- A malformed failure has no optional conversation identity; the constructor preserves absence.; no-ternary: Keep EveCopyRequestError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure.success ? failure.data.conversationId : undefined
   );
 };

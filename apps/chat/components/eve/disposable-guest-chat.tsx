@@ -160,6 +160,7 @@ const GuestConversationView = ({
           selectedTool={selectedTool}
           onToolChange={setSelectedTool}
           retainedModelId={modelId}
+          // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           status={busy ? "streaming" : "ready"}
           disabled={busy || expired}
           draft={draft}
@@ -168,6 +169,7 @@ const GuestConversationView = ({
             onSend(draft.trim());
           }}
           onStop={
+            // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             busy && !expired
               ? (): void => {
                   onStop();
@@ -220,6 +222,7 @@ const GuestConversation = ({
       await agent.send(text);
     } catch (error) {
       setCommandError(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Message could not be sent."
       );
       setDraft(text);
@@ -272,7 +275,7 @@ const GuestConversation = ({
     commandError ||
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value. Optional chain: Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     agent.error?.message ||
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView
@@ -333,6 +336,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
         return;
       }
       setCommandError(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Could not start chat."
       );
     }
@@ -375,31 +379,35 @@ const DisposableGuestChat = (): ReactJSX.Element => {
             // oxlint-disable-next-line react/forbid-component-props -- ChatHeaderView accepts className in its styling contract; preserve this caller's layout and appearance.
             className="h-(--header-height)"
           />
-          {binding ? (
-            <GuestConversation binding={binding} key={binding.sessionId} />
-          ) : (
-            <ChatWelcomeView>
-              {commandError && (
-                <p role="alert" className="text-destructive mb-3 text-sm">
-                  {commandError}
-                </p>
-              )}
-              <EveComposer
-                // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
-                autoFocus
-                status={busy ? "submitted" : "ready"}
-                disabled={busy || !modelId}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSubmit={() => {
-                  void submit();
-                }}
-                files={files}
-                selectedTool={selectedTool}
-                onToolChange={setSelectedTool}
-              />
-            </ChatWelcomeView>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            binding ? (
+              <GuestConversation binding={binding} key={binding.sessionId} />
+            ) : (
+              <ChatWelcomeView>
+                {commandError && (
+                  <p role="alert" className="text-destructive mb-3 text-sm">
+                    {commandError}
+                  </p>
+                )}
+                <EveComposer
+                  // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
+                  autoFocus
+                  // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  status={busy ? "submitted" : "ready"}
+                  disabled={busy || !modelId}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSubmit={() => {
+                    void submit();
+                  }}
+                  files={files}
+                  selectedTool={selectedTool}
+                  onToolChange={setSelectedTool}
+                />
+              </ChatWelcomeView>
+            )
+          }
         </section>
       </ChatLayoutMain>
     </ChatLayout>

@@ -32,19 +32,23 @@ export const documentUi: DocumentUi = {
       // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
       className="min-h-0 flex-1"
     >
-      {comparison ? (
-        <EveDocumentComparison {...comparison} />
-      ) : (
-        <div
-          className={
-            inline === true
-              ? "p-4 sm:px-14 sm:py-16"
-              : "mx-auto max-w-3xl px-4 py-8"
-          }
-        >
-          <Editor {...editorProps} />
-        </div>
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        comparison ? (
+          <EveDocumentComparison {...comparison} />
+        ) : (
+          <div
+            className={
+              // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              inline === true
+                ? "p-4 sm:px-14 sm:py-16"
+                : "mx-auto max-w-3xl px-4 py-8"
+            }
+          >
+            <Editor {...editorProps} />
+          </div>
+        )
+      }
     </ScrollArea>
   ),
 };

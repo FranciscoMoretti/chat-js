@@ -266,6 +266,7 @@ test.each(["owner", "stranger"])(
       result = await contextStorage.run(ctx, () => next(result.session));
     }
     expect(receipts, JSON.stringify(result)).toEqual(
+      // oxlint-disable-next-line no-ternary -- Keep expect(receipts, JSON.stringify(result)).toEqual argume as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       principalId === "owner"
         ? [{ requestId: "request", responder: actor }]
         : []

@@ -31,6 +31,7 @@ const itemAddress = (
 ): string => {
   if (/^[a-z][a-z0-9-]*$/u.test(source)) {
     const suffix =
+      // oxlint-disable-next-line no-ternary -- Keep suffix as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       kind === "tool" || (kind === "gateway" && source.endsWith("-gateway"))
         ? ""
         : `-${kind}`;

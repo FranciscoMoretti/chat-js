@@ -76,6 +76,7 @@ const runMigrate = async (): Promise<void> => {
     >(
       `select to_regclass('drizzle.__drizzle_migrations') is not null as "migrationTableExists"`
     );
+    // oxlint-disable-next-line no-ternary -- Keep applied as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const applied = migrationTableExists
       ? await connection.unsafe<{ createdAt: string; hash: string }[]>(
           `select "created_at"::text as "createdAt", "hash"

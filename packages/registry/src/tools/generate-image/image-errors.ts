@@ -13,9 +13,11 @@ const serializeError = (
   if (typeof error === "object" && error !== null && "message" in error) {
     const message = String(error.message);
     const hasName = Boolean(Reflect.get(error, "name"));
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const name: unknown = hasName
       ? Reflect.get(error, "name")
       : ABSENT_DIAGNOSTIC_VALUE;
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     return { message, name: hasName ? String(name) : ABSENT_DIAGNOSTIC_VALUE };
   }
   return { message: String(error), raw: error };
@@ -51,6 +53,7 @@ const getErrorDebugInfo = (
 ): { errorConstructor: unknown; errorKeys: string[]; errorType: string } => ({
   errorConstructor: constructorName(error),
   errorKeys:
+    // oxlint-disable-next-line no-ternary -- Keep errorKeys as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof error === "object" && error !== null ? Object.keys(error) : [],
   errorType: typeof error,
 });

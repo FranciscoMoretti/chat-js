@@ -47,7 +47,9 @@ export const McpToolResult = ({
       <ToolContent>
         <ToolInput input={part.input} />
         <ToolOutput
+          // oxlint-disable-next-line no-ternary -- Keep errorText JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           errorText={part.state === "output-error" ? part.errorText : undefined}
+          // oxlint-disable-next-line no-ternary -- Keep output JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           output={part.state === "output-available" ? part.output : undefined}
         />
       </ToolContent>

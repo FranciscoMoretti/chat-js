@@ -73,6 +73,7 @@ export const LoginCtaBanner = ({
         <div
           className={cn(
             "flex items-center justify-between gap-3 rounded-lg",
+            // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             compact ? "px-3 py-2" : "px-4 py-3",
             variantStyles[variant],
             className

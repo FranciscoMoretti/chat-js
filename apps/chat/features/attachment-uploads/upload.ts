@@ -20,6 +20,7 @@ export const uploadAttachment = async (
   if (!response.ok) {
     const failure: unknown = await response.json().catch(() => null);
     throw new Error(
+      // oxlint-disable-next-line no-ternary -- Keep Error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       failure !== null &&
         typeof failure === "object" &&
         "error" in failure &&

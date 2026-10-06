@@ -209,6 +209,7 @@ export const snapshotPublicEveCopyDocuments = async (
       ...new Set(resources.documentIds.map((id) => id.toLowerCase())),
     ].toSorted();
     const heads =
+      // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       documentIds.length > 0
         ? await tx
             .select({
@@ -229,6 +230,7 @@ export const snapshotPublicEveCopyDocuments = async (
       throw new Error("A published document is no longer accessible.");
     }
     const revisions =
+      // oxlint-disable-next-line no-ternary -- Keep revisions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       heads.length > 0
         ? await tx
             .select({

@@ -53,54 +53,66 @@ const ElectronAuthOverlay = ({
       <div className="bg-background w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="text-muted-foreground mt-0.5">
-            {isLoading ? (
-              <LoaderCircle
-                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-5 animate-spin"
-              />
-            ) : (
-              <AlertCircle
-                // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-5 text-amber-600"
-              />
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isLoading ? (
+                <LoaderCircle
+                  // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-5 animate-spin"
+                />
+              ) : (
+                <AlertCircle
+                  // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-5 text-amber-600"
+                />
+              )
+            }
           </div>
           <div className="space-y-2">
             <p className="font-medium">{state.message}</p>
             <p className="text-muted-foreground text-sm">{detailMessage}</p>
-            {canCancel ? (
-              <Button
-                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="mt-2"
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              canCancel ? (
+                <Button
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="mt-2"
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
-                onClick={async () => {
-                  try {
-                    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-                    await window.electronAPI?.cancelAuthFlow?.();
-                  } catch (error) {
-                    console.error("Failed to cancel Electron auth flow", error);
-                  }
-                }}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Go back
-              </Button>
-            ) : null}
-            {isLoading ? null : (
-              <Button
-                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="mt-2"
-                onClick={() => setIsDismissed(true)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Dismiss
-              </Button>
-            )}
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
+                  onClick={async () => {
+                    try {
+                      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+                      await window.electronAPI?.cancelAuthFlow?.();
+                    } catch (error) {
+                      console.error(
+                        "Failed to cancel Electron auth flow",
+                        error
+                      );
+                    }
+                  }}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Go back
+                </Button>
+              ) : null
+            }
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isLoading ? null : (
+                <Button
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="mt-2"
+                  onClick={() => setIsDismissed(true)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Dismiss
+                </Button>
+              )
+            }
           </div>
         </div>
       </div>
@@ -241,6 +253,7 @@ export const ElectronAuthHandler = (): ReactJSX.Element | null => {
   }
 
   const overlayKey = `${authState.status}:${authState.message ?? ""}:${
+    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     authState.status === "idle" ? "" : (authState.detail ?? "")
   }`;
 

@@ -86,6 +86,7 @@ export const EveDocumentAssistantActions = ({
     closeTimer.current = setTimeout(() => setExpanded(false), 200);
   };
   const [primary, ...secondary] = actions;
+  // oxlint-disable-next-line no-ternary -- Keep visible as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const visible = expanded ? [...secondary, primary] : [primary];
   return (
     <div
@@ -102,51 +103,54 @@ export const EveDocumentAssistantActions = ({
         }
       }}
     >
-      {busy && onStop ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              aria-label="Stop generation"
-              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="h-auto w-auto rounded-full p-3"
-              variant="ghost"
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        busy && onStop ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label="Stop generation"
+                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-auto w-auto rounded-full p-3"
+                variant="ghost"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
-              onClick={onStop}
-            >
-              <Square size={16} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="left">Stop generation</TooltipContent>
-        </Tooltip>
-      ) : (
-        visible.map((action) => {
-          const Icon = helperIcon(action.label);
-          return (
-            <Tooltip key={action.label}>
-              <TooltipTrigger asChild>
-                <Button
-                  disabled={disabled || !onAction}
-                  variant="ghost"
-                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="h-auto w-auto rounded-full p-3"
-                  aria-label={action.label}
+                // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
+                onClick={onStop}
+              >
+                <Square size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">Stop generation</TooltipContent>
+          </Tooltip>
+        ) : (
+          visible.map((action) => {
+            const Icon = helperIcon(action.label);
+            return (
+              <Tooltip key={action.label}>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={disabled || !onAction}
+                    variant="ghost"
+                    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="h-auto w-auto rounded-full p-3"
+                    aria-label={action.label}
 
-                  onClick={() => {
-                    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-                    void onAction?.(
-                      documentAssistantRequest(action, documentId, revisionId)
-                    );
-                  }}
-                >
-                  <Icon size={16} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">{action.label}</TooltipContent>
-            </Tooltip>
-          );
-        })
-      )}
+                    onClick={() => {
+                      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+                      void onAction?.(
+                        documentAssistantRequest(action, documentId, revisionId)
+                      );
+                    }}
+                  >
+                    <Icon size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">{action.label}</TooltipContent>
+              </Tooltip>
+            );
+          })
+        )
+      }
     </div>
   );
 };

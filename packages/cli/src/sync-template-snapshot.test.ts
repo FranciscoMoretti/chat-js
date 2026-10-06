@@ -45,6 +45,7 @@ const collectFileOrder = async (
         }>
       ): Promise<string[]> => {
         const absolute = path.join(dir, entry.name);
+        // oxlint-disable-next-line no-ternary -- Keep rel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
         if (entry.isDirectory()) {
           return await collectFileOrder(absolute, rel);

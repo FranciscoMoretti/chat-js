@@ -47,7 +47,7 @@ export const authenticateDisposableGuest = async (
 } | null> => {
   const authorization = request.headers.get("authorization");
   const claims = readGuestCredential(
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep readGuestCredential argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     authorization?.startsWith("Bearer ") ? authorization.slice(7) : null
   );
   if (!claims) {

@@ -668,6 +668,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const gateway of [...GATEWAYS, "acme"]) {
+  // oxlint-disable-next-line no-ternary -- Keep electronFlag as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
@@ -681,6 +682,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--gateway",
       gatewaySource(gateway),
       ...storageArguments(gateway),
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(gateway === "openrouter" ? ["--no-documents"] : []),
       "--yes",
       electronFlag,
@@ -780,6 +782,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     }
 
     const selectedSdk =
+      // oxlint-disable-next-line no-ternary -- Keep selectedSdk as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       gateway === "acme"
         ? "@ai-sdk/openai-compatible"
         : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -914,6 +917,7 @@ assert.equal(await files.exists("test.txt"), false);
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
     }
 
+    // oxlint-disable-next-line no-ternary -- Keep other as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const other = gateway === "vercel" ? "openai" : "vercel";
     await writeFile(
       join(cwd, "gateway-type-check.ts"),
@@ -921,12 +925,14 @@ assert.equal(await files.exists("test.txt"), false);
 // @ts-expect-error An uninstalled gateway must not typecheck.
 defineConfig({ ai: { gateway: "${other}" } });
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel" || gateway === "openai"
     ? `// @ts-expect-error Preserve the selected SDK's model ID type across package declarations.
 defineConfig({ ai: { gateway: "${gateway}", workflows: { chat: "not-a-model" } } });`
     : ""
 }
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel"
     ? ""
     : `// @ts-expect-error This gateway has no video model IDs.
@@ -997,6 +1003,7 @@ assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
@@ -1267,7 +1274,9 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 for (const installAtCreation of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   it(`MCP: create ${installAtCreation ? "with" : "without"} MCP and add preserve core, UI order and setup errors`, async () => {
+    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const name = `mcp-${installAtCreation ? "installed" : "omitted"}`;
     const cwd = join(root, name);
     await run(root, [
@@ -1279,7 +1288,9 @@ for (const installAtCreation of [false, true]) {
       "openai",
       "--yes",
       "--no-electron",
+      // oxlint-disable-next-line no-ternary -- Keep ArrayLiteralExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       installAtCreation ? "--mcp" : "--no-mcp",
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(installAtCreation
         ? [
             "--attachments",

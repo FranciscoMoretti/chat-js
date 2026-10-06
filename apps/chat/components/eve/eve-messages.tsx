@@ -76,6 +76,7 @@ const PendingInput = ({
                 respond({ optionId: option.id, requestId: request.requestId })
               }
               type="button"
+              // oxlint-disable-next-line no-ternary -- Keep variant JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               variant={option.style === "danger" ? "outline" : "default"}
             >
               {option.label}
@@ -219,16 +220,19 @@ const Part = ({
           input={part.input}
         />
       )}
-      {part.state === "approval-requested" && request ? (
-        <PendingInput
-          disabled={disabled}
-          key={request.requestId}
-          request={request}
-          respond={respond}
-        />
-      ) : (
-        <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        part.state === "approval-requested" && request ? (
+          <PendingInput
+            disabled={disabled}
+            key={request.requestId}
+            request={request}
+            respond={respond}
+          />
+        ) : (
+          <p className="text-muted-foreground text-sm">{toolStatus(part)}</p>
+        )
+      }
     </section>
   );
 };
@@ -291,7 +295,7 @@ export const EveMessages = ({
     if (message.role === "user") {
       precedingUser = message;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from editor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading messageId from editor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep editing as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const editing = editor?.messageId === message.id ? editor : undefined;
     const canEdit =
       !isReadonly &&
@@ -309,6 +313,7 @@ export const EveMessages = ({
     const actions = (
       <MessageActionsView
         editDisabled={
+          // oxlint-disable-next-line no-ternary -- Keep editDisabled JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           editing
             ? editing.disabled
             : actionsDisabled ||
@@ -328,6 +333,7 @@ export const EveMessages = ({
           /* oxlint-enable oxc/no-optional-chaining */
         }
         onStartEdit={
+          // oxlint-disable-next-line no-ternary -- Keep onStartEdit JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           !isReadonly && onEdit ? (): void => onEdit(message) : undefined
         }
         role={message.role}
@@ -352,6 +358,7 @@ export const EveMessages = ({
         }}
 
         feedback={
+          // oxlint-disable-next-line no-ternary -- Keep feedback JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           message.role === "assistant" && !isReadonly ? (
             <>
               {conversationId && (
@@ -416,6 +423,7 @@ export const EveMessages = ({
             /* oxlint-enable oxc/no-optional-chaining */
           }
           onEdit={
+            // oxlint-disable-next-line no-ternary -- Keep onEdit JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             !isReadonly && onEdit ? (): void => onEdit(message) : undefined
           }
           text={text}

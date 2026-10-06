@@ -50,6 +50,7 @@ export const EveChatPage = async ({
     notFound();
   }
   const selected =
+    // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof conversationId === "string" && conversationId !== ""
       ? await getEveChatPageConversation(principal.ownerId, conversationId)
       : undefined;
@@ -67,6 +68,7 @@ export const EveChatPage = async ({
   const header = (
     <ChatHeaderView
       breadcrumb={
+        // oxlint-disable-next-line no-ternary -- Keep breadcrumb JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         selected ? (
           <h1 className="ml-2 truncate text-sm font-medium">
             {selected.title ?? selected.firstMessage.slice(0, 100)}
@@ -89,7 +91,7 @@ export const EveChatPage = async ({
   }
 
   const copy =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading creationKind from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep copy as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     selected?.creationKind === "copy"
       ? await getEveCopyOperation(principal.ownerId, selected.operationId)
       : undefined;

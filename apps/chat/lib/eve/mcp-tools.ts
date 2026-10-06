@@ -296,6 +296,7 @@ const validateMcpTool = async (tool: Tool): Promise<ValidatedMcpTool<Tool>> => {
   const schema = await asSchema(tool.inputSchema).jsonSchema;
   // MCP defaults to 2020-12; retain explicitly declared draft-07 schemas.
   const Validator =
+    // oxlint-disable-next-line no-ternary -- Keep Validator as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     schema.$schema === "http://json-schema.org/draft-07/schema#"
       ? Ajv
       : Ajv2020;
@@ -404,6 +405,7 @@ const executeEveMcpTool = async (
     )) {
       result = output;
     }
+    // oxlint-disable-next-line no-ternary -- Keep converted as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const converted = tool.toModelOutput
       ? await tool.toModelOutput({
           input,

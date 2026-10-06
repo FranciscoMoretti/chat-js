@@ -42,6 +42,7 @@ export const ResearchProgress = ({
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false);
 
+  // oxlint-disable-next-line no-ternary -- Keep lastUpdate as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const lastUpdate = updates.length > 0 ? updates.at(-1) : null;
 
   const searchCount = React.useMemo(
@@ -104,43 +105,52 @@ export const ResearchProgress = ({
       >
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            {isComplete ? (
-              <span className="text-muted-foreground text-xs">{`Researched for ${timeSpent} seconds, ${searchCount} searches, ${sourceCount} sources`}</span>
-            ) : (
-              <UpdateTitle isRunning={!isComplete} title={lastUpdateTitle} />
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isComplete ? (
+                <span className="text-muted-foreground text-xs">{`Researched for ${timeSpent} seconds, ${searchCount} searches, ${sourceCount} sources`}</span>
+              ) : (
+                <UpdateTitle isRunning={!isComplete} title={lastUpdateTitle} />
+              )
+            }
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isExpanded ? (
-            <Minimize2
-              aria-hidden="true"
-              // oxlint-disable-next-line react/forbid-component-props -- Minimize2 accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          ) : (
-            <Maximize2
-              aria-hidden="true"
-              // oxlint-disable-next-line react/forbid-component-props -- Maximize2 accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="text-muted-foreground size-4 shrink-0"
-            />
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            isExpanded ? (
+              <Minimize2
+                aria-hidden="true"
+                // oxlint-disable-next-line react/forbid-component-props -- Minimize2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-muted-foreground size-4 shrink-0"
+              />
+            ) : (
+              <Maximize2
+                aria-hidden="true"
+                // oxlint-disable-next-line react/forbid-component-props -- Maximize2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-muted-foreground size-4 shrink-0"
+              />
+            )
+          }
         </div>
       </button>
 
-      {isExpanded ? (
-        <div className="px-1 pt-2 pb-1">
-          <ResearchTasks updates={updates} />
-        </div>
-      ) : (
-        lastUpdate &&
-        !isComplete && (
-          <div className="px-4 pt-1 pb-3">
-            {/* We only show the running step in this component */}
-            <ResearchTask isRunning minimal update={lastUpdate} />
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        isExpanded ? (
+          <div className="px-1 pt-2 pb-1">
+            <ResearchTasks updates={updates} />
           </div>
+        ) : (
+          lastUpdate &&
+          !isComplete && (
+            <div className="px-4 pt-1 pb-3">
+              {/* We only show the running step in this component */}
+              <ResearchTask isRunning minimal update={lastUpdate} />
+            </div>
+          )
         )
-      )}
+      }
     </div>
   );
 };

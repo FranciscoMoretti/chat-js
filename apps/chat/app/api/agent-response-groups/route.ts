@@ -44,6 +44,7 @@ export const POST = async (request: Request): Promise<Response> => {
   }
   try {
     const admission =
+      // oxlint-disable-next-line no-ternary -- Keep admission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       principal.kind === "guest"
         ? await admitGuestResponseGroup(request, principal, input.data)
         : undefined;

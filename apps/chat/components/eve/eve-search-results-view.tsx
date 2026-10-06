@@ -126,7 +126,10 @@ export const EveSearchResultsView = ({
         </div>
       </div>
       <output className="sr-only" aria-live="polite">
-        {searching ? "Searching…" : ""}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          searching ? "Searching…" : ""
+        }
       </output>
       <CommandList
         // oxlint-disable-next-line react/forbid-component-props -- CommandList accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -172,13 +175,21 @@ export const EveSearchResultsView = ({
         )}
         {!pending && !error && !searching && items.length === 0 && (
           <p className="text-muted-foreground p-4 text-sm">
-            {isSearch
-              ? "No chats found. Try different words."
-              : "Your recent chats will appear here."}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isSearch
+                ? "No chats found. Try different words."
+                : "Your recent chats will appear here."
+            }
           </p>
         )}
         {items.length > 0 && (
-          <CommandGroup heading={isSearch ? "Best matches" : "Recent chats"}>
+          <CommandGroup
+            heading={
+              // oxlint-disable-next-line no-ternary -- Keep heading JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isSearch ? "Best matches" : "Recent chats"
+            }
+          >
             {items.map((item): React.JSX.Element => (
               <CommandItem
                 // oxlint-disable-next-line react/forbid-component-props -- CommandItem accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -209,7 +220,10 @@ export const EveSearchResultsView = ({
             disabled={disableLoadMore}
             onClick={onLoadMore}
           >
-            {loadingMore ? "Loading…" : "Load more chats"}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              loadingMore ? "Loading…" : "Load more chats"
+            }
           </Button>
         )}
       </CommandList>

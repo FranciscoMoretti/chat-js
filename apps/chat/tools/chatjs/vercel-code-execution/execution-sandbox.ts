@@ -121,6 +121,7 @@ const resolveSandboxAuth = (): SandboxAuth => {
   } catch {
     throw new Error("Sandbox provider identity is unavailable.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep identity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const identity = token ? tokenClaims(token) : undefined;
   if (!(identity && token)) {
     throw new Error("Sandbox provider identity is unavailable.");

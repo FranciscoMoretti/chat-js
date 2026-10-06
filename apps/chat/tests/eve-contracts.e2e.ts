@@ -795,6 +795,7 @@ test("final application deletion erases family content, preserves accounting and
       visibility: "private",
     });
     expect(row.sessionId).toBe(
+      // oxlint-disable-next-line no-ternary -- Keep expect(row.sessionId).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       id === root.id ? root.sessionId : child.sessionId
     );
     expect(await getEveConversation(owner, id)).toBeUndefined();
@@ -849,6 +850,7 @@ test.each(copyReservationStates)(
   "ordinary creation cannot consume a %s copy reservation",
   async (state) => {
     const operationId = crypto.randomUUID();
+    // oxlint-disable-next-line no-ternary -- Keep sessionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const sessionId = state === "bound" ? crypto.randomUUID() : null;
     const [copy] = await insertEveConversationFixtures({
       creationKind: "copy",

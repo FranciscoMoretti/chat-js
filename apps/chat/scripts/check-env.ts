@@ -206,6 +206,7 @@ const validateInstalledItems = async (
         if (missing) {
           return [
             {
+              // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
               missing: [missing],
             },
@@ -280,6 +281,7 @@ const checkEnv = async (): Promise<void> => {
   }
 
   const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
+  // oxlint-disable-next-line no-ternary -- Keep databaseErrors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const databaseErrors = databaseOptions.success
     ? []
     : [
@@ -294,6 +296,7 @@ const checkEnv = async (): Promise<void> => {
   const eveOptions = z
     .object(getEveRuntimeEnvOptions(env))
     .safeParse(resolveEveEnvironment(env));
+  // oxlint-disable-next-line no-ternary -- Keep eveErrors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const eveErrors = eveOptions.success
     ? []
     : [
@@ -312,8 +315,11 @@ const checkEnv = async (): Promise<void> => {
   const errors = [
     ...eveErrors,
     ...databaseErrors,
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(baseUrlError ? [baseUrlError] : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(gatewayError ? [gatewayError] : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(storageError ? [storageError] : []),
     ...validateAuthentication(env),
     ...installedToolErrors,

@@ -234,11 +234,13 @@ const getErrorMessage = (
   firstItem: unknown
 ): string | null => {
   const topLevelError =
+    // oxlint-disable-next-line no-ternary -- Keep topLevelError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     result && typeof result === "object" && "error" in result
       ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
         (result.error as string)
       : undefined;
   const firstItemError =
+    // oxlint-disable-next-line no-ternary -- Keep firstItemError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     firstItem && typeof firstItem === "object" && "error" in firstItem
       ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
         (firstItem.error as string)

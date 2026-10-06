@@ -140,11 +140,14 @@ export const ProjectDetailsDialog = ({
 
   const isDisabled = !hasName || isLoading || (mode === "edit" && isUnchanged);
 
+  // oxlint-disable-next-line no-ternary -- Keep title as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const title = mode === "create" ? "New Project" : "Edit Project";
   const description =
+    // oxlint-disable-next-line no-ternary -- Keep description as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     mode === "create"
       ? "Create a new project to organize your chats."
       : "Update project details.";
+  // oxlint-disable-next-line no-ternary -- Keep buttonText as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const buttonText = mode === "create" ? "Create" : "Save";
 
   return (

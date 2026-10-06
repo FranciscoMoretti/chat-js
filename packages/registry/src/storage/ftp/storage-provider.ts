@@ -8,7 +8,7 @@ export const createStorageAdapter = (
 ): FtpAdapter => {
   const secure =
     options.secure ??
-    // oxlint-disable-next-line node/no-process-env -- Resolve the omitted secure option from the actual FTP_SECURE server configuration; passing explicit secure bypasses this fallback.
+    // oxlint-disable-next-line node/no-process-env, no-ternary -- Resolve the omitted secure option from the actual FTP_SECURE server configuration; passing explicit secure bypasses this fallback.; no-ternary: Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (process.env.FTP_SECURE === "implicit" ? "implicit" : true);
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return ftp({ ...options, secure });

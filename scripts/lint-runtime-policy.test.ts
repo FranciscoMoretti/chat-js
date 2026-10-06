@@ -44,6 +44,7 @@ const standaloneProtected = [
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
+  // oxlint-disable-next-line no-ternary -- Keep annotation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const annotation = file.endsWith("annotated-probe.ts")
     ? "// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n"
     : "";
@@ -195,6 +196,111 @@ test(
               )
         )
       );
+    } finally {
+      await rm(temporary, { force: true, recursive: true });
+    }
+  },
+  testDeadlineMs
+);
+/* oxlint-enable oxc/no-async-await */
+
+const ternaryPolicyFixtures = {
+  "annotated-value.ts":
+    'export const pick = (flag: boolean): string => {\n// oxlint-disable-next-line no-ternary -- Preserve this lazy value selection; pinned unicorn/prefer-ternary rejects if/else assignment.\nconst selected = flag ? "yes" : "no";\nreturn selected;\n};\n',
+  "guard-return.ts":
+    'export const pick = (flag: boolean): string => { if (flag) { return "yes"; } return "no"; };\n',
+  "nested-callback.ts":
+    'export const pick = (outerFlag: boolean, innerFlag: boolean): (() => string) => {\nconst fallback = (): string => "fallback";\nconst selected = /* oxlint-disable no-ternary -- Preserve this lazy callback selection; pinned unicorn/prefer-ternary rejects if/else assignment. */ outerFlag /* oxlint-enable no-ternary */ ? (): string => { return innerFlag ? "left" : "right"; } : fallback;\nreturn selected;\n};\n',
+  "plain-ternary.ts":
+    'export const pick = (flag: boolean): string => flag ? "yes" : "no";\n',
+} as const;
+
+const assertTernaryDiagnostics = (output: string, source: string): void => {
+  const diagnostics = output
+    .split("\n")
+    .filter((line): boolean => line.includes("[Error/eslint(no-ternary)]"));
+  expect(
+    diagnostics
+      .filter((line): boolean => line.includes("plain-ternary.ts:"))
+      .join("\n")
+  ).toMatch(/^[^\n]*plain-ternary\.ts:[^\n]*$/u);
+  expect(
+    diagnostics
+      .filter((line): boolean => line.includes("nested-callback.ts:"))
+      .join("\n")
+  ).toMatch(/^[^\n]*nested-callback\.ts:[^\n]*$/u);
+  expect(
+    diagnostics.filter((line): boolean => line.includes("annotated-value.ts:"))
+  ).toEqual([]);
+  expect(
+    diagnostics.filter((line): boolean => line.includes("guard-return.ts:"))
+  ).toEqual([]);
+  expect(output.includes("[Warning/eslint(no-ternary)]"), source).toBe(false);
+};
+
+/* oxlint-disable oxc/no-async-await -- The native policy probe drains both native child pipes and awaits exit before asserting its diagnostics. */
+const checkTernaryPolicy = async (
+  temporary: string,
+  source: string
+): Promise<void> => {
+  const result = Bun.spawn(
+    [
+      process.execPath,
+      "--bun",
+      path.join(root, "node_modules/oxlint/bin/oxlint"),
+      "-c",
+      path.join(temporary, "oxlint.config.ts"),
+      ...Object.keys(ternaryPolicyFixtures).map((file): string =>
+        path.join(temporary, file)
+      ),
+      "--format",
+      "unix",
+    ],
+    { cwd: temporary, stderr: "pipe", stdout: "pipe" }
+  );
+  const deadline = setTimeout(
+    (): void => result.kill("SIGKILL"),
+    childDeadlineMs
+  );
+  try {
+    const [output, errors, exitCode] = await Promise.all([
+      new Response(result.stdout).text(),
+      new Response(result.stderr).text(),
+      result.exited,
+    ]);
+    expect(errors, source).toBe("");
+    expect(exitCode, source).toBe(diagnosticFailureExit);
+    assertTernaryDiagnostics(output, source);
+  } finally {
+    clearTimeout(deadline);
+    result.kill("SIGKILL");
+    await result.exited;
+  }
+};
+/* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable oxc/no-async-await -- This Bun test awaits isolated fixture writes and sequential repository/standalone policy probes, then removes its temporary directory. */
+test(
+  "ternary restrictions remain enabled while source exceptions leave callback returns visible",
+  async (): Promise<void> => {
+    const temporary = await mkdtemp(
+      path.join(tmpdir(), "chatjs-lint-ternary-")
+    );
+    try {
+      await settleChecks(
+        Object.entries(ternaryPolicyFixtures).map(
+          ([file, contents]: readonly [
+            string,
+            string,
+          ]): (() => Promise<void>) =>
+            async (): Promise<void> =>
+              await writeFile(path.join(temporary, file), contents)
+        )
+      );
+      await writeConfig(temporary, "oxlint.config.ts");
+      await checkTernaryPolicy(temporary, "oxlint.config.ts");
+      await writeConfig(temporary, "apps/chat/oxlint.config.ts");
+      await checkTernaryPolicy(temporary, "apps/chat/oxlint.config.ts");
     } finally {
       await rm(temporary, { force: true, recursive: true });
     }

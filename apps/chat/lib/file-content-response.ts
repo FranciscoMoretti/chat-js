@@ -34,6 +34,7 @@ const parseExplicitRange = (
 ): { end: number; start: number } | null => {
   const start = Number(rangeStart);
   const requestedEnd =
+    // oxlint-disable-next-line no-ternary -- Keep requestedEnd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof rangeEnd === "string" && rangeEnd !== ""
       ? Number(rangeEnd)
       : size - 1;
@@ -108,6 +109,7 @@ const createDownloadResponse = async (
 ): Promise<Response> => {
   const file = await downloadFile(key, range);
   const headers = new Headers({
+    // oxlint-disable-next-line no-ternary -- Keep "Accept-Ranges" as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     "Accept-Ranges": supportsRange ? "bytes" : "none",
     "Cache-Control": "private, no-store",
     "Content-Length": String(file.size),
@@ -122,7 +124,7 @@ const createDownloadResponse = async (
   }
   return new Response(file.stream(), {
     headers,
-    // oxlint-disable-next-line no-magic-numbers -- HTTP distinguishes partial content (206) from a complete download (200).
+    // oxlint-disable-next-line no-magic-numbers, no-ternary -- HTTP distinguishes partial content (206) from a complete download (200).; no-ternary: Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     status: range ? 206 : 200,
   });
 };

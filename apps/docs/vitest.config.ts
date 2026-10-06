@@ -32,6 +32,7 @@ const serveBuiltDocs = (): Plugin => ({
           publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
         }
 
+        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         request.url = `${publicPath}${query ? `?${query}` : ""}`;
       }
 

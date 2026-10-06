@@ -152,6 +152,7 @@ export const useEveFork = (
           );
         }
         setDraft(
+          // oxlint-disable-next-line no-ternary -- Keep setDraft argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof operation.message === "string"
             ? operation.message
             : operation.message
@@ -160,6 +161,7 @@ export const useEveFork = (
                 .join("\n")
         );
         setAttachments(
+          // oxlint-disable-next-line no-ternary -- Keep setAttachments argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof operation.message === "string"
             ? []
             : operation.message
@@ -234,6 +236,7 @@ export const useEveFork = (
         setPending(undefined);
       }
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to create a version."
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required fork lock cleanup in finally.
@@ -257,13 +260,14 @@ export const useEveFork = (
       if (pending || editingMessageId || !family.data || !boundary) {
         return;
       }
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading response from editContext; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading response from editContext; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep responseSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const responseSelection = editContext?.response
         ? responseModelSelection(editContext.response, editContext.events ?? [])
         : undefined;
       const editingSelection =
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelSelection from editContext; preserve one receiver evaluation, skipped accesses and the existing responseSelection fallback. The app guidance prefers optional chaining.
         editContext?.modelSelection ?? responseSelection ?? selectedModel;
+      // oxlint-disable-next-line no-ternary -- Keep modelId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
@@ -290,6 +294,7 @@ export const useEveFork = (
       // Re-upload the exact native bytes; never silently drop a file on an edit.
       let attachments: DraftAttachment[];
       try {
+        // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         attachments = message.parts.some((part) => part.type === "file")
           ? await restoreAttachments.mutateAsync({
               conversationId,
@@ -423,6 +428,7 @@ export const useEveFork = (
         );
         const message = draftMessage(draft, files.attachments);
         const operation =
+          // oxlint-disable-next-line no-ternary -- Keep operation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           modelIds.length > 1
             ? prepareResponseGroupCreation(
                 sessionStorage,

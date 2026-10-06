@@ -44,7 +44,11 @@ export const FollowUpSuggestionsView = ({
           return suggestions.map((suggestion) => {
             const count = seen.get(suggestion) ?? 0;
             seen.set(suggestion, count + 1);
-            const key = count === 0 ? suggestion : `${suggestion}-${count}`;
+            const key =
+              /* oxlint-disable no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ count /* oxlint-enable no-ternary */ ===
+              0
+                ? suggestion
+                : `${suggestion}-${count}`;
             return (
               <Suggestion
                 // oxlint-disable-next-line react/forbid-component-props -- Suggestion accepts className in its styling contract; preserve this caller's layout and appearance.

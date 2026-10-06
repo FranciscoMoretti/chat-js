@@ -62,12 +62,14 @@ const getMcpConnectorByNameId = async ({
   try {
     const conditions = [
       eq(mcpConnector.nameId, nameId),
+      // oxlint-disable-next-line no-ternary -- Keep ArrayLiteralExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       userId === null
         ? isNull(mcpConnector.userId)
         : eq(mcpConnector.userId, userId),
     ];
 
     const whereClause =
+      // oxlint-disable-next-line no-ternary -- Keep whereClause as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof excludeId === "string" && excludeId !== ""
         ? and(...conditions, sql`${mcpConnector.id} != ${excludeId}::uuid`)
         : and(...conditions);

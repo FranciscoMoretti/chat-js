@@ -58,6 +58,7 @@ export const useEveComposerDraft = (
     try {
       const saved = sessionStorage.getItem(key);
       const restored =
+        // oxlint-disable-next-line no-ternary -- Keep restored as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof saved === "string" && saved !== ""
           ? composerDraft.parse(JSON.parse(saved))
           : { attachments: [], selectedTool: null, text: "" };
@@ -97,6 +98,7 @@ export const useEveComposerDraft = (
       update((draft) => ({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
+        // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         text: typeof text === "function" ? text(draft.text) : text,
       })),
     [update]
@@ -107,6 +109,7 @@ export const useEveComposerDraft = (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
         attachments:
+          // oxlint-disable-next-line no-ternary -- Keep attachments as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof attachments === "function"
             ? attachments(draft.attachments)
             : attachments,
@@ -119,6 +122,7 @@ export const useEveComposerDraft = (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing draft own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...draft,
         selectedTool:
+          // oxlint-disable-next-line no-ternary -- Keep selectedTool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof tool === "function" ? tool(draft.selectedTool) : tool,
       })),
     [update]

@@ -68,7 +68,10 @@ const Action = ({
     >
       {children}
       <span className="sr-only">
-        {typeof label === "string" && label !== "" ? label : tooltip}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          typeof label === "string" && label !== "" ? label : tooltip
+        }
       </span>
     </Button>
   );

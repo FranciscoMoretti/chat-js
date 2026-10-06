@@ -180,14 +180,17 @@ const ArtifactAction = ({
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactAction's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {Icon ? (
-        <Icon
-          // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
-          className="size-4"
-        />
-      ) : (
-        children
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        Icon ? (
+          <Icon
+            // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="size-4"
+          />
+        ) : (
+          children
+        )
+      }
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       <span className="sr-only">{label || tooltip}</span>
     </Button>

@@ -96,6 +96,7 @@ const PureSpreadsheetEditor = ({
       }),
       key: i.toString(),
       name: String.fromCodePoint(65 + i),
+      // oxlint-disable-next-line no-ternary -- Keep renderEditCell as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       renderEditCell: isReadonly === true ? undefined : textEditor,
       width: 120,
     }));
@@ -147,7 +148,7 @@ const PureSpreadsheetEditor = ({
 
   return (
     <DataGrid
-      // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts className in its styling contract; preserve this caller's layout and appearance.
+      // oxlint-disable-next-line react/forbid-component-props, no-ternary -- DataGrid accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
       columns={columns}
       defaultColumnOptions={{
@@ -161,6 +162,7 @@ const PureSpreadsheetEditor = ({
           args.selectCell(true);
         }
       }}
+      // oxlint-disable-next-line no-ternary -- Keep onRowsChange JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       onRowsChange={isReadonly === true ? undefined : handleRowsChange}
       rows={localRows}
       // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts style in its styling contract; preserve this caller's layout and appearance.

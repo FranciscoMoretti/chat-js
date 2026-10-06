@@ -53,13 +53,14 @@ const LegacyMessageActionsReference = ({
     <MessageActions
       // oxlint-disable-next-line react/forbid-component-props -- MessageActions accepts className in its styling contract; preserve this caller's layout and appearance.
       className={
+        // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         showActionsWithoutHover
           ? ""
           : "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover/message:opacity-100 focus-within:opacity-100 hover:opacity-100"
       }
     >
       {!isReadonly &&
-        (isEditing ? (
+        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (isEditing /* oxlint-enable no-ternary */ ? (
           <MessageAction
             // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-muted-foreground hover:bg-accent hover:text-accent-foreground h-7 w-7 p-0"
@@ -129,6 +130,7 @@ const LegacyUserMessageReference = ({
     <Message
       // oxlint-disable-next-line react/forbid-component-props -- Message accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
+        // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         mode === "edit" ? "max-w-full [&>div]:max-w-full" : undefined,
         "py-1"
       )}

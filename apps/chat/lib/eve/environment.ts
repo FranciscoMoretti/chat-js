@@ -56,7 +56,7 @@ const resolveEveEnvironment = (
   EVE_INTERNAL_ORIGIN:
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty environment string is unset here; preserve the ordered fallback and evaluate each selected source only at its original access.
     source.EVE_INTERNAL_ORIGIN ||
-    // oxlint-disable-next-line typescript/strict-boolean-expressions -- A missing or empty deployment hostname falls back to the app/test/local origin.
+    // oxlint-disable-next-line typescript/strict-boolean-expressions, no-ternary -- A missing or empty deployment hostname falls back to the app/test/local origin.; no-ternary: Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (source.VERCEL_URL
       ? `https://${source.VERCEL_URL}`
       : // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty environment string is unset here; preserve the ordered fallback and evaluate each selected source only at its original access.

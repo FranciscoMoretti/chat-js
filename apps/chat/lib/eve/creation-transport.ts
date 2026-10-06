@@ -6,6 +6,7 @@ class EveCreationTransportError extends Error {
   public readonly status?: number;
   public constructor(stage: "lookup" | "dispatch", status?: number) {
     super(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Native creation ${stage} failed${status ? ` (HTTP ${status})` : " before receiving a response"}.`
     );
     this.name = "EveCreationTransportError";

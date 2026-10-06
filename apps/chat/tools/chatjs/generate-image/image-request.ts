@@ -67,6 +67,7 @@ const createImageRequest = (
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const selected = context.session.auth.current?.attributes.modelId;
   const selectedModel =
+    // oxlint-disable-next-line no-ternary -- Keep selectedModel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof selected === "string" ? selected : ABSENT_DIAGNOSTIC_VALUE;
   const { attachments, lastGeneratedImage } = eveToolImageContext.get();
   const startMs = Date.now();
@@ -82,6 +83,7 @@ const createImageRequest = (
       imageParts,
       lastGeneratedImage,
       mode:
+        // oxlint-disable-next-line no-ternary -- Keep mode as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         imageParts.length > NO_IMAGE_ATTACHMENTS || lastGeneratedImage !== null
           ? "edit"
           : "generate",

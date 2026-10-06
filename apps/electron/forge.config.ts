@@ -102,10 +102,12 @@ const loadBranding = (): Branding => {
     appPrefix: branding.appPrefix,
     appUrl: branding.appUrl,
     orgEmail:
+      // oxlint-disable-next-line no-ternary -- Keep orgEmail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgEmail" in branding && typeof branding.orgEmail === "string"
         ? branding.orgEmail
         : undefined,
     orgName:
+      // oxlint-disable-next-line no-ternary -- Keep orgName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgName" in branding && typeof branding.orgName === "string"
         ? branding.orgName
         : undefined,
@@ -160,6 +162,7 @@ const createForgeConfig = (): ForgeConfig => {
             homepage: branding.appUrl,
             icon: "./build/icon.png",
             maintainer:
+              // oxlint-disable-next-line no-ternary -- Keep maintainer as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               typeof orgName === "string" &&
               orgName !== "" &&
               typeof orgEmail === "string" &&

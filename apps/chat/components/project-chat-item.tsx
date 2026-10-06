@@ -53,6 +53,7 @@ export const ProjectChatItem = ({
     await onRename(chat.id, title);
   };
   /* oxlint-enable oxc/no-async-await */
+  // oxlint-disable-next-line no-ternary -- Keep lastMessageText as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const lastMessageText = chat.updatedAt
     ? formatDistance(new Date(chat.updatedAt), new Date(), {
         addSuffix: true,

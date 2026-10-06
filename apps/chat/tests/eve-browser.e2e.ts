@@ -193,6 +193,7 @@ for (const decision of ["Approve", "Cancel"]) {
     ).toBeVisible();
     await expect(
       page.getByText(
+        // oxlint-disable-next-line no-ternary -- Keep page.getByText argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         decision === "Approve" ? "Tool completed." : "Request declined.",
         { exact: true }
       )

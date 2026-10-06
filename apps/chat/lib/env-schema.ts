@@ -104,6 +104,7 @@ const getEveRuntimeEnvOptions = (
       "Optional application gateway origin serving /eve/chat/v1; defaults to the current deployment or local app"
     ),
   WORKFLOW_POSTGRES_URL:
+    // oxlint-disable-next-line no-ternary -- Keep WORKFLOW_POSTGRES_URL as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     resolveWorkflowWorld(environment) === "vercel"
       ? z
           .string()

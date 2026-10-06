@@ -576,6 +576,7 @@ test("invalid native seeds or document boundaries never reserve resources", asyn
         title: "Invalid seed",
       })
     ).rejects.toThrow(
+      // oxlint-disable-next-line no-ternary -- Keep expect( reserveEveCopyOperation(ownerId, { modelId: "go as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       seed.messages.length > 0 ? invalidSeedError : invalidBoundaryError
     );
     expect(await getEveCopyOperation(ownerId, operationId)).toBeUndefined();

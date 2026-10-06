@@ -7,7 +7,7 @@ import type { ModelData } from "./model-data";
 export const toModelData = (model: AiGatewayModel): ModelData => {
   const tags = model.tags ?? [];
   // A missing positive tag does not establish that a language model rejects tools.
-  // oxlint-disable-next-line no-undefined -- Missing tool-use metadata means unknown support; ModelData distinguishes this from false for nonlanguage models.
+  // oxlint-disable-next-line no-undefined, no-ternary -- Missing tool-use metadata means unknown support; ModelData distinguishes this from false for nonlanguage models.; no-ternary: Keep toolCall as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const toolCall = tags.includes("tool-use") ? true : undefined;
 
   return {
@@ -34,6 +34,7 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     pricing: model.pricing,
     reasoning: tags.includes("reasoning"),
     tags: model.tags,
+    // oxlint-disable-next-line no-ternary -- Keep toolCall as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     toolCall: model.type === "language" ? toolCall : false,
     type: model.type,
   };

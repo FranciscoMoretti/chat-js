@@ -10,7 +10,7 @@ import { resolveEveEnvironment } from "./eve/environment";
 const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
-    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-rest-spread-properties -- #572: This tests for a browser window; globalThis also exists during server rendering. Rest/spread: Conditional spread (typeof window === "undefined"       ? resolveEveEnvironment(process.env)       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-rest-spread-properties, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering. Rest/spread: Conditional spread (typeof window === "undefined"       ? resolveEveEnvironment(process.env)       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(typeof window === "undefined"
       ? resolveEveEnvironment(process.env)
       : {}),

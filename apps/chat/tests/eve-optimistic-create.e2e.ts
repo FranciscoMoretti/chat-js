@@ -16,6 +16,7 @@ const projectPath = /\/project\/[a-f\d-]+$/u;
  */
 for (const project of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
     page,
   }, testInfo) => {
@@ -175,6 +176,7 @@ for (const identity of ["registered", "guest"]) {
     await page.route("https://unpkg.com/react-scan/**", (route) =>
       route.abort()
     );
+    // oxlint-disable-next-line no-ternary -- Keep page.goto argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
       waitUntil: "domcontentloaded",
     });

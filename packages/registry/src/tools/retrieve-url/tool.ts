@@ -21,6 +21,7 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
 const log = createModuleLogger("tools/retrieve-url");
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+// oxlint-disable-next-line no-ternary -- Keep app as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
 const app = hasNonEmptyValue(env.FIRECRAWL_API_KEY)
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
@@ -144,6 +145,7 @@ Avoid:
         log.error(
           {
             err: error,
+            // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             url: parsedUrl ? redactUrl(parsedUrl) : "<invalid-url>",
           },
           "Firecrawl API error in retrieveUrl tool"

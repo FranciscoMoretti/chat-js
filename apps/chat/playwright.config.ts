@@ -106,6 +106,7 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Retry on CI only */
+  // oxlint-disable-next-line no-ternary -- Keep retries as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   retries: process.env.CI ? 2 : 1,
   testDir: "./tests",
   /* Configure global timeout for each test */
@@ -125,6 +126,7 @@ export default defineConfig({
     url: baseURL,
   },
   /* Opt out of parallel tests on CI. */
+  // oxlint-disable-next-line no-ternary -- Keep workers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   workers: process.env.CI ? 1 : undefined,
 });
 /* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions */

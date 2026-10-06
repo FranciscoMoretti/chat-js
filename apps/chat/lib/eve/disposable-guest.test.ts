@@ -38,11 +38,13 @@ const claims = () => ({
  */
 const request = (token: string, path: string, body?: unknown) =>
   new Request(`https://chat.example/eve/v1/${path}`, {
+    // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     body: body === undefined ? undefined : JSON.stringify(body),
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
+    // oxlint-disable-next-line no-ternary -- Keep method as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     method: body === undefined ? "GET" : "POST",
   });
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */

@@ -140,6 +140,7 @@ void (async () => {
         error.message.startsWith("Usage:") ||
         error.message.startsWith("EVE schema"));
     console.error(
+      // oxlint-disable-next-line no-ternary -- Keep console.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       safe
         ? error.message
         : "EVE setup/check failed. Check WORKFLOW_POSTGRES_URL, database permissions, TLS, and connectivity."

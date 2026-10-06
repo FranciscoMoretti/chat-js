@@ -131,7 +131,7 @@ const sharedTool = (
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         output: part.output,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(part.outputType ? { outputType: part.outputType } : {}),
         partial: part.partial,
         state: part.state,
@@ -219,13 +219,14 @@ const sharedEveMessages = (
   return state.messages.map((message): SharedEveMessage => {
     const modelId = sharedModelId(message, models);
     const selectedTool =
+      // oxlint-disable-next-line no-ternary -- Keep selectedTool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       message.role === "user" ? (eveMessageTool(message) ?? "") : "";
     return {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool === ""         ? {}         : { metadata: { custom: eveToolMetadata(selectedTool) } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool === ""         ? {}         : { metadata: { custom: eveToolMetadata(selectedTool) } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(selectedTool === ""
         ? {}
         : { metadata: { custom: eveToolMetadata(selectedTool) } }),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (modelId === "" ? {} : { metadata: { modelId } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (modelId === "" ? {} : { metadata: { modelId } }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(modelId === "" ? {} : { metadata: { modelId } }),
       id: message.id,
       parts: message.parts.flatMap(sharedEvePart),

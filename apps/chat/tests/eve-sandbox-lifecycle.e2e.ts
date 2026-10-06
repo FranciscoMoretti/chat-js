@@ -62,6 +62,7 @@ for (const language of ["javascript", "python"] as const) {
       sessionId: crypto.randomUUID(),
     });
     const sandbox = await createSandbox(
+      // oxlint-disable-next-line no-ternary -- Keep createSandbox argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       language === "javascript" ? "node22" : "python3.13",
       AbortSignal.timeout(30_000),
       name,
@@ -73,12 +74,14 @@ for (const language of ["javascript", "python"] as const) {
       expect(sandbox.persistent).toBe(false);
       expect(sandbox.name).toBe(name);
       const context = {
+        // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         code: language === "javascript" ? "console.log(6 * 7)" : "print(6 * 7)",
         log,
         requestId,
         sandbox,
       };
       const result =
+        // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         language === "javascript"
           ? await executeJavaScriptInSandbox(context)
           : await executePythonInSandbox(context);

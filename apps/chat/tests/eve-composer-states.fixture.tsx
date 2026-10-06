@@ -66,13 +66,16 @@ const Fixture = (): React.JSX.Element => {
         <section aria-label={name} key={name}>
           <h2>{name}</h2>
           <EveThinkingMessage
+            // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             status={name === "Resuming" ? "resuming" : (status ?? "ready")}
+            // oxlint-disable-next-line no-ternary -- Keep messages JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
           />
           <ControlledChatComposer
             disabled={status !== "ready"}
             draft=""
             onDraftChange={() => setStopped("draft changed")}
+            // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onStop={cancellable ? () => setStopped(name) : undefined}
             onSubmit={() => setStopped("unexpected submission")}
             status={status}

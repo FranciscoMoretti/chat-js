@@ -362,6 +362,7 @@ for (const attachment of [
           {
             type: "text",
             text:
+              // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               attachment.mediaType === "application/pdf"
                 ? "Do not read or transcribe this PDF yet. Save it for my next question. For now respond with only: attachment-ready"
                 : "Reply exactly attachment-ready as plain text. Do not describe the attachment or call tools.",

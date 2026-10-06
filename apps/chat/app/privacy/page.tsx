@@ -10,11 +10,14 @@ import { config } from "@/lib/config";
 const PrivacyPage = (): React.JSX.Element => (
   <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
     <h1>{config.policies.privacy.title}</h1>
-    {config.policies.privacy.lastUpdated ? (
-      <p>
-        <strong>Last updated:</strong> {config.policies.privacy.lastUpdated}
-      </p>
-    ) : null}
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      config.policies.privacy.lastUpdated ? (
+        <p>
+          <strong>Last updated:</strong> {config.policies.privacy.lastUpdated}
+        </p>
+      ) : null
+    }
 
     <p>
       At {config.organization.name}, we respect your privacy and are committed

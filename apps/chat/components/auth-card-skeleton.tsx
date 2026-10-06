@@ -29,7 +29,7 @@ export const AuthCardSkeleton = ({
   variant = "form",
 }: AuthCardSkeletonProps): React.JSX.Element => (
   <div className={cn("flex w-full flex-col gap-6", className)}>
-    <Card
+    <Card /* oxlint-disable no-ternary -- Keep device/form authentication skeletons as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
       // oxlint-disable-next-line react/forbid-component-props -- Card accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cardClassName}
     >
@@ -73,7 +73,7 @@ export const AuthCardSkeleton = ({
               />
             </>
           )}
-        </div>
+        </div /* oxlint-enable no-ternary */>
       </CardContent>
     </Card>
   </div>

@@ -55,10 +55,12 @@ test("plans transitive dependencies and repairs against the complete resulting i
   const server = Bun.serve({
     fetch(request): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
+      // oxlint-disable-next-line no-ternary -- Keep definition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const definition = isReader ? reader : documents;
       return Response.json({
         meta: { chatjs: definition },
         name: definition.id,
+        // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         registryDependencies: isReader
           ? []
           : [`http://127.0.0.1:${server.port}/read-document.json`],
@@ -138,6 +140,7 @@ test("validates feature dependencies and exclusive storage slots before writing"
     fetch(request): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
+        // oxlint-disable-next-line no-ternary -- Keep chatjs as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         name === "langfuse"
           ? {
               contractVersion: 1,
@@ -148,12 +151,14 @@ test("validates feature dependencies and exclusive storage slots before writing"
           : {
               contractVersion: 1,
               id: name,
+              // oxlint-disable-next-line no-ternary -- Keep kind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               kind: name === "mcp" ? "feature" : "storage",
             };
       return Response.json({
         meta: { chatjs },
         name,
         registryDependencies:
+          // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           name === "first"
             ? [`http://127.0.0.1:${server.port}/second.json`]
             : [],

@@ -79,7 +79,12 @@ export const GetStarted = (): React.JSX.Element => {
                     // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
                     className="h-4 w-4"
                   />
-                  <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
+                  <span className="text-xs">
+                    {
+                      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                      copied ? "Copied" : "Copy"
+                    }
+                  </span>
                 </span>
               </button>
             </div>

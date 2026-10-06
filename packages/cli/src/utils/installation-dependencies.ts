@@ -158,6 +158,7 @@ export const prepareDependencyUpdate = async (
       .object({ id: z.string(), kind: z.string() })
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       .safeParse(item.meta?.chatjs);
+    // oxlint-disable-next-line no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const key = descriptor.success
       ? `${descriptor.data.kind}:${descriptor.data.id}`
       : `item:${item.name}`;
@@ -186,7 +187,7 @@ export const prepareDependencyUpdate = async (
     }
     for (const [name, installedVersion] of Object.entries(receipt.owned)) {
       const group =
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading name from manifest.dependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof manifest.dependencies?.[name] === "string"
           ? manifest.dependencies
           : manifest.devDependencies;

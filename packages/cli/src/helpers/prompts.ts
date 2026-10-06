@@ -322,6 +322,7 @@ const promptStorage = async (
     options = input;
   }
   selection.options =
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options === globalThis.undefined ? {} : parseStorageOptions(options);
   // Only the actual built-in address uses SDK-derived option/credential rules.
   // An external item may use the same id with its own contract.
@@ -378,6 +379,7 @@ const promptCoreFeatures = async (
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: availableFeatures.map((key) => ({
       hint:
+        // oxlint-disable-next-line no-ternary -- Keep hint as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         key === "documents"
           ? "Create, edit, and review documents in chat"
           : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from coreFeatureEnvRequirements[key as keyof typeof coreFeatureEnvRequirements]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.

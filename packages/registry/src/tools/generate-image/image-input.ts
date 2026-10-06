@@ -47,6 +47,7 @@ const collectEditImages = async ({
   lastGeneratedImage: Readonly<{ imageUrl: string }> | null;
 }>): Promise<Buffer[]> =>
   await Promise.all([
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(lastGeneratedImage
       ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
       : []),

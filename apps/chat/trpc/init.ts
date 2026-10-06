@@ -70,6 +70,7 @@ const trpc = initTRPC.context<typeof createTRPCContext>().create({
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing shape.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...shape.data,
         zodError:
+          // oxlint-disable-next-line no-ternary -- Keep zodError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           error.cause instanceof ZodError ? flattenError(error.cause) : null,
       },
     };

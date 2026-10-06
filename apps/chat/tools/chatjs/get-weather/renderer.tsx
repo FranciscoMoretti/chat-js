@@ -208,12 +208,14 @@ const WeatherCard = ({
   });
 
   const isMobile = useIsMobile();
+  // oxlint-disable-next-line no-ternary -- Keep hoursToShow as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hoursToShow = isMobile ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
     (time): boolean =>
       new Date(time) >= new Date(weatherAtLocation.current.time)
   );
   const displayStartIndex =
+    // oxlint-disable-next-line no-ternary -- Keep displayStartIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     currentTimeIndex === -1
       ? Math.max(0, weatherAtLocation.hourly.time.length - hoursToShow)
       : currentTimeIndex;

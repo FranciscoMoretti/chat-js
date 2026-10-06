@@ -219,7 +219,10 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
           <section
             key={JSON.stringify(chart)}
             data-testid={`output-${index}`}
-            style={index < malformed.length ? { display: "none" } : undefined}
+            style={
+              // oxlint-disable-next-line no-ternary -- Keep style JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              index < malformed.length ? { display: "none" } : undefined
+            }
           >
             <CodeExecution
               isReadonly

@@ -42,6 +42,7 @@ const DeviceAuthScreen = ({
 
   if (isLoading) {
     title =
+      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       state === "checking-session"
         ? "Checking your session..."
         : "Opening the desktop app...";
@@ -56,19 +57,22 @@ const DeviceAuthScreen = ({
             className="text-center"
           >
             <div className="mb-2 flex justify-center">
-              {isLoading ? (
-                <LoaderCircle
-                  // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="text-muted-foreground size-8 animate-spin"
-                />
-              ) : (
-                <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
-                  <CheckCircle2
-                    // oxlint-disable-next-line react/forbid-component-props -- CheckCircle2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="size-7"
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                isLoading ? (
+                  <LoaderCircle
+                    // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="text-muted-foreground size-8 animate-spin"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="bg-foreground text-background inline-flex h-14 w-14 items-center justify-center rounded-2xl">
+                    <CheckCircle2
+                      // oxlint-disable-next-line react/forbid-component-props -- CheckCircle2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="size-7"
+                    />
+                  </div>
+                )
+              }
             </div>
             <CardTitle
               // oxlint-disable-next-line react/forbid-component-props -- CardTitle accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -135,6 +139,7 @@ export const DeviceLoginPage = (): ReactJSX.Element => {
     searchParams.get(DEVICE_LOGIN_COMPLETED_PARAM) === "1";
   const shouldWaitForApp = isCompletedView || !isElectronTransferQuery(query);
   const displayState =
+    // oxlint-disable-next-line no-ternary -- Keep displayState as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     shouldWaitForApp && state === "checking-session"
       ? "waiting-for-app"
       : state;

@@ -207,6 +207,7 @@ test.each([
   const before = await taskHash("demo:check");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
+  // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";
@@ -288,6 +289,7 @@ test.each([
   const before = await taskHash("test:types");
   const target = path.join(fixture, file);
   await mkdir(path.dirname(target), { recursive: true });
+  // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const previous = (await Bun.file(target).exists())
     ? await readFile(target, "utf-8")
     : "";

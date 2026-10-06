@@ -156,24 +156,27 @@ export const McpConnectDialog = ({
         >
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="bg-muted flex size-10 shrink-0 items-center justify-center rounded-md">
-              {faviconUrl ? (
-                <>
-                  <Favicon
-                    // oxlint-disable-next-line react/forbid-component-props -- Favicon accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="size-5 rounded-sm"
-                    url={faviconUrl}
-                  />
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                faviconUrl ? (
+                  <>
+                    <Favicon
+                      // oxlint-disable-next-line react/forbid-component-props -- Favicon accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="size-5 rounded-sm"
+                      url={faviconUrl}
+                    />
+                    <Globe
+                      // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="text-muted-foreground hidden size-5"
+                    />
+                  </>
+                ) : (
                   <Globe
                     // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="text-muted-foreground hidden size-5"
+                    className="text-muted-foreground size-5"
                   />
-                </>
-              ) : (
-                <Globe
-                  // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="text-muted-foreground size-5"
-                />
-              )}
+                )
+              }
             </div>
             <div className="min-w-0 flex-1 overflow-hidden">
               <DialogTitle /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from connector; preserve one receiver evaluation, skipped accesses and the existing "connector" fallback. */
@@ -186,7 +189,10 @@ export const McpConnectDialog = ({
                 // oxlint-disable-next-line react/forbid-component-props -- DialogDescription accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="truncate"
               >
-                {connector?.url ? getUrlWithoutParams(connector.url) : null}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  connector?.url ? getUrlWithoutParams(connector.url) : null
+                }
               </DialogDescription /* oxlint-enable oxc/no-optional-chaining */>
             </div>
           </div>
@@ -255,23 +261,26 @@ export const McpConnectDialog = ({
             disabled={isPending || isRedirecting || !connector}
             onClick={handleContinue}
           >
-            {isPending || isRedirecting ? (
-              <>
-                <Loader2
-                  // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-4 animate-spin"
-                />
-                Redirecting...
-              </>
-            ) : (
-              <>
-                Continue to {connector?.name ?? "connector"}
-                <ExternalLink
-                  // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-4"
-                />
-              </>
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isPending || isRedirecting ? (
+                <>
+                  <Loader2
+                    // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-4 animate-spin"
+                  />
+                  Redirecting...
+                </>
+              ) : (
+                <>
+                  Continue to {connector?.name ?? "connector"}
+                  <ExternalLink
+                    // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-4"
+                  />
+                </>
+              )
+            }
           </Button /* oxlint-enable oxc/no-optional-chaining */>
           <Button
             // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.

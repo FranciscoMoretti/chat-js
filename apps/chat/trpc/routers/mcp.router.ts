@@ -92,6 +92,7 @@ const validateAndGenerateNameId = async ({
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
+        // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         result.error === "empty"
           ? "Connector name must contain at least one alphanumeric character"
           : 'Connector name cannot be "global" (reserved)',
@@ -147,6 +148,7 @@ const getConnectorWithPermission = async ({
   const isOwner = connector.userId === userId;
   const isGlobal = connector.userId === null;
 
+  // oxlint-disable-next-line no-ternary -- Keep hasPermission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hasPermission = permission === "own" ? isOwner : isOwner || isGlobal;
 
   if (!hasPermission) {
@@ -415,6 +417,7 @@ export const mcpRouter = createTRPCRouter({
                 .then((tools) =>
                   Object.entries(tools).map(([name, tool]) => ({
                     description:
+                      // oxlint-disable-next-line no-ternary -- Keep description as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       typeof tool.description === "string"
                         ? tool.description
                         : null,

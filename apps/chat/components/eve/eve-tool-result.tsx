@@ -22,6 +22,7 @@ export const EveToolResult = ({
     return null;
   }
   const platformOutput =
+    // oxlint-disable-next-line no-ternary -- Keep platformOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     part.state === "output-available"
       ? toolOutputSchema.safeParse(part.output)
       : null;
@@ -39,7 +40,7 @@ export const EveToolResult = ({
       },
     });
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from platformOutput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading success from platformOutput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep tool as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const tool = platformOutput?.success
     ? {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing part own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.

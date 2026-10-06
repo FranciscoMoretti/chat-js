@@ -29,6 +29,7 @@ export const shouldRestartAfterReadinessFailures = (
   );
   return (
     consecutiveFailures >= MIN_READINESS_FAILURES &&
+    // oxlint-disable-next-line no-ternary -- Keep >= operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };

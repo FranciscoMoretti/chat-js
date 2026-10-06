@@ -26,10 +26,12 @@ export const DeepResearchRenderer = defineToolRenderer({
   inputSchema: researchInput,
   outputSchema: researchOutput,
   render: ({ tool, messageId, isReadonly }) => {
+    // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const result = tool.state === "output-available" ? tool.output : undefined;
     let content = <output>Researching…</output>;
     if (result && "format" in result) {
       content =
+        // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         result.format === "clarifying_questions" ? (
           <p>{result.answer}</p>
         ) : (

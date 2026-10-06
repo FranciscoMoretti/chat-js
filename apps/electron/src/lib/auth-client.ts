@@ -45,6 +45,7 @@ const memoryStorage = () => {
 
 /* oxlint-disable node/no-process-env -- electronAuthStorage: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const electronAuthStorage =
+  // oxlint-disable-next-line no-ternary -- Keep electronAuthStorage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   process.env.NODE_ENV === "production" ? storage() : memoryStorage();
 /* oxlint-enable node/no-process-env */
 

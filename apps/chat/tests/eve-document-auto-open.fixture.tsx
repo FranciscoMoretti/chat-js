@@ -172,7 +172,10 @@ const Fixture = ({
           Open existing
         </button>
       </div>
-      <p>Mode: {readOnly ? "readonly" : "owner"}</p>
+      <p /* oxlint-disable no-ternary -- Keep the read-only/owner fixture caption as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
+      >
+        Mode: {readOnly ? "readonly" : "owner"}
+      </p /* oxlint-enable no-ternary */>
       <EveDocumentTool isReadonly={readOnly} messageId="message" part={part} />
     </main>
   );
@@ -198,6 +201,7 @@ const App = (): React.JSX.Element => {
         logicalChatId="logical-chat"
         replaying={replaying}
         isExecutionBusy={
+          // oxlint-disable-next-line no-ternary -- Keep isExecutionBusy JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           busy === undefined ? undefined : (id) => busy && id === conversationId
         }
         onStopExecution={(id) => {

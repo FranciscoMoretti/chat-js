@@ -103,6 +103,7 @@ const AttachmentPill = ({
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
+  // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
 
   return (
@@ -120,19 +121,22 @@ const AttachmentPill = ({
             onRemove && !isUploading && "group-hover:opacity-0"
           )}
         >
-          {isUploading ? (
-            <Loader2Icon
-              className="text-muted-foreground size-3 animate-spin"
-              data-testid="input-attachment-loader"
-            />
-          ) : (
-            <AttachmentIcon
-              isImage={isImage}
-              isPdf={isPdf}
-              name={name}
-              url={url}
-            />
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            isUploading ? (
+              <Loader2Icon
+                className="text-muted-foreground size-3 animate-spin"
+                data-testid="input-attachment-loader"
+              />
+            ) : (
+              <AttachmentIcon
+                isImage={isImage}
+                isPdf={isPdf}
+                name={name}
+                url={url}
+              />
+            )
+          }
         </div>
         {onRemove && !isUploading && (
           <Button
@@ -177,9 +181,11 @@ const AttachmentItem = ({
   const { name, url, contentType } = attachment;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isImage = Boolean(contentType?.startsWith("image/") && url);
+  // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const attachmentLabel = name || (isImage ? "Image" : "Attachment");
 
   const preview =
+    // oxlint-disable-next-line no-ternary -- Keep preview as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     variant === "pill" ? (
       <AttachmentPill
         attachment={attachment}
@@ -317,6 +323,7 @@ const AttachmentList = ({
           key={attachment.url}
           onImageClick={onImageClick}
           onRemove={
+            // oxlint-disable-next-line no-ternary -- Keep onRemove JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onRemoveAction ? () => onRemoveAction(attachment) : undefined
           }
           variant={variant}

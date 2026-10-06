@@ -31,7 +31,7 @@ export const UserMessageView = ({
   messageId?: string;
 }): React.JSX.Element => (
   <Message
-    // oxlint-disable-next-line react/forbid-component-props -- Message accepts className in its styling contract; preserve this caller's layout and appearance.
+    // oxlint-disable-next-line react/forbid-component-props, no-ternary -- Message accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     className={cn(editor ? "max-w-full [&>div]:max-w-full" : undefined, "py-1")}
     data-message-id={messageId}
     from="user"
@@ -39,7 +39,7 @@ export const UserMessageView = ({
     <div className={cn("flex w-full flex-col gap-2", !editor && "items-end")}>
       {!editor && responses}
       {!editor &&
-        (onEdit ? (
+        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (onEdit /* oxlint-enable no-ternary */ ? (
           <button
             aria-disabled={editDisabled}
             className="block cursor-pointer text-left transition-opacity select-text hover:opacity-80"

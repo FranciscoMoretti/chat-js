@@ -11,6 +11,7 @@ class CheckpointRejectedError extends Error {
 
   public constructor(reason: z.infer<typeof checkpointRejectionReason>) {
     super(
+      // oxlint-disable-next-line no-ternary -- Keep super argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       reason === "source_not_idle"
         ? "The conversation was still running when the comparison was requested. Your draft is saved. Wait for it to finish, then send again."
         : "The conversation changed before the comparison could start. Your draft is saved. Review the latest response, then send again."

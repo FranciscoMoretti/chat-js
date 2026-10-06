@@ -33,23 +33,26 @@ export const CloneChatButtonView = ({
       type="button"
       variant="default"
     >
-      {isPending ? (
-        <>
-          <Loader2
-            // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="mr-2 h-4 w-4 animate-spin"
-          />
-          Saving...
-        </>
-      ) : (
-        <>
-          <Copy
-            // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="mr-2 h-4 w-4"
-          />
-          {label}
-        </>
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        isPending ? (
+          <>
+            <Loader2
+              // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="mr-2 h-4 w-4 animate-spin"
+            />
+            Saving...
+          </>
+        ) : (
+          <>
+            <Copy
+              // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="mr-2 h-4 w-4"
+            />
+            {label}
+          </>
+        )
+      }
     </Button>
   </div>
 );

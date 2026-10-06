@@ -145,6 +145,7 @@ for (let mask = 0; mask < 2 ** observabilityItems.length; mask += 1) {
       )
     );
     for (const item of observabilityItems) {
+      // oxlint-disable-next-line no-ternary -- Keep output as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const output = item.name === "langfuse" ? instrumentation : layout;
       expect(output.includes(`@/features/${item.name}/`)).toBe(
         selected.includes(item)
@@ -221,6 +222,7 @@ for (const item of observabilityItems) {
       for (const dependency of item.dependencies) {
         const versionSeparator = dependency.lastIndexOf("@");
         const name =
+          // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           versionSeparator > 0
             ? dependency.slice(0, versionSeparator)
             : dependency;

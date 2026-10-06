@@ -985,6 +985,7 @@ test("history beyond 1000 revisions remains readable and forkable without loadin
       kind: input.kind,
       operationId: id,
       ownerId: owner,
+      // oxlint-disable-next-line no-ternary -- Keep parentRevisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       parentRevisionId: index === 0 ? first.id : ids[index - 1],
       title: "Long history",
       turnIndex: index + 1,
@@ -1321,6 +1322,7 @@ test.each([false, true])(
       revisionId: original.id,
     });
     await captureEveDocumentCheckpoint(owner, root.id, 1);
+    // oxlint-disable-next-line no-ternary -- Keep checkpointId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const checkpointId = named ? crypto.randomUUID() : undefined;
     if (checkpointId) {
       await captureEveNamedDocumentCheckpoint(owner, root.id, checkpointId, 1);
@@ -1424,11 +1426,13 @@ test("imported forks restore the selected document boundary and exclude the late
       .select({ revisionId: eveDocumentHead.revisionId })
       .from(eveDocumentHead)
       .where(eq(eveDocumentHead.conversationId, child.id));
+    // oxlint-disable-next-line no-ternary -- Keep expect(heads).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     expect(heads).toEqual(index === 2 ? [{ revisionId: original.id }] : []);
     const headers = await db
       .select({ messageIndex: eveImportedDocumentCheckpoint.messageIndex })
       .from(eveImportedDocumentCheckpoint)
       .where(eq(eveImportedDocumentCheckpoint.conversationId, child.id));
+    // oxlint-disable-next-line no-ternary -- Keep expect(headers).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     expect(headers).toEqual(index === 2 ? [{ messageIndex: 0 }] : []);
   }
 });

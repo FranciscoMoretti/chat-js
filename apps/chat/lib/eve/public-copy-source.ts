@@ -15,13 +15,20 @@ import { assertEveConfigured } from "./server";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopySource's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
+/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): readPublicEveCopySource uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep readPublicEveCopySource's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readPublicEveCopySource's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): readPublicEveCopySource intentionally keeps the existing falsy-value behavior of row?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-export const readPublicEveCopySource = async (id: string) => {
+export const readPublicEveCopySource = async (
+  id: string
+): Promise<{
+  boundaries: ReturnType<typeof eveCopyBoundaries>;
+  id: string;
+  ownerId: string;
+  projection: ReturnType<typeof prepareEveCopyTranscript>;
+  sessionId: string;
+  title: string;
+}> => {
   const row = await getPublicEveConversation(id);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!row?.sessionId) {
@@ -48,4 +55,4 @@ export const readPublicEveCopySource = async (id: string) => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */

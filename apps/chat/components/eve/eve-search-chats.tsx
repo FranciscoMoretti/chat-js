@@ -63,6 +63,7 @@ const SearchResults = ({
     )
   );
   const isSearch = Boolean(query.trim());
+  // oxlint-disable-next-line no-ternary -- Keep active as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const active = isSearch ? results : history;
   const changingQuery = query.trim() !== search;
   const waiting =
@@ -84,7 +85,9 @@ const SearchResults = ({
       })) ?? [];
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from results.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   const matchedItems = results.data?.pages.flatMap((page) => page.items) ?? [];
+  // oxlint-disable-next-line no-ternary -- Keep currentItems as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const currentItems = isSearch ? matchedItems : recentItems;
+  // oxlint-disable-next-line no-ternary -- Keep items as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const items = waiting || failed ? [] : currentItems;
   const seen = new Set<string>();
   const distinct = items.filter((item) => {

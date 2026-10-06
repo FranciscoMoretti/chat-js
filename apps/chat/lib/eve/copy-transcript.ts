@@ -109,7 +109,7 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
         ...base,
         state: part.state,
         output: z.json().parse(part.output),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(part.outputType ? { outputType: part.outputType } : {}),
       };
     }
@@ -152,6 +152,7 @@ const visitStrings = (
     if (typeof item === "string") {
       const replacement = rewrite(
         item,
+        // oxlint-disable-next-line no-ternary -- Keep rewrite argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         Array.isArray(value) ? parentField : key
       );
       if (mutate) {
@@ -302,7 +303,7 @@ const prepareEveCopyTranscript = (
         const selectedTool = eveMessageTool(message);
         return {
           role: "user",
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+          // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
           parts: message.parts.map((part) => {
             if (part.type === "text") {
@@ -323,7 +324,7 @@ const prepareEveCopyTranscript = (
       }
       return {
         role: "assistant",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining, no-ternary -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(message.metadata?.modelId
           ? { modelId: message.metadata.modelId }
           : {}),
@@ -568,9 +569,11 @@ const copyAttachmentResolver = (
       }
     >
   ): Promise<void> => {
+    // oxlint-disable-next-line no-ternary -- Keep inline as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const inline = part.url.startsWith("data:")
       ? decodeInlineAttachment(part)
       : undefined;
+    // oxlint-disable-next-line no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const key = inline
       ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from allocations.inlineFiles; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         allocations.inlineFiles?.get(inline.id)

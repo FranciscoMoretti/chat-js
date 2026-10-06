@@ -90,6 +90,7 @@ const readDirectives = (
       const end = scanner.getTokenEnd();
       const comment = source.slice(
         start + TWO,
+        // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         end - (token === ts.SyntaxKind.MultiLineCommentTrivia ? TWO : ZERO)
       );
       const match =
@@ -106,12 +107,14 @@ const readDirectives = (
           kind,
           line: source.slice(ZERO, start).split("\n").length,
           reason:
+            // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             separator === -ONE
               ? ""
               : body
                   .slice(separator + TWO)
                   .replaceAll(/^\s*\*\s?/gmu, "")
                   .trim(),
+          // oxlint-disable-next-line no-ternary -- Keep trim receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           rules: (separator === -ONE ? body : body.slice(ZERO, separator))
             .trim()
             .split(/[\s,]+/u)
@@ -181,6 +184,7 @@ const functionScope = (
   const visit = (node: ts.Node): void => {
     if (ts.isFunctionLike(node) && "body" in node && node.body) {
       const declaration =
+        // oxlint-disable-next-line no-ternary -- Keep declaration as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ts.isVariableDeclaration(node.parent) &&
         ts.isVariableDeclarationList(node.parent.parent)
           ? node.parent.parent.parent
@@ -221,15 +225,19 @@ const lineScope = (
   directive: CommentDirective
 ): SourceScope => {
   const start =
+    // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     directive.kind === "disable-next-line"
       ? source.indexOf("\n", directive.end) + ONE
       : source.lastIndexOf("\n", directive.start) + ONE;
   const finalLineStart =
+    // oxlint-disable-next-line no-ternary -- Keep finalLineStart as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     directive.kind === "disable-next-line" ? start : directive.end;
   const newline = source.indexOf("\n", finalLineStart);
   return {
+    // oxlint-disable-next-line no-ternary -- Keep end as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     end: newline < ZERO ? source.length : newline,
     start:
+      // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       start === ZERO && directive.kind === "disable-next-line"
         ? source.length
         : start,
@@ -280,6 +288,7 @@ const readExceptions = (
             (candidate.rules.length === ZERO || candidate.rules.includes(rule))
         );
         const physicalScope =
+          // oxlint-disable-next-line no-ternary -- Keep physicalScope as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           directive.kind === "disable"
             ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading start from enable; preserve one receiver evaluation, skipped accesses and the existing source.length fallback.
               { end: enable?.start ?? source.length, start: directive.end }
@@ -303,6 +312,7 @@ const readExceptions = (
                 scope,
                 directive.kind !== "disable" && scope === physicalScope
               ),
+              // oxlint-disable-next-line no-ternary -- Keep ArrayLiteralExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               directive.kind === "disable" ? Boolean(enable) : "line",
             ])
           )

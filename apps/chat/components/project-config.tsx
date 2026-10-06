@@ -64,15 +64,18 @@ export const ProjectConfig = ({
         type="button"
         variant="outline"
       >
-        {hasInstructions ? (
-          <span aria-hidden="true" className="text-sm leading-none">
-            ✓
-          </span>
-        ) : (
-          <span aria-hidden="true" className="text-base leading-none">
-            +
-          </span>
-        )}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          hasInstructions ? (
+            <span aria-hidden="true" className="text-sm leading-none">
+              ✓
+            </span>
+          ) : (
+            <span aria-hidden="true" className="text-base leading-none">
+              +
+            </span>
+          )
+        }
         Instructions
       </Button>
     </div>

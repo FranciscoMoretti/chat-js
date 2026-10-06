@@ -83,6 +83,7 @@ const parseSessionRequest = (
   }
   return {
     sessionId,
+    // oxlint-disable-next-line no-ternary -- Keep schema as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     schema: action === "cancel" ? cancel : z.union([message, respond]),
   };
 };

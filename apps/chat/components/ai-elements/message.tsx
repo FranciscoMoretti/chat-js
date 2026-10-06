@@ -68,6 +68,7 @@ const Message = ({
   <div
     className={cn(
       "group flex w-full max-w-[80%] gap-2",
+      // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
       className
     )}
@@ -227,12 +228,14 @@ const MessageBranch = ({
 
   const goToPrevious = useCallback(() => {
     const newBranch =
+      // oxlint-disable-next-line no-ternary -- Keep newBranch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       currentBranch > 0 ? currentBranch - 1 : branches.length - 1;
     handleBranchChange(newBranch);
   }, [branches.length, currentBranch, handleBranchChange]);
 
   const goToNext = useCallback(() => {
     const newBranch =
+      // oxlint-disable-next-line no-ternary -- Keep newBranch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       currentBranch < branches.length - 1 ? currentBranch + 1 : 0;
     handleBranchChange(newBranch);
   }, [branches.length, currentBranch, handleBranchChange]);
@@ -291,6 +294,7 @@ const MessageBranchContent = ({
     <div
       className={cn(
         "grid gap-2 overflow-hidden [&>div]:pb-0",
+        // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         index === currentBranch ? "block" : "hidden"
       )}
 
@@ -465,9 +469,10 @@ const MessageAttachment = ({
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const filename = data.filename || "";
   const mediaType =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from data.mediaType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading startsWith from data.mediaType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep mediaType as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     data.mediaType?.startsWith("image/") && data.url ? "image" : "file";
   const isImage = mediaType === "image";
+  // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const attachmentLabel = filename || (isImage ? "Image" : "Attachment");
 
   return (
@@ -479,66 +484,69 @@ const MessageAttachment = ({
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageAttachment's native div attributes, preserving caller events and accessibility props.
       {...props}
     >
-      {isImage ? (
-        <>
-          {/* oxlint-disable-next-line next/no-img-element -- Attachment URLs may be blob or data URLs. */}
-          <img
-            alt={filename || "attachment"}
-            className="size-full object-cover"
-            height={100}
-            src={data.url}
-            width={100}
-          />
-          {onRemove && (
-            <Button
-              aria-label="Remove attachment"
-              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="bg-background/80 hover:bg-background absolute top-2 right-2 size-6 rounded-full p-0 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-              onClick={(event) => {
-                event.stopPropagation();
-                onRemove();
-              }}
-              type="button"
-              variant="ghost"
-            >
-              <XIcon />
-              <span className="sr-only">Remove</span>
-            </Button>
-          )}
-        </>
-      ) : (
-        <>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="bg-muted text-muted-foreground flex size-full shrink-0 items-center justify-center rounded-lg">
-                <PaperclipIcon
-                  // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-4"
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{attachmentLabel}</p>
-            </TooltipContent>
-          </Tooltip>
-          {onRemove && (
-            <Button
-              aria-label="Remove attachment"
-              // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="hover:bg-accent size-6 shrink-0 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-              onClick={(event) => {
-                event.stopPropagation();
-                onRemove();
-              }}
-              type="button"
-              variant="ghost"
-            >
-              <XIcon />
-              <span className="sr-only">Remove</span>
-            </Button>
-          )}
-        </>
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        isImage ? (
+          <>
+            {/* oxlint-disable-next-line next/no-img-element -- Attachment URLs may be blob or data URLs. */}
+            <img
+              alt={filename || "attachment"}
+              className="size-full object-cover"
+              height={100}
+              src={data.url}
+              width={100}
+            />
+            {onRemove && (
+              <Button
+                aria-label="Remove attachment"
+                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="bg-background/80 hover:bg-background absolute top-2 right-2 size-6 rounded-full p-0 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 [&>svg]:size-3"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemove();
+                }}
+                type="button"
+                variant="ghost"
+              >
+                <XIcon />
+                <span className="sr-only">Remove</span>
+              </Button>
+            )}
+          </>
+        ) : (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="bg-muted text-muted-foreground flex size-full shrink-0 items-center justify-center rounded-lg">
+                  <PaperclipIcon
+                    // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="size-4"
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{attachmentLabel}</p>
+              </TooltipContent>
+            </Tooltip>
+            {onRemove && (
+              <Button
+                aria-label="Remove attachment"
+                // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="hover:bg-accent size-6 shrink-0 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100 [&>svg]:size-3"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemove();
+                }}
+                type="button"
+                variant="ghost"
+              >
+                <XIcon />
+                <span className="sr-only">Remove</span>
+              </Button>
+            )}
+          </>
+        )
+      }
     </div>
   );
 };

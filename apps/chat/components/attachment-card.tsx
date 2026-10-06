@@ -80,17 +80,20 @@ const FilePreview = ({
   readonly isPdf: boolean;
 }): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
-    {isPdf ? (
-      <FileTextIcon
-        // oxlint-disable-next-line react/forbid-component-props -- FileTextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="size-5 text-red-500"
-      />
-    ) : (
-      <PaperclipIcon
-        // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="text-muted-foreground size-5"
-      />
-    )}
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      isPdf ? (
+        <FileTextIcon
+          // oxlint-disable-next-line react/forbid-component-props -- FileTextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-5 text-red-500"
+        />
+      ) : (
+        <PaperclipIcon
+          // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-muted-foreground size-5"
+        />
+      )
+    }
   </div>
 );
 /* oxlint-enable react/no-multi-comp */

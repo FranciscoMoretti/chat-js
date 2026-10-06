@@ -95,6 +95,7 @@ export const EveProjectHome = ({
   );
   /* oxlint-enable oxc/no-async-await */
   const rename = useRenameProject();
+  // oxlint-disable-next-line no-ternary -- Keep contentPosition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const contentPosition = shouldCenter ? "row-start-2" : "mt-4";
   const current = project.data;
   const icon =
@@ -118,6 +119,7 @@ export const EveProjectHome = ({
           <div
             className={cn(
               "space-y-4",
+              // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               sending ? "flex min-h-0 flex-1 flex-col" : contentPosition
             )}
           >
@@ -161,6 +163,7 @@ export const EveProjectHome = ({
           <div
             className={cn(
               sending && "hidden",
+              // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               shouldCenter ? "row-start-3 mt-6" : "mt-4 min-h-0 flex-1"
             )}
           >
@@ -172,6 +175,7 @@ export const EveProjectHome = ({
           </div>
           <ProjectInstructionsDialog
             error={
+              // oxlint-disable-next-line no-ternary -- Keep error JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               save.error ? "Could not save instructions. Try again." : undefined
             }
             isPending={save.isPending}

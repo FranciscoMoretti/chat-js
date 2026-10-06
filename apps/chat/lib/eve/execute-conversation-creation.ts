@@ -43,15 +43,23 @@ const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveFork's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
-
- * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
+ */
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
-) => {
+): Promise<
+  | Response
+  | { beforeMessageId: string; sessionId: string }
+  | {
+      checkpointId?: string;
+      beforeTurnId: string | undefined;
+      sessionId: string;
+      beforeMessageId?: undefined;
+    }
+  | undefined
+> => {
   if (!input) {
     return;
   }
@@ -75,12 +83,12 @@ const resolveFork = async (
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (input.checkpointId ? { checkpointId: input.checkpointId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (input.checkpointId ? { checkpointId: input.checkpointId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
@@ -95,9 +103,10 @@ const creationFailure = (cause: unknown): Response => {
   }
   return Response.json(
     {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (cause instanceof CreationConflictError ? { code: cause.code } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (cause instanceof CreationConflictError ? { code: cause.code } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(cause instanceof CreationConflictError ? { code: cause.code } : {}),
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         cause instanceof CreationConflictError
           ? cause.message
           : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
@@ -245,9 +254,10 @@ export const executeEveConversationCreation = async (
   } catch (error) {
     logger.error(
       {
+        // oxlint-disable-next-line no-ternary -- Keep errorType as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (error instanceof EveCreationTransportError           ? { stage: error.stage, status: error.status }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (error instanceof EveCreationTransportError           ? { stage: error.stage, status: error.status }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(error instanceof EveCreationTransportError
           ? { stage: error.stage, status: error.status }
           : {}),

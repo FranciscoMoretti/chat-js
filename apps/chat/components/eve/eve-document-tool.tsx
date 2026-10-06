@@ -84,6 +84,7 @@ export const EveDocumentTool = ({
           documentId: data.documentId ?? "init",
           followLive: true,
           isVisible:
+            // oxlint-disable-next-line no-ternary -- Keep isVisible as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             current.previewCallId === part.toolCallId
               ? current.isVisible
               : true,
@@ -109,6 +110,7 @@ export const EveDocumentTool = ({
       return;
     }
     const completed =
+      // oxlint-disable-next-line no-ternary -- Keep completed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       part.state === "output-available"
         ? eveDocumentResult.safeParse(part.output)
         : undefined;
@@ -141,6 +143,7 @@ export const EveDocumentTool = ({
         documentId: completed.data.documentId,
         followLive: true,
         isVisible:
+          // oxlint-disable-next-line no-ternary -- Keep isVisible as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           current.previewCallId === part.toolCallId ? current.isVisible : true,
         kind: completed.data.kind,
         messageId,
@@ -158,9 +161,12 @@ export const EveDocumentTool = ({
   if (part.state !== "output-available") {
     return (
       <output>
-        {part.toolName === "readDocument"
-          ? "Reading document…"
-          : "Writing document…"}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          part.toolName === "readDocument"
+            ? "Reading document…"
+            : "Writing document…"
+        }
       </output>
     );
   }
@@ -168,11 +174,13 @@ export const EveDocumentTool = ({
   if (!result.success) {
     return <p role="alert">This document result could not be displayed.</p>;
   }
+  // oxlint-disable-next-line no-ternary -- Keep writeAction as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const writeAction = part.toolName.startsWith("create") ? "create" : "update";
   if (preview && conversationId) {
     return (
       <EveDocumentPreview
         isReadonly={isReadonly}
+        // oxlint-disable-next-line no-ternary -- Keep action JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         action={part.toolName === "readDocument" ? "read" : writeAction}
         conversationId={conversationId}
         result={result.data}
@@ -190,6 +198,7 @@ export const EveDocumentTool = ({
         { ...result.data, id: result.data.documentId }
         /* oxlint-enable oxc/no-rest-spread-properties */
       }
+      // oxlint-disable-next-line no-ternary -- Keep type JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       type={part.toolName === "readDocument" ? "read" : writeAction}
     />
   );

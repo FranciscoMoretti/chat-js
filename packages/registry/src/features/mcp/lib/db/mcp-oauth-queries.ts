@@ -58,6 +58,7 @@ const getSessionByState = async ({
   state,
 }: Readonly<{ state: string }>): Promise<McpOAuthSession | undefined> => {
   const rows =
+    // oxlint-disable-next-line no-ternary -- Keep rows as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     state === ""
       ? []
       : await db

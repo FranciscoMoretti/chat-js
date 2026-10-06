@@ -136,8 +136,10 @@ const setAuthOverlay = async (
     return;
   }
 
+  // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   currentAuthOverlayMessage = options.visible ? options.message : null;
 
+  // oxlint-disable-next-line no-ternary -- Keep script as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const script = options.visible
     ? `
 (() => {
@@ -311,6 +313,7 @@ ipcMain.handle(
     } catch (error) {
       isAuthFlowInProgress = false;
       await setAuthState({
+        // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         detail: error instanceof Error ? error.message : String(error),
         message: "Couldn't open the browser sign-in flow.",
         status: "error",
@@ -438,6 +441,7 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     }
 
     const parsed = new URL(url);
+    // oxlint-disable-next-line no-ternary -- Keep token as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const token = parsed.hash.startsWith("#token=")
       ? parsed.hash.slice("#token=".length)
       : null;
@@ -456,6 +460,7 @@ const authenticateFromDeepLink = async (url: string): Promise<boolean> => {
     console.error("[electron-main] deep link authentication failed", error);
     isAuthFlowInProgress = false;
     await setAuthState({
+      // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       detail: error instanceof Error ? error.message : String(error),
       message: "We couldn't finish sign-in automatically.",
       status: "error",
@@ -533,6 +538,7 @@ const scheduleAuthRefresh = (): void => {
         if (!ready) {
           isAuthFlowInProgress = false;
           await setAuthState(
+            // oxlint-disable-next-line no-ternary -- Keep setAuthState argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             authFlowId === currentAuthFlowId
               ? {
                   detail: "Please try the browser flow again.",
@@ -558,6 +564,7 @@ const scheduleAuthRefresh = (): void => {
         console.error("[electron-main] auth refresh failed", error);
         isAuthFlowInProgress = false;
         await setAuthState({
+          // oxlint-disable-next-line no-ternary -- Keep detail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           detail: error instanceof Error ? error.message : String(error),
           message: "Sign-in refresh failed.",
           status: "error",
@@ -580,7 +587,7 @@ const createWindow = (): BrowserWindow => {
   const win = new BrowserWindow({
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing WINDOW_DEFAULTS own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...WINDOW_DEFAULTS,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (process.platform === "darwin" || process.platform === "win32"       ? { titleBarStyle: "default" as const }       : { titleBarOverlay: true, titleBarStyle: "hidden" as const }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (process.platform === "darwin" || process.platform === "win32"       ? { titleBarStyle: "default" as const }       : { titleBarOverlay: true, titleBarStyle: "hidden" as const }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(process.platform === "darwin" || process.platform === "win32"
       ? { titleBarStyle: "default" as const }
       : { titleBarOverlay: true, titleBarStyle: "hidden" as const }),
@@ -700,6 +707,7 @@ const setupApplicationMenu = (): void => {
     {
       role: "editMenu",
     },
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(app.isPackaged
       ? []
       : ([

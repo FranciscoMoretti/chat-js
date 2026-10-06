@@ -48,6 +48,7 @@ await Promise.all(
       item.files.push({
         path: sourcePath,
         target:
+          // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           metadata.kind === "feature"
             ? `~/features/${item.name}/chatjs.json`
             : `~/tools/chatjs/${item.name}/chatjs.json`,

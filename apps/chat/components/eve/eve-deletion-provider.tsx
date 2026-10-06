@@ -79,8 +79,10 @@ const EveDeletionProvider = ({
           const projectId =
             // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from conversation; preserve one receiver evaluation, skipped accesses and the existing (route.source === "project" ? route.projectId : undefined) fallback. The app guidance prefers optional chaining.
             conversation?.projectId ??
+            // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             (route.source === "project" ? route.projectId : undefined);
           router.replace(
+            // oxlint-disable-next-line no-ternary -- Keep router.replace argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             typeof projectId === "string" && projectId !== ""
               ? `/project/${projectId}`
               : "/"

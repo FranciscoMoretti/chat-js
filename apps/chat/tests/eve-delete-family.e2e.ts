@@ -120,6 +120,7 @@ async function fixture(parentId?: string) {
     crypto.randomUUID(),
     "Private fixture",
     () => Promise.resolve(sessionId),
+    // oxlint-disable-next-line no-ternary -- Keep createEveConversation argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     parentId
       ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
       : undefined

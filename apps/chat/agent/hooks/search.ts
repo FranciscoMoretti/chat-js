@@ -120,8 +120,10 @@ export default defineHook({
         console.error(
           "Search indexing failed; will retry on the next chat event.",
           {
+            // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             name: error instanceof Error ? error.name : "UnknownError",
             stack:
+              // oxlint-disable-next-line no-ternary -- Keep stack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               error instanceof Error
                 ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from error.stack; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                   error.stack?.split("\n").slice(1).join("\n")

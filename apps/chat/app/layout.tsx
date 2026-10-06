@@ -102,14 +102,17 @@ const RootLayout = ({
       <Script id="theme-color-script" strategy="beforeInteractive">
         {THEME_COLOR_SCRIPT}
       </Script>
-      {process.env.NODE_ENV === "development" &&
-      !process.env.PLAYWRIGHT &&
-      env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
-        <Script
-          src="https://unpkg.com/react-scan/dist/auto.global.js"
-          strategy="beforeInteractive"
-        />
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        process.env.NODE_ENV === "development" &&
+        !process.env.PLAYWRIGHT &&
+        env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
+          <Script
+            src="https://unpkg.com/react-scan/dist/auto.global.js"
+            strategy="beforeInteractive"
+          />
+        ) : null
+      }
     </head>
     <body className="antialiased">
       <ElectronAuthHandler />

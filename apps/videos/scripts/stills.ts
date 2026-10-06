@@ -38,6 +38,7 @@ for (const second of [
   0, 7, 8.5, 9.9, 15, 16.9, 17.2, 18.5, 20, 20.3, 25, 28.9, 31, 34, 35, 36.5,
   36.7, 37, 38, 39, 40, 42.5, 45, 7,
 ]) {
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const output = `out/stills/${second}${seen.has(second) ? "-seek" : ""}.png`;
   // oxlint-disable-next-line no-await-in-loop, node/no-top-level-await -- This rendering executable preserves sequential frame rendering and its out-of-order seek check. Preserve seek order and avoid concurrent browser renderers consuming unbounded memory.
   await renderStill({

@@ -54,6 +54,7 @@ const documentAssistantActions = (
           label: "Format and clean data",
           modelId: config.ai.tools.sheet.format,
         },
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(installedDocumentKinds.has("code")
           ? [
               {

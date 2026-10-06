@@ -76,8 +76,11 @@ type BaseChart = LineChart | ScatterChart | BarChart;
 const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  // oxlint-disable-next-line no-ternary -- Keep textColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const textColor = isDark ? "#e5e5e5" : "#262626";
+  // oxlint-disable-next-line no-ternary -- Keep gridColor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const gridColor = isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.15)";
+  // oxlint-disable-next-line no-ternary -- Keep tooltipBg as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const tooltipBg = isDark ? "#171717" : "#ffffff";
 
   const sharedOptions: EChartsOption = {
@@ -135,6 +138,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
     if (chart.type === "line" || chart.type === "scatter") {
       const series = chart.elements.map((e, index) => ({
         areaStyle:
+          // oxlint-disable-next-line no-ternary -- Keep areaStyle as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           chart.type === "line"
             ? {
                 color: {
@@ -155,6 +159,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             : undefined,
         data: e.points.map((p: [number | string, number]) => {
           const x =
+            // oxlint-disable-next-line no-ternary -- Keep x as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
           return [x, p[1]];
         }),
@@ -167,6 +172,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
         },
         name: e.label,
         smooth: true,
+        // oxlint-disable-next-line no-ternary -- Keep symbolSize as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         symbolSize: chart.type === "scatter" ? 10 : 0,
         type: chart.type,
       }));
@@ -180,6 +186,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
           nameGap: 40,
           nameLocation: "middle",
           scale: true,
+          // oxlint-disable-next-line no-ternary -- Keep type as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           type: chart.x_scale === "datetime" ? "time" : "value",
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...defaultAxisOptions,
@@ -187,6 +194,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultAxisOptions.axisLabel own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...defaultAxisOptions.axisLabel,
             formatter:
+              // oxlint-disable-next-line no-ternary -- Keep formatter as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               chart.x_scale === "datetime"
                 ? (value: number): string => {
                     const date = new Date(value);
@@ -285,6 +293,7 @@ const InteractiveChart = ({ chart }: { chart: BaseChart }) => {
             option={getChartOptions()}
             // oxlint-disable-next-line react/forbid-component-props -- ReactECharts accepts style in its styling contract; preserve this caller's layout and appearance.
             style={{ height: "400px", width: "100%" }}
+            // oxlint-disable-next-line no-ternary -- Keep theme JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             theme={resolvedTheme === "dark" ? "dark" : undefined}
           />
         </div>

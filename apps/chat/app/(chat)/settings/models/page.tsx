@@ -36,32 +36,35 @@ const ModelsSettingsHeader = ({
         Configure your AI model preferences.
       </p>
     </div>
-    {showRegistryLink ? (
-      <Button
-        asChild
-        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="w-full max-w-[300px] sm:w-auto"
-        size="sm"
-        variant="outline"
-      >
-        <a
-          href="https://airegistry.app"
-          rel="noopener noreferrer"
-          target="_blank"
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      showRegistryLink ? (
+        <Button
+          asChild
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="w-full max-w-[300px] sm:w-auto"
+          size="sm"
+          variant="outline"
         >
-          <ExternalLink
-            // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="size-4"
-          />
-          <span>Models Registry</span>
-        </a>
-      </Button>
-    ) : (
-      <Skeleton
-        // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
-        className="h-8 w-full max-w-[300px] sm:w-36"
-      />
-    )}
+          <a
+            href="https://airegistry.app"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <ExternalLink
+              // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
+            <span>Models Registry</span>
+          </a>
+        </Button>
+      ) : (
+        <Skeleton
+          // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="h-8 w-full max-w-[300px] sm:w-36"
+        />
+      )
+    }
   </SettingsPageHeader>
 );
 /* oxlint-enable react/jsx-no-literals */

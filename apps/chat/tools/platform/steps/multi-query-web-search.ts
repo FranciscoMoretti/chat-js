@@ -110,6 +110,7 @@ const multiQueryWebSearchStep = async ({
     };
   } catch (error: unknown) {
     const errorMessage =
+      // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error ? error.message : "Unknown error occurred";
 
     // Send error annotation

@@ -42,6 +42,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
         return;
       }
       const current =
+        // oxlint-disable-next-line no-ternary -- Keep current as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         pendingRef.current === undefined
           ? eveMessageDelivery.read(sessionStorage, sessionId)
           : pendingRef.current;

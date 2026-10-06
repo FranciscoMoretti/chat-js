@@ -66,7 +66,7 @@ const createTavilySearch =
     const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
       query,
       {
-        // oxlint-disable-next-line eslint/no-undefined -- Tavily merges default days=3 before caller options; the own undefined days value overrides that default so general-search JSON omits days.
+        // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Tavily merges default days=3 before caller options; the own undefined days value overrides that default so general-search JSON omits days.; no-ternary: Keep days as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         days: topic === "news" ? NEWS_LOOKBACK_DAYS : undefined,
         excludeDomains: [...options.excludeDomains],
         includeAnswer: true,

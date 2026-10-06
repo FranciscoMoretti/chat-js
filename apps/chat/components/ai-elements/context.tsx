@@ -263,6 +263,7 @@ const ContextContentFooter = ({
 }: ContextContentFooterProps): React.JSX.Element => {
   const { modelId, usage } = useContextValue();
   const costUSD =
+    // oxlint-disable-next-line no-ternary -- Keep costUSD as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof modelId === "string" && modelId !== ""
       ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         getUsage({
@@ -314,14 +315,20 @@ const TokensWithCost = ({
   readonly costText?: string;
 }): React.JSX.Element => (
   <span>
-    {tokens === undefined
-      ? "—"
-      : new Intl.NumberFormat("en-US", {
-          notation: "compact",
-        }).format(tokens)}
-    {costText ? (
-      <span className="text-muted-foreground ml-2">• {costText}</span>
-    ) : null}
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      tokens === undefined
+        ? "—"
+        : new Intl.NumberFormat("en-US", {
+            notation: "compact",
+          }).format(tokens)
+    }
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      costText ? (
+        <span className="text-muted-foreground ml-2">• {costText}</span>
+      ) : null
+    }
   </span>
 );
 /* oxlint-enable react/jsx-no-literals */
@@ -347,6 +354,7 @@ const ContextInputUsage = ({
     return null;
   }
 
+  // oxlint-disable-next-line no-ternary -- Keep inputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const inputCost = modelId
     ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       getUsage({
@@ -396,6 +404,7 @@ const ContextOutputUsage = ({
     return null;
   }
 
+  // oxlint-disable-next-line no-ternary -- Keep outputCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const outputCost = modelId
     ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       getUsage({
@@ -444,6 +453,7 @@ const ContextReasoningUsage = ({
     return null;
   }
 
+  // oxlint-disable-next-line no-ternary -- Keep reasoningCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const reasoningCost = modelId
     ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       getUsage({
@@ -492,6 +502,7 @@ const ContextCacheUsage = ({
     return null;
   }
 
+  // oxlint-disable-next-line no-ternary -- Keep cacheCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const cacheCost = modelId
     ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading totalUSD from getUsage(...).costUSD; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       getUsage({

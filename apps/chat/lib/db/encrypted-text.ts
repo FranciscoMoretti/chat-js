@@ -63,23 +63,21 @@ const encryptedText = customType<{ driverData: string; data: string }>({
   toDriver: (value): string => encrypt(value),
 });
 
-/* oxlint-disable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
  * Stores JSON as encrypted text in the database.
+ * @returns {ReturnType<typeof customType<{ driverData: string; data: JsonValue }>>} Native column factory whose driver conversion encrypts serialized JSON and decrypts/parses it without runtime schema validation.
  */
-const encryptedJson = <T>() =>
-  customType<{ driverData: string; data: T }>({
+const encryptedJson = <JsonValue>(): ReturnType<
+  typeof customType<{ driverData: string; data: JsonValue }>
+> =>
+  customType<{ driverData: string; data: JsonValue }>({
     dataType: (): string => "text",
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
-    fromDriver: (value) => JSON.parse(decrypt(value)) as T,
+    fromDriver: (value): JsonValue => JSON.parse(decrypt(value)) as JsonValue,
     toDriver: (value): string => encrypt(JSON.stringify(value)),
   });
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (encryptedJson, encryptedText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 export { encryptedJson, encryptedText };
 /* oxlint-enable import/no-named-export */

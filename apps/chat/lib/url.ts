@@ -23,6 +23,7 @@ export const getBaseUrl = (): string => {
   // Next sets PORT to the actual listener, including --port and automatic fallback.
   // oxlint-disable-next-line node/no-process-env -- Read the active Next listener at call time; deployment env validation does not own this runtime override.
   const port = process.env.PORT;
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   return `http://localhost:${typeof port === "string" && port !== "" ? port : "3000"}`;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

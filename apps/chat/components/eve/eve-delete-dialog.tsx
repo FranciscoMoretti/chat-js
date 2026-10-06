@@ -47,10 +47,12 @@ const EveDeleteDialog = ({
   readonly onChanged: (rootId: string) => Promise<void>;
 }): ReactJSX.Element => {
   const [phase, setPhase] = useState<EveDeletionPhase>(
+    // oxlint-disable-next-line no-ternary -- Keep useState argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     conversation.state === "deleting" ? "pending" : "confirm"
   );
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve request's awaited sequencing and rejected-Promise behavior. */
   const request = async (method: "GET" | "DELETE"): Promise<void> => {
+    // oxlint-disable-next-line no-ternary -- Keep setPhase argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     setPhase(method === "GET" ? "checking" : "deleting");
     /* oxlint-disable react/todo -- Preserve the unconfirmed deletion recovery catch. */
     try {
@@ -178,7 +180,10 @@ const EveDeleteDialogView = ({
         )}
         <DialogFooter>
           <Button disabled={busy} onClick={onClose} variant="outline">
-            {phase === "confirm" ? "Cancel" : "Close"}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              phase === "confirm" ? "Cancel" : "Close"
+            }
           </Button>
           {(phase === "pending" || phase === "unconfirmed") && (
             <Button onClick={onCheck} variant="outline">
@@ -190,9 +195,12 @@ const EveDeleteDialogView = ({
             phase === "pending" ||
             phase === "deleting") && (
             <Button disabled={busy} onClick={onDelete} variant="destructive">
-              {phase === "pending"
-                ? "Retry deletion"
-                : "Delete conversation and branches"}
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                phase === "pending"
+                  ? "Retry deletion"
+                  : "Delete conversation and branches"
+              }
             </Button>
           )}
         </DialogFooter>

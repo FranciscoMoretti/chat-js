@@ -179,7 +179,7 @@ const generateDemo = async (): Promise<Map<string, string>> => {
         // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema. Optional chain: Keep the existing nullish guard when reading kind from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         if (metadata?.kind === "tool" || metadata?.kind === "feature") {
           const target =
-            // oxlint-disable-next-line typescript/no-unsafe-member-access -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
+            // oxlint-disable-next-line typescript/no-unsafe-member-access, no-ternary -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.; no-ternary: Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             metadata.kind === "tool"
               ? `~/tools/chatjs/${item.name}/chatjs.json`
               : `~/features/${item.name}/chatjs.json`;
@@ -425,6 +425,7 @@ const syncDemo = async (options: {
   await preflight(path.dirname(baseline), [path.basename(baseline)]);
   const previous = await optionalRead(baseline);
   const record =
+    // oxlint-disable-next-line no-ternary -- Keep record as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof previous === "string" && previous !== ""
       ? baselineSchema.parse(JSON.parse(previous))
       : null;
@@ -447,6 +448,7 @@ const syncDemo = async (options: {
     if (content !== null && content === expected.get(file)) {
       return false;
     }
+    // oxlint-disable-next-line no-ternary -- Keep hash as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const hash = content === null ? null : digest(content);
 
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from record; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -483,6 +485,7 @@ const syncDemo = async (options: {
   if (check) {
     if (drift.length > 0 || baselineDrift) {
       throw new Error(
+        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         `Demo source drift:\n${drift.join("\n")}${baselineDrift ? `\nBaseline drift: ${baseline}` : ""}\nRun bun demo:sync to update source and its baseline.`
       );
     }

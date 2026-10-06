@@ -37,7 +37,7 @@ const OMITTED_HOOK_INPUT = undefined;
 const NO_SUPPLIED_THREAD = undefined;
 
 const useIsomorphicLayoutEffect =
-  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
+  // oxlint-disable-next-line unicorn/prefer-global-this, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering.; no-ternary: Keep useIsomorphicLayoutEffect as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface ThreadHookOptions {
@@ -270,9 +270,11 @@ const useThreadController = <TMessage extends UIMessage>(
   dispatchers: LatestThreadDispatchers<TMessage>;
 } => {
   const hasExternalThread = hasSuppliedThread(options);
+  // oxlint-disable-next-line no-ternary -- Keep externalThread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const externalThread = hasExternalThread
     ? options.thread
     : OMITTED_HOOK_INPUT;
+  // oxlint-disable-next-line no-ternary -- Keep ownOptions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onData from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.

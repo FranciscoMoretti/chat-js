@@ -121,32 +121,39 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
           className="w-56"
         >
           <DropdownMenuGroup>
-            {typeof status === "string" && status !== "" ? (
-              <DropdownMenuLabel>{status}</DropdownMenuLabel>
-            ) : (
-              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from connectors; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-              connectors?.map((connector) => (
-                <DropdownMenuCheckboxItem
-                  key={connector.id}
-                  checked={connector.enabled}
-                  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
-                  disabled={disabled || connector.userId === null}
-                  onSelect={(event): void => event.preventDefault()}
-                  onCheckedChange={(enabled): void =>
-                    toggleEnabled({ enabled, id: connector.id })
-                  }
-                >
-                  <span className="truncate">{connector.name}</span>
-                </DropdownMenuCheckboxItem>
-              ))
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              typeof status === "string" && status !== "" ? (
+                <DropdownMenuLabel>{status}</DropdownMenuLabel>
+              ) : (
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from connectors; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+                connectors?.map((connector) => (
+                  <DropdownMenuCheckboxItem
+                    key={connector.id}
+                    checked={connector.enabled}
+                    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- This is a logical OR of independent conditions; false must continue to the next condition rather than short-circuit as with nullish coalescing.
+                    disabled={disabled || connector.userId === null}
+                    onSelect={(event): void => event.preventDefault()}
+                    onCheckedChange={(enabled): void =>
+                      toggleEnabled({ enabled, id: connector.id })
+                    }
+                  >
+                    <span className="truncate">{connector.name}</span>
+                  </DropdownMenuCheckboxItem>
+                ))
+              )
+            }
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <InternalLink
+                // oxlint-disable-next-line no-ternary -- Keep href JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 href={isAuthenticated ? "/settings/connectors" : "/login"}
               >
                 <Settings />
-                {isAuthenticated ? "Manage connectors" : "Sign in"}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  isAuthenticated ? "Manage connectors" : "Sign in"
+                }
               </InternalLink>
             </DropdownMenuItem>
           </DropdownMenuGroup>

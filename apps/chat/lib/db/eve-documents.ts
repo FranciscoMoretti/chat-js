@@ -567,6 +567,7 @@ const inheritImportedDocumentCheckpoints = async (
       and(
         eq(eveImportedDocumentCheckpoint.conversationId, sourceId),
         eq(eveImportedDocumentCheckpoint.ownerId, ownerId),
+        // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         beforeMessageIndex === undefined
           ? undefined
           : lt(eveImportedDocumentCheckpoint.messageIndex, beforeMessageIndex)
@@ -1167,6 +1168,7 @@ const getEveDocumentRevision = async (
     conversationId,
     documentId
   );
+  // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const selected = revisionId
     ? history.find(
         (revision: ReadonlyNativeSurface<(typeof history)[number]>) =>
@@ -1233,12 +1235,14 @@ const getAccessibleEveDocument = async (
     conversationId,
     documentId
   );
+  // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const selected = revisionId
     ? history.find(
         (item: ReadonlyNativeSurface<(typeof history)[number]>) =>
           item.id === revisionId
       )
     : history.at(-1);
+  // oxlint-disable-next-line no-ternary -- Keep revision as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const revision = selected
     ? await readDocumentRevision(conversation.ownerId, documentId, selected.id)
     : undefined;

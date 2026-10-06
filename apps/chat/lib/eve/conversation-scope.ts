@@ -86,10 +86,12 @@ export const resolveEveConversationScope = async (
     throw new EveSessionMappingError("binding_conflict");
   }
   const row = await readEveSessionMapping(
+    // oxlint-disable-next-line no-ternary -- Keep readEveSessionMapping argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     identity.data ? { reservationId: identity.data } : { sessionId }
   );
   if (!row) {
     throw new EveSessionMappingError(
+      // oxlint-disable-next-line no-ternary -- Keep EveSessionMappingError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       identity.data ? "identity_missing" : "identity_pending"
     );
   }

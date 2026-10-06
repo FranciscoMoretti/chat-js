@@ -112,24 +112,27 @@ const Fixture = (): React.JSX.Element => {
         </button>
       </div>
       <output aria-live="polite" className="block rounded-md border p-3">
-        {delivery.pending ? (
-          <div className="space-y-1">
-            <span className="block">Pending: {delivery.pending.message}</span>
-            <span
-              className="inline-block font-mono text-xs"
-              data-testid="operation"
-            >
-              {delivery.pending.operationId}
-            </span>
-            {delivery.pending.rejection && (
-              <span className="block">
-                Rejected: {delivery.pending.rejection}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          delivery.pending ? (
+            <div className="space-y-1">
+              <span className="block">Pending: {delivery.pending.message}</span>
+              <span
+                className="inline-block font-mono text-xs"
+                data-testid="operation"
+              >
+                {delivery.pending.operationId}
               </span>
-            )}
-          </div>
-        ) : (
-          "No pending message"
-        )}
+              {delivery.pending.rejection && (
+                <span className="block">
+                  Rejected: {delivery.pending.rejection}
+                </span>
+              )}
+            </div>
+          ) : (
+            "No pending message"
+          )
+        }
       </output>
     </main>
   );

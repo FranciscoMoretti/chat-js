@@ -55,10 +55,12 @@ export const GET = async (request: NextRequest) => {
       {
         results: {
           expiredGuests:
+            // oxlint-disable-next-line no-ternary -- Keep expiredGuests as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             guests.status === "fulfilled"
               ? guests.value
               : { error: "Guest cleanup failed; retry required." },
           orphanedAttachments:
+            // oxlint-disable-next-line no-ternary -- Keep orphanedAttachments as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             attachments.status === "fulfilled"
               ? attachments.value
               : { error: "Attachment cleanup failed; retry required." },
@@ -66,12 +68,14 @@ export const GET = async (request: NextRequest) => {
         success,
         timestamp: new Date().toISOString(),
       },
+      // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       { status: success ? 200 : 503 }
     );
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(
       {
+        // oxlint-disable-next-line no-ternary -- Keep details as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         details: error instanceof Error ? error.message : "Unknown error",
         error: "Cleanup failed",
       },

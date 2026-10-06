@@ -51,6 +51,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     connected?: boolean;
     errorMessage?: string;
   }): NextResponse => {
+    // oxlint-disable-next-line no-ternary -- Keep path as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const path = hasNonEmptyValue(connectorId)
       ? `/settings/connectors/${connectorId}`
       : "/settings/connectors";
@@ -80,6 +81,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
 
   if (hasNonEmptyValue(error)) {
     log.error({ error, errorDesc }, "OAuth error from provider");
+    // oxlint-disable-next-line no-ternary -- Keep pending as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const pending = hasNonEmptyValue(state)
       ? await getSessionByState({ state })
       : undefined;
@@ -156,6 +158,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     });
   } catch (oauthError) {
     const errorMessage =
+      // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthError instanceof Error
         ? oauthError.message
         : "Token exchange failed";
@@ -164,6 +167,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
         connectorId: connector.id,
         error: oauthError,
         errorMessage,
+        // oxlint-disable-next-line no-ternary -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorStack: oauthError instanceof Error ? oauthError.stack : undefined,
       },
       "OAuth token exchange failed"

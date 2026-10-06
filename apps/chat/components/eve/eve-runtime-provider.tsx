@@ -138,6 +138,7 @@ const RuntimeSlot = ({
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from identity.data; preserve one receiver evaluation, skipped accesses and the existing runtime.title fallback. The app guidance prefers optional chaining.
         identity.data?.title ??
         runtime.title ??
+        // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         (runtime.operation
           ? eveMessageTitle(runtime.operation.message)
           : "Chat")
@@ -160,35 +161,41 @@ const RuntimeSlot = ({
       )}
       {active && (
         <EveLogicalContext.Provider value={context}>
-          {agent /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
-          selected?.sessionId ? (
-            /* oxlint-enable oxc/no-optional-chaining */ <EveConversation
-              conversationId={selected.id}
-              sessionId={selected.sessionId}
-              ownerId={runtime.ownerId}
-              draftScopeId={runtime.chatId}
-              initialMessage={
-                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from runtime.operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
-                runtime.operation?.message
-                /* oxlint-enable oxc/no-optional-chaining */
-              }
-              header={header}
-            />
-          ) : (
-            <section className="flex h-full min-h-0 flex-col">
-              {header}
-              {runtime.operation && (
-                <EveInitialMessage message={runtime.operation.message} />
-              )}
-              {family.error ? (
-                <p role="alert">{family.error.message}</p>
-              ) : (
-                <div className="flex flex-1 items-center justify-center">
-                  <Spinner aria-label="Loading conversation" />
-                </div>
-              )}
-            </section>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            agent /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+            selected?.sessionId ? (
+              /* oxlint-enable oxc/no-optional-chaining */ <EveConversation
+                conversationId={selected.id}
+                sessionId={selected.sessionId}
+                ownerId={runtime.ownerId}
+                draftScopeId={runtime.chatId}
+                initialMessage={
+                  /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from runtime.operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                  runtime.operation?.message
+                  /* oxlint-enable oxc/no-optional-chaining */
+                }
+                header={header}
+              />
+            ) : (
+              <section className="flex h-full min-h-0 flex-col">
+                {header}
+                {runtime.operation && (
+                  <EveInitialMessage message={runtime.operation.message} />
+                )}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  family.error ? (
+                    <p role="alert">{family.error.message}</p>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center">
+                      <Spinner aria-label="Loading conversation" />
+                    </div>
+                  )
+                }
+              </section>
+            )
+          }
         </EveLogicalContext.Provider>
       )}
     </>
@@ -305,9 +312,10 @@ const EveRuntimeRoute = ({
       (error: unknown) => setFailure(String(error))
     );
   }, [open, id, sessionId, ownerId, chatId, title]);
-  return typeof failure === "string" && failure !== "" ? (
-    <p role="alert">{failure}</p>
-  ) : (
+  if (typeof failure === "string" && failure !== "") {
+    return <p role="alert">{failure}</p>;
+  }
+  return (
     <div className="flex h-full items-center justify-center">
       <Spinner aria-label="Loading conversation" />
     </div>

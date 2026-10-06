@@ -58,6 +58,7 @@ const ShareDialogView = ({
       setStep("shared");
     } catch (error) {
       toast.error(
+        // oxlint-disable-next-line no-ternary -- Keep toast.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to share chat."
       );
     }
@@ -71,6 +72,7 @@ const ShareDialogView = ({
       setStep("info");
     } catch (error) {
       toast.error(
+        // oxlint-disable-next-line no-ternary -- Keep toast.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to make chat private."
       );
     }
@@ -91,14 +93,15 @@ const ShareDialogView = ({
     <>
       {step === "info" && (
         <>
-          <DialogHeader>
+          <DialogHeader /* oxlint-disable no-ternary -- Keep the public/private sharing description as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
+          >
             <DialogTitle>Share chat</DialogTitle>
             <DialogDescription>
               {isPublic
                 ? "This chat is currently public. Anyone with the link can view it."
                 : "Make this chat public so you can share it with others."}
             </DialogDescription>
-          </DialogHeader>
+          </DialogHeader /* oxlint-enable no-ternary */ /* oxlint-disable no-ternary -- Keep the public/private sharing status as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
           <div className="flex flex-col gap-4">
             <div className="bg-muted/20 flex items-center gap-3 rounded-lg border p-3">
               {isPublic ? (
@@ -126,7 +129,7 @@ const ShareDialogView = ({
                   </div>
                 </>
               )}
-            </div>
+            </div /* oxlint-enable no-ternary */ /* oxlint-disable no-ternary -- Keep public/private sharing actions and pending icons as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
             <div className="flex gap-2">
               {isPublic ? (
                 <>
@@ -180,7 +183,7 @@ const ShareDialogView = ({
                   )}
                 </Button>
               )}
-            </div>
+            </div /* oxlint-enable no-ternary */>
           </div>
         </>
       )}
@@ -221,7 +224,7 @@ const ShareDialogView = ({
             <Button onClick={() => setStep("info")} size="sm" variant="ghost">
               ← Back
             </Button>
-            <Button
+            <Button /* oxlint-disable no-ternary -- Keep the pending unshare icon and label as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
               disabled={isPending}
 
               // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
@@ -240,7 +243,7 @@ const ShareDialogView = ({
                   <span className="ml-2">Make Private</span>
                 </>
               )}
-            </Button>
+            </Button /* oxlint-enable no-ternary */>
           </div>
         </>
       )}

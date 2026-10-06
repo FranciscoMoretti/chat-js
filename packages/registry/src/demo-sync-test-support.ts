@@ -42,6 +42,7 @@ const prepareReplacement = async (
   options.expected.set("implementation.ts", "// updated canonical\n");
   options.expected.set("new.ts", "// new canonical\n");
   const target =
+    // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure === "baseline"
       ? options.baseline
       : path.join(options.root, "new.ts");

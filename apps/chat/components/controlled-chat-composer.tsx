@@ -106,6 +106,7 @@ export const ControlledChatComposer = ({
         onEnterSubmit={(event) => {
           if (
             event.isComposing ||
+            // oxlint-disable-next-line no-ternary -- Keep negated operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             !(isMobile ? event.ctrlKey : !event.shiftKey)
           ) {
             return false;
@@ -116,6 +117,7 @@ export const ControlledChatComposer = ({
         onInputChange={onDraftChange}
         onPaste={onPaste}
         placeholder={
+          // oxlint-disable-next-line no-ternary -- Keep placeholder JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           isMobile
             ? "Send a message... (Ctrl+Enter to send)"
             : "Send a message..."
@@ -125,9 +127,11 @@ export const ControlledChatComposer = ({
       <ChatComposerFooter
         actions={
           <PromptInputSubmit
+            // oxlint-disable-next-line no-ternary -- Keep aria-label JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             aria-label={busy && onStop ? "Stop" : "Send"}
             // oxlint-disable-next-line react/forbid-component-props -- PromptInputSubmit accepts className in its styling contract; preserve this caller's layout and appearance.
             className="size-8 shrink-0 @[500px]:size-10"
+            // oxlint-disable-next-line no-ternary -- Keep disabled JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             disabled={busy && onStop ? stopDisabled : !canSend}
             onClick={(event) => {
               event.preventDefault();

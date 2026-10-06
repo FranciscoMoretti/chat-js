@@ -287,10 +287,12 @@ const promptProjectTarget = async (
     options.yes
   );
   const targetDir =
+    // oxlint-disable-next-line no-ternary -- Keep targetDir as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof options.target === "string" && options.target !== ""
       ? initialTarget.targetDir
       : path.resolve(process.cwd(), projectName);
   const displayPath =
+    // oxlint-disable-next-line no-ternary -- Keep displayPath as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof options.target === "string" && options.target !== ""
       ? initialTarget.displayPath
       : projectName;
@@ -328,6 +330,7 @@ const loadInstallableTools = async (
   } catch (error) {
     registrySpinner.fail("Could not load installable tools.");
     logger.warn(
+      // oxlint-disable-next-line no-ternary -- Keep logger.warn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error
         ? error.message
         : "Continuing with built-in tools only."
@@ -357,6 +360,7 @@ const promptCreateSetup = async (
     coreFeatures.attachments = options.attachments;
   }
   const observability =
+    // oxlint-disable-next-line no-ternary -- Keep observability as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.observability === undefined
       ? await promptObservability(options.yes)
       : options.observability
@@ -423,6 +427,7 @@ const promptCreateSetup = async (
     assistantTools.builtInTools.videoGeneration ||
     options.storageProvider !== undefined ||
     options.storageConfig !== undefined;
+  // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const storage = usesStorage
     ? await promptStorage(
         options.yes,
@@ -439,7 +444,9 @@ const promptCreateSetup = async (
     {
       features: [
         ...observability,
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(coreFeatures.mcp ? ["mcp"] : []),
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,
@@ -637,6 +644,7 @@ const printNextSteps = (
           (item: ReadonlyInput<(typeof observabilityItems)[number]>) =>
             item.meta.chatjs.envRequirements ?? []
         ),
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
     ],
   });

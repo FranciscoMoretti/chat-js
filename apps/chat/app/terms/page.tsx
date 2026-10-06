@@ -121,6 +121,7 @@ const TermsPage = (): React.JSX.Element => {
 
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading currency from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const currencyCode = config.pricing?.currency;
+  // oxlint-disable-next-line no-ternary -- Keep currencySymbol as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const currencySymbol = currencyCode
     ? (currencySymbolMap[currencyCode] ?? currencyCode)
     : "";
@@ -129,7 +130,7 @@ const TermsPage = (): React.JSX.Element => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading paymentProcessors from config.services; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading paymentProcessors from config.services; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep paymentProcessors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const paymentProcessors = Array.isArray(config.services?.paymentProcessors)
     ? config.services.paymentProcessors
     : [];
@@ -138,11 +139,14 @@ const TermsPage = (): React.JSX.Element => {
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
       <h1>{config.policies.terms.title}</h1>
-      {config.policies.terms.lastUpdated ? (
-        <p>
-          <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
-        </p>
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        config.policies.terms.lastUpdated ? (
+          <p>
+            <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
+          </p>
+        ) : null
+      }
 
       <p>
         Welcome to {config.appName}. These Terms of Service govern your use of
@@ -207,12 +211,15 @@ const TermsPage = (): React.JSX.Element => {
       <ul>
         <li>Hosting: {config.services.hosting}</li>
         <li>AI providers: {config.services.aiProviders.join(", ")}</li>
-        {config.services.paymentProcessors.length > 0 ? (
-          <li>
-            Payments: {config.services.paymentProcessors.join(", ")} for billing
-            and subscription management
-          </li>
-        ) : null}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          config.services.paymentProcessors.length > 0 ? (
+            <li>
+              Payments: {config.services.paymentProcessors.join(", ")} for
+              billing and subscription management
+            </li>
+          ) : null
+        }
       </ul>
       <p>
         These third-party services have their own terms and privacy policies and

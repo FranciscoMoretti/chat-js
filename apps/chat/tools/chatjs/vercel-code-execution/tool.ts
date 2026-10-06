@@ -82,7 +82,9 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       abortSignal?.throwIfAborted();
       log.info({ language, requestId, runtime, title }, "creating sandbox");
+      // oxlint-disable-next-line no-ternary -- Keep auth as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const auth = sandboxOwnership ? resolveSandboxAuth() : undefined;
+      // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const name = auth
         ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading reserve from sandboxOwnership; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
           await sandboxOwnership?.reserve(auth, abortSignal)
@@ -98,6 +100,7 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
 
       log.info({ language, requestId, title }, "executing code");
       const result =
+        // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         language === "javascript"
           ? await executeJavaScriptInSandbox({
               code,

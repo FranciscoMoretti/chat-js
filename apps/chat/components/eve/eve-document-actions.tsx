@@ -53,6 +53,7 @@ export const EveDocumentActions = ({
       const copied = documentUi[kind]?.copyContent?.(content) ?? content;
       await navigator.clipboard.writeText(copied);
       toast.success(
+        // oxlint-disable-next-line no-ternary -- Keep toast.success argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         kind === "sheet" ? "Copied csv to clipboard!" : "Copied to clipboard!"
       );
     } catch {
@@ -128,6 +129,7 @@ export const EveDocumentActions = ({
             aria-label={copyLabel}
             // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
             className={
+              // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               kind === "sheet" ? "hover:bg-accent h-fit p-2" : buttonClass
             }
             variant="outline"
@@ -137,7 +139,12 @@ export const EveDocumentActions = ({
               void copy();
             }}
           >
-            <Copy size={kind === "sheet" ? 16 : 18} />
+            <Copy
+              size={
+                // oxlint-disable-next-line no-ternary -- Keep size JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                kind === "sheet" ? 16 : 18
+              }
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent>{copyLabel}</TooltipContent>

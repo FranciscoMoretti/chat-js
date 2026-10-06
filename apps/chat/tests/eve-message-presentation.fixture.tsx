@@ -123,6 +123,7 @@ const VersionControls = ({
   const isFirst = message.id === "user-1";
   return (
     <MessageSiblingsView
+      // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       count={isFirst ? 3 : 2}
       index={1}
       onNext={() => onLog(`next:${message.id}`)}
@@ -173,6 +174,7 @@ const Transcript = ({
   return (
     <section
       aria-label={title}
+      // oxlint-disable-next-line no-ternary -- Keep data-testid JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       data-testid={isReadonly ? "readonly-transcript" : "editable-transcript"}
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>

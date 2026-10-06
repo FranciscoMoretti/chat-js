@@ -209,6 +209,7 @@ const installPlan = async (
     }
   }
   const protectedFiles =
+    // oxlint-disable-next-line no-ternary -- Keep protectedFiles as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     plan.replacements.length > NO_REPLACEMENTS || replacingShared
       ? [...targets, ...retired.flat()]
       : [];
@@ -262,6 +263,7 @@ const installPlan = async (
         async ([target, content]: ReadonlyNative<
           readonly [string, Buffer | null]
         >): Promise<void> => {
+          // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           await (content
             ? writeFile(path.join(cwd, target), content)
             : rm(path.join(cwd, target), { force: true }));
@@ -277,6 +279,7 @@ const installPlan = async (
       }
     );
     throw new Error(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Installation did not complete. ${restorationErrors.length > NO_RESTORATION_ERRORS ? `Source restoration also failed: ${restorationErrors.join("; ")}. Preserve .chatjs/replaced-* backups and restore source manually;` : "Previous provider source is preserved;"} newly installed source/dependencies may remain. Fix the reported problem and retry the same add command with --overwrite after reviewing partial source, or run chat-js sync after manual source integration. ${error instanceof Error ? error.message : String(error)}`,
       { cause: error }
     );

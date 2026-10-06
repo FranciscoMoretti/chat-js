@@ -137,7 +137,12 @@ test("a removed editor has an explicit notice in panel and inline views", async 
         <div>
           {[false, true].map((inline): React.JSX.Element => (
             <section key={String(inline)}>
-              <h2>{inline ? "Inline preview" : "Document panel"}</h2>
+              <h2>
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  inline ? "Inline preview" : "Document panel"
+                }
+              </h2>
               <DocumentBody
                 kind="text"
                 title="Notes"

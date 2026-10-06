@@ -76,6 +76,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           onUploaded(attachment);
         } catch (error) {
           toast.error(
+            // oxlint-disable-next-line no-ternary -- Keep toast.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             error instanceof Error ? error.message : "Upload failed."
           );
         }
@@ -125,6 +126,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
         }
         input.current.click();
       },
+      // oxlint-disable-next-line no-ternary -- Keep rootProps as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       rootProps: disabled
         ? {}
         : {

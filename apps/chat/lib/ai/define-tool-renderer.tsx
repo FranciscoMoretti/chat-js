@@ -129,7 +129,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
           tool={{
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
-            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+            // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading success from input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep input as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             input: input?.success ? input.data : undefined,
             state: value.state,
           }}
@@ -176,6 +176,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     isReadonly: boolean;
   }): React.JSX.Element => {
     const parsed = envelope.safeParse(props.tool);
+    // oxlint-disable-next-line no-ternary -- Keep flatMap receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
       (update) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from updateSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.

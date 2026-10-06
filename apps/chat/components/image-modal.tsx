@@ -173,25 +173,28 @@ const ImageModal = ({
           }}
           type="button"
         >
-          {imageUnavailable ? (
-            <output className="flex flex-col items-center gap-3 text-white">
-              <ImageOffIcon
-                // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-10"
-              />
-              <span>Image unavailable</span>
-            </output>
-          ) : (
-            <>
-              {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
-              <img
-                alt={imageName ?? "Expanded image"}
-                className="max-h-[90vh] max-w-[90vw] object-contain"
-                onError={handleImageError}
-                src={imageUrl || undefined}
-              />
-            </>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            imageUnavailable ? (
+              <output className="flex flex-col items-center gap-3 text-white">
+                <ImageOffIcon
+                  // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-10"
+                />
+                <span>Image unavailable</span>
+              </output>
+            ) : (
+              <>
+                {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
+                <img
+                  alt={imageName ?? "Expanded image"}
+                  className="max-h-[90vh] max-w-[90vw] object-contain"
+                  onError={handleImageError}
+                  src={imageUrl || undefined}
+                />
+              </>
+            )
+          }
         </button>
         {showActions && !imageUnavailable && (
           <ImageActions

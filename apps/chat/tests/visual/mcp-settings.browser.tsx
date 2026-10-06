@@ -139,6 +139,7 @@ vi.mock("@tanstack/react-query", () => ({
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...connector,
           requireApproval: mocks.approvalRequired,
+          // oxlint-disable-next-line no-ternary -- Keep userId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           userId: mocks.sharedConnector ? null : connector.userId,
         },
         {
@@ -163,6 +164,7 @@ vi.mock("@tanstack/react-query", () => ({
     }
     return {
       data:
+        // oxlint-disable-next-line no-ternary -- Keep data as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         queryKey[0] === "list" && mocks.listError && !mocks.cachedData
           ? undefined
           : responses[queryKey[0]],
@@ -207,6 +209,7 @@ const renderPage = async (
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() =>
     root.render(
+      /* oxlint-disable no-ternary -- Keep details/list settings headings and description as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
       <SettingsPage>
         <SettingsPageHeader>
           <h2 className="text-lg font-semibold">
@@ -221,6 +224,7 @@ const renderPage = async (
         <Toaster position="top-center" theme="dark" />
         {content}
       </SettingsPage>
+      /* oxlint-enable no-ternary */
     )
   );
   return async (): Promise<void> => {
@@ -293,6 +297,7 @@ test("connector details show discovery, owner controls and the back link", async
 /* oxlint-enable oxc/no-async-await */
 for (const details of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`connector ${details ? "details" : "list"} displays missing credentials instead of an empty state`, async () => {
     mocks.listError = true;
     const cleanup = await renderPage(details);
@@ -306,6 +311,7 @@ for (const details of [false, true]) {
       await expect
         .element(page.getByText("Connector not found", { exact: true }))
         .not.toBeInTheDocument();
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       await takeSnapshot(`mcp-${details ? "details" : "list"}-setup-error`);
     } finally {
       mocks.listError = false;
@@ -317,6 +323,7 @@ for (const details of [false, true]) {
 
 for (const details of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`cached ${details ? "details" : "list"} remains usable after a background refresh error`, async () => {
     mocks.listError = true;
     mocks.cachedData = true;
@@ -326,6 +333,7 @@ for (const details of [false, true]) {
         .element(page.getByText("Documentation server", { exact: true }))
         .toBeVisible();
       await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       await takeSnapshot(`mcp-${details ? "details" : "list"}-refresh-error`);
     } finally {
       mocks.listError = false;

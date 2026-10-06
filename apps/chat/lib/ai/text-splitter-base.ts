@@ -88,6 +88,7 @@ export abstract class TextSplitter implements TextSplitterParams {
     const docs: string[] = [];
     const currentDoc: string[] = [];
     let total = 0;
+    // oxlint-disable-next-line no-ternary -- Keep overlapLimit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const overlapLimit = separator === "" ? 0 : this.chunkOverlap;
     for (const split of splits) {
       const _len = split.length;

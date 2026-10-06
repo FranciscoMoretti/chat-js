@@ -46,6 +46,7 @@ export const withRegistryTransport = async <Result>(
         args: Parameters<typeof fetch>
       ): ReturnType<typeof fetch> {
         const [input] = args;
+        // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         const url = input instanceof Request ? input.url : String(input);
         requireSecure(url);
         return Reflect.apply(original, receiver, args).then(

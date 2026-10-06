@@ -195,6 +195,7 @@ const readCommand = async (
         });
       } catch (error) {
         return rejectEveCommand(
+          // oxlint-disable-next-line no-ternary -- Keep rejectEveCommand argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           error instanceof Error ? error.message : "Unable to read attachment.",
           400
         );
@@ -236,6 +237,7 @@ const handle = async (
   const { path } = await context.params;
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
+  // oxlint-disable-next-line no-ternary -- Keep conversation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const conversation = policy
     ? await getBoundEveConversationForSession(
         principal.ownerId,
@@ -271,6 +273,7 @@ const handle = async (
     }
     const result = await eveRequest(
       principal.ownerId,
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `/eve/chat/${path.join("/")}${query.size > 0 ? `?${query}` : ""}`,
       {
         body,
@@ -278,6 +281,7 @@ const handle = async (
         // Closing the reader must not cancel a validated command before Eve
         // can durably accept it. Streaming reads still follow browser lifetime.
         signal:
+          // oxlint-disable-next-line no-ternary -- Keep signal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           request.method === "GET"
             ? request.signal
             : AbortSignal.timeout(30_000),

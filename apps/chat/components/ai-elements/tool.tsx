@@ -195,6 +195,7 @@ const ToolOutput = ({
       <CodeBlock code={JSON.stringify(output, null, 2)} language="json" />
     );
   } else if (typeof output === "string") {
+    // oxlint-disable-next-line no-ternary -- Keep code JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     Output = <CodeBlock code={output === "" ? '""' : output} language="json" />;
   }
 
@@ -205,11 +206,15 @@ const ToolOutput = ({
       {...props}
     >
       <h4 className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-        {typeof errorText === "string" && errorText !== "" ? "Error" : "Result"}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          typeof errorText === "string" && errorText !== "" ? "Error" : "Result"
+        }
       </h4>
       <div
         className={cn(
           "overflow-x-auto rounded-md text-xs [&_table]:w-full",
+          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof errorText === "string" && errorText !== ""
             ? "bg-destructive/10 text-destructive"
             : "bg-muted/50 text-foreground"

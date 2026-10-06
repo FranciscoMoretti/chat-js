@@ -132,6 +132,7 @@ const EveArtifactPanel = ({
   readOnly: boolean;
 } & DocumentActionProps): ReactJSX.Element => {
   const { artifact, closeArtifact, setArtifact } = useArtifact();
+  // oxlint-disable-next-line no-ternary -- Keep selectedRevisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const selectedRevisionId = artifact.followLive
     ? undefined
     : artifact.revisionId;
@@ -209,6 +210,7 @@ const EveArtifactPanel = ({
     editing.ready &&
     (Boolean(editing.draft) || index === history.length - 1);
   const contentProps = {
+    // oxlint-disable-next-line no-ternary -- Keep content as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     content: previewing
       ? artifact.content
       : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from editing.draft; preserve one receiver evaluation, skipped accesses and the existing revision?.content fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading content from revision; preserve one receiver evaluation, skipped accesses and the existing revision?.content fallback. The app guidance prefers optional chaining.
@@ -217,6 +219,7 @@ const EveArtifactPanel = ({
     isCurrentVersion: index === history.length - 1,
     isReadonly: !editable,
     onSaveContent: editing.edit,
+    // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     status: previewing ? ("streaming" as const) : ("idle" as const),
   };
   const selectRevision = (id: string | undefined): void => {
@@ -277,10 +280,13 @@ const EveArtifactPanel = ({
                 // oxlint-disable-next-line react/forbid-component-props -- ArtifactTitle accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="break-words"
               >
-                {previewing
-                  ? artifact.title
-                  : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from revision; preserve one receiver evaluation, skipped accesses and the existing artifact.title fallback. The app guidance prefers optional chaining.
-                    (revision?.title ?? artifact.title)}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  previewing
+                    ? artifact.title
+                    : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from revision; preserve one receiver evaluation, skipped accesses and the existing artifact.title fallback. The app guidance prefers optional chaining.
+                      (revision?.title ?? artifact.title)
+                }
               </ArtifactTitle>
               <ArtifactDescription>{subtitle} </ArtifactDescription>
             </div>
@@ -306,6 +312,7 @@ const EveArtifactPanel = ({
               }
               onNext={() =>
                 selectRevision(
+                  // oxlint-disable-next-line no-ternary -- Keep selectRevision argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   index + 1 === history.length - 1
                     ? undefined
                     : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from history[index + 1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -321,6 +328,7 @@ const EveArtifactPanel = ({
                     kind={revision.kind}
                     messages={messages}
                     disabled={actionsDisabled}
+                    // oxlint-disable-next-line no-ternary -- Keep onAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     onAction={owned ? onDocumentAction : undefined}
                     buttonOnly
                   />
@@ -368,6 +376,7 @@ const EveArtifactPanel = ({
           {revision && !document.isError && !previewing && (
             <DocumentBody
               comparison={
+                // oxlint-disable-next-line no-ternary -- Keep comparison JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 comparing && previousRevisionId
                   ? {
                       content: revision.content,
@@ -405,6 +414,7 @@ const EveArtifactPanel = ({
                 documentId={artifact.documentId}
                 kind={revision.kind}
                 onAction={
+                  // oxlint-disable-next-line no-ternary -- Keep onAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   onDocumentAction
                     ? (request) => {
                         selectRevision(undefined);
@@ -424,6 +434,7 @@ const EveArtifactPanel = ({
                 documentId={artifact.documentId}
                 kind={revision.kind}
                 messages={messages}
+                // oxlint-disable-next-line no-ternary -- Keep onAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 onAction={owned ? onDocumentAction : undefined}
                 revisionId={revision.id}
                 title={revision.title}
@@ -483,9 +494,9 @@ const Layout = ({
 } & DocumentActionProps) => {
   const { artifact, setArtifact } = useArtifact();
   const ownerId = artifact.conversationId ?? conversationId;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling isExecutionBusy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when calling isExecutionBusy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep busy as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const busy = ownerId ? isExecutionBusy?.(ownerId) : undefined;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling getExecutionMessages; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when calling getExecutionMessages; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep ownerMessages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ownerMessages = ownerId ? getExecutionMessages?.(ownerId) : undefined;
   useEffect(() => {
     if (artifact.status !== "streaming" || !artifact.previewCallId) {
@@ -537,7 +548,12 @@ const Layout = ({
   const visible = Boolean(conversationId && artifact.isVisible);
   return (
     <ChatLayout isSecondaryPanelVisible={visible}>
-      <ChatLayoutMain defaultSize={visible ? 65 : 100}>
+      <ChatLayoutMain
+        defaultSize={
+          // oxlint-disable-next-line no-ternary -- Keep defaultSize JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          visible ? 65 : 100
+        }
+      >
         {children}
       </ChatLayoutMain>
       <ChatLayoutHandle />
@@ -548,6 +564,7 @@ const Layout = ({
             documentActionsDisabled={documentActionsDisabled}
             executionBusy={busy}
             onStop={
+              // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ownerId && onStopExecution
                 ? () => onStopExecution(ownerId)
                 : undefined
@@ -555,6 +572,7 @@ const Layout = ({
             key={`${artifact.conversationId ?? conversationId}:${artifact.documentId}`}
             messages={ownerMessages ?? messages}
             onDocumentAction={
+              // oxlint-disable-next-line no-ternary -- Keep onDocumentAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               !artifact.conversationId ||
               artifact.conversationId === conversationId
                 ? onDocumentAction

@@ -94,6 +94,7 @@ vi.mock("@/features/attachment-uploads/upload", () => ({
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 vi.mock("@/providers/session-provider", () => ({
   useSession: () => ({
+    // oxlint-disable-next-line no-ternary -- Keep data as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     data: state.authenticated ? { user: { id: "fixture" } } : null,
   }),
 }));
@@ -108,6 +109,7 @@ vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
     getModelById: () => ({
       input: { image: true, pdf: true, text: true },
+      // oxlint-disable-next-line no-ternary -- Keep toolCall as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       toolCall: state.unknownCapabilities ? undefined : state.toolCall,
     }),
   }),
@@ -142,6 +144,7 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
   installedToolNames: {
     has: (name: string) =>
       state.featuresEnabled &&
+      // oxlint-disable-next-line no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       (name === "webSearch"
         ? !state.removedTool
         : [
@@ -176,6 +179,7 @@ vi.mock("@tanstack/react-query", () => ({
     data: state.connectors.map((connector) => ({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...connector,
+      // oxlint-disable-next-line no-ternary -- Keep userId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       userId: state.globalConnector ? null : "fixture",
     })),
     isError: state.error,
@@ -250,6 +254,7 @@ const mount = async (
 ) => {
   document.documentElement.classList.add("dark");
   const container = document.createElement("main");
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   container.style.cssText = `padding:32px;width:${state.mobile ? 350 : 900}px;min-height:540px;background:#171717`;
   document.body.append(container);
   const root = createRoot(container);
@@ -662,6 +667,7 @@ test("no available controls hides the menu but still allows clearing a restored 
 
 for (const mobile of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`active pill clears selection without opening the menu (${mobile ? "mobile" : "desktop"})`, async () => {
     state.mobile = mobile;
     composerControls.reverse();
@@ -674,6 +680,7 @@ for (const mobile of [false, true]) {
         .element(page.getByRole("button", { name: "Clear Search tool" }))
         .toBeVisible();
       await takeSnapshot(
+        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         `composer-active-pill-${mobile ? "mobile" : "desktop"}`
       );
       await act(() =>

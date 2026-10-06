@@ -191,15 +191,18 @@ export const SocialAuthProviders = ({
               className="mr-2 h-4 w-4"
             />
             Continue with {label}
-            {isLastUsed ? (
-              <Badge
-                // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="absolute top-0 right-2 h-5 -translate-y-1/2 px-1.5 text-[10px]"
-                variant="default"
-              >
-                Last used
-              </Badge>
-            ) : null}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isLastUsed ? (
+                <Badge
+                  // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="absolute top-0 right-2 h-5 -translate-y-1/2 px-1.5 text-[10px]"
+                  variant="default"
+                >
+                  Last used
+                </Badge>
+              ) : null
+            }
           </Button>
         );
       })}

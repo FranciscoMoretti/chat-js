@@ -84,7 +84,10 @@ export const ProjectInstructionsDialog = ({
           Cancel
         </Button>
         <Button disabled={isPending} onClick={onSave} type="button">
-          {isPending ? "Saving..." : "Save instructions"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            isPending ? "Saving..." : "Save instructions"
+          }
         </Button>
       </DialogFooter>
     </DialogContent>

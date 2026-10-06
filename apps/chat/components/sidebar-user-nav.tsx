@@ -162,6 +162,7 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             align="end"
             // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+            // oxlint-disable-next-line no-ternary -- Keep side JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             side={isMobile ? "bottom" : "right"}
             sideOffset={4}
           >
@@ -203,20 +204,24 @@ export const SidebarUserNav = (): ReactJSX.Element => {
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() =>
+                  // oxlint-disable-next-line no-ternary -- Keep setTheme argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   setTheme(resolvedTheme === "light" ? "dark" : "light")
                 }
               >
-                {resolvedTheme === "light" ? (
-                  <Moon
-                    // oxlint-disable-next-line react/forbid-component-props -- Moon accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="mr-2 size-4"
-                  />
-                ) : (
-                  <Sun
-                    // oxlint-disable-next-line react/forbid-component-props -- Sun accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="mr-2 size-4"
-                  />
-                )}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  resolvedTheme === "light" ? (
+                    <Moon
+                      // oxlint-disable-next-line react/forbid-component-props -- Moon accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="mr-2 size-4"
+                    />
+                  ) : (
+                    <Sun
+                      // oxlint-disable-next-line react/forbid-component-props -- Sun accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="mr-2 size-4"
+                    />
+                  )
+                }
                 Toggle Theme
               </DropdownMenuItem>
             </DropdownMenuGroup>

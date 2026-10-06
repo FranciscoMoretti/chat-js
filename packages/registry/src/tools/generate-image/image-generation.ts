@@ -61,6 +61,7 @@ const traditionalPrompt = async (
   log.debug(
     {
       attachmentCount: options.imageParts.length,
+      // oxlint-disable-next-line no-ternary -- Keep lastGeneratedCount as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       lastGeneratedCount: options.lastGeneratedImage
         ? GENERATED_IMAGE_COUNT
         : NO_GENERATED_IMAGES,
@@ -92,9 +93,10 @@ const storeImage = async (
       mode: options.mode,
       ms: Date.now() - options.startMs,
       uploadedFilename: image.filename,
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (model.multimodal ? { modelId: model.modelId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (model.multimodal ? { modelId: model.modelId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(model.multimodal ? { modelId: model.modelId } : {}),
     },
+    // oxlint-disable-next-line no-ternary -- Keep log.info argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     model.multimodal
       ? "generateImage: multimodal success"
       : "generateImage: success"
@@ -158,6 +160,7 @@ const multimodalContent = async (
   options: Readonly<ImageGenerationOptions>
 ): Promise<(ImageContent | TextContent)[]> => {
   const buffers =
+    // oxlint-disable-next-line no-ternary -- Keep buffers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.mode === "edit" ? await collectEditImages(options) : [];
   const images = buffers.map(
     (image: ReadonlyNativeSurface<Buffer>): ImageContent => ({
@@ -169,6 +172,7 @@ const multimodalContent = async (
     ...images,
     {
       text:
+        // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         options.mode === "edit"
           ? `Based on the provided image(s), ${options.prompt}`
           : `Generate an image: ${options.prompt}`,
@@ -198,6 +202,7 @@ const storeMultimodalImage = async (
   const buffer = Buffer.from(imageFile.uint8Array);
   const timestamp = Date.now();
   const [, subtype] = imageFile.mediaType.split("/");
+  // oxlint-disable-next-line no-ternary -- Keep ext as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ext = typeof subtype === "string" && subtype !== "" ? subtype : "png";
   return await storeImage(
     options,

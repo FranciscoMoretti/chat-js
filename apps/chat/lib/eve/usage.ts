@@ -35,6 +35,7 @@ export const ingestEveUsage = async (
   }
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from attribution; preserve one receiver evaluation, skipped accesses and the existing sessionId fallback. The app guidance prefers optional chaining.
   const billingSession = attribution?.sessionId ?? sessionId;
+  // oxlint-disable-next-line no-ternary -- Keep eventId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const eventId = attribution
     ? `eve-child:${sessionId}:${event.meta.id}`
     : event.meta.id;
@@ -43,7 +44,7 @@ export const ingestEveUsage = async (
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
       const priced = await recordEveUsage({
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation, skipped accesses and the existing (call.failed === true ? 0 : undefined) fallback. The app guidance prefers optional chaining.
+        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation, skipped accesses and the existing (call.failed === true ? 0 : undefined) fallback. The app guidance prefers optional chaining.; no-ternary: Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         costUsd: call.usage?.costUsd ?? (call.failed === true ? 0 : undefined),
         eventId: `${eventId}:model-call:${index}`,
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading generationId from call.providerMetadata.gateway; read gateway from call.providerMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -67,8 +68,10 @@ export const ingestEveUsage = async (
     if (!hasEveToolReceipt(event.data.result.output)) {
       return undefined;
     }
+    // oxlint-disable-next-line no-ternary -- Keep recordedCost as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const recordedCost = result.success ? result.data.usage.costUsd : undefined;
     return await recordEveUsage({
+      // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       costUsd: event.data.status === "rejected" ? 0 : recordedCost,
       eventId: `eve-tool:${sessionId}:${event.data.result.callId}`,
       ownerId,
@@ -85,10 +88,11 @@ export const ingestEveUsage = async (
     return undefined;
   }
   const priced = await recordEveUsage({
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading costUsd from event.data.usage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     costUsd: event.type === "step.failed" ? 0 : event.data.usage?.costUsd,
     eventId,
     generationId:
+      // oxlint-disable-next-line no-ternary -- Keep generationId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       event.type === "step.failed"
         ? undefined
         : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading generationId from event.data.providerMetadata.gateway; read gateway from event.data.providerMetadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.

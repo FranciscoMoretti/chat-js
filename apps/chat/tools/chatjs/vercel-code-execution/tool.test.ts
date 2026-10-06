@@ -83,7 +83,9 @@ it.each(["python", "javascript"] as const)(
       undefined,
       expect.objectContaining({ projectId: "project" })
     );
+    // oxlint-disable-next-line no-ternary -- Keep executor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const executor = language === "python" ? mocks.python : mocks.javascript;
+    // oxlint-disable-next-line no-ternary -- Keep unused as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const unused = language === "python" ? mocks.javascript : mocks.python;
     expect(executor).toHaveBeenCalledWith(
       expect.objectContaining({ code: "source", sandbox })

@@ -12,6 +12,7 @@ export const getGoogleFaviconUrl = (
   size = defaultFaviconSizePx
 ): string => {
   try {
+    // oxlint-disable-next-line no-ternary -- Keep hostname as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const hostname = urlOrHostname.includes("://")
       ? new URL(urlOrHostname).hostname
       : urlOrHostname;

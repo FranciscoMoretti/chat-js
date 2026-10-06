@@ -174,6 +174,7 @@ const FormControl = ({
   return (
     <Slot
       aria-describedby={
+        // oxlint-disable-next-line no-ternary -- Keep aria-describedby JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error ? `${formDescriptionId} ${formMessageId}` : formDescriptionId
       }
       aria-invalid={Boolean(error)}
@@ -219,6 +220,7 @@ const FormMessage = ({
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element | null => {
   const { error, formMessageId } = useFormField();
+  // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const body = error ? (error.message ?? "") : props.children;
 
   if (!body) {

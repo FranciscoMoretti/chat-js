@@ -112,6 +112,7 @@ export const useDocumentDraft = ({
         return;
       }
       update(
+        // oxlint-disable-next-line no-ternary -- Keep update argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         current
           ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             { ...current, content }
@@ -159,6 +160,7 @@ export const useDocumentDraft = ({
       }
       const newest = latest.current;
       update(
+        // oxlint-disable-next-line no-ternary -- Keep update argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         newest && newest.content !== submitted.submittedContent
           ? {
               baseRevisionId: saved.id,
@@ -170,6 +172,7 @@ export const useDocumentDraft = ({
       );
     } catch (error) {
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Document could not be saved."
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required save lock cleanup in finally.

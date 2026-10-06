@@ -69,15 +69,17 @@ const guestRequestIpHash = (
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
   // https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for
+  // oxlint-disable-next-line no-ternary -- Keep header as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const header = env.VERCEL_URL
     ? "x-vercel-forwarded-for"
     : env.TRUSTED_CLIENT_IP_HEADER;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from request.headers.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from request.headers.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep address as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const address = header ? request.headers.get(header)?.trim() : undefined;
   if (!(address && isIP(address)) || address.includes("%")) {
     throw new Error("Trusted client address is unavailable.");
   }
   const canonical =
+    // oxlint-disable-next-line no-ternary -- Keep canonical as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     isIP(address) === IPV6_VERSION
       ? new URL(`http://[${address}]`).hostname.slice(
           LEADING_BRACKET_LENGTH,
@@ -85,6 +87,7 @@ const guestRequestIpHash = (
         )
       : address;
   const mapped = MAPPED_IP.exec(canonical);
+  // oxlint-disable-next-line no-ternary -- Keep normalized as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const normalized = mapped
     ? [
         Math.floor(
@@ -256,12 +259,14 @@ const admitGuestCreation = async (
     {
       creationRejected: reservation.status !== "conflict",
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         reservation.status === "conflict"
           ? "This operation has different content."
           : "Guest message limit reached. Sign in to continue.",
     },
     {
       status:
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         reservation.status === "conflict"
           ? HTTP_CONFLICT
           : HTTP_TOO_MANY_REQUESTS,

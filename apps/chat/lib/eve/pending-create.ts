@@ -221,6 +221,7 @@ const moveRejectedProjectCreation = (
     );
   }
   const next =
+    // oxlint-disable-next-line no-ternary -- Keep next as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     "modelIds" in pending
       ? prepareResponseGroupCreation(
           storage,

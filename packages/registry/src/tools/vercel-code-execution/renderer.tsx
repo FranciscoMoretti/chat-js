@@ -27,9 +27,13 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
     language: "python",
     title: "",
   };
+  // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const result = tool.state === "output-available" ? tool.output : null;
+  // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const code = typeof args.code === "string" ? args.code : "";
+  // oxlint-disable-next-line no-ternary -- Keep title as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const title = typeof args.title === "string" ? args.title : "";
+  // oxlint-disable-next-line no-ternary -- Keep language as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const language = args.language === "javascript" ? "javascript" : "python";
   return (
     <div className="space-y-6">

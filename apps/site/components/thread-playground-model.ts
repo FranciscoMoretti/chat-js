@@ -175,6 +175,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
     const streamId = crypto.randomUUID();
     const userMessage = messages.at(-1);
+    // oxlint-disable-next-line no-ternary -- Keep prompt as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const prompt = userMessage ? getMessageText(userMessage) : "this branch";
     const response = `${responseLabel}: Let’s explore "${prompt}". Start with a small release that people can try immediately. Show one clear workflow, collect feedback from real integrations, and use it to decide what to improve next. This response has its own stream: you can explore another branch, stop a sibling, or return here without losing any of this progress.`;
     const words = response.split(" ");
@@ -204,6 +205,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
               // oxlint-disable-next-line no-await-in-loop -- Stream words in order with a separate cancellable delay for each token.
               await delay(tokenDelay, abortSignal);
               controller.enqueue({
+                // oxlint-disable-next-line no-ternary -- Keep delta as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 delta: index === 0 ? word : ` ${word}`,
                 id: "text",
                 type: "text-delta",

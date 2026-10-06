@@ -2,15 +2,13 @@
 
 The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-The conditional-expression rule below remains temporarily disabled during adoption. Its rationale explains the conflicts to resolve through narrow source exceptions; it does not authorize a permanent global exclusion. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are now enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
+All 681 rules in the effective repository and standalone-app configurations are enabled. This is a configuration milestone; inherited source exceptions still need individual review. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
-## Rules awaiting source-scoped adoption
+## Conditional value selections
 
-| Rule | Rationale and evidence |
-| --- | --- |
-| `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
+`no-ternary` is enabled. Practical direct returns and callback guards were fixed before adoption. The remaining 943 canonical expression sites have local comments identifying their actual value-selection context and the pinned `unicorn/prefer-ternary` conflict with equivalent if/else assignment. These are convention exceptions, not claims that every expression is architecturally irreducible. `unicorn/no-nested-ternary` remains enabled.
 
-These conflicts remain part of the unfinished adoption work. Do not replace them with indiscriminate source waivers or distort code merely to satisfy opposing rules.
+Comments target the actual line, condition prefix or bounded JSX expression/tag trivia. Exact scope ledgers exclude unreviewed nested conditions, and compiler checks preserve emitted JavaScript, rendered child strings and JSDoc attachment. The native policy regression runs actual root and standalone configurations without forcing the rule on the command line; disabled-policy and overbroad nested-callback controls fail. These proofs do not sign off unrelated existing suppressions.
 
 ## Node runtime boundaries
 
@@ -113,7 +111,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 
 ## Inventory of 110 audited rules
 
-`Enforced` means the rule remains an error in the effective policy, subject to existing options and scoped exceptions. `Off — policy` links to the rationale above. Original issues retain audit provenance even when their original enable-all resolution needs qualification.
+`Enforced` means the rule remains an error in the effective policy, subject to existing options and scoped exceptions. Original issues retain audit provenance even when their original enable-all resolution needs qualification.
 
 | Rule | Status | Original issue |
 | --- | --- | --- |
@@ -146,7 +144,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `no-empty-function` | Enforced | [#575](https://github.com/FranciscoMoretti/chat-js/issues/575) |
 | `no-implicit-coercion` | Enforced | [#516](https://github.com/FranciscoMoretti/chat-js/issues/516) |
 | `no-magic-numbers` | Enforced | [#517](https://github.com/FranciscoMoretti/chat-js/issues/517) |
-| `no-ternary` | Off — policy | [#518](https://github.com/FranciscoMoretti/chat-js/issues/518) |
+| `no-ternary` | Enforced — local value-selection convention | [#518](https://github.com/FranciscoMoretti/chat-js/issues/518) |
 | `no-undefined` | Enforced | [#519](https://github.com/FranciscoMoretti/chat-js/issues/519) |
 | `no-underscore-dangle` | Enforced | [#520](https://github.com/FranciscoMoretti/chat-js/issues/520) |
 | `node/no-process-env` | Enforced | [#537](https://github.com/FranciscoMoretti/chat-js/issues/537) |

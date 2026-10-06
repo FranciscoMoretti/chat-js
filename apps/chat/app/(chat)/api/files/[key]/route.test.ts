@@ -46,6 +46,7 @@ describe("file route", () => {
     async (managed) => {
       mocks.access.mockResolvedValue({ allowed: true, managed });
       const response = await getFile();
+      // oxlint-disable-next-line no-ternary -- Keep expect(response.status).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       expect(response.status).toBe(managed ? 200 : 404);
       if (!managed) {
         expect(mocks.serve).not.toHaveBeenCalled();

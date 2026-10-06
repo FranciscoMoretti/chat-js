@@ -47,6 +47,7 @@ const incomingMessageSearchText = (event: {
   };
   readonly meta: { readonly id: string };
 }): EveSearchText[] => {
+  // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const text = event.data.parts
     ? event.data.parts
         .filter((part) => part.type === "text")

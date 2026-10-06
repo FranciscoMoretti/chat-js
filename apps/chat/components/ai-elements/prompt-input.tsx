@@ -196,7 +196,7 @@ const PromptInputButton = ({
   ...props
 }: PromptInputButtonProps): React.JSX.Element => {
   const newSize =
-    // oxlint-disable-next-line react/no-react-children -- Preserve React child-count semantics for the public button sizing API.
+    // oxlint-disable-next-line react/no-react-children, no-ternary -- Preserve React child-count semantics for the public button sizing API.; no-ternary: Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     size ?? (Children.count(props.children) > 1 ? "sm" : "icon-sm");
 
   return (
@@ -473,6 +473,7 @@ const PromptInputSpeechButton = ({
           const textarea = textareaRef.current;
           const currentValue = textarea.value;
           const newValue =
+            // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             currentValue + (currentValue ? " " : "") + finalTranscript;
 
           textarea.value = newValue;

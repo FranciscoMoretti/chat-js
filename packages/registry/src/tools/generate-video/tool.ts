@@ -210,7 +210,7 @@ const prepareGeneration = (
   const uploadFile = eveGeneratedFileUploader(context);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const selected = context.session.auth.current?.attributes.modelId;
-  // oxlint-disable-next-line eslint/no-undefined -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.
+  // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Start/failure logger payloads keep an own selectedModel field, while the optional resolver argument is absent unless the SDK auth attribute is a string.; no-ternary: Keep selectedModel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const selectedModel = typeof selected === "string" ? selected : undefined;
   const startMs = Date.now();
   return {
@@ -232,6 +232,7 @@ const throwVideoFailure = (
   startMs: number,
   selectedModel?: string
 ): never => {
+  // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const errorMessage = error instanceof Error ? error.message : "";
   const isUnsupportedVideoGateway = errorMessage.includes(
     "does not support video models"
@@ -240,6 +241,7 @@ const throwVideoFailure = (
   log.error(
     {
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error
           ? { message: error.message, name: error.name }
           : error,

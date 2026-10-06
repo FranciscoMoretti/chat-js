@@ -85,7 +85,7 @@ beforeEach(() => {
   /* oxlint-enable oxc/no-async-await */
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, no-ternary -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.; no-ternary: Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })

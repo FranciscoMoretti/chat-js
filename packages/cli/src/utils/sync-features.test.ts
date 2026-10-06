@@ -66,6 +66,7 @@ const install = async (root: string): Promise<void> => {
         await mkdir(path.dirname(path.join(root, file)), { recursive: true });
         await writeFile(
           path.join(root, file),
+          // oxlint-disable-next-line no-ternary -- Keep writeFile argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           file === "features/mcp/chatjs.json"
             ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from mcpItem.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
               JSON.stringify(mcpItem.meta?.chatjs)
@@ -322,6 +323,7 @@ for (const file of ["composer-controls.ts", "settings-items.ts"]) {
     await initializeFeatureUi(root);
     await install(root);
     const name =
+      // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       file === "composer-controls.ts" ? "composerControls" : "settingsItems";
     await writeFile(
       path.join(root, file),

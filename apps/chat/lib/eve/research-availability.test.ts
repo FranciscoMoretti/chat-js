@@ -101,11 +101,11 @@ it.each([
     eveTurnGuest.update(() => scenario === "guest");
     const principal = {
       attributes: {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "selected" ? { selectedTool: "deepResearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "selected" ? { selectedTool: "deepResearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (scenario === "other-tool" ? { selectedTool: "webSearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "other-tool" ? { selectedTool: "webSearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
       },
       authenticator: "test",
@@ -126,6 +126,7 @@ it.each([
             ...session,
             auth: {
               current: principal,
+              // oxlint-disable-next-line no-ternary -- Keep initiator as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               initiator: scenario === "anonymous" ? null : principal,
             },
           }),
@@ -138,6 +139,7 @@ it.each([
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.doGenerateCalls[0].tools; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
     expect(names).toEqual(
+      // oxlint-disable-next-line no-ternary -- Keep expect(names).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ["automatic", "selected"].includes(scenario)
         ? ["deepResearch", "webSearch"]
         : ["webSearch"]

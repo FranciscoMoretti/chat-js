@@ -39,6 +39,7 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     return `Maintainer build failed during validation: ${error.message}`;
   }
   const code =
+    // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     error !== null && typeof error === "object" && "code" in error
       ? error.code
       : undefined;
@@ -48,6 +49,7 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     /^(?:(?:[0-9]{2}|F0|HV|P0|XX)[0-9A-Z]{3}|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|SUBPROCESS_EXIT_\d{1,3})$/u.test(
       code
     );
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMaintainerBuild's awaited sequencing and rejected-Promise behavior. */
@@ -166,6 +168,7 @@ if (import.meta.main) {
     /* oxlint-enable oxc/no-async-await */
   } catch (error) {
     console.error(
+      // oxlint-disable-next-line no-ternary -- Keep console.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error &&
         error.message.startsWith("Maintainer build failed during ")
         ? error.message

@@ -63,8 +63,10 @@ test("history pages and searches older conversations without exposing other owne
   await insertEveConversationFixtures(
     ids.map((id, index) => ({
       id,
+      // oxlint-disable-next-line no-ternary -- Keep ownerId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ownerId: index === 55 ? foreignOwner : owner.id,
       operationId: crypto.randomUUID(),
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       firstMessage: `${prefix} ${index === 54 ? "100%_literal" : `${index} end`}`,
       // Exercise precise timestamp ties and the pinned-to-unpinned boundary.
       updatedAt: sql`'2099-01-01 00:00:00.123456'::timestamp`,

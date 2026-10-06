@@ -44,6 +44,7 @@ test.each(["missing configuration", "invalid URL"])(
     const result = await retrieveUrl.execute(
       {
         url:
+          // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           reason === "invalid URL" ? "file:///private" : "https://example.com",
       },
       testToolContext()

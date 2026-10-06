@@ -65,6 +65,7 @@ const EveLogicalResponses = ({
   const [pending, setPending] = useState<string>();
   const userId = controller.logicalId(conversationId, messageId);
   const group =
+    // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof userId === "string" && userId !== ""
       ? logicalResponseSlots(snapshot, userId)
       : undefined;
@@ -93,6 +94,7 @@ const EveLogicalResponses = ({
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing slot.modelId fallback. The app guidance prefers optional chaining.
           modelName: getModelById(slot.modelId)?.name ?? slot.modelId,
           operationId: slot.operationId,
+          // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           state: slot.original ? "bound" : "unresolved",
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           status: snapshot.agents.get(
@@ -115,6 +117,7 @@ const EveLogicalResponses = ({
           if (model) {
             void changeModel(model.id);
           }
+          // oxlint-disable-next-line no-ternary -- Keep setPending argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           setPending(slot.original ? undefined : operationId);
           if (slot.attempt) {
             controller.selectNode(slot.attempt.answer);

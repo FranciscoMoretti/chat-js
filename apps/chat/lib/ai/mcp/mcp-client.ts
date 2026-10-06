@@ -99,6 +99,7 @@ export class MCPClient {
         software_id: config.appPrefix,
         software_version: "1.0.0",
         token_endpoint_auth_method:
+          // oxlint-disable-next-line no-ternary -- Keep token_endpoint_auth_method as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof this.serverConfig.oauthClientId === "string" &&
           this.serverConfig.oauthClientId !== "" &&
           typeof this.serverConfig.oauthClientSecret === "string" &&
@@ -267,15 +268,18 @@ export class MCPClient {
       }
       return {
         needsAuth: false,
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         status: this.client ? "connected" : "disconnected",
       };
     } catch (error) {
       const errorMessage =
+        // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : String(error);
       log.error(
         {
           connectorId: this.id,
           errorMessage,
+          // oxlint-disable-next-line no-ternary -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           errorStack: error instanceof Error ? error.stack : undefined,
         },
         "attemptConnection failed"
@@ -410,6 +414,7 @@ export class MCPClient {
     if (this.client !== origin) {
       return;
     }
+    // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isAuthError =
       errorMessage.includes("401") ||

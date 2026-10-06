@@ -29,6 +29,7 @@ const calculateMessagesTokens = (messages: ModelMessage[]): number => {
         // Add overhead for other part types (image, file, etc.)
         // Using GPT-4V approximation: ~765 tokens for typical image
         totalTokens +=
+          // oxlint-disable-next-line no-ternary -- Keep += operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           part.type === "text"
             ? encoder.encode(part.text).length
             : NON_TEXT_PART_TOKEN_ESTIMATE;
@@ -95,10 +96,11 @@ const extractSystemMessage = (
   otherMessages: ModelMessage[];
 } => {
   const systemMessage =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading role from messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep systemMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     preserveSystemMessage && messages[0]?.role === "system"
       ? messages[0]
       : null;
+  // oxlint-disable-next-line no-ternary -- Keep otherMessages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const otherMessages = systemMessage ? messages.slice(1) : messages;
   return { otherMessages, systemMessage };
 };
@@ -301,6 +303,7 @@ const truncateMessages = (
     preserveSystemMessage
   );
 
+  // oxlint-disable-next-line no-ternary -- Keep systemTokens as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const systemTokens = systemMessage
     ? calculateMessagesTokens([systemMessage])
     : 0;

@@ -133,6 +133,7 @@ export const EveComposer = ({
         attachments={
           <ContextBar
             attachments={files.attachments}
+            // oxlint-disable-next-line no-ternary -- Keep onRemoveAction JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onRemoveAction={uploadLocked ? undefined : removeAttachment}
             uploadQueue={files.uploadQueue}
           />

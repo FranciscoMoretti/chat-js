@@ -36,6 +36,7 @@ export const prepareEveMessage = async (
       continue;
     }
     const supported =
+      // oxlint-disable-next-line no-ternary -- Keep supported as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       part.mediaType === "application/pdf"
         ? model.input.pdf
         : model.input.image;

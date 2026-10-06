@@ -60,6 +60,7 @@ const executeInDaytona = async (
       sandbox: commandSandbox(resource, signal),
     };
     const result =
+      // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.language === "javascript"
         ? await executeJavaScriptInSandbox(execution)
         : await executePythonInSandbox(execution);

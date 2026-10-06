@@ -79,12 +79,16 @@ const ResponseStatus = ({
     <span className={styles.responseStatus} data-state={state}>
       <span
         aria-hidden="true"
+        // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         className={live ? styles.streamingRing : styles.statusDot}
       />
       <span>
-        {state === "submitted"
-          ? "Starting"
-          : state.charAt(0).toUpperCase() + state.slice(1)}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          state === "submitted"
+            ? "Starting"
+            : state.charAt(0).toUpperCase() + state.slice(1)
+        }
       </span>
       {message.role === "assistant" && (
         <span
@@ -132,7 +136,7 @@ const ThreadInstallCommand = (): React.JSX.Element => {
           />
           npm package
         </span>
-        <button
+        <button /* oxlint-disable no-ternary -- Keep the copied install-command icon as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
           aria-label="Copy installation command"
           className="text-muted-foreground hover:bg-secondary hover:text-foreground grid size-8 place-items-center transition-colors"
           onClick={(): void => {
@@ -151,7 +155,7 @@ const ThreadInstallCommand = (): React.JSX.Element => {
               className="size-4"
             />
           )}
-        </button>
+        </button /* oxlint-enable no-ternary */>
       </div>
       <div className="overflow-x-auto px-4 py-4">
         <code className="font-mono text-sm whitespace-nowrap">
@@ -289,6 +293,7 @@ const Conversation = ({
 
           return (
             <article
+              // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               className={`${styles.message} ${isUser ? styles.userMessage : styles.assistantMessage}`}
               data-selected={chat.tree.cursorId === message.id}
               key={message.id}
@@ -299,7 +304,12 @@ const Conversation = ({
                     <Sparkles size={14} />
                   </span>
                 )}
-                <span>{isUser ? "You" : "Assistant"}</span>
+                <span>
+                  {
+                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    isUser ? "You" : "Assistant"
+                  }
+                </span>
                 {chat.tree.cursorId === message.id && (
                   <span className={styles.currentTurn}>Selected</span>
                 )}
@@ -325,42 +335,49 @@ const Conversation = ({
                   />
                   Branch from here
                 </button>
-                {hasSiblings ? (
-                  <fieldset className="ml-auto flex items-center gap-0.5">
-                    <legend className="sr-only">
-                      Branch navigation for {message.id}
-                    </legend>
-                    <button
-                      aria-label={`Previous branch for ${message.id}`}
-                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
-                      disabled={siblingIndex === 0}
-                      onClick={(): void => navigateToSibling(siblingIndex - 1)}
-                      title="Previous version"
-                      type="button"
-                    >
-                      <ChevronLeft
-                        // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
-                        className="size-3.5"
-                      />
-                    </button>
-                    <span className="min-w-8 text-center font-mono text-[10px]">
-                      Branch {siblingIndex + 1} / {siblings.length}
-                    </span>
-                    <button
-                      aria-label={`Next branch for ${message.id}`}
-                      className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
-                      disabled={siblingIndex === siblings.length - 1}
-                      onClick={(): void => navigateToSibling(siblingIndex + 1)}
-                      title="Next version"
-                      type="button"
-                    >
-                      <ChevronRight
-                        // oxlint-disable-next-line react/forbid-component-props -- ChevronRight accepts className in its styling contract; preserve this caller's layout and appearance.
-                        className="size-3.5"
-                      />
-                    </button>
-                  </fieldset>
-                ) : null}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  hasSiblings ? (
+                    <fieldset className="ml-auto flex items-center gap-0.5">
+                      <legend className="sr-only">
+                        Branch navigation for {message.id}
+                      </legend>
+                      <button
+                        aria-label={`Previous branch for ${message.id}`}
+                        className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
+                        disabled={siblingIndex === 0}
+                        onClick={(): void =>
+                          navigateToSibling(siblingIndex - 1)
+                        }
+                        title="Previous version"
+                        type="button"
+                      >
+                        <ChevronLeft
+                          // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
+                          className="size-3.5"
+                        />
+                      </button>
+                      <span className="min-w-8 text-center font-mono text-[10px]">
+                        Branch {siblingIndex + 1} / {siblings.length}
+                      </span>
+                      <button
+                        aria-label={`Next branch for ${message.id}`}
+                        className="hover:bg-background/10 grid size-7 place-items-center disabled:opacity-30"
+                        disabled={siblingIndex === siblings.length - 1}
+                        onClick={(): void =>
+                          navigateToSibling(siblingIndex + 1)
+                        }
+                        title="Next version"
+                        type="button"
+                      >
+                        <ChevronRight
+                          // oxlint-disable-next-line react/forbid-component-props -- ChevronRight accepts className in its styling contract; preserve this caller's layout and appearance.
+                          className="size-3.5"
+                        />
+                      </button>
+                    </fieldset>
+                  ) : null
+                }
               </div>
             </article>
           );
@@ -448,6 +465,7 @@ const Conversation = ({
               </button>
               <button
                 aria-label={`Send message with ${responseCount} ${
+                  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   responseCount === 1 ? "response" : "responses"
                 }`}
                 className="bg-primary text-primary-foreground grid size-8 place-items-center rounded-md disabled:opacity-40"
@@ -526,6 +544,7 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
     observer.observe(viewport);
     return (): void => observer.disconnect();
   }, []);
+  // oxlint-disable-next-line no-ternary -- Keep scale as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const scale = viewportSize.width
     ? Math.max(
         0.75,
@@ -573,6 +592,7 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
                 return (
                   <path
                     className={
+                      // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       activeIds.has(childId) ? styles.selectedEdge : styles.edge
                     }
                     d={`M${node.x} ${node.y + 43} C${node.x} ${node.y + 65}, ${child.x} ${child.y - 65}, ${child.x} ${child.y - 43}`}
@@ -612,11 +632,14 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
                   </span>
                 )}
                 <span className={styles.nodeTitle}>
-                  {message.role === "user" ? (
-                    <GitBranch size={12} />
-                  ) : (
-                    <span className={styles.assistantGlyph}>✦</span>
-                  )}
+                  {
+                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    message.role === "user" ? (
+                      <GitBranch size={12} />
+                    ) : (
+                      <span className={styles.assistantGlyph}>✦</span>
+                    )
+                  }
                   {
                     /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from message.metadata; preserve one receiver evaluation, skipped accesses and the existing message.role fallback. */
                     message.metadata?.title ??
@@ -626,13 +649,20 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
                 <span className={styles.nodePreview}>
                   {getMessageText(message) || "Waiting for first token…"}
                 </span>
-                {message.role === "assistant" ? (
-                  <ResponseStatus chat={chat} message={message} />
-                ) : (
-                  <span className={styles.promptLabel}>
-                    Prompt{isActive ? " · on selected path" : ""}
-                  </span>
-                )}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  message.role === "assistant" ? (
+                    <ResponseStatus chat={chat} message={message} />
+                  ) : (
+                    <span className={styles.promptLabel}>
+                      Prompt
+                      {
+                        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                        isActive ? " · on selected path" : ""
+                      }
+                    </span>
+                  )
+                }
               </button>
             );
           })}
@@ -725,6 +755,7 @@ const PlaygroundSession = (): React.JSX.Element => {
         request: {
           body: {
             responseLabel:
+              // oxlint-disable-next-line no-ternary -- Keep responseLabel as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               count === 1 ? "Assistant reply" : `Response 1 of ${count}`,
           },
         },
@@ -751,6 +782,7 @@ const PlaygroundSession = (): React.JSX.Element => {
       await Promise.all(completions);
     } catch (error) {
       setPlaygroundError(
+        // oxlint-disable-next-line no-ternary -- Keep setPlaygroundError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to start this response"
       );
     }
@@ -780,6 +812,7 @@ const PlaygroundSession = (): React.JSX.Element => {
       );
     } catch (error) {
       setPlaygroundError(
+        // oxlint-disable-next-line no-ternary -- Keep setPlaygroundError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to create this branch"
       );
     }

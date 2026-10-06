@@ -64,6 +64,7 @@ const executeCode: CodeExecutor = async (input, context) =>
         {
           callId: context.callId,
           language: input.language,
+          // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           reason: error instanceof Error ? error.message : "Unknown error",
           sessionId: context.session.id,
         },

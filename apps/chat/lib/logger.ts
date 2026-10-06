@@ -13,6 +13,7 @@ const appBinding = userConfig.appPrefix || userConfig.appName || "chatjs";
 // in Eve's authored-module snapshots.
 const logger: Logger = pino({
   base: { app: appBinding },
+  // oxlint-disable-next-line no-ternary -- Keep level as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   level: process.env.NODE_ENV === "production" ? "info" : "debug",
   redact: {
     paths: [

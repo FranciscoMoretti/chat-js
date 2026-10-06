@@ -79,6 +79,7 @@ const BreadcrumbLink = reactForwardRef<
   }
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, oxc/no-rest-spread-properties -- BreadcrumbLink forwards Comp's native CSSProperties and extensible role/autoCapitalize string types; readonly reader projections still flag those immutable branded primitive strings. Its ForwardedRef<HTMLAnchorElement> parameter preserves React's writable current assignment and callback contract. Rest/spread: Rest binding props excludes asChild, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
 >(({ asChild, className, ...props }, ref) => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "a";
 
   return (

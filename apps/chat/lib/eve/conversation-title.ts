@@ -44,8 +44,8 @@ const compactTitle = (value: string): string => {
     EVE_TITLE_MAX_LENGTH + WORD_BOUNDARY_LOOKAHEAD
   );
   const wordBoundary = shortened.lastIndexOf(" ");
-  return (
-    wordBoundary > TITLE_START_INDEX
+  return /* oxlint-disable no-ternary -- Keep slice receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (
+    wordBoundary /* oxlint-enable no-ternary */ > TITLE_START_INDEX
       ? shortened.slice(TITLE_START_INDEX, wordBoundary)
       : shortened
   )
@@ -134,6 +134,7 @@ const persistGeneratedEveConversationTitle = async ({
     log.warn(
       {
         conversationId,
+        // oxlint-disable-next-line no-ternary -- Keep errorName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title eligibility check failed"
@@ -142,6 +143,7 @@ const persistGeneratedEveConversationTitle = async ({
   }
   const generated = await generateEveConversationTitleResult(message);
   try {
+    // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     await (generated.source === "generated"
       ? replaceEveRootFallbackTitle(
           ownerId,
@@ -154,6 +156,7 @@ const persistGeneratedEveConversationTitle = async ({
     log.warn(
       {
         conversationId,
+        // oxlint-disable-next-line no-ternary -- Keep errorName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorName: error instanceof Error ? error.name : typeof error,
       },
       "Eve title persistence failed"

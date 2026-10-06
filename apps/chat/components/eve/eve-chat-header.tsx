@@ -192,73 +192,76 @@ const EveChatHeader = ({
                 // oxlint-disable-next-line react/forbid-component-props -- BreadcrumbItem accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="min-w-0"
               >
-                {draft === undefined ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        aria-label={`Chat menu: ${title}`}
-                        className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
-                        type="button"
-                      >
-                        <span className="truncate">{title}</span>
-                        <ChevronDown
-                          aria-hidden
-                          // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
-                          className="text-muted-foreground size-4 shrink-0"
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  draft === undefined ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          aria-label={`Chat menu: ${title}`}
+                          className="group text-foreground hover:bg-muted focus-visible:ring-ring flex min-w-0 items-center gap-1.5 rounded-md border border-transparent bg-transparent px-2 py-1 text-sm font-medium transition focus-visible:ring-1 focus-visible:outline-none"
+                          type="button"
+                        >
+                          <span className="truncate">{title}</span>
+                          <ChevronDown
+                            aria-hidden
+                            // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+                            className="text-muted-foreground size-4 shrink-0"
+                          />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <ChatMenuItems
+                          isPinned={
+                            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the existing false fallback. The app guidance prefers optional chaining. */
+                            identity.data?.isPinned ??
+                            /* oxlint-enable oxc/no-optional-chaining */ false
+                          }
+                          onRename={() => setDraft(title)}
+                          onTogglePin={() =>
+                            pin.mutate({
+                              id: chatId,
+                              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+                              isPinned: !identity.data?.isPinned,
+                            })
+                          }
+                          onDelete={() =>
+                            openDeletion({
+                              id: chatId,
+                              projectId: projectId ?? null,
+                              state: "bound",
+                              title,
+                            })
+                          }
+                          onShare={() => setSharing(true)}
+                          showShare={hasMessages}
                         />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <ChatMenuItems
-                        isPinned={
-                          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the existing false fallback. The app guidance prefers optional chaining. */
-                          identity.data?.isPinned ??
-                          /* oxlint-enable oxc/no-optional-chaining */ false
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : (
+                    <Input
+                      aria-label="Chat title"
+                      // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Rename replaces the title with this input and transfers keyboard focus into it.
+                      autoFocus
+                      // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
+                      maxLength={255}
+                      value={draft}
+                      onChange={(event) => setDraft(event.target.value)}
+                      onBlur={save}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          save();
                         }
-                        onRename={() => setDraft(title)}
-                        onTogglePin={() =>
-                          pin.mutate({
-                            id: chatId,
-                            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isPinned from identity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-                            isPinned: !identity.data?.isPinned,
-                          })
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          setDraft(undefined);
                         }
-                        onDelete={() =>
-                          openDeletion({
-                            id: chatId,
-                            projectId: projectId ?? null,
-                            state: "bound",
-                            title,
-                          })
-                        }
-                        onShare={() => setSharing(true)}
-                        showShare={hasMessages}
-                      />
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <Input
-                    aria-label="Chat title"
-                    // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Rename replaces the title with this input and transfers keyboard focus into it.
-                    autoFocus
-                    // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="bg-background h-7 w-[220px] px-2 py-1 text-sm"
-                    maxLength={255}
-                    value={draft}
-                    onChange={(event) => setDraft(event.target.value)}
-                    onBlur={save}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        save();
-                      }
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        setDraft(undefined);
-                      }
-                    }}
-                  />
-                )}
+                      }}
+                    />
+                  )
+                }
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>

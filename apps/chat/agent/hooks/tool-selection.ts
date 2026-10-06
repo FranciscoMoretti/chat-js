@@ -25,6 +25,7 @@ export default defineHook({
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const supplied = context.session.auth.current?.attributes.selectedTool;
       const selected =
+        // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         supplied === undefined ? null : frontendToolsSchema.parse(supplied);
       eveTurnTool.update(() => selected);
     },

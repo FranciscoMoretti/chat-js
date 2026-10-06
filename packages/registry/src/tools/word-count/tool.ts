@@ -29,6 +29,7 @@ export const wordCount = defineTool({
       (usage: Readonly<Pick<ToolUsage, "addCostUsd">>) => {
         usage.addCostUsd(UNBILLED_TOOL_COST_USD);
         const words =
+          // oxlint-disable-next-line no-ternary -- Keep words as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           text.trim() === ""
             ? EMPTY_COUNT
             : text.trim().split(WORD_SPLIT_REGEX).length;

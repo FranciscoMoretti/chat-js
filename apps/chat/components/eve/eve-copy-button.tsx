@@ -89,9 +89,11 @@ const EveCopyButton = ({
         forgetConfirmedRequest(accountOwnerId, input);
       }
       setRejected(!cause.retryable);
+      // oxlint-disable-next-line no-ternary -- Keep setDestination argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       setDestination(cause.retryable ? cause.conversationId : undefined);
     }
     setFailure(
+      // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       cause instanceof Error
         ? cause.message
         : "Saving is unconfirmed. Retry the same copy."
@@ -120,6 +122,7 @@ const EveCopyButton = ({
   }
   return (
     <section
+      // oxlint-disable-next-line no-ternary -- Keep aria-label JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       aria-label={recovery ? "Saved copy recovery" : "Save shared conversation"}
     >
       {recovery && (

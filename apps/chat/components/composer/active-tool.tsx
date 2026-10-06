@@ -32,10 +32,12 @@ export const ActiveTool = ({
   const label = definition?.shortName ?? "Unavailable tool";
   return (
     <Button
+      // oxlint-disable-next-line no-ternary -- Keep aria-label JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       aria-label={definition ? `Clear ${label} tool` : "Clear unavailable tool"}
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "h-8 gap-1 rounded-full px-2 @[500px]:h-10 @[500px]:gap-2",
+        // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         definition ? "text-primary" : "text-destructive"
       )}
       disabled={disabled}

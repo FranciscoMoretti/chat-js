@@ -129,6 +129,7 @@ const readEveSessionMapping = async (
     })
     .from(eveConversation)
     .where(
+      // oxlint-disable-next-line no-ternary -- Keep db .select({ creationKind: eveConversation.creationKind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "reservationId" in identity
         ? eq(eveConversation.id, identity.reservationId)
         : eq(eveConversation.sessionId, identity.sessionId)
@@ -194,8 +195,10 @@ const listEveConversations = async (
       and member."ownerId" = ${ownerId}
       and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
   )`;
+  // oxlint-disable-next-line no-ternary -- Keep beforeCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const beforeCursor = cursor
     ? or(
+        // oxlint-disable-next-line no-ternary -- Keep or argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         cursor.isPinned ? eq(eveChat.isPinned, false) : undefined,
         and(
           eq(eveChat.isPinned, cursor.isPinned),
@@ -209,6 +212,7 @@ const listEveConversations = async (
         )
       )
     : undefined;
+  // oxlint-disable-next-line no-ternary -- Keep matchesProject as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const matchesProject = projectId
     ? eq(eveChatProject.projectId, projectId)
     : isNull(eveChatProject.projectId);
@@ -236,7 +240,9 @@ const listEveConversations = async (
             and member."ownerId" = ${ownerId}
             and member."state" in ('creating', 'bound', 'uncertain', 'deleting')
         )`,
+        // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         projectId === undefined ? undefined : matchesProject,
+        // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         search ? ilike(title, `%${escapedSearch}%`) : undefined,
         beforeCursor
       )
@@ -248,6 +254,7 @@ const listEveConversations = async (
   return {
     items: page,
     nextCursor:
+      // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       rows.length > 50 && last
         ? { id: last.id, isPinned: last.isPinned, updatedAt: last.updatedAt }
         : null,
@@ -662,6 +669,7 @@ const reserveEveConversation = async (
     if (existingReservation) {
       return [];
     }
+    // oxlint-disable-next-line no-ternary -- Keep [source] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const [source] = fork
       ? await tx
           .select()
@@ -680,6 +688,7 @@ const reserveEveConversation = async (
         "The source conversation is not available for editing."
       );
     }
+    // oxlint-disable-next-line no-ternary -- Keep [initialGroup] as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const [initialGroup] = source
       ? []
       : await tx
@@ -727,6 +736,7 @@ const reserveEveConversation = async (
         forkTurnId: fork?.beforeTurnId,
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         parentConversationId: fork?.conversationId,
+        // oxlint-disable-next-line no-ternary -- Keep rootConversationId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         rootConversationId: source
           ? (source.rootConversationId ?? source.id)
           : undefined,

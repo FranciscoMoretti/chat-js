@@ -47,6 +47,7 @@ const compressImageIfNeeded = async (
   try {
     const maybeResult = await imageCompression(file, options);
     const resultBlob =
+      // oxlint-disable-next-line no-ternary -- Keep resultBlob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       maybeResult instanceof File
         ? maybeResult
         : new File([maybeResult], file.name, {

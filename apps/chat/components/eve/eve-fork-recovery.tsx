@@ -58,9 +58,12 @@ export const EveForkRecovery = ({
                 onClick={handleRetry}
                 size="sm"
               >
-                {"modelIds" in fork.pending
-                  ? "Recover comparison"
-                  : "Recover version"}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  "modelIds" in fork.pending
+                    ? "Recover comparison"
+                    : "Recover version"
+                }
               </Button>
             </>
           )}

@@ -15,6 +15,7 @@ export const toolResultToModelOutput = (
   result: ToolResult<ToolOutput>
 ): ToolModelOutput =>
   toolOutput.json(
+    // oxlint-disable-next-line no-ternary -- Keep toolOutput.json argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     result.status === "error" ? { error: result.error } : result.output
   );
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

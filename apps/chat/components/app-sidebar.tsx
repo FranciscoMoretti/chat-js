@@ -83,14 +83,17 @@ const HistorySkeleton = (): React.JSX.Element => (
 const RegisteredEveProjects = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  return session?.user ? (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
-      <SidebarMenu>
-        <SidebarProjects />
-      </SidebarMenu>
-    </SidebarGroup>
-  ) : null;
+  if (session?.user) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroupLabel>Projects</SidebarGroupLabel>
+        <SidebarMenu>
+          <SidebarProjects />
+        </SidebarMenu>
+      </SidebarGroup>
+    );
+  }
+  return null;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AppSidebar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */

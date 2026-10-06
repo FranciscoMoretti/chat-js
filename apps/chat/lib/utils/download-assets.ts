@@ -38,6 +38,7 @@ const defaultDownload = async ({
   url: URL;
 }>): Promise<AssetDownloadResult> => {
   const isApplicationUrl = url.origin === new URL(getBaseUrl()).origin;
+  // oxlint-disable-next-line no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const key = isApplicationUrl ? keyFromFileUrl(url.toString()) : null;
   if (key) {
     try {
@@ -75,6 +76,7 @@ const defaultDownload = async ({
 const parseHttpUrl = (value: string): URL | null => {
   try {
     const url =
+      // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       keyFromFileUrl(value) === null
         ? new URL(value)
         : new URL(value, getBaseUrl());
@@ -137,6 +139,7 @@ const downloadAssetsFromModelMessages = async (
       if (part.type !== "file" && part.type !== "image") {
         continue;
       }
+      // oxlint-disable-next-line no-ternary -- Keep dataOrUrl as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const dataOrUrl = part.type === "file" ? part.data : part.image;
       const url = toHttpUrl(dataOrUrl);
       if (url) {

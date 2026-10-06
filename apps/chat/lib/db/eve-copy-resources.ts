@@ -98,6 +98,7 @@ const writeEveCopyFile = async (
     }
     await assertEveCopySourceAvailable(tx, copy);
     const blob =
+      // oxlint-disable-next-line no-ternary -- Keep blob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       file.source.kind === "inline"
         ? new Blob([Buffer.from(file.source.base64, "base64")], {
             type: file.mediaType,
@@ -263,6 +264,7 @@ const acceptEveCopy = async (
     }
     await assertEveCopySourceAvailable(tx, copy);
     const heads =
+      // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       copy.plan.sourceHeads.length > 0
         ? await tx
             .select({

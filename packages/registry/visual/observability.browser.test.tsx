@@ -50,8 +50,14 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
           {[0, 1, 2, 3].map((mask) => (
             <section key={mask} data-testid={`combination-${mask}`}>
               <p>Chat content</p>
-              {mask % 2 ? <Analytics /> : null}
-              {Math.floor(mask / 2) ? <SpeedInsights /> : null}
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                mask % 2 ? <Analytics /> : null
+              }
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                Math.floor(mask / 2) ? <SpeedInsights /> : null
+              }
             </section>
           ))}
         </>

@@ -57,6 +57,7 @@ const SessionProvider = ({
   const isSeeded = serverSession !== undefined;
 
   const value = useMemo<SessionContextValue>(() => {
+    // oxlint-disable-next-line no-ternary -- Keep seededSession as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const seededSession = isSeeded ? serverSession : null;
 
     // Unknown until the server tree seeds us or the client session settles.
@@ -71,6 +72,7 @@ const SessionProvider = ({
     // seed while the client fetch is still pending or failed (e.g. blocked
     // get-session / trustedOrigins mismatch).
     const effective =
+      // oxlint-disable-next-line no-ternary -- Keep effective as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       isClientPending || (clientError !== null && clientError !== undefined)
         ? (clientSession ?? seededSession)
         : clientSession;

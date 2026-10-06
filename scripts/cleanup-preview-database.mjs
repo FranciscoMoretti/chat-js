@@ -86,6 +86,7 @@ const isNeonBranchPage = (value) =>
  */
 const fetchBranchPage = async ({ base, cursor, headers, request }) => {
   const url =
+    // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     cursor === EMPTY_CURSOR
       ? base
       : `${base}?cursor=${encodeURIComponent(cursor)}`;
@@ -116,6 +117,7 @@ const readNextCursor = (page, seenCursors) => {
   if (hasCursor && !isFalsyCursor(rawCursor) && typeof rawCursor !== "string") {
     throw new Error("Invalid or repeated Neon pagination cursor.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const nextCursor = typeof rawCursor === "string" ? rawCursor : EMPTY_CURSOR;
   if (nextCursor !== EMPTY_CURSOR && seenCursors.has(nextCursor)) {
     throw new Error("Invalid or repeated Neon pagination cursor.");

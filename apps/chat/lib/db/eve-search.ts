@@ -234,6 +234,7 @@ const searchEveConversations = async (
         'StartSel=⟦, StopSel=⟧, MaxWords=32, MinWords=12, MaxFragments=1') end as excerpt
     from best cross join query
     where ${
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       cursor
         ? sql`
       "chatRank" < ${cursor.rank}::double precision
@@ -269,6 +270,7 @@ const searchEveConversations = async (
   return {
     items: page,
     nextCursor:
+      // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       items.length > 20 && last
         ? { id: last.id, rank: last.rank, updatedAt: last.updatedAt }
         : null,

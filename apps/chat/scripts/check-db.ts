@@ -67,6 +67,7 @@ const checkDatabase = async (): Promise<void> => {
       process.stdout.write(`${purpose}: connection OK\n`);
     } catch {
       const variable =
+        // oxlint-disable-next-line no-ternary -- Keep variable as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         purpose === "migration" && parsed.data.DATABASE_MIGRATION_URL
           ? "DATABASE_MIGRATION_URL"
           : "DATABASE_URL";

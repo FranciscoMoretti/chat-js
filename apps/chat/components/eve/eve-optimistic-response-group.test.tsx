@@ -18,6 +18,7 @@ vi.mock("@/providers/chat-models-provider", () => ({
   useChatModels: () => ({
     getModelById: (id: string) => ({
       id,
+      // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       name: id === "first-model" ? "First model" : "Second model",
     }),
   }),

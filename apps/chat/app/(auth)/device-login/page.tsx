@@ -43,6 +43,7 @@ const DeviceLoginContent = async ({
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
   const queryString = new URLSearchParams(query).toString();
+  // oxlint-disable-next-line no-ternary -- Keep currentHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const currentHref = queryString
     ? `/device-login?${queryString}`
     : "/device-login";

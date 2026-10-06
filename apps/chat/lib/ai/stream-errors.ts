@@ -86,6 +86,7 @@ const getStreamErrorToastContent = (
   message: string;
 } => {
   const rawMessage =
+    // oxlint-disable-next-line no-ternary -- Keep rawMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof error.message === "string" ? error.message.trim() : "";
   const rawCause = getErrorText(error.cause);
 
@@ -94,6 +95,7 @@ const getStreamErrorToastContent = (
     // oxlint-disable-next-line no-magic-numbers -- One character is the existing truncation cutoff for streamed error messages.
     rawMessage.length <= 1 || genericErrorMessages.has(rawMessage);
   let rawResolved =
+    // oxlint-disable-next-line no-ternary -- Keep rawResolved as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     rawMessage === ""
       ? (rawCause ?? FALLBACK_STREAM_ERROR_MESSAGE)
       : rawMessage;

@@ -33,6 +33,7 @@ const removeUnlockedJobs = async (
     throw new Error("Wait for active queue workers before cleanup.");
   }
   const removed =
+    // oxlint-disable-next-line no-ternary -- Keep removed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     locked.length > 0
       ? z
           .array(z.object({ id: z.string() }))

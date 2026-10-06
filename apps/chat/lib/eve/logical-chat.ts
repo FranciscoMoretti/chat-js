@@ -106,7 +106,7 @@ const latestMessageTime = (
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
 moving it below executable initialization can obscure ordering and API ownership.
 init-declarations (#507): LogicalChat assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): LogicalChat keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -114,8 +114,6 @@ max-statements (#512): LogicalChat keeps its ordered workflow and input contract
 no-continue (#515): LogicalChat skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
 no-magic-numbers (#517): LogicalChat uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): LogicalChat uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/explicit-function-return-type (#560): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep LogicalChat's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): LogicalChat accepts branches: readonly LogicalBranch[]; leftBranch; rightBranch; agent: NativeChatAgent; branch; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): LogicalChat intentionally keeps the existing falsy-value behavior of path?.length; last; id; branch.parentConversationId; agent?.data.messages.length; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): LogicalChat preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
@@ -160,10 +158,10 @@ class LogicalChat {
     };
   }
 
-  public getSnapshot = () => this.snapshot;
-  public subscribe = (listener: () => void) => {
+  public getSnapshot = (): LogicalChatSnapshot => this.snapshot;
+  public subscribe = (listener: () => void): (() => void) => {
     this.listeners.add(listener);
-    return () => {
+    return (): void => {
       this.listeners.delete(listener);
     };
   };
@@ -245,7 +243,10 @@ class LogicalChat {
     this.publish();
   }
 
-  public logicalId(conversationId: string, nativeId: string) {
+  public logicalId(
+    conversationId: string,
+    nativeId: string
+  ): string | undefined {
     return this.snapshot.aliases.get(aliasKey(conversationId, nativeId));
   }
 
@@ -313,6 +314,7 @@ class LogicalChat {
           }
         } catch (projectionError) {
           error =
+            // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             projectionError instanceof Error
               ? projectionError.message
               : "Unable to restore the chat tree.";
@@ -385,7 +387,7 @@ class LogicalChat {
     }
   }
 }
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-params (#511): sourcePrefix keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -404,6 +406,7 @@ const sourcePrefix = (
     return { prefix: [], replaced: undefined };
   }
   const sourceId = branch.parentConversationId;
+  // oxlint-disable-next-line no-ternary -- Keep boundaryId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const boundaryId = branch.forkMessageId
     ? aliases.get(aliasKey(sourceId, branch.forkMessageId))
     : aliases.get(
@@ -418,6 +421,7 @@ const sourcePrefix = (
           )?.id ?? ""
         )
       );
+  // oxlint-disable-next-line no-ternary -- Keep index as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const index = boundaryId ? source.indexOf(boundaryId) : -1;
   // Named idle checkpoints have no following user yet: the entire source is inherited.
   if (index < 0 && branch.forkKind === "comparison") {

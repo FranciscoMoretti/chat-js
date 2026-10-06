@@ -22,6 +22,7 @@ export const POST = async (
   try {
     const body: unknown = await request.json();
     const model =
+      // oxlint-disable-next-line no-ternary -- Keep model as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof body === "object" && body !== null && "model" in body
         ? body.model
         : undefined;

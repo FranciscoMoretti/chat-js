@@ -126,7 +126,7 @@ it("refuses erasure when retirement or cost settlement is incomplete", async () 
     events: [{ type: "step.completed" }, { type: "session.completed" }],
   });
   mocks.usage.mockImplementation((_owner, _session, event) =>
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This retire-session fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, no-ternary -- #597: This retire-session fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.; no-ternary: Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     Promise.resolve(event.type === "step.completed" ? false : undefined)
   );
   await expect(retireEveSessionForDeletion("owner", "session")).rejects.toThrow(

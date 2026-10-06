@@ -69,6 +69,7 @@ export const EveDocumentRun = ({
   }
   return (
     <div
+      // oxlint-disable-next-line no-ternary -- Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={buttonOnly ? "shrink-0" : "shrink-0 space-y-2 border-t p-2"}
     >
       {canRun && !resultOnly && (

@@ -143,66 +143,85 @@ const CustomConnectorRow = ({
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {isIncompatible ? (
-          <Badge
-            // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="gap-1"
-            variant="destructive"
-          >
-            <AlertTriangle
-              // oxlint-disable-next-line react/forbid-component-props -- AlertTriangle accepts className in its styling contract; preserve this caller's layout and appearance.
-              className="size-3"
-            />
-            Error
-          </Badge>
-        ) : null}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          isIncompatible ? (
+            <Badge
+              // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="gap-1"
+              variant="destructive"
+            >
+              <AlertTriangle
+                // oxlint-disable-next-line react/forbid-component-props -- AlertTriangle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-3"
+              />
+              Error
+            </Badge>
+          ) : null
+        }
 
-        {showOAuthButton ? (
-          <Button disabled={isTestingConnection} onClick={onConnect} size="sm">
-            {isTestingConnection ? (
-              <span className="inline-flex items-center gap-2">
-                <Loader2
-                  // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="size-4 animate-spin"
-                />
-                Loading
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2">
-                Connect
-                <ArrowUpRight
-                  // oxlint-disable-next-line react/forbid-component-props -- ArrowUpRight accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="-mr-1 size-4"
-                />
-              </span>
-            )}
-          </Button>
-        ) : null}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          showOAuthButton ? (
+            <Button
+              disabled={isTestingConnection}
+              onClick={onConnect}
+              size="sm"
+            >
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                isTestingConnection ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2
+                      // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="size-4 animate-spin"
+                    />
+                    Loading
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-2">
+                    Connect
+                    <ArrowUpRight
+                      // oxlint-disable-next-line react/forbid-component-props -- ArrowUpRight accepts className in its styling contract; preserve this caller's layout and appearance.
+                      className="-mr-1 size-4"
+                    />
+                  </span>
+                )
+              }
+            </Button>
+          ) : null
+        }
 
-        {showDetailsButton ? (
-          <Button
-            asChild
-            disabled={isTestingConnection}
-            size="sm"
-            variant="outline"
-          >
-            <InternalLink href={href}>
-              {isTestingConnection ? (
-                <span className="inline-flex items-center gap-2">
-                  <Loader2
-                    // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                    className="size-4 animate-spin"
-                  />
-                  Loading
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-2">
-                  {actionLabel}
-                </span>
-              )}
-            </InternalLink>
-          </Button>
-        ) : null}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          showDetailsButton ? (
+            <Button
+              asChild
+              disabled={isTestingConnection}
+              size="sm"
+              variant="outline"
+            >
+              <InternalLink href={href}>
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  isTestingConnection ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2
+                        // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                        className="size-4 animate-spin"
+                      />
+                      Loading
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-2">
+                      {actionLabel}
+                    </span>
+                  )
+                }
+              </InternalLink>
+            </Button>
+          ) : null
+        }
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -219,6 +238,8 @@ const CustomConnectorRow = ({
           <DropdownMenuContent align="end">
             {
               /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading isAuthenticated from authStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               authStatus?.isAuthenticated ? (
                 <>
                   <DropdownMenuItem
@@ -232,19 +253,22 @@ const CustomConnectorRow = ({
               ) : null
               /* oxlint-enable oxc/no-optional-chaining */
             }
-            {needsOAuth ? (
-              <>
-                <DropdownMenuItem
-                  onClick={(event): void => {
-                    event.preventDefault();
-                    onConnect();
-                  }}
-                >
-                  Connect
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              needsOAuth ? (
+                <>
+                  <DropdownMenuItem
+                    onClick={(event): void => {
+                      event.preventDefault();
+                      onConnect();
+                    }}
+                  >
+                    Connect
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null
+            }
             <DropdownMenuItem
               // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
               className="text-destructive focus:text-destructive"
@@ -549,47 +573,58 @@ export const ConnectorsSettings = (): React.JSX.Element => {
       </div>
 
       <div className="flex flex-col">
-        {customConnectors.length > 0 ? (
-          customConnectors.map((connector, index) => (
-            <Fragment key={connector.id}>
-              <CustomConnectorRow
-                connector={connector}
-                isDisconnecting={isDisconnecting}
-                onConnect={(): void => handleOpenConnectDialog(connector.id)}
-                onDisconnect={(): void =>
-                  disconnectConnector({ id: connector.id })
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          customConnectors.length > 0 ? (
+            customConnectors.map((connector, index) => (
+              <Fragment key={connector.id}>
+                <CustomConnectorRow
+                  connector={connector}
+                  isDisconnecting={isDisconnecting}
+                  onConnect={(): void => handleOpenConnectDialog(connector.id)}
+                  onDisconnect={(): void =>
+                    disconnectConnector({ id: connector.id })
+                  }
+                  onUninstall={(): void =>
+                    deleteConnector({ id: connector.id })
+                  }
+                />
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  index < customConnectors.length - 1 ? <Separator /> : null
                 }
-                onUninstall={(): void => deleteConnector({ id: connector.id })}
-              />
-              {index < customConnectors.length - 1 ? <Separator /> : null}
-            </Fragment>
-          ))
-        ) : (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="bg-muted mb-4 rounded-full p-3">
-              <Radio
-                // oxlint-disable-next-line react/forbid-component-props -- Radio accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="text-muted-foreground size-6"
-              />
+              </Fragment>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="bg-muted mb-4 rounded-full p-3">
+                <Radio
+                  // oxlint-disable-next-line react/forbid-component-props -- Radio accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="text-muted-foreground size-6"
+                />
+              </div>
+              <p className="text-sm font-medium">No custom connectors</p>
+              <p className="text-muted-foreground mt-1 max-w-sm text-xs">
+                Add a custom MCP connector to access tools from your services.
+              </p>
             </div>
-            <p className="text-sm font-medium">No custom connectors</p>
-            <p className="text-muted-foreground mt-1 max-w-sm text-xs">
-              Add a custom MCP connector to access tools from your services.
-            </p>
-          </div>
-        )}
+          )
+        }
       </div>
 
-      {globalConnectors.length > 0 ? (
-        <div>
-          <p className="text-sm font-medium">Built-in connectors</p>
-          <div className="divide-y">
-            {globalConnectors.map((connector) => (
-              <BuiltInConnectorRow connector={connector} key={connector.id} />
-            ))}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        globalConnectors.length > 0 ? (
+          <div>
+            <p className="text-sm font-medium">Built-in connectors</p>
+            <div className="divide-y">
+              {globalConnectors.map((connector) => (
+                <BuiltInConnectorRow connector={connector} key={connector.id} />
+              ))}
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null
+      }
 
       <McpCreateDialog onClose={handleDialogClose} open={createOpen} />
 

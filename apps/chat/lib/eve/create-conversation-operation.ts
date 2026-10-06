@@ -122,6 +122,7 @@ export const createEveConversationOperation = async (
     }
     logger.error(
       {
+        // oxlint-disable-next-line no-ternary -- Keep errorType as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
       },

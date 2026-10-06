@@ -206,6 +206,7 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...options,
           messageId:
+            // oxlint-disable-next-line no-ternary -- Keep messageId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             spec.messageId === NO_VALUE && options.trigger === "submit-message"
               ? NO_VALUE
               : options.messageId,

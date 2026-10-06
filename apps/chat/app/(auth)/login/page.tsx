@@ -44,6 +44,7 @@ const LoginPageContent = async ({
   const query = toSearchParamRecord(resolvedSearchParams);
   const isElectronTransfer =
     config.desktopApp.enabled && query.client_id === ELECTRON_AUTH_CLIENT_ID;
+  // oxlint-disable-next-line no-ternary -- Keep session as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const session = isElectronTransfer
     ? await auth.api.getSession({ headers: await headers() })
     : null;

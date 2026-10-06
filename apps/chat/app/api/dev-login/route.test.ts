@@ -53,6 +53,7 @@ vi.mock("@/lib/db/client", async () => {
     db: {
       insert: (table: unknown) => ({
         values: (row: Record<string, unknown>) => {
+          // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           const target = table === user ? state.data.user : state.data.session;
           if (table !== user) {
             target.push(row);

@@ -102,8 +102,10 @@ export const NewEveConversation = ({
         setDraft(restored.text);
         setAttachments(restored.attachments);
         setRetainedModelIds(
+          // oxlint-disable-next-line no-ternary -- Keep setRetainedModelIds argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           "modelIds" in pending ? pending.modelIds : undefined
         );
+        // oxlint-disable-next-line no-ternary -- Keep setRetainedModelId argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         setRetainedModelId("modelIds" in pending ? undefined : pending.modelId);
       }
     } catch {
@@ -115,10 +117,13 @@ export const NewEveConversation = ({
   ): void => {
     setDraft(restoreDraft(operation.message).text);
     setSelectedTool(operation.selectedTool ?? null);
+    // oxlint-disable-next-line no-ternary -- Keep setRetainedModelId argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     setRetainedModelId("modelIds" in operation ? undefined : operation.modelId);
     setRetainedModelIds(
+      // oxlint-disable-next-line no-ternary -- Keep setRetainedModelIds argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "modelIds" in operation ? operation.modelIds : undefined
     );
+    // oxlint-disable-next-line no-ternary -- Keep setOptimisticComparison argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     setOptimisticComparison("modelIds" in operation ? operation : undefined);
     setRetainedOperationId(operation.operationId);
   };
@@ -167,6 +172,7 @@ export const NewEveConversation = ({
         setRetainedOperationId(undefined);
       }
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error
           ? error.message
           : "Unable to start. Retain this operation before retrying."
@@ -198,10 +204,13 @@ export const NewEveConversation = ({
       <EveComposer
         // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the new-conversation typing workflow; changing initial page focus requires accessibility and UX review.
         autoFocus
+        // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         status={busy ? "submitted" : "ready"}
         disabled={busy}
+        // oxlint-disable-next-line no-ternary -- Keep draft JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         draft={busy ? "" : draft}
         files={
+          // oxlint-disable-next-line no-ternary -- Keep files JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           busy /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing files own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
             ? { ...files, attachments: [] }
             : /* oxlint-enable oxc/no-rest-spread-properties */ files
@@ -243,13 +252,16 @@ export const NewEveConversation = ({
             // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
             className="mx-auto w-full max-w-3xl"
           >
-            {optimisticComparison ? (
-              <EveOptimisticResponseGroup operation={optimisticComparison} />
-            ) : (
-              <EveInitialMessage
-                message={draftMessage(draft, files.attachments)}
-              />
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              optimisticComparison ? (
+                <EveOptimisticResponseGroup operation={optimisticComparison} />
+              ) : (
+                <EveInitialMessage
+                  message={draftMessage(draft, files.attachments)}
+                />
+              )
+            }
             {!optimisticComparison && <ThinkingMessage />}
             <output className="sr-only">Sending…</output>
           </ConversationContent>
@@ -258,7 +270,10 @@ export const NewEveConversation = ({
       </div>
     );
   }
-  return projectId ? composer : <ChatWelcomeView>{composer}</ChatWelcomeView>;
+  if (projectId) {
+    return composer;
+  }
+  return <ChatWelcomeView>{composer}</ChatWelcomeView>;
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */

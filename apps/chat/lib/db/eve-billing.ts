@@ -134,6 +134,7 @@ const recordEveUsage = async (input: {
     );
   if (settled) {
     const incoming =
+      // oxlint-disable-next-line no-ternary -- Keep incoming as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -160,6 +161,7 @@ const recordEveUsage = async (input: {
         .for("update");
     }
     const costUsd =
+      // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -341,6 +343,7 @@ const withManagedUsageReconciliation = async (
       }
     });
   } catch (error) {
+    // oxlint-disable-next-line no-ternary -- Keep cause as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const cause = error instanceof Error && error.cause ? error.cause : error;
     if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
       throw new EveUsageReconciliationBusyError();

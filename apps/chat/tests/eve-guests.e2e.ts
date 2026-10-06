@@ -361,6 +361,7 @@ test("committing and releasing the same attempt are mutually exclusive", async (
   const guestAfterCommitReleaseRace = await findEveGuest(row.tokenHash);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading remainingMessages from guestAfterCommitReleaseRace; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(guestAfterCommitReleaseRace?.remainingMessages).toBe(
+    // oxlint-disable-next-line no-ternary -- Keep expect(guestAfterCommitReleaseRace?.remainingMessages). as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     results[0] ? 0 : 1
   );
 });
@@ -464,15 +465,18 @@ test("denied first admission creates no account or quota rows", async () => {
       {
         // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
+        // oxlint-disable-next-line no-ternary -- Keep requestsPerMinute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         requestsPerMinute: denial === "rate" ? 0 : 100,
       },
       {
         expiresAt: new Date(Date.now() + 60_000),
+        // oxlint-disable-next-line no-ternary -- Keep messageLimit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         messageLimit: denial === "balance" ? 0 : 2,
         tokenHash: credential.tokenHash,
       }
     );
     expect(result.status).toBe(
+      // oxlint-disable-next-line no-ternary -- Keep expect(result.status).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       denial === "rate" ? "rate-limited" : "exhausted"
     );
     expect(await findEveGuest(credential.tokenHash)).toBeUndefined();

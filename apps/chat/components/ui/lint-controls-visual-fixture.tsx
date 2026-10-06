@@ -45,7 +45,14 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
       <p>Actions: {actions}</p>
       <div className="flex items-center gap-2">
         <Spinner aria-label="Saving" />
-        <Shimmer as={inline ? "span" : "p"}>Thinking...</Shimmer>
+        <Shimmer
+          as={
+            // oxlint-disable-next-line no-ternary -- Keep as JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            inline ? "span" : "p"
+          }
+        >
+          Thinking...
+        </Shimmer>
       </div>
       <Button onClick={() => setInline((value) => !value)} type="button">
         Change shimmer element

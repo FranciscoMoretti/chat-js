@@ -116,6 +116,7 @@ const readLocalEveSandboxInventory = async (
     });
     let parsed: unknown;
     try {
+      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       parsed = raw === undefined ? undefined : JSON.parse(raw);
     } catch {
       parsed = undefined;

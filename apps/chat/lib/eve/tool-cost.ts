@@ -33,7 +33,7 @@ const tokenCost = (
     return 0;
   }
   const rate =
-    // oxlint-disable-next-line no-undefined -- Provider rate absence must fail nonzero token pricing rather than become free work.
+    // oxlint-disable-next-line no-undefined, no-ternary -- Provider rate absence must fail nonzero token pricing rather than become free work.; no-ternary: Keep rate as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     price === undefined || price.trim() === "" ? Number.NaN : Number(price);
   /* oxlint-disable no-magic-numbers -- Negative token counts/rates cannot produce a valid nonnegative usage charge. */
   if (

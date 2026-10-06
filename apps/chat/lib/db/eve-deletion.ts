@@ -101,6 +101,131 @@ const findUnresolvedEveFamilySandbox = (
     // oxlint-disable-next-line no-magic-numbers -- This cleanup-existence probe needs only the first unresolved sandbox.
     .limit(1);
 
+/** Read the owner-filtered root/member identity before family finalization.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability, used with its original receiver.
+ * @param {string} ownerId - Owner required by the joined identity predicate.
+ * @param {string} routeId - Root chat ID or joined member conversation ID.
+ * @returns {QueryPromise<readonly ({ readonly chatId: typeof eveChat.$inferSelect.id } | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionIdentity = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  routeId: string
+): QueryPromise<
+  readonly ({ readonly chatId: typeof eveChat.$inferSelect.id } | undefined)[]
+> =>
+  query
+    .select({ chatId: eveChat.id })
+    .from(eveChat)
+    .leftJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
+        eq(eveConversation.id, routeId)
+      )
+    )
+    .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
+
+/** Read the first surviving application-content row from one of the nine cleanup dependency tables.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability.
+ * @param {Readonly<typeof eveFileReference | typeof eveImportedDocumentCheckpointEntry | typeof eveImportedDocumentCheckpoint | typeof eveNamedDocumentCheckpointEntry | typeof eveNamedDocumentCheckpoint | typeof eveDocumentCheckpointEntry | typeof eveDocumentCheckpoint | typeof eveDocumentHead | typeof eveDocumentRevision>} table - Original native dependency table in declared cleanup order.
+ * @param {readonly string[]} ids - Same family ID array supplied to the native inArray column overload.
+ * @returns {QueryPromise<readonly ({ readonly conversationId: typeof table.$inferSelect.conversationId } | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readEveFamilyApplicationContent = (
+  query: Readonly<Pick<typeof db, "select">>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native Drizzle table columns retain their class identity for select/from/inArray; a mapped readonly column surface loses the SDK column contract.
+  table: Readonly<
+    | typeof eveFileReference
+    | typeof eveImportedDocumentCheckpointEntry
+    | typeof eveImportedDocumentCheckpoint
+    | typeof eveNamedDocumentCheckpointEntry
+    | typeof eveNamedDocumentCheckpoint
+    | typeof eveDocumentCheckpointEntry
+    | typeof eveDocumentCheckpoint
+    | typeof eveDocumentHead
+    | typeof eveDocumentRevision
+  >,
+  ids: readonly string[]
+): QueryPromise<
+  readonly (
+    | { readonly conversationId: typeof table.$inferSelect.conversationId }
+    | undefined
+  )[]
+> =>
+  query
+    .select({ conversationId: table.conversationId })
+    .from(table)
+    .where(inArray(table.conversationId, ids))
+    // oxlint-disable-next-line no-magic-numbers -- Stop at the first surviving application-content row; this query tests existence.
+    .limit(1);
+
+/** Read the first owner-visible identity and joined member state for a deletion receipt.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability, forwarded without cloning or rebinding.
+ * @param {string} ownerId - Owner required by the joined identity predicate.
+ * @param {string} conversationId - Root chat ID or joined member conversation ID.
+ * @returns {QueryPromise<readonly ({ readonly chatId: typeof eveChat.$inferSelect.id; readonly state: typeof eveConversation.$inferSelect.state | null } | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionReceipt = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  conversationId: string
+): QueryPromise<
+  readonly (
+    | {
+        readonly chatId: typeof eveChat.$inferSelect.id;
+        readonly state: typeof eveConversation.$inferSelect.state | null;
+      }
+    | undefined
+  )[]
+> =>
+  query
+    .select({
+      chatId: eveChat.id,
+      state: eveConversation.state,
+    })
+    .from(eveChat)
+    .leftJoin(
+      eveConversation,
+      and(
+        eq(eveConversation.chatId, eveChat.id),
+        eq(eveConversation.ownerId, eveChat.ownerId),
+        eq(eveConversation.id, conversationId)
+      )
+    )
+    .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
+    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
+    .limit(1);
+
+/** Read the owner-visible member state when a root receipt has no joined member state.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing select capability.
+ * @param {string} ownerId - Owner required by the member-state predicate.
+ * @param {Readonly<{ chatId: typeof eveChat.$inferSelect.id }>} row - Same root identity object; chatId is read only at the original predicate position.
+ * @returns {QueryPromise<readonly (Readonly<Pick<typeof eveConversation.$inferSelect, "state">> | undefined)[]>} Original native query object; an empty result has no first row.
+ */
+const readOwnedEveDeletionMemberState = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ownerId: string,
+  row: Readonly<{ chatId: typeof eveChat.$inferSelect.id }>
+): QueryPromise<
+  readonly (
+    | Readonly<Pick<typeof eveConversation.$inferSelect, "state">>
+    | undefined
+  )[]
+> =>
+  query
+    .select({ state: eveConversation.state })
+    .from(eveConversation)
+    .where(
+      and(
+        eq(eveConversation.chatId, row.chatId),
+        eq(eveConversation.ownerId, ownerId)
+      )
+    )
+    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
+    .limit(1);
+
 /**
  * Final application stage. The internal coordinator must confirm native payload,
  * sandbox and file removal before calling this; this is not a deletion endpoint.
@@ -120,18 +245,11 @@ const completeEveConversationDeletion = async (
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );
-      const [queriedIdentity] = await tx
-        .select({ chatId: eveChat.id })
-        .from(eveChat)
-        .leftJoin(
-          eveConversation,
-          and(
-            eq(eveConversation.chatId, eveChat.id),
-            eq(eveConversation.ownerId, eveChat.ownerId),
-            eq(eveConversation.id, routeId)
-          )
-        )
-        .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
+      const [queriedIdentity] = await readOwnedEveDeletionIdentity(
+        tx,
+        ownerId,
+        routeId
+      );
       const identity = requireEveDeletionIdentity(queriedIdentity);
       const condition = and(
         eq(eveConversation.ownerId, ownerId),
@@ -160,13 +278,11 @@ const completeEveConversationDeletion = async (
         eveDocumentRevision,
       ]) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Read the nine dependency tables in declared order on this transaction, stopping at the first surviving row; parallel probes would dispatch later queries before that failure.
-        const [remaining] = await tx
-          .select({ conversationId: table.conversationId })
-          .from(table)
-          .where(inArray(table.conversationId, ids))
-          // oxlint-disable-next-line no-magic-numbers -- Stop at the first surviving application-content row; this query tests existence.
-          .limit(1);
-        // oxlint-disable-next-line typescript/strict-boolean-expressions -- Any first surviving content row blocks finalization before provenance or identity metadata is erased.
+        const [remaining] = await readEveFamilyApplicationContent(
+          tx,
+          table,
+          ids
+        );
         if (remaining) {
           throw new Error("Application content cleanup is incomplete.");
         }
@@ -236,24 +352,7 @@ const getEveDeletionState = async (
   ownerId: string,
   conversationId: string
 ): Promise<EveDeletionState | undefined> => {
-  const [row] = await db
-    .select({
-      chatId: eveChat.id,
-      state: eveConversation.state,
-    })
-    .from(eveChat)
-    .leftJoin(
-      eveConversation,
-      and(
-        eq(eveConversation.chatId, eveChat.id),
-        eq(eveConversation.ownerId, eveChat.ownerId),
-        eq(eveConversation.id, conversationId)
-      )
-    )
-    .where(ownerVisibleEveIdentityCondition(ownerId, conversationId))
-    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
-    .limit(1);
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Array destructuring can yield no identity despite Drizzle unchecked-index inference; preserve the missing-receipt guard.
+  const [row] = await readOwnedEveDeletionReceipt(db, ownerId, conversationId);
   if (!row) {
     // oxlint-disable-next-line no-undefined -- Missing owner-visible identity has no deletion-state receipt.
     return undefined;
@@ -261,18 +360,7 @@ const getEveDeletionState = async (
   if (row.state) {
     return { rootId: row.chatId, state: row.state };
   }
-  const [member] = await db
-    .select({ state: eveConversation.state })
-    .from(eveConversation)
-    .where(
-      and(
-        eq(eveConversation.chatId, row.chatId),
-        eq(eveConversation.ownerId, ownerId)
-      )
-    )
-    // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
-    .limit(1);
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- An empty member query has no first row and must preserve the missing-receipt result.
+  const [member] = await readOwnedEveDeletionMemberState(db, ownerId, row);
   if (!member) {
     // oxlint-disable-next-line no-undefined -- An identity without an owner-visible member has no deletion-state receipt.
     return undefined;

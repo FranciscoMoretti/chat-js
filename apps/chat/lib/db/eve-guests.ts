@@ -195,6 +195,7 @@ const rateAvailable = async (
 ): Promise<boolean> => {
   for (const period of periods) {
     const limit =
+      // oxlint-disable-next-line no-ternary -- Keep limit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       period.seconds === MINUTE_WINDOW_SECONDS
         ? input.requestsPerMinute
         : input.requestsPerMonth;

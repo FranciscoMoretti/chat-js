@@ -46,6 +46,7 @@ const toAiGatewayModel = (
   name: model.id,
   object: "model",
   owned_by:
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
   pricing: {},
   type: "language",

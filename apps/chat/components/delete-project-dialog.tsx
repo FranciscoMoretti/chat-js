@@ -116,7 +116,10 @@ export const DeleteProjectDialog = ({
               return handleDelete();
             }}
           >
-            {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              deleteMutation.isPending ? "Deleting..." : "Delete"
+            }
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

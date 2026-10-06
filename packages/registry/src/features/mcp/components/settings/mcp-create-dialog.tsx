@@ -152,11 +152,11 @@ export const McpCreateDialog = ({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing values own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...values,
       name: values.name.trim(),
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from values.oauthClientId; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from values.oauthClientId; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep oauthClientId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthClientId: values.oauthClientId?.trim()
         ? values.oauthClientId
         : undefined,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from values.oauthClientSecret; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from values.oauthClientSecret; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep oauthClientSecret as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthClientSecret: values.oauthClientSecret?.trim()
         ? values.oauthClientSecret
         : undefined,
@@ -265,7 +265,7 @@ export const McpCreateDialog = ({
                   variant="ghost"
                 >
                   <ChevronDown
-                    // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+                    // oxlint-disable-next-line react/forbid-component-props, no-ternary -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
                   />
                   Advanced settings

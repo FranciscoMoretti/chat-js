@@ -23,6 +23,7 @@ export const selectedEveTools = (
   if (!selectedTool) {
     return null;
   }
+  // oxlint-disable-next-line no-ternary -- Keep names as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const names = canvasTools.includes(selectedTool)
     ? canvasTools
     : [selectedTool];

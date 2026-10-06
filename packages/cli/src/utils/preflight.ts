@@ -57,6 +57,7 @@ export const preflight = async (
       if (
         entry &&
         (entry.isSymbolicLink() ||
+          // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           (index === parts.length - LAST_PART_OFFSET
             ? !entry.isFile()
             : !entry.isDirectory()))

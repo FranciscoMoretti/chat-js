@@ -44,12 +44,12 @@ export const ChatMenuItems = ({
       className="cursor-pointer"
       onClick={onTogglePin}
     >
-      <PinIcon
+      <PinIcon /* oxlint-disable no-ternary -- Keep the pinned menu label and icon fill as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
         // oxlint-disable-next-line react/forbid-component-props -- PinIcon accepts className in its styling contract; preserve this caller's layout and appearance.
         className={`size-4 ${isPinned ? "fill-current" : ""}`}
       />
       <span>{isPinned ? "Unpin" : "Pin"}</span>
-    </DropdownMenuItem>
+    </DropdownMenuItem /* oxlint-enable no-ternary */>
 
     {onMoveProject && (
       <DropdownMenuItem onClick={onMoveProject}>

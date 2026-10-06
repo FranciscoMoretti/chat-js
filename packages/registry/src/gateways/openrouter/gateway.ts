@@ -116,7 +116,7 @@ const toAiGatewayModel = (
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading web_search from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       web_search: model.pricing?.web_search,
     },
-    // oxlint-disable-next-line eslint/no-undefined -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.
+    // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.; no-ternary: Keep tags as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     tags: tags.length > EMPTY_TAG_COUNT ? tags : undefined,
     type,
   };

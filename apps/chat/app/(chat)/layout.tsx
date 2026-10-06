@@ -55,9 +55,11 @@ const ChatLayoutDynamic = async ({
     headers(),
     getChatModels(),
   ]);
+  // oxlint-disable-next-line no-ternary -- Keep session as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const session = isPlaywrightTestEnvironment
     ? null
     : await auth.api.getSession({ headers: headersRes });
+  // oxlint-disable-next-line no-ternary -- Keep principal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const principal = isPlaywrightTestEnvironment
     ? null
     : await resolveEvePrincipal(headersRes);

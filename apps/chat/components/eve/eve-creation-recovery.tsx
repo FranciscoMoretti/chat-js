@@ -50,7 +50,9 @@ export const EveCreationRecovery = ({
     try {
       const saved = readCreationRequest(sessionStorage, ownerId, scope);
       setPending(
+        // oxlint-disable-next-line no-ternary -- Keep setPending argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         saved &&
+          // oxlint-disable-next-line no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           (typeof operationId === "string" && operationId !== ""
             ? saved.operationId === operationId
             : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -87,6 +89,7 @@ export const EveCreationRecovery = ({
         setRejected(true);
       }
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to recover. Try again."
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required recovery lock cleanup in finally.
@@ -112,6 +115,7 @@ export const EveCreationRecovery = ({
       globalThis.location.assign("/");
     } catch (error) {
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to restore the draft."
       );
     }
@@ -119,6 +123,7 @@ export const EveCreationRecovery = ({
 
   let status = "Checking the saved request…";
   if (loaded) {
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     status = pending
       ? "Conversation creation is unconfirmed. Retry the saved request to recover it."
       : "This browser does not have the original request. Return to the tab where you sent it, or check again if creation is still running.";
@@ -133,27 +138,39 @@ export const EveCreationRecovery = ({
       className="mx-auto w-full max-w-3xl space-y-4 p-4"
     >
       <p className="break-words whitespace-pre-wrap">
-        {pending ? eveMessageTitle(pending.message) : firstMessage}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          pending ? eveMessageTitle(pending.message) : firstMessage
+        }
       </p>
       <output className="block">{status}</output>
       {failure && <p role="alert">{failure}</p>}
-      {rejected /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
-      scope?.projectId ? (
-        /* oxlint-enable oxc/no-optional-chaining */ <Button
-          onClick={continueWithoutProject}
-        >
-          Continue without project
-        </Button>
-      ) : null}
-      {!rejected && pending ? (
-        <Button
-          disabled={busy}
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Creation recovery owns its durable operation and displayed failures; the button triggers that existing lifecycle.
-          onClick={retry}
-        >
-          {busy ? "Recovering…" : "Retry creation"}
-        </Button>
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        rejected /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+        scope?.projectId ? (
+          /* oxlint-enable oxc/no-optional-chaining */ <Button
+            onClick={continueWithoutProject}
+          >
+            Continue without project
+          </Button>
+        ) : null
+      }
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        !rejected && pending ? (
+          <Button
+            disabled={busy}
+            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Creation recovery owns its durable operation and displayed failures; the button triggers that existing lifecycle.
+            onClick={retry}
+          >
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              busy ? "Recovering…" : "Retry creation"
+            }
+          </Button>
+        ) : null
+      }
       {!pending && (
         <Button
           disabled={!loaded}

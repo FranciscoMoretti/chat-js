@@ -244,6 +244,7 @@ test.each([false, true])(
     };
     const result = await executeInDaytona(
       {
+        // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         code: extra ? "!pip install missing-package\nprint(42)" : "print(42)",
         language: "python",
         title: "test",

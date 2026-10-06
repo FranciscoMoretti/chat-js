@@ -49,6 +49,7 @@ export const validateCustomToolKeys = async (
   }
   const configPath = ts.findConfigFile(cwd, (file) => ts.sys.fileExists(file));
   const config: unknown =
+    // oxlint-disable-next-line no-ternary -- Keep config as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof configPath === "string" && configPath !== ""
       ? ts.readConfigFile(configPath, (file) => ts.sys.readFile(file)).config
       : {};
@@ -86,6 +87,7 @@ export const validateCustomToolKeys = async (
       )
   );
   const argument =
+    // oxlint-disable-next-line no-ternary -- Keep argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     usesCoreHelper &&
     initializer &&
     ts.isCallExpression(initializer) &&

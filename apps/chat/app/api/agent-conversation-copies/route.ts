@@ -109,11 +109,12 @@ export const POST = async (request: Request): Promise<Response> => {
     return Response.json(
       {
         conversationId:
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+          // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep conversationId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           existing?.creationKind === "copy" ? existing.id : undefined,
         error: message,
         retryable: !rejected,
       },
+      // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       { headers, status: rejected ? 409 : 503 }
     );
   }

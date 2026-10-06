@@ -47,6 +47,7 @@ export const useRenameProject = () => {
         const detail = queryClient.getQueryData<Project | null>(detailKey);
         const previous = queryClient.getQueryData<Project[]>(listKey);
         const nextName =
+          // oxlint-disable-next-line no-ternary -- Keep nextName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof variables.updates.name === "string"
             ? variables.updates.name
             : undefined;

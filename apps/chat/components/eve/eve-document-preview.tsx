@@ -48,7 +48,7 @@ export const EveDocumentPreview = ({
   let loadingMessage = "Loading document…";
   if (document.isError) {
     loadingMessage =
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from document.error.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading code from document.error.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       document.error.data?.code === "NOT_FOUND"
         ? "Document is no longer available in this conversation."
         : "Open document to retry loading.";
@@ -105,7 +105,10 @@ export const EveDocumentPreview = ({
       <div className="bg-muted flex flex-row items-start justify-between gap-2 rounded-t-2xl border border-b-0 p-4 sm:items-center">
         <div className="flex flex-row items-start gap-3 sm:items-center">
           <div className="text-muted-foreground">
-            {action === "update" ? <Pencil size={16} /> : <File size={16} />}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              action === "update" ? <Pencil size={16} /> : <File size={16} />
+            }
           </div>
           <div className="-translate-y-1 font-medium sm:translate-y-0">
             {result.title}
@@ -133,6 +136,7 @@ export const EveDocumentPreview = ({
             isVisible: true,
             kind: result.kind,
             messageId,
+            // oxlint-disable-next-line no-ternary -- Keep revisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             revisionId: isLatest ? undefined : result.revisionId,
             status: "idle",
             title: result.title,

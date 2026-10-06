@@ -145,6 +145,7 @@ const createMessageFromInput = async <
   const messageId = getInputMessageId(input) ?? fallbackId;
   const { metadata } = input;
   if ("text" in input || "files" in input) {
+    // oxlint-disable-next-line no-ternary -- Keep fileParts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const fileParts = Array.isArray(input.files)
       ? input.files
       : await convertFileListToFileUIParts(input.files);
@@ -153,6 +154,7 @@ const createMessageFromInput = async <
       metadata,
       parts: [
         ...fileParts,
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...("text" in input &&
         input.text !== ABSENT_INPUT_TEXT &&
         input.text !== null
@@ -445,6 +447,7 @@ abstract class ThreadCore<
 
     if (target.role === "assistant") {
       this.#runs.assertHasCapacity(
+        // oxlint-disable-next-line no-ternary -- Keep this.#runs.assertHasCapacity argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof parentMessageId === "string" && parentMessageId !== ""
           ? parentMessageId
           : ROOT_MESSAGE_ID
@@ -478,16 +481,19 @@ abstract class ThreadCore<
   }> {
     const { parentMessageId, target } = this.readTree((tree) => {
       const cursorTarget =
+        // oxlint-disable-next-line no-ternary -- Keep cursorTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof tree.cursorId === "string" && tree.cursorId !== ""
           ? tree.getMessage(tree.cursorId)
           : ABSENT_MESSAGE_TARGET;
       const selectedTarget =
+        // oxlint-disable-next-line no-ternary -- Keep selectedTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         messageId === ABSENT_MESSAGE_TARGET || messageId === ROOT_MESSAGE_ID
           ? cursorTarget
           : tree.getMessage(messageId);
       let targetParentMessageId: string | null = ROOT_MESSAGE_ID;
       if (selectedTarget) {
         targetParentMessageId =
+          // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           selectedTarget.role === "assistant"
             ? (tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID)
             : selectedTarget.id;
@@ -558,6 +564,7 @@ abstract class ThreadCore<
         ) => UIMessage<Metadata, Data, Tools>[])
   ): void {
     const nextMessages =
+      // oxlint-disable-next-line no-ternary -- Keep nextMessages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       typeof messages === "function"
         ? messages(this.getSnapshot().messages)
         : messages;
@@ -575,10 +582,12 @@ abstract class ThreadCore<
     const { tree, ...request } = options ?? {};
     if (!input) {
       const cursorId =
+        // oxlint-disable-next-line no-ternary -- Keep cursorId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tree && "from" in tree
           ? (tree.from ?? ROOT_MESSAGE_ID)
           : this.getSnapshot().cursorId;
       const cursorMessage =
+        // oxlint-disable-next-line no-ternary -- Keep cursorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof cursorId === "string" && cursorId !== ""
           ? this.getMessage(cursorId)
           : ABSENT_MESSAGE_TARGET;
@@ -598,6 +607,7 @@ abstract class ThreadCore<
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading follow from tree; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       follow: tree?.follow,
       from:
+        // oxlint-disable-next-line no-ternary -- Keep from as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tree && "from" in tree
           ? (tree.from ?? ROOT_MESSAGE_ID)
           : OMITTED_RUN_ORIGIN,
@@ -660,10 +670,12 @@ abstract class ThreadCore<
     originMessage: UIMessage<Metadata, Data, Tools> | undefined;
   }> {
     const { cursorId, originMessage } = this.readTree((tree) => {
+      // oxlint-disable-next-line no-ternary -- Keep originCursorId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const originCursorId = from === OMITTED_RUN_ORIGIN ? tree.cursorId : from;
       return {
         cursorId: originCursorId,
         originMessage:
+          // oxlint-disable-next-line no-ternary -- Keep originMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof originCursorId === "string" && originCursorId !== ""
             ? tree.getMessage(originCursorId)
             : ABSENT_MESSAGE_TARGET,
@@ -700,6 +712,7 @@ abstract class ThreadCore<
   ): void {
     this.updateTree((tree): void => {
       const existingMessage = tree.getMessage(message.id);
+      // oxlint-disable-next-line no-ternary -- Keep attachmentId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const attachmentId = existingMessage
         ? (tree.getParentId(message.id) ?? ROOT_MESSAGE_ID)
         : cursorId;

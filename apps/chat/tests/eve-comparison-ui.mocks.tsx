@@ -24,6 +24,7 @@ const fixtureModels = models
     ...model,
     apiModelId: model.id,
     input: { image: true, pdf: true, text: true },
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     name: model.id === firstModel ? "First model" : "Second model",
   }));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -173,7 +174,10 @@ const EveConversation = ({
           <p key={file.url}>{file.name}</p>
         ))}
         <button onClick={() => setPending((value) => !value)} type="button">
-          {pending ? "Resolve pending send" : "Simulate pending send"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            pending ? "Resolve pending send" : "Simulate pending send"
+          }
         </button>
       </section>
     </main>

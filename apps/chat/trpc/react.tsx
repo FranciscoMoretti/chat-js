@@ -103,10 +103,13 @@ const TRPCReactProvider = (props: {
       <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
         {props.children}
       </TRPCProvider>
-      {process.env.NODE_ENV === "development" &&
-      env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        process.env.NODE_ENV === "development" &&
+        env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
+          <ReactQueryDevtools initialIsOpen={false} />
+        ) : null
+      }
     </QueryClientProvider>
   );
 };

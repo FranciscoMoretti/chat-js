@@ -34,6 +34,7 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
       {visibleSources.map((source, index): React.JSX.Element => (
         <Favicon
           alt={`Favicon for ${
+            // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             typeof source.title === "string" && source.title !== ""
               ? source.title
               : new URL(source.url).hostname
@@ -41,8 +42,10 @@ export const FaviconGroup: React.FC<FaviconGroupProps> = ({
           // oxlint-disable-next-line react/forbid-component-props -- Favicon accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn(
             "border-background h-5 w-5 rounded-full border-2",
+            // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             index > 0 ? "-ml-2" : ""
           )}
+          // oxlint-disable-next-line no-ternary -- Keep key JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           key={source.url === "" ? index : source.url}
           // oxlint-disable-next-line react/forbid-component-props -- Favicon accepts style in its styling contract; preserve this caller's layout and appearance.
           style={{ zIndex: maxVisible - index }}

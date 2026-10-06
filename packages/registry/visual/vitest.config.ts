@@ -18,6 +18,8 @@ import { playwright } from "@vitest/browser-playwright";
 import type { Page, Route } from "playwright";
 import { defineConfig } from "vitest/config";
 
+import { registeredProjectsPlugin } from "./registered-projects-plugin";
+
 const appRequire = createRequire(
   new URL("../../../apps/chat/package.json", import.meta.url)
 );
@@ -32,6 +34,7 @@ export default defineConfig({
     include: [
       "@trpc/server/observable",
       "next/dist/shared/lib/app-router-context.shared-runtime",
+      "next/dist/shared/lib/hooks-client-context.shared-runtime",
       "next/link",
       "next/navigation",
       "@lexical/react/LexicalPlainTextPlugin",
@@ -47,13 +50,15 @@ export default defineConfig({
       "nanoid",
       "next/dist/client/image-component",
       "react",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
       "react-dom/client",
       "react-dropzone",
       "sonner",
     ],
   },
   oxc: { jsx: { runtime: "automatic" } },
-  plugins: [uiverifyPlugin()],
+  plugins: [registeredProjectsPlugin(), uiverifyPlugin()],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("../../../apps/chat", import.meta.url)),
@@ -67,7 +72,12 @@ export default defineConfig({
       react: path.dirname(appRequire.resolve("react/package.json")),
       "react-dom": path.dirname(appRequire.resolve("react-dom/package.json")),
     },
-    dedupe: ["react", "react-dom"],
+    dedupe: [
+      "react",
+      "react/jsx-runtime",
+      "react/jsx-dev-runtime",
+      "react-dom",
+    ],
   },
   test: {
     browser: {

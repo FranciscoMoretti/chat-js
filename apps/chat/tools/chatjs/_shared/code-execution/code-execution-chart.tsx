@@ -70,8 +70,10 @@ const pngSchema = z.object({
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const CodeExecutionChart = ({ value }: { value: unknown }) => {
   const parsedChart = chartSchema.safeParse(value);
+  // oxlint-disable-next-line no-ternary -- Keep chart as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const chart: BaseChart | null = parsedChart.success ? parsedChart.data : null;
   const parsedPng = pngSchema.safeParse(value);
+  // oxlint-disable-next-line no-ternary -- Keep pngChart as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const pngChart = parsedPng.success ? parsedPng.data : null;
   return (
     <>

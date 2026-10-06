@@ -77,6 +77,7 @@ export const config = new Command()
         closeEvent = await once(child, "close");
       } catch (error) {
         throw new Error(
+          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           `Could not spawn ${cmd}. Make sure ${pm} is installed. ${error instanceof Error ? error.message : String(error)}`,
           {
             cause: error,

@@ -51,7 +51,7 @@ export const EveAttachment = ({
   let url = source;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (source?.startsWith("data:")) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from resolved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading source from resolved; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     url = resolved?.source === source ? resolved.url : undefined;
   }
   if (typeof url === "string" && url !== "") {

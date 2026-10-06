@@ -164,6 +164,7 @@ it.each([
     );
     const location = new URL(response.headers.get("location") ?? "");
     expect(location.pathname).toBe(
+      // oxlint-disable-next-line no-ternary -- Keep expect(location.pathname).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       session ? "/settings/connectors/connector" : "/settings/connectors"
     );
     expect(mocks.deleteSession).not.toHaveBeenCalled();

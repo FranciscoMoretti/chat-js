@@ -97,21 +97,24 @@ const DetailsSection = ({
         // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
         className="my-3"
       />
-      {count === 0 ? (
-        <p className="text-muted-foreground text-xs italic">None available</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map(({ name, key }) => (
-            <span
-              className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
-              key={key}
-              title={name}
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        count === 0 ? (
+          <p className="text-muted-foreground text-xs italic">None available</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {items.map(({ name, key }) => (
+              <span
+                className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
+                key={key}
+                title={name}
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )
+      }
     </div>
   );
 };
@@ -633,15 +636,18 @@ export const McpDetailsPage = ({
             </Label>
           </div>
 
-          {canEdit ? (
-            <Button onClick={handleUninstall} size="sm" variant="destructive">
-              <Trash2
-                // oxlint-disable-next-line react/forbid-component-props -- Trash2 accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-4"
-              />
-              Uninstall
-            </Button>
-          ) : null}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            canEdit ? (
+              <Button onClick={handleUninstall} size="sm" variant="destructive">
+                <Trash2
+                  // oxlint-disable-next-line react/forbid-component-props -- Trash2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-4"
+                />
+                Uninstall
+              </Button>
+            ) : null
+          }
         </div>
       </div>
 

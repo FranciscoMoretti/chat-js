@@ -32,6 +32,7 @@ export default defineDynamic({
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const ownerId = context.session.auth.initiator?.principalId;
       const timeoutSignal = AbortSignal.timeout(30_000);
+      // oxlint-disable-next-line no-ternary -- Keep discoverySignal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const discoverySignal = context.abortSignal
         ? AbortSignal.any([context.abortSignal, timeoutSignal])
         : timeoutSignal;

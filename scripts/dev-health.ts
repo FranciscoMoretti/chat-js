@@ -56,6 +56,7 @@ if (import.meta.main) {
   } catch (error) {
     // oxlint-disable-next-line eslint/no-console -- Preserve the command's operator-facing failure diagnostic.
     console.error(
+      // oxlint-disable-next-line no-ternary -- Keep console.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error ? error.message : "Runtime unavailable"
     );
     process.exitCode = 1;

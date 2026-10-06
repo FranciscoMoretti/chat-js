@@ -91,10 +91,10 @@ const buildChatModels = (
         const rightProviderIndex = PROVIDER_ORDER.indexOf(rightModel.owned_by);
 
         const leftIndex =
-          // oxlint-disable-next-line no-magic-numbers -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.
+          // oxlint-disable-next-line no-magic-numbers, no-ternary -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.; no-ternary: Keep leftIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           leftProviderIndex === -1 ? PROVIDER_ORDER.length : leftProviderIndex;
         const rightIndex =
-          // oxlint-disable-next-line no-magic-numbers -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.
+          // oxlint-disable-next-line no-magic-numbers, no-ternary -- indexOf uses -1 for an unlisted provider, which sorts after configured providers.; no-ternary: Keep rightIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           rightProviderIndex === -1
             ? PROVIDER_ORDER.length
             : rightProviderIndex;
@@ -147,6 +147,7 @@ const snapshotMatchesGateway = (gateway: string): boolean =>
   generatedForGateway === gateway;
 
 const KNOWN_MODEL_IDS = new Set<string>(
+  // oxlint-disable-next-line no-ternary -- Keep Set argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   snapshotMatchesGateway(config.ai.gateway)
     ? generatedModels.map((model: { readonly id: string }) => model.id)
     : []

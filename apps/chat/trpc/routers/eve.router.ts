@@ -196,6 +196,7 @@ export const eveRouter = createTRPCRouter({
           cause: error,
           code: "CONFLICT",
           message:
+            // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             error instanceof Error
               ? error.message
               : "Document could not be saved.",

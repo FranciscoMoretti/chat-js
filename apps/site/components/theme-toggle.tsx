@@ -15,6 +15,7 @@ export const ThemeToggle = (): React.JSX.Element => {
       aria-label="Toggle theme"
       className="text-foreground/75 hover:bg-secondary hover:text-foreground rounded-md p-2 transition-colors"
       onClick={(): void =>
+        // oxlint-disable-next-line no-ternary -- Keep setTheme argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         setTheme(resolvedTheme === "dark" ? "light" : "dark")
       }
       type="button"

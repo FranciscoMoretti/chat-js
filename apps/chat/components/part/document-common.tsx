@@ -99,6 +99,7 @@ const PureDocumentToolResult = ({
           isVisible: true,
           kind: result.kind,
           messageId,
+          // oxlint-disable-next-line no-ternary -- Keep revisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           revisionId: followLive ? undefined : result.revisionId,
           status: "idle",
           title: result.title,
@@ -167,7 +168,7 @@ const PureDocumentToolCall = ({
         </div>
 
         <div className="text-left">
-          {`${getActionText(type, "present")} ${args.title ? `"${args.title}"` : ""}`}
+          {`${getActionText(type, "present")} ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ args /* oxlint-enable no-ternary */.title ? `"${args.title}"` : ""}`}
         </div>
       </div>
 

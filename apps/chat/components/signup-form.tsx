@@ -57,12 +57,18 @@ export const SignupForm = ({
             // oxlint-disable-next-line react/forbid-component-props -- CardTitle accepts className in its styling contract; preserve this caller's layout and appearance.
             className="text-xl"
           >
-            {isElectron ? "Continue in browser" : "Create an account"}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isElectron ? "Continue in browser" : "Create an account"
+            }
           </CardTitle>
           <CardDescription>
-            {isElectron
-              ? "Use your browser to sign in or create an account."
-              : "Get started in seconds"}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isElectron
+                ? "Use your browser to sign in or create an account."
+                : "Get started in seconds"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -77,23 +83,26 @@ export const SignupForm = ({
                 signInOptions={signInOptions}
               />
             </Suspense>
-            {isElectron ? (
-              <div className="text-muted-foreground text-center text-sm">
-                New and existing accounts both continue through the browser
-                flow.
-              </div>
-            ) : (
-              <div className="text-center text-sm">
-                Already have an account?{" "}
-                <InternalLink
-                  // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
-                  className="underline underline-offset-4"
-                  href={loginHref}
-                >
-                  Sign in
-                </InternalLink>
-              </div>
-            )}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              isElectron ? (
+                <div className="text-muted-foreground text-center text-sm">
+                  New and existing accounts both continue through the browser
+                  flow.
+                </div>
+              ) : (
+                <div className="text-center text-sm">
+                  Already have an account?{" "}
+                  <InternalLink
+                    // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="underline underline-offset-4"
+                    href={loginHref}
+                  >
+                    Sign in
+                  </InternalLink>
+                </div>
+              )
+            }
           </div>
         </CardContent>
       </Card>

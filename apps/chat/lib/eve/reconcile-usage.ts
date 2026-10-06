@@ -63,6 +63,7 @@ const reconcileEveSubagentUsage = async (
     descendants.map((child) => child.sessionId)
   );
   for (const child of descendants) {
+    // oxlint-disable-next-line no-ternary -- Keep start as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const start = replayUnpriced ? 0 : child.usageStreamIndex;
     const length = positions.get(child.sessionId);
     if (length !== undefined && length < child.usageStreamIndex) {
@@ -131,6 +132,7 @@ const reconcileEveUsage = async (
   replayUnpriced = false
 ): Promise<void> => {
   assertEveConfigured();
+  // oxlint-disable-next-line no-ternary -- Keep startIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const startIndex = replayUnpriced
     ? 0
     : await getEveUsageCursor(ownerId, sessionId);
@@ -212,6 +214,7 @@ const reconcileAllOwnerUsage = async (
     ...children.map((child) => child.sessionId),
   ]);
   for (const row of bindings) {
+    // oxlint-disable-next-line no-ternary -- Keep length as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const length = row.sessionId ? positions.get(row.sessionId) : undefined;
     if (length !== undefined && length < row.usageStreamIndex) {
       throw new Error("Eve stream is shorter than its durable billing cursor.");

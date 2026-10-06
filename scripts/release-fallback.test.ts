@@ -230,6 +230,7 @@ test("retry pushes an existing local tag after the first push fails", async (): 
 for (const lookupFails of [false, true]) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(
+    // oxlint-disable-next-line no-ternary -- Keep test argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     lookupFails
       ? "registry authentication failure never triggers publication"
       : "missing version publishes and creates release metadata",

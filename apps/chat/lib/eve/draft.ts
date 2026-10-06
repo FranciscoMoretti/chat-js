@@ -54,6 +54,7 @@ const draftMessage = (
     return eveMessageInput.parse(text);
   }
   return eveMessageInput.parse([
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(text.trim() ? [{ text, type: "text" }] : []),
     ...attachments.map((file) => ({
       data: file.url,

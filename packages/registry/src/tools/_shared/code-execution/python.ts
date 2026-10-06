@@ -33,6 +33,7 @@ const installBasePackages = async (
   if (installStep.exitCode !== 0) {
     const errorOutput = await installStep.stderr();
     const standardOutput =
+      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await installStep.stdout() : "";
     const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
@@ -111,6 +112,7 @@ const processExtraPackages = async (
   if (dynamicInstall.exitCode !== 0) {
     const errorOutput = await dynamicInstall.stderr();
     const standardOutput =
+      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
     const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(

@@ -85,9 +85,11 @@ process.stdout.write(
             ...input,
             disabled: disabled ?? false,
             kind: "code",
+            // oxlint-disable-next-line no-ternary -- Keep messages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             messages: part
               ? [{ id: title, role: "assistant", parts: [part] }]
               : [],
+            // oxlint-disable-next-line no-ternary -- Keep onAction as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onAction: readOnly ? undefined : () => Promise.resolve(),
             title: "saved.js",
           })

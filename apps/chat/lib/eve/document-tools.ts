@@ -123,6 +123,7 @@ export const executeEveDocumentTool = async (
   if (!(operation && installedDocumentKinds.has(operation.kind))) {
     throw new Error("Document tool is unavailable.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep edit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const edit = operation.edit ? eveDocumentEditInput.parse(value) : undefined;
   const input = edit ?? eveDocumentCreateInput.parse(value);
   const scope = await resolveEveConversationScope(

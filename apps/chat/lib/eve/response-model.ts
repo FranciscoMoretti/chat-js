@@ -11,6 +11,7 @@ const responseModelReferences = (
   const models = new Map<string, string>();
   for (const event of events) {
     const candidates =
+      // oxlint-disable-next-line no-ternary -- Keep candidates as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       event.type === "history.restored" ? event.data.events : [event];
     for (const candidate of candidates) {
       if (
@@ -36,6 +37,7 @@ const responseModel = (
   turnId: string,
   importedModelId?: string
 ): string => {
+  // oxlint-disable-next-line no-ternary -- Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const reference = turnId
     ? responseModelReferences(events).get(turnId)
     : importedModelId;

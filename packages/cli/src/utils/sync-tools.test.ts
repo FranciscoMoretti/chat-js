@@ -752,6 +752,7 @@ test("grouped tool and composer imports keep bindings attached beyond nine alias
   await mkdir(directory, { recursive: true });
   const tools = Array.from({ length: 11 }, (value, index) => ({
     composer: {
+      // oxlint-disable-next-line no-ternary -- Keep icon as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       icon: index % 2 === 0 ? "Globe" : "Wrench",
       name: `Tool ${index}`,
       shortName: `Tool ${index}`,

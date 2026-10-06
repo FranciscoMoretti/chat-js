@@ -46,6 +46,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
           reactCreateElement(
             "p",
             { "data-message": messageId, "data-readonly": isReadonly },
+            // oxlint-disable-next-line no-ternary -- Keep reactCreateElement argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             tool.state === "output-available" ? tool.output.echoed : "Loading"
           ),
         renderProgress: ({ updates }) =>

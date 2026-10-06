@@ -83,6 +83,7 @@ const readResourceRecords = async (
       )
     );
     const pattern =
+      // oxlint-disable-next-line no-ternary -- Keep pattern as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
     if (
       record.sessionKey !== input.sessionKey ||
@@ -123,13 +124,16 @@ const readLocalSandboxResources = async (
     throw error;
   });
   const metadata =
+    // oxlint-disable-next-line no-ternary -- Keep metadata as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     metadataText === undefined
       ? undefined
       : metadataSchema.parse(JSON.parse(metadataText));
+  // oxlint-disable-next-line no-ternary -- Keep Set argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const sandboxNames = new Set<string>(metadata ? [metadata.sandboxName] : []);
   const recordedSnapshots = new Set<string>();
   const recorded = await readResourceRecords(input);
   for (const record of recorded) {
+    // oxlint-disable-next-line no-ternary -- Keep add receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (record.kind === "sandbox" ? sandboxNames : recordedSnapshots).add(
       record.name
     );
@@ -141,7 +145,7 @@ const readLocalSandboxResources = async (
     }
     throw error;
   });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stateSnapshotName from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading stateSnapshotName from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep snapshots as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const snapshots: string[] = metadata?.stateSnapshotName
     ? [metadata.stateSnapshotName, ...recordedSnapshots]
     : [...recordedSnapshots];

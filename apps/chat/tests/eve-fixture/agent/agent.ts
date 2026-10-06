@@ -46,6 +46,7 @@ export default defineAgent({
           {
             // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from tool; preserve one receiver evaluation, skipped accesses and the existing "run_tool" fallback. The app guidance prefers optional chaining.
             name: tool?.name ?? "run_tool",
+            // oxlint-disable-next-line no-ternary -- Keep input as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             input: tool
               ? { note: "Review release" }
               : { name: "confirm_note", input: { note: "Review release" } },

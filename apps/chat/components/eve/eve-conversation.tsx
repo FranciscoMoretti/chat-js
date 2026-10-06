@@ -127,7 +127,7 @@ const EveConversation = ({
       event.type === "turn.cancelled"
   );
   const durableError =
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep durableError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined;
   const displayedError =
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from commandFailure; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining.
@@ -135,11 +135,13 @@ const EveConversation = ({
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
   const selectedPath = new Set<string>();
+  // oxlint-disable-next-line no-ternary -- Keep selectedNode as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   let selectedNode = snapshot.cursorId
     ? snapshot.nodes.get(snapshot.cursorId)
     : undefined;
   while (selectedNode) {
     selectedPath.add(selectedNode.id);
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     selectedNode = selectedNode.parentId
       ? snapshot.nodes.get(selectedNode.parentId)
       : undefined;
@@ -162,6 +164,7 @@ const EveConversation = ({
     .map((message) => {
       const id = controller.logicalId(conversationId, message.id);
       const canonical =
+        // oxlint-disable-next-line no-ternary -- Keep canonical as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof id === "string" && id !== ""
           ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from snapshot.nodes.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             snapshot.nodes.get(id)?.message
@@ -184,7 +187,7 @@ const EveConversation = ({
   const modelForMessage = (
     message: (typeof messages)[number]
   ): string | undefined => {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const reference = message.metadata?.turnId
       ? responseModels.get(message.metadata.turnId)
       : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -217,6 +220,7 @@ const EveConversation = ({
       await action();
     } catch (error) {
       setCommandFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error
           ? error
           : new Error("Request failed. Reconnect before retrying.")
@@ -256,11 +260,11 @@ const EveConversation = ({
           agent.send(draftMessage(pending.message, pending.attachments), {
             headers: {
               [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (pending.modelId                 ? { "x-chatjs-selected-model": pending.modelId }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (pending.modelId                 ? { "x-chatjs-selected-model": pending.modelId }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(pending.modelId
                 ? { "x-chatjs-selected-model": pending.modelId }
                 : {}),
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (pending.selectedTool                 ? { "x-chatjs-selected-tool": pending.selectedTool }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (pending.selectedTool                 ? { "x-chatjs-selected-tool": pending.selectedTool }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(pending.selectedTool
                 ? { "x-chatjs-selected-tool": pending.selectedTool }
                 : {}),
@@ -407,6 +411,7 @@ const EveConversation = ({
                 messages={messages}
 
                 editor={
+                  // oxlint-disable-next-line no-ternary -- Keep editor JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   editingMessageId
                     ? {
                         content: (
@@ -414,6 +419,7 @@ const EveConversation = ({
                             <EveComposer
                               // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Edit intentionally transfers focus to the message composer inside that message.
                               autoFocus
+                              // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                               status={fork.busy ? "submitted" : "ready"}
                               disabled={
                                 busy ||
@@ -485,12 +491,14 @@ const EveConversation = ({
                     (candidate) => candidate.role === "user"
                   );
                   const response = following
+                    // oxlint-disable-next-line no-ternary -- Keep following .slice argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     .slice(0, nextUser === -1 ? following.length : nextUser)
                     .find((candidate) => candidate.role === "assistant");
                   const logicalId = controller.logicalId(
                     conversationId,
                     message.id
                   );
+                  // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   const group = logicalId
                     ? logicalResponseSlots(snapshot, logicalId)
                     : undefined;
@@ -502,8 +510,10 @@ const EveConversation = ({
                   }
                   return fork.begin(message, undefined, {
                     events: agent.events,
+                    // oxlint-disable-next-line no-ternary -- Keep modelSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     modelSelection: group ? groupModels : undefined,
                     response:
+                      // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       response && modelForMessage(response)
                         ? response
                         : undefined,
@@ -568,9 +578,12 @@ const EveConversation = ({
             {pendingMessage && !commandPending && (
               <output className="space-y-2 text-sm">
                 <p>
-                  {pendingMessage.rejection
-                    ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-                    : "Message delivery is unconfirmed. Your draft is saved in this tab."}
+                  {
+                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    pendingMessage.rejection
+                      ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
+                      : "Message delivery is unconfirmed. Your draft is saved in this tab."
+                  }
                 </p>
                 <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
                 <AttachmentList attachments={pendingMessage.attachments} />
@@ -616,6 +629,7 @@ const EveConversation = ({
                       );
                       delivery.release(pendingMessage);
                       setCommandFailure(
+                        // oxlint-disable-next-line no-ternary -- Keep setCommandFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                         pendingMessage.rejection
                           ? undefined
                           : new Error(
@@ -633,6 +647,7 @@ const EveConversation = ({
               </output>
             )}
             <EveComposer
+              // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               status={agent.status === "resuming" ? "submitted" : agent.status}
               disabled={
                 !composerDraft.loaded ||
@@ -783,6 +798,7 @@ const useConversationInput = (
     }
   );
   const comparison =
+    // oxlint-disable-next-line no-ternary -- Keep comparison as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */

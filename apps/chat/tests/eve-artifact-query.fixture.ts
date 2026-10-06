@@ -51,6 +51,7 @@ const trpcClient = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       fetch(input, init): Promise<Response> {
+        // oxlint-disable-next-line no-ternary -- Keep URL argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         const url = new URL(input instanceof Request ? input.url : input);
         if (url.pathname === "/api/trpc/eve.saveDocument") {
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading body from init; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -101,11 +102,13 @@ const trpcClient = createTRPCClient<AppRouter>({
                 SuperJSON.parse(JSON.stringify(serialized))
               );
               const existing = request.documentId === existingId;
+              // oxlint-disable-next-line no-ternary -- Keep latestId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               const latestId = existing
                 ? "00000000-0000-4000-8000-000000000004"
                 : "00000000-0000-4000-8000-000000000002";
               const revisionId =
                 request.revisionId ??
+                // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 (existing && restoredContent !== undefined
                   ? restoredId
                   : latestId);
@@ -115,8 +118,10 @@ const trpcClient = createTRPCClient<AppRouter>({
               ) {
                 throw new Error("Wrong revision selected");
               }
+              // oxlint-disable-next-line no-ternary -- Keep title as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               const title = existing ? "Existing draft" : "Orchard notes";
               const createdAt = new Date("2026-01-01T00:00:00.000Z");
+              // oxlint-disable-next-line no-ternary -- Keep content as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               let content = existing
                 ? "Existing document content."
                 : "# Orchard notes\n\nPlant the apple trees in autumn.";
@@ -129,6 +134,7 @@ const trpcClient = createTRPCClient<AppRouter>({
               const data: inferRouterOutputs<AppRouter>["eve"]["document"] = {
                 canEdit: true,
                 history: [
+                  // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   ...(existing
                     ? [
                         {
@@ -143,12 +149,14 @@ const trpcClient = createTRPCClient<AppRouter>({
                     : []),
                   {
                     id: latestId,
+                    // oxlint-disable-next-line no-ternary -- Keep parentRevisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     parentRevisionId: existing ? olderId : null,
                     title,
                     kind: "text",
                     turnIndex: 0,
                     createdAt,
                   },
+                  // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   ...(existing && restoredContent !== undefined
                     ? [
                         {

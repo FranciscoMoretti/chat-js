@@ -12,6 +12,7 @@ export const useDebouncedSearch = (value: string): string => {
   useEffect(() => {
     const timeout = setTimeout(
       () => setSearch(normalized),
+      // oxlint-disable-next-line no-ternary -- Keep setTimeout argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       normalized ? typingDebounceDelayMs : clearedSearchDelayMs
     );
     return (): void => clearTimeout(timeout);

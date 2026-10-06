@@ -17,7 +17,7 @@ const getOpenAIProviderOptions = (
   const modelName = apiModelId.split("/").pop() ?? apiModelId;
   return {
     reasoningSummary: "auto",
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (modelName === "gpt-5" ||     modelName === "gpt-5-mini" ||     modelName === "gpt-5-nano"       ? { reasoningEffort: "low" }       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (modelName === "gpt-5" ||     modelName === "gpt-5-mini" ||     modelName === "gpt-5-nano"       ? { reasoningEffort: "low" }       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(modelName === "gpt-5" ||
     modelName === "gpt-5-mini" ||
     modelName === "gpt-5-nano"
@@ -41,6 +41,7 @@ const getModelProviderOptions = (
     }
     case "anthropic": {
       return {
+        // oxlint-disable-next-line no-ternary -- Keep SatisfiesExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         anthropic: (model.reasoning
           ? {
               thinking: {
@@ -56,6 +57,7 @@ const getModelProviderOptions = (
     }
     case "google": {
       return {
+        // oxlint-disable-next-line no-ternary -- Keep SatisfiesExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         google: (model.reasoning
           ? {
               thinkingConfig: {

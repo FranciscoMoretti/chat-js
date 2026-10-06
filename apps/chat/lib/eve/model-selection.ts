@@ -102,7 +102,7 @@ const loadEveModelDefinition = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveModel's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable unicorn/max-nested-calls -- typescript/explicit-function-return-type (#560): Keep resolveEveModel's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable unicorn/max-nested-calls --
 unicorn/max-nested-calls (#568): resolveEveModel keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const resolveEveModel = async (
   requestedId?: string

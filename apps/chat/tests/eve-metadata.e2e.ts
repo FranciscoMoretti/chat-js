@@ -65,9 +65,11 @@ test("rename and pin persist, preserve input, and reject another owner's changes
   });
   await insertEveConversationFixtures(
     ids.map((id, index) => ({
+      // oxlint-disable-next-line no-ternary -- Keep firstMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       firstMessage: index === 0 ? firstTitle : secondTitle,
       id,
       operationId: crypto.randomUUID(),
+      // oxlint-disable-next-line no-ternary -- Keep ownerId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ownerId: index === 2 ? foreignOwner : owner.id,
       updatedAt: new Date(Date.now() + index * 1000),
     }))

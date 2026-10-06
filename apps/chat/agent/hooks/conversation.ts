@@ -55,6 +55,7 @@ export default defineHook({
         AbortSignal.timeout(10_000),
         // Native lineage identifies the existing root binding. An inherited
         // reservation attribute never authorizes a child to claim that binding.
+        // oxlint-disable-next-line no-ternary -- Keep resolveEveConversationScope argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         context.session.parent
           ? undefined
           : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.

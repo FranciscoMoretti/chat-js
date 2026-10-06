@@ -84,6 +84,7 @@ const resolveEveResponseGroupLineage = (
   while (current && !visited.has(current.id)) {
     reversedLineage.push(current);
     visited.add(current.id);
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     current = current.parentConversationId
       ? conversationsById.get(current.parentConversationId)
       : undefined;
@@ -140,6 +141,7 @@ const resolveEveResponseGroupLineage = (
     const original = conversations.find(
       (conversation) => conversation.operationId === operationId
     );
+    // oxlint-disable-next-line no-ternary -- Keep originalBoundary as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const originalBoundary = original ? localTurnBoundary(original) : null;
     if (!(original && originalBoundary)) {
       continue;
@@ -164,6 +166,7 @@ const resolveEveResponseGroupLineage = (
         }
       }
     }
+    // oxlint-disable-next-line no-ternary -- Keep replacement as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const replacement = valid.has(selectedConversationId)
       ? conversationsById.get(selectedConversationId)
       : latest;

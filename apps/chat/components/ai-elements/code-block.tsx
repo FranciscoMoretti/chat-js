@@ -61,6 +61,7 @@ const highlightCode = async (
   language: BundledLanguage,
   showLineNumbers = false
 ) => {
+  // oxlint-disable-next-line no-ternary -- Keep transformers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const transformers: ShikiTransformer[] = showLineNumbers
     ? [lineNumberTransformer]
     : [];
@@ -192,11 +193,12 @@ const CodeBlockCopyButton = ({
       onCopy?.();
       setTimeout(() => setIsCopied(false), timeout);
     } catch (error) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       onError?.(error instanceof Error ? error : new Error(String(error)));
     }
   };
   /* oxlint-enable oxc/no-async-await */
+  // oxlint-disable-next-line no-ternary -- Keep Icon as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Icon = isCopied ? CheckIcon : CopyIcon;
 
   return (

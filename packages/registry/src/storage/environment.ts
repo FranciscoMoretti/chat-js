@@ -117,6 +117,7 @@ const getStorageEnvironmentRequirements = (
     requiresEnvironmentVariable(variable, adapterOptions)
   );
   const requirements: StorageEnvironmentRequirement[] =
+    // oxlint-disable-next-line no-ternary -- Keep requirements as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     required && required.length > EMPTY_VARIABLE_COUNT
       ? [
           {

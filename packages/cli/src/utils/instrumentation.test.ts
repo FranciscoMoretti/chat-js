@@ -23,10 +23,12 @@ const compiled = ts.transpileModule(source, {
 for (const runtime of ["nodejs", "edge"]) {
   for (const fail of [false, true]) {
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     test(`core lifecycle survives optional instrumentation ${fail ? "failure" : "omission"} on ${runtime}`, async (): Promise<void> => {
       const events: string[] = [];
       const received: unknown[] = [];
       const failure = new Error("Missing credentials for langfuse");
+      // oxlint-disable-next-line no-ternary -- Keep registrations as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const registrations = fail
         ? [
             (context: unknown) => {
@@ -58,13 +60,17 @@ for (const runtime of ["nodejs", "edge"]) {
       if (!exports.register) {
         throw new Error("Missing register export");
       }
+      // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       await (fail
         ? // oxlint-disable-next-line typescript/no-confusing-void-expression -- Await the asynchronous matcher before advancing the test; Bun matcher declarations expose a void result.
           expect(exports.register()).rejects.toBe(failure)
         : exports.register());
+      // oxlint-disable-next-line no-ternary -- Keep expect(received).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       expect(received).toEqual(fail ? [{ appPrefix: "test", runtime }] : []);
       expect(events).toEqual([
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(runtime === "nodejs" ? ["core"] : []),
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(fail ? ["optional"] : []),
       ]);
     });

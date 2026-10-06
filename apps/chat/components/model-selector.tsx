@@ -180,6 +180,7 @@ const PureCommandItem = ({
   const featureIcons = useMemo(() => getFeatureIcons(model), [model]);
   const searchValue = useMemo(
     () =>
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `${model.name} ${model.reasoning ? "reasoning" : ""} ${model.owned_by} `.toLowerCase(),
     [model]
   );
@@ -479,6 +480,7 @@ const PureModelSelector = ({
       startTransition(() => {
         const { current } = optimisticSelectionRef;
         const currentCounts: SelectedModelCounts =
+          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof current === "string" ? { [current]: 1 } : current;
 
         const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
@@ -513,6 +515,7 @@ const PureModelSelector = ({
       startTransition(() => {
         const { current } = optimisticSelectionRef;
         const currentCounts: SelectedModelCounts =
+          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof current === "string" ? { [current]: 1 } : current;
 
         const newCount = (currentCounts[id] ?? 0) + delta;
@@ -752,21 +755,25 @@ const PureModelSelector = ({
               <CommandEmpty>No model found.</CommandEmpty>
               <CommandGroup>
                 {filteredModels.map(({ model, disabled }) => {
-                  const isSelected = useMultipleModels
-                    ? selectedModelIds.has(model.id)
-                    : model.id === optimisticModelId;
+                  const isSelected =
+                    /* oxlint-disable no-ternary -- Keep isSelected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ useMultipleModels /* oxlint-enable no-ternary */
+                      ? selectedModelIds.has(model.id)
+                      : model.id === optimisticModelId;
                   const count =
-                    useMultipleModels && typeof optimisticSelection !== "string"
+                    /* oxlint-disable no-ternary -- Keep count as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ useMultipleModels /* oxlint-enable no-ternary */ &&
+                    typeof optimisticSelection !== "string"
                       ? (optimisticSelection[model.id] ?? 0)
                       : undefined;
                   return (
                     <CommandItem
+                      // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       count={isSelected ? count : undefined}
                       disabled={disabled}
                       isSelected={isSelected}
                       key={model.id}
                       model={model}
                       onCountChange={
+                        // oxlint-disable-next-line no-ternary -- Keep onCountChange JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                         useMultipleModels
                           ? (delta): void => handleCountChange(model.id, delta)
                           : undefined
@@ -779,6 +786,7 @@ const PureModelSelector = ({
                         selectSingleModel(model.id);
                       }}
                       selectionControl={
+                        // oxlint-disable-next-line no-ternary -- Keep selectionControl JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                         useMultipleModels ? (
                           <Checkbox
                             checked={isSelected}

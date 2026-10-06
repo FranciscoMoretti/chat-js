@@ -80,23 +80,26 @@ export const GuestVisualFixture = (): React.JSX.Element => {
           data-testid="guest-visual"
           className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
         >
-          {state === "welcome" ? (
-            <DisposableGuestChat />
-          ) : (
-            <>
-              <ChatHeaderView breadcrumb={null} />
-              <GuestConversationView
-                messages={messages}
-                modelId={modelId}
-                busy={false}
-                expired={state === "expired"}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSend={() => null}
-                onStop={() => null}
-              />
-            </>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            state === "welcome" ? (
+              <DisposableGuestChat />
+            ) : (
+              <>
+                <ChatHeaderView breadcrumb={null} />
+                <GuestConversationView
+                  messages={messages}
+                  modelId={modelId}
+                  busy={false}
+                  expired={state === "expired"}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSend={() => null}
+                  onStop={() => null}
+                />
+              </>
+            )
+          }
         </div>
       </DefaultModelProvider>
     </ChatModelsProvider>

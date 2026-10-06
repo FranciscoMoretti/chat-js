@@ -81,9 +81,9 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
         auth: {
           current: {
             attributes: {
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (selectedTool ? { selectedTool } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { selectedTool } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedTool ? { selectedTool } : {}),
-              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (principalType === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (principalType === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
             authenticator: "gateway",

@@ -54,6 +54,7 @@ export const EveLogicalGroupRecovery = ({
       });
     } catch (error) {
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Comparison recovery failed."
       );
       // oxlint-disable-next-line react/todo -- Always release recovery pending state.

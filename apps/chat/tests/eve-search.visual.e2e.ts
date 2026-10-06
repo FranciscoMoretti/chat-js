@@ -274,7 +274,9 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
         .slice("/api/trpc/".length)
         .split(",");
       // Preserve unrelated results when tRPC batches the sidebar queries.
+      // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const response = procedures.length > 1 ? await route.fetch() : undefined;
+      // oxlint-disable-next-line no-ternary -- Keep data as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const data: unknown = response ? await response.json() : [];
       if (!Array.isArray(data)) {
         throw new TypeError("Expected a tRPC batch response");

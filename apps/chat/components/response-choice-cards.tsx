@@ -54,13 +54,16 @@ export const ResponseChoiceCards = ({
         >
           <span className="text-sm font-medium">{slot.modelName}</span>
           <span className="text-muted-foreground flex items-center gap-1 text-xs">
-            {slot.loading ? (
-              <LoaderCircle
-                aria-hidden
-                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
-                className="size-3 animate-spin"
-              />
-            ) : null}
+            {
+              // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              slot.loading ? (
+                <LoaderCircle
+                  aria-hidden
+                  // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-3 animate-spin"
+                />
+              ) : null
+            }
             {slot.statusLabel}
           </span>
         </Button>

@@ -15,6 +15,7 @@ const imageMode = process.argv.includes("--image");
 const common = {
   input: { prompt: "A tree in the wind" },
   toolCallId: "fixture",
+  // oxlint-disable-next-line no-ternary -- Keep toolName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   toolName: imageMode ? "generateImage" : "generateVideo",
   type: "dynamic-tool",
 } as const;
@@ -31,7 +32,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     ...common,
     output: createToolResult(
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (imageMode           ? {               fileId: "abcdefghijklmnopqrstuvwx.png",               imageUrl: "/api/files/abcdefghijklmnopqrstuvwx.png",             }           : {               fileId: "abcdefghijklmnopqrstuvwx.mp4",               videoUrl: "/api/files/abcdefghijklmnopqrstuvwx.mp4",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (imageMode           ? {               fileId: "abcdefghijklmnopqrstuvwx.png",               imageUrl: "/api/files/abcdefghijklmnopqrstuvwx.png",             }           : {               fileId: "abcdefghijklmnopqrstuvwx.mp4",               videoUrl: "/api/files/abcdefghijklmnopqrstuvwx.mp4",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(imageMode
           ? {
               fileId: "abcdefghijklmnopqrstuvwx.png",
@@ -50,6 +51,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
+    // oxlint-disable-next-line no-ternary -- Keep errorText as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     errorText: imageMode
       ? "Image provider unavailable"
       : "Video provider unavailable",

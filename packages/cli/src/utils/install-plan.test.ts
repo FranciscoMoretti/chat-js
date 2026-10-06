@@ -46,7 +46,7 @@ const server = () =>
         contractVersion: 1,
         id,
         kind: "tool",
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (id === "extra"           ? {}           : {               codeExecutionCapabilities: {                 cancellation: "terminate",                 cleanup: "durable-allocation",                 files: "ephemeral",                 languages: ["python", "javascript"],                 timeout: "bounded",                 usage: "single-receipt",               },               codeExecutorExport: "executeCode",               slot: "codeExecution",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (id === "extra"           ? {}           : {               codeExecutionCapabilities: {                 cancellation: "terminate",                 cleanup: "durable-allocation",                 files: "ephemeral",                 languages: ["python", "javascript"],                 timeout: "bounded",                 usage: "single-receipt",               },               codeExecutorExport: "executeCode",               slot: "codeExecution",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(id === "extra"
           ? {}
           : {
@@ -61,6 +61,7 @@ const server = () =>
               codeExecutorExport: "executeCode",
               slot: "codeExecution",
             }),
+        // oxlint-disable-next-line no-ternary -- Keep toolExport as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tools: [{ toolExport: id === "extra" ? "extra" : "executeCode" }],
       };
       return Response.json({
@@ -72,6 +73,7 @@ const server = () =>
             type: "registry:file",
           },
           {
+            // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             content: `export const ${id === "extra" ? "extra" : "executeCode"} = {};\n`,
             path: "tool.ts",
             target: `~/tools/chatjs/${id}/tool.ts`,

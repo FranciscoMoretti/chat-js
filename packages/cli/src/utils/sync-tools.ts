@@ -136,6 +136,7 @@ const readToolDefinition = async (
   }
   await preflight(cwd, [
     `${directory}/${entryName}/tool.ts`,
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(typeof definition.availabilityExport === "string" &&
     definition.availabilityExport !== ""
       ? [`${directory}/${entryName}/availability.ts`]
@@ -143,11 +144,13 @@ const readToolDefinition = async (
     ...definition.tools
       .filter((tool) => tool.workflow)
       .map((tool): string => `agent/tools/${tool.toolExport}.ts`),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(definition.documentKind ||
     (typeof definition.documentRunExport === "string" &&
       definition.documentRunExport !== "")
       ? [`${directory}/${entryName}/document.tsx`]
       : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(definition.tools.some((tool) => tool.rendererExport)
       ? [`${directory}/${entryName}/renderer.tsx`]
       : []),
@@ -159,11 +162,13 @@ const readToolDefinition = async (
       .map((tool) =>
         readFile(pathModule.join(cwd, "agent/tools", `${tool.toolExport}.ts`))
       ),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(definition.documentKind ||
     (typeof definition.documentRunExport === "string" &&
       definition.documentRunExport !== "")
       ? [readFile(pathModule.join(cwd, directory, entryName, "document.tsx"))]
       : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(definition.tools.some((tool) => tool.rendererExport)
       ? [readFile(pathModule.join(cwd, directory, entryName, "renderer.tsx"))]
       : []),
@@ -320,6 +325,7 @@ const registrationImports = (
       index
     ): string => {
       const declaration =
+        // oxlint-disable-next-line no-ternary -- Keep declaration as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         names.length === 1
           ? `import { ${names[0].name} as ${names[0].alias} } from "./${id}/${file}";`
           : `import {\n${names
@@ -343,6 +349,7 @@ const registrationImports = (
       return declaration;
     }
   );
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   return `${rendered.join("\n")}${firstGrouped === -1 ? "" : "\n/* oxlint-enable sort-imports */"}`;
 };
 /* oxlint-enable eslint/no-magic-numbers */
@@ -364,7 +371,9 @@ const sourceFor = (
         name: item.toolExport,
       })),
       "tool"
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     )}\n\nexport const providers = defineToolSet(${providers.length > 0 ? `{\n${orderedProperties(providers.map((item, registrationIndex) => ({ key: registrationKey(item), value: `tool${registrationIndex}` })))}\n}` : "{}"});\n`,
+    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     toolBody: `import { defineToolSet } from "@/lib/eve/tool-types";\n// oxlint-disable-next-line sort-imports -- Evaluate the tool-set runtime before custom tool modules, preserving the generated registry dependency order.\nimport { customTools } from "./custom-tools";\n${ordinary.some((item): boolean => item.provider) ? 'import { providers } from "./providers";\n' : ""}${registrationImports(
       ordinary
         .filter((item): boolean => !item.provider)
@@ -374,6 +383,7 @@ const sourceFor = (
           name: item.toolExport,
         })),
       "tool"
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     )}\n\nconst installed = defineToolSet(${ordinary.length > 0 ? `{\n${orderedProperties(ordinary.map((item) => ({ key: registrationKey(item), value: item.provider ? `providers.${item.key}` : `tool${registrations.indexOf(item)}` })))}\n}` : "{}"});\nfor (const key of Object.keys(customTools)) {\n  if (Object.hasOwn(installed, key)${registrations.some((item) => item.workflow) ? ` || ${JSON.stringify(registrations.filter((item) => item.workflow).map((item): string => item.key))}.includes(key)` : ""}) {\n    throw new Error(\`Duplicate tool registration: \${key}\`);\n  }\n}\n/* oxlint-disable oxc/no-rest-spread-properties -- Copy installed and custom tool bindings into the public registry after duplicate-key validation, preserving own-enumerable composition and binding identities. */\nexport const tools = { ...installed, ...customTools };\n/* oxlint-enable oxc/no-rest-spread-properties */\n`,
     uiBody: `import type { ToolRendererRegistry } from "@/lib/ai/tool-renderer-registry";\nimport { customUi } from "./custom-ui";\n${registrationImports(
       renderers.flatMap((item, registrationIndex) => {
@@ -392,6 +402,7 @@ const sourceFor = (
         return [];
       }),
       "renderer"
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     )}\n\nconst installed = ${renderers.length > 0 ? `{\n${orderedProperties(renderers.map((item, registrationIndex) => ({ key: JSON.stringify(`tool-${registrationKey(item)}`), value: `renderer${registrationIndex}` })))}\n}` : "{}"};\nfor (const key of Object.keys(customUi)) {\n  if (Object.hasOwn(installed, key)) {\n    throw new Error(\`Duplicate renderer registration: \${key}\`);\n  }\n}\n/* oxlint-disable oxc/no-rest-spread-properties -- Copy installed and custom renderer bindings into the public registry after duplicate-key validation, preserving own-enumerable composition and binding identities. */\nexport const ui = { ...installed, ...customUi } satisfies ToolRendererRegistry;\n/* oxlint-enable oxc/no-rest-spread-properties */\n`,
   };
 };
@@ -582,6 +593,7 @@ const syncTools = async (
     readOptional(pathModule.join(dir, "custom-ui.ts")),
   ]);
   await Promise.all([
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(customTools === null
       ? [
           writeFile(
@@ -592,6 +604,7 @@ const syncTools = async (
           ),
         ]
       : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(customUi === null
       ? [
           writeFile(
@@ -624,6 +637,7 @@ const syncTools = async (
     pathModule.join(dir, "composer-tools.ts"),
     generatedSource(
       `${
+        // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         composerTools.length > 0
           ? `import { ${composerTools
               .map((item, index) => ({
@@ -637,7 +651,7 @@ const syncTools = async (
               .map((item): string => `${item.icon} as ${item.alias}`)
               .join(", ")} } from "lucide-react";\n`
           : ""
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading shortName from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+        // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading name from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading shortName from item.composer; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       }import type { LucideIcon } from "lucide-react";\n\nexport const composerTools: Readonly<Record<string, { icon: LucideIcon; name: string; shortName: string } | undefined>> = ${composerTools.length > 0 ? `{\n${composerTools.map((item, index): string => `  ${JSON.stringify(item.key)}: { icon: Icon${index}, name: ${JSON.stringify(item.composer?.name)}, shortName: ${JSON.stringify(item.composer?.shortName)} },`).join("\n")}\n}` : "{}"};\n`
     )
   );
@@ -645,6 +659,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "document-run.ts"),
     generatedSource(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `"use client";\n\nimport type { ComponentType } from "react";\n\nimport type { DocumentRunProps } from "@/lib/eve/document-ui";\n${runner ? `\nimport { ${runner.documentRunExport} as InstalledDocumentRun } from "./${runner.id}/document";\n` : ""}\nexport const DocumentRun: ComponentType<DocumentRunProps> | undefined =\n  ${runner ? "InstalledDocumentRun" : "undefined"};\n`
     )
   );
@@ -656,6 +671,7 @@ const syncTools = async (
   await writeFile(
     pathModule.join(dir, "code-executor.ts"),
     generatedSource(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `import type { CodeExecutor } from "@/lib/eve/code-executor";\n${executor ? `import { ${executor.codeExecutorExport} as execute } from "./${executor.id}/tool";\n` : ""}\nexport const codeExecutor: CodeExecutor | undefined = ${executor ? "execute" : "undefined"};\n`
     )
   );

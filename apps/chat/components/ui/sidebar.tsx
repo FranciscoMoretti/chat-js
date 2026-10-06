@@ -115,6 +115,7 @@ const SidebarProvider = ({
   const open = openProp ?? internalOpen;
   const setOpen = useReactCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
+      // oxlint-disable-next-line no-ternary -- Keep openState as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const openState = typeof value === "function" ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
@@ -168,6 +169,7 @@ const SidebarProvider = ({
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
+  // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const state = open ? "expanded" : "collapsed";
 
   const contextValue = useReactMemo<SidebarContextProps>(
@@ -281,6 +283,7 @@ const Sidebar = ({
   return (
     <div
       className="group peer text-sidebar-foreground group/sidebar hidden md:block"
+      // oxlint-disable-next-line no-ternary -- Keep data-collapsible JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-side={side}
       data-slot="sidebar"
@@ -293,6 +296,7 @@ const Sidebar = ({
           "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
+          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           variant === "floating" || variant === "inset"
             ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
@@ -302,10 +306,12 @@ const Sidebar = ({
       <div
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
           // Adjust the padding for floating and inset variants.
+          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -556,6 +562,7 @@ const SidebarGroupLabel = ({
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, asChild from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div"> & { asChild?: boolean }): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "div";
 
   return (
@@ -587,6 +594,7 @@ const SidebarGroupAction = ({
 }: ReactComponentProps<"button"> & {
   asChild?: boolean;
 }): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -701,6 +709,7 @@ const SidebarMenuButton = ({
   isActive?: boolean;
   tooltip?: string | ReactComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
 
@@ -722,6 +731,7 @@ const SidebarMenuButton = ({
   }
 
   const normalizedTooltip =
+    // oxlint-disable-next-line no-ternary -- Keep normalizedTooltip as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof tooltip === "string" ? { children: tooltip } : tooltip;
 
   return (
@@ -753,6 +763,7 @@ const SidebarMenuAction = ({
   asChild?: boolean;
   showOnHover?: boolean;
 }): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "button";
 
   return (
@@ -902,6 +913,7 @@ const SidebarMenuSubButton = ({
   size?: "sm" | "md";
   isActive?: boolean;
 }): ReactJSX.Element => {
+  // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const Comp = asChild ? Slot : "a";
 
   return (

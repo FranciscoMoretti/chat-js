@@ -19,6 +19,7 @@ export const MessageVoteActions = ({
 }): React.JSX.Element => (
   <>
     <MessageAction
+      // oxlint-disable-next-line no-ternary -- Keep aria-pressed JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       aria-pressed={vote ? !vote.isUpvoted : false}
       // oxlint-disable-next-line react/forbid-component-props -- MessageAction accepts className in its styling contract; preserve this caller's layout and appearance.
       className="text-muted-foreground hover:bg-accent hover:text-accent-foreground pointer-events-auto! h-7 w-7 p-0"

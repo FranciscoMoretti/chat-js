@@ -63,6 +63,7 @@ const PureSidebarChatItem = ({
   ) => ReactNode;
 }): ReactJSX.Element => {
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
+    // oxlint-disable-next-line no-ternary -- Keep chatHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     chat.projectId
       ? `/project/${chat.projectId}/chat/${chat.id}`
       : `/chat/${chat.id}`;
@@ -99,35 +100,38 @@ const PureSidebarChatItem = ({
 
   return (
     <SidebarMenuItem>
-      {isEditing ? (
-        <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
-          <Input
-            // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing inline Rename replaces the sidebar item with this focused title editor.
-            autoFocus
-            // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
-            className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-            maxLength={255}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        isEditing ? (
+          <div className="bg-background flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm">
+            <Input
+              // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing inline Rename replaces the sidebar item with this focused title editor.
+              autoFocus
+              // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+              maxLength={255}
 
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
-            onBlur={handleRename}
-            onChange={(event) => setEditTitle(event.target.value)}
-            onKeyDown={handleKeyDown}
-            value={editTitle}
-          />
-        </div>
-      ) : (
-        <SidebarMenuButton asChild isActive={isActive}>
-          <InternalLink
-            href={chatHref}
-            onNavigate={() => {
-              setOpenMobile(false);
-            }}
-            prefetch={prefetch}
-          >
-            <span>{chat.title}</span>
-          </InternalLink>
-        </SidebarMenuButton>
-      )}
+              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
+              onBlur={handleRename}
+              onChange={(event) => setEditTitle(event.target.value)}
+              onKeyDown={handleKeyDown}
+              value={editTitle}
+            />
+          </div>
+        ) : (
+          <SidebarMenuButton asChild isActive={isActive}>
+            <InternalLink
+              href={chatHref}
+              onNavigate={() => {
+                setOpenMobile(false);
+              }}
+              prefetch={prefetch}
+            >
+              <span>{chat.title}</span>
+            </InternalLink>
+          </SidebarMenuButton>
+        )
+      }
 
       <DropdownMenu modal>
         <DropdownMenuTrigger asChild>
@@ -144,6 +148,7 @@ const PureSidebarChatItem = ({
         <DropdownMenuContent align="end" side="bottom">
           <ChatMenuItems
             isPinned={chat.isPinned}
+            // oxlint-disable-next-line no-ternary -- Keep onDelete JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onDelete={onDelete ? (): void => onDelete(chat.id) : undefined}
             onMoveProject={onMoveProject}
             onRename={() => {

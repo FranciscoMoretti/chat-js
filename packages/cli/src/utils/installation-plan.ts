@@ -79,6 +79,7 @@ export const planInstallation = async (
   } = {}
 ) => {
   const selection = installationSelectionSchema.parse(input);
+  // oxlint-disable-next-line no-ternary -- Keep installed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const installed = options.fresh === true ? [] : await readInstalledTools(cwd);
   const expected = new Map<string, ToolDefinition>();
   const sources = new Set<string>();
@@ -171,9 +172,11 @@ export const planInstallation = async (
       async (source): Promise<void> =>
         await visit(itemAddress(source, "tool"), "feature")
     ),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(typeof selection.gateway === "string" && selection.gateway !== ""
       ? [visit(itemAddress(selection.gateway, "gateway"), "gateway")]
       : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(selection.storage
       ? [visit(itemAddress(selection.storage.source, "storage"), "storage")]
       : []),
@@ -184,6 +187,7 @@ export const planInstallation = async (
         throw new Error("Invalid exclusive provider kind.");
       }
       const previous =
+        // oxlint-disable-next-line no-ternary -- Keep previous as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         options.fresh === true ? undefined : await readProviderId(cwd, kind);
       if (
         typeof previous === "string" &&
@@ -269,6 +273,7 @@ export const planInstallation = async (
   }
   await validateToolInstallation(cwd, target());
   const installedFeatures =
+    // oxlint-disable-next-line no-ternary -- Keep installedFeatures as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.fresh === true
       ? []
       : await Promise.all(

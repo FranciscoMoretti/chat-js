@@ -53,6 +53,7 @@ export const POST = async (request: Request): Promise<Response> => {
       { status: 400 }
     );
   }
+  // oxlint-disable-next-line no-ternary -- Keep host as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const host = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.APP_URL;
   if (!host) {
     return Response.json(

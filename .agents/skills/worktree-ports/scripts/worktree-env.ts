@@ -83,6 +83,7 @@ const spawnChild = (
     });
   } catch (error) {
     return fail(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Failed to start "${commandArgs[COMMAND_ARGUMENT_INDEX]}": ${error instanceof Error ? error.message : String(error)}`
     );
   }

@@ -148,6 +148,7 @@ test.each([
       "HEAD",
       "--exit-code",
     ]);
+    // oxlint-disable-next-line no-ternary -- Keep expect(result.exitCode, result.stderr.toString()).toBe  as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     expect(result.exitCode, result.stderr.toString()).toBe(affected ? 1 : 0);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const output = JSON.parse(result.stdout.toString());

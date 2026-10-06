@@ -41,6 +41,7 @@ const main = async () => {
       .where(
         and(
           eq(eveConversation.state, "bound"),
+          // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           cursor ? gt(eveConversation.id, cursor) : undefined
         )
       )
@@ -72,7 +73,7 @@ const main = async () => {
     cursor = batch.at(-1)?.id;
     console.info(`Search backfill: ${indexed} indexed, ${failed} failed.`);
   }
-  // oxlint-disable-next-line unicorn/no-process-exit -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.
+  // oxlint-disable-next-line unicorn/no-process-exit, no-ternary -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.; no-ternary: Keep process.exit argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   process.exit(failed ? 1 : 0);
 };
 /* oxlint-enable oxc/no-async-await */

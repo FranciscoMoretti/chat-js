@@ -64,6 +64,7 @@ export const EveResponseGroupCards = ({
         } else if (loading) {
           statusLabel = "Generating...";
         } else if (candidate.status === "ready") {
+          // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           statusLabel = selected ? "Selected" : "Task completed";
         }
         return {
