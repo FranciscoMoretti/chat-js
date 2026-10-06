@@ -143,7 +143,7 @@ const persistGeneratedEveConversationTitle = async ({
   }
   const generated = await generateEveConversationTitleResult(message);
   try {
-    // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    // oxlint-disable-next-line no-ternary -- Keep the selected persistence call lazy inside this try/catch; direct if/else triggers pinned unicorn/prefer-ternary.
     await (generated.source === "generated"
       ? replaceEveRootFallbackTitle(
           ownerId,
