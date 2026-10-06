@@ -21,6 +21,12 @@ import {
   documentExecutionLanguage,
   eveCodeExecutionResult,
 } from "./schemas";
+
+type ReadonlyCodeExecutionContext = Readonly<
+  Pick<ToolContext, "callId" | "session"> & {
+    abortSignal: Readonly<AbortSignal>;
+  }
+>;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveCodeDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveCodeDocument's asynchronous iteration and rejection behavior. */
 /* oxlint-enable sort-imports */
@@ -29,7 +35,6 @@ import {
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Execute saved source, never model-supplied replacement code.
  * @param {unknown} value Untrusted tool input validated against the shared execution schema.
@@ -38,7 +43,7 @@ import {
  */
 export const executeEveCodeDocument = async function* executeEveCodeDocument(
   value: unknown,
-  context: ToolContext
+  context: ReadonlyCodeExecutionContext
 ) {
   if (
     !(
@@ -105,7 +110,6 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */

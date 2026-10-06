@@ -1,17 +1,39 @@
+import type { ToolContext } from "eve/tools";
 import { defineTool } from "eve/tools";
+// oxlint-disable-next-line sort-imports -- Keep Oxfmt's module grouping: it places this approval type subpath after `eve/tools`, while sort-imports orders the imported binding name.
+import type { ApprovalResponseContext } from "eve/tools/approval";
+import type { z } from "zod";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { executeDocumentDeletion, requestDocumentDeletion } from "./execute";
 /* oxlint-enable sort-imports */
 import { deleteDocumentInput } from "./schemas";
 
+type DeleteDocumentInput = z.infer<typeof deleteDocumentInput>;
+type DeleteDocumentRequestContext = Readonly<
+  Pick<ToolContext, "callId" | "session"> & {
+    abortSignal: Readonly<AbortSignal>;
+    toolInput?: Readonly<DeleteDocumentInput>;
+  }
+>;
+type DeleteDocumentPrincipal = Readonly<
+  Pick<ApprovalResponseContext<DeleteDocumentInput>["responder"], "principalId">
+>;
+type DeleteDocumentResponseContext = Readonly<
+  Pick<ApprovalResponseContext<DeleteDocumentInput>, "responder"> & {
+    session: Readonly<{
+      initiator: DeleteDocumentPrincipal | null;
+    }>;
+  }
+>;
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (deleteDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export const deleteDocument = defineTool({
   approval: {
-    request: (context) => requestDocumentDeletion(context.toolInput, context),
-    response: ({ responder, session }) => {
+    request: (context: DeleteDocumentRequestContext) =>
+      requestDocumentDeletion(context.toolInput, context),
+    response: ({ responder, session }: DeleteDocumentResponseContext) => {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       if (responder.principalId === session.initiator?.principalId) {
         return { status: "allowed" };
@@ -29,4 +51,3 @@ export const deleteDocument = defineTool({
 });
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */

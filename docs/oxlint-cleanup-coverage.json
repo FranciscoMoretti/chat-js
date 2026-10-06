@@ -354707,6 +354707,369 @@
       "limitations": [
         "This source audit does not change the pinned 971ab current-membership snapshot or the exception baseline.",
         "Unresolved native SDK contracts require exact same-checker assignability evidence before they can be called justified."
+      ],
+      "nativeProbeResults": [
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 72,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A temporary same-project TypeScript `@ts-expect-error` confirmed the actual mutable `ThreadRunHost.updateRunPath` callback cannot be assigned to a callback accepting `readonly UIMessage[]`.",
+          "disposition": "unresolved: replacing the host operation signature or cloning changes its native mutable callback contract."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 85,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A deep-readonly ThreadRunHost value could be formed from the mutable source, but forwarding its readonly dataPartSchemas into the installed `ChatInit<UIMessage>` contract produced the expected assignment error.",
+          "disposition": "unresolved: the callback host carries actual SDK schema instances into ChatInit."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 112,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A deeply readonly tool-call event fit the ChatInit callback shape, but forwarding it to the host produced no-unsafe-argument/no-unsafe-member-access diagnostics for the generic static/dynamic toolCall union.",
+          "disposition": "unresolved: a finite readonly reader must preserve the SDK generic union and its nested toolCall typing."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 118,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A deep-readonly sendAutomaticallyWhen event was rejected when forwarded to the host because `messages` became readonly; optional callback return also includes undefined before the existing false fallback.",
+          "disposition": "unresolved: preserve mutable native message array input and false fallback while testing a finite reader."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 201,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A shallow Readonly<SendOptions> still triggered prefer-readonly; recursively mapping the SDK transport options produced TS2589 excessive-instantiation diagnostics. The body spreads options into a fresh request while retaining nested field references.",
+          "disposition": "unresolved: test a finite options view that satisfies the rule without changing native nested references."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 243,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "result": "A temporary same-project TypeScript `@ts-expect-error` confirmed deeply readonly AbstractChat.sendMessage input is rejected by the actual SDK method because its UIMessage parts are mutable.",
+          "disposition": "unresolved: preserve the exact SDK input and identity unless a finite compatible reader is proven."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 92,
+          "rule": "oxc/no-async-await",
+          "result": "No alternative callback implementation was type/runtime-probed; source forwards optional onToolCall and awaits its promise.",
+          "disposition": "unresolved: compare the installed callback contract and sync-throw/rejection timing before changing async form."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "line": 180,
+          "rule": "oxc/no-async-await",
+          "result": "No promise-chain replacement was probed; source awaits transport reconnect before run-state updates and stream piping.",
+          "disposition": "unresolved: compare synchronous throws, rejected transport promises, and state update order before removing await."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "line": 189,
+          "rule": "typescript/no-deprecated",
+          "result": "The field is inherited by exported UseThreadHelpers, which is re-exported through the package react entry; current repo references are only the forwarding implementation.",
+          "disposition": "unresolved: decide whether to make this public API removal despite the internal absence of direct callers."
+        }
+      ]
+    },
+    {
+      "snapshotCommit": "15738a96fc7d027ded07a6bd51fd4db5f23f4210",
+      "review": "document-tool-readonly-boundaries",
+      "sources": [
+        {
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "sourceSha256": "f3c81f92cce621f2744dd5be84313eabdca1deef39bcea9b60c5d260f734cda8",
+          "memberships": 4,
+          "generatedMirror": "apps/chat/tools/chatjs/read-document/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "sourceSha256": "d4e73175d90e600359baf45c17bdda1fd601572f598bc331dd80b3aac9721b85",
+          "memberships": 6,
+          "generatedMirror": "apps/chat/tools/chatjs/delete-document/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "sourceSha256": "bb1ca3dfc04c916610a94339c4635a9560b8f9e735dc57a05f81b02e275eea29",
+          "memberships": 17,
+          "generatedMirror": "apps/chat/tools/chatjs/saved-code-execution/execute.ts"
+        }
+      ],
+      "scopeDispositions": [
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing import ordering is retained; exact formatter/native diagnostic conflict or module initialization effect is not yet proven.",
+          "fingerprint": "e680f6d75a53788cdb50be12ad9580d3d86a66329f9e843a3f5ad8caaa60d39a",
+          "line": 5,
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/no-named-export while app policy also enables import/no-default-export; this file exposes its existing named readDocument binding.",
+          "fingerprint": "7f2b68b997f40b0b1dfed1a9ade89bad3ec3d12dc13248b3ae5294b923763898",
+          "line": 21,
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "rule": "import/prefer-default-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/prefer-default-export while app policy also enables import/no-default-export; this file exposes its existing named readDocument binding.",
+          "fingerprint": "7f2b68b997f40b0b1dfed1a9ade89bad3ec3d12dc13248b3ae5294b923763898",
+          "line": 21,
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "rule": "import/no-named-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "The called executeEveDocumentTool is an async function. A controlled resolved/rejected/parser-error comparison found the same observed parse, settlement and microtask order for async/await and then(result => schema.parse(result)); promise/prefer-await-to-then applies only to test files, not production.",
+          "fingerprint": "d8edd905090983cac9359b84742732a263a89765123f29ad5acaee3cd4d53721",
+          "line": 22,
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "rule": "oxc/no-async-await",
+          "status": "fix-candidate"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Narrow next-line scope for ApprovalResponseContext: Oxfmt groups type imports by module path and places eve/tools/approval after eve/tools, while native sort-imports requires imported-binding order; scoped native lint and Oxfmt checks both pass.",
+          "fingerprint": "594d31bb1f48939d1d63ee56fb8e65b50c8f0656f047e140d69223a2b45426b8",
+          "line": 3,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "sort-imports",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing execute-before-schemas import ordering is retained; no specific runtime initializer effect or formatter/native conflict established yet.",
+          "fingerprint": "9f91de0790d9dc828ef6c9f1260a1299c3d5d1b8d22bdcbeaa23c3c147ab63eb",
+          "line": 7,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/no-named-export while app policy also enables import/no-default-export; deleteDocument remains the module's existing named binding.",
+          "fingerprint": "c89c819fa3f0e00029476e02f450dc42a5e6bfc0f6bdfab08c9e9e9a7f015730",
+          "line": 30,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "import/prefer-default-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/prefer-default-export while app policy also enables import/no-default-export; deleteDocument remains the module's existing named binding.",
+          "fingerprint": "c89c819fa3f0e00029476e02f450dc42a5e6bfc0f6bdfab08c9e9e9a7f015730",
+          "line": 30,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "import/no-named-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Approval request returns requestDocumentDeletion(...) directly. An async wrapper returns an adopting Promise instead of that exact Promise and changes the synchronous-throw boundary.",
+          "fingerprint": "5c8f37cbcccccc2dd9ac8f71bc2a34d9862c8c6990c172727a35769838fa5d64",
+          "line": 31,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "typescript/promise-function-async",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "session.initiator is null-capable; the current comparison reads an undefined principal when absent. An explicit equivalent branch has not been compared.",
+          "fingerprint": "eb4ec71133e0b5f117fc16382a1d68db0450cde4110d3e1993c1bed97f287a7c",
+          "line": 37,
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "rule": "oxc/no-optional-chaining",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing type/value import order retained; exact conflict or initialization consequence not established.",
+          "fingerprint": "0bbcea8e7180b616ded44169bec02fc65462b51563a70041de5af563c38e09ab",
+          "line": 5,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing local-binding order retained; exact conflict or initialization consequence not established.",
+          "fingerprint": "451309add848de51ad71e8b5d8a4b4cc1e30ec040e7d66c42489f6b74f0b4c4d",
+          "line": 8,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing binding-syntax group retained; exact conflict or initialization consequence not established.",
+          "fingerprint": "c6c89c663ca09049036f6d74f0535736f77cfa5a1849aee54482082f389f9824",
+          "line": 11,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Existing local-binding order retained; exact conflict or initialization consequence not established.",
+          "fingerprint": "b6bf90f33b15650fd5d8e5600a1480d9ebeb53cc4129c7ed962cefaffe27de4a",
+          "line": 18,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "sort-imports",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/no-named-export while app policy also enables import/no-default-export; executeEveCodeDocument is the existing named function consumed by runCodeDocument.",
+          "fingerprint": "389ebf8ce9b7e2222a570e6ab43e7a0883fed1b57efbd3b0963bf152eeeeb63c",
+          "line": 30,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "import/prefer-default-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Paired with import/prefer-default-export while app policy also enables import/no-default-export; executeEveCodeDocument is the existing named function consumed by runCodeDocument.",
+          "fingerprint": "389ebf8ce9b7e2222a570e6ab43e7a0883fed1b57efbd3b0963bf152eeeeb63c",
+          "line": 30,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "import/no-named-export",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "The exported async generator is registered directly as EVE AsyncIterable output and consumed with Array.fromAsync; this establishes protocol use, but not that every Promise await cannot be expressed another way.",
+          "fingerprint": "0a84e935f519a670aeb86bb13d09af1d25f282330cf1e6ce39ab3cda8b72e557",
+          "line": 31,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-async-await",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Function gates installation, validates input, resolves scope/revision, checks cancellation, invokes the executor and normalizes/yields output. Existing reason incorrectly claims cleanup; no cleanup appears in this function.",
+          "fingerprint": "61bdbd159b64df474c0302992503106f1d238f5bdba294310b02558f32379fa1",
+          "line": 34,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "eslint/max-statements",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Exported async generator's inferred yielded result union flows to runCodeDocument; an equivalent explicit boundary type has not been ruled out.",
+          "fingerprint": "732688e9bfc058e0f3447224050e65e38016793de4221909008f3e73c01ffbc2",
+          "line": 35,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "typescript/explicit-module-boundary-types",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "The function contains ordered validation, DB reads, executor call and output normalization; no helper extraction or threshold rationale has been evaluated.",
+          "fingerprint": "a7787692e5416ae4f25a164bb4b4a4d645d38a456cc7c51d6d4941884ce16291",
+          "line": 36,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "eslint/max-lines-per-function",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable",
+          "evidence": "Inferred async-generator yield shape is consumed by runCodeDocument; an equivalent explicit annotation has not been ruled out.",
+          "fingerprint": "ffa0ed0ffbafef8302ddc443b47703f4f30683a2af3369104add6314a9a0ab7e",
+          "line": 37,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "typescript/explicit-function-return-type",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Initiator principal is optional in the session auth shape; explicit equivalent branch has not been compared.",
+          "fingerprint": "a4e03972cfabc5dd692a5fb7e308ef5a66d7ec9e4c126e04542af2ad62e997e7",
+          "line": 58,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-optional-chaining",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Revision can be absent; optional access feeds the existing not-found branch. Explicit equivalent branch has not been compared.",
+          "fingerprint": "5d7d1c9b486aff5a1ddcb39d1d47a003b7de998972faa309dd72c1cb0ecffc7e",
+          "line": 69,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-optional-chaining",
+          "status": "unresolved"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Enforced eslint/prefer-object-spread requires spread over Object.assign; spread preserves the result's own enumerable keys and later output overrides.",
+          "fingerprint": "5e4f24eb02727a45f2c81324531f4b21502eb9c0f1bbb675d3df16405cae8fcf",
+          "line": 93,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-rest-spread-properties",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Enforced eslint/prefer-object-spread requires spread; conditional spread preserves selected branch own keys and override position.",
+          "fingerprint": "a85a860147539e4f3439d96928a644f1c72027f9c55e549ae7997bbd09af4f5c",
+          "line": 96,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-rest-spread-properties",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "This lazy branch selection is a ternary inside object spread; enabled unicorn/prefer-ternary conflicts with replacing it by if/else assignment.",
+          "fingerprint": "a85a860147539e4f3439d96928a644f1c72027f9c55e549ae7997bbd09af4f5c",
+          "line": 96,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "no-ternary",
+          "status": "justified"
+        },
+        {
+          "directive": "oxlint-disable-next-line",
+          "evidence": "Enforced eslint/prefer-object-spread requires spread; later source fields intentionally retain their override position before document identity fields.",
+          "fingerprint": "2ceb88a3a3bc9bbbe4d07452c3f15b4e931f9c3b550d0a1272448d1eaa929797",
+          "line": 104,
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "rule": "oxc/no-rest-spread-properties",
+          "status": "justified"
+        }
+      ],
+      "fixedMemberships": [
+        {
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "line": 13,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "status": "fixed",
+          "evidence": "Replaced the broad waiver with schema-derived ReadonlyReadInput and ReadonlyReadContext containing only callId, session, and Readonly<AbortSignal>; the called helper consumes those fields and actual type-aware lint plus Registry typecheck pass."
+        },
+        {
+          "path": "packages/registry/src/tools/delete-document/tool.ts",
+          "line": 9,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "status": "fixed",
+          "evidence": "Replaced broad waiver with finite typed readers for the approval request’s schema-derived readonly toolInput/session/callId/abortSignal and response’s responder/session.initiator principalId; actual type-aware lint and Registry typecheck pass."
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "line": 32,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "status": "fixed",
+          "evidence": "Replaced broad waiver with Readonly<Pick<ToolContext, callId|session> plus Readonly<AbortSignal>; function only reads these fields and passes them to scope/executor helpers. Existing ToolContext callers pass and Registry typecheck passes."
+        }
+      ],
+      "limitations": [
+        "The historical 971ab current-membership snapshot is unchanged; this record describes a later working-tree review.",
+        "read-document no-async-await is a fix candidate for the next batch; the async-wrapper source was not changed in this batch.",
+        "Unresolved import-order, optional-chain, metric, explicit-return and module-boundary scopes remain unresolved as detailed per membership.",
+        "The stale unmatched readonly enable directive in delete-document was removed after the candidate review; this source-hash record uses the final synchronized source."
       ]
     }
   ]
