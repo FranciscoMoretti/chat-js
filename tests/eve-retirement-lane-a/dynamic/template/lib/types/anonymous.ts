@@ -1,0 +1,1 @@
+export const ANONYMOUS_LIMITS = { AVAILABLE_TOOLS: [] };

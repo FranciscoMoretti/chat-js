@@ -9,5 +9,9 @@
     "types": ["node"],
     "allowJs": true
   },
-  "include": ["fixture/**/*.ts"]
+  "include": [
+    "fixture/**/*.ts",
+    "dynamic/template/**/*.ts",
+    "dynamic/prepare.mjs"
+  ]
 }
