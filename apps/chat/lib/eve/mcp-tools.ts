@@ -371,7 +371,7 @@ const executeEveMcpTool = async (
   remoteName: string,
   input: unknown,
   context: McpToolContext,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original ModelMessage content to executeMcpTool; this nested native execute-options boundary remains unresolved for a readonly reader.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original nested ModelMessage content passed to the native Tool.execute options; readonly content fails SDK assignability (TS2322), and copying would change the forwarded aliases.
   messages: readonly ModelMessage[]
 ): Promise<ReturnType<typeof eveMcpResult.parse>> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -391,7 +391,7 @@ const executeEveMcpTool = async (
     connector,
     context.abortSignal,
     async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This callback forwards the original SDK tool/schema objects to native validation and execution; a finite schema-preserving readonly reader remains unresolved.
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native Tool and FlexibleSchema objects unchanged; the SDK execute callback and ai.asSchema require their mutable callable/schema identities.
       tools
     ) => {
       if (!Object.hasOwn(tools, remoteName)) {
@@ -478,7 +478,7 @@ const requestEveMcpApproval = async (
     connector,
     signal,
     async (
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This callback forwards the original SDK tool/schema objects to native validation; a finite schema-preserving readonly reader remains unresolved.
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native Tool and FlexibleSchema objects unchanged; ai.asSchema preserves symbol-marked and lazy schema identities that a deep readonly view cannot satisfy.
       tools
     ) => {
       if (!Object.hasOwn(tools, remoteName)) {

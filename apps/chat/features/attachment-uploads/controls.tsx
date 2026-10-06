@@ -15,6 +15,10 @@ import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 
+type AttachControlProps = Readonly<
+  Pick<ComposerControlProps, "disabled" | "onAttach">
+>;
+
 const loginPrompt = (
   <LoginPrompt
     title="Sign in to attach files"
@@ -28,8 +32,7 @@ const loginPrompt = (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
+const AttachFilesControl = ({ disabled, onAttach }: AttachControlProps) => {
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads")) {
     return null;
@@ -53,7 +56,6 @@ const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- TakePhotoControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable unicorn/no-null */
@@ -66,8 +68,7 @@ const AttachFilesControl = ({ disabled, onAttach }: ComposerControlProps) => {
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const TakePhotoControl = ({ disabled, onAttach }: ComposerControlProps) => {
+const TakePhotoControl = ({ disabled, onAttach }: AttachControlProps) => {
   const mobile = useIsMobile();
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads") || !mobile) {
@@ -91,7 +92,6 @@ const TakePhotoControl = ({ disabled, onAttach }: ComposerControlProps) => {
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable unicorn/no-null */
