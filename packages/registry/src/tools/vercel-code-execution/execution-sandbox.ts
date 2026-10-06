@@ -5,8 +5,11 @@ import { APIError, Sandbox } from "@vercel/sandbox";
 
 import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-disable sort-imports -- Oxfmt groups imports by module path while sort-imports orders the aliased types by name. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
@@ -149,13 +152,12 @@ const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
 
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const createSandbox = (
   runtime: string,
-  signal?: AbortSignal,
+  signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
-  auth?: SandboxAuth
+  auth?: Readonly<SandboxAuth>
 ): Promise<Sandbox> =>
   Sandbox.create({
     name,
@@ -170,7 +172,6 @@ const createSandbox = (
   });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
 
@@ -204,8 +205,10 @@ const cleanupSandbox = async (
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
+const findSandboxForCleanup = async (
+  name: string,
+  auth: Readonly<SandboxAuth>
+) => {
   try {
     return await Sandbox.get({
       name,
@@ -223,7 +226,6 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 

@@ -1,4 +1,3 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The CodeExecutor implements native mutable EVE context and usage accounting interfaces. */
 /* oxlint-disable import/max-dependencies -- The installed tool explicitly composes native execution, usage, authorization and provider cleanup contracts. */
 import { defineTool } from "eve/tools";
 
@@ -42,6 +41,7 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- CodeExecutor receives the native EVE ToolContext shape; executeWithToolUsage consumes that same mutable boundary.
 const executeCode: CodeExecutor = async (input, context) =>
   await executeWithToolUsage(context, async (usage) => {
     usage.addCostUsd(NO_COST_USD);

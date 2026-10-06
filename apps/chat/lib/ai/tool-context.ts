@@ -4,16 +4,18 @@ import type { ImageModel, LanguageModel } from "ai";
 /* oxlint-enable sort-imports */
 
 import type { AppModelId } from "@/lib/ai/app-model-id";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
 /** Progress events understood by installed search tools without depending on ChatMessage. */
 interface ToolProgressWriter {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Writer implementations receive ResearchUpdate with mutable query/results arrays; making the callback accept readonly arrays would break assignability of existing publishing consumers.
-  write: (part: {
-    data: ResearchUpdate;
-    id?: string;
-    type: "data-researchUpdate";
-  }) => void;
+  write: (
+    part: Readonly<{
+      data: ReadonlyNativeSurface<ResearchUpdate>;
+      id?: string;
+      type: "data-researchUpdate";
+    }>
+  ) => void;
 }
 
 interface ToolModelProvider {

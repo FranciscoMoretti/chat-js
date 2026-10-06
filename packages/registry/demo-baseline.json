@@ -149,7 +149,7 @@
     "tools/chatjs/tools.ts": "7d63191f77d8d7d429d070b39f63aa7cc3fe0a9c9ebfc289c663a86c46a90446",
     "tools/chatjs/ui.ts": "54ba3254c21550a0296350bfdd9974d37b7c75c0bb9179c0ba29dddf19ae0315",
     "tools/chatjs/vercel-code-execution/chatjs.json": "81f21440ccc667306e9e9b11f01d6d55cd69a5645ba288b450ae997b511346cc",
-    "tools/chatjs/vercel-code-execution/execution-sandbox.ts": "449198eee983eff2bf549dc7cc3c2777c595f569befc3d2a33b5a4d8b285048d",
+    "tools/chatjs/vercel-code-execution/execution-sandbox.ts": "0652b48d96a124be264733d3c20a514e00489999ed5b20ab5c9298d68600cf2d",
     "tools/chatjs/vercel-code-execution/renderer.tsx": "dd7d0c4f0f536fcdc0ad45299cd519c508c446ff992643147fd358703f5894f5",
     "tools/chatjs/vercel-code-execution/schemas.ts": "2c5ad4b411078198dfbc3ee993f00068214f7156b3f9029d27c1b6d81fc5c5bb",
     "tools/chatjs/vercel-code-execution/tool.ts": "61669504216ebd7ade8f0f5066a4036487390112aa5a5627e7c3d0974f4d6077",

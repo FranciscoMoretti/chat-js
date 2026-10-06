@@ -19,6 +19,16 @@ interface DownloadResult {
 
 type AssetDownloadResult = DownloadResult | null;
 
+interface DownloadableAssetPartReader {
+  readonly data?: unknown;
+  readonly image?: unknown;
+  readonly type: string;
+}
+
+interface DownloadableMessageReader {
+  readonly content: string | readonly DownloadableAssetPartReader[];
+}
+
 type DownloadImplementation = (
   args: ReadonlyNativeSurface<{
     url: URL;
@@ -114,8 +124,7 @@ const toHttpUrl = (value: unknown): URL | null => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve downloadAssetsFromModelMessages's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): downloadAssetsFromModelMessages accepts messages: ModelMessage[]; url; { url, data }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable max-statements, no-continue --
  * max-statements (#512): downloadAssetsFromModelMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): downloadAssetsFromModelMessages skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
  */
@@ -126,7 +135,7 @@ const toHttpUrl = (value: unknown): URL | null => {
  * @returns {Promise<Record<string, AssetDownloadResult>>} Downloaded binary payloads and media types keyed by normalized URL; absent assets retain null results.
  */
 const downloadAssetsFromModelMessages = async (
-  messages: ModelMessage[],
+  messages: readonly DownloadableMessageReader[],
   downloadImplementation: DownloadImplementation = defaultDownload
 ): Promise<Record<string, AssetDownloadResult>> => {
   const urlSet = new Set<string>();
@@ -165,16 +174,16 @@ const downloadAssetsFromModelMessages = async (
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements, no-continue */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): mapFilePart accepts part: FilePart; downloaded: Record<string, AssetDownloadResult>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): mapFilePart returns the original FilePart on unmatched or unchanged URLs; the mutable result type preserves that exact object identity.
  * typescript/strict-boolean-expressions (#610): mapFilePart intentionally keeps the existing falsy-value behavior of found; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): mapFilePart preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const mapFilePart = (
   part: FilePart,
-  downloaded: Record<string, AssetDownloadResult>
+  downloaded: ReadonlyNativeSurface<Record<string, AssetDownloadResult>>
 ): FilePart | null => {
   const url = toHttpUrl(part.data);
   if (url) {
@@ -196,14 +205,14 @@ const mapFilePart = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): mapImagePart accepts part: ImagePart; downloaded: Record<string, AssetDownloadResult>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): mapImagePart returns the original ImagePart on unmatched or unchanged URLs; the mutable result type preserves that exact object identity.
  * typescript/strict-boolean-expressions (#610): mapImagePart intentionally keeps the existing falsy-value behavior of found; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): mapImagePart preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const mapImagePart = (
   // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
   part: ImagePart,
-  downloaded: Record<string, AssetDownloadResult>
+  downloaded: ReadonlyNativeSurface<Record<string, AssetDownloadResult>>
   // oxlint-disable-next-line typescript/no-deprecated -- #583: Asset normalization still accepts legacy image payloads; removing this branch would drop supported conversation attachments.
 ): ImagePart | null => {
   const url = toHttpUrl(part.image);
@@ -229,7 +238,7 @@ const mapImagePart = (
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): replaceFilePartUrlByBinaryDataInMessages keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): replaceFilePartUrlByBinaryDataInMessages uses 0, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): replaceFilePartUrlByBinaryDataInMessages accepts messages: ModelMessage[]; part: TextPart | ImagePart | FilePart; message; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+ * typescript/prefer-readonly-parameter-types (#565): Unchanged non-user messages and untouched parts are returned by identity in the mutable ModelMessage[] result; a deep-readonly input would require cloning those aliases or changing the output contract.
  */
 /**
  * Replaces downloadable URL-based image and file content in model messages with binary data.

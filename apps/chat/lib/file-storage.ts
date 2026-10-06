@@ -2,7 +2,9 @@ import type { Body, StoredFile, UploadResult } from "files-sdk";
 import { Files } from "files-sdk";
 import { nanoid } from "nanoid";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep the finite type reader and runtime import within the formatter's local-import group, while preserving runtime initialization order. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { FILE_STORAGE_PREFIX } from "./constants";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -50,9 +52,8 @@ const sanitizeFilename = (filename: string): string => {
 const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve uploadFileAtKey's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-params --
  * max-params (#511): uploadFileAtKey keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): uploadFileAtKey accepts body: Body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
  * Upload using a preallocated key recorded by the caller before external storage I/O.
@@ -65,7 +66,7 @@ const createFileId = (): string => nanoid(FILE_ID_LENGTH);
 const uploadFileAtKey = async (
   key: string,
   filename: string,
-  body: Body,
+  body: ReadonlyNativeSurface<Body>,
   contentType?: string
 ): Promise<{
   contentType: UploadResult["contentType"];
@@ -89,18 +90,14 @@ const uploadFileAtKey = async (
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-params */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): FileUploader accepts body: Body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 type FileUploader = (
   filename: string,
-  body: Body,
+  body: ReadonlyNativeSurface<Body>,
   contentType?: string
 ) => ReturnType<typeof uploadFileAtKey>;
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve iterateStoredFiles's asynchronous iteration and rejection behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations -- The first inventory page has no cursor; subsequent pages use the cursor supplied by the preceding response. */
 /**

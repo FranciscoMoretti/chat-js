@@ -69,13 +69,18 @@ const createToolUsage = (): {
 };
 
 type ToolUsage = ReturnType<typeof createToolUsage>;
+type ToolProgressOptions<Output extends ToolOutput> = ReadonlyNativeSurface<{
+  usage: ToolUsage;
+  abortSignal: AbortSignal;
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published update arrays retain exact references in ToolResult and stream receipts; readonly output would require cloning or changing the public result contract.
+  publish: (output: Output, updates?: ToolOutput[]) => void;
+}>;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeWithToolUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --max-statements (#512): Check cancellation before execution, after cost settlement and again when converting only ExpectedToolFailureError into an error receipt; unknown failures remain rejected. Preserve these billing/cancellation boundaries.*/
 const executeWithToolUsage = async <Output extends ToolOutput>(
   context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the executor callback's existing mutable accounting facade input; readonly callback parameters would restrict caller-owned method replacement at this public boundary.
-  execute: (usage: ToolUsage) => Output | Promise<Output>
+  execute: (usage: ReadonlyNativeSurface<ToolUsage>) => Output | Promise<Output>
 ): Promise<ToolResult<Output>> => {
   context.abortSignal.throwIfAborted();
   const usage = createToolUsage();
@@ -100,20 +105,14 @@ const executeWithToolUsage = async <Output extends ToolOutput>(
 
 /** Streaming alone needs a queue; accounting is shared.
  * @param {ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>} context Native cancellation capability checked before execution and while settling usage.
- * @param {(options: {usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: ToolOutput[]) => void}) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
+ * @param {(options: ReadonlyNativeSurface<{usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: ToolOutput[]) => void}>) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
  * @yields {ToolResult<Output>} Progress snapshots followed by the final settled usage receipt.
  */
 const executeWithToolProgress = async function* executeWithToolProgress<
   Output extends ToolOutput,
 >(
   context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the streaming executor callback's mutable options/usage and native AbortSignal contract; caller callbacks retain their existing input capabilities.
-  execute: (options: {
-    usage: ToolUsage;
-    abortSignal: AbortSignal;
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published update arrays retain exact references in ToolResult and stream receipts; readonly output would require cloning or changing the public result contract.
-    publish: (output: Output, updates?: ToolOutput[]) => void;
-  }) => Promise<Output>
+  execute: (options: ToolProgressOptions<Output>) => Promise<Output>
 ): AsyncGenerator<ToolResult<Output>> {
   context.abortSignal.throwIfAborted();
   const cancellation = new AbortController();
@@ -136,12 +135,11 @@ const executeWithToolProgress = async function* executeWithToolProgress<
       const publish = (output: Output, nextUpdates?: ToolOutput[]): void => {
         updates = nextUpdates;
         if (!cancelled) {
-          // oxlint-disable-next-line no-undefined -- Progress has no settled cost receipt yet; undefined preserves that existing absence contract.
-          controller.enqueue(createToolResult(output, undefined, updates));
+          controller.enqueue(createToolResult(output, undefined, updates)); // oxlint-disable-line no-undefined -- Progress has no settled cost receipt yet; undefined preserves that existing absence contract.
         }
       };
       try {
-        // oxlint-disable-next-line typescript/promise-function-async, typescript/prefer-readonly-parameter-types -- Preserve the accounting facade instance forwarded to the executor callback.  Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
+        // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise unchanged; synchronous executor failures stay inside executeWithToolUsage's existing try/catch.
         const result = await executeWithToolUsage({ abortSignal }, (usage) =>
           execute({ abortSignal, publish, usage })
         );

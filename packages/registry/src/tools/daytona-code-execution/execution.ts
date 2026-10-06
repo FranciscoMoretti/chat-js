@@ -1,10 +1,10 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The lifecycle coordinator consumes the existing ownership, provider and AbortSignal contracts without widening them to recursively readonly SDK types. */
 /* oxlint-disable eslint/max-params, eslint/max-statements -- This lifecycle coordinator keeps allocation, confirmation, cancellation and release in one ordered transaction with its four explicit dependencies. */
 import type { CodeExecutionInput } from "@/lib/eve/code-executor";
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CodeExecutionResult } from "@/tools/chatjs/_shared/code-execution/types";
 /* oxlint-enable sort-imports */
 
@@ -13,15 +13,17 @@ import type { createDaytonaProvider } from "./sandbox";
 
 interface SandboxOwnership {
   reserve: (
-    provider: { teamId: string; projectId: string },
-    signal?: AbortSignal
+    provider: Readonly<{ teamId: string; projectId: string }>,
+    signal?: ReadonlyNativeSurface<AbortSignal>
   ) => Promise<string>;
   created: (name: string) => Promise<void>;
   release: () => Promise<void>;
 }
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve observeCleanup's awaited sequencing and rejected-Promise behavior. */
-const observeCleanup = async (pending: Promise<void>): Promise<void> => {
+const observeCleanup = async (
+  pending: Readonly<Promise<void>>
+): Promise<void> => {
   try {
     await pending;
   } catch {
@@ -32,9 +34,9 @@ const observeCleanup = async (pending: Promise<void>): Promise<void> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeInDaytona's awaited sequencing and rejected-Promise behavior. */
 const executeInDaytona = async (
   input: CodeExecutionInput,
-  selected: ReturnType<typeof createDaytonaProvider>,
-  ownership: SandboxOwnership,
-  signal: AbortSignal
+  selected: ReadonlyNativeSurface<ReturnType<typeof createDaytonaProvider>>,
+  ownership: ReadonlyNativeSurface<SandboxOwnership>,
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): Promise<CodeExecutionResult> => {
   signal.throwIfAborted();
   const name = await ownership.reserve(selected.cleanup.provider, signal);

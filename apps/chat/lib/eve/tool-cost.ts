@@ -1,9 +1,9 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-import { toModelData } from "@/lib/ai/to-model-data";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UsageInfo } from "@/lib/credits/cost-accumulator";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 import { createToolUsage } from "./tool-usage";
@@ -11,17 +11,13 @@ import { createToolUsage } from "./tool-usage";
 import type { ToolUsage } from "./tool-usage";
 /* oxlint-enable sort-imports */
 
+// Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
 const pricingForModel = (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- toModelData forwards native gateway tags/pricing references into mutable ModelData; preserve the same record input rather than copying provider data.
-  fetchedModels: readonly AiGatewayModel[],
+  fetchedModels: ReadonlyNativeSurface<AiGatewayModel[]>,
   modelId: string
-): ReturnType<typeof toModelData>["pricing"] | undefined => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native gateway model records are forwarded unchanged to the mutable-reference projection toModelData.
-  const models = fetchedModels.map((model) => toModelData(model));
-  // oxlint-disable-next-line oxc/no-optional-chaining -- A freshly fetched provider catalog may omit this model or pricing; preserve unavailable-price handling in each deferred charge. The app guidance prefers optional chaining.
-  return models.find((model: { readonly id: string }) => model.id === modelId)
-    ?.pricing;
-};
+): ReadonlyNativeSurface<AiGatewayModel["pricing"]> | undefined =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- An absent model has no pricing; keep the existing undefined result and return the selected model's original pricing object.
+  fetchedModels.find((model) => model.id === modelId)?.pricing;
 
 const tokenCost = (
   tokens: number | undefined,

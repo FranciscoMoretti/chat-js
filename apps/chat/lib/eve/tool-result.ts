@@ -6,7 +6,7 @@ type ToolOutput =
   | number
   | boolean
   | null
-  | ToolOutput[]
+  | readonly ToolOutput[]
   | { [key: string]: ToolOutput | undefined };
 
 const jsonOutput: z.ZodType<ToolOutput> = z.lazy(() =>

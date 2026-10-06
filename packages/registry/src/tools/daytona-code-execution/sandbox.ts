@@ -1,4 +1,3 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Daytona request types and AbortSignal are SDK-owned mutable contracts; these adapters forward them without changing their public assignability. */
 /* oxlint-disable-next-line import/no-nodejs-modules -- Server-side credential scope hashing must use Node crypto and never expose the API key. */
 import { createHash } from "node:crypto";
 
@@ -8,6 +7,8 @@ import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
 import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 
 import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-disable-next-line sort-imports -- Oxfmt orders canonical imports by module path while sort-imports orders these type imports by local binding. */
 import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
 
 const API_URL = "https://app.daytona.io/api";
@@ -25,6 +26,7 @@ interface DaytonaResource {
 }
 interface DaytonaClient {
   readonly create: (
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the exact native Daytona create request; ReadonlyNativeSurface makes nested volumes readonly and rejects the real Daytona client’s VolumeMount[] parameter (app TypeScript TS2345).
     params: CreateSandboxFromSnapshotParams,
     options?: Readonly<{ timeout?: number }>
   ) => Promise<DaytonaResource>;
@@ -44,8 +46,8 @@ const shellArgument = (value: string): string =>
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForCommand's awaited sequencing and rejected-Promise behavior. */
 const waitForCommand = async <Result>(
-  operation: Promise<Result>,
-  signal: AbortSignal
+  operation: Readonly<Promise<Result>>,
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): Promise<Result> => {
   const cancelled = Promise.withResolvers<never>();
   const stop = (): void => {
@@ -64,10 +66,13 @@ const waitForCommand = async <Result>(
 /* oxlint-enable oxc/no-async-await */
 const commandSandbox = (
   resource: DaytonaResource,
-  signal: AbortSignal
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): ExecutionSandbox => ({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runCommand's awaited sequencing and rejected-Promise behavior. */
-  async runCommand({ cmd, args }) {
+  async runCommand({
+    cmd,
+    args,
+  }: Readonly<{ cmd: string; args: readonly string[] }>) {
     signal.throwIfAborted();
     const result = await waitForCommand(
       resource.process.executeCommand(

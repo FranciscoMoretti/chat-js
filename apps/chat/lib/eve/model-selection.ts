@@ -31,8 +31,7 @@ class EveModelUnavailableError extends Error {
   }
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): getEveModelDefinition accepts models = getFallbackModels(config.ai.gateway).map((model) => toModelData(model) ); model; item; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The selected model is spread into mutable EveModelDefinition; its tags array and pricing object retain their original mutable aliases, and a deep-readonly view fails the return contract or would require cloning. */
 const getEveModelDefinition = (
   requestedId?: string,
   models = getFallbackModels(config.ai.gateway).map((model) =>
@@ -76,7 +75,7 @@ let loading: Promise<ModelData[]> | undefined;
 /* oxlint-enable init-declarations */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): loadEveModelDefinition accepts model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+typescript/prefer-readonly-parameter-types (#565): The fetched models are passed through toModelData, whose mutable ModelData output retains each model's original tags and pricing objects; a deep-readonly view would break that alias contract or require cloning. */
 const loadEveModelDefinition = async (
   requestedId?: string
 ): Promise<EveModelDefinition> => {

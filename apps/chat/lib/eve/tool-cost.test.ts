@@ -16,15 +16,7 @@ vi.mock("../ai/active-gateway", () => ({
   }),
 }));
 /* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/to-model-data")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("../ai/to-model-data", () => ({
-  toModelData: (value: unknown) => value,
-}));
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
-
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("combines API and nested model usage without rounding each call") uses 5, 0.0505 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
