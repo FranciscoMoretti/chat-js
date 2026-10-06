@@ -1,4 +1,5 @@
 import { and, eq, inArray, or, sql } from "drizzle-orm";
+import type { QueryPromise } from "drizzle-orm/query-promise";
 
 import { db } from "./client";
 import { tombstoneEveResponseGroups } from "./eve-response-groups";
@@ -74,6 +75,32 @@ const assertEveFamilyPendingDeletion = (
   }
 };
 
+/** Read the first unresolved native sandbox without changing query construction or execution.
+ * @param {Readonly<Pick<typeof db, "select">>} query - Existing transaction select capability; its receiver is forwarded unchanged.
+ * @param {readonly string[]} ids - Family conversation IDs already read after response-group tombstoning.
+ * @returns {QueryPromise<readonly (Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">> | undefined)[]>} The original native query object; an empty result has no first row.
+ */
+const findUnresolvedEveFamilySandbox = (
+  query: Readonly<Pick<typeof db, "select">>,
+  ids: readonly string[]
+): QueryPromise<
+  readonly (
+    | Readonly<Pick<typeof eveCodeSandbox.$inferSelect, "name">>
+    | undefined
+  )[]
+> =>
+  query
+    .select({ name: eveCodeSandbox.name })
+    .from(eveCodeSandbox)
+    .where(
+      and(
+        inArray(eveCodeSandbox.conversationId, ids),
+        eq(eveCodeSandbox.state, "unresolved")
+      )
+    )
+    // oxlint-disable-next-line no-magic-numbers -- This cleanup-existence probe needs only the first unresolved sandbox.
+    .limit(1);
+
 /**
  * Final application stage. The internal coordinator must confirm native payload,
  * sandbox and file removal before calling this; this is not a deletion endpoint.
@@ -117,18 +144,7 @@ const completeEveConversationDeletion = async (
         (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) =>
           row.id
       );
-      const [sandbox] = await tx
-        .select({ name: eveCodeSandbox.name })
-        .from(eveCodeSandbox)
-        .where(
-          and(
-            inArray(eveCodeSandbox.conversationId, ids),
-            eq(eveCodeSandbox.state, "unresolved")
-          )
-        )
-        // oxlint-disable-next-line no-magic-numbers -- This cleanup-existence probe needs only the first unresolved sandbox.
-        .limit(1);
-      // oxlint-disable-next-line typescript/strict-boolean-expressions -- A first unresolved sandbox row blocks finalization; an empty result permits the subsequent ordered content checks.
+      const [sandbox] = await findUnresolvedEveFamilySandbox(tx, ids);
       if (sandbox) {
         throw new Error("Code sandbox cleanup is incomplete.");
       }

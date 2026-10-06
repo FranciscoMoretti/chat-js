@@ -28,9 +28,7 @@ import type { prepareEveCopyTranscript } from "./copy-transcript";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveCopyPlan); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveCopyPlan's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): prepareEveCopyPlan's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): prepareEveCopyPlan's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -38,7 +36,15 @@ import type { prepareEveCopyTranscript } from "./copy-transcript";
  * typescript/promise-function-async (#606): prepareEveCopyPlan preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-boolean-expressions (#610): prepareEveCopyPlan intentionally keeps the existing falsy-value behavior of documentId; revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Input is an authorized public projection and ancestry, never browser-supplied content. */
+/**
+ * Allocate destination identities and rewrite an authorized public projection and ancestry.
+ * Inputs must come from server authorization, never browser-supplied content.
+ * @param {ReturnType<typeof prepareEveCopyTranscript>} projection - Public transcript seed and referenced file keys to copy.
+ * @param {Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>} snapshot - Authorized document revisions and transcript checkpoints.
+ * @param {(key: string) => Promise<Blob>} readPublicFile - Read an authorized source attachment to compute its digest and metadata.
+ * @param {string} origin - Origin used when materializing destination attachment URLs.
+ * @returns {Promise<EveCopyPlan>} Copy plan with allocated identities, source descriptors, and remapped document boundaries; no destination files are written here.
+ */
 export const prepareEveCopyPlan = async (
   projection: ReturnType<typeof prepareEveCopyTranscript>,
   snapshot: Awaited<ReturnType<typeof snapshotPublicEveCopyDocuments>>,
@@ -139,4 +145,4 @@ export const prepareEveCopyPlan = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

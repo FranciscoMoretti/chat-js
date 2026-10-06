@@ -10,19 +10,16 @@ import nodePath from "node:path";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceLocalEveSandboxMutations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): fenceLocalEveSandboxMutations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * no-magic-numbers (#517): fenceLocalEveSandboxMutations uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): fenceLocalEveSandboxMutations accepts sessionIds: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Permanently stop new local sandbox operations for an authorized native family.
  * Existing operation records must disappear before inventory and cleanup proceed.
  * Never expire or discard unresolved records on a timer: provider work may remain.
+ * @param {string} appRoot - Application root containing the local .eve mutation journal.
+ * @param {readonly string[]} sessionIds - Authorized family members to fence; duplicates share one marker.
  */
 export const fenceLocalEveSandboxMutations = async (
   appRoot: string,
-  sessionIds: string[]
+  sessionIds: readonly string[]
 ): Promise<void> => {
   const scopes = [...new Set(sessionIds)].map((id) =>
     nodePath.join(
@@ -61,6 +58,7 @@ export const fenceLocalEveSandboxMutations = async (
         throw error;
       }
     );
+    // oxlint-disable-next-line no-magic-numbers -- Zero journal entries means every recorded sandbox operation has settled.
     if (operations.length > 0) {
       throw new Error(
         "Sandbox operations are still pending. Resolve them before cleanup."
@@ -70,4 +68,3 @@ export const fenceLocalEveSandboxMutations = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */
