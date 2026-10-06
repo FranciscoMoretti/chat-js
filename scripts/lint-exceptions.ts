@@ -409,36 +409,15 @@ const snapshotExceptions = (
   return { baseline, errors };
 };
 
-// oxlint-disable-next-line eslint/max-statements -- Compare all three independent baseline budgets together and report every violation instead of failing at the first one.
-const checkExceptions = (
-  files: Readonly<Record<string, string>>,
-  baseline: ExceptionBaseline
+// Compare scope fingerprints as a multiset, consuming each prior occurrence once.
+const compareFingerprintBudget = (
+  current: ExceptionBaseline,
+  prior: ExceptionBaseline
 ): string[] => {
-  const snapshot = snapshotExceptions(files);
-  const { errors } = snapshot;
-  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
-  for (const [key, count] of Object.entries(snapshot.baseline.counts)) {
-    if (count > (baseline.counts[key] ?? 0)) {
-      errors.push(
-        `Exception count increased ${key}: ${baseline.counts[key] ?? 0} -> ${count}`
-      );
-    }
-  }
-  /* oxlint-enable no-magic-numbers */
-  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
-  for (const [key, count] of Object.entries(snapshot.baseline.missingReasons)) {
-    if (count > (baseline.missingReasons[key] ?? 0)) {
-      errors.push(
-        `Missing reason after -- ${key}: ${baseline.missingReasons[key] ?? 0} -> ${count}`
-      );
-    }
-  }
-  /* oxlint-enable no-magic-numbers */
+  const errors: string[] = [];
   /* oxlint-disable no-magic-numbers -- indexOf returns -1 for an unknown fingerprint; splice removes exactly one matched prior occurrence. */
-  for (const [key, fingerprints] of Object.entries(
-    snapshot.baseline.scopeFingerprints
-  )) {
-    const remaining = [...(baseline.scopeFingerprints[key] ?? [])];
+  for (const [key, fingerprints] of Object.entries(current.scopeFingerprints)) {
+    const remaining = [...(prior.scopeFingerprints[key] ?? [])];
     for (const fingerprint of fingerprints) {
       const index = remaining.indexOf(fingerprint);
       if (index === -1) {
@@ -451,6 +430,35 @@ const checkExceptions = (
     }
   }
   /* oxlint-enable no-magic-numbers */
+  return errors;
+};
+
+const checkExceptions = (
+  files: Readonly<Record<string, string>>,
+  baseline: ExceptionBaseline
+): string[] => {
+  const { baseline: current, errors } = snapshotExceptions(files);
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
+  for (const [key, count] of Object.entries(current.counts)) {
+    if (count > (baseline.counts[key] ?? 0)) {
+      errors.push(
+        `Exception count increased ${key}: ${baseline.counts[key] ?? 0} -> ${count}`
+      );
+    }
+  }
+  /* oxlint-enable no-magic-numbers */
+  /* oxlint-disable no-magic-numbers -- Absent prior budget counts mean zero; compare and report the same nonnegative default. */
+  for (const [key, count] of Object.entries(current.missingReasons)) {
+    if (count > (baseline.missingReasons[key] ?? 0)) {
+      errors.push(
+        `Missing reason after -- ${key}: ${baseline.missingReasons[key] ?? 0} -> ${count}`
+      );
+    }
+  }
+  /* oxlint-enable no-magic-numbers */
+  for (const error of compareFingerprintBudget(current, baseline)) {
+    errors.push(error);
+  }
   return errors;
 };
 

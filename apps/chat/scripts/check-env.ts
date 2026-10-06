@@ -56,22 +56,19 @@ interface ValidationError {
 }
 
 const projectRoot = path.resolve(import.meta.dirname, "..");
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): toolEnvironmentSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/max-nested-calls (#568): toolEnvironmentSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-const toolEnvironmentSchema = z.object({
-  envRequirements: z
-    .array(
-      z.object({
-        description: z.string().optional(),
-        options: z.array(z.array(z.string()).min(1)).min(1),
-        runtimeAuth: z.literal("vercel-oidc").optional(),
-      })
-    )
-    .default([]),
+const nonEmptyEnvironmentOptionSchema = z.array(z.string()).min(1);
+const toolEnvironmentRequirementSchema = z.object({
+  description: z.string().optional(),
+  options: z.array(nonEmptyEnvironmentOptionSchema).min(1),
+  runtimeAuth: z.literal("vercel-oidc").optional(),
 });
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
+const toolEnvironmentSchema = z.object({
+  envRequirements: z.array(toolEnvironmentRequirementSchema).default([]),
+});
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): validateGatewayKey uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
