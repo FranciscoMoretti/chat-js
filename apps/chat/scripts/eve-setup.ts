@@ -1,36 +1,35 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { execFileSync } from "node:child_process";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-fence"; "@/lib/eve/lifecycle/postgres/eve-resource-fence"; "../lib/eve/environment"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
+/* oxlint-disable import/no-nodejs-modules --
+ * import/no-nodejs-modules (#529): The setup command isolates the provider CLI in a Node child process because that CLI may exit its process; this is a Node tooling boundary.
  */
 import { execFileSync } from "node:child_process";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
 import { config } from "dotenv";
 /* oxlint-enable sort-imports */
 import postgres from "postgres";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { resolveWorkflowDatabaseUrl } from "@/lib/eve/environment";
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
 /* oxlint-enable sort-imports */
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 
-import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
 import { resolveEveSetup } from "./eve-setup-config";
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync --
- * max-lines-per-function (#510): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): run keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): run emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): run uses 2, 3, 30_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * node/no-process-env (#537): run reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * node/no-sync (#538): run uses execFileSync( process.execPath, [ "-e", 'import("@workflow/world-postgre within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
+ * max-lines-per-function (#510): run owns CLI argument/environment selection, optional provider setup, local fencing, required-table verification and connection cleanup; extracting its mode-dependent order across helpers risks separating one command lifecycle.
+ * max-statements (#512): run performs the conditional provider setup before mode-dependent connection checks, then fences local workflows, verifies tables and closes the client; there is no independently reused operation to extract from this one entrypoint.
+ * no-console (#514): run reports selected backend, setup progress and schema readiness on this CLI's stdout; removing those messages changes its command output contract.
+ * no-magic-numbers (#517): 2 and 3 select/limit the script arguments, 30_000 is the connection deadline in milliseconds, and 0 requests immediate client shutdown; these values define this command flow.
+ * node/no-process-env (#537): run reads the CLI's dotenv-populated process.env once to resolve the selected world and database URL; this is the script's environment boundary.
+ * node/no-sync (#538): The provider setup CLI may exit its child process; execFileSync isolates that lifecycle and ensures setup completes before PostgreSQL checks begin.
  */
 const run = async (): Promise<void> => {
   const [mode] = process.argv.slice(2);
@@ -122,31 +121,31 @@ const run = async (): Promise<void> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync */
 
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
- * no-console (#514): void (async () => { try { await run(); } catch (error)  emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await run(); } catch (error) 's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-console --
+ * no-console (#514): The entrypoint prints safe validation messages verbatim and maps potentially secret-bearing database/provider errors to a fixed generic message.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await run();
   } catch (error) {
     // Database/child-process errors can contain connection details. Never print them.
-    const safe =
+    if (
       error instanceof Error &&
       (error.message.startsWith("ChatJS setup") ||
         error.message.startsWith("Set WORKFLOW") ||
         error.message.startsWith("WORKFLOW_POSTGRES_URL must") ||
         error.message.startsWith("Usage:") ||
-        error.message.startsWith("EVE schema"));
-    console.error(
-      // oxlint-disable-next-line no-ternary -- Keep console.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      safe
-        ? error.message
-        : "EVE setup/check failed. Check WORKFLOW_POSTGRES_URL, database permissions, TLS, and connectivity."
-    );
+        error.message.startsWith("EVE schema"))
+    ) {
+      console.error(error.message);
+    } else {
+      console.error(
+        "EVE setup/check failed. Check WORKFLOW_POSTGRES_URL, database permissions, TLS, and connectivity."
+      );
+    }
     process.exitCode = 1;
   }
 })();
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable no-console */
