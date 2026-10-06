@@ -52,6 +52,6 @@ The isolated projection example demonstrates scope and last-null-selection behav
 
 ## Evidence and remaining gates
 
-See [experiment](../../experiments/eve-delivery-correlation/README.md). Stock 0.71.3 accepts the test HTTP requests but discards the token. The local patch passes the isolated worker proofs. Neither observation is supported upstream parity.
+See [experiment](../../experiments/eve-delivery-correlation/README.md). Stock 0.71.3 accepts the test HTTP requests but discards the token. The local patch passes the isolated worker proofs, including actual process death and same-world replay after completed turns. The lost follow-up is never resent. In-flight checkpoint recovery is a separate unproven boundary. Neither observation is supported upstream parity.
 
-Before removal: upstream acceptance and a consumable release; aggregate size/retention semantics; durable restart/checkpoint and Postgres proofs; terminal queued-cancellation disposition; allocation recovery proof; production submission/projection persistence and history/copy migration; adversarial authenticated owner/session binding; and clean integration checks. No product decision is needed to retain the current guarantees while these dependencies remain.
+Before removal: upstream acceptance and a consumable release; aggregate size/retention semantics; in-flight restart/checkpoint and Postgres proofs; terminal queued-cancellation disposition; allocation recovery proof; production submission/projection persistence and history/copy migration; adversarial authenticated owner/session binding; and clean integration checks. No product decision is needed to retain the current guarantees while these dependencies remain.
