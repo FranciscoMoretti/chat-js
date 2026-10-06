@@ -56,15 +56,16 @@ create or replace trigger eve_queue_fence before insert or update of payload, ta
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (installEvePostgresQueueFence); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresQueueFence's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): installEvePostgresQueueFence's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): installEvePostgresQueueFence uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * typescript/prefer-readonly-parameter-types (#565): installEvePostgresQueueFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
- * Explicit provider migration after installEvePostgresResourceFence.
- * Register the provider's configured task name (normally workflow_flows).
- * Fences enqueues/replacements, not worker bookkeeping or existing job removal.
+ * Explicit provider migration after installEvePostgresResourceFence. Fences enqueues and replacements, leaving worker bookkeeping and existing job removal available.
+ *
+ * @param {Sql} connection Postgres connection used to install the queue trigger and register its task in one READ COMMITTED transaction.
+ * @param {string} taskIdentifier Nonempty provider task identifier (normally workflow_flows) whose queue writes require writable resources.
+ * @returns {Promise<void>} Resolves after the trigger and task registration commit; validation, migration or transaction failures reject.
  */
 export const installEvePostgresQueueFence = async (
   connection: Sql,
@@ -79,4 +80,4 @@ export const installEvePostgresQueueFence = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

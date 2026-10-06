@@ -29,12 +29,16 @@ import {
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers --
- * jsdoc/require-param (#534): documentIdForCall's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): documentIdForCall's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): documentIdForCall uses 0, 16, 6, 128, 8, 64, 12, 20 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
-/** Deterministic UUIDv8: retrying a create must address exactly the same document. */
+/**
+ * Deterministic UUIDv8: retrying a create must address exactly the same document.
+ *
+ * @param {string} sessionId Session identity included in the SHA-256 input.
+ * @param {string} callId Tool-call identity included in the SHA-256 input.
+ * @returns {string} A UUIDv8 string derived from the session and call identities.
+ */
 const documentIdForCall = (sessionId: string, callId: string): string => {
   const bytes = createHash("sha256")
     .update(JSON.stringify([sessionId, callId]))
@@ -47,7 +51,7 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveDocumentTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveDocumentTool's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-lines-per-function (#510): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

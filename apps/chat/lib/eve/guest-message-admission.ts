@@ -32,16 +32,22 @@ import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
-jsdoc/require-param (#534): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): admitGuestMessage's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/explicit-function-return-type (#560): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep admitGuestMessage's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Only the first reservation may dispatch: eve's session POST has no replay key. */
+/**
+ * Only the first reservation may dispatch: eve's session POST has no replay key.
+ *
+ * @param {ReadonlyNativeSurface<Request>} request Request carrying the operation UUID and guest IP headers.
+ * @param {string} ownerId Guest owner whose quota and operation reservation are checked.
+ * @param {string} sessionId Session included in the reservation payload hash.
+ * @param {{ readonly message: ReadonlyEveMessageInput; readonly modelId?: string; readonly selectedTool?: UiToolName; }} input Message, model and selected tool included in the reservation payload hash.
+ * @returns {Promise<Response | { operationId: string; reservationId: string }>} The newly acquired reservation identities, or an HTTP rejection/recovery response; storage failures reject.
+ */
 const admitGuestMessage = async (
   request: ReadonlyNativeSurface<Request>,
   ownerId: string,
@@ -110,7 +116,7 @@ const admitGuestMessage = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const settleGuestMessage = async (
