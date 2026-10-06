@@ -29,10 +29,11 @@ import {
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Execute saved source, never model-supplied replacement code.
+ * @param {unknown} value Untrusted tool input validated against the shared execution schema.
+ * @param {ToolContext} context Native tool context supplying session scope, call metadata, and cancellation.
  * @yields {unknown} Native EVE platform result snapshots with document identity.
  */
 export const executeEveCodeDocument = async function* executeEveCodeDocument(
@@ -105,7 +106,6 @@ export const executeEveCodeDocument = async function* executeEveCodeDocument(
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
