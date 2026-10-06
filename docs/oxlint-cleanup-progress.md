@@ -228,6 +228,17 @@ The same batch adds four synchronous deletion query readers (195 controlled coor
 
 Full `bun lint`, all seven type tasks, template parity, two policy tests (100 assertions), 43 focused app tests and eight maintained Chromium tests pass. The latest full CLI suite passes 203 tests (1,102 assertions); it ran before the subsequent erased app annotations and fixture-only refinements, with no CLI implementation changes afterward. The final full typed/unused scan matches exactly the six established cross-environment assertion warnings and reports no errors. The exception total is **20,920**, up 1,083 from batch30; entries are not bug counts. Deletion transaction metrics and broader inherited-suppression review remain open. No live PostgreSQL validation, complete exception signoff, PR or push is claimed.
 
+The thirty-second batch replaces 15 documentation exception memberships with authored contracts for eight database helpers in five modules. The docs describe owned search and continuation cursors, trusted subagent lineage, published document snapshots, deletion fences, creation reservations and owner-only feedback. Independent review corrected the distinction between the owner-scoped operation ID and the reserved conversation ID required as the native creation key, and documented Drizzle's lazy awaitable query without changing its builder API. All eight JSDoc attachments and unrelated directive rules/order remain intact; syntax and emitted JavaScript are unchanged. The actual five-module type-aware/unused scan is clean. Full lint, all seven type tasks, regenerated template parity and 52 focused tests pass. The full-tree typed/unused check matches the six established warnings. The baseline now contains **20,905** memberships. No live PostgreSQL behavior or complete exception review is claimed.
+
+A read-only provenance inventory measured the original full-goal boundary and the preceding integration checkpoint:
+
+| Snapshot | Commit | Source files | Exception memberships |
+| --- | --- | --: | --: |
+| Original goal boundary | `3a6dfcbef5da45df8e0f089b0604796c40150066` | 1,396 | 10,211 |
+| Batch31 checkpoint | `4387a50564ebb7ed97ae12f435f543351c3c2b21` | 1,412 | 20,920 |
+
+The boundary is the parent of `3aa0f88c45318a5a406ecbe46490e57695e358b5`. Using the existing `readExceptions()` parser, occurrence provenance is 2,059 unchanged fingerprints, 7,295 modified at existing membership keys, 857 removed memberships and 11,566 added memberships. These describe source history, not semantic review or retained-exception approval. Unchanged fingerprints remain pending unless specific review evidence exists; modified or removed entries alone do not establish a validated fix. Current counts supersede historical totals below.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

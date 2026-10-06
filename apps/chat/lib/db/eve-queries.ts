@@ -779,16 +779,21 @@ const reserveEveConversation = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beginEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): beginEveConversationDeletion's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): beginEveConversationDeletion accepts tx; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): beginEveConversationDeletion intentionally keeps the existing falsy-value behavior of source; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): beginEveConversationDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-/** Fence one conversation family; retirement and physical purge must finish separately. */
+/**
+ * Fences every conversation in the selected logical chat for deletion.
+ * The returned session IDs can then be retired before physical purge.
+ * @param {string} ownerId Owner of the selected conversation or chat.
+ * @param {string} id Conversation or logical chat ID used to find the family.
+ * @returns {Promise<{ conversations: Array<Pick<ConversationRow, "id" | "sessionId">>; rootId: string } | undefined>} The chat root and fenced conversation IDs, or undefined when no owned record matches.
+ * @throws {CreationConflictError} when creation recovery is still in progress.
+ */
 const beginEveConversationDeletion = async (
   ownerId: string,
   id: string
@@ -872,7 +877,7 @@ const beginEveConversationDeletion = async (
     };
   });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): matchesEveFork preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -981,8 +986,7 @@ const bindConversationSession = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): createEveConversation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
 max-lines-per-function (#510): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): createEveConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -990,7 +994,24 @@ typescript/prefer-readonly-parameter-types (#565): createEveConversation accepts
 typescript/strict-boolean-expressions (#610): createEveConversation intentionally keeps the existing falsy-value behavior of initialProjectId; reservation; existing; current; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): createEveConversation preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** The dispatcher must use the supplied reservation ID as Eve's idempotency key. */
+/**
+ * Reserves a conversation under the owner’s operation ID and binds it to a native session.
+ * The reserved conversation ID is passed to the native creator as its idempotency key.
+ * @param {string} ownerId Owner creating the conversation.
+ * @param {string} operationId Stable owner-scoped operation ID used to find or reuse the conversation reservation.
+ * @param {string} message First user message and default conversation title.
+ * @param {(id: string) => Promise<string>} create Native-session creator called with the reserved conversation ID as native idempotency key.
+ * @param {string} [initialModelId] Initial model to use for the conversation.
+ * @param {unknown} [initialRequest] Initial request metadata persisted with the conversation.
+ * @param {string} [initialContentHash] Hash used to identify the initial content.
+ * @param {string} [initialTitle] Initial title; defaults to the first message.
+ * @param {EveForkInput} [fork] Source conversation and checkpoint information for a fork.
+ * @param {typeof eveConversation.$inferInsert.forkKind} [forkKind] Fork type for the new conversation.
+ * @param {string[]} [fileKeys] File keys attached to the initial message.
+ * @param {string} [initialProjectId] Project to associate with a new non-fork conversation.
+ * @param {string} [guestReservationId] Existing guest reservation to consume.
+ * @returns {Promise<BoundConversation>} The bound conversation after native session creation succeeds.
+ */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
 const createEveConversation = async (
   ownerId: string,
@@ -1143,7 +1164,7 @@ const createEveConversation = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveOwnerBindings's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const listEveOwnerBindings = async (
   ownerId: string

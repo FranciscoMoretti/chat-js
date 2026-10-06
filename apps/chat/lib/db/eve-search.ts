@@ -15,13 +15,20 @@ type SearchTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveSearchText's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): writeEveSearchText's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
 max-params (#511): writeEveSearchText keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): writeEveSearchText uses 8000, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): writeEveSearchText accepts tx: SearchTransaction; entries: readonly EveSearchText[]; entry; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): writeEveSearchText intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Share the binding row lock with deletion so a late backfill cannot resurrect text. */
+/**
+ * Writes search chunks only while the owner’s conversation binding is active.
+ * The binding lock serializes the write with deletion, and existing keys are
+ * updated when their indexed text changes.
+ * @param {SearchTransaction} tx Transaction shared with the caller’s conversation update.
+ * @param {string} ownerId Owner whose active conversation is being indexed.
+ * @param {string} conversationId Bound conversation that owns the chunks.
+ * @param {readonly EveSearchText[]} entries Search keys and text chunks to persist.
+ */
 const writeEveSearchText = async (
   tx: SearchTransaction,
   ownerId: string,
@@ -72,7 +79,7 @@ const writeEveSearchText = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve indexEveSearchText's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable jsdoc/require-param, max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): indexEveSearchText uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -175,15 +182,20 @@ const highlightSearchExcerpt = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): searchEveConversations's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
 max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): searchEveConversations uses 2, 1, 0, 20, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/explicit-function-return-type (#560): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): searchEveConversations accepts input: { search: string; cursor?: { rank: number; updatedAt: string; id: string } | n; { highlightQuery, highlightWords, ...item }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** One result per logical chat, with the branch containing its strongest match. */
+/**
+ * Searches an owner’s bound conversations and returns one ranked result per chat.
+ * The cursor continues after a result using rank, update time, and chat ID.
+ * @param {string} ownerId Owner whose private conversation and search text rows are queried.
+ * @param {{ search: string; cursor?: { rank: number; updatedAt: string; id: string } | null }} input Search text and optional continuation cursor.
+ * @returns {Promise<{ items: Array<Omit<EveSearchResult, "highlightQuery" | "highlightWords">>; nextCursor: { id: string; rank: number; updatedAt: string } | null }>} A page of highlighted chat results and a cursor when more results exist.
+ */
 const searchEveConversations = async (
   ownerId: string,
   input: {
@@ -278,6 +290,6 @@ const searchEveConversations = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (indexEveSearchText, searchEveConversations, writeEveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };
 /* oxlint-enable import/no-named-export */
