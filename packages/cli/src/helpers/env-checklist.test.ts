@@ -167,7 +167,6 @@ describe("collectEnvChecklist", () => {
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("includes every installed MCP requirement and preserves combined and alternative groups", () => {
   const previous = coreFeatureEnvRequirements.mcp;
   coreFeatureEnvRequirements.mcp = [
@@ -203,9 +202,14 @@ it("includes every installed MCP requirement and preserves combined and alternat
       ],
     });
     expect(
-      entries.filter((entry) => entry.vars === "MCP_ENCRYPTION_KEY")
+      entries.filter(
+        (entry: { readonly vars: string }) =>
+          entry.vars === "MCP_ENCRYPTION_KEY"
+      )
     ).toHaveLength(1);
-    expect(entries.map((entry) => entry.vars)).toEqual(
+    expect(
+      entries.map((entry: { readonly vars: string }) => entry.vars)
+    ).toEqual(
       // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
       expect.arrayContaining([
         "MCP_ENCRYPTION_KEY",
@@ -214,12 +218,14 @@ it("includes every installed MCP requirement and preserves combined and alternat
       ])
     );
     expect(
-      entries.filter((entry) => entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN")
+      entries.filter(
+        (entry: { readonly oneOfGroup?: string }) =>
+          entry.oneOfGroup === "TEAM+TOKEN|OIDC_TOKEN"
+      )
     ).toHaveLength(2);
   } finally {
     coreFeatureEnvRequirements.mcp = previous;
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

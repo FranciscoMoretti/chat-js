@@ -41,10 +41,9 @@ it("validates gateway integration metadata with the standard registry schema", a
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   const server = Bun.serve({
-    fetch: (request) => {
+    fetch: (request: Readonly<Pick<Request, "url">>) => {
       if (new URL(request.url).pathname === "/gateway.json") {
         return Response.redirect(new URL("/target.json", request.url));
       }
@@ -65,5 +64,4 @@ it("retains HTTPS enforcement for shadcn requests and redirects", async () => {
   }
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */

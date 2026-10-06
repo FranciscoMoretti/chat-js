@@ -96,7 +96,6 @@ afterAll(async (): Promise<void> => {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each([
   ["apps/docs/index.mdx", false],
   ["apps/site/app/page.tsx", false],
@@ -154,7 +153,7 @@ test.each([
     const output = JSON.parse(result.stdout.toString());
     // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const taskNames = output.data.affectedTasks.items.map(
-      (task: { fullName: string }): string => task.fullName
+      (task: { readonly fullName: string }): string => task.fullName
     );
     // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(taskNames.includes("@chat-js/cli#test:scaffold")).toBe(affected);
@@ -173,7 +172,7 @@ test.each([
     const plannedTasks = new Set(
       // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       JSON.parse(execution.stdout.toString()).tasks.map(
-        (task: { taskId: string }): string => task.taskId
+        (task: { readonly taskId: string }): string => task.taskId
       )
     );
     expect(plannedTasks.has("@chat-js/cli#test:scaffold")).toBe(affected);
@@ -193,7 +192,6 @@ test.each([
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */

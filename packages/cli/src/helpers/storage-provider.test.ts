@@ -31,7 +31,6 @@ import {
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("storage registry integration", () => {
   it("resolves every built-in provider ID to its published item name", () => {
     for (const item of builtInStorage) {
@@ -51,7 +50,8 @@ describe("storage registry integration", () => {
     expect(
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from getStorageEnvironmentRequirements(...)[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       getStorageEnvironmentRequirements("vercel-blob")[0]?.options.map(
-        (option) => option.map((provider) => provider.key)
+        (option: readonly { readonly key: string }[]) =>
+          option.map((provider: { readonly key: string }) => provider.key)
       )
     ).toEqual([
       ["BLOB_READ_WRITE_TOKEN"],
@@ -130,7 +130,6 @@ describe("storage registry integration", () => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

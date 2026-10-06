@@ -21,7 +21,6 @@ import {
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 it("uses external defaults and every environment group with --yes", async () => {
   const definition = externalGatewayFixture().root.meta.chatjs;
   definition.envRequirements = [
@@ -51,7 +50,7 @@ it("uses external defaults and every environment group with --yes", async () => 
     ...input,
     gatewayRequirements: definition.envRequirements,
   });
-  expect(entries.map((entry) => entry.vars)).toEqual(
+  expect(entries.map((entry: { readonly vars: string }) => entry.vars)).toEqual(
     // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
     expect.arrayContaining(["FIRST", "SECOND", "ALTERNATE"])
   );
@@ -62,7 +61,6 @@ it("uses external defaults and every environment group with --yes", async () => 
   ).not.toThrow();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
 it("rejects a default for media the gateway cannot support", () => {

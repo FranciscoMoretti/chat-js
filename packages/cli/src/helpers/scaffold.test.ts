@@ -686,7 +686,6 @@ describe("scaffoldFromGit", (): void => {
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("scaffoldElectron", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
@@ -779,8 +778,11 @@ describe("scaffoldElectron", (): void => {
         target: ts.ScriptTarget.ES2022,
       },
     });
-    const commands: { args: string[]; command: string; nodeEnv?: string }[] =
-      [];
+    const commands: {
+      args: readonly string[];
+      command: string;
+      nodeEnv?: string;
+    }[] = [];
     const configModule: {
       default?: { hooks: Record<string, () => Promise<void>> };
     } = {};
@@ -793,8 +795,8 @@ describe("scaffoldElectron", (): void => {
           return {
             spawnSync: (
               command: string,
-              args: string[],
-              options: { env: NodeJS.ProcessEnv }
+              args: readonly string[],
+              options: { readonly env: Readonly<NodeJS.ProcessEnv> }
             ) => {
               commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
               return { status: 0 };
@@ -938,7 +940,6 @@ describe("scaffoldElectron", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */

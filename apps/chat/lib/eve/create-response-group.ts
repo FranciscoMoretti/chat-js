@@ -24,8 +24,7 @@ const recoveryKey = (ownerId: string, groupId: string): string =>
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): readResponseGroupDraft uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): readResponseGroupDraft intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable no-undefined -- no-undefined (#519): readResponseGroupDraft uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const readResponseGroupDraft = (
   storage: StorageAccess,
   ownerId: string,
@@ -33,12 +32,12 @@ const readResponseGroupDraft = (
 ): z.output<typeof eveResponseGroupInput> | undefined => {
   const saved = storage.getItem(recoveryKey(ownerId, groupId));
 
-  if (saved) {
+  if (saved !== null && saved !== "") {
     return eveResponseGroupInput.parse(JSON.parse(saved));
   }
   return undefined;
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable max-params --max-params (#511): retainResponseGroupDraft keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 /**
