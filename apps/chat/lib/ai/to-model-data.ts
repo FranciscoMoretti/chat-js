@@ -2,9 +2,34 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import type { ModelData } from "./model-data";
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (toModelData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ModelData retains the exact mutable `tags` and `pricing` objects from the gateway record; the output contract exposes both aliases as writable, so a deep-readonly input would either stop type-checking or require cloning and changing identity.
-export const toModelData = (model: AiGatewayModel): ModelData => {
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ReadonlyAiGatewayModel, toModelData); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+type ReadonlyAiGatewayPricing = Readonly<
+  Omit<
+    AiGatewayModel["pricing"],
+    "input_cache_read_tiers" | "input_tiers" | "output_tiers"
+  >
+> & {
+  readonly input_cache_read_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_cache_read_tiers"]>[number]
+  >[];
+  readonly input_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["input_tiers"]>[number]
+  >[];
+  readonly output_tiers?: readonly Readonly<
+    NonNullable<AiGatewayModel["pricing"]["output_tiers"]>[number]
+  >[];
+};
+
+export type ReadonlyAiGatewayModel = Readonly<
+  Omit<AiGatewayModel, "pricing" | "tags"> & {
+    readonly pricing: ReadonlyAiGatewayPricing;
+    readonly tags?: readonly string[];
+  }
+>;
+
+export const toModelData = (
+  model: Readonly<ReadonlyAiGatewayModel>
+): ModelData => {
   const tags = model.tags ?? [];
   // A missing positive tag does not establish that a language model rejects tools.
   // oxlint-disable-next-line no-undefined, no-ternary -- Missing tool-use metadata means unknown support; ModelData distinguishes this from false for nonlanguage models.; no-ternary: Keep toolCall as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -39,4 +64,4 @@ export const toModelData = (model: AiGatewayModel): ModelData => {
     type: model.type,
   };
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable import/no-named-export */

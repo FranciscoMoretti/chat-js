@@ -915,9 +915,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c96589b057621b03f3b1831d7b089ffb42976c269fa5283c2b90715ff72711e5",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts after verified bun demo:sync mapping and byte-identical SHA-256 4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts",
+        "canonicalSourceSha256": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
+        "mirrorSourceSha256": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
+        "campaignFingerprint": "c96589b057621b03f3b1831d7b089ffb42976c269fa5283c2b90715ff72711e5"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/agent/tools/installed.ts",
@@ -935,9 +942,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "unresolved",
+      "evidence": "Inherited from packages/registry/src/features/mcp/agent/tools/mcp.ts after verified bun demo:sync mapping and byte-identical SHA-256 a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/features/mcp/agent/tools/mcp.ts",
+        "canonicalSourceSha256": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+        "mirrorSourceSha256": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+        "campaignFingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/app/(auth)/device-login/page.tsx",
@@ -5895,10 +5909,11 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d83d9d74ea813c8d0581ed699ac1dcce23677f63562282d8f9821e72e9150549",
-      "status": "unresolved",
-      "evidence": "ReadonlyNativeSurface causes TS2322 because ModelData exposes the original mutable tags/pricing aliases. Check contained output/API widening before final disposition.",
+      "status": "fixed",
+      "evidence": "Finite readonly pricing/tag input preserves the public gateway tag type; native assignability and app type checks pass.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/ai/tool-context.ts",
@@ -8197,10 +8212,11 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "5cfe0eadca05422aba4e61981a572de5050abc240f564032f943365fa871c045",
-      "status": "unresolved",
-      "evidence": "Readonly candidate conflicts with mutable ModelData tags/pricing aliases at the actual return consumer. Check contained alias migration.",
+      "status": "fixed",
+      "evidence": "Selection consumes readonly model inputs; actual callers and return contracts type-check.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/model-selection.ts",
@@ -8208,10 +8224,11 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "db162856692e6cff7f45f8fc72572a082932dfd6c1ad2cba64e66b1ff3527567",
-      "status": "unresolved",
-      "evidence": "Readonly candidate conflicts with mutable EveModelDefinition/ModelData aliases. Check contained alias migration.",
+      "status": "fixed",
+      "evidence": "Selection callback consumes readonly model inputs; actual callers and return contracts type-check.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/optimistic-metadata.ts",
@@ -8632,10 +8649,11 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "b603ff70a0332de0e1d93aa0b14cda9f2f7c8f3a4677e9a1acd85a107475fce9",
-      "status": "unresolved",
-      "evidence": "Mutable receipt updates alias remains unresolved; Sol’s follow-up protocol widening is pending.",
+      "status": "fixed",
+      "evidence": "Receipt updates use readonly input views; output shape and runtime array identity are unchanged; app types and maintained receipt tests pass.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/tool-result.ts",
@@ -8643,10 +8661,11 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "0673d7c2c89ee5d94c297b7ec5496eab7e1851b67a275bee9372aba31f3fbaaf",
-      "status": "unresolved",
-      "evidence": "Mutable receipt updates alias remains unresolved; Sol’s follow-up protocol widening is pending.",
+      "status": "fixed",
+      "evidence": "Receipt updates use readonly input views; output shape and runtime array identity are unchanged; app types and maintained receipt tests pass.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/tool-selection.test.ts",
@@ -8746,10 +8765,11 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "bcf2cd23db087584feebc034e23a08eaf0f21d48c468e17314178a04e4762665",
-      "status": "unresolved",
-      "evidence": "ToolResult preserves the exact mutable updates array reference; receipt protocol migration is a possible next step.",
+      "status": "fixed",
+      "evidence": "Tool usage accepts readonly receipt updates; existing output aliases remain unchanged and app consumers type-check.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/tool-usage.ts",
@@ -8757,10 +8777,11 @@
       "directive": "oxlint-disable-next-line",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f4b6dfc5b070fa27d6752710e3bb5bd64bb5af7b370e64f78ed7f461ef1e35fb",
-      "status": "unresolved",
-      "evidence": "Published progress receipts preserve the exact mutable updates reference; receipt protocol migration is a possible next step.",
+      "status": "fixed",
+      "evidence": "Tool usage publishes readonly receipt updates without copying; existing receipt aliases remain unchanged.",
       "provenance": "unknown",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/lib/eve/tool-usage.ts",
@@ -11525,9 +11546,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e0c7f1f345ae0229b727eb52640c101248fa091967076433ae7435086bf61898",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/deep-research/workflow.ts after verified bun demo:sync mapping and byte-identical SHA-256 8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/deep-research/workflow.ts",
+        "canonicalSourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+        "mirrorSourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+        "campaignFingerprint": "e0c7f1f345ae0229b727eb52640c101248fa091967076433ae7435086bf61898"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/tools/chatjs/deep-research/workflow.ts",
@@ -11535,9 +11563,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "fbad645d17b28281796b8e2cd30487beb2fb33e70343f14d6855debc04d878cd",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "justified",
+      "evidence": "Inherited from packages/registry/src/tools/deep-research/workflow.ts after verified bun demo:sync mapping and byte-identical SHA-256 8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/deep-research/workflow.ts",
+        "canonicalSourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+        "mirrorSourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+        "campaignFingerprint": "fbad645d17b28281796b8e2cd30487beb2fb33e70343f14d6855debc04d878cd"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/tools/chatjs/generate-image/renderer.tsx",
@@ -11915,9 +11950,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/vercel-code-execution/tool.ts after verified bun demo:sync mapping and byte-identical SHA-256 7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/vercel-code-execution/tool.ts",
+        "canonicalSourceSha256": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
+        "mirrorSourceSha256": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
+        "campaignFingerprint": "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/tools/chatjs/word-count/renderer.tsx",
@@ -12055,9 +12097,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "9f0db90ad2e9199dd1bc0caf7b1ed2083886e74a403cd436fd9a1503afdafe9b",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+        "canonicalSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "mirrorSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "campaignFingerprint": "9f0db90ad2e9199dd1bc0caf7b1ed2083886e74a403cd436fd9a1503afdafe9b"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/trpc/routers/mcp.router.ts",
@@ -12065,9 +12114,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2130323a7fb3f038efa5d59985f4a3334f000efdfa4e2d1a9ffb92e1f2543efe",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+        "canonicalSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "mirrorSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "campaignFingerprint": "2130323a7fb3f038efa5d59985f4a3334f000efdfa4e2d1a9ffb92e1f2543efe"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/trpc/routers/mcp.router.ts",
@@ -12075,9 +12131,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "11786c8b9daccea35e032fab4ca4990fe0584f16cc59e473899d493ecb2f095b",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+        "canonicalSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "mirrorSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "campaignFingerprint": "11786c8b9daccea35e032fab4ca4990fe0584f16cc59e473899d493ecb2f095b"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/trpc/routers/mcp.router.ts",
@@ -12085,9 +12148,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "unresolved",
+      "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+        "canonicalSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "mirrorSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+        "campaignFingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167"
+      },
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "apps/chat/trpc/routers/project.router.ts",
@@ -12885,9 +12955,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "unresolved",
+      "evidence": "Original broad scope is narrowed to native EVE context/result boundaries; four remaining site scopes still need independent assignability review.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/features/mcp/app/(chat)/settings/connectors/[connectorId]/page.tsx",
@@ -13195,9 +13266,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "9f0db90ad2e9199dd1bc0caf7b1ed2083886e74a403cd436fd9a1503afdafe9b",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Validation helper consumes a readonly input record; Registry type checks pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
@@ -13205,9 +13277,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2130323a7fb3f038efa5d59985f4a3334f000efdfa4e2d1a9ffb92e1f2543efe",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Permission helper consumes a readonly input record; Registry type checks pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
@@ -13215,9 +13288,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "11786c8b9daccea35e032fab4ca4990fe0584f16cc59e473899d493ecb2f095b",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Public connector projection accepts a finite readonly row view and returns a fresh projection; Registry and app types pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
@@ -13225,9 +13299,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "unresolved",
+      "evidence": "Remaining router scope has not been independently resolved; retain it as open.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/gateways/vercel/gateway.ts",
@@ -13368,10 +13443,11 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "41d607919dc5082191058e275d658d0a2b45194dd0d8f410a84a5f4f5c4cd23f",
-      "status": "unresolved",
-      "evidence": "Native EVE contextual CodeExecutor boundary remains; confirm whether a finite consumed view is assignable at actual registration callsite.",
+      "status": "fixed",
+      "evidence": "Tool now uses a readonly CodeExecutionContext view; actual EVE registration and app types pass.",
       "provenance": "canonical-source",
-      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73"
+      "reviewedAtCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts",
@@ -13379,9 +13455,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c96589b057621b03f3b1831d7b089ffb42976c269fa5283c2b90715ff72711e5",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Provider entry callback uses a finite readonly tuple reader; Registry types and native lint pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/tools/deep-research/progress-panel.tsx",
@@ -13469,9 +13546,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e0c7f1f345ae0229b727eb52640c101248fa091967076433ae7435086bf61898",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Workflow input uses a readonly consumed view; Registry and app type checks pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/tools/deep-research/workflow.ts",
@@ -13479,9 +13557,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "fbad645d17b28281796b8e2cd30487beb2fb33e70343f14d6855debc04d878cd",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "justified",
+      "evidence": "Output-schema adapter retains native z.ZodType because z.toJSONSchema requires mutable Zod internals; actual type-aware lint and Registry checks confirm the boundary.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/tools/firecrawl-search/renderer.tsx",
@@ -13801,9 +13880,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Code executor context uses a readonly native-surface view; Registry and app types pass.",
+      "provenance": "canonical-source",
+      "reviewedAtSourceHead": "3a138d54f"
     },
     {
       "path": "packages/registry/src/tools/word-count/renderer.tsx",
@@ -14598,28 +14678,127 @@
   ],
   "latestReview": {
     "sourceCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
-    "originalMembershipsReviewed": 26,
+    "originalMembershipsReviewed": 35,
     "statusCounts": {
-      "fixed": 13,
-      "justified": 2,
-      "unresolved": 11
+      "fixed": 27,
+      "justified": 3,
+      "unresolved": 5
     },
-    "note": "Batch checkpoint dispositions are fingerprinted to the immutable campaign snapshot. Fixed records remain in the original denominator as historical dispositions; unresolved scopes stay open.",
+    "note": "Original denominator remains pinned to immutable d7a93408 snapshot. Direct source reviews and inherited verified generated-mirror dispositions are separate; mirror inheritance is not an independent audit.",
     "currentSourceHashes": {
-      "apps/chat/lib/ai/to-model-data.ts": "1ef54510f4013af4d07202de010e069264bd24f550d67a5d17ce6f508a30aba1",
+      "apps/chat/lib/ai/to-model-data.ts": "0465aa3bd25deae2920db03dc91b7becc8daa315b8c98b3d4acff422845006a7",
       "apps/chat/lib/ai/tool-context.ts": "cb9b98f21726ece37244855956aee41ce4f69ffa00c135bcb167bd765937a7c1",
-      "apps/chat/lib/eve/model-selection.ts": "5fb1a4811706a84446257bf872f1fb063ac9cab9ba920d108cbc9c03b3747dc9",
+      "apps/chat/lib/eve/model-selection.ts": "292677122a8dde2277000423438d9c2f5f7b55bbf2182e4fa56714e6bcc61c2c",
       "apps/chat/lib/eve/research-progress.ts": "c98172d5beeb6fc22453ade77d40bbddf825acaeb1370b7e5325c5253c1f0d15",
       "apps/chat/lib/eve/tool-cost.ts": "09ca81c53092b02537b9a6a862187288cea7298d54ab939671d2b0d6b8a7a732",
-      "apps/chat/lib/eve/tool-result.ts": "0a2fab2d1c0a6f8347164e34c892fc1e08dfa93816bb68434da00d64bebccef5",
-      "apps/chat/lib/eve/tool-usage.ts": "bf0dfc7eaa7478b19cb23a8414ea6a0c17b16f41756b91ac77571d5955fa1796",
+      "apps/chat/lib/eve/tool-result.ts": "3e13a2e95a3f5e0802c69259ab07d26c2522c20c9bff48a5cc3a81b8e299757e",
+      "apps/chat/lib/eve/tool-usage.ts": "4bb0d5dd9d0008483627498ae2a23fbbfb9fc1a7e9840b25bc7e7c1baf0e6379",
       "apps/chat/lib/file-storage.ts": "63e1fe109f69f02e44274adf96faf146a5e59e8e496f61e36ac99b4863ddca5a",
       "apps/chat/lib/utils/download-assets.ts": "c44ff49477ee2dfbd77a5d62e6c5560cb13772407f28ca058be9f9be27ef4432",
       "packages/registry/src/tools/_shared/code-execution/types.ts": "1f58f3f9be99607a8484d7d5fe7558fc6ce4065e0a675f7372ae298a9e933a60",
       "packages/registry/src/tools/daytona-code-execution/execution.ts": "005b29c05e22c3302db50d3982aa2da3dbf0f0733ce9fa069ca26dfdf902a5f5",
       "packages/registry/src/tools/daytona-code-execution/sandbox.ts": "1d433eac2f9ab8a4f98b34fa93d37ab074a422fb9c2eac71e8d44c30c08d343a",
-      "packages/registry/src/tools/daytona-code-execution/tool.ts": "ec73df2f7bb10fcf59adcef4f017a840bb6e3b81a3620cda788a8e7a3ed168a5",
-      "packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts": "0652b48d96a124be264733d3c20a514e00489999ed5b20ab5c9298d68600cf2d"
+      "packages/registry/src/tools/daytona-code-execution/tool.ts": "157eade3918ff90816527218d353691a08424042c29afc55cf1773672af992b1",
+      "packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts": "0652b48d96a124be264733d3c20a514e00489999ed5b20ab5c9298d68600cf2d",
+      "packages/registry/src/tools/deep-research/workflow.ts": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+      "packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
+      "packages/registry/src/features/mcp/agent/tools/mcp.ts": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+      "packages/registry/src/tools/vercel-code-execution/tool.ts": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
+      "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+      "apps/chat/tools/chatjs/deep-research/workflow.ts": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
+      "apps/chat/agent/tools/mcp.ts": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+      "apps/chat/agent/subagents/researcher/tools/webSearch.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
+      "apps/chat/tools/chatjs/vercel-code-execution/tool.ts": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
+      "apps/chat/trpc/routers/mcp.router.ts": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
+    },
+    "directReview": {
+      "sourceHead": "3a138d54f",
+      "originalMembershipsReviewed": 35,
+      "statusCounts": {
+        "fixed": 27,
+        "justified": 3,
+        "unresolved": 5
+      }
+    },
+    "inheritedMirrorReview": {
+      "membershipCount": 9,
+      "statusCounts": {
+        "fixed": 6,
+        "justified": 1,
+        "unresolved": 2
+      },
+      "evidence": "bun demo:sync output plus byte-identical canonical/mirror SHA-256 for each mapped file",
+      "records": [
+        {
+          "canonicalPath": "packages/registry/src/tools/deep-research/workflow.ts",
+          "mirrorPath": "apps/chat/tools/chatjs/deep-research/workflow.ts",
+          "fingerprint": "e0c7f1f345ae0229b727eb52640c101248fa091967076433ae7435086bf61898",
+          "status": "fixed",
+          "sourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41"
+        },
+        {
+          "canonicalPath": "packages/registry/src/tools/deep-research/workflow.ts",
+          "mirrorPath": "apps/chat/tools/chatjs/deep-research/workflow.ts",
+          "fingerprint": "fbad645d17b28281796b8e2cd30487beb2fb33e70343f14d6855debc04d878cd",
+          "status": "justified",
+          "sourceSha256": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41"
+        },
+        {
+          "canonicalPath": "packages/registry/src/features/mcp/agent/tools/mcp.ts",
+          "mirrorPath": "apps/chat/agent/tools/mcp.ts",
+          "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
+          "status": "unresolved",
+          "sourceSha256": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea"
+        },
+        {
+          "canonicalPath": "packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts",
+          "mirrorPath": "apps/chat/agent/subagents/researcher/tools/webSearch.ts",
+          "fingerprint": "c96589b057621b03f3b1831d7b089ffb42976c269fa5283c2b90715ff72711e5",
+          "status": "fixed",
+          "sourceSha256": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e"
+        },
+        {
+          "canonicalPath": "packages/registry/src/tools/vercel-code-execution/tool.ts",
+          "mirrorPath": "apps/chat/tools/chatjs/vercel-code-execution/tool.ts",
+          "fingerprint": "f5d6385be4f4190d78134ee73eb4cedd5bfb5aa771a4c0533546bb87e5711372",
+          "status": "fixed",
+          "sourceSha256": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7"
+        },
+        {
+          "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+          "mirrorPath": "apps/chat/trpc/routers/mcp.router.ts",
+          "fingerprint": "9f0db90ad2e9199dd1bc0caf7b1ed2083886e74a403cd436fd9a1503afdafe9b",
+          "status": "fixed",
+          "sourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
+        },
+        {
+          "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+          "mirrorPath": "apps/chat/trpc/routers/mcp.router.ts",
+          "fingerprint": "2130323a7fb3f038efa5d59985f4a3334f000efdfa4e2d1a9ffb92e1f2543efe",
+          "status": "fixed",
+          "sourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
+        },
+        {
+          "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+          "mirrorPath": "apps/chat/trpc/routers/mcp.router.ts",
+          "fingerprint": "11786c8b9daccea35e032fab4ca4990fe0584f16cc59e473899d493ecb2f095b",
+          "status": "fixed",
+          "sourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
+        },
+        {
+          "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
+          "mirrorPath": "apps/chat/trpc/routers/mcp.router.ts",
+          "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
+          "status": "unresolved",
+          "sourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
+        }
+      ]
+    },
+    "combinedStatusCounts": {
+      "fixed": 33,
+      "justified": 4,
+      "unresolved": 7,
+      "unreviewed": 1329
     }
   }
 }

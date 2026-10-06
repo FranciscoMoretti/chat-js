@@ -72,8 +72,7 @@ type ToolUsage = ReturnType<typeof createToolUsage>;
 type ToolProgressOptions<Output extends ToolOutput> = ReadonlyNativeSurface<{
   usage: ToolUsage;
   abortSignal: AbortSignal;
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published update arrays retain exact references in ToolResult and stream receipts; readonly output would require cloning or changing the public result contract.
-  publish: (output: Output, updates?: ToolOutput[]) => void;
+  publish: (output: Output, updates?: readonly ToolOutput[]) => void;
 }>;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeWithToolUsage's awaited sequencing and rejected-Promise behavior. */
@@ -105,7 +104,7 @@ const executeWithToolUsage = async <Output extends ToolOutput>(
 
 /** Streaming alone needs a queue; accounting is shared.
  * @param {ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>} context Native cancellation capability checked before execution and while settling usage.
- * @param {(options: ReadonlyNativeSurface<{usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: ToolOutput[]) => void}>) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
+ * @param {(options: ReadonlyNativeSurface<{usage: ToolUsage; abortSignal: AbortSignal; publish: (output: Output, updates?: readonly ToolOutput[]) => void}>) => Promise<Output>} execute Executor that publishes exact output/update references and resolves the final result under the provided usage/cancellation session.
  * @yields {ToolResult<Output>} Progress snapshots followed by the final settled usage receipt.
  */
 const executeWithToolProgress = async function* executeWithToolProgress<
@@ -121,7 +120,7 @@ const executeWithToolProgress = async function* executeWithToolProgress<
     cancellation.signal,
   ]);
   // oxlint-disable-next-line init-declarations -- Updates are absent until the executor publishes them; explicit undefined initialization conflicts with no-undefined and adds an unnecessary write.
-  let updates: ToolOutput[] | undefined;
+  let updates: readonly ToolOutput[] | undefined;
   let cancelled = false;
   const stream = new ReadableStream<ToolResult<Output>>({
     cancel(): void {
@@ -131,8 +130,10 @@ const executeWithToolProgress = async function* executeWithToolProgress<
     async start(
       controller: Readonly<ReadableStreamDefaultController<ToolResult<Output>>>
     ): Promise<void> {
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Published output/update references pass unchanged into mutable native ToolResult receipts.
-      const publish = (output: Output, nextUpdates?: ToolOutput[]): void => {
+      const publish = (
+        output: Output,
+        nextUpdates?: readonly ToolOutput[]
+      ): void => {
         updates = nextUpdates;
         if (!cancelled) {
           controller.enqueue(createToolResult(output, undefined, updates)); // oxlint-disable-line no-undefined -- Progress has no settled cost receipt yet; undefined preserves that existing absence contract.

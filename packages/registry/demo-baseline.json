@@ -8,9 +8,9 @@
     "agent/subagents/researchWriter/hooks/billing.ts": "fd739ac31c0a6c0329c7e007c88761cbaf6a4c8ad34f5e0a6c7f4ce66792dd8d",
     "agent/subagents/researcher/agent.ts": "51b590cf2d4a121b3ef3c9239a58959858651d46bd951059b70225af17bac3dd",
     "agent/subagents/researcher/hooks/billing.ts": "fd739ac31c0a6c0329c7e007c88761cbaf6a4c8ad34f5e0a6c7f4ce66792dd8d",
-    "agent/subagents/researcher/tools/webSearch.ts": "fb87699606f408942ea2bbb8e459778ad94bacd39fdfcb0045e85fcb0ca77b36",
+    "agent/subagents/researcher/tools/webSearch.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
     "agent/tools/deepResearch.ts": "c9f08a60665353458d19da96899eabc0b9975e0512dbed65112a2fc4fbf99027",
-    "agent/tools/mcp.ts": "69ceb9dd1162af158343f4ead3d05ca61f95a4f45ea1942e765d015c483bcd64",
+    "agent/tools/mcp.ts": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
     "app/(chat)/api/files/upload/route.ts": "792f61b2dc073a7f455cd5fae6bf5251f68f8c6a93bb0bb234d45881584422d5",
     "app/(chat)/settings/connectors/[connectorId]/page.tsx": "c5e1992a6fd8fce9613b2ec4ea9ad97acd4dba6b2426b501ca28a0a54d5f2402",
     "app/(chat)/settings/connectors/page.tsx": "10135efa207dbf64beb6635aa789a6c368a2447de841509163e39e098eeb6b61",
@@ -87,7 +87,7 @@
     "tools/chatjs/deep-research/tasks.tsx": "b5ae1642da06e7d77bd3e06defbb6a55cc59bf261f262717118f5c07e28b9fb5",
     "tools/chatjs/deep-research/tool.ts": "c5c36bf03d5e6a80756afe5bd5334f71122a931c966eb6348f241a56b84dd6ff",
     "tools/chatjs/deep-research/update-title.tsx": "4749e2c7b4a976d408ec5209a34b78803be9517c96a59bc751454fe1b582c986",
-    "tools/chatjs/deep-research/workflow.ts": "29b2f30a35401f418dffd1d5e0d88a298adeff5363e39b016a230805f44d5a5a",
+    "tools/chatjs/deep-research/workflow.ts": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
     "tools/chatjs/delete-document/availability.ts": "ee3926655802f6e826c9810effbe746dcc574b4c537fdd05d4160259dadf5b95",
     "tools/chatjs/delete-document/chatjs.json": "3cf3469c7ec3a149c281e291fa7891000df3f73f927533b67658d6c47c6aca87",
     "tools/chatjs/delete-document/execute.ts": "94748b021a58de8e418d519409492f32deb9eadf5feb0b49cf03ac79a8dbfd5e",
@@ -152,13 +152,13 @@
     "tools/chatjs/vercel-code-execution/execution-sandbox.ts": "0652b48d96a124be264733d3c20a514e00489999ed5b20ab5c9298d68600cf2d",
     "tools/chatjs/vercel-code-execution/renderer.tsx": "dd7d0c4f0f536fcdc0ad45299cd519c508c446ff992643147fd358703f5894f5",
     "tools/chatjs/vercel-code-execution/schemas.ts": "2c5ad4b411078198dfbc3ee993f00068214f7156b3f9029d27c1b6d81fc5c5bb",
-    "tools/chatjs/vercel-code-execution/tool.ts": "61669504216ebd7ade8f0f5066a4036487390112aa5a5627e7c3d0974f4d6077",
+    "tools/chatjs/vercel-code-execution/tool.ts": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
     "tools/chatjs/word-count/chatjs.json": "19da65e93cd8b34684894c6d4a2f471b9ce9c4fe301a9917b039ef9e8342a977",
     "tools/chatjs/word-count/renderer.tsx": "7817868dc6914722ba0c5995a070a2e485c7a9544c81233eb5dbbdb120b85e61",
     "tools/chatjs/word-count/schemas.ts": "d030403cc9db3ebf8c90285fb356bbdea4c12d43ab277b294f4cc7bea2f8fbd5",
     "tools/chatjs/word-count/tool.ts": "9ec8969217e507e0f55d76553734d13d703f1af12e25937eb1a81775a71940a0",
     "tools/chatjs/workflow-types.ts": "052c142b3d3baf58460069ba44547c5fa742b32293991305afe8c14d99206bdd",
-    "trpc/routers/mcp.router.ts": "75eb33dfaab76d82811219b569e043a84e4611b35c510fdc156ef336e4f0737d"
+    "trpc/routers/mcp.router.ts": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036"
   },
   "version": 1
 }

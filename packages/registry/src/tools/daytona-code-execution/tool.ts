@@ -6,7 +6,10 @@ import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { CodeExecutor } from "@/lib/eve/code-executor";
+import type {
+  CodeExecutionContext,
+  CodeExecutor,
+} from "@/lib/eve/code-executor";
 /* oxlint-enable sort-imports */
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
@@ -15,6 +18,7 @@ import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 
 import { executeInDaytona } from "./execution";
@@ -41,8 +45,10 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- CodeExecutor receives the native EVE ToolContext shape; executeWithToolUsage consumes that same mutable boundary.
-const executeCode: CodeExecutor = async (input, context) =>
+const executeCode: CodeExecutor = async (
+  input,
+  context: ReadonlyNativeSurface<CodeExecutionContext>
+) =>
   await executeWithToolUsage(context, async (usage) => {
     usage.addCostUsd(NO_COST_USD);
     const signal = AbortSignal.any([

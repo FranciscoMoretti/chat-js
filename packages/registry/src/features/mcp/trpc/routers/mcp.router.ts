@@ -72,7 +72,6 @@ const assertMcpReady = (): void => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAndGenerateNameId's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Validates and generates a nameId from a connector name.
  * Throws TRPCError if the name is invalid or the namespace already exists.
@@ -82,9 +81,9 @@ const validateAndGenerateNameId = async ({
   userId,
   excludeId,
 }: {
-  name: string;
-  userId: string | null;
-  excludeId?: string;
+  readonly name: string;
+  readonly userId: string | null;
+  readonly excludeId?: string;
 }): Promise<string> => {
   assertMcpReady();
   const result = generateMcpNameId(name);
@@ -115,7 +114,6 @@ const validateAndGenerateNameId = async ({
   return result.nameId;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
 
@@ -125,7 +123,6 @@ type Permission = "own" | "own-or-global";
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Fetches connector and validates user permission.
  * - "own": user must own the connector (userId === ctx.user.id)
@@ -136,9 +133,9 @@ const getConnectorWithPermission = async ({
   userId,
   permission,
 }: {
-  id: string;
-  userId: string;
-  permission: Permission;
+  readonly id: string;
+  readonly userId: string;
+  readonly permission: Permission;
 }) => {
   const connector = await getMcpConnectorById({ id });
   if (!connector) {
@@ -161,7 +158,6 @@ const getConnectorWithPermission = async ({
   return connector;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable jsdoc/require-returns */
@@ -175,12 +171,29 @@ const displayConnectorUrl = (value: string): string => {
   return url.href;
 };
 
+type McpConnectorRow = NonNullable<
+  Awaited<ReturnType<typeof getMcpConnectorById>>
+>;
+type PublicConnectorInput = Readonly<
+  Pick<
+    McpConnectorRow,
+    | "enabled"
+    | "id"
+    | "name"
+    | "nameId"
+    | "requireApproval"
+    | "type"
+    | "url"
+    | "userId"
+  > & {
+    createdAt: Readonly<McpConnectorRow["createdAt"]>;
+    updatedAt: Readonly<McpConnectorRow["updatedAt"]>;
+  }
+>;
+
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const publicConnector = (
-  connector: NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>
-) => ({
+const publicConnector = (connector: PublicConnectorInput) => ({
   createdAt: connector.createdAt,
   enabled: connector.enabled,
   id: connector.id,
@@ -196,7 +209,6 @@ const publicConnector = (
 });
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mcpRouter); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpRouter's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 

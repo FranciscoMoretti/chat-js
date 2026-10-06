@@ -1,5 +1,7 @@
+import type { DynamicResolveContext, ToolDefinition } from "eve/tools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires the separate type declaration to precede the value import. */
 import { defineDynamic, defineTool } from "eve/tools";
-import type { ToolDefinition } from "eve/tools";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { parse, stringify } from "superjson";
 /* oxlint-enable sort-imports */
@@ -21,11 +23,14 @@ const log = createModuleLogger("eve.mcp-registration");
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 export default defineDynamic({
   events: {
-    "step.started": async (_event, context) => {
+    "step.started": async (
+      _event,
+      /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE defines this callback's DynamicResolveContext, including its model-message history and optional native AbortSignal; retain the framework context shape for defineDynamic assignability. */
+      context: DynamicResolveContext
+    ) => {
       if (eveTurnGuest.get() || eveTurnTool.get()) {
         return {};
       }
@@ -59,6 +64,7 @@ export default defineDynamic({
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing description own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...description,
           approval: {
+            /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this policy as ApprovalContext; retain that exact approval input/session contract while forwarding its fields unchanged to the application adapter. */
             request: (approvalContext) =>
               requestEveMcpApproval(
                 connectorId,
@@ -66,7 +72,15 @@ export default defineDynamic({
                 approvalContext.toolInput,
                 approvalContext
               ),
-            response: ({ responder, session }) => {
+            response: ({
+              responder,
+              session,
+            }: {
+              readonly responder: Readonly<{ principalId: string }>;
+              readonly session: Readonly<{
+                initiator: Readonly<{ principalId: string }> | null;
+              }>;
+            }) => {
               // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
               if (responder.principalId === session.initiator?.principalId) {
                 return { status: "allowed" };
@@ -77,7 +91,11 @@ export default defineDynamic({
               };
             },
           },
-          execute: (input, toolContext) =>
+          execute: (
+            input: Readonly<Record<string, unknown>>,
+            /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this executor with its native ToolContext; the callback forwards the same session, receipt and abort signal unchanged to the application adapter. */
+            toolContext
+          ) =>
             executeEveMcpTool(
               connectorId,
               remoteName,
@@ -85,6 +103,7 @@ export default defineDynamic({
               toolContext,
               parse(messages)
             ),
+          /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this projection with the exact MCP execution result; retain the inferred result contract and model-output alias. */
           toModelOutput: (output) => output.modelOutput,
         });
       }
@@ -94,7 +113,6 @@ export default defineDynamic({
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

@@ -282,7 +282,7 @@ it("publishes completed searches when a researcher fails without masking the fai
     .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
     .mockRejectedValueOnce(error);
   mocks.searches.mockResolvedValue([search]);
-  const outputs: { updates?: unknown[] }[] = [];
+  const outputs: { updates?: readonly unknown[] }[] = [];
   const consume = async (): Promise<void> => {
     for await (const output of executeEveResearch({}, context)) {
       outputs.push(output);

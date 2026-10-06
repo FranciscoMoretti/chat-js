@@ -3,7 +3,10 @@ import { defineTool } from "eve/tools";
 
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { CodeExecutor } from "@/lib/eve/code-executor";
+import type {
+  CodeExecutionContext,
+  CodeExecutor,
+} from "@/lib/eve/code-executor";
 /* oxlint-enable sort-imports */
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
@@ -12,6 +15,7 @@ import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
@@ -52,10 +56,12 @@ const observeCleanup = async (
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const executeCode: CodeExecutor = ({ code, title, language }, context) =>
+const executeCode: CodeExecutor = (
+  { code, title, language },
+  context: ReadonlyNativeSurface<CodeExecutionContext>
+) =>
   executeWithToolUsage(context, async (usage) => {
     const { abortSignal } = context;
     const sandboxOwnership = eveCodeSandboxOwnership(context);
@@ -136,7 +142,6 @@ const executeCode: CodeExecutor = ({ code, title, language }, context) =>
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */

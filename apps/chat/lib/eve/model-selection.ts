@@ -10,6 +10,7 @@ import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 /* oxlint-enable sort-imports */
 import type { ModelData } from "@/lib/ai/model-data";
+import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
@@ -31,16 +32,15 @@ class EveModelUnavailableError extends Error {
   }
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The selected model is spread into mutable EveModelDefinition; its tags array and pricing object retain their original mutable aliases, and a deep-readonly view fails the return contract or would require cloning. */
 const getEveModelDefinition = (
   requestedId?: string,
-  models = getFallbackModels(config.ai.gateway).map((model) =>
-    toModelData(model)
+  models: readonly ModelData[] = getFallbackModels(config.ai.gateway).map(
+    (model: Readonly<ReadonlyAiGatewayModel>) => toModelData(model)
   )
 ): EveModelDefinition => {
   const id = requestedId ?? config.ai.workflows.chat;
   const model = models.find(
-    (item) =>
+    (item: Readonly<ModelData>) =>
       item.id === id || (item.reasoning && `${item.id}-reasoning` === id)
   );
   if (
@@ -60,7 +60,6 @@ const getEveModelDefinition = (
     reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations --
  * init-declarations (#507): catalog assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -74,8 +73,7 @@ let loading: Promise<ModelData[]> | undefined;
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadEveModelDefinition's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations */
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): The fetched models are passed through toModelData, whose mutable ModelData output retains each model's original tags and pricing objects; a deep-readonly view would break that alias contract or require cloning. */
+/* oxlint-disable no-undefined -- no-undefined (#519): loadEveModelDefinition uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const loadEveModelDefinition = async (
   requestedId?: string
 ): Promise<EveModelDefinition> => {
@@ -83,7 +81,9 @@ const loadEveModelDefinition = async (
     loading ??= (async (): Promise<ModelData[]> => {
       try {
         const models = await getActiveGateway().fetchModels();
-        const converted = models.map((model) => toModelData(model));
+        const converted = models.map(
+          (model: Readonly<ReadonlyAiGatewayModel>) => toModelData(model)
+        );
         catalog = {
           expires: Date.now() + MODEL_CATALOG_TTL_MS,
           models: converted,
@@ -99,7 +99,7 @@ const loadEveModelDefinition = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveModel's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable unicorn/max-nested-calls --
 unicorn/max-nested-calls (#568): resolveEveModel keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */

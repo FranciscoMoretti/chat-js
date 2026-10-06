@@ -3,10 +3,11 @@
 import type { WorkflowToolContext } from "eve/tools";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable sort-imports -- Keep separate type declarations and Oxfmt module ordering; their type/value grouping conflicts with sort-imports. */
 import type { ToolResult } from "@/lib/eve/tool-result";
-/* oxlint-enable sort-imports */
 import { createToolResult } from "@/lib/eve/tool-result";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 /* oxlint-enable sort-imports */
@@ -41,11 +42,17 @@ import {
 
 type ResearchOutput = z.infer<typeof researchOutput>;
 
+type ResearchWorkflowContext = Readonly<
+  Omit<WorkflowToolContext, "abortSignal"> & {
+    abortSignal: ReadonlyNativeSurface<WorkflowToolContext["abortSignal"]>;
+  }
+>;
+
 const structuredMessage = (message: string): string =>
   `${message}\n\nDeliver the requested fields through the final_output tool. Put any Markdown inside its string fields; do not return prose or JSON text instead of calling the tool.`;
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- z.toJSONSchema requires the original mutable Zod internals; a recursively readonly schema is not assignable to the native Zod API. */
 const outputSchema = (schema: z.ZodType) =>
   z.record(z.string(), z.json()).parse(z.toJSONSchema(schema));
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveResearch); the enabled import/no-default-export convention rejects the default-export alternative. */
@@ -59,10 +66,9 @@ const outputSchema = (schema: z.ZodType) =>
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export async function* executeEveResearch(
-  _input: Record<string, never>,
-  context: WorkflowToolContext
+  _input: Readonly<Record<string, never>>,
+  context: ResearchWorkflowContext
 ): AsyncGenerator<ToolResult<ResearchOutput>, void> {
   "use workflow";
   const { config, date, messages, timestamp } = await prepareResearch(context);
@@ -211,7 +217,7 @@ export async function* executeEveResearch(
   const report = researchReport.parse(
     await context.agent("researchWriter", {
       message: structuredMessage(
-        `${finalReportGenerationPrompt({ date, findings: notes.map((note): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
+        `${finalReportGenerationPrompt({ date, findings: notes.map((note: ReadonlyNativeSurface<(typeof notes)[number]>): string => note.findings).join("\n"), research_brief: brief.research_brief })}\n\nWrite the complete Markdown report with title ${JSON.stringify(brief.title)}. Return title and content; the workflow will save the document.`
       ),
       outputSchema: outputSchema(researchReport),
     })
@@ -238,7 +244,6 @@ export async function* executeEveResearch(
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
