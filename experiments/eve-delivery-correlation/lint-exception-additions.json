@@ -1,6 +1,8 @@
 {
   "counts": {
     "[\"experiments/eve-delivery-correlation/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
+    "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"require-await\",\"oxlint-disable-next-line\"]": 1,
+    "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"typescript/require-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"experiments/eve-delivery-correlation/fixture/agent/tools/hold.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": 3,
     "[\"experiments/eve-delivery-correlation/fixture/agent/tools/hold.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable-next-line\"]": 1,
@@ -50,8 +52,14 @@
     "[\"experiments/eve-delivery-correlation/fixture/agent/agent.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
       "3a0dab538b6ce3a4504fac14da339536526f99efd00fca5ff811e9094d0f1904"
     ],
+    "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"require-await\",\"oxlint-disable-next-line\"]": [
+      "44f343870184fa35e46cf497d8e513a0f277efb3ec25765222f87b8dfec27720"
+    ],
+    "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"typescript/require-await\",\"oxlint-disable-next-line\"]": [
+      "44f343870184fa35e46cf497d8e513a0f277efb3ec25765222f87b8dfec27720"
+    ],
     "[\"experiments/eve-delivery-correlation/fixture/agent/channels/eve.ts\",\"import/no-default-export\",\"oxlint-disable-next-line\"]": [
-      "1c62edd80aa9bc368602cef21f79fb69953c6a8fa5150a94e564bcc7e320072a"
+      "9b75b6b33ab238bd53c2ee31325f67ba21f8afc5e143d09c0111a53666fbcb5e"
     ],
     "[\"experiments/eve-delivery-correlation/fixture/agent/tools/hold.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": [
       "c4348c5946dbe32366a28c73ce5b34f3c4f39f98a67afad92e85dea8df3dfe1f",

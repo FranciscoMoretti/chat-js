@@ -4,13 +4,13 @@ Production is unchanged; arbitrary metadata is still required. This is a local u
 
 ## Baseline and reproduction
 
-Exact release: eve **0.71.3**, source **fab8ba1424eddfdedd6a177cac21710258da0e81**, bundled Workflow **5.0.1** (serde **5.0.0**), AI SDK **7.0.106**, Node **24.20.0**, Bun **1.3.11**. Same target as Lane D baseline `858d36fe8`; restart controller copied unchanged from `422e371e3`. No main-only source. Root manifests, lockfile, shared adapters and parent checkout are untouched.
+Exact release: eve **0.71.3**, source **fab8ba1424eddfdedd6a177cac21710258da0e81**, bundled Workflow **5.0.1** (serde **5.0.0**), AI SDK **7.0.106**, Node **24.20.0**, Bun **1.3.11**. Same target as Lane D baseline `858d36fe8`; restart controller copied unchanged from `7a312a544`. No main-only source. Root manifests, lockfile, shared adapters and parent checkout are untouched.
 
 Run from repository root:
 
 ```sh
 bun experiments/eve-delivery-correlation/setup.ts
-# Supply Lane D’s shared harness directory (at commit 422e371e3).
+# Supply Lane D’s shared harness directory (at commit 7a312a544).
 bun experiments/eve-delivery-correlation/setup-shared.ts /Users/fran/.codex/worktrees/e70d/chat-js/tests/eve-retirement-runtime
 bunx --no-install tsc --noEmit -p experiments/eve-delivery-correlation/tsconfig.json
 bunx --no-install oxlint experiments/eve-delivery-correlation
@@ -21,6 +21,8 @@ EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node CORRELATION_PATCHED=1 bun exper
 EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node bun experiments/eve-delivery-correlation/restart.ts
 EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node CORRELATION_PATCHED=1 bun experiments/eve-delivery-correlation/restart.ts
 ```
+
+`setup-shared.ts` validates SHA-256 hashes of both unchanged controller files from D commit `7a312a5448fb88403897217b3998cd0b775ee5c2` before copying them, and records the commit/hashes in the ignored `controller-provenance.json`.
 
 Setup creates separate stock/patched installations and a source checkout under ignored `apps/chat/.eve/lane-c-*`. It verifies the source commit, applies `runtime.patch`, and transpiles only changed runtime modules into the isolated patched package. Production and Lane D dependencies are never patched. The patch is deliberately experimental: this is not the upstream build/type-generation pipeline. Direct dependency versions are pinned; generated isolated Bun lockfiles are retained locally, not a new shared dependency contract.
 
@@ -42,7 +44,9 @@ The eval launcher follows Lane D's mock-model/disposable-local-world approach an
 
 The full worker proof uses real HTTP routes, admission, inbox/Workflow execution, the model/tool harness and durable event replay. Only model responses and the tool barrier are authored test fixtures. HTTP acceptance is not mocked. The proxy crash is an injected exception after the real acceptance response, before the test proxy can write its mapping. The mapping stays empty and dispatch count stays exactly three; there is no resend.
 
-For creation, a **test oracle** privately observes the session ID to inspect native storage after the simulated proxy failure. That does not recover unknown session identity for the application. The separate `restart.ts` proof uses a legitimately known session ID. It injects response loss for one follow-up after real HTTP 202, waits for two completed turns, SIGKILLs the process group, and restarts the same local world with `eve dev --resume`. The entire native event snapshot is identical before and after restart, including creation/follow-up tokens on the experimental runtime. The mapping stays empty and exactly one follow-up dispatch occurs. This proves completed-world restart replay, not crash recovery of a partially committed running step.
+For creation, a **test oracle** privately observes the session ID to inspect native storage after the simulated proxy failure. That does not recover unknown session identity for the application. The separate `restart.ts` proof uses a legitimately known session ID. It injects response loss for one follow-up after real HTTP 202, waits for two completed turns, SIGKILLs the process group, and restarts the same local world with `eve dev --resume`. The corrected controller waits for detached-server state cleanup before restart. The proof also queries a fixture-only HTTP process-identity endpoint before and after, asserts distinct serving-process PIDs, and verifies the old state file is absent after crash. The entire native event snapshot is identical before and after restart, including creation/follow-up tokens on the experimental runtime. The mapping stays empty and exactly one follow-up dispatch occurs. This proves completed-world restart replay, not crash recovery of a partially committed running step.
+
+Corrected-controller rerun on 6 October 2026: stock **84516 → 84771**, experimental **84470 → 84706**; both commands exited 0. These replace the earlier `422e371e3` controller results, which did not rule out reuse of the detached server. Only the two restart proofs and affected isolated types/lint/exception snapshot were rerun for this correction.
 
 The queued non-materialization check holds the first model turn at a file barrier, confirms the queued send has no message receipt, then the launcher stops the disposable worker. It does not prove a durable terminal cancellation disposition or prevent future materialization if the same world is resumed. A reset experiment showed that a queued message can materialize before reset completes; reset is not used as evidence of non-receipt.
 
@@ -55,7 +59,7 @@ The queued non-materialization check holds the first model turn at a file barrie
 - `bun test:types`: passed, all 7 monorepo tasks from Turbo cache; isolated experimental files are not covered by that result.
 - Explicit `tsc --noEmit -p experiments/eve-delivery-correlation/tsconfig.json`: passed. It includes launchers, module probes and compiled HTTP fixtures; experimental fields are schema-validated against the released SDK.
 - Targeted `oxlint experiments/eve-delivery-correlation`: passed. No unsafe-type waivers. Required EVE default exports, Node/process boundaries, ordered tests and SDK callbacks have statement-scoped reasons.
-- `lint-exception-additions.json`: 44 rule/directive records, no missing reasons, exported with `snapshotExceptions` for D. The shared baseline/config remains untouched. `bun lint` stops at these not-yet-integrated budget additions; D owns reviewing and merging them.
+- `lint-exception-additions.json`: 46 rule/directive records, no missing reasons, exported with `snapshotExceptions` for D. The shared baseline/config remains untouched. `bun lint` stops at these not-yet-integrated budget additions; D owns reviewing and merging them.
 - Running `ultracite check .` independently of the budget gate reaches only seven errors in unchanged `scripts/vercel-preview-build.ts:127–137`, matching D’s baseline attribution. No new Lane C lint errors remain.
 - Remaining gates: upstream supported contract/release, production immutable submission and annotation storage, old-history/copy migration, in-flight restart/Postgres proof, terminal cancellation disposition and independent creation allocation recovery.
 

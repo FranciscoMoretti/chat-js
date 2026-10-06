@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import path from "node:path";
 
 import { Client } from "eve/client";
+import { z } from "zod";
 
 // oxlint-disable-next-line import/no-relative-parent-imports -- Lane D's controller is copied unchanged into this ignored runtime area by the shared-support setup step.
 import {
@@ -32,6 +33,13 @@ const driver = await createPersistentRuntime(
       : "Published eve@0.71.3 / fab8ba1424eddfdedd6a177cac21710258da0e81",
   }
 );
+const processIdentity = z.object({ pid: z.number().int().positive() });
+const readProcessId = async (): Promise<number> => {
+  const response = await fetch(`${driver.url}/proof/process`);
+  assert.equal(response.ok, true);
+  return processIdentity.parse(await response.json()).pid;
+};
+const processIds: number[] = [];
 const client = new Client({ host: driver.url });
 const mappings = new Map<string, string>();
 let dispatches = zero;
@@ -56,6 +64,7 @@ const loseFollowup = async (sessionId: string): Promise<void> => {
 };
 try {
   await driver.start();
+  processIds.push(await readProcessId());
   const creation = { correlationId: "create-restart", message: "initial" };
   const created = await client.sessions.create(creation);
   await created.response.result();
@@ -73,7 +82,15 @@ try {
         undefined;
   });
   await driver.crash();
+  assert.equal(
+    await Bun.file(
+      path.join(driver.directory, ".eve/dev-server-state.v1.json")
+    ).exists(),
+    false
+  );
   await driver.start();
+  processIds.push(await readProcessId());
+  assert.notEqual(processIds[zero], processIds[one]);
   const after = await new Client({ host: driver.url }).sessions
     .attach(created.session.state.sessionId)
     .snapshot();
@@ -101,5 +118,5 @@ await driver.remove();
 
 await Bun.write(
   Bun.stdout,
-  `Restart receipt replay passed (${patched ? "experimental" : "stock counterexample"}); one dispatch, no resend.\n`
+  `Restart receipt replay passed (${patched ? "experimental" : "stock counterexample"}); server PIDs ${processIds.join(" -> ")}; one dispatch, no resend.\n`
 );
