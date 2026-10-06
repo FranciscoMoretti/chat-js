@@ -15,8 +15,6 @@ type GenerateMcpNameIdResult =
   | { ok: true; nameId: string }
   | { ok: false; error: "empty" | "reserved" };
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): generateMcpNameId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /**
  * Generates a namespace (nameId) from a connector name.
  * Rules:
@@ -24,6 +22,8 @@ jsdoc/require-returns (#535): generateMcpNameId's existing documentation covers 
  * - Collapse consecutive underscores, trim leading/trailing
  * - Cannot equal "global" exactly (reserved for global connectors)
  * - Cannot result in empty string
+ * @param {string} name - Connector display name to normalize; normalization does not enforce the separate maximum-length limit.
+ * @returns {GenerateMcpNameIdResult} Normalized namespace or an empty/reserved-name rejection.
  */
 const generateMcpNameId = (name: string): GenerateMcpNameIdResult => {
   const nameId = name
@@ -42,15 +42,16 @@ const generateMcpNameId = (name: string): GenerateMcpNameIdResult => {
 
   return { nameId, ok: true };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): createToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /**
  * Creates a fully qualified tool ID from namespace and tool name.
  * Format: `{namespace}__{toolName}`
  * For global connectors: `global__{nameId}__{toolName}`
  * Uses `__` separator for OpenAI compatibility (requires ^[a-zA-Z0-9_-]+$)
+ * @param {string} namespace - Connector namespace to embed without further normalization.
+ * @param {string} toolName - Tool name to append without validation or escaping.
+ * @param {boolean} isGlobal - Whether to prefix the global connector namespace.
+ * @returns {string} Qualified tool identifier with the selected namespace prefix.
  */
 const createToolId = (
   namespace: string,
@@ -62,10 +63,8 @@ const createToolId = (
   }
   return `${namespace}${TOOL_ID_SEPARATOR}${toolName}`;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null -- jsdoc/require-param (#534): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): parseToolId's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
 max-statements (#512): parseToolId keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): parseToolId uses -1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 unicorn/no-null (#570): parseToolId preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
@@ -73,6 +72,8 @@ unicorn/no-null (#570): parseToolId preserves explicit null in its storage/API s
  * Parses a tool ID back into its components.
  * Splits on `__` separator to get namespace and tool name.
  * For global tools, returns { isGlobal: true, namespace, toolName }
+ * @param {string} toolId - Qualified identifier to split at the user or global namespace boundary.
+ * @returns {{ isGlobal: boolean; namespace: string; toolName: string } | null} Parsed components, preserving empty components and later separators, or null when a required separator is missing.
  */
 const parseToolId = (
   toolId: string
@@ -112,7 +113,7 @@ const parseToolId = (
   };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-magic-numbers, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 export { createToolId, generateMcpNameId, MCP_NAME_MAX_LENGTH, parseToolId };
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (GenerateMcpNameIdResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

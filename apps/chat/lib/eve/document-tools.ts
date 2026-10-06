@@ -53,13 +53,11 @@ const documentIdForCall = (sessionId: string, callId: string): string => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveDocumentTool's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-lines-per-function (#510): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): executeEveDocumentTool keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): executeEveDocumentTool uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): executeEveDocumentTool uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep executeEveDocumentTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep executeEveDocumentTool's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): executeEveDocumentTool accepts context: DocumentContext; [key]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): executeEveDocumentTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
@@ -67,7 +65,30 @@ export const executeEveDocumentTool = async (
   name: string,
   value: unknown,
   context: DocumentContext
-) => {
+): Promise<
+  | {
+      content: string;
+      date: string;
+      documentId: string;
+      fileIds: string[];
+      kind: Awaited<ReturnType<typeof saveEveDocumentRevision>>["kind"];
+      revisionId: string;
+      status: string;
+      title: string;
+      result?: undefined;
+    }
+  | {
+      date: string;
+      documentId: string;
+      kind: Awaited<ReturnType<typeof saveEveDocumentRevision>>["kind"];
+      result: string;
+      revisionId: string;
+      status: string;
+      title: string;
+      content?: undefined;
+      fileIds?: undefined;
+    }
+> => {
   if (name === "readDocument") {
     const input = eveDocumentReadInput.parse(value);
     const scope = await resolveEveConversationScope(
@@ -142,4 +163,4 @@ export const executeEveDocumentTool = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
