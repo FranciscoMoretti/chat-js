@@ -2,10 +2,75 @@ import type { MessageStreamEvent } from "eve/client";
 
 import { recordEveUsage } from "@/lib/db/eve-billing";
 import { registerEveSubagent } from "@/lib/db/eve-subagents";
+/* oxlint-disable sort-imports -- Pinned Oxfmt places the local type declaration after database values and before the relative grouped import; sort-imports requires a different local-binding and binding-syntax order. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
 /* oxlint-enable sort-imports */
+
+/** Native evidence fields consumed by billing; tool output stays unknown until receipt validation. */
+interface UsageEventData {
+  "action.result": Pick<
+    Extract<MessageStreamEvent, { type: "action.result" }>["data"],
+    "status" | "turnId"
+  > & {
+    result:
+      | (Pick<
+          Extract<
+            Extract<
+              MessageStreamEvent,
+              { type: "action.result" }
+            >["data"]["result"],
+            { kind: "tool-result" }
+          >,
+          "kind" | "callId"
+        > & { output: unknown })
+      | Pick<
+          Exclude<
+            Extract<
+              MessageStreamEvent,
+              { type: "action.result" }
+            >["data"]["result"],
+            { kind: "tool-result" }
+          >,
+          "kind"
+        >;
+  };
+  "compaction.usage": Pick<
+    Extract<MessageStreamEvent, { type: "compaction.usage" }>["data"],
+    "usage" | "providerMetadata" | "turnId"
+  >;
+  "hook.result": Pick<
+    Extract<MessageStreamEvent, { type: "hook.result" }>["data"],
+    "modelCalls" | "turnId"
+  >;
+  "step.completed": Pick<
+    Extract<MessageStreamEvent, { type: "step.completed" }>["data"],
+    "usage" | "providerMetadata" | "turnId"
+  >;
+  "step.failed": Pick<
+    Extract<MessageStreamEvent, { type: "step.failed" }>["data"],
+    "turnId"
+  >;
+  "subagent.called": Pick<
+    Extract<MessageStreamEvent, { type: "subagent.called" }>["data"],
+    "remote" | "childSessionId" | "turnId"
+  >;
+}
+
+/** Read original SDK event objects without claiming ownership of their unused recursive payloads. */
+type UsageEventReader = ReadonlyNativeSurface<
+  | {
+      [EventType in keyof UsageEventData]: Pick<
+        Extract<MessageStreamEvent, { type: EventType }>,
+        "type" | "meta"
+      > & { data: UsageEventData[EventType] };
+    }[keyof UsageEventData]
+  | (Pick<
+      Exclude<MessageStreamEvent, { type: keyof UsageEventData }>,
+      "type" | "meta"
+    > & { data?: unknown })
+>;
 
 const NO_USAGE_COST_USD = 0;
 
@@ -22,8 +87,7 @@ const NO_USAGE_COST_USD = 0;
 export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Read the original SDK MessageStreamEvent across sequential writes; its event variants contain mutable data and JSON members. This parameter retains the native SDK contract without cloning the event.
-  event: MessageStreamEvent,
+  event: UsageEventReader,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
 ): Promise<boolean | undefined> => {
   if (event.type === "subagent.called" && !event.data.remote) {

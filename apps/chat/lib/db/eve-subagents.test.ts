@@ -8,7 +8,8 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 /* oxlint-enable sort-imports */
 import { drizzle } from "drizzle-orm/pglite";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt places the native SDK type before the grouped test-runtime declaration; sort-imports requires a different local-binding and binding-syntax order. */
+import type { MessageStreamEvent } from "eve/client";
 import { afterAll, beforeAll, expect, it, vi } from "vitest";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
@@ -141,33 +142,29 @@ it("advances child cursors monotonically and revokes stream access when the root
 it("charges native child receipts once and rounds their combined cost on the root turn", async () => {
   const attribution = { sessionId: "root", turnId: "turn_3" };
   for (const sessionId of ["paid-one", "paid-two", "paid-one"]) {
-    await ingestEveUsage(
-      "owner",
-      sessionId,
-      {
-        data: {
-          result: {
-            callId: "search",
-            kind: "tool-result",
-            output: {
-              kind: "chatjs.tool-result",
-              output: { answer: "Evidence" },
-              status: "success",
-              usage: { costUsd: 0.001 },
-              version: 1,
-            },
-            toolName: "webSearch",
+    const event = {
+      data: {
+        result: {
+          callId: "search",
+          kind: "tool-result",
+          output: {
+            kind: "chatjs.tool-result",
+            output: { answer: "Evidence" },
+            status: "success",
+            usage: { costUsd: 0.001 },
+            version: 1,
           },
-          sequence: 0,
-          status: "completed",
-          stepIndex: 0,
-          turnId: "turn_0",
+          toolName: "webSearch",
         },
-        meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
-        type: "action.result",
+        sequence: 0,
+        status: "completed",
+        stepIndex: 0,
+        turnId: "turn_0",
       },
-      attribution
-    );
+      meta: { at: "2026-09-28T00:00:00Z", id: "same-event-name" },
+      type: "action.result",
+    } satisfies MessageStreamEvent;
+    await ingestEveUsage("owner", sessionId, event, attribution);
   }
   const rows = await postgres.query<{
     count: number;
