@@ -48,4 +48,4 @@ Keep ChatJS's current fork adapter and execution-time policy/owner checks. Adopt
 
 EVE 0.71.3’s approver-as-caller propagation is useful execution context, but does not by itself establish consent: an ordinary owner call also has that caller. The executable false-to-true counterexample and `invokeTool` case explicitly distinguish these facts.
 
-The concrete upstream recommendation is to preserve the approved callback binding through replay, rather than authorize a rediscovered same-named callback with a new stable token. See [the design handoff](RESTART-COMPARISON.md) for the availability tradeoff, ChatJS’s captured message history, and the distinct unresolved Lane D hook-restart case.
+The concrete upstream recommendation is to preserve the approved callback binding through replay, rather than authorize a rediscovered same-named callback with a new stable token. See [the design handoff](RESTART-COMPARISON.md) for the availability tradeoff, ChatJS’s captured message history, and Lane D’s now-passing but distinct hook-restart case. This remains a handoff recommendation, not a user-approved production API.

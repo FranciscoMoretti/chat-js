@@ -2,14 +2,20 @@
 
 Compared Lane B `19a4035fb` with Lane D `422e371e3` on EVE 0.71.3 / `fab8ba1424eddfdedd6a177cac21710258da0e81`. This is a source/evidence comparison, not a new runtime reproduction. The experimental patch and production adapter remain unchanged.
 
-## The restart results are not equivalent
+## Resolved status — Lane D `7a312a544`
+
+D's callback-restart probe now **passes on stock EVE 0.71.3**, with distinct process IDs and one observed effect. D matched the one-second test ownership lease and waited for `.eve/dev-server-state.v1.json` removal before releasing barriers/restarting. The original 60-second window was shorter than the 860-second default lease. The original controller also waited only for CLI exit: EVE's detached server closes asynchronously on IPC disconnect, so releasing a barrier too early could let the old server continue. D rejected a lease-only run that produced four effects; the cleanup wait restored the one-effect result.
+
+The earlier timeout is no longer an unresolved stock-runtime recovery counterexample. The table below records the original comparison at `422e371e3`, not D's corrected controls. The crash points remain distinct: D covers the settlement-hook boundary and B covers later executor entry. Neither demonstrates exactly-once effects, direct detached-server SIGKILL, safe production lease settings or production/backend migration. This update records D's reported and committed evidence; Lane B did not rerun the runtime.
+
+## Original comparison at Lane D `422e371e3`
 
 | Boundary/control | Lane B | Lane D `--callbacks` |
 | --- | --- | --- |
 | Before settlement | Pauses inside response policy after candidate ingestion, crashes, releases and resumes without resending. | Also pauses inside response policy, crashes, releases and resumes. These are comparable logical boundaries. |
 | Later crash | In a separate scenario/session, pauses inside the executor **after receipt construction**, before the effect. | On the same approval, crashes again **inside the `approval.settled` hook**, before executor entry. B does not cover this hook boundary or D's two-crash sequence. |
 | Workflow ownership lease | Explicit `WORKFLOW_INLINE_OWNERSHIP_LEASE_SECONDS=1`. | Fixture environment omits the override. Bundled Workflow 5.0.1 defaults to **860 seconds (14m20s)**. |
-| Process termination | SIGKILL to the CLI PID; waits for `.eve/dev-server-state.v1.json` removal. Not an explicit process-group kill. | Detached worker; SIGKILL to the whole process group. This is a stronger process-tree interruption. |
+| Process termination | SIGKILL to the CLI PID; waits for `.eve/dev-server-state.v1.json` removal. Not an explicit process-group kill. | SIGKILL to the CLI process group, then only CLI-exit wait. The server is separately detached, so this did not establish that it had stopped. |
 | Restart | First start is fresh; subsequent starts use `eve dev --resume` with the same fixture/world storage. New loopback port and fresh client handles. | Every start uses `--resume`, same storage and fixed port; waits for HTTP health. |
 | Recovery observation | Read-only polling; 60 seconds for most boundaries, 90 seconds for executor replay; 180-second overall watchdog per mode. | Effect marker absent after 60 seconds; native settlement readable and persisted `turnStep` still `running`. |
 
@@ -19,13 +25,13 @@ The lease difference is a concrete confounder: the bundled runtime documents tha
 
 The hook boundary also matters independently. In released `harness/tool-loop.ts`, the runtime awaits emission of `approval.settled` before marking its audit record's event as emitted. A hook can therefore be paused while that runtime path remains incomplete. A readable stream event establishes neither completion of the hook nor commitment of the enclosing Workflow step. B's executor-entry barrier is later: its callback has already received the reconstructed receipt. Passing that test cannot establish recovery of D's earlier hook interruption.
 
-**Handoff:** retain D's failing acceptance result as unresolved. A bounded comparison would hold lease, process-group termination and port/client behavior constant and test each crash point separately before the combined sequence. Do not clear Workflow records, alter step status, resend approval or infer permanent loss from the current timeout. D owns that controller comparison; this note does not expand Lane B's implementation.
+**Handoff:** D’s corrected comparison resolves the earlier timeout; retain the distinct barrier coverage and bounded test-lease qualifications above. No Workflow records were cleared, step statuses altered or approvals resent to obtain the passing result. The experimental patch and production adapter remain unchanged.
 
 Evidence read: D's `fixture.ts`, `persistent-runtime.ts`, `restart.ts`, `restart-fixture/control.ts`, `restart-fixture/agent/hooks/settlement.ts` and `RESTART.md`; B's committed `runtime-fixture.patch`; EVE's pinned `harness/tool-loop.ts`; the published package's `dist/src/compiled/@workflow/core/runtime/constants.d.ts` and compiled `getInlineOwnershipLeaseSeconds` implementation (default 860, override clamped to 1–900 seconds).
 
 ## Recommend preserving the approved callback binding
 
-For upstream, prefer **resuming the persisted approved callback binding** over inventing a separate stable-action-identity API. At approval request time, the runtime already has the resolved dynamic callback descriptor/closure, scope, resolver/entry identity, schema and parsed action. Keep that binding with the pending execution. Approval replay should execute that binding; subsequent `step.started` discovery can supply tools for new calls, but must not substitute a same-named callback for the already approved call. The receipt still comes only from the winning authenticated settlement for that continuation.
+This is the design handoff recommendation, not a user-approved production API or authorization to implement one. For upstream, prefer **resuming the persisted approved callback binding** over inventing a separate stable-action-identity API. At approval request time, the runtime already has the resolved dynamic callback descriptor/closure, scope, resolver/entry identity, schema and parsed action. Keep that binding with the pending execution. Approval replay should execute that binding; subsequent `step.started` discovery can supply tools for new calls, but must not substitute a same-named callback for the already approved call. The receipt still comes only from the winning authenticated settlement for that continuation.
 
 This preserves availability when rediscovery changes incidental captured data: the approved action can resume without comparing its entire old closure to a freshly generated closure. In ChatJS, `apps/chat/agent/tools/mcp.ts` captures `messages = stringify(context.messages)` and later passes `parse(messages)` into execution, in addition to `connectorId` and `remoteName`. Model history can change during approval handling while connector and remote action identity remain the same. Full metadata equality conservatively invalidates that consent too. Schema/descriptive metadata changes can also cause rejection even when the intended effect is unchanged. The current experiment intentionally fails closed in these cases; it is not an availability-complete MCP replacement.
 

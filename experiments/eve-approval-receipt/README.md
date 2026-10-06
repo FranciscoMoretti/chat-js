@@ -51,7 +51,7 @@ Both stock and patched modes pass seven scenarios, each with explicit assertions
 
 The compiled fixture transforms `hello` to `HELLO:original`, coerces `"2"` to `2`, and inserts a `mode: "safe"` default. Both request and executor observe the parsed values. The dynamic resolver is `step.started`, matching ChatJS's MCP registration scope.
 
-The after-settlement test writes an entry marker after runtime receipt construction, pauses before the disposable effect, kills the EVE process with SIGKILL, removes the pause marker, then uses `eve dev --resume`. It does not reconstruct session JSON or mock a Workflow checkpoint. The same request ID and a different executor PID are recorded across replay. This proves the tested local-world recovery boundary, **not** Postgres compatibility, arbitrary deployment migration or exactly-once external effects.
+The after-settlement test writes an entry marker after runtime receipt construction, pauses before the disposable effect, kills the EVE process with SIGKILL, removes the pause marker, then uses `eve dev --resume`. SIGKILL targets the CLI; the detached server closes on IPC disconnect, and the controller waits for its state-record removal before releasing the barrier. This is not direct detached-server SIGKILL. It does not reconstruct session JSON or mock a Workflow checkpoint. The same request ID and a different executor PID are recorded across replay. This proves the tested local-world recovery boundary, **not** Postgres compatibility, arbitrary deployment migration or exactly-once external effects.
 
 ## Finding and fix from the runtime proof
 
@@ -85,7 +85,7 @@ After `bun install --frozen-lockfile --ignore-scripts` in this worktree, shared 
 
 ## Remaining dependency and integration gates
 
-[Comparison with Lane D’s callback-restart probe and upstream binding recommendation](RESTART-COMPARISON.md) explains why B’s accelerated-lease executor-entry success does not supersede D’s unresolved settled-hook recovery failure.
+[Comparison with Lane D’s callback-restart probe and upstream binding recommendation](RESTART-COMPARISON.md) records D’s resolved callback-restart result in `7a312a544`, while keeping its settlement-hook boundary distinct from B’s executor-entry boundary. Binding preservation remains a proposal, not an approved production API.
 
 EVE 0.71.3 exposes caller propagation, **not** the proposed exact-consent receipt. Caller identity is also present for unapproved owner calls, as the runtime counterexample demonstrates. A supported receipt contract and release remain the upstream blocker.
 
