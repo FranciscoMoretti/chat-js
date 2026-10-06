@@ -7142,7 +7142,6 @@
     "[\"apps/chat/tools/chatjs/code-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/code-executor.ts\",\"import/no-named-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/code-executor.ts\",\"import/prefer-default-export\",\"oxlint-disable-next-line\"]": 1,
@@ -7503,7 +7502,6 @@
     "[\"apps/chat/tools/chatjs/sheet-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/tavily-search/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/tavily-search/renderer.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": 1,
@@ -7589,7 +7587,6 @@
     "[\"apps/chat/tools/chatjs/text-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/tool-availability.ts\",\"import/no-named-export\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/tools/chatjs/tool-availability.ts\",\"import/prefer-default-export\",\"oxlint-disable-next-line\"]": 1,
@@ -9540,7 +9537,6 @@
     "[\"packages/registry/src/tools/code-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/tools/code-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/require-await\",\"oxlint-disable\"]": 1,
@@ -9943,7 +9939,6 @@
     "[\"packages/registry/src/tools/sheet-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/tavily-search/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/tavily-search/renderer.tsx\",\"react/only-export-components\",\"oxlint-disable\"]": 1,
@@ -10021,7 +10016,6 @@
     "[\"packages/registry/src/tools/text-documents/guidelines.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
-    "[\"packages/registry/src/tools/text-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 2,
@@ -38976,18 +38970,14 @@
     ],
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11",
-      "064d73738685f64381ec9f85d1042c9541640b1f37b6988389c4dd3ab7eacec8"
+      "917835d262acd1c10e5e599c68cfee6948af8c912d247b6c2ea544d755bc6e74"
     ],
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "20f629a9cd61f777b9e8360b263e5b34c244f5ac8b2c8faf1018ebc91bcd84b4",
-      "6b3c9e753d558954f000d7798759b3aa17903025e70cd07ce1f27b515503484f"
-    ],
-    "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "50dd61f462a2fcb428d2cd063ba73bfcf04f42d332c01dc4d64ac4f103cf5e51",
-      "502f5d753022ac2831ef60991a879c3f60837e1ddf3faf1fd98a36e66b887235"
+      "974ce9a2f52c1abe9f1754ea147b344ccf08a595b58385b0f3942c604d905ce1",
+      "01d5208cfc6b0bf4e74fa16ec6770492d64079ce15bcfc8dc391358dbf259b38"
     ],
     "[\"apps/chat/tools/chatjs/code-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "d3fd00d59b434e7813ced935ffe6a54ef2fdbc0299b3a2eae150a6add68da919"
+      "b970122c3cabbf00638f87b6fe4e3ca8f4a365364c34483bb413b53e1a25cb42"
     ],
     "[\"apps/chat/tools/chatjs/code-executor.ts\",\"import/no-named-export\",\"oxlint-disable-next-line\"]": [
       "6135fecb6dc469dd182ecfd43c9086521df880991544482257cd3b540e2abf3c"
@@ -40261,15 +40251,11 @@
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "7a9c88e00df14899005f13d3997f84902e6d007a7382517f3da9b3c6d0f51ae7",
-      "44740d3c32827c8843bee5d78e66c5aab41c370ea6c9d38a5118d8d4ff233753"
-    ],
-    "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "5b3ca40a02e1d86ddb2beaed34e70cf555951fdec18519f99f38c28c986d0566",
-      "e422769d8c933a6a975d6df1b105862e5b819b64b51b85cbceb7719d0962a661"
+      "cd5f9732c4fc4e2a3f896ff392fdcd55fbb2197a08280565e0e834b5e40c843b",
+      "ca4b1e5b74232f28264853dde06efca7415d7909b9882d52f6e001ba8008f2ca"
     ],
     "[\"apps/chat/tools/chatjs/sheet-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "6a907394e8f5d428ff42707c1be05c1d295b24844347af99034cb7069334184d"
+      "ae81651118424cb581275862c76d4242385feeeb5f0e097b7f0ac9ea3308d3b7"
     ],
     "[\"apps/chat/tools/chatjs/tavily-search/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "78c994b9f2ffce27a35ae27c19efc3af4d3f5c7224484aa07e3153cc3a3ba4c9",
@@ -40555,15 +40541,11 @@
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "bcb6287402197950427b21555aa53f65fb9c8f90c651c25d354dcd2b0ebbd448",
-      "4a5d9cd9c1b0dd4ce9bdb3e2795af0d22662e76da454ac6b32be274b6cf98fa0"
-    ],
-    "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "c75a11082413d758c7e39697d7d9ba76a765beb945f8aab6ff3fe79d2c60300d",
-      "c8029bb579a69f74b8be79644fb9d644b6bb0e0dffac3814071b7580060fc993"
+      "69be53a0d0148da819db773320f8be5d053a77a740cb568a83631b93f525dca3",
+      "94bf4da6ebfd18da3b4505e51653b5e903935aeaaa753243126792afe01c634f"
     ],
     "[\"apps/chat/tools/chatjs/text-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "9efce2ca00c9beaf518da0dceccfd7dac3a38bd029c70c73c2e5dff912cab703"
+      "50196683324602fe4757a0751c985b407f4c87ab768ba5fe9fc63d815cfec350"
     ],
     "[\"apps/chat/tools/chatjs/tool-availability.ts\",\"import/no-named-export\",\"oxlint-disable-next-line\"]": [
       "bce44aeb5f268550c2843b7e4bf537a3827f20cdf2996872537c7fe6bd8e18a2"
@@ -48341,18 +48323,14 @@
     ],
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11",
-      "064d73738685f64381ec9f85d1042c9541640b1f37b6988389c4dd3ab7eacec8"
+      "917835d262acd1c10e5e599c68cfee6948af8c912d247b6c2ea544d755bc6e74"
     ],
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "20f629a9cd61f777b9e8360b263e5b34c244f5ac8b2c8faf1018ebc91bcd84b4",
-      "6b3c9e753d558954f000d7798759b3aa17903025e70cd07ce1f27b515503484f"
-    ],
-    "[\"packages/registry/src/tools/code-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "50dd61f462a2fcb428d2cd063ba73bfcf04f42d332c01dc4d64ac4f103cf5e51",
-      "502f5d753022ac2831ef60991a879c3f60837e1ddf3faf1fd98a36e66b887235"
+      "974ce9a2f52c1abe9f1754ea147b344ccf08a595b58385b0f3942c604d905ce1",
+      "01d5208cfc6b0bf4e74fa16ec6770492d64079ce15bcfc8dc391358dbf259b38"
     ],
     "[\"packages/registry/src/tools/code-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "d3fd00d59b434e7813ced935ffe6a54ef2fdbc0299b3a2eae150a6add68da919"
+      "b970122c3cabbf00638f87b6fe4e3ca8f4a365364c34483bb413b53e1a25cb42"
     ],
     "[\"packages/registry/src/tools/daytona-code-execution/execution.test.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
       "e6a0bfce98b776b2c5bb42320626f469467586dc674c0f3534baf039fde7ee38"
@@ -49768,15 +49746,11 @@
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11"
     ],
     "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "7a9c88e00df14899005f13d3997f84902e6d007a7382517f3da9b3c6d0f51ae7",
-      "44740d3c32827c8843bee5d78e66c5aab41c370ea6c9d38a5118d8d4ff233753"
-    ],
-    "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "5b3ca40a02e1d86ddb2beaed34e70cf555951fdec18519f99f38c28c986d0566",
-      "e422769d8c933a6a975d6df1b105862e5b819b64b51b85cbceb7719d0962a661"
+      "cd5f9732c4fc4e2a3f896ff392fdcd55fbb2197a08280565e0e834b5e40c843b",
+      "ca4b1e5b74232f28264853dde06efca7415d7909b9882d52f6e001ba8008f2ca"
     ],
     "[\"packages/registry/src/tools/sheet-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "6a907394e8f5d428ff42707c1be05c1d295b24844347af99034cb7069334184d"
+      "ae81651118424cb581275862c76d4242385feeeb5f0e097b7f0ac9ea3308d3b7"
     ],
     "[\"packages/registry/src/tools/tavily-search/renderer.tsx\",\"sort-imports\",\"oxlint-disable\"]": [
       "78c994b9f2ffce27a35ae27c19efc3af4d3f5c7224484aa07e3153cc3a3ba4c9",
@@ -50034,15 +50008,11 @@
       "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11"
     ],
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "bcb6287402197950427b21555aa53f65fb9c8f90c651c25d354dcd2b0ebbd448",
-      "4a5d9cd9c1b0dd4ce9bdb3e2795af0d22662e76da454ac6b32be274b6cf98fa0"
-    ],
-    "[\"packages/registry/src/tools/text-documents/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "c75a11082413d758c7e39697d7d9ba76a765beb945f8aab6ff3fe79d2c60300d",
-      "c8029bb579a69f74b8be79644fb9d644b6bb0e0dffac3814071b7580060fc993"
+      "69be53a0d0148da819db773320f8be5d053a77a740cb568a83631b93f525dca3",
+      "94bf4da6ebfd18da3b4505e51653b5e903935aeaaa753243126792afe01c634f"
     ],
     "[\"packages/registry/src/tools/text-documents/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "9efce2ca00c9beaf518da0dceccfd7dac3a38bd029c70c73c2e5dff912cab703"
+      "50196683324602fe4757a0751c985b407f4c87ab768ba5fe9fc63d815cfec350"
     ],
     "[\"packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "0155a8fae9a3328ce7c6bf114309db2bdeb6a4370b12c7b34be0742098179869",

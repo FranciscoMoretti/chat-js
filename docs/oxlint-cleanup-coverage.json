@@ -354233,6 +354233,481 @@
         "No real database/OAuth service run; this tranche changes type contracts, docs/comments and one boolean comparison only."
       ],
       "interpretation": "This is post-snapshot review evidence for 47 original memberships, not a claim about the 81-membership candidate or a rewrite of statuses in the pinned 971ab current snapshot. Fixed, partially narrowed, reviewed, and unresolved dispositions remain separate."
+    },
+    {
+      "review": "thread-adapter-and-hook-helper-source-audit",
+      "snapshotCommit": "948e36bd2",
+      "sources": [
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "memberships": 29
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "memberships": 15
+        }
+      ],
+      "dispositionCounts": {
+        "justified": 35,
+        "unresolved": 9
+      },
+      "scopeDispositions": [
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 17,
+          "rule": "eslint/no-undefined",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "1ba9b412fe8ad53684896c268186d5ccb2240ce7e6674299e3c89131e928e050",
+          "status": "justified",
+          "evidence": "NO_VALUE is passed to the SDK to reset the resume prefix and omit the optional message/response ID; those call sites use the SDK undefined sentinel."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 19,
+          "rule": "unicorn/no-null",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "c36ff2f5a00e30658d20f2c5b2ba006c75cae79b0e998474c6d08c9c85a1007e",
+          "status": "justified",
+          "evidence": "The declared ChatTransport.reconnectToStream result includes null for no stream; ThreadRunChat uses that branch to preserve a prior run error."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 72,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "411476449e8be29dbf51b8d63d592b11968c342fd03c3e617712d7003cdd97bf",
+          "status": "unresolved",
+          "evidence": "The host callback is declared with mutable TMessage[] and receives native controller implementations; direct contravariant assignability has not been captured for this exact interface.",
+          "nextAction": "Run a same-checker control assigning the actual ThreadRunHost callback to a readonly-message callback and record the compiler result."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 85,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "3ffcd7a39d7a2b935101a881b5c25f19c92c7f37d81da8a6889948e4d115ed8b",
+          "status": "unresolved",
+          "evidence": "The constructor forwards the original SDK schema instances; the stated FlexibleSchema incompatibility has not been proven against the installed SDK type in this exact constructor.",
+          "nextAction": "Type-check a readonly JSONSchema reader against the installed ChatInit FlexibleSchema contract and preserve schema instance identity."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 92,
+          "rule": "oxc/no-async-await",
+          "directive": "oxlint-disable",
+          "fingerprint": "3267c2375db0abef37c722a80a570405de5877e4ee02acf9514a42974615980a",
+          "status": "unresolved",
+          "evidence": "This async callback is supplied to the SDK onToolCall hook; whether direct promise forwarding preserves the callback contract and synchronous-throw behavior has not been checked.",
+          "nextAction": "Compare the installed ChatInit onToolCall type and sync-throw/rejection behavior before replacing await."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 98,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "69f4377a70c85789627daa72129e52c1059352bd794169d34d9629529165caae",
+          "status": "justified",
+          "evidence": "host.onData is optional; optional call preserves one property read and skips the event argument evaluation when absent."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 101,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "9da880a4b7828655a9ca88b1d2947287ec8c6dbfd2017bc1500bef716c6fe4dc",
+          "status": "justified",
+          "evidence": "host.onError is optional; optional call preserves one property read and skipped invocation when absent."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 105,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "d75b368af05348a9231eaf09b5cf2a81e6d49aeada94353bdc16c7a37b0fe39a",
+          "status": "justified",
+          "evidence": "host.onFinish is optional; optional call skips construction of the adapted event when absent."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 107,
+          "rule": "oxc/no-rest-spread-properties",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "e72dd65affb694bfbddb9133e1b8e3fc563147893c3c840e5a9e6b830704cb20",
+          "status": "justified",
+          "evidence": "The event object is copied and messages overridden after its own keys; the configured object-spread rule rejects the Object.assign alternative."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 112,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "080dd04131018f044a567fa993d7a5c1ee7259a5e35ef32d4ca79f17c32a1a45",
+          "status": "unresolved",
+          "evidence": "The callback forwards the installed static/dynamic generic tool-call event; the comment’s conditional-assignability claim lacks a same-checker proof.",
+          "nextAction": "Type-check the exact ChatInit tool-call union against a readonly reader, including both static and dynamic tool-call branches."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 115,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "ff3e5837784238e06d2a470115f8f4ae8a2b62c0c4d03dc03342cb15f4879e00",
+          "status": "justified",
+          "evidence": "host.onToolCall is optional; the optional call retains the existing single lookup and skips the event call when absent."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 118,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "f588cbca140a451a888bc92fe30efd7ade71e77381d1a9dc36ef2ca2ec098c3d",
+          "status": "unresolved",
+          "evidence": "The SDK callback receives the original message array; mutability requirements of actual callbacks have not been verified for this exact onFinish surface.",
+          "nextAction": "Inspect ChatInit onFinish native type and callers, then prove readonly assignability or document a mutating consumer."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 120,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "eadcf18dc86d1bf38a6920713256960490098ae143af8d31c421ca17211ddabc",
+          "status": "justified",
+          "evidence": "The optional sendAutomaticallyWhen callback preserves one property read and the existing false fallback."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 143,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "3d2e4a7dfa8215a87a97885e9a7768d88c6ef3b369d461e0ebbfd78f6ebe9302",
+          "status": "justified",
+          "evidence": "Reading lastMessage.role is guarded by an optional receiver; optional chaining retains the one read and absent-message short circuit."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 147,
+          "rule": "oxc/no-rest-spread-properties",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "9a6d373c024f0e448e3f5cab98718f925d75fd1f933e50b02e4de0bad7073879",
+          "status": "justified",
+          "evidence": "The transformed stream chunk preserves own keys and overrides message fields after copying; configured object-spread rule rejects Object.assign."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 158,
+          "rule": "oxc/no-optional-chaining",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "eb30ee9ddd35290023599c11f5bc907e89a2f2f370dcdcc68e60013df069d2ab",
+          "status": "justified",
+          "evidence": "The second lastMessage.role read occurs only on the first non-start chunk; optional chaining preserves the missing-message short circuit."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 177,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "81488d6fe062e1ed6e3a0f9e5df24c7e57a3db4a669e9bc40132643841ad7ecc",
+          "status": "justified",
+          "evidence": "createTransport writes resumePrefix and preserveReconnectError through this live ThreadRunState instance; those fields must remain writable."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 180,
+          "rule": "oxc/no-async-await",
+          "directive": "oxlint-disable",
+          "fingerprint": "5671364655383f6721975f0f2ebb1b2f8f67f064c4d90fb337ddf4700c485e7d",
+          "status": "unresolved",
+          "evidence": "The reconnect callback awaits the host transport before updating run state and piping the stream; whether a promise chain preserves sync-throw and rejection timing has not been demonstrated.",
+          "nextAction": "Compare the native transport return contract and synchronous throw/rejection timing before changing the callback form."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 199,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "5dc5914e85ecfa7055fd9ea84d1736b6d62b0e4980e31e39472019ab523d1b34",
+          "status": "justified",
+          "evidence": "The transport wrapper intentionally forwards sendMessages directly so a synchronous transport throw reaches the SDK makeRequest/onError path synchronously."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 201,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "8c7ca924b433a6eb5e602e397bb467f5c8792b3b1b7476fcd173da624e7b9667",
+          "status": "unresolved",
+          "evidence": "The SDK message options are spread into a fresh call object, so original mutability may not be required; exact readonly assignability has not been checked.",
+          "nextAction": "Type-check a readonly options view against the installed ChatTransport.sendMessages contract and retain its own-key override order."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 206,
+          "rule": "oxc/no-rest-spread-properties",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "2ac756116d96fb670f99f1197c76aa2f2c785469fa50821729896e4ff75358bf",
+          "status": "justified",
+          "evidence": "The wrapper copies all own option keys then overrides messageId; the configured object-spread rule rejects Object.assign."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 209,
+          "rule": "no-ternary",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "df875d40d6c237cd9e8ec8de47a3c3c224c6c40c13ecca8f2c90eed491d65d37",
+          "status": "justified",
+          "evidence": "The expression selects one messageId while constructing the transport request; the pinned unicorn/prefer-ternary convention conflicts with replacing it by branch assignment."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 236,
+          "rule": "oxc/no-async-await",
+          "directive": "oxlint-disable",
+          "fingerprint": "df77566701ef928d21cd4d028b2bfab0b683020fdd6806dae8faa733c63b8a18",
+          "status": "justified",
+          "evidence": "start awaits sendMessage so a synchronous throw becomes the method’s rejected promise, matching its async API."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 241,
+          "rule": "oxc/no-async-await",
+          "directive": "oxlint-disable",
+          "fingerprint": "6d83834f7b3ac57de842a7ba67ffc1dfb86f7a440cb0d0650870e3d4a41034e3",
+          "status": "justified",
+          "evidence": "startWithMessage awaits sendMessage for the same async rejection contract while passing the original message."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 243,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "65c6752d252cf262f25c65e3728ef57e7d48949cc302e13c13e55a8f07e4b9a7",
+          "status": "unresolved",
+          "evidence": "The method accepts the exact installed AbstractChat.sendMessage argument and forwards it; the readonly incompatibility is asserted but not captured for this declaration.",
+          "nextAction": "Run a native assignability control for the exact sendMessage argument, including mutable UIMessage parts and FileList."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 254,
+          "rule": "oxc/no-async-await",
+          "directive": "oxlint-disable",
+          "fingerprint": "b7323f0fdc17e10e8c8467db5d3e4b03e7c8f927820ad617d10844cc696c180c",
+          "status": "justified",
+          "evidence": "regenerateMessage awaits the SDK method, preserving sync-throw-to-rejection behavior of its async public method."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 259,
+          "rule": "oxc/no-rest-spread-properties",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "e7eaeca0fe1a5e07a0a0eccdfb09465b8572f83524b15d3e9c02ff20c85660c9",
+          "status": "justified",
+          "evidence": "regenerateMessage copies request own keys and applies messageId last; the configured object-spread rule rejects Object.assign."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 265,
+          "rule": "import/no-named-export",
+          "directive": "oxlint-disable",
+          "fingerprint": "a39e3f0c323d2bea18b87af4d282a6ca18a28e6b3e55e1ecaec57be6f5e81701",
+          "status": "justified",
+          "evidence": "ThreadRunChat is consumed through named imports in run-registry.ts and thread-core.ts; default-only export would change those imports."
+        },
+        {
+          "path": "packages/thread/src/ai-sdk-run-chat.ts",
+          "sourceSha256": "8a2e412a6b3cae253fbdeaa77066f9d0b1acede462ccf9e6b4eabee0db95c2eb",
+          "line": 269,
+          "rule": "import/no-named-export",
+          "directive": "oxlint-disable",
+          "fingerprint": "6a61dabca40c99804174bd78e5f641905b8186cce1d15e86ee15615a4e9a9c29",
+          "status": "justified",
+          "evidence": "ThreadRunSpec, ThreadRunHost, and RequestReader are named type exports used by package internals; enabled no-default-export rejects the alternative."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 2,
+          "rule": "sort-imports",
+          "directive": "oxlint-disable",
+          "fingerprint": "fdbaf39799f20d3fe23e5e5bea4fc88158f4207c3df9d5e4b3f46a55a5fd972e",
+          "status": "justified",
+          "evidence": "Pinned Oxfmt retains the type-only SDK import order/grouping that conflicts with sort-imports."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 8,
+          "rule": "sort-imports",
+          "directive": "oxlint-disable",
+          "fingerprint": "3f0c8e5d5cc71a5db1d072a3991221d1d6b61f967b072d4007f7d8af0b4f3598",
+          "status": "justified",
+          "evidence": "Pinned Oxfmt retains the type-only local declaration grouping that conflicts with sort-imports."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 51,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "000ab4459a698b68cd2fa5aeccd3b215e21007b7b56722fd6df20b01b0ed5b9f",
+          "status": "justified",
+          "evidence": "The public TreeHelpers.startRun input forwards canonical SDK metadata and parts to the controller; same-checker controls show readonly message parts are rejected."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 68,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "a1bfadf7d2e7e0f79438a030504cd2719068e6c21121266f74f8acd5c0bb93bd",
+          "status": "justified",
+          "evidence": "The public sendMessage signature retains the installed UseChatHelpers input union, including mutable parts/FileList; same-checker controls reject readonly substitution."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 117,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "5fbd8b29834d9efaf6d57329c678d614b4274a9cfd659dc1c2dde9d1f7a72321",
+          "status": "justified",
+          "evidence": "createTreeHelpers returns original snapshot arrays/maps and controller arrays through exported mutable TreeHelpers fields; readonly conversion or cloning changes declared result/alias behavior."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 149,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "b955e5659c5cdddb89553485fe4fdf4d335c0fb763f17ebd10f7078ac144e661",
+          "status": "justified",
+          "evidence": "The helper directly forwards an overridable public resumeRun promise; wrapping async would adopt the promise and convert synchronous throws."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 158,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "34d88b8c7187d5afebca091fa0ed6a8e3654e8638b5bff8a7e66c0e47944606a",
+          "status": "justified",
+          "evidence": "The helper directly forwards the public startRun promise and synchronous failure."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 158,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "34d88b8c7187d5afebca091fa0ed6a8e3654e8638b5bff8a7e66c0e47944606a",
+          "status": "justified",
+          "evidence": "The native startRun input requires mutable canonical SDK metadata/parts; same-checker controls reject the readonly substitution, while request/options are already readonly."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 162,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "73e7cfe7ad45663474530b68dcefb52ce45cfcc898db7f755eb1e1eea0611032",
+          "status": "justified",
+          "evidence": "The helper directly forwards an overridable stopAll promise, preserving promise identity and synchronous throws."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 164,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "41c23af5b53c09f5fa8442721a469f0c1795c59cb2b6c69f1991045708463713",
+          "status": "justified",
+          "evidence": "The helper directly forwards an overridable stopRun promise, preserving promise identity and synchronous throws."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 166,
+          "rule": "typescript/promise-function-async",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "dde1304e2a227f0a77e2bdbdc40cfd7073461480d1db1042859a91d88cfd2cac",
+          "status": "justified",
+          "evidence": "The helper directly forwards an overridable stopRunForMessage promise, preserving promise identity and synchronous throws."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 171,
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "17ef82687350498854b928cd45eee0fff39eae4f3fe9047d883d0c0a20286b22",
+          "status": "justified",
+          "evidence": "createThreadHelpers returns the original mutable canonical messages array and setMessages callback in exported UseThreadHelpers; snapshot references are not cloned."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 189,
+          "rule": "typescript/no-deprecated",
+          "directive": "oxlint-disable-next-line",
+          "fingerprint": "3b50d428f0687f7f1237e61c371505b4214822ff162610eb243ff99a380c29cd",
+          "status": "unresolved",
+          "evidence": "addToolResult is deprecated upstream but remains part of the exported UseThreadHelpers surface; no explicit public API removal/migration decision exists.",
+          "nextAction": "Confirm package API compatibility policy and consumer migration before removing the deprecated exported helper."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 204,
+          "rule": "import/no-named-export",
+          "directive": "oxlint-disable",
+          "fingerprint": "2a6c612355ea112a7013cd7b21ba3fff9383e12ebbef3ea4e735e7f803bc06a5",
+          "status": "justified",
+          "evidence": "createThreadHelpers is imported by use-thread.ts and exposed through the named react.ts package entry."
+        },
+        {
+          "path": "packages/thread/src/thread-hook-helpers.ts",
+          "sourceSha256": "052b4d81c45f9245a49215fc0e1cc6f7330f002559b5bd6e90a8651678660ea3",
+          "line": 207,
+          "rule": "import/no-named-export",
+          "directive": "oxlint-disable",
+          "fingerprint": "904fdc95df338677b8ba734abce187ba04c1d47c4a58853f42eaafece6fa2ec7",
+          "status": "justified",
+          "evidence": "TreeHelpers and UseThreadHelpers are re-exported by react.ts as named package types."
+        }
+      ],
+      "limitations": [
+        "This source audit does not change the pinned 971ab current-membership snapshot or the exception baseline.",
+        "Unresolved native SDK contracts require exact same-checker assignability evidence before they can be called justified."
+      ]
     }
   ]
 }
