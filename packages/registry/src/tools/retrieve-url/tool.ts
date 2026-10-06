@@ -15,6 +15,15 @@ import { createModuleLogger } from "@/lib/logger";
 
 import { retrievedInput } from "./schemas";
 
+type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
+type RetrieveUrlContext = Readonly<{
+  abortSignal: Readonly<AbortSignal>;
+}>;
+type RetrieveUrlUsage = Readonly<{
+  addCostUsd: (cost: number) => void;
+  markUnknown: () => void;
+}>;
+
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
@@ -49,7 +58,6 @@ const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
@@ -60,8 +68,8 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  execute: ({ url }, context) =>
-    executeWithToolUsage(context, async (usage) => {
+  execute: ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
+    executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
       usage.addCostUsd(0);
       try {
         if (!app) {

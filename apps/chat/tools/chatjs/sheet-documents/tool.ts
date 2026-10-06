@@ -31,7 +31,7 @@ type ReadonlyDocumentToolContext = Readonly<
   }
 >;
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createSheetDocument's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 const createSheetDocument = defineTool({
   description: `Create a new sheet document in this conversation. Supply the complete content and a descriptive title. ${sheetGuidelines}`,
   execute: async (
@@ -45,8 +45,7 @@ const createSheetDocument = defineTool({
   outputSchema: eveDocumentWriteResult,
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve editSheetDocument's awaited sequencing and rejected-Promise behavior. */
-
+/* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 const editSheetDocument = defineTool({
   description: `Edit an existing sheet document in this conversation. Read the document first and supply its revision ID. Supply the complete replacement content. ${sheetGuidelines}`,
   execute: async (
@@ -59,7 +58,7 @@ const editSheetDocument = defineTool({
   inputSchema: eveDocumentEditInput,
   outputSchema: eveDocumentWriteResult,
 });
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createSheetDocument, editSheetDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createSheetDocument, editSheetDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createSheetDocument, editSheetDocument };
 /* oxlint-enable import/no-named-export */

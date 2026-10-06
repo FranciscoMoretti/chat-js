@@ -307959,7 +307959,7 @@
       "fingerprint": "44ad5a7c529d1c5a25c77bce727248ef2f810c03d46431efdb049918bd31d335",
       "memberships": 4,
       "paths": 4,
-      "sample": "Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing \"Preparing prompt…\" fallback."
+      "sample": "Keep the existing nullish guard when reading prompt from tool.input; preserve one receiver evaluation, skipped accesses and the existing \"Preparing prompt\u2026\" fallback."
     },
     {
       "fingerprint": "3449b8335b7f2d40b60f02415735db5fc605a68fc7c5d03d64e126b233741c90",
@@ -316617,7 +316617,7 @@
       "fingerprint": "2e523b86b51582a3aebb60ae23dd167a26e47c6ac03fa9d951909568641ffe35",
       "memberships": 2,
       "paths": 1,
-      "sample": "Read the last actual request so retry must preserve the failed page’s complete cursor input."
+      "sample": "Read the last actual request so retry must preserve the failed page\u2019s complete cursor input."
     },
     {
       "fingerprint": "ed49ade1278e61a9286357f3b60e27c81753e971dd20c80aa3e7cdb7eeed042c",
@@ -316725,7 +316725,7 @@
       "fingerprint": "8b37d0f80731f589b877357e2ef977136da93d699bebf072115958e4515be715",
       "memberships": 2,
       "paths": 1,
-      "sample": "Keep Better Auth’s native completion promise while returning the fixed local session synchronously."
+      "sample": "Keep Better Auth\u2019s native completion promise while returning the fixed local session synchronously."
     },
     {
       "fingerprint": "414dd90330c40b787bc55bb0e74860f8b267f59de1d2ebf18cbc6cfb4372ef36",
@@ -320043,7 +320043,7 @@
       "fingerprint": "b980000a99fc0cfdfd92508ad6b5e676c57f7ce5c04509412b9db3770ce80b2e",
       "memberships": 2,
       "paths": 2,
-      "sample": "Use EVE’s native event reducer and initial state for this projection."
+      "sample": "Use EVE\u2019s native event reducer and initial state for this projection."
     },
     {
       "fingerprint": "66ed14bb2268ba926fe303a6e75585ce313a7f3aa94058c39a35c4c82b3c35ea",
@@ -320895,7 +320895,7 @@
       "fingerprint": "aded3c780d6f94a25106da9a8f05784f12a7eea45ab2396103c2ea4ece02f399",
       "memberships": 2,
       "paths": 1,
-      "sample": "#603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error. Optional chain: Keep the existing nullish guard when reading reason from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining."
+      "sample": "#603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation\u2019s cancellation error. Optional chain: Keep the existing nullish guard when reading reason from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining."
     },
     {
       "fingerprint": "68e0e81e834bbd3bae891f10f4094ded5c94d835752e46c4f55f874d7200d7d9",
@@ -342279,7 +342279,7 @@
       "fingerprint": "742b2a5dcd90e8f997c3e7d2457fe15eaf78a8ed341f8c53e794cb4d3ea6de17",
       "memberships": 1,
       "paths": 1,
-      "sample": "import/no-nodejs-modules (#529): This executable writes its generated source through Node’s promise-based filesystem API."
+      "sample": "import/no-nodejs-modules (#529): This executable writes its generated source through Node\u2019s promise-based filesystem API."
     },
     {
       "fingerprint": "45bb2908c1edeb231352e337c58d02d4a5acb4e14e7b2dae6ca34571937f605a",
@@ -343983,7 +343983,7 @@
       "fingerprint": "d0ac62239828f75167507d75b6ad8e09ca6b0421c2ac432b34b1efcb24dc3444",
       "memberships": 1,
       "paths": 1,
-      "sample": "#603: AbortSignal.reason is typed as any; forward the controller’s Error unchanged to verify cancellation stops further topics and saving."
+      "sample": "#603: AbortSignal.reason is typed as any; forward the controller\u2019s Error unchanged to verify cancellation stops further topics and saving."
     },
     {
       "fingerprint": "065d49c423cd14ace10212402e50cac08e54ca3bbf64ad57a5035545daee1966",
@@ -349419,13 +349419,13 @@
       "fingerprint": "a073b3557805a7ba0a10ba71787e2ab53490dce8278d89e11cc9811afa506aaf",
       "memberships": 1,
       "paths": 1,
-      "sample": "Modern configured runtimes support native async; preserve it.each([ [\"SAFF\", \"⟦Saff⟧ron\"], [\"saffron OR saff\", \"⟦Saffron⟧\"], ['\"saffron cooking\"', \"⟦Saf's awaited sequencing and rejected-Promise behavior."
+      "sample": "Modern configured runtimes support native async; preserve it.each([ [\"SAFF\", \"\u27e6Saff\u27e7ron\"], [\"saffron OR saff\", \"\u27e6Saffron\u27e7\"], ['\"saffron cooking\"', \"\u27e6Saf's awaited sequencing and rejected-Promise behavior."
     },
     {
       "fingerprint": "89c86bbf7cacf9605ffa9e38106320a6e4923c0193b4f10a5e19606580b72894",
       "memberships": 1,
       "paths": 1,
-      "sample": "typescript/prefer-readonly-parameter-types (#565): it.each([ [\"SAFF\", \"⟦Saff⟧ron\"], [\"saffron OR saff\", \"⟦Saffron⟧\"], ['\"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration."
+      "sample": "typescript/prefer-readonly-parameter-types (#565): it.each([ [\"SAFF\", \"\u27e6Saff\u27e7ron\"], [\"saffron OR saff\", \"\u27e6Saffron\u27e7\"], ['\"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration."
     },
     {
       "fingerprint": "dbf9ba7518c24ab94ae45fda734b0e3acb5cd743b7d73ba3ba59fe5c910aab38",
@@ -349437,13 +349437,13 @@
       "fingerprint": "4a3ae13333a8c0b4be878e452b541549dffc5a0f8b4ed837cb9bdbe45b0f1502",
       "memberships": 1,
       "paths": 1,
-      "sample": "Modern configured runtimes support native async; preserve it.each([ ['-\"bar baz\" ba', \"bar ba baz baalone\", \"⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone\"], [\"istan\", \"İsta's awaited sequencing and rejected-Promise behavior."
+      "sample": "Modern configured runtimes support native async; preserve it.each([ ['-\"bar baz\" ba', \"bar ba baz baalone\", \"\u27e6ba\u27e7r \u27e6ba\u27e7 \u27e6ba\u27e7z \u27e6ba\u27e7alone\"], [\"istan\", \"\u0130sta's awaited sequencing and rejected-Promise behavior."
     },
     {
       "fingerprint": "50c4e200430f2e5dbe8bdacdd72d1de37443fbd2c64d7dc2cf7598e2c56cb497",
       "memberships": 1,
       "paths": 1,
-      "sample": "typescript/prefer-readonly-parameter-types (#565): it.each([ ['-\"bar baz\" ba', \"bar ba baz baalone\", \"⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone\"], [\"is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration."
+      "sample": "typescript/prefer-readonly-parameter-types (#565): it.each([ ['-\"bar baz\" ba', \"bar ba baz baalone\", \"\u27e6ba\u27e7r \u27e6ba\u27e7 \u27e6ba\u27e7z \u27e6ba\u27e7alone\"], [\"is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration."
     },
     {
       "fingerprint": "55bd507a30e6ff4b8a7685288b66c426b5d6c25356ed0c6b3f59bcdc42018ff9",
@@ -354355,7 +354355,7 @@
           "directive": "oxlint-disable-next-line",
           "fingerprint": "080dd04131018f044a567fa993d7a5c1ee7259a5e35ef32d4ca79f17c32a1a45",
           "status": "unresolved",
-          "evidence": "The callback forwards the installed static/dynamic generic tool-call event; the comment’s conditional-assignability claim lacks a same-checker proof.",
+          "evidence": "The callback forwards the installed static/dynamic generic tool-call event; the comment\u2019s conditional-assignability claim lacks a same-checker proof.",
           "nextAction": "Type-check the exact ChatInit tool-call union against a readonly reader, including both static and dynamic tool-call branches."
         },
         {
@@ -354489,7 +354489,7 @@
           "directive": "oxlint-disable",
           "fingerprint": "df77566701ef928d21cd4d028b2bfab0b683020fdd6806dae8faa733c63b8a18",
           "status": "justified",
-          "evidence": "start awaits sendMessage so a synchronous throw becomes the method’s rejected promise, matching its async API."
+          "evidence": "start awaits sendMessage so a synchronous throw becomes the method\u2019s rejected promise, matching its async API."
         },
         {
           "path": "packages/thread/src/ai-sdk-run-chat.ts",
@@ -354800,12 +354800,12 @@
       "scopeDispositions": [
         {
           "directive": "oxlint-disable",
-          "evidence": "Existing import ordering is retained; exact formatter/native diagnostic conflict or module initialization effect is not yet proven.",
+          "evidence": "Removing this directive while retaining the formatted import block produces a native sort-imports diagnostic; pinned Oxfmt check passes on that block. No module-side-effect claim is made.",
           "fingerprint": "e680f6d75a53788cdb50be12ad9580d3d86a66329f9e843a3f5ad8caaa60d39a",
           "line": 5,
           "path": "packages/registry/src/tools/read-document/tool.ts",
           "rule": "sort-imports",
-          "status": "unresolved"
+          "status": "justified"
         },
         {
           "directive": "oxlint-disable",
@@ -354827,12 +354827,13 @@
         },
         {
           "directive": "oxlint-disable",
-          "evidence": "The called executeEveDocumentTool is an async function. A controlled resolved/rejected/parser-error comparison found the same observed parse, settlement and microtask order for async/await and then(result => schema.parse(result)); promise/prefer-await-to-then applies only to test files, not production.",
+          "evidence": "Effective production print-config enables oxc/no-async-await, promise/prefer-await-to-then, and typescript/promise-function-async. The tested .then(parse) alternative adds the latter two obligations, so it does not yield a net cleanup.",
           "fingerprint": "d8edd905090983cac9359b84742732a263a89765123f29ad5acaee3cd4d53721",
           "line": 22,
           "path": "packages/registry/src/tools/read-document/tool.ts",
           "rule": "oxc/no-async-await",
-          "status": "fix-candidate"
+          "status": "unresolved",
+          "nextAction": "Reassess only if the merged production rule configuration or callback contract changes."
         },
         {
           "directive": "oxlint-disable-next-line",
@@ -355055,7 +355056,7 @@
           "line": 9,
           "rule": "typescript/prefer-readonly-parameter-types",
           "status": "fixed",
-          "evidence": "Replaced broad waiver with finite typed readers for the approval request’s schema-derived readonly toolInput/session/callId/abortSignal and response’s responder/session.initiator principalId; actual type-aware lint and Registry typecheck pass."
+          "evidence": "Replaced broad waiver with finite typed readers for the approval request\u2019s schema-derived readonly toolInput/session/callId/abortSignal and response\u2019s responder/session.initiator principalId; actual type-aware lint and Registry typecheck pass."
         },
         {
           "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
@@ -355067,9 +355068,458 @@
       ],
       "limitations": [
         "The historical 971ab current-membership snapshot is unchanged; this record describes a later working-tree review.",
-        "read-document no-async-await is a fix candidate for the next batch; the async-wrapper source was not changed in this batch.",
+        "read-document no-async-await remains unresolved: the .then form adds active Promise-rule obligations and has not yielded a net cleanup.",
         "Unresolved import-order, optional-chain, metric, explicit-return and module-boundary scopes remain unresolved as detailed per membership.",
         "The stale unmatched readonly enable directive in delete-document was removed after the candidate review; this source-hash record uses the final synchronized source."
+      ]
+    },
+    {
+      "review": "document-tools-and-document-runs-batch76",
+      "snapshotCommit": "2c46c0884",
+      "baselineMembershipsBefore": 20707,
+      "baselineMembershipsAfter": 20695,
+      "baselineMembershipDelta": -12,
+      "sources": [
+        {
+          "path": "packages/registry/src/tools/read-document/tool.ts",
+          "sourceSha256": "c3ff3f73ac4c053a2f49b70ecb308f0ed0a2000a06737481b5ac6a1462663595",
+          "memberships": 4,
+          "scopeDispositions": [
+            {
+              "line": 5,
+              "rule": "sort-imports",
+              "fingerprint": "e680f6d75a53788cdb50be12ad9580d3d86a66329f9e843a3f5ad8caaa60d39a",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 21,
+              "rule": "import/prefer-default-export",
+              "fingerprint": "570cc5c704cb2eeb7c38bcd8cb62248f6c3efaca2a6e96522b24c7951f39e8f5",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 21,
+              "rule": "import/no-named-export",
+              "fingerprint": "570cc5c704cb2eeb7c38bcd8cb62248f6c3efaca2a6e96522b24c7951f39e8f5",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 22,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "9fc4c34c109900fa3314e5f71736a435fe617314408135ca89a146b6c1ab2f8b",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/read-document/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/code-documents/tool.ts",
+          "sourceSha256": "779ab29e25515ebbdc24f702a78ccb9c077dc0c8cd46b94026bd2d4e67cbc0d3",
+          "memberships": 5,
+          "scopeDispositions": [
+            {
+              "line": 5,
+              "rule": "sort-imports",
+              "fingerprint": "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 14,
+              "rule": "sort-imports",
+              "fingerprint": "b0fb027b5c15fdb73b68f4ac04333cae22d1d55185e8772a21869e539ee75b07",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 37,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "dd22d77e299bc03df38d499e2b53ec1b33dd9eff723a4a2a9f1d4bda919597d0",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 51,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "4fd50d4030d17b9258823f29666c7efa749f1b031ee98eccaadb8830c8009a52",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 65,
+              "rule": "import/no-named-export",
+              "fingerprint": "99f419c428003623bb1671d6fa85b2f01bc35650ad49af31d1effb86822945e0",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/code-documents/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/sheet-documents/tool.ts",
+          "sourceSha256": "3b64a01129430d3ec7d087375dc14c35cb17a668830ac648bd406438e67ddabc",
+          "memberships": 4,
+          "scopeDispositions": [
+            {
+              "line": 5,
+              "rule": "sort-imports",
+              "fingerprint": "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 34,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "0e88d2b6f6a2f616176a97d6c44f3bbbaaf673fb5ea048b2b8fc8abafe670cbc",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 48,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "9ff3f575ffcbf3b8a4afbea44bae4e043ddb84bb863b917a8ec49b552001b317",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 62,
+              "rule": "import/no-named-export",
+              "fingerprint": "b0714f0f588b4d5c3ec73fa348eed48eaf9eb8d04d033f63dd3ae47d63f91d69",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/sheet-documents/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/text-documents/tool.ts",
+          "sourceSha256": "a807cd8ae5a090c0875eb307fc298db5c869ac4e4d891144db1151463ff001e7",
+          "memberships": 4,
+          "scopeDispositions": [
+            {
+              "line": 5,
+              "rule": "sort-imports",
+              "fingerprint": "06027cc306636aaeebe395fb05f4dca31a60b68c79eab0c777043886fea25a11",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 34,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "e0a19ac872d49590a748ad7e985f425b7ff0a1653ecfad8eb5efe2628ea114a0",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 48,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "9d2e1d30fe2e1b6d408b7b6f09f76529bd1b9fbbc131eddab456725e42aa254a",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 62,
+              "rule": "import/no-named-export",
+              "fingerprint": "cd10ec84d66aba78b23c41df936b7d99e1184c231bc66eb11d73f416c1d81eed",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/text-documents/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/retrieve-url/tool.ts",
+          "sourceSha256": "3506b6b6bbe422fb80184d897e7927b34b27f76e1ad58e79a7b9c46643b19412",
+          "memberships": 24,
+          "scopeDispositions": [
+            {
+              "line": 5,
+              "rule": "sort-imports",
+              "fingerprint": "1cb5f2dafe61f809d5661ae303e8386ccd0b115409134e5ce0250cd20cfcba03",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 9,
+              "rule": "sort-imports",
+              "fingerprint": "eca8bacdc3fcc2baeec5414fbaf481ff6acdf2b0c1ec3e84286da78008e92810",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 12,
+              "rule": "sort-imports",
+              "fingerprint": "86860c692c9cbb4437ad9978c839b758839291fbc590cd57d814929fa67a29f8",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 32,
+              "rule": "unicorn/no-null",
+              "fingerprint": "8de84fe4fc0041b93545c8cd77ea7006efe69f4284570e5e23d815457815f199",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 33,
+              "rule": "no-ternary",
+              "fingerprint": "0c20f70f33776cee1463bbf1cabffafe0c8226b62e32f3136170533ce08582cb",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 39,
+              "rule": "unicorn/no-null",
+              "fingerprint": "0e15c1327fde56cad51210c3e2e96b959aa3bb391b6597b99272dcf9d507aebe",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 55,
+              "rule": "import/prefer-default-export",
+              "fingerprint": "2467798e8fcb79e1f2110d60ee7eb01d5acde594cbdbef99c0e6e9c68626447a",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 55,
+              "rule": "import/no-named-export",
+              "fingerprint": "2467798e8fcb79e1f2110d60ee7eb01d5acde594cbdbef99c0e6e9c68626447a",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 56,
+              "rule": "oxc/no-async-await",
+              "fingerprint": "7b2948140fd3523bee1c59ea1a9c8c1580dbb8df5f92bc48b56f5341655a0bc2",
+              "status": "justified",
+              "evidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order."
+            },
+            {
+              "line": 58,
+              "rule": "eslint/max-statements",
+              "fingerprint": "f13e53d2bf544ef91af8f3d40a34511ac15284d9954b60c3c018ae235e344425",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 59,
+              "rule": "eslint/max-lines-per-function",
+              "fingerprint": "604ca9557bf302b67fbda55633119d6beda213344bb3641bb4dc8ff8c0825f9e",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 60,
+              "rule": "eslint/no-magic-numbers",
+              "fingerprint": "f2b68b18823e8e164755679c49c82b9088f2a761c590f944b5b7557c9b348de6",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 61,
+              "rule": "typescript/promise-function-async",
+              "fingerprint": "3806ab344a1fdcc55759fa81143c3ed7bf8d50f30702aa07e54e6f2a41a4a026",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 62,
+              "rule": "typescript/strict-boolean-expressions",
+              "fingerprint": "80864d5e539a34ae399a951b59b527dd505078683ebaf3bc8f8e1ba278df0fb0",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 127,
+              "rule": "typescript/no-unsafe-member-access",
+              "fingerprint": "a5ce3bcf3f0ad7ac5153721c74e610b2f334946fd5e927261a8562c78e08dcf5",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 127,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "a5ce3bcf3f0ad7ac5153721c74e610b2f334946fd5e927261a8562c78e08dcf5",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 129,
+              "rule": "typescript/no-unsafe-member-access",
+              "fingerprint": "3cf91cfe681cec8ec195bc7c3c4c97328823a99c6e2b475a1432130aa1e25c55",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 129,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "3cf91cfe681cec8ec195bc7c3c4c97328823a99c6e2b475a1432130aa1e25c55",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 131,
+              "rule": "typescript/no-unsafe-member-access",
+              "fingerprint": "187720dee35d09f4d51a68d8ca119c221e1dc866669f4f8f6209b6d568ada1fa",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 131,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "187720dee35d09f4d51a68d8ca119c221e1dc866669f4f8f6209b6d568ada1fa",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 139,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "1b8d7560ee181ae2e6b0c6664da3488b3d128590d19073919f9cb7a0ce1c125a",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 141,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "07fc0b9d3f9e98fde08f9cb05ea8d5b1cee4ad7424100702b7d444ae8120b8c6",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 144,
+              "rule": "typescript/prefer-nullish-coalescing",
+              "fingerprint": "8b7fd9594fb856ce7ded8ecd8a87baf622ca95479cc9912ac37564405296f6c5",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            },
+            {
+              "line": 155,
+              "rule": "no-ternary",
+              "fingerprint": "02dede8acea0546dbfcf8ba371578ca12f7d270dda331f9331b4db3e52b42213",
+              "status": "unreviewed",
+              "evidence": "inherited current membership; not semantically audited in this tranche"
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/retrieve-url/tool.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d",
+          "memberships": 3,
+          "scopeDispositions": [
+            {
+              "rule": "import/prefer-default-export",
+              "status": "justified",
+              "evidence": "unchanged existing named/default opposing convention"
+            },
+            {
+              "rule": "import/no-named-export",
+              "status": "justified",
+              "evidence": "unchanged existing named/default opposing convention"
+            },
+            {
+              "rule": "typescript/consistent-return",
+              "status": "justified",
+              "evidence": "Explicit return undefined for absent lookup yields precisely eslint/no-undefined under pinned native681; actual value/absence result unchanged."
+            }
+          ],
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "generatedMirror": "apps/chat/tools/chatjs/saved-code-execution/document-runs.ts"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/execute.ts",
+          "sourceSha256": "046bc2bd303970740b4c1a45e25764901497dd646ba572e079dc664460f055c8",
+          "memberships": 17,
+          "provenance": "canonical registry source; generated mirror verified byte-identical after demo sync",
+          "scopeDispositions": [
+            {
+              "rule": "sort-imports",
+              "status": "justified",
+              "count": 4,
+              "evidence": "Removing the retained import directives exposes four native sort-imports diagnostics; pinned Oxfmt check passes. The conflict is formatter/native ordering, with no module side-effect assertion."
+            },
+            {
+              "rule": "eslint/max-statements",
+              "status": "unresolved",
+              "evidence": "Comment now lists actual generator stages; the rule remains a metric exception."
+            },
+            {
+              "rule": "eslint/max-lines-per-function",
+              "status": "unresolved",
+              "evidence": "Comment no longer claims cleanup; no containment refactor was completed in this batch."
+            }
+          ],
+          "generatedMirror": "apps/chat/tools/chatjs/saved-code-execution/execute.ts"
+        }
+      ],
+      "fixedMemberships": [
+        {
+          "path": "packages/registry/src/tools/retrieve-url/tool.ts",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "status": "fixed",
+          "evidence": "Finite readonly input/context/usage surfaces expose fields the executor consumes; callback producer/consumers remain assignable; emitted runtime JS unchanged.",
+          "sourceSha256": "3506b6b6bbe422fb80184d897e7927b34b27f76e1ad58e79a7b9c46643b19412"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "status": "fixed",
+          "evidence": "Existing ReadonlyNativeSurface over only message id/parts; all original native transcript inputs accepted; original matching part object returned without copying.",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "rule": "typescript/explicit-function-return-type",
+          "status": "fixed",
+          "evidence": "Existing native EveDynamicToolPart result contract with absent undefined, mutually assignable to original inferred return.",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "rule": "typescript/explicit-module-boundary-types",
+          "status": "fixed",
+          "evidence": "Same native exported result annotation, no custom result alias or assertion.",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "rule": "jsdoc/require-returns",
+          "status": "fixed",
+          "evidence": "Authored native-part identity/absence guarantee, compiler confirms attached JSDoc.",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d"
+        },
+        {
+          "path": "packages/registry/src/tools/saved-code-execution/document-runs.ts",
+          "rule": "eslint/no-continue",
+          "status": "fixed",
+          "evidence": "Positive type/tool-name guard has the original short-circuit getter order and loop order; five actual function/real-schema getter, alias and error controls pass and incorrect-tool mutant is rejected; maintained lookup test1/1 against copied candidate.",
+          "sourceSha256": "2a2c5506e0a72976fa854d6048cbec19b9e395f481d6df0e042e754af331ab6d"
+        }
+      ],
+      "effectiveConfigEvidence": "Actual --print-config for each path reports deny for oxc/no-async-await, promise/prefer-await-to-then, typescript/promise-function-async. .then(parse) triggers the latter two rules and the replacement callback shape; current async/await wrappers retain awaited executor then schema-parse order.",
+      "proofs": {
+        "registryTypecheck": "passed",
+        "registryUnitTests": "117 tests; 214 assertions",
+        "fullLint": "passed",
+        "fullTypeChecks": "7/7",
+        "templateCheck": "passed",
+        "canonicalMirrorParity": "all seven pairs byte-identical after bun demo:sync --discard",
+        "documentRunsLedger": "/tmp/document-runs-review.json",
+        "fiveDocumentToolLedger": "/tmp/registry-document-tool-scope-ledger.json"
+      },
+      "limitations": [
+        "The four wrappers retain their existing async-await scopes because the promise-chain alternative conflicts with the effective production rules.",
+        "This evidence extends the pinned historical inventory; it does not change the inventory snapshot commit or claim all inherited memberships were audited."
       ]
     }
   ]

@@ -2,20 +2,20 @@ import type { ToolContext } from "eve/tools";
 
 import { getEveDocumentRevision } from "@/lib/db/eve-documents";
 import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt leaves this import block unchanged; native sort-imports reports an ordering conflict here. */
 import { eveToolAllowed } from "@/lib/eve/turn-tools";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt leaves this import block unchanged; native sort-imports reports an ordering conflict here. */
 import { codeExecutor } from "@/tools/chatjs/code-executor";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt leaves this import block unchanged; native sort-imports reports a binding-group conflict here. */
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Pinned Oxfmt leaves this import block unchanged; native sort-imports reports an ordering conflict here. */
 import {
   documentExecutionInput,
   documentExecutionLanguage,
@@ -31,9 +31,9 @@ type ReadonlyCodeExecutionContext = Readonly<
 /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeEveCodeDocument's asynchronous iteration and rejection behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable eslint/max-statements -- This generator gates the feature, parses input, resolves scope and revision, runs code, and normalizes yielded output; the statement metric remains under review. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-lines-per-function -- This generator combines validation, execution, and streamed-result construction; there is no cleanup phase in this function. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /**
  * Execute saved source, never model-supplied replacement code.

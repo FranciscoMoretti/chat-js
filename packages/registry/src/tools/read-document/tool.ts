@@ -19,7 +19,7 @@ type ReadonlyReadContext = Readonly<
 >;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readDocument's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 export const readDocument = defineTool({
   description:
     "Read the latest document content and revision ID in this conversation before editing it.",
