@@ -11,11 +11,12 @@ import { builtInGateways } from "#cli/registry/gateways";
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The registry item callback consumes a recursively structured generated descriptor; a shallow readonly annotation does not satisfy the rule and a finite projected type has not been validated against clone/spread inference. */
 /** An independently hosted registry with a name, credentials and file layout unknown to the CLI. */
 export const externalGatewayFixture = () => {
   const openAiCompatibleGateway = builtInGateways.find(
-    (item): boolean => item.meta.chatjs.id === "openai-compatible"
+    (item: {
+      readonly meta: { readonly chatjs: { readonly id: string } };
+    }): boolean => item.meta.chatjs.id === "openai-compatible"
   );
   if (!openAiCompatibleGateway) {
     throw new Error("Missing OpenAI-compatible gateway fixture");
@@ -70,7 +71,6 @@ export const externalGatewayFixture = () => {
   };
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */

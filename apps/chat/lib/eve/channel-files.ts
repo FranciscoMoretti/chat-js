@@ -12,8 +12,7 @@ type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchEveChannelFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/strict-boolean-expressions (#610): fetchEveChannelFile intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): fetchEveChannelFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 /** Interpret owned storage keys locally; never fetch the URL's hostname.
@@ -26,12 +25,16 @@ export const fetchEveChannelFile = async (
   context?: FileContext
 ): Promise<{ bytes: Buffer; mediaType: string } | null> => {
   const key = keyFromFileUrl(url);
-  if (!key) {
+  if (key === null) {
     return null;
   }
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading auth from context.session; read session from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const auth = context?.session?.auth.current;
-  if (!auth || auth.principalType === "anonymous") {
+  if (
+    auth === null ||
+    typeof auth !== "object" ||
+    auth.principalType === "anonymous"
+  ) {
     throw new Error("Attachment resolution requires an authenticated owner.");
   }
   await assertEveFilesOwned(auth.principalId, [key]);
@@ -43,4 +46,4 @@ export const fetchEveChannelFile = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */

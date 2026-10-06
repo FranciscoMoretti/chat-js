@@ -2791,7 +2791,6 @@
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -3073,7 +3072,6 @@
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
@@ -3227,7 +3225,6 @@
     "[\"apps/chat/lib/db/credits.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/credits.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/db/encrypted-text.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"typescript/no-unsafe-type-assertion\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -3642,7 +3639,6 @@
     "[\"apps/chat/lib/eve/channel-files.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/channel-files.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/channel-files.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/lib/eve/channel-files.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/channel-files.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/eve/channel-files.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/eve/checkpoint-readiness.test.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 6,
@@ -7422,13 +7418,13 @@
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
-    "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/no-unsafe-member-access\",\"oxlint-disable-next-line\"]": 3,
@@ -8712,7 +8708,6 @@
     "[\"packages/cli/src/utils/provider-config.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/cli/src/utils/provider-config.ts\",\"sort-imports\",\"oxlint-disable\"]": 2,
     "[\"packages/cli/src/utils/provider-config.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": 1,
-    "[\"packages/cli/src/utils/provider-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 3,
     "[\"packages/cli/src/utils/provider-config.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 3,
     "[\"packages/cli/src/utils/provider-config.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 3,
     "[\"packages/cli/src/utils/provider-config.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 2,
@@ -8819,7 +8814,7 @@
     "[\"packages/cli/src/utils/sync-tools.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/sync-tools.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 17,
     "[\"packages/cli/src/utils/sync-tools.ts\",\"eslint/max-params\",\"oxlint-disable\"]": 1,
-    "[\"packages/cli/src/utils/sync-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 4,
+    "[\"packages/cli/src/utils/sync-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 3,
     "[\"packages/cli/src/utils/sync-tools.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 5,
     "[\"packages/cli/src/utils/sync-tools.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/src/utils/sync-tools.ts\",\"max-lines\",\"oxlint-disable\"]": 1,
@@ -8832,7 +8827,6 @@
     "[\"packages/cli/test/external-gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/test/external-gateway.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/test/external-gateway.ts\",\"node/no-sync\",\"oxlint-disable\"]": 1,
-    "[\"packages/cli/test/external-gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/cli/test/external-gateway.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": 2,
     "[\"packages/cli/test/gateway-selection.test.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": 4,
     "[\"packages/cli/test/gateway-selection.test.ts\",\"sort-imports\",\"oxlint-disable\"]": 6,
@@ -9029,7 +9023,6 @@
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
@@ -9261,7 +9254,6 @@
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": 1,
@@ -9871,13 +9863,13 @@
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": 2,
-    "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 2,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/no-unsafe-member-access\",\"oxlint-disable-next-line\"]": 3,
@@ -10151,8 +10143,8 @@
     "[\"packages/registry/visual/charts-finished.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/visual/charts-finished.ts\",\"import/no-named-export\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/visual/charts-finished.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
-    "[\"packages/registry/visual/charts-finished.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"packages/registry/visual/charts-finished.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/visual/charts-finished.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/visual/charts-finished.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": 1,
     "[\"packages/registry/visual/image.browser.test.tsx\",\"sort-imports\",\"oxlint-disable\"]": 3,
     "[\"packages/registry/visual/image.browser.test.tsx\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 2,
@@ -21741,37 +21733,33 @@
       "78db286935a861d85cfe8526b8a82da52279f6c8c3e251ef981332bf79a99d13"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "18c38c82d93be16187317ff1597152fb4722f5076695efcf9bd3c466b116ec9f",
-      "fef4ba71248790a4fb2272deeb9a85c0304f8a7e0b8d996419130511b42ef6f9"
+      "ba2f15a3b1be2fd225111613806aa2eb2b495e4bbab8798302a4277a33f5a834",
+      "2d4969a612011f44985063b8a81032a2790e84e33b40c8d85c437cae79d777bf"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "b76231d594a5fea2afa4c3e6e11705867d9d18685cddbd375f97291f67c92ce7",
-      "a67196e554913cbd6ea64ce52050293866b4f003d0128b33b8cca0b61653cdcd"
+      "ca723eee7cbc1f382106321b8bf7377f2231aab1f8561da7ccb9560356c626c3",
+      "7e92d0182223b5338037cc4380da42d7d9ccfec9e1b83fb724d1512250e7df85"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "996f91c004690fe8a9abdcee7f36c157ac379ea3ac9e914778e5166569554b64"
+      "83307d6d2805fe67df543036fd2ea7d6a28c83aee048fbf7f270b6420446625b"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "44c2bf68de347856b8388daaa509a9075091c907a410cf6b3fb65a8327f880d4"
+      "7656778a15baa0423cf36f577f8c721d2f2f92fcb03e6f8099d99573ef308872"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": [
-      "6f1a50d84b2211a500a9f265b49a7805b07651931f4f641a05fe261384dc839f"
-    ],
-    "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "fc06c45533a585d0694a86efd2381dd1219a473f21eb21cf7753d347a4392251",
-      "f7a41288c2d23f2afadc5065a276d592419cc0a42041cb8f42d893451a219912"
+      "b1c5ebf87495a97dcb84deaa3ea73263e7f24eb965c0f730890346ca5f3da034"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "c8535c0fbbc01c4b4544e79a929fbd53ebda49d162203724e20a7b9e0830f200"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "e618b6809b1a6bc0fb5ffac075f552b2192125430217ded935760041c1d35a40"
+      "3358fd9c9a6685874f8c55ecee88cba17138041c340115f32ca6caac4ebb4e40"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "e618b6809b1a6bc0fb5ffac075f552b2192125430217ded935760041c1d35a40"
+      "3358fd9c9a6685874f8c55ecee88cba17138041c340115f32ca6caac4ebb4e40"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"eslint/no-continue\",\"oxlint-disable\"]": [
-      "54bcebfeef4e37003e1d0fb44d7cfe92074a23dedd534887b3324599d8d2d455"
+      "3429b3461dc9f2c585019c87eb40cf2694bf4b62eafc6983fd057f770ef097b6"
     ],
     "[\"apps/chat/features/attachment-uploads/upload-prep.ts\",\"no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "6efa3ffe447f7848322b25dde97e5d944579a95483a1070d1e11d8698de7ce08"
@@ -22768,46 +22756,43 @@
       "187b1a8582676575be98d22958e0edcc027214a4e006cdd5c9de57dcf98f68b2"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "b91672c645a313e03068ee3431674cde732cd03c469368f9b6ac06ca0ddd2c0e"
+      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b91672c645a313e03068ee3431674cde732cd03c469368f9b6ac06ca0ddd2c0e"
+      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "ec0e73bb0282c1874536f8362eb453b202ccea40dad55158b1b4bb6d4d576815"
+      "c947bf251f29a85bedfe75d1dbafaaafde8a6ed1f31f541e94540006d05134b3"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "034f34929c002a5a97cdd4df844bb2085f22a65cffd74fa113afe4c39646e235"
+      "15e7e5e57ce91888fa86cd74dc7f4278ce2057c9551925286fc3efbf16886ca1"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "78c9c427afbfa83540e5db7e2de620ddd88d67b552687dad56498a9911e534cc"
+      "79a3201abdb4fa49d504c191258aa04dbfb625dd1937b68492151018fe94bd8a"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "0364afa7243a6fb05ae64d434e06ea83655aebd899cb4fbf598c1bfdad9e09dd"
-    ],
-    "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "a29a4eea8f8363c49d2744fafcd02457729229cd2900c58c52344035db0866f9"
+      "f002fdf66245857e3ac71e11c4e45b6f8e5489445fd0ddddbbd0d890fb428d43"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "06cd7c1e6dc8e45aeb828f105d30f234d78a1bb804b44fe69d125ecba6e8b547"
+      "b0273fd0b70bd1cf27d3e8227417b1a91b910269c54c2dd7ae8b094c08524987"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "0162196a41791309f91d6aae23cc86eec62b72f3418cdfd892a608ebac6d8002"
+      "21679b7a84feaefd3a144a47f4c105c93356dc32747b96a0ef1e266ec15bbef0"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "a268b12867457bef8bf382d2045d427b2a6c4ff7bc9b5ce187ab81dadd9bf113"
+      "2240ac1173f5c5ff23bccba1962642897069167cd18fef19f2207fd2588ee9fa"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "21d0e4635485f8a76aec15bba1d6881f3e872d6f5540b3bfd59ea019c98d97be"
+      "eddd5f030033d953e66698e2792249fd35fe0b8a8ca2f15c42d526b688b84edd"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "91105e053d5ba8f86f515db8a011ad249f2f0593ec74a725040cae46aa1edcd0"
+      "d505887a8812dd86a3a04e8ec5ac8045646b7cbabbfa77fd5a1d7946ca1227e3"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "9a65a9b6b83cab5ab19552f72995055af4e786fc0b801a1e7132a64932079609",
       "146a42c67bda867d240899675abffe2a923a91ffcbe0426454c0968206caa301",
-      "d1d6c059d2386ff67af0a29b9c5172d82b2ba7d7231e104ec238be6cf1b9bae5",
-      "277ab584b3f0be03e98baf652672daded7b42c341f08de449f816b30fc7d31b8",
+      "b0b6d1a5956d1f610f456517a34b4bcdcba1551b750ded6b4d84cb32f91f7112",
+      "f0a5bc98d52f66afa0f4720a51d2dd0d1163a0e24bc0fc4683dd6c99b18ad6ae",
       "acd7abf0b74726f5ba86b1b9deaadab9ead73905a1f7673383a8516417cb9867",
       "4f4eae4cb44e39d841b7613510a510e7935931e7371b5498a1066ea3dce15f68",
       "563f95070b4b1bd508b29780acd4975eefda051e063adeff3e343e57ad347dbe",
@@ -22836,7 +22821,7 @@
       "e22e370b1fe5e45e4b23b660cc69ade5d0972f56d2caa641cec679be23ec52c3"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "159a06c25e4ab03497aa0cf3f3c8f11b7f55c1421affd90557011d44db192f00"
+      "0a56ce2685875b471eb2dfbd5ec5b45a752d6b8ae3052c8c315a7a7499979dd1"
     ],
     "[\"apps/chat/lib/ai/mcp/mcp-sse-refresh.test.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "2863b53a4f3536201fed17b8ee6357fa091454b2342d8d9ef29e2fb82176cb2d"
@@ -23362,9 +23347,6 @@
     ],
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "8fb39e3212a67f887bde479da6d65aaae683a68662ed67fa22d6a56aa42e5d1b"
-    ],
-    "[\"apps/chat/lib/db/encrypted-text.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "fa5147a28b7fec065e743be755f735232d6a541cd4c63a7f07e32b59d5e0bdf1"
     ],
     "[\"apps/chat/lib/db/encrypted-text.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "06460fb103e5060108436b25de3baf9dceda342addadd99e40655f2262661049"
@@ -25220,19 +25202,16 @@
       "f33fb887d18568339fd5f8392b8856bee0f23db25dda6e1b36752f4ab8109841"
     ],
     "[\"apps/chat/lib/eve/channel-files.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "946cf84bfc82d626974104f6fd36ea218c1c3e701395b079ccd5155e6ab9a31a"
+      "d1a123abbe61a8715d5be5c6c709a5a6034b0669f4e5740755aef891dce43b85"
     ],
     "[\"apps/chat/lib/eve/channel-files.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "946cf84bfc82d626974104f6fd36ea218c1c3e701395b079ccd5155e6ab9a31a"
+      "d1a123abbe61a8715d5be5c6c709a5a6034b0669f4e5740755aef891dce43b85"
     ],
     "[\"apps/chat/lib/eve/channel-files.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "7d74c1d7504346d4567a00466b8b521c272c0cb2449d54f01ac9d4f4ee310a90"
-    ],
-    "[\"apps/chat/lib/eve/channel-files.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "c937dd62ca5d6492325d259f612d075cad5f63289a753224f8dc3e864faca4e9"
+      "eb45bf6280e49f64cf48cb33094e6acc2bf2a36695d4bca07ee5c622a5ba4673"
     ],
     "[\"apps/chat/lib/eve/channel-files.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "c937dd62ca5d6492325d259f612d075cad5f63289a753224f8dc3e864faca4e9"
+      "751ccd5097cd970920250d43b629fe6db26a255322931ac7cc7e0b0f4bc4ca38"
     ],
     "[\"apps/chat/lib/eve/channel-files.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "fd320d60e0f18ea2f27aaaa2b83b75edba6c70f224e578d2a585d21254cf7142"
@@ -39979,18 +39958,14 @@
       "0c20f70f33776cee1463bbf1cabffafe0c8226b62e32f3136170533ce08582cb",
       "02dede8acea0546dbfcf8ba371578ca12f7d270dda331f9331b4db3e52b42213"
     ],
-    "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "daaa9d9a810c0318268e9f750f4257655166bb63bfad9d2f2f8e396a4f51ab31",
-      "84f86a224e68c0253d50351ddaae67696a1b81e65f77011828117535c9e1a1a6"
-    ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "b36f30ee60ada95c39cb26cf5198d26232c0cbe03cc684e52abd0d1913d6fa81"
+      "5ce6fe54315c687c9995b47649c670c811995094314900add9c28d978e2b2bd7"
     ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b36f30ee60ada95c39cb26cf5198d26232c0cbe03cc684e52abd0d1913d6fa81"
+      "5ce6fe54315c687c9995b47649c670c811995094314900add9c28d978e2b2bd7"
     ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "bf2885a058b1bc4a66eab08950cc535083ce1f0936616f85143e54e3ecb2407c"
+      "5c286a25c46187bbea4583516f7e05a1386729516cf8c0d3f0fe00f80d14b25a"
     ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "b8b19452a4302b46311fd1eb4594f2614cc7f3cf49d6b5f738b9fcd73a72bddf"
@@ -40000,6 +39975,9 @@
     ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "f5899ef1144238aa1f33d44d202e1a8b472e10c0a2122b1a35163746570c362d"
+    ],
+    "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "84f86a224e68c0253d50351ddaae67696a1b81e65f77011828117535c9e1a1a6"
     ],
     "[\"apps/chat/tools/chatjs/retrieve-url/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "1b66a115fa60f2525f2779c5f1b07c24b9be2ada2b5f6f3e9846abc2c0772bbb"
@@ -44946,15 +44924,10 @@
       "fb02e52e93e48332a86e80bbd48396c3ee4338ed7623fd2a6b2e79c320219d89"
     ],
     "[\"packages/cli/src/utils/provider-config.ts\",\"eslint/max-statements\",\"oxlint-disable-next-line\"]": [
-      "697cfebf5c612aae555d13e02479d1ff3197e647ae9874f8889760095bab0761"
-    ],
-    "[\"packages/cli/src/utils/provider-config.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
-      "77ad46cac495507c65635766d24fa7ef5484c75675b92877476330dbf4559293",
-      "34880f9797fca4a4524c4f3f44a329416145e62929494774372421552218b8fe",
-      "0537ef06f9e9a3eb6fe672220a4509504f0c37629d22cd23a59771f8be974a4d"
+      "02bdc0c39e2db62ae481a381a5e06fa7af03018d570292dca7f47bf205b1d95c"
     ],
     "[\"packages/cli/src/utils/provider-config.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "b6d483e9328f04084e919084db29f299a2a9eec33f2d10df7040f0faf8b5122d",
+      "67b2cfc5538e9511de9ec79427937b3f622979e33264e2be2cd6aace2c3f1c20",
       "dab0c400ff98f2ea3e58c04a2b9d97d7d99a72d336f6a8d641d989c84ffd1ae9",
       "d6baa3f53dc408be70a716784a6a79c2ae2fc0a1cd7d7ec9ff6e40991293bf81"
     ],
@@ -45459,7 +45432,7 @@
       "31ecafe231b79ef1d850751d0e186cea61b92bfcc395976977956fbabd4b4227",
       "bb96b9368d328342038bb87888ec1c58ce2e9d75a9baf908a7658efe65642f90",
       "07699c078b28828acf7b2a7fdc371205675cf44d8d620e8736fcb7f8b7164abe",
-      "cda0a7c349711dfbeb8ba4bad9b42ae951dd037f2244a2eb7edfbad9ddd9dbda",
+      "a78cc40eb323a98160f15bf32af3490adf3f36553f7f3fcf49aaa5569bb72ae8",
       "5102bbd5f3e42abaaeda24bbf9f820fcf0c0ea3cafeeb5ad384e92ac84c24d55",
       "774e85c2a7e74700de45631c1f2e3dc1408369157d07216ad2a4c9fb62b20044"
     ],
@@ -45484,7 +45457,7 @@
     "[\"packages/cli/src/utils/sync-tools.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
       "a9da0a419fc98642557b7eddb1d9f62dc17bf575b28bd10646827fb5cd3c8e5b",
       "c1ad2a6ec1925187c9cd80707c6e199a446c3d7711a9c3d04f913603feb7d5c9",
-      "bd5cfb8b4990755c96d9f3d74c94527853fe9ecc0ed6a445b16c75f9306a5efc",
+      "42f11571eb541ed9ced61d36144e811f8418e154b894ab24e8ba86f823e919ef",
       "f0625d8ee1e00280a210e60d61e0a75958a05fd208449af506c5ff27d9bbc70e",
       "fde224f8c4e202d29655a66b7ebe4cffd13c5a3642634f74cc8181f09a9b8649"
     ],
@@ -45515,7 +45488,6 @@
     ],
     "[\"packages/cli/src/utils/sync-tools.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
       "a122bc1f98cf722d2f9502c7445a1c2ad182cca183e500bdde39f944ae47cd39",
-      "c25c84c2d109c21876e3aa67b44b36c31e70058bd135397289a944c410f1ac25",
       "aaa5717303d5cc31e3cb339175ceac8129e5b110c8c8580a4e5278fa7e88c65a",
       "c28ca42336a485d3d5c209f396334bcc04073e4cf45e8b84c46a4f35ad78f303"
     ],
@@ -45530,7 +45502,7 @@
       "6c9ef5d3cb7108ee46d0303a0d747e2be6bbd3236a97e19de3f13628b1681aa8"
     ],
     "[\"packages/cli/src/utils/sync-tools.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "1ee6778875fbcecc1c45be00e1f90f615cbd2bada81f52e4a7a885f3f315553f"
+      "2dccb01e445598eeaf5ee28f96c993bbad7197b9bbe8182a8070f41b4b2a49e3"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": [
       "99eab930fc76b1daa1ececa54183233c5ea1b0ae8826812b5a4e584f403b371d"
@@ -45539,28 +45511,25 @@
       "2b704060c6a6a3975c82e1d9a65aa8dd7d171dbd6393f2d8fad2e5b66fd4c74d"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "a7c93a835e58fe65d6e1f5d00eb6b09856ce69b1888ee2aae8d1eaf2a001c005"
+      "e18387889355c22e838a3e697607629ac70e122af712aef4b032a04b5ad34ac0"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "a7c93a835e58fe65d6e1f5d00eb6b09856ce69b1888ee2aae8d1eaf2a001c005"
+      "e18387889355c22e838a3e697607629ac70e122af712aef4b032a04b5ad34ac0"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "99a8cf6a68cda6991c81187260ee7d9bff0235bcba3252b7fb1824a8174c6b7e"
+      "8b1cbe4300fc3f7dc2f3dd5d6848b4fa1c1f628ef86b4b96592675ce8c95dfd3"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "a3456b1eaa2e3cadf15492d555cb937617e0f1fbd75e4272d681edbed2201b95"
+      "25f5308e93d32b8bbf7d18bf03e81d042660a5aa42db9ffc3ae7d6ca827facf5"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "58c622d4bd0f1b689f32b7d2d10e3644bcaa1a62276778fd9c9bab9be1be3327"
+      "ad2e63c0e678f894b03dcfb262f88525dd4fb4823eee1933056d3d687e810faf"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "f84ba66cb02102f32ed5406b27d0445573abb37c4cd529657e9c41defdd499a3"
+      "3053dd86834635b096ca459e1eebfd6bd78d1819661100880031f2bdc1b413d6"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"node/no-sync\",\"oxlint-disable\"]": [
-      "a292a1da918735537cae33976d9fb41e079da10f50b9dd02833b81ca8ff01bc1"
-    ],
-    "[\"packages/cli/test/external-gateway.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "aea98f9c3f367e1e9be5a9596d4ca06b63a10a6a48a7d7f9f3acca69bfa55ac5"
+      "e258e667ad5a8923ffa24de7eb3bb8d4ab4b52c5a957c0e33324cae042a95656"
     ],
     "[\"packages/cli/test/external-gateway.ts\",\"oxc/no-rest-spread-properties\",\"oxlint-disable-next-line\"]": [
       "2db08e1732c37ff4fbd59cbd32c6e37d96ee36bd04601fcec7671b65849eee06",
@@ -46379,37 +46348,33 @@
       "78db286935a861d85cfe8526b8a82da52279f6c8c3e251ef981332bf79a99d13"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "18c38c82d93be16187317ff1597152fb4722f5076695efcf9bd3c466b116ec9f",
-      "fef4ba71248790a4fb2272deeb9a85c0304f8a7e0b8d996419130511b42ef6f9"
+      "ba2f15a3b1be2fd225111613806aa2eb2b495e4bbab8798302a4277a33f5a834",
+      "2d4969a612011f44985063b8a81032a2790e84e33b40c8d85c437cae79d777bf"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "b76231d594a5fea2afa4c3e6e11705867d9d18685cddbd375f97291f67c92ce7",
-      "a67196e554913cbd6ea64ce52050293866b4f003d0128b33b8cca0b61653cdcd"
+      "ca723eee7cbc1f382106321b8bf7377f2231aab1f8561da7ccb9560356c626c3",
+      "7e92d0182223b5338037cc4380da42d7d9ccfec9e1b83fb724d1512250e7df85"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "996f91c004690fe8a9abdcee7f36c157ac379ea3ac9e914778e5166569554b64"
+      "83307d6d2805fe67df543036fd2ea7d6a28c83aee048fbf7f270b6420446625b"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "44c2bf68de347856b8388daaa509a9075091c907a410cf6b3fb65a8327f880d4"
+      "7656778a15baa0423cf36f577f8c721d2f2f92fcb03e6f8099d99573ef308872"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/init-declarations\",\"oxlint-disable\"]": [
-      "6f1a50d84b2211a500a9f265b49a7805b07651931f4f641a05fe261384dc839f"
-    ],
-    "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "fc06c45533a585d0694a86efd2381dd1219a473f21eb21cf7753d347a4392251",
-      "f7a41288c2d23f2afadc5065a276d592419cc0a42041cb8f42d893451a219912"
+      "b1c5ebf87495a97dcb84deaa3ea73263e7f24eb965c0f730890346ca5f3da034"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"no-ternary\",\"oxlint-disable-next-line\"]": [
       "c8535c0fbbc01c4b4544e79a929fbd53ebda49d162203724e20a7b9e0830f200"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "e618b6809b1a6bc0fb5ffac075f552b2192125430217ded935760041c1d35a40"
+      "3358fd9c9a6685874f8c55ecee88cba17138041c340115f32ca6caac4ebb4e40"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "e618b6809b1a6bc0fb5ffac075f552b2192125430217ded935760041c1d35a40"
+      "3358fd9c9a6685874f8c55ecee88cba17138041c340115f32ca6caac4ebb4e40"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"eslint/no-continue\",\"oxlint-disable\"]": [
-      "54bcebfeef4e37003e1d0fb44d7cfe92074a23dedd534887b3324599d8d2d455"
+      "3429b3461dc9f2c585019c87eb40cf2694bf4b62eafc6983fd057f770ef097b6"
     ],
     "[\"packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts\",\"no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "6efa3ffe447f7848322b25dde97e5d944579a95483a1070d1e11d8698de7ce08"
@@ -47273,46 +47238,43 @@
       "187b1a8582676575be98d22958e0edcc027214a4e006cdd5c9de57dcf98f68b2"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "b91672c645a313e03068ee3431674cde732cd03c469368f9b6ac06ca0ddd2c0e"
+      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b91672c645a313e03068ee3431674cde732cd03c469368f9b6ac06ca0ddd2c0e"
+      "1649359dcc1b9ad2284efe1064f9df9aa3ccb316bd9eac479b52937be1c34c6f"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
-      "ec0e73bb0282c1874536f8362eb453b202ccea40dad55158b1b4bb6d4d576815"
+      "c947bf251f29a85bedfe75d1dbafaaafde8a6ed1f31f541e94540006d05134b3"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "034f34929c002a5a97cdd4df844bb2085f22a65cffd74fa113afe4c39646e235"
+      "15e7e5e57ce91888fa86cd74dc7f4278ce2057c9551925286fc3efbf16886ca1"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "78c9c427afbfa83540e5db7e2de620ddd88d67b552687dad56498a9911e534cc"
+      "79a3201abdb4fa49d504c191258aa04dbfb625dd1937b68492151018fe94bd8a"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "0364afa7243a6fb05ae64d434e06ea83655aebd899cb4fbf598c1bfdad9e09dd"
-    ],
-    "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "a29a4eea8f8363c49d2744fafcd02457729229cd2900c58c52344035db0866f9"
+      "f002fdf66245857e3ac71e11c4e45b6f8e5489445fd0ddddbbd0d890fb428d43"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/no-undefined\",\"oxlint-disable\"]": [
-      "06cd7c1e6dc8e45aeb828f105d30f234d78a1bb804b44fe69d125ecba6e8b547"
+      "b0273fd0b70bd1cf27d3e8227417b1a91b910269c54c2dd7ae8b094c08524987"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"eslint/max-lines-per-function\",\"oxlint-disable\"]": [
-      "0162196a41791309f91d6aae23cc86eec62b72f3418cdfd892a608ebac6d8002"
+      "21679b7a84feaefd3a144a47f4c105c93356dc32747b96a0ef1e266ec15bbef0"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "a268b12867457bef8bf382d2045d427b2a6c4ff7bc9b5ce187ab81dadd9bf113"
+      "2240ac1173f5c5ff23bccba1962642897069167cd18fef19f2207fd2588ee9fa"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "21d0e4635485f8a76aec15bba1d6881f3e872d6f5540b3bfd59ea019c98d97be"
+      "eddd5f030033d953e66698e2792249fd35fe0b8a8ca2f15c42d526b688b84edd"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "91105e053d5ba8f86f515db8a011ad249f2f0593ec74a725040cae46aa1edcd0"
+      "d505887a8812dd86a3a04e8ec5ac8045646b7cbabbfa77fd5a1d7946ca1227e3"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
       "9a65a9b6b83cab5ab19552f72995055af4e786fc0b801a1e7132a64932079609",
       "146a42c67bda867d240899675abffe2a923a91ffcbe0426454c0968206caa301",
-      "d1d6c059d2386ff67af0a29b9c5172d82b2ba7d7231e104ec238be6cf1b9bae5",
-      "277ab584b3f0be03e98baf652672daded7b42c341f08de449f816b30fc7d31b8",
+      "b0b6d1a5956d1f610f456517a34b4bcdcba1551b750ded6b4d84cb32f91f7112",
+      "f0a5bc98d52f66afa0f4720a51d2dd0d1163a0e24bc0fc4683dd6c99b18ad6ae",
       "acd7abf0b74726f5ba86b1b9deaadab9ead73905a1f7673383a8516417cb9867",
       "4f4eae4cb44e39d841b7613510a510e7935931e7371b5498a1066ea3dce15f68",
       "563f95070b4b1bd508b29780acd4975eefda051e063adeff3e343e57ad347dbe",
@@ -47341,7 +47303,7 @@
       "e22e370b1fe5e45e4b23b660cc69ade5d0972f56d2caa641cec679be23ec52c3"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts\",\"max-lines\",\"oxlint-disable\"]": [
-      "159a06c25e4ab03497aa0cf3f3c8f11b7f55c1421affd90557011d44db192f00"
+      "0a56ce2685875b471eb2dfbd5ec5b45a752d6b8ae3052c8c315a7a7499979dd1"
     ],
     "[\"packages/registry/src/features/mcp/lib/ai/mcp/oauth-authorization-required-error.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
       "130db7da4fd9e011d5a9e81afd8f508d7d4f814b6addd5095d1b1d734e79e423"
@@ -49483,18 +49445,14 @@
       "0c20f70f33776cee1463bbf1cabffafe0c8226b62e32f3136170533ce08582cb",
       "02dede8acea0546dbfcf8ba371578ca12f7d270dda331f9331b4db3e52b42213"
     ],
-    "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "daaa9d9a810c0318268e9f750f4257655166bb63bfad9d2f2f8e396a4f51ab31",
-      "84f86a224e68c0253d50351ddaae67696a1b81e65f77011828117535c9e1a1a6"
-    ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "b36f30ee60ada95c39cb26cf5198d26232c0cbe03cc684e52abd0d1913d6fa81"
+      "5ce6fe54315c687c9995b47649c670c811995094314900add9c28d978e2b2bd7"
     ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "b36f30ee60ada95c39cb26cf5198d26232c0cbe03cc684e52abd0d1913d6fa81"
+      "5ce6fe54315c687c9995b47649c670c811995094314900add9c28d978e2b2bd7"
     ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "bf2885a058b1bc4a66eab08950cc535083ce1f0936616f85143e54e3ecb2407c"
+      "5c286a25c46187bbea4583516f7e05a1386729516cf8c0d3f0fe00f80d14b25a"
     ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"eslint/max-statements\",\"oxlint-disable\"]": [
       "b8b19452a4302b46311fd1eb4594f2614cc7f3cf49d6b5f738b9fcd73a72bddf"
@@ -49504,6 +49462,9 @@
     ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "f5899ef1144238aa1f33d44d202e1a8b472e10c0a2122b1a35163746570c362d"
+    ],
+    "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "84f86a224e68c0253d50351ddaae67696a1b81e65f77011828117535c9e1a1a6"
     ],
     "[\"packages/registry/src/tools/retrieve-url/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "1b66a115fa60f2525f2779c5f1b07c24b9be2ada2b5f6f3e9846abc2c0772bbb"
@@ -50444,19 +50405,19 @@
       "386e03dd1d8ba29a26e32b12d2c97671139075294b3d72b14a859dd9bc4f01c5"
     ],
     "[\"packages/registry/visual/charts-finished.ts\",\"import/prefer-default-export\",\"oxlint-disable\"]": [
-      "a3b2616af2f839a7f5cbc64903a8ee5b5cac0dc5a4e5ee7bb881a7630bbec9f1"
+      "f6e54adaecde53b55d06b5567b6130853f447ddf73aaaa89790c65f91bb1b8f7"
     ],
     "[\"packages/registry/visual/charts-finished.ts\",\"import/no-named-export\",\"oxlint-disable\"]": [
-      "a3b2616af2f839a7f5cbc64903a8ee5b5cac0dc5a4e5ee7bb881a7630bbec9f1"
+      "f6e54adaecde53b55d06b5567b6130853f447ddf73aaaa89790c65f91bb1b8f7"
     ],
     "[\"packages/registry/visual/charts-finished.ts\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
-      "43a73f6da327bf67eadce2749be64dc85c4103e8f7cde5efe7671f6fed2e37b7"
-    ],
-    "[\"packages/registry/visual/charts-finished.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
-      "43c15dbd84c40ed84df58dd4ace159e78e5aa84ccaa1f51e5caed719edecb8d1"
+      "b0ab84c35594f72be5cc57aef19ad86cea387fcd490f9f60f75e3d1126f3a612"
     ],
     "[\"packages/registry/visual/charts-finished.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable\"]": [
-      "919c15b54ee69f7cd6d79a192292d64f172b56d3eb53d71f39420b422e658904"
+      "7afa053523678475f906b4a33fd21475647d472d6aa982d4e6e71c497e2026a8"
+    ],
+    "[\"packages/registry/visual/charts-finished.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
+      "78bceb89b9c8f5744796e74e94dd795e6626144fe642d9bcb97037ca262641c3"
     ],
     "[\"packages/registry/visual/charts-finished.ts\",\"oxc/no-optional-chaining\",\"oxlint-disable-next-line\"]": [
       "eeea98ea10307e6279c9d25414a272e25fc0e4edbd09f7ad97705016841f5269"

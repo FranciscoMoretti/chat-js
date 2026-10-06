@@ -605,21 +605,21 @@ The disjoint type-only lane removes four memberships: `installation-contracts.ts
 
 ### Current workspace inventory and execution plan
 
-The current explicit baseline contains 20,685 suppression memberships across 1,396 source paths with at least one membership. The recognized generated ChatJS mirror subtree, `apps/chat/tools/chatjs/`, contributes 1,030 memberships across 97 paths; the remaining 19,655 memberships across 1,299 paths are authored or not-yet-classified. Templates are generated or checked separately and are not included in this baseline classification. These are current exception counts, not semantic review counts. A successful lint run proves that active rules pass; it does not mark a retained or unreviewed scope as reviewed.
+The current explicit baseline contains 20,670 suppression memberships across 1,396 source paths with at least one membership. The recognized generated ChatJS mirror subtree, `apps/chat/tools/chatjs/`, contributes 1,029 memberships across 97 paths; the remaining 19,641 memberships across 1,299 paths are authored or not-yet-classified. Templates are generated or checked separately and are not included in this baseline classification. These are current exception counts, not semantic review counts. A successful lint run proves that active rules pass; it does not mark a retained or unreviewed scope as reviewed.
 
 The largest actionable rule groups currently present are:
 
 | Rule | Memberships | Paths | Known ChatJS mirror memberships / paths |
 | --- | --: | --: | --: |
-| `typescript/prefer-readonly-parameter-types` | 1,414 | 629 | 77 / 46 |
-| `typescript/explicit-function-return-type` | 410 | 251 | 55 / 34 |
-| `typescript/strict-boolean-expressions` | 341 | 236 | 16 / 13 |
+| `typescript/prefer-readonly-parameter-types` | 1,403 | 625 | 76 / 46 |
+| `typescript/explicit-function-return-type` | 408 | 249 | 55 / 34 |
+| `typescript/strict-boolean-expressions` | 339 | 234 | 16 / 13 |
 | `import/no-relative-parent-imports` | 245 | 184 | 0 / 0 |
 | `no-magic-numbers` | 870 | 390 | 10 / 8 |
 
 The `no-magic-numbers` line has more memberships than strict booleans; the table groups the four requested signature/guard/import families with the next large routine numeric family. Unused or redundant directives are checked through scoped `--report-unused-disable-directives` runs and are not represented as a separate count in this baseline. A rule's presence, or its absence from the count table, is not a disposition for any source scope.
 
-The historical source ledger at the 12,472-entry starting snapshot records its own reviewed, fixed, retained, and unreviewed dispositions at the checkpoint described above. Later commits add source-specific evidence in each batch entry and temporary proof ledgers. Do not merge those historical dispositions with the current 20,685 count or infer review from matching fingerprints: unlisted current scopes remain unreviewed until a source-level disposition is recorded. Known generated mirrors are reviewed through their canonical source and regeneration mapping; the other paths require their own provenance check before they can be treated as generated.
+The historical source ledger at the 12,472-entry starting snapshot records its own reviewed, fixed, retained, and unreviewed dispositions at the checkpoint described above. Later commits add source-specific evidence in each batch entry and temporary proof ledgers. Do not merge those historical dispositions with the current 20,670 count or infer review from matching fingerprints: unlisted current scopes remain unreviewed until a source-level disposition is recorded. Known generated mirrors are reviewed through their canonical source and regeneration mapping; the other paths require their own provenance check before they can be treated as generated.
 
 The current 11-file `apps/chat/scripts` partition has 113 memberships: `backfill-eve-search.ts` 18, `build-eve.ts` 8, `check-db.test.ts` 8, `check-db.ts` 12, `check-env.ts` 31, `environment-validation-report.ts` 3, `check-workflow-backend.ts` 6, `eve-setup-config.test.ts` 0, `eve-setup-config.ts` 2, `eve-setup.ts` 18, and `fetch-models.ts` 7. The check-db and backfill figures include the already-integrated changes: the former's two function metrics were removed after controlled lifecycle tests, and the latter's two private async functions now declare `Promise<void>`. `eve-setup.ts`'s run metrics were removed in Batch 67 through explicit named stages; its remaining added numeric/output/environment scopes describe those stages.
 
@@ -627,9 +627,9 @@ Current ownership and execution state:
 
 | Lane | Files or scope | State |
 | --- | --- | --- |
-| Integrator | Batch 70 baseline and progress ledger; template parity | Batch 70 gates are green; commit and release follow. Keep generated mirror and baseline ownership centralized. |
-| CLI review lane | `apps/chat/lib/utils.ts` readonly `cn` input and `packages/cli/src/utils/mcp-schema.ts` AST reader | Both readonly changes are frozen and native-checked. |
-| Type-only lane | `packages/cli/src/utils/{install-plan.test.ts,sync-features.ts,sync-observability.test.ts}` | Six readonly memberships removed; type-aware lint, formatting, type tests and 34 focused tests passed. |
+| Integrator | Current baseline and progress ledger; template/demo parity | Batch 70 is committed; Batch 71 gates are green and commit is pending. Keep generated mirror and baseline ownership centralized. |
+| CLI review lane | `apps/chat/lib/utils.ts` readonly `cn` input and `packages/cli/src/utils/mcp-schema.ts` AST reader | Those changes are committed and native-checked. |
+| Type-only lane | Current readonly candidates in CLI and registry | Batch 71 candidates are frozen; typed lint, formatting and full type tests pass. |
 | Lane A | `apps/chat/lib/db/file-storage-keys.ts` missing-row predicate review | Retained the existing guard; direct undefined and object-type forms conflict with enabled rules or error contract. Updated the scope reason with that concrete evidence. |
 
 Lane A's earlier exact-return fixes remain recorded in their batch entries. This tranche removes the `readEveCheckpoint` truthiness scope by checking its declared optional string ID explicitly, preserving missing and empty behavior; the existing checkpoint readiness suite passes. `getEveStreamPositions` explicitly rejects a missing or empty local workflow URL before loading its PostgreSQL adapter, and a focused test protects the empty-URL fail-fast contract. The SDK-, schema-, and Drizzle-inferred return candidates remain unresolved or unreviewed until their native producer and consumer contracts are checked.
@@ -724,3 +724,32 @@ The missing-row guard in `apps/chat/lib/db/file-storage-keys.ts` remains unchang
 The baseline records only these six reviewed paths. Final SHA-256 values: `apps/chat/lib/db/file-storage-keys.ts` `dccba0604c90143d34df41f5f38db4badeafdc45cc64b961de549e444dab3628`; `apps/chat/lib/utils.ts` `d89ac7737467984085c06fddac309704572831b3f02e1df6e9243a6b09de7a0d`; `packages/cli/src/utils/install-plan.test.ts` `6b88d470f9872dbf171be944f66c1a5f9be23df4cc7fdca62f96acd404c89ce1`; `mcp-schema.ts` `6129650ae498a4ec27c2138e2b4d0f82f824f94a451962276051f21c01b1ebeb`; `sync-features.ts` `e36b101969dd76d95a35a0dac86225e207e942f4444914e489101f66c49c5057`; and `sync-observability.test.ts` `21882371de07515a6621cc17c551d41c0969cb4fe6326a2ff49de47f9d88dfa8`.
 
 Type-aware Oxlint with unused-directive reporting and Oxfmt pass on all changed sources. Full `bun lint`, all seven `bun test:types` tasks, and Node 24 `bun run test:unit` pass; the CLI suite passes 203 tests with 1,102 assertions. `bun template:check` confirms chat-app and Electron templates are synced and the registry demo check passes. The full exception-cleanup objective remains active; only these six source dispositions are recorded here.
+
+### Batch 71: narrow readonly inputs and make sentinel checks explicit
+
+The explicit baseline falls 20,685→20,670 (−15 memberships): `typescript/prefer-readonly-parameter-types` −11, `typescript/strict-boolean-expressions` −2, and `typescript/explicit-function-return-type` −2. The 12 changed TypeScript paths are nine authored/canonical sources and three generated app mirrors. Canonical-to-mirror pairs are maintained by the registry demo generator: `packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts` → `apps/chat/lib/ai/mcp/mcp-oauth-provider.ts`, `packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts` → `apps/chat/features/attachment-uploads/upload-prep.ts`, and `packages/registry/src/tools/retrieve-url/tool.ts` → `apps/chat/tools/chatjs/retrieve-url/tool.ts`. `bun demo:sync --discard` regenerated those files; the three mirror files are byte-identical to their canonical sources. The baseline comparison covers canonical and mirror paths separately.
+
+In `apps/chat/lib/eve/channel-files.ts`, `keyFromFileUrl` returns either `null` or a validated nonempty storage key, so `key === null` preserves the malformed/nonstorage URL path. The Eve SDK's current auth value is `SessionAuthContext | null | undefined`; the explicit null/object/anonymous checks preserve the missing-auth error and allow only nonanonymous contexts. In `apps/chat/lib/db/encrypted-text.ts`, `MCP_ENCRYPTION_KEY` is `string | undefined`, and the schema permits the empty string as the unset sentinel; a type and empty-string guard preserves the existing error and key-decoding boundary. These remove two strict-boolean memberships (7→6 and 5→4).
+
+The CLI readonly lane removes three callback memberships from `provider-config.ts` (22→19), one from `sync-tools.ts` (70→69), and one from `external-gateway.ts` (12→11). Read-only projections contain only fields read by the callbacks and preserve the original runtime objects. Registry canonical sources remove two readonly memberships from upload preparation (14→12) and one from URL redaction (26→25). The upload functions still return mutable `File[]` values and pass the original `File` objects to compression; URL redaction reads only the original URL's `origin` and `pathname` in the same order. Their generated app mirrors change by the same per-file deltas.
+
+The MCP OAuth provider's two private methods now declare the inferred contracts `Promise<McpOAuthSession | undefined>` and `Promise<McpOAuthSession>`, removing its broad class return-type membership in both canonical source and generated mirror (48→47 each). The canonical source is the registry file; the app mirror was regenerated after review. In `charts-finished.ts`, the broad readonly scope was narrowed to the single ECharts `HTMLElement` callback whose API input remains mutable; its total stays 6→6 while the fingerprint moves to a precise next-line scope. This is the only newly fingerprinted exception scope in the batch, accepted as a narrowing with no membership increase.
+
+Baseline fingerprints changed only for these 12 reviewed paths. Final source SHA-256 values:
+
+| Source | SHA-256 | Membership delta |
+| --- | --- | --: |
+| `apps/chat/lib/ai/mcp/mcp-oauth-provider.ts` | `3884a33297a152949b18978123cd4b0583e7bdcd52630bed833fbbca450516de` | −1 |
+| `apps/chat/lib/db/encrypted-text.ts` | `eaf9c70b007cc4eaa4d3147ccf72788359d954aa8d69a3a2be2ab663632008bd` | −1 |
+| `apps/chat/lib/eve/channel-files.ts` | `57043eb4e1ed423a25b99220f7cc5e75f0d045245868b4c312f1ac949cf95387` | −1 |
+| `apps/chat/features/attachment-uploads/upload-prep.ts` | `0513d9100de836244e4325156bf64f0f6632dca65734625bdbee0c6c059805a3` | −2 |
+| `apps/chat/tools/chatjs/retrieve-url/tool.ts` | `cf8d24936a8cfe11a5fb01999a98bad1c54e6b86e6c975b2c1f57d75adf12f0c` | −1 |
+| `packages/cli/src/utils/provider-config.ts` | `1fa7f3ffc26a3446d33b43c898249ee3d45c59290cf2a4f70c24066fb7cd7bc1` | −3 |
+| `packages/cli/src/utils/sync-tools.ts` | `44b9318612495524b51fc30e4337dd7fd23bde77efe4c828cf050c72cce73b4c` | −1 |
+| `packages/cli/test/external-gateway.ts` | `60dd77bb1a73538f8e758c3f5616cec21cf3cd8367d5072e389e842c34fdf9e0` | −1 |
+| `packages/registry/src/features/attachment-uploads/features/attachment-uploads/upload-prep.ts` | `0513d9100de836244e4325156bf64f0f6632dca65734625bdbee0c6c059805a3` | −2 |
+| `packages/registry/src/features/mcp/lib/ai/mcp/mcp-oauth-provider.ts` | `3884a33297a152949b18978123cd4b0583e7bdcd52630bed833fbbca450516de` | −1 |
+| `packages/registry/src/tools/retrieve-url/tool.ts` | `cf8d24936a8cfe11a5fb01999a98bad1c54e6b86e6c975b2c1f57d75adf12f0c` | −1 |
+| `packages/registry/visual/charts-finished.ts` | `037cca81a39b4d33dcdea11bb3831d412310a0ba4368214d9aef91c3e6084281` | 0 |
+
+The changed sources pass scoped type-aware Oxlint with unused-directive reporting and Oxfmt. The app type check passes; `channel-files.test.ts` and `env-schema.test.ts` pass 35/35, upload-preparation tests pass 5/5, and `sync-tools.test.ts` passes 22 tests with 86 assertions. Full `bun lint`, all seven `bun test:types` tasks, Node 24 `bun run test:unit` (nine tasks; CLI 203 tests/1,102 assertions and registry 117 tests), `bun template:check`, and registry `demo:check` (32 assertions) pass. The generated MCP OAuth app candidate was first found to be only a mirror edit; its exact proven return annotations were moved to the canonical registry source before regeneration and final gates. The overall cleanup objective remains active; this entry dispositions only the 12 paths above.

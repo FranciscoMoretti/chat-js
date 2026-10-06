@@ -91,7 +91,6 @@ const storedClientInformationSchema = z.looseObject({
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -214,7 +213,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAuthData's awaited sequencing and rejected-Promise behavior. */
-  private async getAuthData() {
+  private async getAuthData(): Promise<McpOAuthSession | undefined> {
     await this.initializeOAuth();
     return this.cachedAuthData;
   }
@@ -224,7 +223,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
     tokens?: OAuthTokens | null;
     clientInfo?: OAuthClientInformationFull | null;
     codeVerifier?: string | null;
-  }) {
+  }): Promise<McpOAuthSession> {
     if (!this.currentOAuthState) {
       throw new Error("OAuth not initialized");
     }
@@ -611,7 +610,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-returns */

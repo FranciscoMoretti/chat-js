@@ -10,17 +10,13 @@ import { env } from "@/lib/env";
 
 const ALGORITHM = "aes-256-gcm";
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): getKey intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const getKey = (): Buffer => {
   const key = env.MCP_ENCRYPTION_KEY;
-  if (!key) {
+  if (typeof key !== "string" || key === "") {
     throw new Error("MCP_ENCRYPTION_KEY is not configured");
   }
   return Buffer.from(key, "base64");
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): encrypt uses 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

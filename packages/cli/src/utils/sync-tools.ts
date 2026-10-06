@@ -352,10 +352,9 @@ const registrationImports = (
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const sourceFor = (
-  registrations: Registration[]
+  registrations: readonly ReadonlyInput<Registration>[]
 ): { providerBody: string; toolBody: string; uiBody: string } => {
   const renderers = registrations.filter((item) => item.rendererExport);
   const providers = registrations.filter((item): boolean => item.provider);
@@ -404,7 +403,6 @@ const sourceFor = (
   };
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */

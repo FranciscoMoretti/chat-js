@@ -60,19 +60,20 @@ const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   }
   if (ts.isObjectLiteralExpression(value)) {
     return Object.fromEntries(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-      value.properties.map((property) => {
-        if (
-          !ts.isPropertyAssignment(property) ||
-          !(
-            ts.isIdentifier(property.name) ||
-            ts.isStringLiteralLike(property.name)
-          )
-        ) {
-          throw new Error("Provider data must use literal properties.");
+      value.properties.map(
+        (property: ReadonlyNative<ts.ObjectLiteralElementLike>) => {
+          if (
+            !ts.isPropertyAssignment(property) ||
+            !(
+              ts.isIdentifier(property.name) ||
+              ts.isStringLiteralLike(property.name)
+            )
+          ) {
+            throw new Error("Provider data must use literal properties.");
+          }
+          return [property.name.text, literalValue(property.initializer)];
         }
-        return [property.name.text, literalValue(property.initializer)];
-      })
+      )
     );
   }
   throw new Error(
@@ -95,10 +96,14 @@ const readProviderLiteral = async (
   );
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .flatMap((statement) => statement.declarationList.declarations)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .find((item) => item.name.getText(parsed) === name);
+    .flatMap(
+      (statement: ReadonlyNative<ts.VariableStatement>) =>
+        statement.declarationList.declarations
+    )
+    .find(
+      (item: { readonly name: Readonly<Pick<ts.Node, "getText">> }) =>
+        item.name.getText(parsed) === name
+    );
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (!declaration?.initializer) {
     throw new Error(

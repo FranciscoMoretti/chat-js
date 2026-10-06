@@ -41,11 +41,10 @@ const parseUrl = (url: string): URL | null => {
 };
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
+const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
+  `${url.origin}${url.pathname}`;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (retrieveUrl); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retrieveUrl's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
