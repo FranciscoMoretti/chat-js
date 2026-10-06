@@ -28,6 +28,7 @@ import {
 import type { EveForkInput } from "@/lib/eve/contracts";
 import type { EveHistoryInput } from "@/lib/eve/history-input";
 import { EveSessionMappingError } from "@/lib/eve/session-mapping-error";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { initializeEveForkDocuments } from "./eve-documents";
 import { referenceEveFiles } from "./eve-files";
@@ -103,9 +104,6 @@ const getBoundEveConversationForSession = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveSessionMapping's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): readEveSessionMapping accepts identity: Readonly<{ reservationId: string } | { sessionId: string }>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 /**
  * Internal mapping lookup includes tombstones so deletion cannot look like pending delivery.
  * @param {Readonly<{ reservationId: string } | { sessionId: string }>} identity Exact reservation or native session whose durable mapping is inspected.
@@ -1327,12 +1325,10 @@ const settleEveRootFallbackTitle = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveConversationActivity's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): recordEveConversationActivity accepts at: Date; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
 const recordEveConversationActivity = async (
   ownerId: string,
   sessionId: string,
-  at: Date
+  at: ReadonlyNativeSurface<Date>
 ): Promise<void> => {
   await db
     .update(eveChat)
@@ -1351,7 +1347,6 @@ const recordEveConversationActivity = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getPublicEveConversation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions -- no-magic-numbers (#517): getPublicEveConversation uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): getPublicEveConversation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

@@ -7,6 +7,7 @@ import React from "react";
 import { WebSourceBadge } from "@/components/source-badge";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
 
@@ -21,17 +22,16 @@ import { UpdateTitle } from "./update-title";
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const ResearchTask = ({
   update,
   minimal,
   isRunning,
-}: {
-  update: ResearchUpdate;
+}: Readonly<{
+  update: ReadonlyNativeSurface<ResearchUpdate>;
   minimal: boolean;
   isRunning: boolean;
-}) => (
+}>) => (
   <div className="group">
     {!minimal && (
       <div className="flex items-center gap-2">
@@ -122,7 +122,6 @@ export const ResearchTask = ({
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */

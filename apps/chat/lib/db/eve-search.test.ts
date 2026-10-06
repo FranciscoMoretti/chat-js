@@ -12,21 +12,22 @@ import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./client") accepts query: SQL; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 vi.mock("./client", () => {
   const database = drizzle(postgres);
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     db: {
-      execute: async (query: SQL) => {
+      execute: async (query: ReadonlyNativeSurface<SQL>) => {
         const result = await database.execute(query);
         return result.rows;
       },
@@ -35,7 +36,7 @@ vi.mock("./client", () => {
   };
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: {} }));
 
 /* oxlint-disable import/no-relative-parent-imports --
@@ -104,9 +105,8 @@ afterAll(() => postgres.close());
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
@@ -131,7 +131,7 @@ it("finds message-only matches, boosts titles, highlights excerpts and deduplica
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 it("rejects cross-owner indexing and handles punctuation-only searches", async () => {
   await indexEveSearchText("bob", branch, [
@@ -144,9 +144,8 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["saff", [titleChat, chat]],   ["SAFF", [titleChat, chat]],   ["saffron coo", [titleChat's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ accepts ids; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   ["saff", [titleChat, chat]],
@@ -165,7 +164,7 @@ it.each([
   ["' | & :*", []],
 ])(
   "matches the last positive unquoted word as a prefix: %s",
-  async (search, ids) => {
+  async (search: string, ids: readonly string[]) => {
     const result = await searchEveConversations("alice", { search });
     expect(result.items.map((item) => item.id)).toEqual(ids);
     if (search === "saffron ri") {
@@ -175,7 +174,7 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -202,9 +201,6 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["SAFF", "⟦Saff⟧ron"],   ["saffron OR saff", "⟦Saffron⟧"],   ['"saffron cooking"', "⟦Saf's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["SAFF", "⟦Saff⟧ron"], ["saffron OR saff", "⟦Saffron⟧"], ['"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ["SAFF", "⟦Saff⟧ron"],
   ["saffron OR saff", "⟦Saffron⟧"],
@@ -221,7 +217,6 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -262,9 +257,6 @@ it("shows an assistant-only Hello match even when the title also matches", async
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],   ["istan", "İsta's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],
   ["istan", "İstanbul", "⟦İstan⟧bul"],
@@ -283,11 +275,9 @@ it.each([
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result  uses 20, 0, 5, 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("continues past tied ranks and timestamps without skipping when an earlier result  accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
@@ -318,11 +308,10 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("finds a maximum-length quoted phrase crossing a chunk boundary") uses 48, 2, 255, 1999, 0, 8200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds a maximum-length quoted phrase crossing a chunk boundary") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
   const phrase = `start ${"word ".repeat(48)}endingz`;
@@ -344,11 +333,10 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("hides deleting chats and permanently erases text without allowing a late backfill accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
@@ -367,7 +355,7 @@ it("hides deleting chats and permanently erases text without allowing a late bac
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve repairPreviewSearchHistory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

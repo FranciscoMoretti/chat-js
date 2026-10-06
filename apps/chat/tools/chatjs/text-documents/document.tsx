@@ -6,28 +6,40 @@ import React from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { DocumentUi } from "@/lib/eve/document-ui";
-/* oxlint-enable sort-imports */
+import type { DocumentBodyProps, DocumentUi } from "@/lib/eve/document-ui";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { EveDocumentComparison } from "./comparison";
+import type { Editor as EditorExport } from "./editor";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const Editor = dynamic(
-  // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic expects a loader promise selecting the named editor export; this then maps the module to that component.
-  () => import("./editor").then((editorModule) => editorModule.Editor),
+  () =>
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Next dynamic requires a loader promise selecting the named editor export.
+    import("./editor").then(
+      (
+        editorModule: Readonly<{
+          Editor: React.ExoticComponent<
+            React.ComponentProps<typeof EditorExport>
+          >;
+        }>
+      ) => editorModule.Editor
+    ),
   {
     ssr: false,
   }
 );
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (documentUi); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const documentUi: DocumentUi = {
-  Body: ({ inline, editorProps, comparison }) => (
+  Body: ({
+    inline,
+    editorProps,
+    comparison,
+  }: ReadonlyNativeSurface<DocumentBodyProps>) => (
     <ScrollArea
       // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
       className="min-h-0 flex-1"
@@ -53,5 +65,4 @@ export const documentUi: DocumentUi = {
   ),
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-props-no-spreading */

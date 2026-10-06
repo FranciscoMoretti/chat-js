@@ -67,16 +67,13 @@ const hasEveResponseGroupOperation = async (
   return rows.length === SINGLE_ROW_LIMIT;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): EveCopySourceChangedError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 class EveCopySourceChangedError extends CreationConflictError {
-  public constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
     this.name = "EveCopySourceChangedError";
   }
 }
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve lockEveCopyOwners's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const lockEveCopyOwners = async (
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- #565: The complete Drizzle transaction preserves transaction-bound locks. Readonly leaves mutable _.session and _.tableNamesMap; method-only views accept plain db handles, while full mapped views erase protected schema/nestedIndex provenance required by the lock API.
