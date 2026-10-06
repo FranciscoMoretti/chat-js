@@ -125,14 +125,13 @@ const optionalRead = async (file: string): Promise<string | null> => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve filesBelow's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const filesBelow = async (
   directory: string,
   prefix = ""
 ): Promise<string[]> => {
   const entries = await readdir(directory, { withFileTypes: true });
   const nested = await Promise.all(
-    entries.map(async (entry) => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       const file = path.posix.join(prefix, entry.name);
 
       if (entry.isDirectory()) {
@@ -145,7 +144,6 @@ const filesBelow = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve generateDemo's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
@@ -413,11 +411,10 @@ const replaceDemoFiles = async (
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /** Check all files before writing any: a failed protection check never partially syncs. */
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The read-only expected map uses standard-library iterator tuple types; syncDemo only reads entries and never changes the caller map.
 const syncDemo = async (options: {
   readonly root: string;
   readonly baseline: string;
-  readonly expected: ReadonlyMap<string, string>;
+  readonly expected: Pick<ReadonlyMap<string, string>, "get" | "has" | "keys">;
   readonly check?: boolean;
   readonly discard?: boolean;
 }): Promise<void> => {

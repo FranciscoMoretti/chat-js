@@ -182,11 +182,9 @@ const highlightSearchExcerpt = (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchEveConversations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
 max-lines-per-function (#510): searchEveConversations keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): searchEveConversations uses 2, 1, 0, 20, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep searchEveConversations's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/prefer-readonly-parameter-types (#565): searchEveConversations accepts input: { search: string; cursor?: { rank: number; updatedAt: string; id: string } | n; { highlightQuery, highlightWords, ...item }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): searchEveConversations preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
@@ -202,7 +200,10 @@ const searchEveConversations = async (
     search: string;
     cursor?: { rank: number; updatedAt: string; id: string } | null;
   }
-) => {
+): Promise<{
+  items: Omit<EveSearchResult, "highlightQuery" | "highlightWords">[];
+  nextCursor: { id: string; rank: number; updatedAt: string } | null;
+}> => {
   const { cursor } = input;
   const query = input.search.trim();
   const prefixLastWord =
@@ -290,6 +291,6 @@ const searchEveConversations = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (indexEveSearchText, searchEveConversations, writeEveSearchText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { indexEveSearchText, searchEveConversations, writeEveSearchText };
 /* oxlint-enable import/no-named-export */

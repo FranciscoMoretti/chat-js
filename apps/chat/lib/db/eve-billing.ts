@@ -206,8 +206,6 @@ const recordEveUsage = async (input: {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * This cursor is billing progress, never a second copy of the transcript.
  * @param {string} ownerId Owner whose bound session is authorized.
@@ -218,7 +216,7 @@ const getEveUsageCursor = async (
   ownerId: string,
   sessionId: string
 ): Promise<number> => {
-  const [row] = await db
+  const rows = await db
     .select({ streamIndex: eveConversation.usageStreamIndex })
     .from(eveConversation)
     .where(
@@ -228,17 +226,15 @@ const getEveUsageCursor = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
+  const [row] = rows;
   return row.streamIndex;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Advance only after durable ingestion; concurrent older readers cannot rewind it.
  * @param {string} ownerId Owner whose bound session is authorized.
@@ -256,7 +252,7 @@ const advanceEveUsageCursor = async (
   ) {
     throw new Error("Invalid Eve usage cursor.");
   }
-  const [row] = await db
+  const rows = await db
     .update(eveConversation)
     .set({
       usageStreamIndex: sql`greatest(${eveConversation.usageStreamIndex}, ${streamIndex})`,
@@ -269,13 +265,12 @@ const advanceEveUsageCursor = async (
       )
     )
     .returning({ id: eveConversation.id });
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withManagedUsageReconciliation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

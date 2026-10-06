@@ -48,41 +48,36 @@ const compactionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)\/compact$/u;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authorizeDeletionRequest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/strict-boolean-expressions -- * typescript/strict-boolean-expressions (#610): authorizeDeletionRequest intentionally keeps the existing falsy-value behavior of sessionId; rootSessionId; env.WORKFLOW_POSTGRES_URL; await getDeletingEveConversationForSession(owner, rootSessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 const authorizeDeletionRequest = async (
   request: ReadonlyNativeSurface<Request>,
   owner: string,
   path: string
 ): Promise<boolean> => {
   const sessionId = parseDeletionSessionRequest(path, request.method);
-  if (!sessionId) {
+  if (sessionId === null) {
     return false;
   }
   const rootSessionId = request.headers.get("x-chatjs-deletion-root");
-  if (!rootSessionId) {
+  if (rootSessionId === null || rootSessionId === "") {
     return Boolean(
       await getDeletingEveConversationForSession(owner, sessionId)
     );
   }
-  if (
-    !(
-      path.endsWith("/sandbox-identity") &&
-      request.method === "GET" &&
-      resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
-      env.WORKFLOW_POSTGRES_URL &&
-      (await getDeletingEveConversationForSession(owner, rootSessionId))
-    )
-  ) {
-    return false;
-  }
-  return await isFencedEveDescendant(
-    env.WORKFLOW_POSTGRES_URL,
-    rootSessionId,
-    sessionId
+  const workflowPostgresUrl = env.WORKFLOW_POSTGRES_URL;
+  return (
+    path.endsWith("/sandbox-identity") &&
+    request.method === "GET" &&
+    resolveWorkflowWorld(env) === "@workflow/world-postgres" &&
+    typeof workflowPostgresUrl === "string" &&
+    workflowPostgresUrl !== "" &&
+    typeof (await getDeletingEveConversationForSession(
+      owner,
+      rootSessionId
+    )) === "object" &&
+    (await isFencedEveDescendant(workflowPostgresUrl, rootSessionId, sessionId))
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): gatewaySessionPolicy uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

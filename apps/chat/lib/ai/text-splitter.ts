@@ -7,10 +7,9 @@ export interface RecursiveCharacterTextSplitterParams extends TextSplitterParams
 }
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (RecursiveCharacterTextSplitter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
  * max-statements (#512): RecursiveCharacterTextSplitter keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): RecursiveCharacterTextSplitter uses -1, 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): RecursiveCharacterTextSplitter accepts fields?: Partial<RecursiveCharacterTextSplitterParams>; parts: string[]; splits: string[]; finalChunks: string[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): RecursiveCharacterTextSplitter preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 export class RecursiveCharacterTextSplitter
@@ -18,11 +17,15 @@ export class RecursiveCharacterTextSplitter
   implements RecursiveCharacterTextSplitterParams
 {
   public separators: string[] = ["\n\n", "\n", ".", ",", ">", "<", " ", ""];
-  public constructor(fields?: Partial<RecursiveCharacterTextSplitterParams>) {
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Constructor stores fields.separators by reference in public mutable this.separators; readonly array input would change that shared mutable alias contract. */
+  public constructor(
+    fields?: Readonly<Partial<RecursiveCharacterTextSplitterParams>>
+  ) {
     super(fields);
     // oxlint-disable-next-line oxc/no-optional-chaining -- Constructor fields is an optional public argument; the no-options constructor retains each established default, so direct access is not equivalent. The app guidance prefers optional chaining.
     this.separators = fields?.separators ?? this.separators;
   }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   private findBestSeparator(text: string): string {
     for (const separator of this.separators) {
       if (separator === "" || text.includes(separator)) {
@@ -31,7 +34,9 @@ export class RecursiveCharacterTextSplitter
     }
     return this.separators.at(-1) ?? "";
   }
-  private static combineParenthesizedPhrases(parts: string[]): string[] {
+  private static combineParenthesizedPhrases(
+    parts: readonly string[]
+  ): string[] {
     const combined: string[] = [];
     for (let index = 0; index < parts.length; index += 1) {
       const current = parts[index] ?? "";
@@ -51,7 +56,7 @@ export class RecursiveCharacterTextSplitter
   }
   private handleSpaceSeparatorOptimization(
     text: string,
-    splits: string[]
+    splits: readonly string[]
   ): string[] | null {
     const trimmed = text.trim();
     if (trimmed.length <= this.chunkSize) {
@@ -62,8 +67,9 @@ export class RecursiveCharacterTextSplitter
     }
     return null;
   }
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- processSplits appends to the caller-owned finalChunks output buffer. */
   private processSplits(
-    splits: string[],
+    splits: readonly string[],
     separator: string,
     finalChunks: string[]
   ): void {
@@ -86,6 +92,7 @@ export class RecursiveCharacterTextSplitter
       finalChunks.push(...mergedText);
     }
   }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
   public splitText(text: string): string[] {
     if (this.chunkOverlap >= this.chunkSize) {
       throw new Error("Cannot have chunkOverlap >= chunkSize");
@@ -105,4 +112,4 @@ export class RecursiveCharacterTextSplitter
   }
 }
 /* oxlint-enable import/no-named-export */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */

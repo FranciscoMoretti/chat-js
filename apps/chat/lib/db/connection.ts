@@ -50,8 +50,7 @@ const databaseConnection = (
       ? // oxlint-disable-next-line typescript/prefer-nullish-coalescing, typescript/strict-boolean-expressions -- An empty migration URL means unset and must fall back to DATABASE_URL; preserve the short-circuit single migration-URL getter read.
         environment.DATABASE_MIGRATION_URL || environment.DATABASE_URL
       : environment.DATABASE_URL;
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Reject a missing or empty selected URL before reading pool settings; retain the current falsy-value guard at this environment boundary.
-  if (!url) {
+  if (typeof url !== "string" || url === "") {
     throw new Error(
       "DATABASE_URL is required (or DATABASE_MIGRATION_URL for schema operations)"
     );
