@@ -40,6 +40,40 @@ const ownerVisibleEveIdentityCondition = (
     or(eq(eveChat.id, conversationId), eq(eveConversation.id, conversationId))
   );
 
+/** Require an identity before looking up or mutating its conversation family.
+ * @param {Readonly<{ chatId: typeof eveChat.$inferSelect.id }> | undefined} identity - First owner-filtered identity row, absent when the native query found no match.
+ * @returns {Readonly<{ chatId: typeof eveChat.$inferSelect.id }>} The same identity object; throws before family reads when it is absent.
+ */
+const requireEveDeletionIdentity = (
+  identity: Readonly<{ chatId: typeof eveChat.$inferSelect.id }> | undefined
+): Readonly<{ chatId: typeof eveChat.$inferSelect.id }> => {
+  if (!identity) {
+    throw new Error("Conversation identity is unavailable.");
+  }
+  return identity;
+};
+
+/** Require every member to have entered deletion before final tombstoning.
+ * @param {readonly Readonly<Pick<typeof eveConversation.$inferSelect, "state">>[]} family - Native conversation state readers for the owner-visible family.
+ * @returns {void} Rejects an empty family or the first member outside deleting/deleted; reads no member IDs.
+ */
+const assertEveFamilyPendingDeletion = (
+  family: readonly Readonly<
+    Pick<typeof eveConversation.$inferSelect, "state">
+  >[]
+): void => {
+  if (
+    // oxlint-disable-next-line no-magic-numbers -- An empty family cannot be committed as deleted; zero is the direct collection-emptiness comparison.
+    family.length === 0 ||
+    family.some(
+      (row: Readonly<Pick<typeof eveConversation.$inferSelect, "state">>) =>
+        row.state !== "deleting" && row.state !== "deleted"
+    )
+  ) {
+    throw new Error("The entire conversation family must be pending deletion.");
+  }
+};
+
 /**
  * Final application stage. The internal coordinator must confirm native payload,
  * sandbox and file removal before calling this; this is not a deletion endpoint.
@@ -59,7 +93,7 @@ const completeEveConversationDeletion = async (
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`eve-family:${ownerId}`}, 0))`
       );
-      const [identity] = await tx
+      const [queriedIdentity] = await tx
         .select({ chatId: eveChat.id })
         .from(eveChat)
         .leftJoin(
@@ -71,27 +105,13 @@ const completeEveConversationDeletion = async (
           )
         )
         .where(ownerVisibleEveIdentityCondition(ownerId, routeId));
-      // oxlint-disable-next-line typescript/strict-boolean-expressions -- The first owner-visible identity row is absent when the native query returns an empty array; keep the existing falsy-row failure boundary.
-      if (!identity) {
-        throw new Error("Conversation identity is unavailable.");
-      }
+      const identity = requireEveDeletionIdentity(queriedIdentity);
       const condition = and(
         eq(eveConversation.ownerId, ownerId),
         eq(eveConversation.chatId, identity.chatId)
       );
       const family = await tx.select().from(eveConversation).where(condition);
-      if (
-        // oxlint-disable-next-line no-magic-numbers -- An empty family cannot be committed as deleted; zero is the direct collection-emptiness comparison.
-        family.length === 0 ||
-        family.some(
-          (row: Readonly<Pick<typeof eveConversation.$inferSelect, "state">>) =>
-            row.state !== "deleting" && row.state !== "deleted"
-        )
-      ) {
-        throw new Error(
-          "The entire conversation family must be pending deletion."
-        );
-      }
+      assertEveFamilyPendingDeletion(family);
       await tombstoneEveResponseGroups(tx, ownerId, family);
       const ids = family.map(
         (row: Readonly<Pick<typeof eveConversation.$inferSelect, "id">>) =>

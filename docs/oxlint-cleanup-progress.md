@@ -206,6 +206,10 @@ A synchronous owner-visible identity predicate replaces duplicated Drizzle expre
 
 The environment interruption cleared temporary proof files, so current source and Git preimages were used to rebuild compiler/runtime proofs, actual browser comparisons and the wrong-branch control. Full lint, all seven type tasks, 32 focused app tests, two maintained browser scenarios and template parity pass. Current native typed/unused output reports the six established cross-environment assertion warnings and no errors. Source entries total **19,873**, including the new maintained fixture support. Six practical UI conditionals and final no-ternary adoption remain; original-scope review also continues.
 
+The twenty-seventh batch separates synchronous owner-identity and pending-family preconditions from deletion finalization. The identity helper exposes honest optional-row input, returns the same object and removes its strict-boolean exception. Family state checks remain before tombstoning; member IDs are still read afterward. Expanding both helper calls reconstructs the original runtime syntax, and 120 actual coordinator comparisons preserve transaction identity, changing/throwing getters, all nine content-stop positions, post-tombstone family mutation and queued tasks at each query await. Error stacks may gain a private helper frame.
+
+An awaited resource-phase trial changed queued-task versus query-getter order and was rejected. No Promise wrapper or await was added to the accepted precondition change. Transaction size is reduced but remains under review rather than declared unfixable. Full lint, all seven type tasks, 19 focused tests and template parity pass; exact typed/unused diagnostics match the six established warnings. Entries total **19,872**. Live PostgreSQL execution is not claimed; the differential coordinator proof uses controlled query/schema producers.
+
 The goal remains open. Broad existing suppressions remain pending individual review. The all-110 diagnostic totals and PR references below are historical records, not measurements or publication state for this checkout and the new full-preset scope.
 
 ## Historical cleanup records

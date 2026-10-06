@@ -3225,11 +3225,11 @@
     "[\"apps/chat/lib/db/eve-copy-source-file.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"sort-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": 2,
+    "[\"apps/chat/lib/db/eve-deletion.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 5,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"max-lines-per-function\",\"oxlint-disable-next-line\"]": 2,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"max-statements\",\"oxlint-disable-next-line\"]": 1,
-    "[\"apps/chat/lib/db/eve-deletion.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": 5,
-    "[\"apps/chat/lib/db/eve-deletion.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": 5,
+    "[\"apps/chat/lib/db/eve-deletion.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": 4,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"unicorn/no-null\",\"oxlint-disable-next-line\"]": 5,
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 2,
@@ -23001,32 +23001,31 @@
       "59a8b0e3da3e68f8934ab46c0d60308bc9575342f0941ca731c8c825c36b724c"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "b2c282e8714e06c6d46a1c1773ae50227824699b9bcff1899882385f5d7903e3",
+      "407022c5ce76636d2a43066d86dfd17fdaa5d9730bb132c4729bce51dd7d4d92",
       "77a1faf0108a22813c8ebc8d8fdb31bfc5a10847ecf86f2b9e9f5dbc90d28c42"
     ],
+    "[\"apps/chat/lib/db/eve-deletion.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
+      "174a1c15a61966a951556e133d7df202cec0094fbaf1963d413de46c28e2fdb0",
+      "c4e4d6309d4432d722699e0ebf8d33b454b046f7ae860dafdd258722619379fe",
+      "862bd7ca4533b6e4e558ce81576fa3bee27b72a56fe6c66770570ea531359501",
+      "106580d8e2b5f2458f0c2504354d6a5d6b55bc44c629ad55900150eaa9436e04",
+      "55930b7d8648eb6a1ccb5e178dd3dca322b22b2300082d0ed19f4195ebfc1d0e"
+    ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"max-lines-per-function\",\"oxlint-disable-next-line\"]": [
-      "21b20c5afddde1378d79f3b84b36ff1ec5005d9bfef12545f8b967b52ebd96c0",
-      "9ab65b685fe23a80c2bb9a0cda3e78b443a54153921460a44ce7c700c5bd327d"
+      "d8132033c02e1a13a114ffb0b149713bcf4d84daa367201e7c910467687ec402",
+      "7e5ee79da1625d4da05d0c2ab5c42efecb19203f132f90ba52af57a1ecdaf5fe"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": [
       "42b5adb70dc0459e99e1bf24490c78721a350e6a0dc94f14d31cb81b03905daa"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"max-statements\",\"oxlint-disable-next-line\"]": [
-      "9ab65b685fe23a80c2bb9a0cda3e78b443a54153921460a44ce7c700c5bd327d"
+      "7e5ee79da1625d4da05d0c2ab5c42efecb19203f132f90ba52af57a1ecdaf5fe"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"typescript/strict-boolean-expressions\",\"oxlint-disable-next-line\"]": [
-      "66547d668d8497c14ce3a2a4c3f66abf1bda4a351ed7da4ee8f7a34a5005b7b2",
       "08901cd4fe961c53e105f6428da4ecdb522e55e9c613312aa4839e609a16d90e",
       "cd983807939783866a636d63b3f7e4af9b2b787669943f98a793d55263250f4d",
       "fbbc84c4ce3d58ff85aa70fca10da04ecd14f580958ee63e9d296724ffe9bafa",
       "6f2a9fa18d7f97739b35a33dc743e9045205ec6d72489baa565753663f59f77b"
-    ],
-    "[\"apps/chat/lib/db/eve-deletion.ts\",\"no-magic-numbers\",\"oxlint-disable-next-line\"]": [
-      "051120e8a19ced0eb0266c3794e8e0d400b0c778cf1525afb9cf3f546462d6af",
-      "c4e4d6309d4432d722699e0ebf8d33b454b046f7ae860dafdd258722619379fe",
-      "862bd7ca4533b6e4e558ce81576fa3bee27b72a56fe6c66770570ea531359501",
-      "106580d8e2b5f2458f0c2504354d6a5d6b55bc44c629ad55900150eaa9436e04",
-      "55930b7d8648eb6a1ccb5e178dd3dca322b22b2300082d0ed19f4195ebfc1d0e"
     ],
     "[\"apps/chat/lib/db/eve-deletion.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable-next-line\"]": [
       "65fc7b40c5890d2dd36f0fff5bf73d5c5faae0aae4ec8b0ee85ff4c67408e719"
