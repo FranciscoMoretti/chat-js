@@ -15,7 +15,7 @@ import { assertEveConfigured } from "../lib/eve/server";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
-/* oxlint-disable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+/* oxlint-disable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type --
  * init-declarations (#507): main assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): main keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): main emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
@@ -23,7 +23,6 @@ import { assertEveConfigured } from "../lib/eve/server";
  * no-magic-numbers (#517): main uses 50, 0, 1, -1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): main uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep main's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): main intentionally keeps the existing falsy-value behavior of cursor; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const main = async () => {
   assertEveConfigured();
@@ -42,7 +41,9 @@ const main = async () => {
         and(
           eq(eveConversation.state, "bound"),
           // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          cursor ? gt(eveConversation.id, cursor) : undefined
+          typeof cursor === "string" && cursor !== ""
+            ? gt(eveConversation.id, cursor)
+            : undefined
         )
       )
       .orderBy(asc(eveConversation.id))
@@ -51,7 +52,7 @@ const main = async () => {
       break;
     }
     for (const conversation of batch) {
-      if (!conversation.sessionId) {
+      if (conversation.sessionId === null || conversation.sessionId === "") {
         continue;
       }
       try {
@@ -78,7 +79,7 @@ const main = async () => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined, typescript/explicit-function-return-type */
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
  * no-console (#514): void (async () => { try { await main(); } catch (error) emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await main(); } catch (error)'s return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.

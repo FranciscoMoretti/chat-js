@@ -267,12 +267,11 @@ const checkGatewaySnapshot = (): string | null => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers --
  * max-lines-per-function (#510): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkEnv emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): checkEnv uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): checkEnv accepts issue; validationError; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const checkEnv = async (): Promise<void> => {
   const { env } = process;
@@ -293,7 +292,10 @@ const checkEnv = async (): Promise<void> => {
         {
           feature: "database",
           missing: databaseOptions.error.issues.map(
-            (issue) => `${issue.path.join(".")}: ${issue.message}`
+            (issue: {
+              readonly path: readonly PropertyKey[];
+              readonly message: string;
+            }) => `${issue.path.join(".")}: ${issue.message}`
           ),
         },
       ];
@@ -308,7 +310,10 @@ const checkEnv = async (): Promise<void> => {
         {
           feature: "Eve",
           missing: eveOptions.error.issues.map(
-            (issue) => `${issue.path.join(".")}: ${issue.message}`
+            (issue: {
+              readonly path: readonly PropertyKey[];
+              readonly message: string;
+            }) => `${issue.path.join(".")}: ${issue.message}`
           ),
         },
       ];
@@ -334,7 +339,10 @@ const checkEnv = async (): Promise<void> => {
   if (errors.length > 0) {
     const message = errors
       .map(
-        (validationError) =>
+        (validationError: {
+          readonly feature: string;
+          readonly missing: readonly string[];
+        }) =>
           `  - ${validationError.feature}: ${validationError.missing.join(", ")}`
       )
       .join("\n");
@@ -353,7 +361,7 @@ const checkEnv = async (): Promise<void> => {
   console.log("✅ Environment validation passed");
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers */
 
 /* oxlint-disable no-console, no-magic-numbers --
  * no-console (#514): try { await checkEnv(); } catch (error) { console.error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
