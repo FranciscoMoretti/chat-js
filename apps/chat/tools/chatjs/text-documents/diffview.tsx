@@ -5,12 +5,17 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 /* oxlint-enable sort-imports */
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+/* oxlint-disable sort-imports -- Keep the value and type-only bindings for the same package separate as required by consistent-type-specifier-style. */
+import type { ChangeObject } from "diff";
 import { diffWords } from "diff";
+/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { $createParagraphNode, $getRoot, TextNode } from "lexical";
 /* oxlint-enable sort-imports */
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import React, { useEffect } from "react";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { createEditorConfig } from "./editor-config";
 
@@ -34,7 +39,6 @@ type SerializedDiffTextNode = SerializedTextNode & {
 /* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Custom diff text node that supports styling
 class DiffTextNode extends TextNode {
   public __diffType?: DiffTypeValue;
@@ -43,14 +47,16 @@ class DiffTextNode extends TextNode {
     return "diff-text";
   }
 
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Lexical's static TextNode.clone override must retain its native TextNode input to preserve the subclass static contract while this implementation reads the subclass diffType field. */
   public static clone(node: DiffTextNode): DiffTextNode {
     const newNode = new DiffTextNode(node.__text, node.__key);
     newNode.__diffType = node.__diffType;
     return newNode;
   }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
   public static importJSON(
-    serializedNode: SerializedDiffTextNode
+    serializedNode: ReadonlyNativeSurface<SerializedDiffTextNode>
   ): DiffTextNode {
     const { text, diffType } = serializedNode;
     const node = new DiffTextNode(text);
@@ -79,6 +85,7 @@ class DiffTextNode extends TextNode {
     return this.__diffType;
   }
 
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- The Lexical override receives native EditorConfig/LexicalEditor contracts and forwards both references unchanged to TextNode.createDOM. */
   public createDOM(config: EditorConfig, editor?: LexicalEditor): HTMLElement {
     const element = super.createDOM(config, editor);
     const diffType = this.getDiffType();
@@ -110,7 +117,9 @@ class DiffTextNode extends TextNode {
 
     return element;
   }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- TextNode.updateDOM receives the original mutable DOM node and editor config; it updates that DOM node in place. */
   public updateDOM(
     prevNode: DiffTextNode,
     dom: HTMLElement,
@@ -128,8 +137,8 @@ class DiffTextNode extends TextNode {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Lexical dispatches nodes of the registered replacement class; the cast preserves that subclass relationship for the superclass DOM update.
     return super.updateDOM(prevNode as this, dom, config);
   }
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-underscore-dangle */
@@ -137,12 +146,11 @@ class DiffTextNode extends TextNode {
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Proper diff computation using the diff library
 const computeProperDiff = (oldText: string, newText: string) => {
   const changes = diffWords(oldText, newText);
 
-  return changes.map((change) => {
+  return changes.map((change: Readonly<ChangeObject<string>>) => {
     let type: DiffTypeValue;
     if (change.added) {
       type = DiffType.Inserted;
@@ -158,21 +166,19 @@ const computeProperDiff = (oldText: string, newText: string) => {
     };
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const DiffContentPlugin = ({
   oldContent,
   newContent,
-}: {
+}: ReadonlyNativeSurface<{
   oldContent: string;
   newContent: string;
-}) => {
+}>) => {
   const [editor] = useLexicalComposerContext();
 
   useEffect((): void => {
@@ -203,7 +209,6 @@ const DiffContentPlugin = ({
 
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
@@ -222,8 +227,10 @@ interface DiffEditorProps {
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
+export const DiffView = ({
+  oldContent,
+  newContent,
+}: ReadonlyNativeSurface<DiffEditorProps>) => {
   const initialConfig = {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createEditorConfig() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...createEditorConfig(),
@@ -250,7 +257,6 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
   );
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable react/jsx-max-depth */

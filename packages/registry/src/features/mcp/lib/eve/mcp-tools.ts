@@ -47,6 +47,14 @@ type ReadonlyNativeSurface<Value> = Value extends (
       }
     : Value;
 
+// Read-only native session/approval metadata and cancellation used by MCP adapters.
+type McpToolContext = Readonly<{
+  session: ToolContext["session"];
+  callId: ToolContext["callId"];
+  abortSignal: Readonly<AbortSignal>;
+  approval?: Readonly<Pick<NonNullable<ToolContext["approval"]>, "responder">>;
+}>;
+
 const log = createModuleLogger("eve.mcp");
 
 const FIRST_CHARACTER_INDEX = 0;
@@ -356,13 +364,14 @@ const validateMcpInput = async (tool: Tool, input: unknown): Promise<void> => {
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const executeEveMcpTool = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "callId" | "abortSignal" | "approval">,
+  context: McpToolContext,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original ModelMessage content to executeMcpTool; this nested native execute-options boundary remains unresolved for a readonly reader.
   messages: readonly ModelMessage[]
 ): Promise<ReturnType<typeof eveMcpResult.parse>> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
@@ -378,49 +387,56 @@ const executeEveMcpTool = async (
     ),
     ownerId
   );
-  return await withConnector(connector, context.abortSignal, async (tools) => {
-    if (!Object.hasOwn(tools, remoteName)) {
-      throw new Error("MCP tool is no longer available.");
+  return await withConnector(
+    connector,
+    context.abortSignal,
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This callback forwards the original SDK tool/schema objects to native validation and execution; a finite schema-preserving readonly reader remains unresolved.
+      tools
+    ) => {
+      if (!Object.hasOwn(tools, remoteName)) {
+        throw new Error("MCP tool is no longer available.");
+      }
+      const tool = tools[remoteName];
+      const validatedTool = await validateMcpTool(tool);
+      // EVE binds this receipt to the exact session, tool, call and input.
+      // Use the current persisted connector policy, not discovered SDK metadata.
+      if (
+        connector.requireApproval &&
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responder from context.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+        context.approval?.responder.principalId !== ownerId
+      ) {
+        throw new Error("MCP tools require an owner approval receipt.");
+      }
+      let result: unknown;
+      for await (const output of executeMcpTool(
+        validatedTool,
+        input,
+        context,
+        messages
+      )) {
+        result = output;
+      }
+      // oxlint-disable-next-line no-ternary -- Keep converted as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      const converted = tool.toModelOutput
+        ? await tool.toModelOutput({
+            input,
+            output: result,
+            toolCallId: context.callId,
+          })
+        : { type: "json", value: result };
+      return eveMcpResult.parse({
+        kind: "chatjs.mcp-result",
+        modelOutput: converted,
+        output: result,
+      });
     }
-    const tool = tools[remoteName];
-    const validatedTool = await validateMcpTool(tool);
-    // EVE binds this receipt to the exact session, tool, call and input.
-    // Use the current persisted connector policy, not discovered SDK metadata.
-    if (
-      connector.requireApproval &&
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responder from context.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      context.approval?.responder.principalId !== ownerId
-    ) {
-      throw new Error("MCP tools require an owner approval receipt.");
-    }
-    let result: unknown;
-    for await (const output of executeMcpTool(
-      validatedTool,
-      input,
-      context,
-      messages
-    )) {
-      result = output;
-    }
-    // oxlint-disable-next-line no-ternary -- Keep converted as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const converted = tool.toModelOutput
-      ? await tool.toModelOutput({
-          input,
-          output: result,
-          toolCallId: context.callId,
-        })
-      : { type: "json", value: result };
-    return eveMcpResult.parse({
-      kind: "chatjs.mcp-result",
-      modelOutput: converted,
-      output: result,
-    });
-  });
+  );
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveMcpApproval's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-enable eslint/init-declarations */
 
 /* oxlint-enable eslint/max-params */
@@ -430,21 +446,20 @@ const executeEveMcpTool = async (
 
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /**
  * Evaluates current MCP approval policy using serializable identifiers and a temporary client.
  * @param {string} connectorId Connector identity resolved against the authenticated owner and installed MCP feature.
  * @param {string} remoteName Exact remote tool name whose availability and schema are rechecked.
  * @param {unknown} input Tool input validated before its current approval policy is evaluated.
- * @param {Pick<ToolContext, "session" | "abortSignal">} context Native session authentication, call identity, and cancellation evidence.
+ * @param {Pick<McpToolContext, "session" | "abortSignal">} context Native session authentication and cancellation evidence.
  * @returns {Promise<"user-approval" | "not-applicable">} Whether the current tool requires user approval; the temporary client closes on all paths.
  */
 const requestEveMcpApproval = async (
   connectorId: string,
   remoteName: string,
   input: unknown,
-  context: Pick<ToolContext, "session" | "abortSignal">
+  context: Pick<McpToolContext, "session" | "abortSignal">
 ): Promise<"user-approval" | "not-applicable"> => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const ownerId = context.session.auth.initiator?.principalId;
@@ -459,25 +474,36 @@ const requestEveMcpApproval = async (
     await withAbort(() => getMcpConnectorById({ id: connectorId }), signal),
     ownerId
   );
-  return await withConnector(connector, signal, async (tools) => {
-    if (!Object.hasOwn(tools, remoteName)) {
-      throw new Error("MCP tool is no longer available.");
-    }
-    await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
+  return await withConnector(
+    connector,
+    signal,
+    async (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This callback forwards the original SDK tool/schema objects to native validation; a finite schema-preserving readonly reader remains unresolved.
+      tools
+    ) => {
+      if (!Object.hasOwn(tools, remoteName)) {
+        throw new Error("MCP tool is no longer available.");
+      }
+      await validateMcpInput(await validateMcpTool(tools[remoteName]), input);
 
-    if (connector.requireApproval) {
-      return "user-approval";
+      if (connector.requireApproval) {
+        return "user-approval";
+      }
+      return "not-applicable";
     }
-    return "not-applicable";
-  });
+  );
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval, McpToolContext); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/max-params */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-export { discoverEveMcpTools, executeEveMcpTool, requestEveMcpApproval };
+export {
+  discoverEveMcpTools,
+  executeEveMcpTool,
+  requestEveMcpApproval,
+  type McpToolContext,
+};
 /* oxlint-enable import/no-named-export */

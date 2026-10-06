@@ -55,7 +55,7 @@ export const admitGuestResponseGroup = async (
     input.operationId,
     input.modelIds
   );
-  const inputs: Parameters<typeof reserveEveGuestMessages>[0] = [];
+  const inputs: Parameters<typeof reserveEveGuestMessages>[0][number][] = [];
   for (const candidate of candidates) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Keep quota admission and cleanup ordered and bounded.
     const ipHash = await validateGuestCreation(request, principal, {

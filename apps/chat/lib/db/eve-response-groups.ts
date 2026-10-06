@@ -36,6 +36,9 @@ type ResponseGroupTransaction = Parameters<
 type ResponseGroupTombstoneTransaction = Readonly<
   Pick<ResponseGroupTransaction, "select" | "update">
 >;
+type ResponseGroupWriteTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "execute" | "insert" | "select" | "update">
+>;
 type ResponseGroupRow = typeof eveResponseGroup.$inferSelect;
 type ConversationRow = typeof eveConversation.$inferSelect;
 type ReservedResponseGroup = Omit<
@@ -55,7 +58,7 @@ type ReservedResponseGroup = Omit<
  * unicorn/no-null (#570): reserveGroupRow preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const reserveGroupRow = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupWriteTransaction,
   ownerId: string,
   value: z.infer<typeof eveResponseGroupInput>
 ): Promise<ResponseGroupRow | undefined> => {
@@ -185,13 +188,13 @@ const reserveEveResponseGroup = async (
  */
 /**
  * Must commit with guest quota when admitting an anonymous comparison.
- * @param {ResponseGroupTransaction} tx Native transaction shared with the caller's guest quota admission.
+ * @param {ResponseGroupWriteTransaction} tx Native transaction capabilities shared with the caller's guest quota admission.
  * @param {string} ownerId Owner whose family lock fences the comparison reservation.
  * @param {z.infer<typeof eveResponseGroupInput>} value Comparison input whose hash and candidate order define replay identity.
  * @returns {Promise<ReservedResponseGroup>} The allocated or replayed group; the caller controls the shared transaction commit.
  */
 const reserveEveResponseGroupInTransaction = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupWriteTransaction,
   ownerId: string,
   value: z.infer<typeof eveResponseGroupInput>
 ): Promise<ReservedResponseGroup> =>

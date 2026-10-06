@@ -1,12 +1,9 @@
-import type { DynamicResolveContext, ToolDefinition } from "eve/tools";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires the separate type declaration to precede the value import. */
+import type { ToolDefinition, ToolModelOutput } from "eve/tools";
 import { defineDynamic, defineTool } from "eve/tools";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { parse, stringify } from "superjson";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { McpToolContext } from "@/lib/eve/mcp-tools";
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
@@ -28,8 +25,11 @@ export default defineDynamic({
   events: {
     "step.started": async (
       _event,
-      /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE defines this callback's DynamicResolveContext, including its model-message history and optional native AbortSignal; retain the framework context shape for defineDynamic assignability. */
-      context: DynamicResolveContext
+      context: Readonly<{
+        session: Readonly<Pick<McpToolContext["session"], "id" | "auth">>;
+        abortSignal?: Readonly<AbortSignal>;
+        messages: readonly unknown[];
+      }>
     ) => {
       if (eveTurnGuest.get() || eveTurnTool.get()) {
         return {};
@@ -64,8 +64,13 @@ export default defineDynamic({
           // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing description own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...description,
           approval: {
-            /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this policy as ApprovalContext; retain that exact approval input/session contract while forwarding its fields unchanged to the application adapter. */
-            request: (approvalContext) =>
+            request: (
+              approvalContext: Readonly<
+                Pick<McpToolContext, "session" | "abortSignal"> & {
+                  toolInput?: unknown;
+                }
+              >
+            ) =>
               requestEveMcpApproval(
                 connectorId,
                 remoteName,
@@ -93,8 +98,7 @@ export default defineDynamic({
           },
           execute: (
             input: Readonly<Record<string, unknown>>,
-            /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this executor with its native ToolContext; the callback forwards the same session, receipt and abort signal unchanged to the application adapter. */
-            toolContext
+            toolContext: McpToolContext
           ) =>
             executeEveMcpTool(
               connectorId,
@@ -103,8 +107,8 @@ export default defineDynamic({
               toolContext,
               parse(messages)
             ),
-          /* oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EVE contextually types this projection with the exact MCP execution result; retain the inferred result contract and model-output alias. */
-          toModelOutput: (output) => output.modelOutput,
+          toModelOutput: (output: Readonly<{ modelOutput: ToolModelOutput }>) =>
+            output.modelOutput,
         });
       }
       return definitions;

@@ -943,7 +943,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
       "status": "unresolved",
-      "evidence": "Inherited from packages/registry/src/features/mcp/agent/tools/mcp.ts after verified bun demo:sync mapping and byte-identical SHA-256 a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea.",
+      "evidence": "Fixed with finite context/input readers; actual MCP tool callback/native types and app mirror compile.",
       "provenance": "verified-generated-mirror",
       "inheritedFrom": {
         "canonicalPath": "packages/registry/src/features/mcp/agent/tools/mcp.ts",
@@ -6444,8 +6444,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "3c60e493e8003b025b645fdd89a9060a24f0f5b3f959ea77e4c1fbaecd9433ee",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6454,8 +6454,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "ef98386af38b219cdaa0f53a920016577314df47ae83416569da0073f24bffc0",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6464,8 +6464,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "176b8f287867fa26c128a5de43ac1c100fc7727d25974e1292da699aa37819dd",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6474,8 +6474,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "4115fed263cb9bae2c97d2cd8b06ed09e3fdd189434f1e0b17c95c7cad53d0a4",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6484,8 +6484,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a9c5b5046a6ea9bfa56908ad9551caaa2e5e595cdf224afec8bba9d9ceef2c7e",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6494,8 +6494,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a89499d4af2719dc51f79a715d6fd4ba40562c0fa3e4e1bb8c745fa14ed05c90",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -6504,8 +6504,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "111c3e3be2de97524a9be8708d48dcfa4d5696c5ba8fdfd042bb8819d55cefdf",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Finite readonly input or consumed-view change preserves runtime identity and behavior; validated by actual caller types and focused tests in the current EVE guest batch.",
       "provenance": "unknown"
     },
     {
@@ -8214,7 +8214,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Unresolved: narrowed context readers clear surrounding sites, but the actual SDK ModelMessage parameter retains its native mutable contract. Next action is a contained SDK input migration/assignability check.",
       "provenance": "unknown"
     },
     {
@@ -8224,7 +8224,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Unresolved: narrowed readers clear surrounding sites, but an SDK tools-map parameter retains its native input contract. Next action is a contained SDK input migration/assignability check.",
       "provenance": "unknown"
     },
     {
@@ -11502,7 +11502,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c11e73bdb670de16a02378d517475f08b7c042a9fcc2ee90bd62c8a0dffde343",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Editor input is a finite reader of the fields consumed by the code-document view; actual Registry/app type checks pass and the existing callback identity is preserved.",
       "provenance": "unknown"
     },
     {
@@ -11512,7 +11512,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e07f8231dc74c04c8b174cbbdc2ea67c2e59697ee1308ccf5b872e4ecc916439",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Editor callback reads/forwards the existing editor capability; the finite readonly view passes actual Registry/app callers without copying.",
       "provenance": "unknown"
     },
     {
@@ -11833,7 +11833,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c23d4cdb05aa71f30812178628d6e23af01f96a80be6c48ca7530d9101ee33c2",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "The saved-code renderer receives the factory’s schema-parsed finite tool payload; actual factory/render callback types pass.",
       "provenance": "unknown"
     },
     {
@@ -11887,7 +11887,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
       "provenance": "unknown"
     },
     {
@@ -11897,7 +11897,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "663168f13c655051deb760d8f84890440137f788e0f2155e041ef4118dc6886f",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Sheet document body consumes and forwards its props as a reader; actual app/Registry type checks pass.",
       "provenance": "unknown"
     },
     {
@@ -11907,7 +11907,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f8738717a9c4915b5eaa9fbb111691525f71cd4adbd5af6cd47162f28dc53a44",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Copy-content rows are read-only string arrays; the component reads each row and does not mutate or retain a mutable alias.",
       "provenance": "unknown"
     },
     {
@@ -11947,7 +11947,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
       "provenance": "unknown"
     },
     {
@@ -11957,7 +11957,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "9b19c674ba1ca635ad8bd55952f17622ce7ca5c631b8284536393efc4c37feed",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "DiffView text input is read-only; actual component consumers type-check with the narrowed view.",
       "provenance": "unknown"
     },
     {
@@ -11967,7 +11967,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "3ab6b2be4dd915c64e1f280bb2dcab3175e6593a79a4db330da293fcf46c09b8",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "DiffView renders content from the supplied reader without mutating or retaining the original data.",
       "provenance": "unknown"
     },
     {
@@ -11977,7 +11977,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d01b9cdbf61c20c25df8c834c0c4ed172daddf30529f3d23628529621585ab17",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "DiffView comparison data is consumed read-only; actual Registry/app types pass.",
       "provenance": "unknown"
     },
     {
@@ -12021,7 +12021,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d7fd9be6d2f7b3a5e99edee4a482f34971c4b61a1bd48d2594e6754c9f3993f8",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Text document body consumes and forwards props as a reader; actual Registry/app type checks pass.",
       "provenance": "unknown"
     },
     {
@@ -12031,7 +12031,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a4c07d1d42ed92c803fcd58aa188c9c74195f29a66e4c6ed5856871253b3c43b",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Text editor callback reads its finite input view; actual caller types pass and the original callback/objects are forwarded.",
       "provenance": "unknown"
     },
     {
@@ -12041,7 +12041,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6678b2069bd1efdad693b1e31d4c5b3f5a7f1f871ccff68a318b3764bf4c3c85",
       "status": "unreviewed",
-      "evidence": null,
+      "evidence": "Text document editor input is a finite reader accepted by actual callers; runtime behavior is unchanged.",
       "provenance": "unknown"
     },
     {
@@ -12316,7 +12316,7 @@
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
       "status": "unresolved",
-      "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+      "evidence": "Fixed the router’s broad readonly waiver using finite discovery and procedure-input readers; actual Registry/app type checks pass.",
       "provenance": "verified-generated-mirror",
       "inheritedFrom": {
         "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
@@ -13122,8 +13122,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
-      "status": "unresolved",
-      "evidence": "Original broad scope is narrowed to native EVE context/result boundaries; four remaining site scopes still need independent assignability review.",
+      "status": "fixed",
+      "evidence": "Fixed with finite context/input readers; actual MCP tool callback/native types and app mirror compile.",
       "provenance": "canonical-source",
       "reviewedAtSourceHead": "3a138d54f"
     },
@@ -13415,8 +13415,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "unresolved",
+      "evidence": "Unresolved: narrowed context readers clear surrounding sites, but the actual SDK ModelMessage parameter retains its native mutable contract. Next action is a contained SDK input migration/assignability check.",
       "provenance": "canonical-source"
     },
     {
@@ -13425,8 +13425,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "unresolved",
+      "evidence": "Unresolved: narrowed readers clear surrounding sites, but an SDK tools-map parameter retains its native input contract. Next action is a contained SDK input migration/assignability check.",
       "provenance": "canonical-source"
     },
     {
@@ -13468,8 +13468,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
-      "status": "unresolved",
-      "evidence": "Remaining router scope has not been independently resolved; retain it as open.",
+      "status": "fixed",
+      "evidence": "Fixed the router’s broad readonly waiver using finite discovery and procedure-input readers; actual Registry/app type checks pass.",
       "provenance": "canonical-source",
       "reviewedAtSourceHead": "3a138d54f"
     },
@@ -13548,8 +13548,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c11e73bdb670de16a02378d517475f08b7c042a9fcc2ee90bd62c8a0dffde343",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Editor input is a finite reader of the fields consumed by the code-document view; actual Registry/app type checks pass and the existing callback identity is preserved.",
       "provenance": "canonical-source"
     },
     {
@@ -13558,8 +13558,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e07f8231dc74c04c8b174cbbdc2ea67c2e59697ee1308ccf5b872e4ecc916439",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Editor callback reads/forwards the existing editor capability; the finite readonly view passes actual Registry/app callers without copying.",
       "provenance": "canonical-source"
     },
     {
@@ -13860,8 +13860,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c23d4cdb05aa71f30812178628d6e23af01f96a80be6c48ca7530d9101ee33c2",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "The saved-code renderer receives the factory’s schema-parsed finite tool payload; actual factory/render callback types pass.",
       "provenance": "canonical-source"
     },
     {
@@ -13903,8 +13903,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "unresolved",
+      "evidence": "Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
       "provenance": "canonical-source"
     },
     {
@@ -13913,8 +13913,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "663168f13c655051deb760d8f84890440137f788e0f2155e041ef4118dc6886f",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Sheet document body consumes and forwards its props as a reader; actual app/Registry type checks pass.",
       "provenance": "canonical-source"
     },
     {
@@ -13923,8 +13923,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f8738717a9c4915b5eaa9fbb111691525f71cd4adbd5af6cd47162f28dc53a44",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Copy-content rows are read-only string arrays; the component reads each row and does not mutate or retain a mutable alias.",
       "provenance": "canonical-source"
     },
     {
@@ -13954,8 +13954,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "unresolved",
+      "evidence": "Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
       "provenance": "canonical-source"
     },
     {
@@ -13964,8 +13964,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "9b19c674ba1ca635ad8bd55952f17622ce7ca5c631b8284536393efc4c37feed",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "DiffView text input is read-only; actual component consumers type-check with the narrowed view.",
       "provenance": "canonical-source"
     },
     {
@@ -13974,8 +13974,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "3ab6b2be4dd915c64e1f280bb2dcab3175e6593a79a4db330da293fcf46c09b8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "DiffView renders content from the supplied reader without mutating or retaining the original data.",
       "provenance": "canonical-source"
     },
     {
@@ -13984,8 +13984,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d01b9cdbf61c20c25df8c834c0c4ed172daddf30529f3d23628529621585ab17",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "DiffView comparison data is consumed read-only; actual Registry/app types pass.",
       "provenance": "canonical-source"
     },
     {
@@ -14016,8 +14016,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d7fd9be6d2f7b3a5e99edee4a482f34971c4b61a1bd48d2594e6754c9f3993f8",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Text document body consumes and forwards props as a reader; actual Registry/app type checks pass.",
       "provenance": "canonical-source"
     },
     {
@@ -14026,8 +14026,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a4c07d1d42ed92c803fcd58aa188c9c74195f29a66e4c6ed5856871253b3c43b",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Text editor callback reads its finite input view; actual caller types pass and the original callback/objects are forwarded.",
       "provenance": "canonical-source"
     },
     {
@@ -14036,8 +14036,8 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "6678b2069bd1efdad693b1e31d4c5b3f5a7f1f871ccff68a318b3764bf4c3c85",
-      "status": "unreviewed",
-      "evidence": null,
+      "status": "fixed",
+      "evidence": "Text document editor input is a finite reader accepted by actual callers; runtime behavior is unchanged.",
       "provenance": "canonical-source"
     },
     {
@@ -14878,14 +14878,14 @@
     }
   ],
   "latestReview": {
-    "sourceCommit": "de812fd45",
-    "originalMembershipsReviewed": 145,
+    "sourceCommit": "79fb41c60",
+    "originalMembershipsReviewed": 182,
     "statusCounts": {
-      "fixed": 127,
-      "unresolved": 7,
-      "justified": 11
+      "fixed": 160,
+      "justified": 11,
+      "unresolved": 11
     },
-    "note": "The immutable d7a93408 denominator is unchanged. Direct source review and verified generated-mirror inheritance are reported separately. This update records EVE database transaction readers and Registry renderer inputs; the copy-plan JSONB parameter and saved-code callback remain unresolved. The Renderer paired PNGs are pixel-identical before and after synchronized mirrors.",
+    "note": "The immutable d7a93408 denominator is unchanged. This update records the EVE guest readers, five Registry document renderers/editors, and MCP tool/router readers. Direct authored-source dispositions and verified generated-mirror inheritances are reported separately. Two document editor boundaries and two MCP SDK input boundaries remain unresolved; narrowed descendant directives and the new visual-test metric obligation are tracked separately from original campaign membership.",
     "currentSourceHashes": {
       "apps/chat/lib/ai/to-model-data.ts": "0465aa3bd25deae2920db03dc91b7becc8daa315b8c98b3d4acff422845006a7",
       "apps/chat/lib/ai/tool-context.ts": "cb9b98f21726ece37244855956aee41ce4f69ffa00c135bcb167bd765937a7c1",
@@ -14903,19 +14903,19 @@
       "packages/registry/src/tools/vercel-code-execution/execution-sandbox.ts": "0652b48d96a124be264733d3c20a514e00489999ed5b20ab5c9298d68600cf2d",
       "packages/registry/src/tools/deep-research/workflow.ts": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
       "packages/registry/src/tools/deep-research/agent/subagents/researcher/tools/web-search.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
-      "packages/registry/src/features/mcp/agent/tools/mcp.ts": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+      "packages/registry/src/features/mcp/agent/tools/mcp.ts": "c6e8a78b6ce95e3e3c996f2b0910e85af81be5cfef9d9490cc7edaf34faa6407",
       "packages/registry/src/tools/vercel-code-execution/tool.ts": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
-      "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+      "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts": "a1b11f4b55f468fb62038c756422936820b43c9c05c83ecf627e76f83dcc1415",
       "apps/chat/tools/chatjs/deep-research/workflow.ts": "8d2f975466f88862aac6827b93e347896d1edb52267a1787efc8b668ee7d5f41",
-      "apps/chat/agent/tools/mcp.ts": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+      "apps/chat/agent/tools/mcp.ts": "c6e8a78b6ce95e3e3c996f2b0910e85af81be5cfef9d9490cc7edaf34faa6407",
       "apps/chat/agent/subagents/researcher/tools/webSearch.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
       "apps/chat/tools/chatjs/vercel-code-execution/tool.ts": "7b56388750507ecc3ae855531c93462c45f3bf975397dfdf916f05312d92caf7",
-      "apps/chat/trpc/routers/mcp.router.ts": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+      "apps/chat/trpc/routers/mcp.router.ts": "a1b11f4b55f468fb62038c756422936820b43c9c05c83ecf627e76f83dcc1415",
       "packages/registry/src/tools/deep-research/tasks.tsx": "dbd924949ec3c5c1ed8ef8852705fba7c5b11ba1d898fbe4e386335b85c1b21c",
       "packages/registry/src/tools/deep-research/task.tsx": "157f00f80b1efe7eae6b173891ff44a9c6cdf7d51cb63dce1936ea41c2406217",
       "packages/registry/src/tools/code-documents/document.tsx": "dca2c96caa6ca8c16e6f18fec4d87fb6eabfa7cacd1a283ea2441d9f564cb6fc",
       "packages/registry/src/tools/sheet-documents/document.tsx": "9bf016fec432043161499d8a9f1935e3a0bea5909bee59b7e9c002e4e809285e",
-      "packages/registry/src/tools/text-documents/document.tsx": "3573932bddc0e1288927dda9453e448cc6ace79e6797c1a82db3b23653d98",
+      "packages/registry/src/tools/text-documents/document.tsx": "3573932bddc0e1288927dda9453e448cc6ace79e6797c1a82d20db3b23653d98",
       "apps/chat/lib/db/eve-documents.ts": "ac5318dda156d03fdb9723e3f326dd3429b6fdbaf2e419b33f37d7166b89463d",
       "apps/chat/lib/db/eve-queries.ts": "8129abc94cd9218cb44b87bd9b3b0760a5d9d5f3d2697ffe4cd7c2c83fbfe0ac",
       "apps/chat/lib/db/eve-copy-journal.ts": "f8f2ee2965950ab43ecd4d55985468f74c5ecef96ca2df0589afe19476fa0cb6",
@@ -14941,7 +14941,7 @@
       "apps/chat/tools/chatjs/get-weather/renderer.tsx": "b8561c76c9846a50433f3f0a0406be875ebb1c710cb6251b6c0f958e0c61ff8a",
       "packages/registry/src/tools/get-weather/renderer.tsx": "b8561c76c9846a50433f3f0a0406be875ebb1c710cb6251b6c0f958e0c61ff8a",
       "apps/chat/tools/chatjs/deep-research/update-title.tsx": "5320279cd2a93f81f56ac7f4c1b4b6e642040fb75360eb6ac2e9153cc547f3d0",
-      "apps/chat/lib/db/eve-response-groups.ts": "ade532162ca5be2b302a3a3977485de99ab354080d817fab91ae65c084877560",
+      "apps/chat/lib/db/eve-response-groups.ts": "16bf2ee75d6857c9dd8ce0cc4cd330197c480c4c7bc866f21260a7ad55296b3d",
       "packages/registry/src/tools/retrieve-url/renderer.tsx": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
       "apps/chat/tools/chatjs/retrieve-url/renderer.tsx": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
       "packages/registry/src/tools/generate-image/renderer.tsx": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
@@ -14951,23 +14951,37 @@
       "packages/registry/src/tools/vercel-code-execution/renderer.tsx": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
       "apps/chat/tools/chatjs/vercel-code-execution/renderer.tsx": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
       "packages/registry/src/tools/saved-code-execution/document.tsx": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
-      "apps/chat/tools/chatjs/saved-code-execution/document.tsx": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7"
+      "apps/chat/tools/chatjs/saved-code-execution/document.tsx": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+      "apps/chat/lib/db/eve-guests.ts": "ad6405bcdcefeb76481dc53a3b1efe38bbaa3e2ae65367c337306441ebf76567",
+      "apps/chat/lib/eve/guest-group-admission.ts": "4fddf46b979cd19f377abcfb4018cf370d4108c0b5ecab11ccaa74d196d5aa9c",
+      "apps/chat/lib/eve/mcp-tools.ts": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+      "packages/registry/src/features/mcp/lib/eve/mcp-tools.ts": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+      "packages/registry/src/tools/code-documents/editor.tsx": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+      "packages/registry/src/tools/sheet-documents/editor.tsx": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+      "packages/registry/src/tools/text-documents/editor.tsx": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+      "packages/registry/src/tools/text-documents/diffview.tsx": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+      "packages/registry/src/tools/saved-code-execution/renderer.tsx": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde",
+      "apps/chat/tools/chatjs/code-documents/editor.tsx": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+      "apps/chat/tools/chatjs/sheet-documents/editor.tsx": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+      "apps/chat/tools/chatjs/text-documents/editor.tsx": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+      "apps/chat/tools/chatjs/text-documents/diffview.tsx": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+      "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde"
     },
     "directReview": {
-      "sourceHead": "de812fd45",
-      "originalMembershipsReviewed": 110,
+      "sourceHead": "79fb41c60",
+      "originalMembershipsReviewed": 132,
       "statusCounts": {
-        "fixed": 98,
-        "unresolved": 4,
-        "justified": 8
+        "fixed": 118,
+        "justified": 8,
+        "unresolved": 6
       }
     },
     "inheritedMirrorReview": {
-      "membershipCount": 35,
+      "membershipCount": 50,
       "statusCounts": {
-        "fixed": 29,
-        "unresolved": 3,
-        "justified": 3
+        "fixed": 42,
+        "justified": 3,
+        "unresolved": 5
       },
       "evidence": "Verified bun demo:sync mappings and byte-identical source/mirror SHA-256 for every listed inherited record. Firecrawl is canonical-only because it has no selected generated mirror.",
       "records": [
@@ -14994,16 +15008,16 @@
           "directive": "oxlint-disable",
           "rule": "typescript/prefer-readonly-parameter-types",
           "fingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a",
-          "status": "unresolved",
-          "evidence": "Inherited from packages/registry/src/features/mcp/agent/tools/mcp.ts after verified bun demo:sync mapping and byte-identical SHA-256 a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea.",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Fixed with finite context/input readers; actual MCP tool callback/native types and app mirror compile.",
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/features/mcp/agent/tools/mcp.ts",
-            "canonicalSourceSha256": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
-            "mirrorSourceSha256": "a84b13e78ca79bc5435d444ed7478f2e8b150222883192dc60eb9c9fdd41adea",
+            "canonicalSourceSha256": "c6e8a78b6ce95e3e3c996f2b0910e85af81be5cfef9d9490cc7edaf34faa6407",
+            "mirrorSourceSha256": "c6e8a78b6ce95e3e3c996f2b0910e85af81be5cfef9d9490cc7edaf34faa6407",
             "campaignFingerprint": "efd7ed162b72b7c0ded6d6f119e66e49d4d56583aa0ce2ca5eb259a3b908919a"
           },
-          "reviewedAtSourceHead": "3a138d54f"
+          "reviewedAtSourceHead": "79fb41c60"
         },
         {
           "path": "apps/chat/lib/ai/mcp/mcp-fetch.ts",
@@ -15300,16 +15314,16 @@
           "directive": "oxlint-disable",
           "rule": "typescript/prefer-readonly-parameter-types",
           "fingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167",
-          "status": "unresolved",
-          "evidence": "Inherited from packages/registry/src/features/mcp/trpc/routers/mcp.router.ts after verified bun demo:sync mapping and byte-identical SHA-256 73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036.",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Fixed the router’s broad readonly waiver using finite discovery and procedure-input readers; actual Registry/app type checks pass.",
           "provenance": "verified-generated-mirror",
           "inheritedFrom": {
             "canonicalPath": "packages/registry/src/features/mcp/trpc/routers/mcp.router.ts",
-            "canonicalSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
-            "mirrorSourceSha256": "73efcb4ed872cb09eb654c7f8d6781c4726e6e33e653ce586864b04c258c8036",
+            "canonicalSourceSha256": "a1b11f4b55f468fb62038c756422936820b43c9c05c83ecf627e76f83dcc1415",
+            "mirrorSourceSha256": "a1b11f4b55f468fb62038c756422936820b43c9c05c83ecf627e76f83dcc1415",
             "campaignFingerprint": "4eda1fd7762da4bcac77b7d18e1a5dc91cef504035e67faf6f6be3b6a8fbb167"
           },
-          "reviewedAtSourceHead": "3a138d54f"
+          "reviewedAtSourceHead": "79fb41c60"
         },
         {
           "path": "apps/chat/tools/chatjs/word-count/renderer.tsx",
@@ -15565,14 +15579,269 @@
             "campaignFingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610"
           },
           "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/code-documents/editor.tsx",
+          "line": 53,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "c11e73bdb670de16a02378d517475f08b7c042a9fcc2ee90bd62c8a0dffde343",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Editor input is a finite reader of the fields consumed by the code-document view; actual Registry/app type checks pass and the existing callback identity is preserved.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/code-documents/editor.tsx",
+            "canonicalSourceSha256": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+            "mirrorSourceSha256": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+            "campaignFingerprint": "c11e73bdb670de16a02378d517475f08b7c042a9fcc2ee90bd62c8a0dffde343"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/code-documents/editor.tsx",
+          "line": 133,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "e07f8231dc74c04c8b174cbbdc2ea67c2e59697ee1308ccf5b872e4ecc916439",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Editor callback reads/forwards the existing editor capability; the finite readonly view passes actual Registry/app callers without copying.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/code-documents/editor.tsx",
+            "canonicalSourceSha256": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+            "mirrorSourceSha256": "fd0342ba2d546807dccfbf79a705e9b24a92a7c2478a7d259f398f4c4bf40ba1",
+            "campaignFingerprint": "e07f8231dc74c04c8b174cbbdc2ea67c2e59697ee1308ccf5b872e4ecc916439"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/sheet-documents/editor.tsx",
+          "line": 31,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8",
+          "status": "unresolved",
+          "evidence": "Inherited canonical disposition: Unresolved: PapaParse unparse consumes mutable outer row arrays; the exact readonly projection is rejected by its native parameter type. Next action is a contained caller/projection migration, preserving PapaParse input identity.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
+            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "campaignFingerprint": "a59c6dcd9899fb029767ae8415e812efdfa5f97ebe525a22abc6ba89ca0938b8"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/sheet-documents/editor.tsx",
+          "line": 44,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "663168f13c655051deb760d8f84890440137f788e0f2155e041ef4118dc6886f",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Sheet document body consumes and forwards its props as a reader; actual app/Registry type checks pass.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
+            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "campaignFingerprint": "663168f13c655051deb760d8f84890440137f788e0f2155e041ef4118dc6886f"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/sheet-documents/editor.tsx",
+          "line": 185,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "f8738717a9c4915b5eaa9fbb111691525f71cd4adbd5af6cd47162f28dc53a44",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Copy-content rows are read-only string arrays; the component reads each row and does not mutate or retain a mutable alias.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/sheet-documents/editor.tsx",
+            "canonicalSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "mirrorSourceSha256": "0085436b140d2a04c925e0792634ec14d0efc70a8b72595b284c918745d39a3d",
+            "campaignFingerprint": "f8738717a9c4915b5eaa9fbb111691525f71cd4adbd5af6cd47162f28dc53a44"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/editor.tsx",
+          "line": 47,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "d7fd9be6d2f7b3a5e99edee4a482f34971c4b61a1bd48d2594e6754c9f3993f8",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Text document body consumes and forwards props as a reader; actual Registry/app type checks pass.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/editor.tsx",
+            "canonicalSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "mirrorSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "campaignFingerprint": "d7fd9be6d2f7b3a5e99edee4a482f34971c4b61a1bd48d2594e6754c9f3993f8"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/editor.tsx",
+          "line": 115,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "a4c07d1d42ed92c803fcd58aa188c9c74195f29a66e4c6ed5856871253b3c43b",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Text editor callback reads its finite input view; actual caller types pass and the original callback/objects are forwarded.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/editor.tsx",
+            "canonicalSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "mirrorSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "campaignFingerprint": "a4c07d1d42ed92c803fcd58aa188c9c74195f29a66e4c6ed5856871253b3c43b"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/editor.tsx",
+          "line": 168,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "6678b2069bd1efdad693b1e31d4c5b3f5a7f1f871ccff68a318b3764bf4c3c85",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: Text document editor input is a finite reader accepted by actual callers; runtime behavior is unchanged.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/editor.tsx",
+            "canonicalSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "mirrorSourceSha256": "e496a33ed8f8caf99c91aa1f6b6d18c089d390583fc4abf9db49b0e1344dffc6",
+            "campaignFingerprint": "6678b2069bd1efdad693b1e31d4c5b3f5a7f1f871ccff68a318b3764bf4c3c85"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
+          "line": 37,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade",
+          "status": "unresolved",
+          "evidence": "Inherited canonical disposition: Unresolved: the broad class waiver was narrowed to the Lexical clone/createDOM/updateDOM hooks. A readonly ReactNode projection loses ReactPortal.children and the actual motion.div children assignment fails TS2322; next action is a finite hook-specific view or API-compatible ReactNode projection.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
+            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "campaignFingerprint": "2b26fc52bf44554225c9f40dbeda2a0ac50c7f0fa3f1eb200c3029d33d79cade"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
+          "line": 140,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "9b19c674ba1ca635ad8bd55952f17622ce7ca5c631b8284536393efc4c37feed",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: DiffView text input is read-only; actual component consumers type-check with the narrowed view.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
+            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "campaignFingerprint": "9b19c674ba1ca635ad8bd55952f17622ce7ca5c631b8284536393efc4c37feed"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
+          "line": 168,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "3ab6b2be4dd915c64e1f280bb2dcab3175e6593a79a4db330da293fcf46c09b8",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: DiffView renders content from the supplied reader without mutating or retaining the original data.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
+            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "campaignFingerprint": "3ab6b2be4dd915c64e1f280bb2dcab3175e6593a79a4db330da293fcf46c09b8"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/text-documents/diffview.tsx",
+          "line": 225,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "d01b9cdbf61c20c25df8c834c0c4ed172daddf30529f3d23628529621585ab17",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: DiffView comparison data is consumed read-only; actual Registry/app types pass.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/text-documents/diffview.tsx",
+            "canonicalSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "mirrorSourceSha256": "48ecc2598ac432f71eb1e3d0ba64a2c65d35767bba0b65cffe6075c33f1e7873",
+            "campaignFingerprint": "d01b9cdbf61c20c25df8c834c0c4ed172daddf30529f3d23628529621585ab17"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx",
+          "line": 15,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "c23d4cdb05aa71f30812178628d6e23af01f96a80be6c48ca7530d9101ee33c2",
+          "status": "fixed",
+          "evidence": "Inherited canonical disposition: The saved-code renderer receives the factory’s schema-parsed finite tool payload; actual factory/render callback types pass.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/saved-code-execution/renderer.tsx",
+            "canonicalSourceSha256": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde",
+            "mirrorSourceSha256": "48b7fa05c938943eea67437d73ee7c7246acd309ddb9a825a591a3fd38c50fde",
+            "campaignFingerprint": "c23d4cdb05aa71f30812178628d6e23af01f96a80be6c48ca7530d9101ee33c2"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/lib/eve/mcp-tools.ts",
+          "line": 359,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8",
+          "status": "unresolved",
+          "evidence": "Inherited canonical disposition: Unresolved: narrowed context readers clear surrounding sites, but the actual SDK ModelMessage parameter retains its native mutable contract. Next action is a contained SDK input migration/assignability check.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/features/mcp/lib/eve/mcp-tools.ts",
+            "canonicalSourceSha256": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+            "mirrorSourceSha256": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+            "campaignFingerprint": "89e32473b69bec7b45da70d085d37155939e0f9ffcf80d9d2a268c93f605bad8"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
+        },
+        {
+          "path": "apps/chat/lib/eve/mcp-tools.ts",
+          "line": 433,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e",
+          "status": "unresolved",
+          "evidence": "Inherited canonical disposition: Unresolved: narrowed readers clear surrounding sites, but an SDK tools-map parameter retains its native input contract. Next action is a contained SDK input migration/assignability check.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/features/mcp/lib/eve/mcp-tools.ts",
+            "canonicalSourceSha256": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+            "mirrorSourceSha256": "1456ccdadf6a3329cc52d1affffd5d7f5bc7503b535462cccb89169aa953d1c5",
+            "campaignFingerprint": "6e20574a10b6e034fdd07d561dbf95c2057a4f9f716a12a55b262848858a523e"
+          },
+          "reviewedAtSourceHead": "79fb41c60"
         }
       ]
     },
     "combinedStatusCounts": {
-      "fixed": 65,
+      "fixed": 160,
       "justified": 11,
-      "unresolved": 9,
-      "unreviewed": 1288
+      "unresolved": 11,
+      "unreviewed": 1191
     },
     "deletedPaths": {
       "apps/chat/lib/utils/download-assets.ts": {
@@ -15588,6 +15857,6 @@
         "originalReadonlyMemberships": 0
       }
     },
-    "unreviewedCount": 1228
+    "unreviewedCount": 1191
   }
 }

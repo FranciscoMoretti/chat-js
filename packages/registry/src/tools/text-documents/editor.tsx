@@ -30,7 +30,11 @@ import { $getRoot } from "lexical";
 import React, { memo, useEffect, useRef } from "react";
 /* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
 import { createEditorConfig, handleEditorChange } from "./editor-config";
+/* oxlint-enable sort-imports */
 
 interface EditorProps {
   content: string;
@@ -44,19 +48,18 @@ interface EditorProps {
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // Content update plugin
 const ContentUpdatePlugin = ({
   content,
   status,
   onSaveContent,
   isReadonly,
-}: {
+}: ReadonlyNativeSurface<{
   content: string;
   status: "streaming" | "idle";
   onSaveContent: (content: string, debounce: boolean) => void;
   isReadonly?: boolean;
-}) => {
+}>) => {
   const [editor] = useLexicalComposerContext();
   const isProgrammaticUpdate = useRef(false);
 
@@ -87,7 +90,9 @@ const ContentUpdatePlugin = ({
     );
   }, [content, status, editor]);
 
-  const handleChange = (editorState: EditorState): void => {
+  const handleChange = (
+    editorState: Readonly<Pick<EditorState, "read">>
+  ): void => {
     if (!(isReadonly === true || isProgrammaticUpdate.current)) {
       handleEditorChange({
         editor,
@@ -100,7 +105,6 @@ const ContentUpdatePlugin = ({
   return <OnChangePlugin onChange={handleChange} />;
 };
 /* oxlint-disable react/jsx-no-literals -- PureEditor renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -112,13 +116,12 @@ const ContentUpdatePlugin = ({
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const PureEditor = ({
   content,
   onSaveContent,
   status,
   isReadonly,
-}: EditorProps) => {
+}: ReadonlyNativeSurface<EditorProps>) => {
   const initialConfig = createEditorConfig();
 
   const editorConfig = {
@@ -156,7 +159,6 @@ const PureEditor = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
@@ -165,8 +167,10 @@ const PureEditor = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean =>
+const areEqual = (
+  prevProps: ReadonlyNativeSurface<EditorProps>,
+  nextProps: ReadonlyNativeSurface<EditorProps>
+): boolean =>
   prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
   prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
   !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
@@ -174,7 +178,6 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean =>
   prevProps.onSaveContent === nextProps.onSaveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Editor); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 export const Editor = memo(PureEditor, areEqual);
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

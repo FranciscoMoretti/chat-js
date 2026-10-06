@@ -9,10 +9,13 @@ import { oneDark } from "@codemirror/theme-one-dark";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EditorView } from "@codemirror/view";
 /* oxlint-enable sort-imports */
+import type { ViewUpdate } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { memo, useEffect, useRef } from "react";
 /* oxlint-enable sort-imports */
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 interface EditorProps {
   content: string;
@@ -50,14 +53,13 @@ const getLanguageExtension = (language: string) => {
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureCodeEditor = ({
   content,
   onSaveContent,
   isReadonly,
   language = "python",
-}: EditorProps) => {
+}: ReadonlyNativeSurface<EditorProps>) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
@@ -88,18 +90,24 @@ const PureCodeEditor = ({
         getLanguageExtension(language),
         EditorView.editable.of(!(isReadonly === true)),
         EditorState.readOnly.of(Boolean(isReadonly)),
-        EditorView.updateListener.of((update): void => {
-          if (
-            update.docChanged &&
-            isReadonly !== true &&
-            update.transactions.some(
-              (transaction): boolean =>
-                !transaction.annotation(Transaction.remote)
-            )
-          ) {
-            onSaveContent(update.state.doc.toString(), true);
+        EditorView.updateListener.of(
+          (
+            update: ReadonlyNativeSurface<
+              Pick<ViewUpdate, "docChanged" | "state" | "transactions">
+            >
+          ): void => {
+            if (
+              update.docChanged &&
+              isReadonly !== true &&
+              update.transactions.some(
+                (transaction: ReadonlyNativeSurface<Transaction>): boolean =>
+                  !transaction.annotation(Transaction.remote)
+              )
+            ) {
+              onSaveContent(update.state.doc.toString(), true);
+            }
           }
-        }),
+        ),
       ]),
     });
   }, [onSaveContent, isReadonly, language]);
@@ -123,15 +131,16 @@ const PureCodeEditor = ({
   );
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean => {
+const areEqual = (
+  prevProps: ReadonlyNativeSurface<EditorProps>,
+  nextProps: ReadonlyNativeSurface<EditorProps>
+): boolean => {
   if (prevProps.currentVersionIndex !== nextProps.currentVersionIndex) {
     return false;
   }
@@ -154,7 +163,6 @@ const areEqual = (prevProps: EditorProps, nextProps: EditorProps): boolean => {
   return true;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (CodeEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
 export const CodeEditor = memo(PureCodeEditor, areEqual);
