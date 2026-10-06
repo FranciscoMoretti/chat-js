@@ -22,16 +22,12 @@ import { resolveEveSetup } from "./eve-setup-config";
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync --
- * max-lines-per-function (#510): run owns CLI argument/environment selection, optional provider setup, local fencing, required-table verification and connection cleanup; extracting its mode-dependent order across helpers risks separating one command lifecycle.
- * max-statements (#512): run performs the conditional provider setup before mode-dependent connection checks, then fences local workflows, verifies tables and closes the client; there is no independently reused operation to extract from this one entrypoint.
- * no-console (#514): run reports selected backend, setup progress and schema readiness on this CLI's stdout; removing those messages changes its command output contract.
- * no-magic-numbers (#517): 2 and 3 select/limit the script arguments, 30_000 is the connection deadline in milliseconds, and 0 requests immediate client shutdown; these values define this command flow.
- * node/no-process-env (#537): run reads the CLI's dotenv-populated process.env once to resolve the selected world and database URL; this is the script's environment boundary.
- * node/no-sync (#538): The provider setup CLI may exit its child process; execFileSync isolates that lifecycle and ensures setup completes before PostgreSQL checks begin.
+/**
+ * Validate the optional setup mode before resolving configuration.
+ * @returns {string | undefined} Supplied mode; absent or empty values retain the default setup path.
  */
-const run = async (): Promise<void> => {
+/* oxlint-disable no-magic-numbers -- CLI argument positions 2 and 3 distinguish the optional mode from extra arguments. */
+const readSetupMode = (): string | undefined => {
   const [mode] = process.argv.slice(2);
   if (
     process.argv.length > 3 ||
@@ -39,6 +35,45 @@ const run = async (): Promise<void> => {
   ) {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
+  return mode;
+};
+/* oxlint-enable no-magic-numbers */
+
+/**
+ * Run provider migrations in a child because the provider CLI exits its process.
+ * @param {string} databaseUrl Validated PostgreSQL URL for the provider setup.
+ * @returns {void} Completes after the provider command, or propagates its failure.
+ */
+/* oxlint-disable no-console, node/no-sync, node/no-process-env -- Report migration progress, snapshot dotenv's environment, and wait for the isolated provider CLI before opening our connection. */
+const prepareProviderDatabase = (databaseUrl: string): void => {
+  console.log("Preparing the configured EVE PostgreSQL world...");
+  // The provider CLI exits the process, so isolate it from our lifecycle setup.
+  execFileSync(
+    process.execPath,
+    [
+      "-e",
+      'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
+    ],
+    {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
+      stdio: "pipe",
+      timeout: 120_000,
+    }
+  );
+};
+/* oxlint-enable no-console, node/no-sync, node/no-process-env */
+
+/**
+ * Resolve the world and execute only the requested synchronous preparation stage.
+ * @returns {{ mode: string | undefined; setup: ReturnType<typeof resolveEveSetup> }} Validated mode and world details for the readiness phase.
+ */
+/* oxlint-disable no-console, node/no-process-env -- Resolve the dotenv-populated CLI environment and report the selected backend before any asynchronous readiness checks. */
+const prepareEveSetupContext = (): {
+  mode: string | undefined;
+  setup: ReturnType<typeof resolveEveSetup>;
+} => {
+  const mode = readSetupMode();
   const setup = resolveEveSetup(
     resolveWorkflowWorld(),
     resolveWorkflowDatabaseUrl(process.env)
@@ -47,79 +82,113 @@ const run = async (): Promise<void> => {
     console.log(
       "Workflow backend: Vercel (managed). No PostgreSQL workflow setup required."
     );
-    return;
+    return { mode, setup };
   }
-  const { databaseUrl, local } = setup;
   console.log("Workflow backend: PostgreSQL (local/self-hosted).");
-  if (mode === "--validate") {
-    return;
+  if (typeof mode !== "string" || mode === "") {
+    prepareProviderDatabase(setup.databaseUrl);
   }
-  if (!mode) {
-    console.log("Preparing the configured EVE PostgreSQL world...");
-    // The provider CLI exits the process, so isolate it from our lifecycle setup.
-    execFileSync(
-      process.execPath,
-      [
-        "-e",
-        'import("@workflow/world-postgres/cli").then(({ setupDatabase }) => setupDatabase())',
-      ],
-      {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        env: { ...process.env, WORKFLOW_POSTGRES_URL: databaseUrl },
-        stdio: "pipe",
-        timeout: 120_000,
-      }
-    );
-  }
+  return { mode, setup };
+};
+/* oxlint-enable no-console, node/no-process-env */
+
+/**
+ * Open the readiness connection and begin its deadline before the first await.
+ * @param {string} databaseUrl Validated PostgreSQL world URL.
+ * @returns {{ connection: postgres.Sql; deadline: ReturnType<typeof setTimeout> }} Client and timer owned by the caller's finally block.
+ */
+/* oxlint-disable no-magic-numbers -- The readiness deadline is 30_000 milliseconds; its callback requests immediate client shutdown. */
+const openReadinessConnection = (
+  databaseUrl: string
+): {
+  connection: postgres.Sql;
+  deadline: ReturnType<typeof setTimeout>;
+} => {
   const connection = postgres(databaseUrl, { connect_timeout: 10, max: 1 });
   const deadline = setTimeout(() => {
     void connection.end({ timeout: 0 });
   }, 30_000);
-  try {
-    if (!mode && local) {
-      await installEvePostgresResourceFence(connection);
-      await installEvePostgresQueueFence(connection, "workflow_flows");
-    }
-    const required = [
-      "workflow.workflow_runs",
-      "workflow.workflow_events",
-      "workflow.workflow_event_slots",
-      "workflow.workflow_steps",
-      "workflow.workflow_hooks",
-      "workflow.workflow_waits",
-      "workflow.workflow_stream_chunks",
-      "graphile_worker._private_jobs",
-    ];
-    if (local) {
-      required.push(
-        "workflow.eve_resource_fences",
-        "workflow.eve_session_retirements",
-        "workflow.eve_queue_tasks"
+  return { connection, deadline };
+};
+/* oxlint-enable no-magic-numbers */
+
+/**
+ * Build the provider and optional local lifecycle table manifest in query order.
+ * @param {boolean} local Whether this world owns local lifecycle fences.
+ * @returns {string[]} A fresh ordered table manifest for the readiness query.
+ */
+const requiredEveTables = (local: boolean): string[] => {
+  const required = [
+    "workflow.workflow_runs",
+    "workflow.workflow_events",
+    "workflow.workflow_event_slots",
+    "workflow.workflow_steps",
+    "workflow.workflow_hooks",
+    "workflow.workflow_waits",
+    "workflow.workflow_stream_chunks",
+    "graphile_worker._private_jobs",
+  ];
+  if (local) {
+    required.push(
+      "workflow.eve_resource_fences",
+      "workflow.eve_session_retirements",
+      "workflow.eve_queue_tasks"
+    );
+  }
+  return required;
+};
+
+/**
+ * Reject incomplete schemas and report the supported readiness coverage.
+ * @param {readonly unknown[]} missing Rows identifying requested tables missing from PostgreSQL.
+ * @param {boolean} local Whether local lifecycle tables were included.
+ * @returns {void} Reports readiness, or throws the command's actionable schema error.
+ */
+/* oxlint-disable no-console -- Report schema readiness and the hosted lifecycle coverage limit on the setup command's stdout. */
+const reportSchemaReadiness = (
+  missing: readonly unknown[],
+  local: boolean
+): void => {
+  // oxlint-disable-next-line no-magic-numbers -- Any nonempty missing-table result makes the requested schema incomplete.
+  if (missing.length > 0) {
+    throw new Error(
+      "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
+    );
+  }
+  console.log("EVE PostgreSQL connection and required tables are ready.");
+  if (!local) {
+    console.log(
+      "Hosted lifecycle/deletion verification remains required; this command checks provider schema readiness only."
+    );
+  }
+};
+/* oxlint-enable no-console */
+
+/* oxlint-disable oxc/no-async-await -- The command preserves its existing await locations for local fencing, the readiness query, and final client cleanup. */
+const run = async (): Promise<void> => {
+  const { mode, setup } = prepareEveSetupContext();
+  if (!setup.managed && mode !== "--validate") {
+    const { connection, deadline } = openReadinessConnection(setup.databaseUrl);
+    try {
+      if ((typeof mode !== "string" || mode === "") && setup.local) {
+        await installEvePostgresResourceFence(connection);
+        await installEvePostgresQueueFence(connection, "workflow_flows");
+      }
+      reportSchemaReadiness(
+        await connection`
+          select name from unnest(${requiredEveTables(setup.local)}::text[]) as name
+          where to_regclass(name) is null
+        `,
+        setup.local
       );
+    } finally {
+      clearTimeout(deadline);
+      await connection.end({ timeout: 1 });
     }
-    const missing = await connection`
-      select name from unnest(${required}::text[]) as name
-      where to_regclass(name) is null
-    `;
-    if (missing.length > 0) {
-      throw new Error(
-        "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
-      );
-    }
-    console.log("EVE PostgreSQL connection and required tables are ready.");
-    if (!local) {
-      console.log(
-        "Hosted lifecycle/deletion verification remains required; this command checks provider schema readiness only."
-      );
-    }
-  } finally {
-    clearTimeout(deadline);
-    await connection.end({ timeout: 1 });
   }
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, node/no-sync */
 
 /* oxlint-disable no-console --
  * no-console (#514): The entrypoint prints safe validation messages verbatim and maps potentially secret-bearing database/provider errors to a fixed generic message.

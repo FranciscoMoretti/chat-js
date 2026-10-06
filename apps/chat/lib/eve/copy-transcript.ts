@@ -127,11 +127,10 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
   }
 };
 /* oxlint-enable max-statements, no-magic-numbers */
-/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types --
  * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): visitStrings accepts seen = new WeakSet<object>(); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): visitStrings intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const visitStrings = (
   value: unknown,
@@ -140,7 +139,7 @@ const visitStrings = (
   parentField?: string,
   seen = new WeakSet<object>()
 ): void => {
-  if (!value || typeof value !== "object") {
+  if (typeof value !== "object" || value === null) {
     return;
   }
   if (seen.has(value)) {
@@ -163,11 +162,10 @@ const visitStrings = (
     }
   }
 };
-/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable init-declarations, max-statements, typescript/strict-boolean-expressions --
+/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable init-declarations, max-statements --
  * init-declarations (#507): transformFileReferences assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): transformFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/strict-boolean-expressions (#610): transformFileReferences intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const transformFileReferences = (
   text: string,
@@ -189,14 +187,12 @@ const transformFileReferences = (
     }
     const key = keyFromFileUrl(url.href);
 
-    if (key) {
+    if (key !== null) {
       return replace(key) + token.slice(candidate.length);
     }
     return token;
   });
-/* oxlint-enable init-declarations, max-statements, typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/strict-boolean-expressions (#610): eveCopyResources intentionally keeps the existing falsy-value behavior of field; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-enable init-declarations, max-statements */
 /**
  * Scans copy content before destination keys are reserved.
  * @param {unknown} value Transcript or authorized document revision content to inspect.
@@ -218,10 +214,20 @@ const eveCopyResources = (
       files.add(key);
       return key;
     });
-    if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
+    if (
+      documentReferences &&
+      typeof field === "string" &&
+      field !== "" &&
+      DOCUMENT_FIELDS.has(field)
+    ) {
       documents.add(z.uuid().parse(text).toLowerCase());
     }
-    if (documentReferences && field && REVISION_FIELDS.has(field)) {
+    if (
+      documentReferences &&
+      typeof field === "string" &&
+      field !== "" &&
+      REVISION_FIELDS.has(field)
+    ) {
       revisions.add(z.uuid().parse(text).toLowerCase());
     }
     return text;
@@ -232,7 +238,6 @@ const eveCopyResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): transcriptResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -359,13 +364,13 @@ type CopyAllocations = {
   inlineFiles?: ReadonlyMap<string, string>;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 moving it below executable initialization can obscure ordering and API ownership.
 init-declarations (#507): rewriteEveCopyResources assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accepts allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): rewriteEveCopyResources intentionally keeps the existing falsy-value behavior of fileId; key; field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+ */
 /**
  * Rewrites a cloned value using durable, ownership-checked destination allocations.
  * @param {T} value Transcript or document content whose source references are replaced in a clone.
@@ -432,28 +437,38 @@ const rewriteEveCopyResources = <T>(
         isFileStorageKey(text)
       ) {
         const fileId = allocations.files.get(text);
-        if (!fileId) {
+        if (typeof fileId !== "string" || fileId === "") {
           throw new Error("Missing copied file allocation.");
         }
         return fileId;
       }
       let result = transformFileReferences(text, (source) => {
         const key = allocations.files.get(source);
-        if (!key) {
+        if (typeof key !== "string" || key === "") {
           throw new Error("Missing copied file allocation.");
         }
         return createFileUrl(key);
       });
       let map: ReadonlyMap<string, string> | undefined;
-      if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
+      if (
+        documentReferences &&
+        typeof field === "string" &&
+        field !== "" &&
+        DOCUMENT_FIELDS.has(field)
+      ) {
         map = documents;
       }
-      if (documentReferences && field && REVISION_FIELDS.has(field)) {
+      if (
+        documentReferences &&
+        typeof field === "string" &&
+        field !== "" &&
+        REVISION_FIELDS.has(field)
+      ) {
         map = revisions;
       }
       if (map) {
         const replacement = map.get(text.toLowerCase());
-        if (!replacement) {
+        if (typeof replacement !== "string" || replacement === "") {
           throw new Error("Missing copied document allocation.");
         }
         return replacement;
@@ -472,7 +487,7 @@ const rewriteEveCopyResources = <T>(
   );
   return root.value;
 };
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): decodeInlineAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
@@ -535,13 +550,12 @@ const eveCopyInlineAttachments = (
   return [...files.values()];
 };
 /* oxlint-enable no-continue, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): copyAttachmentResolver uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): copyAttachmentResolver uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): copyAttachmentResolver accepts allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): copyAttachmentResolver intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const copyAttachmentResolver = (
   allocations: CopyAllocations,
@@ -573,16 +587,17 @@ const copyAttachmentResolver = (
     const inline = part.url.startsWith("data:")
       ? decodeInlineAttachment(part)
       : undefined;
-    // oxlint-disable-next-line no-ternary -- Keep key as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const key = inline
-      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from allocations.inlineFiles; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        allocations.inlineFiles?.get(inline.id)
-      : keyFromFileUrl(part.url);
-    if (!(key && destinationKeys.has(key))) {
+    const key =
+      // oxlint-disable-next-line no-ternary -- Keep key selection lazy; pinned unicorn/prefer-ternary flags the equivalent assignment branches.
+      inline === undefined
+        ? keyFromFileUrl(part.url)
+        : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from allocations.inlineFiles; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+          allocations.inlineFiles?.get(inline.id);
+    if (typeof key !== "string" || key === "" || !destinationKeys.has(key)) {
       throw new Error("Missing copied attachment allocation.");
     }
     let file = metadata.get(key);
-    if (!file) {
+    if (file === undefined) {
       file = loadDestinationFile(key);
       metadata.set(key, file);
     }
@@ -601,10 +616,9 @@ const copyAttachmentResolver = (
   };
   /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): rewriteDocumentPart accepts part: SeedPart; allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): rewriteDocumentPart intentionally keeps the existing falsy-value behavior of field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const rewriteDocumentPart = (
   part: SeedPart,
@@ -621,9 +635,16 @@ const rewriteDocumentPart = (
   visitStrings(
     part,
     (text, field) => {
-      if (field && (DOCUMENT_FIELDS.has(field) || REVISION_FIELDS.has(field))) {
+      if (
+        typeof field === "string" &&
+        field !== "" &&
+        (DOCUMENT_FIELDS.has(field) || REVISION_FIELDS.has(field))
+      ) {
         const replacement = identities.get(text.toLowerCase());
-        if (!replacement && requireAllocation) {
+        if (
+          (typeof replacement !== "string" || replacement === "") &&
+          requireAllocation
+        ) {
           throw new Error("Missing copied document allocation.");
         }
         return replacement ?? text;
@@ -637,7 +658,7 @@ const rewriteDocumentPart = (
   );
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve materializeEveCopyTranscript's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

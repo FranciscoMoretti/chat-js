@@ -40,8 +40,8 @@ const unwrap = (expression: ReadonlyNative<ts.Expression>): ts.Expression => {
 };
 
 // Read generated data without importing or executing application code.
-// oxlint-disable-next-line eslint/max-statements, typescript/prefer-readonly-parameter-types -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-const literalValue = (input: ts.Expression): unknown => {
+// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
+const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   const value = unwrap(input);
   if (ts.isStringLiteralLike(value)) {
     return value.text;

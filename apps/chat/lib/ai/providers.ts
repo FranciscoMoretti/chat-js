@@ -79,9 +79,9 @@ const getLanguageModel = async (
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, node/no-process-env */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
-typescript/prefer-readonly-parameter-types (#565): getImageModel accepts modelId: ActiveGatewayImageModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
 typescript/strict-boolean-expressions (#610): getImageModel intentionally keeps the existing falsy-value behavior of imageModel; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed adapter preserves its SDK string-literal suggestions and open string intersection; model IDs are primitive strings with no mutable fields.
 const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
   const imageModel = getActiveGateway().createImageModel(modelId);
   if (!imageModel) {
@@ -91,11 +91,10 @@ const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
   }
   return imageModel;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): getVideoModel accepts modelId: ActiveGatewayVideoModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 const getVideoModel = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed adapter preserves its SDK string-literal suggestions and open string intersection; model IDs are primitive strings with no mutable fields.
   modelId: ActiveGatewayVideoModelId
 ): Experimental_VideoModelV4 => {
   const videoModel = getActiveGateway().createVideoModel(modelId);
@@ -106,7 +105,6 @@ const getVideoModel = (
   }
   return videoModel;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 // Get a multimodal language model that can generate images via generateText
 const getMultimodalImageModel = (

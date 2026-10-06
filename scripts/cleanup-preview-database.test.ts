@@ -18,23 +18,26 @@ const rootBranch = {
   protected: false,
 };
 interface Branch {
-  created_at: string;
-  default?: boolean;
-  id: string;
-  name: string;
-  parent_id?: string | null;
-  primary?: boolean;
-  protected?: boolean;
+  readonly created_at: string;
+  readonly default?: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly parent_id?: string | null;
+  readonly primary?: boolean;
+  readonly protected?: boolean;
 }
 interface RunOptions {
-  state?: string;
-  repo?: string;
-  open?: boolean;
-  branches?: Branch[];
-  deleteStatus?: number;
-  pages?: { branches: Branch[]; pagination: { next: string } }[];
-  stateBeforeDelete?: string;
-  openBeforeDelete?: boolean;
+  readonly state?: string;
+  readonly repo?: string;
+  readonly open?: boolean;
+  readonly branches?: readonly Branch[];
+  readonly deleteStatus?: number;
+  readonly pages?: readonly {
+    readonly branches: readonly Branch[];
+    readonly pagination: { readonly next: string };
+  }[];
+  readonly stateBeforeDelete?: string;
+  readonly openBeforeDelete?: boolean;
 }
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectRejection's awaited sequencing and rejected-Promise behavior. */
 const expectRejection = async (
@@ -65,7 +68,6 @@ const expectRejection = async (
 /* oxlint-disable typescript/explicit-function-return-type -- run: Keep contextual/generic inference for this SDK, callback or composite result; a new explicit type requires choosing its public shape. */
 /* oxlint-disable eslint/no-magic-numbers -- run: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 /* oxlint-disable unicorn/no-null -- run: The fixture explicitly exercises the null state required by the API. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- run: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- run: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
 const run = async ({
   state = "closed",
@@ -123,7 +125,7 @@ const run = async ({
     },
     number: 123,
     repository: { owner: "owner", repo: "repo" },
-    request: (url: string, options: RequestInit) => {
+    request: (url: string, options: Readonly<Pick<RequestInit, "method">>) => {
       calls.push({ method: options.method ?? "GET", url });
       return Promise.resolve(
         // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -137,7 +139,6 @@ const run = async ({
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */

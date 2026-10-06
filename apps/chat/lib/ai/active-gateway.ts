@@ -19,7 +19,7 @@ let activeGateway: GatewayProvider | null = null;
 export const getActiveGateway = (): GatewayProvider => {
   activeGateway ??= new Gateway({
     env: gatewayEnv,
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the native fetch Request/RequestInit contract and original promise directly; wrapping in async changes promise identity and synchronous argument-error timing.
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the original native Request and RequestInit objects; readonly header tuples are not assignable to HeadersInit without conversion. Return the original fetch promise without async adoption.
     fetch: (input, init): Promise<Response> =>
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing init own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fetch(input, { ...init, next: { revalidate: 3600 } }),

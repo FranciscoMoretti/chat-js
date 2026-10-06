@@ -37,10 +37,9 @@ afterEach(async (): Promise<void> => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const server = () =>
   Bun.serve({
-    fetch(request) {
+    fetch(request: Readonly<Pick<Request, "url">>) {
       const id = new URL(request.url).pathname.slice(1).replace(".json", "");
       const definition = {
         contractVersion: 1,
@@ -89,7 +88,6 @@ const server = () =>
     port: 0,
   });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 const fixture = async (): Promise<string> => {

@@ -223,11 +223,10 @@ const collectDefinitions = async (
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const missingPreviousRegistration = (
   previousTools: string | null,
-  ids: Set<string>,
-  entries: Awaited<ReturnType<typeof readdir>>
+  ids: Readonly<Pick<Set<string>, "has">>,
+  entries: readonly { readonly name: string }[]
 ): string | null => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading matchAll from previousTools; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
   for (const match of previousTools?.matchAll(
@@ -244,7 +243,6 @@ const missingPreviousRegistration = (
   }
   return null;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
 const validateExpected = (

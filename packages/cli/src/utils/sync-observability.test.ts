@@ -78,8 +78,13 @@ const fixture = async (): Promise<string> => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve itemFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const itemFiles = async (item: (typeof observabilityItems)[number]) => [
+const itemFiles = async (item: {
+  readonly files: readonly Readonly<
+    (typeof observabilityItems)[number]["files"][number]
+  >[];
+  readonly meta: { readonly chatjs: unknown };
+  readonly name: string;
+}) => [
   ...(await Promise.all(
     item.files.map(async (file) => ({
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing file own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -98,7 +103,6 @@ const itemFiles = async (item: (typeof observabilityItems)[number]) => [
   },
 ];
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
