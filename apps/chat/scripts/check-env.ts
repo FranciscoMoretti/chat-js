@@ -43,6 +43,13 @@ import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 import { storageEnvRequirements, storageId } from "@/lib/storage-options";
 /* oxlint-enable sort-imports */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+
+/* oxlint-disable sort-imports -- Pinned Oxfmt places this relative import after alias imports, while sort-imports requires multiple named bindings before single-binding imports. */
+import {
+  reportEnvironmentFailure,
+  reportEnvironmentSuccess,
+} from "./environment-validation-report";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 loadEnvConfig({ path: ".env.local" });
@@ -54,6 +61,8 @@ interface ValidationError {
   feature: string;
   missing: string[];
 }
+
+const VALIDATION_FAILURE_EXIT_STATUS = 1;
 
 const projectRoot = path.resolve(import.meta.dirname, "..");
 /* oxlint-disable no-magic-numbers --
@@ -251,65 +260,59 @@ const checkGatewaySnapshot = (): string | null => {
   // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Matching configured/generated gateway literals narrow this mismatch branch to never; keep its diagnostic for scaffolded configurations with a stale model snapshot.
   return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers --
- * max-lines-per-function (#510): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): checkEnv emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): checkEnv uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-const checkEnv = async (): Promise<void> => {
-  const { env } = process;
-  if (isPlaywrightTestEnvironment(env)) {
-    console.log(
-      "✅ Skipping optional environment validation in Playwright test mode"
-    );
-    // Playwright CI only exercises anonymous flows, so optional feature checks
-    // and the gateway snapshot warning stay enforced in non-Playwright builds.
-    return;
-  }
-
+const validateDatabaseEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
   const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
-  // oxlint-disable-next-line no-ternary -- Keep databaseErrors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const databaseErrors = databaseOptions.success
-    ? []
-    : [
-        {
-          feature: "database",
-          missing: databaseOptions.error.issues.map(
-            (issue: {
-              readonly path: readonly PropertyKey[];
-              readonly message: string;
-            }) => `${issue.path.join(".")}: ${issue.message}`
-          ),
-        },
-      ];
+  if (databaseOptions.success) {
+    return [];
+  }
+  return [
+    {
+      feature: "database",
+      missing: databaseOptions.error.issues.map(
+        (issue: {
+          readonly path: readonly PropertyKey[];
+          readonly message: string;
+        }) => `${issue.path.join(".")}: ${issue.message}`
+      ),
+    },
+  ];
+};
 
+const validateEveEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
   const eveOptions = z
     .object(getEveRuntimeEnvOptions(env))
     .safeParse(resolveEveEnvironment(env));
-  // oxlint-disable-next-line no-ternary -- Keep eveErrors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const eveErrors = eveOptions.success
-    ? []
-    : [
-        {
-          feature: "Eve",
-          missing: eveOptions.error.issues.map(
-            (issue: {
-              readonly path: readonly PropertyKey[];
-              readonly message: string;
-            }) => `${issue.path.join(".")}: ${issue.message}`
-          ),
-        },
-      ];
+  if (eveOptions.success) {
+    return [];
+  }
+  return [
+    {
+      feature: "Eve",
+      missing: eveOptions.error.issues.map(
+        (issue: {
+          readonly path: readonly PropertyKey[];
+          readonly message: string;
+        }) => `${issue.path.join(".")}: ${issue.message}`
+      ),
+    },
+  ];
+};
 
+const validateConfiguredEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
+  const databaseErrors = validateDatabaseEnvironment(env);
+  const eveErrors = validateEveEnvironment(env);
   const baseUrlError = validateBaseUrl(env);
   const gatewayError = validateGatewayKey(env);
   const storageError = validateStorage(env);
-  const installedToolErrors = await validateInstalledItems(env, "tools/chatjs");
-  const errors = [
+  return [
     ...eveErrors,
     ...databaseErrors,
     // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -318,47 +321,44 @@ const checkEnv = async (): Promise<void> => {
     ...(gatewayError ? [gatewayError] : []),
     // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(storageError ? [storageError] : []),
+  ];
+};
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
+const checkEnv = async (): Promise<void> => {
+  const { env } = process;
+  if (isPlaywrightTestEnvironment(env)) {
+    // oxlint-disable-next-line no-console -- This CLI reports its explicit Playwright validation bypass.
+    console.log(
+      "✅ Skipping optional environment validation in Playwright test mode"
+    );
+    // Playwright CI only exercises anonymous flows, so optional feature checks
+    // and the gateway snapshot warning stay enforced in non-Playwright builds.
+    return;
+  }
+
+  const configuredErrors = validateConfiguredEnvironment(env);
+  const installedToolErrors = await validateInstalledItems(env, "tools/chatjs");
+  const errors = [
+    ...configuredErrors,
     ...validateAuthentication(env),
     ...installedToolErrors,
     ...(await validateInstalledItems(env, "features")),
   ];
 
-  if (errors.length > 0) {
-    const message = errors
-      .map(
-        (validationError: {
-          readonly feature: string;
-          readonly missing: readonly string[];
-        }) =>
-          `  - ${validationError.feature}: ${validationError.missing.join(", ")}`
-      )
-      .join("\n");
-
-    console.error(
-      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables and check your app configuration.`
-    );
-    process.exit(1);
+  if (reportEnvironmentFailure(errors)) {
+    process.exit(VALIDATION_FAILURE_EXIT_STATUS);
   }
-
-  const snapshotWarning = checkGatewaySnapshot();
-  if (snapshotWarning !== null) {
-    console.warn(`⚠️  ${snapshotWarning}`);
-  }
-
-  console.log("✅ Environment validation passed");
+  reportEnvironmentSuccess(checkGatewaySnapshot());
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers */
 
-/* oxlint-disable no-console, no-magic-numbers --
- * no-console (#514): try { await checkEnv(); } catch (error) { console.error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): try { await checkEnv(); } catch (error) { console.error uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-disable no-console -- This CLI reports unexpected setup exceptions through console.error. */
 try {
   // oxlint-disable-next-line node/no-top-level-await -- This setup executable awaits environment validation so its existing catch supplies the failure exit status.
   await checkEnv();
 } catch (error) {
   console.error(error);
-  process.exit(1);
+  process.exit(VALIDATION_FAILURE_EXIT_STATUS);
 }
-/* oxlint-enable no-console, no-magic-numbers */
+/* oxlint-enable no-console */
