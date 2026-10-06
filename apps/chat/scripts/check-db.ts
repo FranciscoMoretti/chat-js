@@ -18,14 +18,13 @@ const CHECK_DEADLINE_MS = 15_000;
 const CLOSE_TIMEOUT_SECONDS = 1;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkDatabase's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
  * max-lines-per-function (#510): checkDatabase keeps runtime and migration connection checks with their deadline and cleanup; explicit Promise return annotations put this cohesive operation at 51 lines.
  * max-statements (#512): checkDatabase keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-console (#514): checkDatabase emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): checkDatabase uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * node/no-process-env (#537): checkDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/prefer-readonly-parameter-types (#565): checkDatabase accepts issue; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): checkDatabase intentionally keeps the existing falsy-value behavior of parsed.data.DATABASE_MIGRATION_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): checkDatabase's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 const checkDatabase = async (): Promise<void> => {
@@ -68,7 +67,8 @@ const checkDatabase = async (): Promise<void> => {
     } catch {
       const variable =
         // oxlint-disable-next-line no-ternary -- Keep variable as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        purpose === "migration" && parsed.data.DATABASE_MIGRATION_URL
+        purpose === "migration" &&
+        typeof parsed.data.DATABASE_MIGRATION_URL === "string"
           ? "DATABASE_MIGRATION_URL"
           : "DATABASE_URL";
       console.error(
@@ -86,7 +86,7 @@ const checkDatabase = async (): Promise<void> => {
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
 
 /* oxlint-disable no-console, typescript/explicit-function-return-type --
  * no-console (#514): void (async () => { try { await checkDatabase(); } catc emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.

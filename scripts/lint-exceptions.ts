@@ -111,34 +111,36 @@ const readDirectives = (source: string, filename: string): CommentDirective[] =>
       /^\s*(?<engine>eslint|oxlint)-(?<kind>disable(?:-next-line|-line)?|enable)\b(?<body>[\s\S]*)$/u.exec(
         comment
       );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading groups from match; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    if (match?.groups) {
-      const { engine = "", kind = "", body = "" } = match.groups;
-      const separator = body.indexOf("--");
-      return [
-        {
-          end,
-          engine,
-          kind,
-          line: source.slice(ZERO, start).split("\n").length,
-          reason:
-            // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-            separator === -ONE
-              ? ""
-              : body
-                  .slice(separator + TWO)
-                  .replaceAll(/^\s*\*\s?/gmu, "")
-                  .trim(),
-          // oxlint-disable-next-line no-ternary -- Keep trim receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          rules: (separator === -ONE ? body : body.slice(ZERO, separator))
-            .trim()
-            .split(/[\s,]+/u)
-            .filter(Boolean),
-          start,
-        },
-      ];
+    if (!match) {
+      return [];
     }
-    return [];
+    if (!match.groups) {
+      return [];
+    }
+    const { engine = "", kind = "", body = "" } = match.groups;
+    const separator = body.indexOf("--");
+    return [
+      {
+        end,
+        engine,
+        kind,
+        line: source.slice(ZERO, start).split("\n").length,
+        reason:
+          // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          separator === -ONE
+            ? ""
+            : body
+                .slice(separator + TWO)
+                .replaceAll(/^\s*\*\s?/gmu, "")
+                .trim(),
+        // oxlint-disable-next-line no-ternary -- Keep trim receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        rules: (separator === -ONE ? body : body.slice(ZERO, separator))
+          .trim()
+          .split(/[\s,]+/u)
+          .filter(Boolean),
+        start,
+      },
+    ];
   });
 
 interface SourceScope {
