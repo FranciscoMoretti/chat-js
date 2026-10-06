@@ -55,6 +55,12 @@ describe("EVE setup selection", () => {
 });
 /* oxlint-enable no-undefined */
 
+it("rejects a PostgreSQL URL without a database path", () => {
+  expect(() => resolveEveSetup(world, "postgres://db/")).toThrow(
+    "Set WORKFLOW_POSTGRES_URL to a PostgreSQL connection URL."
+  );
+});
+
 it.each([
   "postgres://db/workflows?pool_mode=transaction",
   "postgresql://postgres:secret@db.project.supabase.co:6543/postgres",
