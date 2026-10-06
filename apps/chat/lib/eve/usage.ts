@@ -5,24 +5,24 @@ import { registerEveSubagent } from "@/lib/db/eve-subagents";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { hasEveToolReceipt, toolResultSchema } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 const NO_USAGE_COST_USD = 0;
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ingestEveUsage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ingestEveUsage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types --
- * max-lines-per-function (#510): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-params (#511): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): ingestEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): ingestEveUsage uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): ingestEveUsage accepts event: MessageStreamEvent; attribution?: { sessionId: string; turnId: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined --
+ * max-lines-per-function: This router handles subagent admission, ordered hook attempts, receipt-gated tool evidence and completed/failed step evidence; further workflow boundaries remain under review.
+ * max-params: Preserve the positional owner/session/event/optional child-attribution ingestion API used by billing hooks and reconciliation; changing to an input object requires migrating those callers.
+ * max-statements: Registration precedes billing dispatch, each hook attempt is awaited before advancing, and receipt/step branches retain distinct boolean versus absent results. Further routing boundaries remain under review.
+ * no-undefined: No admitted usage or a failed step returns undefined; false specifically reports observed completed evidence without a price. Optional receipt costs likewise remain unpriced when absent.
  */
-// oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
+// oxlint-disable-next-line eslint/complexity -- Route subagent, hook, tool and step evidence with their existing distinct admission and pricing outcomes; these are sequential separate writes, not one atomic transaction.
 export const ingestEveUsage = async (
   ownerId: string,
   sessionId: string,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Read the original SDK MessageStreamEvent across sequential writes; its event variants contain mutable data and JSON members. This parameter retains the native SDK contract without cloning the event.
   event: MessageStreamEvent,
   attribution?: Readonly<{ sessionId: string; turnId: string }>
 ): Promise<boolean | undefined> => {
@@ -44,7 +44,7 @@ export const ingestEveUsage = async (
   if (event.type === "hook.result") {
     let completedCallsPriced = true;
     for (const [index, call] of (event.data.modelCalls ?? []).entries()) {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Advance durable evidence in order without skipping unresolved work.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Persist each model-attempt receipt before advancing; a rejected write must stop later attempts.
       const priced = await recordEveUsage({
         costUsd:
           // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from call.usage; preserve one receiver evaluation and the failed-call fallback. The app guidance prefers optional chaining.
@@ -122,4 +122,4 @@ export const ingestEveUsage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined */

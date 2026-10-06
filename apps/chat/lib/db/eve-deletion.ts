@@ -24,7 +24,6 @@ import {
   eveSubagentSession,
   eveVote,
 } from "./schema";
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
 /** Select the requested root or joined member while retaining the owner filter.
@@ -225,6 +224,8 @@ const readOwnedEveDeletionMemberState = (
     )
     // oxlint-disable-next-line no-magic-numbers -- The deletion receipt needs only the first owner-visible identity or member state.
     .limit(1);
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve completeEveConversationDeletion's awaited sequencing and rejected-Promise behavior. */
 
 /**
  * Final application stage. The internal coordinator must confirm native payload,
