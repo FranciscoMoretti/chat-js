@@ -47,16 +47,34 @@ const tokenCost = (
   /* oxlint-enable no-magic-numbers */
   return tokens * rate;
 };
+/** Cost adapter with replaceable accounting methods and a deferred dollar total. */
+interface EveToolCost {
+  /* oxlint-disable typescript/method-signature-style -- Preserve the adapter's existing method parameter variance; function-property signatures reject narrower caller-provided replacements accepted by the inferred methods. */
+  addAPICost(name: string, costCents: number): void;
+  addImageCost(
+    modelId: string,
+    count: number,
+    usage: Readonly<UsageInfo>,
+    source: string
+  ): void;
+  addLLMCost(
+    modelId: string,
+    tokens: Readonly<UsageInfo>,
+    source: string
+  ): void;
+  /* oxlint-enable typescript/method-signature-style */
+  totalUsd: ToolUsage["totalUsd"];
+}
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createEveToolCost); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
 /** Resolve provider usage before sealing a durable receipt; unknown pricing must not become free work.
  * @param {Readonly<ToolUsage>} usage Accounting session receiving immediate API cost and deferred provider-priced image/token charges.
- * @returns {ReturnType<typeof createEveToolCost>} The existing tool cost adapter; totalUsd settles deferred charges and omits totals when reported pricing is incomplete.
+ * @returns {EveToolCost} The existing tool cost adapter; totalUsd settles deferred charges and omits totals when reported pricing is incomplete.
  */
 export const createEveToolCost = (
   usage: Readonly<ToolUsage> = createToolUsage()
-  // oxlint-disable-next-line typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- Preserve inferred native method signatures and their parameter variance; explicit method signatures conflict with method-signature-style, while function-property conversion changes assignability.
-) => ({
+): EveToolCost => ({
   addAPICost(_name: string, costCents: number): void {
     // oxlint-disable-next-line no-magic-numbers -- API charges are reported in cents; convert to dollars for durable usage receipts.
     usage.addCostUsd(costCents / 100);

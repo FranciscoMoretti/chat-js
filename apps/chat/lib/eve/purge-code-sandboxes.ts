@@ -1,20 +1,17 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../../tools/chatjs/tools"; "../ai/installed-tool-capabilities"; "../db/eve-code-sandboxes" dependency within this package instead of introducing an alias or barrel API.
- */
-import { tools } from "../../tools/chatjs/tools";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getCodeSandboxCleanup } from "../ai/installed-tool-capabilities";
-/* oxlint-enable sort-imports */
+import { getCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
+import { tools } from "@/tools/chatjs/tools";
+
+/* oxlint-disable import/no-relative-parent-imports -- Preserve user-owned custom tool initialization before environment validation and database-client creation; alias sorting moves this database dependency before the installed registry and changes that supported extension startup order. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
 } from "../db/eve-code-sandboxes";
 /* oxlint-enable sort-imports */
+/* oxlint-enable import/no-relative-parent-imports */
 import { eveCodeSandboxName } from "./code-sandbox-name";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEveFamilyCodeSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEveFamilyCodeSandboxes's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): purgeEveFamilyCodeSandboxes keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

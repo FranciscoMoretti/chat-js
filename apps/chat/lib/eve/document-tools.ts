@@ -1,6 +1,5 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents" dependency within this package instead of introducing an alias or barrel API.
  */
 import { createHash } from "node:crypto";
 
@@ -8,13 +7,13 @@ import { createHash } from "node:crypto";
 import type { ToolContext } from "eve/tools";
 /* oxlint-enable sort-imports */
 
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
-} from "../db/eve-documents";
+} from "@/lib/db/eve-documents";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 /* oxlint-enable sort-imports */
 import { resolveEveConversationScope } from "./conversation-scope";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -25,7 +24,7 @@ import {
   eveDocumentReadInput,
 } from "./document-contracts";
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+/* oxlint-enable import/no-nodejs-modules */
 
 type DocumentContext = Pick<ToolContext, "session" | "callId" | "abortSignal">;
 

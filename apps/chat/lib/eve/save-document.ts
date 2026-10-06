@@ -1,20 +1,16 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../db/eve-documents"; "../db/eve-queries" dependency within this package instead of introducing an alias or barrel API.
- */
 import { Client } from "eve/client";
 import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
-} from "../db/eve-documents";
+} from "@/lib/db/eve-documents";
 /* oxlint-enable sort-imports */
-import { getEveConversation } from "../db/eve-queries";
+import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
 /* oxlint-enable sort-imports */
@@ -29,7 +25,6 @@ import { assertEveConfigured } from "./server";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (saveManualEveDocument); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveManualEveDocument's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-statements (#512): saveManualEveDocument keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

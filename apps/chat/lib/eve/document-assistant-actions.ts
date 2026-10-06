@@ -1,15 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../config" dependency within this package instead of introducing an alias or barrel API.
- */
+import { config } from "@/lib/config";
 import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { config } from "../config";
-/* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DocumentAssistantRequest } from "./document-contracts";
 /* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable max-lines-per-function -- max-lines-per-function (#510): documentAssistantActions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const documentAssistantActions = (

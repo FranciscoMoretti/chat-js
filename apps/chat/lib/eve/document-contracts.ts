@@ -9,17 +9,16 @@ interface DocumentAssistantRequest {
   modelId: string;
 }
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): documentFileIds uses 256 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): documentFileIds accepts ids; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
+no-magic-numbers (#517): documentFileIds uses 256 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 const documentFileIds = z
   .array(z.string().refine(isFileStorageKey))
   .max(256)
-  .transform((ids) => [...new Set(ids)].toSorted())
+  .transform((ids: readonly string[]) => [...new Set(ids)].toSorted())
   .describe(
     "Stable file IDs used by this document, including embedded images. Provide the complete list on every save, or [] for no attachments; never include presigned URLs."
   );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): documentContent uses 2_000_000, 1, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.

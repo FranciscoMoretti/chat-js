@@ -1,8 +1,5 @@
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): isEnabledFlag intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const isEnabledFlag = (value: string | undefined): boolean => {
-  if (!value) {
+  if (typeof value !== "string" || value === "") {
     return false;
   }
 
@@ -10,8 +7,6 @@ const isEnabledFlag = (value: string | undefined): boolean => {
   return !["0", "false", "no", "off"].includes(normalizedValue);
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (isPlaywrightTestEnvironment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable typescript/strict-boolean-expressions */
-
 /* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * node/no-process-env (#537): isPlaywrightTestEnvironment reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  * typescript/prefer-readonly-parameter-types (#565): isPlaywrightTestEnvironment accepts env: NodeJS.ProcessEnv = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

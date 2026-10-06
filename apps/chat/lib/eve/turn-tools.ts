@@ -1,22 +1,19 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../ai/types"; "../types/anonymous" dependency within this package instead of introducing an alias or barrel API.
- */
 import { defineState } from "eve/context";
 
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps the external runtime declaration before this local type declaration; sort-imports requires UiToolName before defineState. */
+import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   installedDocumentKinds,
   installedToolNames,
 } from "@/tools/chatjs/installed-features";
-/* oxlint-enable sort-imports */
 
-import type { UiToolName } from "../ai/types";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { ANONYMOUS_LIMITS } from "../types/anonymous";
 /* oxlint-enable sort-imports */
 import { eveDocumentOperations } from "./document-contracts";
 import { selectedEveTools } from "./selected-tools";
-/* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable unicorn/no-null -- unicorn/no-null (#570): eveTurnTool preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 // Set only by turn.started. Approval/reconnect authentication must not change it.
