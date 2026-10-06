@@ -38,6 +38,19 @@ import {
  * no-magic-numbers (#517): CopyTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type ReserveEveCopyInput = Readonly<{
+  operationId: string;
+  sourceConversationId: string;
+  sourceSessionId: string;
+  sourceOwnerId: string;
+  projectionHash: string;
+  title: string;
+  modelId: string;
+  plan: EveCopyPlan;
+}>;
+type CopyWriteTransaction = Readonly<
+  Pick<CopyTransaction, "execute" | "insert" | "select">
+>;
 /* oxlint-enable no-magic-numbers */
 const hashPattern = /^[a-f0-9]{64}$/u;
 const FIRST_ROW_INDEX = 0;
@@ -106,6 +119,9 @@ type CopyPlanFilesReader = Readonly<{
     >;
   }>[];
 }>;
+type CopyPlanFileFields = Readonly<
+  Pick<EveCopyPlan["files"][number], "key" | "mediaType" | "sha256" | "size">
+>;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve hasEveResponseGroupOperation's awaited sequencing and rejected-Promise behavior. */
 const hasEveResponseGroupOperation = async (
@@ -510,10 +526,9 @@ const assertSourceFiles = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): reserveEveCopyOperation accepts input: { operationId: string; sourceConversationId: string; sourceSessionId: string; tx; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Allocation and source authorization are committed before any destination storage I/O.
  * @param {string} ownerId Owner of the fresh destination conversation.
  * @param {{ operationId: string; readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; projectionHash: string; title: string; modelId: string; plan: EveCopyPlan; }} input Immutable source identity, projection and prepared resources for the copy.
@@ -521,16 +536,8 @@ typescript/prefer-readonly-parameter-types (#565): reserveEveCopyOperation accep
  */
 const reserveEveCopyOperation = async (
   ownerId: string,
-  input: {
-    operationId: string;
-    readonly sourceConversationId: string;
-    readonly sourceSessionId: string;
-    readonly sourceOwnerId: string;
-    projectionHash: string;
-    title: string;
-    modelId: string;
-    plan: EveCopyPlan;
-  }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The Drizzle JSONB insert requires the existing EveCopyPlan type; a readonly plan fails its native insert overload. Keep the original object and schema contract until the database JSON type can accept a readonly plan.
+  input: ReserveEveCopyInput
 ): Promise<EveCopyOperation> => {
   validateCopyPlan(input.plan);
   if (!hashPattern.test(input.projectionHash)) {
@@ -539,7 +546,7 @@ const reserveEveCopyOperation = async (
   const planHash = createHash("sha256")
     .update(JSON.stringify(input.plan))
     .digest("hex");
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: CopyWriteTransaction) => {
     await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
     const existingRows = await tx
       .select()
@@ -633,18 +640,21 @@ const reserveEveCopyOperation = async (
       sourceSessionId: input.sourceSessionId,
     });
     if (input.plan.files.length > 0) {
-      await tx
-        .insert(eveStoredFile)
-        .values(input.plan.files.map((file) => ({ key: file.key, ownerId })));
+      await tx.insert(eveStoredFile).values(
+        input.plan.files.map((file: CopyPlanFileFields) => ({
+          key: file.key,
+          ownerId,
+        }))
+      );
       await tx.insert(eveFileReference).values(
-        input.plan.files.map((file) => ({
+        input.plan.files.map((file: CopyPlanFileFields) => ({
           conversationId: conversation.id,
           key: file.key,
           ownerId,
         }))
       );
       await tx.insert(eveConversationCopyFile).values(
-        input.plan.files.map((file) => ({
+        input.plan.files.map((file: CopyPlanFileFields) => ({
           conversationId: conversation.id,
           key: file.key,
           mediaType: file.mediaType,
@@ -659,7 +669,7 @@ const reserveEveCopyOperation = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveCopySourceAvailable, EveCopySourceChangedError, getEveCopyOperation, isUnacceptedEveCopy, lockEveCopyOwners, readEveCopy, rejectEveCopyPreflight, reserveEveCopyOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-journal.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {

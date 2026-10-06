@@ -33,6 +33,9 @@ const SINGLE_MATCH_LIMIT = 1;
 type ResponseGroupTransaction = Parameters<
   Parameters<typeof db.transaction>[typeof FIRST_PARAMETER_INDEX]
 >[typeof FIRST_PARAMETER_INDEX];
+type ResponseGroupTombstoneTransaction = Readonly<
+  Pick<ResponseGroupTransaction, "select" | "update">
+>;
 type ResponseGroupRow = typeof eveResponseGroup.$inferSelect;
 type ConversationRow = typeof eveConversation.$inferSelect;
 type ReservedResponseGroup = Omit<
@@ -197,7 +200,7 @@ const reserveEveResponseGroupInTransaction = async (
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tombstoneEveResponseGroups's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): tombstoneEveResponseGroups accepts tx: ResponseGroupTransaction; family: { id: string; operationId: string; }[]; row; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null --
 typescript/strict-boolean-expressions (#610): tombstoneEveResponseGroups intentionally keeps the existing falsy-value behavior of unknown; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/max-nested-calls (#568): tombstoneEveResponseGroups keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -209,12 +212,12 @@ unicorn/no-null (#570): tombstoneEveResponseGroups preserves explicit null in it
  * @param {{ id: string; operationId: string; }[]} family Conversation and operation identities defining the deleted family.
  */
 const tombstoneEveResponseGroups = async (
-  tx: ResponseGroupTransaction,
+  tx: ResponseGroupTombstoneTransaction,
   ownerId: string,
-  family: {
+  family: readonly Readonly<{
     id: string;
     operationId: string;
-  }[]
+  }>[]
 ): Promise<void> => {
   const [unknown] = await tx
     .select({ id: eveResponseGroup.id })
@@ -254,7 +257,7 @@ const tombstoneEveResponseGroups = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveResponseGroupRejection's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-params, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-params (#511): recordEveResponseGroupRejection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): recordEveResponseGroupRejection accepts rejection?: { error: string; code?: "project_not_found"; }; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.

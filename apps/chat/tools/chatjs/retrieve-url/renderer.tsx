@@ -5,6 +5,9 @@ import ReactMarkdown from "react-markdown";
 
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; this import erases at runtime. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { retrievedInput, retrievedResult } from "./schemas";
@@ -51,8 +54,9 @@ const LoadingState = () => (
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
+const ErrorState = ({
+  errorMessage,
+}: Readonly<{ errorMessage: string | undefined }>) => (
   <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
     <div className="flex items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
@@ -73,7 +77,6 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
   </div>
 );
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -106,8 +109,9 @@ const getItemProperty = <T,>(
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentHeader = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>) => {
   const url = getItemProperty(firstItem, "url", "");
   const title = getItemProperty(firstItem, "title", "Retrieved Content");
   const description = getItemProperty(
@@ -158,7 +162,6 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- RetrievedContentDetails renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -172,8 +175,9 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentDetails = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>) => {
   const content = getItemProperty(firstItem, "content", "No content available");
 
   return (
@@ -202,7 +206,6 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -257,15 +260,14 @@ const getErrorMessage = (
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const RetrieveUrlView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: RetrieveUrlRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>) => {
   if (tool.state === "input-available" || tool.state === "input-streaming") {
     return <LoadingState />;
   }
@@ -295,7 +297,6 @@ const RetrieveUrlView = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetrieveUrlRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */

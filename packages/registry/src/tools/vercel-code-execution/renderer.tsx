@@ -17,10 +17,24 @@ type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionResult
 >["tool"];
 
+type CodeExecutionViewTool = Readonly<{
+  state: CodeExecutionTool["state"];
+  input?: Readonly<{
+    code?: string;
+    language?: string;
+    title?: string;
+  }>;
+  output?: Readonly<{
+    chart: unknown;
+    message: string;
+  }>;
+}>;
+
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
+const CodeExecutionView = ({
+  tool,
+}: Readonly<{ tool: CodeExecutionViewTool }>) => {
   const args = tool.input ?? {
     code: "",
     icon: "default",
@@ -59,7 +73,6 @@ const CodeExecutionView = ({ tool }: { tool: CodeExecutionTool }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 

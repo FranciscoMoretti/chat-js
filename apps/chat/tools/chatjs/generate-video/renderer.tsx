@@ -3,6 +3,8 @@ import React from "react";
 
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; this import erases at runtime. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateVideoInput, generateVideoResult } from "./schemas";
@@ -17,8 +19,9 @@ type GenerateVideoTool = ToolRendererProps<
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
+const GenerateVideoView = ({
+  tool,
+}: ReadonlyNativeSurface<{ tool: GenerateVideoTool }>) => {
   if (tool.state === "input-streaming" || tool.state === "input-available") {
     return (
       <div className="flex w-full flex-col items-center justify-center gap-4 rounded-lg border p-8">
@@ -59,7 +62,6 @@ const GenerateVideoView = ({ tool }: { tool: GenerateVideoTool }) => {
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateVideoRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */

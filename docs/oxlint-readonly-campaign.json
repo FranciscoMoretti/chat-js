@@ -6135,9 +6135,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "22b7f5a05621025b0a258bdfceb229a433c04b6a914af2682ab4fec54df0869c",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "unresolved",
+      "evidence": "A finite readonly view clears the three file-map callbacks and the transaction callback. The remaining input must retain mutable EveCopyPlan because Drizzle JSONB insert rejects the readonly plan with TS2769. Next action: establish a JSONB insert input type that accepts a readonly plan without changing schema/output or copying the plan; rerun the actual Drizzle overload check.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-copy-resources.ts",
@@ -6377,9 +6378,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "45831ffb5b0db1076c26616fc8fcf09dfd463e2c022b15ed1abb16ac0af637b0",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly native transaction capabilities preserve original transaction receivers and query results. Actual type-aware Oxlint and unused-directive checks are clean; app types pass; five maintained storage suites pass 29 tests.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-files.ts",
@@ -6387,9 +6389,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "885a21b8d892256dcb71777b123c241859198af7ed0219d3f3761850152251f6",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly native transaction capabilities preserve original transaction receivers and query results. Actual type-aware Oxlint and unused-directive checks are clean; app types pass; five maintained storage suites pass 29 tests.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-files.ts",
@@ -6397,9 +6400,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c1eb4fbaae4116d0f83533ec5da81f5eb6b0e2ff4ba4161ae83885f92f97064c",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly native transaction capabilities preserve original transaction receivers and query results. Actual type-aware Oxlint and unused-directive checks are clean; app types pass; five maintained storage suites pass 29 tests.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-files.ts",
@@ -6407,9 +6411,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "5a5a82e3806449b2ab0b71c27077dbc18f3cf21badc129ac20bc2752e22b33e8",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly native transaction capabilities preserve original transaction receivers and query results. Actual type-aware Oxlint and unused-directive checks are clean; app types pass; five maintained storage suites pass 29 tests.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-files.ts",
@@ -6417,9 +6422,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "1daaed886bea1d568e6efd7911639a50cfb5e8fc6ed44fe92cbf24ec20478d14",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly native transaction capabilities preserve original transaction receivers and query results. Actual type-aware Oxlint and unused-directive checks are clean; app types pass; five maintained storage suites pass 29 tests.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-files.ts",
@@ -6561,9 +6567,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "9ab91c2080f0f8fc4b2e8aed0656b87cf006a0af8c2f1a36d50e281f531c6550",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly transaction-method views and readonly readers preserve original transaction receiver, result identity, and query behavior. Scoped type-aware Oxlint plus unused-directive check and Oxfmt pass; app test:types passes; five maintained EVE suites pass 42/42.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-queries.ts",
@@ -6571,9 +6578,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e11205d44c4fc3b97f69e50ae8edceaf61f47a6d1e01a0e68f0804797ab38d28",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly transaction-method views preserve the native transaction receiver and existing query result. Scoped type-aware Oxlint plus unused-directive check and Oxfmt pass; app test:types passes; five maintained EVE suites pass 42/42.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-queries.ts",
@@ -6581,9 +6589,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "25004211121296d65b6001b03e98b2331515004c28478dc960eb1df5f7175c46",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly transaction-method views preserve the native transaction receiver and existing query result. Scoped type-aware Oxlint plus unused-directive check and Oxfmt pass; app test:types passes; five maintained EVE suites pass 42/42.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-queries.ts",
@@ -6591,9 +6600,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f936431fddbdbdd96ac683299d598135f613305f6735641644079f87678c4777",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly transaction-method views preserve the native transaction receiver and existing query result. Scoped type-aware Oxlint plus unused-directive check and Oxfmt pass; app test:types passes; five maintained EVE suites pass 42/42.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-queries.ts",
@@ -6611,9 +6621,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "487a853d80185d53e800806f820c2f1660c7fdbc4aa20a35accc1e3c6fdf375f",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Finite readonly transaction-method views are passed through the tombstone helper using its matching select/update capability; family rows are read-only. Scoped type-aware Oxlint plus unused-directive check and Oxfmt pass; app test:types passes; five maintained EVE suites pass 42/42.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-response-groups.ts",
@@ -6671,9 +6682,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "ba2705348547770700429cd883aab3edeb3d4d391bf41037dcb6e78dc7d9d184",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "The tombstone helper now accepts only its consumed native select/update transaction methods and a readonly family projection. The original transaction object is forwarded without wrappers or copies; actual app types and scoped native lint pass.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/lib/db/eve-search.test.ts",
@@ -11651,9 +11663,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f46c0b552ca1862d9de6598f4337ba09001b3c9af96093ecb8d5c5f4e940168c",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/generate-image/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/generate-image/renderer.tsx",
+        "canonicalSourceSha256": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+        "mirrorSourceSha256": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+        "campaignFingerprint": "f46c0b552ca1862d9de6598f4337ba09001b3c9af96093ecb8d5c5f4e940168c"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/generate-image/tool.test.ts",
@@ -11681,9 +11700,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d7b03094de25c78c0ef644384e66973709f6237350fe95d2d91a918cf349140e",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/generate-video/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/generate-video/renderer.tsx",
+        "canonicalSourceSha256": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+        "mirrorSourceSha256": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+        "campaignFingerprint": "d7b03094de25c78c0ef644384e66973709f6237350fe95d2d91a918cf349140e"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/get-weather/renderer.test.tsx",
@@ -11721,9 +11747,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "15cc65316aefdebb3f66647814e54b3ecd841901ce8c62ea971d5107f2bae2cd",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "campaignFingerprint": "15cc65316aefdebb3f66647814e54b3ecd841901ce8c62ea971d5107f2bae2cd"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
@@ -11731,9 +11764,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e813183e8491b896a35374f72cf252684c17281600df07e87ba9c3b57593587a",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "campaignFingerprint": "e813183e8491b896a35374f72cf252684c17281600df07e87ba9c3b57593587a"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
@@ -11741,9 +11781,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "8b8dcc44e7d5486b9e3c3c9ed961b8643cf74cc27178f9ceb6cc61c2f5ddc62f",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "campaignFingerprint": "8b8dcc44e7d5486b9e3c3c9ed961b8643cf74cc27178f9ceb6cc61c2f5ddc62f"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
@@ -11751,9 +11798,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c52ddeb6b864f482584f7924165fb7fc98360ce494efc6bdcb28b5c6290ae692",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+        "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+        "campaignFingerprint": "c52ddeb6b864f482584f7924165fb7fc98360ce494efc6bdcb28b5c6290ae692"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/saved-code-execution/document.tsx",
@@ -11761,9 +11815,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "unresolved",
+      "evidence": "Inherited from packages/registry/src/tools/saved-code-execution/document.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/saved-code-execution/document.tsx",
+        "canonicalSourceSha256": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+        "mirrorSourceSha256": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+        "campaignFingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/saved-code-execution/renderer.tsx",
@@ -12019,9 +12080,16 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "7538852af94e25f5018ffee407d426008cf178e7243b7e293f9e65b1a5aa9b87",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "unknown"
+      "status": "fixed",
+      "evidence": "Inherited from packages/registry/src/tools/vercel-code-execution/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe.",
+      "provenance": "verified-generated-mirror",
+      "inheritedFrom": {
+        "canonicalPath": "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+        "canonicalSourceSha256": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+        "mirrorSourceSha256": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+        "campaignFingerprint": "7538852af94e25f5018ffee407d426008cf178e7243b7e293f9e65b1a5aa9b87"
+      },
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "apps/chat/tools/chatjs/vercel-code-execution/sandbox.test.ts",
@@ -13693,9 +13761,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "f46c0b552ca1862d9de6598f4337ba09001b3c9af96093ecb8d5c5f4e940168c",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/generate-image/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/generate-video/renderer.tsx",
@@ -13703,9 +13772,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "d7b03094de25c78c0ef644384e66973709f6237350fe95d2d91a918cf349140e",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/generate-video/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/get-weather/renderer.tsx",
@@ -13735,9 +13805,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "15cc65316aefdebb3f66647814e54b3ecd841901ce8c62ea971d5107f2bae2cd",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/retrieve-url/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/retrieve-url/renderer.tsx",
@@ -13745,9 +13816,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "e813183e8491b896a35374f72cf252684c17281600df07e87ba9c3b57593587a",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/retrieve-url/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/retrieve-url/renderer.tsx",
@@ -13755,9 +13827,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "8b8dcc44e7d5486b9e3c3c9ed961b8643cf74cc27178f9ceb6cc61c2f5ddc62f",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/retrieve-url/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/retrieve-url/renderer.tsx",
@@ -13765,9 +13838,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "c52ddeb6b864f482584f7924165fb7fc98360ce494efc6bdcb28b5c6290ae692",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/retrieve-url/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/saved-code-execution/document.tsx",
@@ -13775,9 +13849,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "unresolved",
+      "evidence": "The existing registered callback input retains the original mutable callback contract; a readonly projection is not assignable to the renderer callback. Keep this source scope unresolved pending a finite consumed callback type that preserves the registered handler signature.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/saved-code-execution/renderer.tsx",
@@ -13993,9 +14068,10 @@
       "directive": "oxlint-disable",
       "rule": "typescript/prefer-readonly-parameter-types",
       "fingerprint": "7538852af94e25f5018ffee407d426008cf178e7243b7e293f9e65b1a5aa9b87",
-      "status": "unreviewed",
-      "evidence": null,
-      "provenance": "canonical-source"
+      "status": "fixed",
+      "evidence": "Readonly native readers preserve the original component inputs and object identity. Actual Registry/app type checks, scoped type-aware lint, formatter, and existing paired visual tests pass; all eight before/after PNGs are pixel-identical. Transpiled JavaScript ASTs match the packages/registry/src/tools/vercel-code-execution/renderer.tsx source snapshot.",
+      "provenance": "direct-source-review",
+      "reviewedAtSourceHead": "de812fd45"
     },
     {
       "path": "packages/registry/src/tools/vercel-code-execution/tool.ts",
@@ -14802,14 +14878,14 @@
     }
   ],
   "latestReview": {
-    "sourceCommit": "d7a93408dda8f9e5fe5e6839fdcd4174b5264e73",
-    "originalMembershipsReviewed": 117,
+    "sourceCommit": "de812fd45",
+    "originalMembershipsReviewed": 145,
     "statusCounts": {
-      "fixed": 102,
-      "justified": 11,
-      "unresolved": 4
+      "fixed": 127,
+      "unresolved": 7,
+      "justified": 11
     },
-    "note": "The immutable d7a93408 denominator is unchanged. Direct source review and verified generated-mirror inheritance are reported separately. This batch records EVE database scopes and independently validated Registry renderer scopes; Firecrawl is canonical-only.",
+    "note": "The immutable d7a93408 denominator is unchanged. Direct source review and verified generated-mirror inheritance are reported separately. This update records EVE database transaction readers and Registry renderer inputs; the copy-plan JSONB parameter and saved-code callback remain unresolved. The Renderer paired PNGs are pixel-identical before and after synchronized mirrors.",
     "currentSourceHashes": {
       "apps/chat/lib/ai/to-model-data.ts": "0465aa3bd25deae2920db03dc91b7becc8daa315b8c98b3d4acff422845006a7",
       "apps/chat/lib/ai/tool-context.ts": "cb9b98f21726ece37244855956aee41ce4f69ffa00c135bcb167bd765937a7c1",
@@ -14841,8 +14917,8 @@
       "packages/registry/src/tools/sheet-documents/document.tsx": "9bf016fec432043161499d8a9f1935e3a0bea5909bee59b7e9c002e4e809285e",
       "packages/registry/src/tools/text-documents/document.tsx": "3573932bddc0e1288927dda9453e448cc6ace79e6797c1a82db3b23653d98",
       "apps/chat/lib/db/eve-documents.ts": "ac5318dda156d03fdb9723e3f326dd3429b6fdbaf2e419b33f37d7166b89463d",
-      "apps/chat/lib/db/eve-queries.ts": "605917ad4e0f44d5ec24ec7953afaa53e4be41f16f2dee92b675c535814ebca1",
-      "apps/chat/lib/db/eve-copy-journal.ts": "c172cfcd85e8ead96f7e87ba13ea5767fe1e04169b89bc58b20e220aafd3c1f3",
+      "apps/chat/lib/db/eve-queries.ts": "8129abc94cd9218cb44b87bd9b3b0760a5d9d5f3d2697ffe4cd7c2c83fbfe0ac",
+      "apps/chat/lib/db/eve-copy-journal.ts": "f8f2ee2965950ab43ecd4d55985468f74c5ecef96ca2df0589afe19476fa0cb6",
       "apps/chat/lib/db/eve-search.test.ts": "a0bcaeb525c9dd089a9b5b3a2c888b505a3aaa183a13a3592f045bbd107db137",
       "packages/registry/src/gateways/vercel/gateway.ts": "5c0d23100b3f909e36d88d3810b03075bbefe2705fc04598616f84da756d91df",
       "packages/registry/src/storage/ftp/storage-provider.ts": "1b5b630864bbbe6f835b913f87348ca9a6f7c43a47c998854fc6236478a77f29",
@@ -14858,29 +14934,40 @@
       "packages/registry/src/tools/saved-code-execution/result.tsx": "689b4793bc554270c90a464a057ba169f242d7a4146c97ec09dfc38851a7e4da",
       "packages/registry/src/tools/tavily-search/renderer.tsx": "8a50c80556b41c32dbdcb0dc2f868593cceff4d27aea27da26fa9783944574a4",
       "packages/registry/src/tools/firecrawl-search/renderer.tsx": "8a50c80556b41c32dbdcb0dc2f868593cceff4d27aea27da26fa9783944574a4",
-      "apps/chat/lib/db/eve-files.ts": "d8b2a25ed9a109d6f3e74c9b0f9434c0950fb4de0d21afddaab384106073844d",
+      "apps/chat/lib/db/eve-files.ts": "3a276e9f0193213d7490bbf558e9567593be95a9161c303a8e06842f41426084",
       "packages/registry/src/tools/deep-research/update-title.tsx": "5320279cd2a93f81f56ac7f4c1b4b6e642040fb75360eb6ac2e9153cc547f3d0",
       "apps/chat/tools/chatjs/word-count/renderer.tsx": "490a41d7db5f66473fb289a6efaeff20f188f04126f20e889f2ab85f88abc6f6",
       "apps/chat/tools/chatjs/tavily-search/renderer.tsx": "8a50c80556b41c32dbdcb0dc2f868593cceff4d27aea27da26fa9783944574a4",
       "apps/chat/tools/chatjs/get-weather/renderer.tsx": "b8561c76c9846a50433f3f0a0406be875ebb1c710cb6251b6c0f958e0c61ff8a",
       "packages/registry/src/tools/get-weather/renderer.tsx": "b8561c76c9846a50433f3f0a0406be875ebb1c710cb6251b6c0f958e0c61ff8a",
-      "apps/chat/tools/chatjs/deep-research/update-title.tsx": "5320279cd2a93f81f56ac7f4c1b4b6e642040fb75360eb6ac2e9153cc547f3d0"
+      "apps/chat/tools/chatjs/deep-research/update-title.tsx": "5320279cd2a93f81f56ac7f4c1b4b6e642040fb75360eb6ac2e9153cc547f3d0",
+      "apps/chat/lib/db/eve-response-groups.ts": "ade532162ca5be2b302a3a3977485de99ab354080d817fab91ae65c084877560",
+      "packages/registry/src/tools/retrieve-url/renderer.tsx": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+      "apps/chat/tools/chatjs/retrieve-url/renderer.tsx": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+      "packages/registry/src/tools/generate-image/renderer.tsx": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+      "apps/chat/tools/chatjs/generate-image/renderer.tsx": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+      "packages/registry/src/tools/generate-video/renderer.tsx": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+      "apps/chat/tools/chatjs/generate-video/renderer.tsx": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+      "packages/registry/src/tools/vercel-code-execution/renderer.tsx": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+      "apps/chat/tools/chatjs/vercel-code-execution/renderer.tsx": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+      "packages/registry/src/tools/saved-code-execution/document.tsx": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+      "apps/chat/tools/chatjs/saved-code-execution/document.tsx": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7"
     },
     "directReview": {
-      "sourceHead": "0b0065c3f",
-      "originalMembershipsReviewed": 90,
+      "sourceHead": "de812fd45",
+      "originalMembershipsReviewed": 110,
       "statusCounts": {
-        "fixed": 80,
-        "justified": 8,
-        "unresolved": 2
+        "fixed": 98,
+        "unresolved": 4,
+        "justified": 8
       }
     },
     "inheritedMirrorReview": {
-      "membershipCount": 27,
+      "membershipCount": 35,
       "statusCounts": {
-        "fixed": 22,
-        "justified": 3,
-        "unresolved": 2
+        "fixed": 29,
+        "unresolved": 3,
+        "justified": 3
       },
       "evidence": "Verified bun demo:sync mappings and byte-identical source/mirror SHA-256 for every listed inherited record. Firecrawl is canonical-only because it has no selected generated mirror.",
       "records": [
@@ -15342,6 +15429,142 @@
             "campaignFingerprint": "2d0be123f0e7f00cbf3b2912fbeabb20708c2149cb81f004a7c8e480e6639808"
           },
           "reviewedAtSourceHead": "0b0065c3f"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
+          "line": 54,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "15cc65316aefdebb3f66647814e54b3ecd841901ce8c62ea971d5107f2bae2cd",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+            "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "campaignFingerprint": "15cc65316aefdebb3f66647814e54b3ecd841901ce8c62ea971d5107f2bae2cd"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
+          "line": 109,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "e813183e8491b896a35374f72cf252684c17281600df07e87ba9c3b57593587a",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+            "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "campaignFingerprint": "e813183e8491b896a35374f72cf252684c17281600df07e87ba9c3b57593587a"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
+          "line": 175,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "8b8dcc44e7d5486b9e3c3c9ed961b8643cf74cc27178f9ceb6cc61c2f5ddc62f",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+            "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "campaignFingerprint": "8b8dcc44e7d5486b9e3c3c9ed961b8643cf74cc27178f9ceb6cc61c2f5ddc62f"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/retrieve-url/renderer.tsx",
+          "line": 260,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "c52ddeb6b864f482584f7924165fb7fc98360ce494efc6bdcb28b5c6290ae692",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/retrieve-url/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/retrieve-url/renderer.tsx",
+            "canonicalSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "mirrorSourceSha256": "89bd5f5a85c73cf16e5ff28b13f24e272e0f71e6c5d3f5c4bcf00e1cf913ae9d",
+            "campaignFingerprint": "c52ddeb6b864f482584f7924165fb7fc98360ce494efc6bdcb28b5c6290ae692"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/generate-image/renderer.tsx",
+          "line": 35,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "f46c0b552ca1862d9de6598f4337ba09001b3c9af96093ecb8d5c5f4e940168c",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/generate-image/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/generate-image/renderer.tsx",
+            "canonicalSourceSha256": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+            "mirrorSourceSha256": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+            "campaignFingerprint": "f46c0b552ca1862d9de6598f4337ba09001b3c9af96093ecb8d5c5f4e940168c"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/generate-video/renderer.tsx",
+          "line": 20,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "d7b03094de25c78c0ef644384e66973709f6237350fe95d2d91a918cf349140e",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/generate-video/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/generate-video/renderer.tsx",
+            "canonicalSourceSha256": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+            "mirrorSourceSha256": "55db9f2682fc60d5d29ccff9815d42c1dfa3f0e90426ac7826ce35252a200993",
+            "campaignFingerprint": "d7b03094de25c78c0ef644384e66973709f6237350fe95d2d91a918cf349140e"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/vercel-code-execution/renderer.tsx",
+          "line": 22,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "7538852af94e25f5018ffee407d426008cf178e7243b7e293f9e65b1a5aa9b87",
+          "status": "fixed",
+          "evidence": "Inherited from packages/registry/src/tools/vercel-code-execution/renderer.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/vercel-code-execution/renderer.tsx",
+            "canonicalSourceSha256": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+            "mirrorSourceSha256": "2275865cbc2401e25e915b887c5e54827558635afc2c4b74e6e99212fa0e51fe",
+            "campaignFingerprint": "7538852af94e25f5018ffee407d426008cf178e7243b7e293f9e65b1a5aa9b87"
+          },
+          "reviewedAtSourceHead": "de812fd45"
+        },
+        {
+          "path": "apps/chat/tools/chatjs/saved-code-execution/document.tsx",
+          "line": 41,
+          "directive": "oxlint-disable",
+          "rule": "typescript/prefer-readonly-parameter-types",
+          "fingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610",
+          "status": "unresolved",
+          "evidence": "Inherited from packages/registry/src/tools/saved-code-execution/document.tsx after verified demo:sync target mapping and byte-identical canonical/mirror SHA-256 b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7.",
+          "provenance": "verified-generated-mirror",
+          "inheritedFrom": {
+            "canonicalPath": "packages/registry/src/tools/saved-code-execution/document.tsx",
+            "canonicalSourceSha256": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+            "mirrorSourceSha256": "b93ed9fcd7240908dc0fea20228e85b5d3df9f8592ad39c04f6b02cb5a5772d7",
+            "campaignFingerprint": "a823f99319eb31da436863d9864980ed1fe1d238e98eb0fbc122cfc46b4e4610"
+          },
+          "reviewedAtSourceHead": "de812fd45"
         }
       ]
     },
@@ -15364,6 +15587,7 @@
         "evidence": "/tmp/download-assets-entry-review.json",
         "originalReadonlyMemberships": 0
       }
-    }
+    },
+    "unreviewedCount": 1228
   }
 }

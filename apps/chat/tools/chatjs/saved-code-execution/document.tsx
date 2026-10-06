@@ -38,7 +38,7 @@ import { documentExecutionLanguage } from "./schemas";
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep the registered DocumentRunProps callback contract: onAction accepts mutable DocumentAssistantRequest, and widening that callback argument to readonly narrows the React consumer contract; this component forwards the callback unchanged. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -114,7 +114,6 @@ export const EveDocumentRun = ({
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 

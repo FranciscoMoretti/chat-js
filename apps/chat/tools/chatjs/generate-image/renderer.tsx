@@ -13,6 +13,8 @@ import { useImageLoadError } from "@/hooks/use-image-load-error";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 /* oxlint-enable sort-imports */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; this import erases at runtime. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateImageInput, generateImageResult } from "./schemas";
@@ -32,9 +34,10 @@ type GenerateImageTool = ToolRendererProps<
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
+const GenerateImageView = ({
+  tool,
+}: ReadonlyNativeSurface<{ tool: GenerateImageTool }>) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from tool.output; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const imageUrl = tool.output?.imageUrl;
@@ -120,7 +123,6 @@ const GenerateImageView = ({ tool }: { tool: GenerateImageTool }) => {
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GenerateImageRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable react/jsx-max-depth */
