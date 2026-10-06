@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:fs/promises" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import fs from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../features/installed"; "../lib/ai/gateway-model-defaults"; "../lib/ai/models.generated"; "../lib/config"; "../lib/config-requirements" dependency within this package instead of introducing an alias or barrel API.
  */
 /**
  * Build-time config validation script.
@@ -18,33 +17,33 @@ import { config as loadEnvConfig } from "dotenv";
 import { z } from "zod";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { installedFeatures } from "../features/installed";
+import { installedFeatures } from "@/features/installed";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
+import { gatewayEnvRequirements } from "@/lib/ai/gateway-model-defaults";
 /* oxlint-enable sort-imports */
-import { generatedForGateway } from "../lib/ai/models.generated";
+import { generatedForGateway } from "@/lib/ai/models.generated";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { config } from "../lib/config";
+import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   authEnvRequirements,
   getMissingRequirement,
   isRequirementSatisfied,
-} from "../lib/config-requirements";
+} from "@/lib/config-requirements";
 /* oxlint-enable sort-imports */
-import { databaseEnvOptions } from "../lib/db/connection";
-import { getEveRuntimeEnvOptions } from "../lib/env-schema";
-import { resolveEveEnvironment } from "../lib/eve/environment";
+import { databaseEnvOptions } from "@/lib/db/connection";
+import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
+import { resolveEveEnvironment } from "@/lib/eve/environment";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
+import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { storageEnvRequirements, storageId } from "../lib/storage-options";
+import { storageEnvRequirements, storageId } from "@/lib/storage-options";
 /* oxlint-enable sort-imports */
-import { installedToolNames } from "../tools/chatjs/installed-features";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();

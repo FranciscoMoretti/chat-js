@@ -5507,7 +5507,6 @@
     "[\"apps/chat/scripts/check-db.ts\",\"unicorn/prefer-top-level-await\",\"oxlint-disable-next-line\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
-    "[\"apps/chat/scripts/check-env.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/scripts/check-env.ts\",\"sort-imports\",\"oxlint-disable\"]": 7,
     "[\"apps/chat/scripts/check-env.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": 5,
     "[\"apps/chat/scripts/check-env.ts\",\"unicorn/max-nested-calls\",\"oxlint-disable\"]": 1,
@@ -32432,22 +32431,19 @@
       "d0dd6dcaf3fc136986832f7212fae880df82d2b44a70ef8df86e5e91d1d2828c"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/max-dependencies\",\"oxlint-disable\"]": [
-      "ee3e466dc07c49ead51b96b388609b13568f7b0fc7da487a789ef34548fafe27"
+      "fcdd31fc55e38fba59b75f9c677aae1e200a5ddc270efd83da8cacf0b99d187f"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "3d3c27e04f62eae4ef31eabf6f045e81c1cc2472273925f7064b2223f61f9675"
-    ],
-    "[\"apps/chat/scripts/check-env.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable\"]": [
-      "3d3c27e04f62eae4ef31eabf6f045e81c1cc2472273925f7064b2223f61f9675"
+      "0b07bb91282dbc48dc6511e9cca23478217d3d19169bdfdbe99970eb18e51dad"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"sort-imports\",\"oxlint-disable\"]": [
       "5001eb11517f8ae8f0be1946735f7e9be7ea59f8f5d27a6940c522fa5454505f",
-      "2d834ed9aba5c16aceade184cf7daa4872ef953616fe20fb1df3a8dc7bb24807",
-      "4f4d6f970ddf61bfa98e14fa8d7892bb1dd081346203c6e9220a7296a9d058bb",
-      "0cb2212b3af665a0bb0d27ffe811e0a5c334a6c5c66fb977824a745fa65eb0ac",
-      "976cfd8a7ee69cb7fa521f696abf5503869b375cca6a63e4132bb5384b6126ab",
-      "b8e8e12ff10885e9d9505e87c0512d3117ee8f223707f7de3aa3da3c6a7c2bcc",
-      "85694d223e88837401731a825944eda1464c928799c9bec5cdffda1794e1d43d"
+      "01851bdbd815f0deef1ba970e42d992a03c7f105186b52ae8a4a780b77941fef",
+      "b79ec02abf4b2194dcad9392fabcb5ee7e3d6acbf004eff87a03e8226697a4b8",
+      "4dd68d1b3d9a32ffbbe219bb07539c4f52ca78c7ee2818e573288a730d9c652f",
+      "c69d0da33734d6e900f09549844e79562c169d9db413030017b9d8a575420b48",
+      "930a30fdeaebae7256366b18c93064d55ae61dea5728adb7db1be1c6b34aae3f",
+      "92eb54e8cb9124c422ef7a3581f2d98b53ceebe203b33dd4a842deaab03f1928"
     ],
     "[\"apps/chat/scripts/check-env.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
       "93c9d9d61e589807651689ca40b3847f697ba8aae520bd77f23722ff38d8ab85",
