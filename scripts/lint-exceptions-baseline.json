@@ -32547,22 +32547,22 @@
       "c64a052454778574458456843aa02d4978dcb65a5b7b7596e7486fd34a8b3ae9"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
-      "cd335e1fb348172298a2aebf9e0bb64a3164619a4b12a18e85a0c6de4ad374b8"
+      "d38e0b2b024326238b704d1b895599d4b1b32b4136c1ee23551860576ccab6df"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"sort-imports\",\"oxlint-disable\"]": [
-      "40e4c0c763cd2d7037c85df854e5ec612ef56dddccdaf1ffa3d885f5a17c3a0e"
+      "5d98b60066567b96e416020dae22bb3620eea64243cea2eafeb7da030eeb9fa0"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"oxc/no-async-await\",\"oxlint-disable\"]": [
-      "091cf3f65f9915791e89697f66ee2713b00b32c51e94211130a820633ac0b532"
+      "fb0178647dcc9781468e42c515608645b92ab8b01a4a0b8455e1a9e4d0786d20"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"no-console\",\"oxlint-disable\"]": [
-      "fce74eb71a762e9f39fcf6697966697790a1e20a35624dbb7ed66d6171f06c8f"
+      "47369ae06e244c3ae059bab26b60dc237d9eac931c3b44c81fdbb33000f0687f"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"no-magic-numbers\",\"oxlint-disable\"]": [
-      "fce74eb71a762e9f39fcf6697966697790a1e20a35624dbb7ed66d6171f06c8f"
+      "47369ae06e244c3ae059bab26b60dc237d9eac931c3b44c81fdbb33000f0687f"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"unicorn/no-null\",\"oxlint-disable\"]": [
-      "fce74eb71a762e9f39fcf6697966697790a1e20a35624dbb7ed66d6171f06c8f"
+      "47369ae06e244c3ae059bab26b60dc237d9eac931c3b44c81fdbb33000f0687f"
     ],
     "[\"apps/chat/scripts/fetch-models.ts\",\"node/no-top-level-await\",\"oxlint-disable-next-line\"]": [
       "e40e5ef9516bdd4e75faf4747da2dff4a603e01e0c0ef039c8c88630c18c919e"
