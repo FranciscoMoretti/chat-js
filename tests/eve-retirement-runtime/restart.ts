@@ -13,6 +13,7 @@ import { preparePostgresFixture } from "./postgres-fixture";
 const crashAtCallbacks = process.argv.includes("--callbacks");
 const swapConnector = process.argv.includes("--swap-connector");
 const useDefaultLease = process.argv.includes("--default-lease");
+const abruptServer = process.argv.includes("--abrupt-server");
 const crashTestLeaseSeconds = 1;
 const postgresFlag = process.argv.indexOf("--postgres");
 const absentFlag = -1;
@@ -104,7 +105,8 @@ try {
     const candidate = processMarker.parse(
       await runtime.waitForMarker("candidate")
     );
-    await runtime.crash();
+    // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
+    await runtime.crash(abruptServer ? candidate.pid : undefined);
     await runtime.release("candidate");
     await runtime.start();
     const settled = processMarker.parse(await runtime.waitForMarker("settled"));
@@ -125,7 +127,8 @@ try {
       await Bun.file(path.join(runtime.directory, "effects.jsonl")).exists(),
       false
     );
-    await runtime.crash();
+    // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
+    await runtime.crash(abruptServer ? settled.pid : undefined);
     await runtime.release("settled");
     await runtime.start();
   }
@@ -151,7 +154,19 @@ try {
   assert.equal(effects.trim().split("\n").length, singleEffect);
   await runtime.remove();
 } catch (error) {
-  await runtime.crash();
+  await writeFile(
+    path.join(runtime.directory, "failure.txt"),
+    error instanceof Error ? (error.stack ?? error.message) : String(error)
+  );
+  try {
+    await runtime.crash();
+  } catch (cleanupError) {
+    throw new AggregateError(
+      [error, cleanupError],
+      `Restart and cleanup failed; retained ${runtime.directory}`,
+      { cause: cleanupError }
+    );
+  }
   throw new Error(`Restart proof failed; retained ${runtime.directory}`, {
     cause: error,
   });

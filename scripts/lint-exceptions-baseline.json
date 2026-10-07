@@ -6402,7 +6402,7 @@
     "[\"tests/eve-retirement-runtime/restart.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-runtime/restart.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable-next-line\"]": 2,
-    "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 1,
+    "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": 3,
     "[\"tests/eve-retirement-runtime/run-postgres.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": 1,
     "[\"tests/eve-retirement-runtime/run.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": 1
   },
@@ -29547,31 +29547,31 @@
       "987791be08ca36dfed003d2a35e0221a8e187c157b4c71b1de8b1ac8a8b09034"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"no-undefined\",\"oxlint-disable\"]": [
-      "c9d719543c559fb1b570feb34d69196ee4da70ef86afe9d9b5be4fb7dfca9ad2"
+      "0cb471553b1485c075cb7f8b6b036d13f83e4bc0b4f01dd6f036cee0cfc8d56b"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "2f997424c8314781ca037a91c2264b1b0fd3b1231f76e655a5488c0e8e9495b9"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-param\",\"oxlint-disable\"]": [
-      "cb453666857a3e41cc1d5020496b728cff34988967d372f383fd99117be04d25"
+      "a1a10526e665656dd7834a531bff24c83a44626a5ac8813252809c26ad20fb5a"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"jsdoc/require-returns\",\"oxlint-disable\"]": [
-      "cb453666857a3e41cc1d5020496b728cff34988967d372f383fd99117be04d25"
+      "a1a10526e665656dd7834a531bff24c83a44626a5ac8813252809c26ad20fb5a"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": [
       "92fbc1d06a847765eb9e96324723db3e60ff512b9b658d681604954d438f894f"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-statements\",\"oxlint-disable\"]": [
-      "8a8d337c21ad17e606e43cf8d628e51a2706f18f1e7e105ac6bed71ec76fa525"
+      "d0f2673964c2f8429aa9b3aa3486a358ddb9d7cd13d5a2b2f29dfa0bd0e62873"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"max-lines-per-function\",\"oxlint-disable\"]": [
-      "8a8d337c21ad17e606e43cf8d628e51a2706f18f1e7e105ac6bed71ec76fa525"
+      "d0f2673964c2f8429aa9b3aa3486a358ddb9d7cd13d5a2b2f29dfa0bd0e62873"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-function-return-type\",\"oxlint-disable\"]": [
-      "8a8d337c21ad17e606e43cf8d628e51a2706f18f1e7e105ac6bed71ec76fa525"
+      "d0f2673964c2f8429aa9b3aa3486a358ddb9d7cd13d5a2b2f29dfa0bd0e62873"
     ],
     "[\"tests/eve-retirement-runtime/persistent-runtime.ts\",\"typescript/explicit-module-boundary-types\",\"oxlint-disable\"]": [
-      "8a8d337c21ad17e606e43cf8d628e51a2706f18f1e7e105ac6bed71ec76fa525"
+      "d0f2673964c2f8429aa9b3aa3486a358ddb9d7cd13d5a2b2f29dfa0bd0e62873"
     ],
     "[\"tests/eve-retirement-runtime/postgres-fixture.ts\",\"import/no-nodejs-modules\",\"oxlint-disable\"]": [
       "657cad75e95e41b85dcad60882c7208913e30d50f1fa7d55a51623272c4705a7"
@@ -29629,7 +29629,9 @@
       "beb39c0e78373ebb2e1ecd1c5e8bded0adc97cef7973ab4631ca57bd60c38eb7"
     ],
     "[\"tests/eve-retirement-runtime/restart.ts\",\"no-undefined\",\"oxlint-disable-next-line\"]": [
-      "40e4978d15aa1b5c23dd6852035a0c4fe3fb0903b2b1456e28f85fb87d33e3a1"
+      "40e4978d15aa1b5c23dd6852035a0c4fe3fb0903b2b1456e28f85fb87d33e3a1",
+      "1ca19918a0216cc7d4c577fc0b4e6804c752b28fe81e6435eb47bbae1bcbf5e4",
+      "9b1a92ed9070768df6396b4879461cd618806e20835ae0bc820ecdea321a629b"
     ],
     "[\"tests/eve-retirement-runtime/run-postgres.ts\",\"import/no-nodejs-modules\",\"oxlint-disable-next-line\"]": [
       "95fa01b67dc7bee0789696a4c3d66218f6210ff29f60ff1a660b20bdc0b9511a"

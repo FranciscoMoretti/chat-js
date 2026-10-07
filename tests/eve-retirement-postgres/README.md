@@ -54,3 +54,11 @@ bash tests/eve-retirement-postgres/cluster.sh stop /absolute/cluster-root
 ```
 
 This verifies the ownership marker, stops the cluster and retains data/logs for inspection. Deleting those retained files is a separate explicit cleanup operation. Keep the current shared cluster alive while A/C/B use it.
+
+## Abrupt serving-process crash
+
+Call `await runtime.crash(serverPid)` with a PID read from the fixture callback or its authenticated process-identity endpoint. The controller validates that PID's parent against its own running CLI, kills the detached server process group, waits for that group to disappear from the OS process table, removes only the dead server's stale URL record, and waits for CLI exit. It retains all world data. Default `crash()` still means CLI SIGKILL followed by detached-server cleanup. Never guess a PID. `runtime.node` exposes the validated Node executable for seed/client subprocesses.
+
+`restart.ts --callbacks --abrupt-server` passes on the built-in local world: different candidate, settlement and effect PIDs, one observed effect, no approval resend. PostgreSQL reaches a new worker, but Graphile Worker 0.16.6 retains dead workers' job locks until its **four-hour** stale-lock threshold (`dist/sql/resetLockedAt.js`). The 60-second Postgres callback probe therefore cannot establish automatic recovery. The SQL evidence has locked jobs owned by the dead workers; do not clear locks or age timestamps and call that baseline recovery. A separately labeled supported administrator recovery can be tested independently. CLI-only shutdown is different: it can durably mark an interrupted approval candidate failed and return to input waiting.
+
+The controller uses `ps` group membership because macOS/Bun can report `EPERM` for `kill(group, 0)` during reaping. Permission errors are never treated as proof of process death. `crash-N.json` records lifecycle progress; the restart driver saves the primary failure before cleanup and preserves both errors if cleanup also fails.

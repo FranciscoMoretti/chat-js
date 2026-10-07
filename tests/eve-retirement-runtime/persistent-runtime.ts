@@ -20,7 +20,7 @@ const healthTimeoutMs = 1000;
 /** Poll external runtime evidence with a bounded deadline; never resend a command. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- The function signature supplies the probe and timeout contract. */
 const until = async <TValue>(
-  probe: () => Promise<TValue | undefined>,
+  probe: () => Promise<TValue | undefined> | TValue | undefined,
   timeoutMs = startupTimeoutMs
 ): Promise<TValue> => {
   const deadline = Date.now() + timeoutMs;
@@ -90,17 +90,77 @@ const createPersistentRuntime = async (
   } = {};
   let generation = zero;
 
-  const crash = async (): Promise<void> => {
+  const crash = async (serverPid?: number): Promise<void> => {
     if (state.running === undefined) {
       return;
+    }
+    const crashEvidence = async (phase: string): Promise<void> => {
+      await writeFile(
+        path.join(fixture.directory, `crash-${generation}.json`),
+        JSON.stringify({ phase, serverPid })
+      );
+    };
+    await crashEvidence("checking-parent");
+    if (serverPid !== undefined) {
+      z.number().int().positive().parse(serverPid);
+      const parent = Bun.spawn(["ps", "-p", String(serverPid), "-o", "ppid="], {
+        stdout: "pipe",
+      });
+      const parentText = await new Response(parent.stdout).text();
+      const parentPid = Number(parentText.trim());
+      if ((await parent.exited) !== zero || parentPid !== state.running.pid) {
+        throw new Error(
+          "Refusing to kill a server outside this fixture's CLI process"
+        );
+      }
+      process.kill(-serverPid, "SIGKILL");
+      await crashEvidence("server-signaled");
+    }
+    if (serverPid !== undefined) {
+      await until(async () => {
+        // On macOS, kill(group, 0) can return EPERM while a killed child is reaped.
+        // Read process-group membership instead; never treat a permission error as death.
+        const groups = Bun.spawn(["ps", "-axo", "pgid="], { stdout: "pipe" });
+        const groupText = await new Response(groups.stdout).text();
+        if ((await groups.exited) !== zero) {
+          throw new Error("Unable to verify terminated server process group");
+        }
+        return groupText
+          .split(/\s+/u)
+          .some((value) => Number(value) === serverPid)
+          ? undefined
+          : true;
+      });
+      await crashEvidence("server-group-terminated");
+      // Only the dead server's stale URL record is removed; durable data is retained.
+      await rm(path.join(fixture.directory, ".eve/dev-server-state.v1.json"), {
+        force: true,
+      });
+      await crashEvidence("stale-url-removed");
     }
     if (
       state.running.child.exitCode === null &&
       state.running.child.signalCode === null
     ) {
-      process.kill(-state.running.pid, "SIGKILL");
+      try {
+        process.kill(-state.running.pid, "SIGKILL");
+      } catch (error) {
+        // The CLI may exit itself when its directly killed server disconnects.
+        if (
+          !(error instanceof Error && "code" in error && error.code === "ESRCH")
+        ) {
+          throw error;
+        }
+      }
     }
-    await state.running.exited;
+    const stopped = state.running;
+    await until(() =>
+      stopped.child.exitCode !== null || stopped.child.signalCode !== null
+        ? true
+        : undefined
+    );
+    await stopped.exited;
+    await crashEvidence("cli-exited");
     // EVE's detached server closes asynchronously on CLI IPC disconnect.
     // Do not release barriers or reuse its port while that owner can still run.
     await until(async () =>
@@ -128,7 +188,9 @@ const createPersistentRuntime = async (
         fixture.cli,
         "dev",
         "--no-ui",
-        "--no-default-extensions",
+        ...(experimentalInstallation?.distribution === "production-fork"
+          ? []
+          : ["--no-default-extensions"]),
         "--host",
         "127.0.0.1",
         "--port",
@@ -170,6 +232,7 @@ const createPersistentRuntime = async (
   return {
     crash,
     directory: fixture.directory,
+    node: fixture.node,
     release: async (name: string): Promise<void> => {
       await writeFile(
         path.join(fixture.directory, `${name}.release`),
