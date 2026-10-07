@@ -71,27 +71,35 @@ test("saved-code results display interactive and PNG charts with text fallback",
   drawing.fillRect(260, 20, 160, 180);
   const charts = [
     {
-      elements: [
-        { group: "Counts", label: "A", value: 3 },
-        { group: "Counts", label: "B", value: 5 },
-      ],
-      title: "Saved analysis",
-      type: "bar",
+      chart: {
+        elements: [
+          { group: "Counts", label: "A", value: 3 },
+          { group: "Counts", label: "B", value: 5 },
+        ],
+        title: "Saved analysis",
+        type: "bar",
+      },
+      id: "bar-chart",
     },
     {
-      base64: canvas.toDataURL().split(",")[1],
-      format: "png",
+      chart: {
+        base64: canvas.toDataURL().split(",")[1],
+        format: "png",
+      },
+      id: "png-chart",
     },
-    "",
+    {
+      chart: "",
+      id: "text-fallback",
+    },
   ];
   try {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
     await act(() =>
       root.render(
         <div className="grid grid-cols-2 gap-6">
-          {charts.map((chart, index): React.JSX.Element => (
-            // oxlint-disable-next-line react/no-array-index-key -- #551: These fixed visual fixture cases are rendered once and never reordered.
-            <section key={index}>
+          {charts.map(({ chart, id }, index): React.JSX.Element => (
+            <section key={id}>
               <EveDocumentRunResult
                 part={{
                   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.

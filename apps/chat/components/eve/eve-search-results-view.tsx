@@ -16,21 +16,34 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 /* oxlint-disable no-magic-numbers -- highlightedExcerpt: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1);  */
 
-const highlightedExcerpt = (excerpt: string): (React.JSX.Element | string)[] =>
-  excerpt.split(/(?<match>⟦[^⟧]*⟧)/u).map((part, index) => {
-    if (part.startsWith("⟦") && part.endsWith("⟧")) {
-      return (
+const highlightedExcerpt = (
+  excerpt: string
+): (React.JSX.Element | string)[] => {
+  let previousEnd = 0;
+  const parts = [...excerpt.matchAll(/⟦[^⟧]*⟧/gu)].flatMap(
+    (match: readonly string[] & Readonly<{ index: number }>) => {
+      const start = match.index;
+      const before = excerpt.slice(previousEnd, start);
+      previousEnd = start + match[0].length;
+      const mark = (
         <mark
           className="text-foreground bg-transparent font-medium"
-          // oxlint-disable-next-line react/no-array-index-key -- #551: Repeated matched text needs its offset in this excerpt; marks have no component state.
-          key={`${index}:${part}`}
+          key={start}
         >
-          {part.slice(1, -1)}
+          {match[0].slice(1, -1)}
         </mark>
       );
+      if (before.length > 0) {
+        return [before, mark];
+      }
+      return [mark];
     }
-    return part;
-  });
+  );
+  if (previousEnd < excerpt.length) {
+    parts.push(excerpt.slice(previousEnd));
+  }
+  return parts;
+};
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveSearchResultsView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- EveSearchResultsView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable no-magic-numbers */
