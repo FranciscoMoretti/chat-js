@@ -22,7 +22,7 @@ import { createStorageAdapter } from "./storage-provider";
 /* oxlint-enable sort-imports */
 
 const PATH_SEPARATOR = /[\\/]/u;
-// oxlint-disable-next-line no-control-regex -- Filename sanitization deliberately removes ASCII C0 and DEL control characters.
+// oxlint-disable-next-line no-control-regex -- The upload result's pathname contract removes every ASCII C0 and DEL character while preserving all other filename characters.
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F]/gu;
 const FILE_ID_LENGTH = 24;
 const INVENTORY_PAGE_SIZE = 100;
