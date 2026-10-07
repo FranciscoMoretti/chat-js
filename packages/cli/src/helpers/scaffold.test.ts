@@ -444,7 +444,11 @@ describe("scaffoldFromTemplate", (): void => {
     ).toContain('command: "npm run dev"');
     expect(
       await readFile(
-        pathModule.join(destination, "scripts", "check-env.ts"),
+        pathModule.join(
+          destination,
+          "scripts",
+          "environment-validation-report.ts"
+        ),
         "utf-8"
       )
     ).toContain("npm run fetch:models");
@@ -482,6 +486,22 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).toEqual([]);
     expect(packageJson.scripts["db:migrate"]).toBe("tsx lib/db/migrate.ts");
+  });
+  it("keeps Bun commands in the generated gateway snapshot warning", async (): Promise<void> => {
+    const destination = makeTempDir("chat-app-bun-gateway-warning");
+
+    await scaffoldFromTemplate(destination);
+
+    const report = await readFile(
+      pathModule.join(
+        destination,
+        "scripts",
+        "environment-validation-report.ts"
+      ),
+      "utf-8"
+    );
+    expect(report).toContain("bun run fetch:models");
+    expect(report).not.toContain("npm run fetch:models");
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
