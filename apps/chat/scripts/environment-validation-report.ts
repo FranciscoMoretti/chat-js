@@ -1,4 +1,10 @@
 /* oxlint-disable no-console -- These CLI reporting operations emit ordered environment diagnostics, the gateway warning and validation success through console. */
+const formatGatewaySnapshotWarning = (
+  generatedForGateway: string,
+  configuredGateway: string
+): string =>
+  `models.generated.ts was built for "${generatedForGateway}" but config uses "${configuredGateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
+
 const reportEnvironmentFailure = (
   errors: readonly {
     readonly feature: string;
@@ -35,5 +41,9 @@ const reportEnvironmentSuccess = (snapshotWarning: string | null): void => {
 };
 /* oxlint-enable no-console */
 /* oxlint-disable import/no-named-export -- The CLI imports these named reporting operations; app guidance and enabled import/no-default-export require named exports. */
-export { reportEnvironmentFailure, reportEnvironmentSuccess };
+export {
+  formatGatewaySnapshotWarning,
+  reportEnvironmentFailure,
+  reportEnvironmentSuccess,
+};
 /* oxlint-enable import/no-named-export */
