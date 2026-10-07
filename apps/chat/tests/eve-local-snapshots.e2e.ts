@@ -3,7 +3,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/local-sandbox-fence"; "../lib/eve/purge-local-sandbox" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { randomBytes } from "node:crypto";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -91,7 +90,8 @@ test("family cleanup removes parent and child VMs and snapshots while preserving
       .detached(true)
       .create();
     await childSandbox.stopWithTimeout(10_000);
-    await (await Sandbox.get(childName)).snapshot(childStateSnapshotName);
+    const childHandle = await Sandbox.get(childName);
+    await childHandle.snapshot(childStateSnapshotName);
     await mkdir(childDirectory, { recursive: true });
     await writeFile(
       path.join(childDirectory, "metadata.json"),
