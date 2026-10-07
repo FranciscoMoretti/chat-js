@@ -1,5 +1,5 @@
-// The package command launches this .cjs entrypoint with CommonJS globals.
-/* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- apps/electron/package.json runs this .cjs wrapper with Node; these three builtin require calls and __dirname retain its CommonJS startup contract. */
+// Apps/electron/package.json starts this launcher with Node before Electron Forge.
+/* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- Node's .cjs wrapper supplies require and __dirname to resolve and spawn the installed Forge entrypoint. */
 // oxlint-disable-next-line import/no-nodejs-modules -- This Node launcher resolves the installed Forge executable and forwards its process exit status.
 const { spawnSync } = require("node:child_process");
 // oxlint-disable-next-line import/no-nodejs-modules -- This Node launcher resolves the installed Forge executable and forwards its process exit status.
