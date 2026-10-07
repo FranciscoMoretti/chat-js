@@ -619,10 +619,11 @@ describe("Thread", (): void => {
 
     expect(run.finished).not.toBe(initialFinished);
     let finished = false;
-    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- Observe completion without awaiting or adding a value so the pending resumed request remains testable.
-    void run.finished.then((): void => {
+    const markFinished = (): void => {
       finished = true;
-    });
+    };
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Observe completion without awaiting so the pending resumed request remains testable.
+    void run.finished.then(markFinished);
     await Bun.sleep(0);
     expect(finished).toBeFalse();
     reconnect.close();
