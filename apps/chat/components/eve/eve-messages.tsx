@@ -41,6 +41,9 @@ import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 /* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep the recursive readonly EVE data view after the runtime module imports. */
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveAttachment } from "./eve-attachment";
@@ -131,6 +134,34 @@ const toolStatus = (
   return "Working…";
 };
 /* oxlint-disable react/jsx-no-literals -- Part renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+
+const messagePartIdentity = (part: ReadonlyEveMessagePart): string => {
+  switch (part.type) {
+    case "text":
+    case "reasoning": {
+      return `${part.type}:${part.stepIndex ?? "unscoped"}`;
+    }
+    case "file": {
+      if (typeof part.url === "string" && part.url !== "") {
+        return `file:${part.stepIndex ?? "unscoped"}:${part.url}`;
+      }
+      return `file:${part.stepIndex ?? "unscoped"}:${part.filename ?? "unnamed"}:${part.mediaType}`;
+    }
+    case "step-start": {
+      return "step-start";
+    }
+    case "authorization": {
+      return `authorization:${part.turnId}:${part.stepIndex}:${part.name}`;
+    }
+    case "dynamic-tool": {
+      return `dynamic-tool:${part.toolCallId}`;
+    }
+    default: {
+      const unreachable: never = part;
+      return unreachable;
+    }
+  }
+};
 
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Part: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -307,6 +338,13 @@ export const EveMessages = ({
       .filter((part) => part.type === "text")
       .map((part) => part.text)
       .join("\n");
+    const partOccurrences = new Map<string, number>();
+    const nextPartKey = (part: EveMessagePart): string => {
+      const identity = messagePartIdentity(part);
+      const occurrence = partOccurrences.get(identity) ?? 0;
+      partOccurrences.set(identity, occurrence + 1);
+      return `${message.id}:${identity}:${occurrence}`;
+    };
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling modelForMessage; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const modelId = modelForMessage?.(message);
     /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve actions's awaited sequencing and rejected-Promise behavior. */
@@ -401,9 +439,8 @@ export const EveMessages = ({
           actions={actions}
           attachments={message.parts
             .filter((part) => part.type === "file")
-            .map((part, index): React.JSX.Element => (
-              // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
-              <EveAttachment key={`${message.id}:file:${index}`} part={part} />
+            .map((part): React.JSX.Element => (
+              <EveAttachment key={nextPartKey(part)} part={part} />
             ))}
           editor={
             /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from editing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
@@ -447,21 +484,22 @@ export const EveMessages = ({
           className="w-full px-0 py-0 text-left"
         >
           <span className="sr-only">Assistant</span>
-          {message.parts.map((part, index): React.JSX.Element => (
-            <Part
-              disabled={disabled}
-              isReadonly={isReadonly}
-              // oxlint-disable-next-line react/no-array-index-key -- #551: EVE message parts are append-only; their index is their stable identity.
-              key={`${message.id}:${index}`}
-              messageId={message.id}
-              part={part}
-              respond={respond}
-              previewDocument={
-                part.type === "dynamic-tool" &&
-                part.toolCallId === latestDocumentCallId
-              }
-            />
-          ))}
+          {message.parts
+            .filter((part) => part.type !== "step-start")
+            .map((part): React.JSX.Element => (
+              <Part
+                disabled={disabled}
+                isReadonly={isReadonly}
+                key={nextPartKey(part)}
+                messageId={message.id}
+                part={part}
+                respond={respond}
+                previewDocument={
+                  part.type === "dynamic-tool" &&
+                  part.toolCallId === latestDocumentCallId
+                }
+              />
+            ))}
           {actions}
           {message.id /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ ===
             messages.at(-1)?.id &&
