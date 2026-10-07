@@ -1,4 +1,4 @@
-/* oxlint-disable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function, unicorn/no-await-expression-member -- This ordered auth integration scenario checks HTTP statuses, PKCE, state, session cookies and one-time token consumption together. */
+/* oxlint-disable eslint/no-magic-numbers, eslint/max-statements, eslint/max-lines-per-function -- This ordered auth integration scenario checks HTTP statuses, PKCE, state, session cookies and one-time token consumption together. */
 // oxlint-disable-next-line import/no-nodejs-modules -- Exercise the server PKCE contract using SHA-256.
 import { createHash } from "node:crypto";
 
@@ -118,21 +118,27 @@ it("transfers a browser login through PKCE and accepts only the current desktop 
         method: "POST",
       })
     );
-  expect((await exchange(`${ELECTRON_APP_SCHEME}://`)).status).toBe(403);
-  expect(
-    (await exchange(`${ELECTRON_APP_SCHEME}:/`, "wrong-verifier")).status
-  ).toBe(400);
-  expect(
-    (await exchange(`${ELECTRON_APP_SCHEME}:/`, codeVerifier, "wrong-state"))
-      .status
-  ).toBe(400);
+  const rejectedOrigin = await exchange(`${ELECTRON_APP_SCHEME}://`);
+  expect(rejectedOrigin.status).toBe(403);
+  const rejectedVerifier = await exchange(
+    `${ELECTRON_APP_SCHEME}:/`,
+    "wrong-verifier"
+  );
+  expect(rejectedVerifier.status).toBe(400);
+  const rejectedState = await exchange(
+    `${ELECTRON_APP_SCHEME}:/`,
+    codeVerifier,
+    "wrong-state"
+  );
+  expect(rejectedState.status).toBe(400);
   const session = await exchange(`${ELECTRON_APP_SCHEME}:/`);
   expect(session.status).toBe(200);
   expect(session.headers.get("set-cookie")).toContain("session_token=");
   expect(await session.json()).toMatchObject({
     user: { email: "desktop@example.test" },
   });
-  expect((await exchange(`${ELECTRON_APP_SCHEME}:/`)).status).toBe(404);
+  const consumedTransfer = await exchange(`${ELECTRON_APP_SCHEME}:/`);
+  expect(consumedTransfer.status).toBe(404);
 });
 /* oxlint-enable oxc/no-async-await */
 afterEach(() => {
