@@ -466,92 +466,95 @@ const PureModelSelector = ({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
 
-  const selectSingleModel = useCallback(
-    (id: AppModelId) => {
-      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
-      startTransition(() => {
-        setOptimisticSelection(id);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        const completion = onModelSelectionChangeAction?.(id);
-        // React 19 awaits returned Actions and routes rejections to the error
-        // boundary: https://react.dev/reference/react/useTransition#exposing-action-prop-from-components
-        return completion;
-      });
-      setOpen(false);
+  const dispatchSelection = useCallback(
+    (selection: SelectedModelValue): void => {
+      try {
+        // Run the producer before the transition so Send sees its local selection immediately.
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the optional Action's skipped call and original completion value.
+        const completion = onModelSelectionChangeAction?.(selection);
+        // oxlint-disable-next-line typescript/promise-function-async -- React receives the original Action promise without changing its identity or synchronous producer contract.
+        startTransition(() => {
+          setOptimisticSelection(selection);
+          return completion;
+        });
+      } catch (error) {
+        startTransition(() => {
+          // oxlint-disable-next-line react/todo -- Preserve React's boundary ownership for a synchronously throwing selection producer.
+          throw error;
+        });
+      }
     },
     [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
+  );
+
+  const selectSingleModel = useCallback(
+    (id: AppModelId) => {
+      dispatchSelection(id);
+      setOpen(false);
+    },
+    [dispatchSelection]
   );
 
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
-      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof current === "string" ? { [current]: 1 } : current;
+      const { current } = optimisticSelectionRef;
+      const currentCounts: SelectedModelCounts =
+        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
+      const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
 
-        let nextSelection: SelectedModelCounts;
-        if (isAlreadySelected) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          nextSelection = { ...currentCounts, [id]: 1 };
+      let nextSelection: SelectedModelCounts;
+      if (isAlreadySelected) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        nextSelection = { ...currentCounts, [id]: 1 };
+      }
 
-        setOptimisticSelection(nextSelection);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        return onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
+    [dispatchSelection]
   );
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
-      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof current === "string" ? { [current]: 1 } : current;
+      const { current } = optimisticSelectionRef;
+      const currentCounts: SelectedModelCounts =
+        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const newCount = (currentCounts[id] ?? 0) + delta;
-        let nextSelection: SelectedModelValue;
+      const newCount = (currentCounts[id] ?? 0) + delta;
+      let nextSelection: SelectedModelValue;
 
-        if (newCount <= 0) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          nextSelection = { ...currentCounts, [id]: newCount };
+      if (newCount <= 0) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        nextSelection = { ...currentCounts, [id]: newCount };
+      }
 
-        setOptimisticSelection(nextSelection);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        return onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
+    [dispatchSelection]
   );
 
   const handleMultipleModelsToggle = useCallback(
@@ -559,29 +562,13 @@ const PureModelSelector = ({
       setUseMultipleModels(checked);
 
       if (checked) {
-        const nextSelection = buildMultiModelSelection([optimisticModelId]);
-        // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
-        startTransition(() => {
-          setOptimisticSelection(nextSelection);
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-          return onModelSelectionChangeAction?.(nextSelection);
-        });
+        dispatchSelection(buildMultiModelSelection([optimisticModelId]));
         return;
       }
 
-      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
-      startTransition(() => {
-        setOptimisticSelection(optimisticModelId);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        return onModelSelectionChangeAction?.(optimisticModelId);
-      });
+      dispatchSelection(optimisticModelId);
     },
-    [
-      onModelSelectionChangeAction,
-      optimisticModelId,
-      setOptimisticSelection,
-      startTransition,
-    ]
+    [dispatchSelection, optimisticModelId]
   );
 
   return (
