@@ -39,42 +39,41 @@ export const eveCopyBoundaries = (
 ): EveCopyBoundary[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
-  return (
-    events
-      // oxlint-disable-next-line unicorn/no-array-reduce -- Use EVE’s native event reducer and initial state for this projection.
-      .reduce((state, event) => reduceEvent(state, event), reducer.initial())
-      .messages.flatMap<EveCopyBoundary>((message, messageIndex) => {
-        if (message.role !== "user") {
-          return [];
-        }
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-        const turn = nativeTurn.safeParse(message.metadata?.turnId);
-        if (turn.success) {
-          return [
-            {
-              messageIndex,
-              sourceIndex: checkpointIndex.parse(
-                Number(turn.data.slice(NATIVE_TURN_PREFIX.length))
-              ),
-              sourceKind: "turn",
-            },
-          ];
-        }
-        const imported = importedMessage.safeParse(message.id);
-        if (imported.success) {
-          return [
-            {
-              messageIndex,
-              sourceIndex: Number(
-                imported.data.slice(IMPORTED_MESSAGE_PREFIX.length)
-              ),
-              sourceKind: "imported",
-            },
-          ];
-        }
-        throw new Error("Conversation document boundary is unavailable.");
-      })
-  );
+  let state = reducer.initial();
+  for (const event of events) {
+    state = reduceEvent(state, event);
+  }
+  return state.messages.flatMap<EveCopyBoundary>((message, messageIndex) => {
+    if (message.role !== "user") {
+      return [];
+    }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    const turn = nativeTurn.safeParse(message.metadata?.turnId);
+    if (turn.success) {
+      return [
+        {
+          messageIndex,
+          sourceIndex: checkpointIndex.parse(
+            Number(turn.data.slice(NATIVE_TURN_PREFIX.length))
+          ),
+          sourceKind: "turn",
+        },
+      ];
+    }
+    const imported = importedMessage.safeParse(message.id);
+    if (imported.success) {
+      return [
+        {
+          messageIndex,
+          sourceIndex: Number(
+            imported.data.slice(IMPORTED_MESSAGE_PREFIX.length)
+          ),
+          sourceKind: "imported",
+        },
+      ];
+    }
+    throw new Error("Conversation document boundary is unavailable.");
+  });
 };
 /* oxlint-enable import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

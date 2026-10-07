@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
     }[];
   }[],
   metadata: vi.fn(),
+  reduce: vi.fn((state: Readonly<{ messages: readonly unknown[] }>) => state),
   reserve: vi.fn(),
   snapshot: vi.fn(),
   upload: vi.fn(),
@@ -64,7 +65,7 @@ vi.mock("eve/client", () => ({
   },
   defaultMessageReducer: () => ({
     initial: () => ({ messages: mocks.messages }),
-    reduce: vi.fn(),
+    reduce: mocks.reduce,
   }),
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -125,6 +126,33 @@ it("restores exact trusted inline history without an installed upload feature", 
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 2 from mocks.upload.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(new Uint8Array(mocks.upload.mock.calls[0]?.[2])).toEqual(
     new Uint8Array([1, 2, 3])
+  );
+});
+
+it("replays ordered snapshot events through the reducer before restoring", async () => {
+  const first = {
+    data: { messages: [] },
+    meta: { at: "2026-10-07T00:00:00Z", id: "first" },
+    type: "history.seeded",
+  };
+  const second = {
+    data: { messages: [] },
+    meta: { at: "2026-10-07T00:00:01Z", id: "second" },
+    type: "history.seeded",
+  };
+  mocks.snapshot.mockResolvedValue({ events: [first, second] });
+
+  await restoreMessageAttachments("owner", input);
+
+  expect(mocks.reduce).toHaveBeenNthCalledWith(
+    1,
+    { messages: mocks.messages },
+    first
+  );
+  expect(mocks.reduce).toHaveBeenNthCalledWith(
+    2,
+    { messages: mocks.messages },
+    second
   );
 });
 /* oxlint-enable oxc/no-async-await */

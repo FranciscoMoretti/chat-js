@@ -208,12 +208,10 @@ const sharedEveMessages = (
 ): SharedEveMessage[] => {
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
-  // oxlint-disable-next-line unicorn/no-array-reduce -- Replay native events in order with the bound EVE reducer and its initial state; reduce preserves the input array length snapshot and skips sparse entries.
-  const state = events.reduce(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve EVE reducer.reduce input state and event types, including mutable message parts and recursive event collections.
-    (current, event) => reduceEvent(current, event),
-    reducer.initial()
-  );
+  let state = reducer.initial();
+  for (const event of events) {
+    state = reduceEvent(state, event);
+  }
   const models = responseModelReferences(events);
   // oxlint-disable-next-line oxc/no-map-spread, typescript/prefer-readonly-parameter-types -- Project fresh public message DTOs without mutating reducer state; conditional metadata omits absent provenance/tool selections and preserves the existing key order. Native reduced message metadata is forwarded to eveMessageTool, whose Pick<EveMessage, "metadata"> contract contains mutable JSON collections.
   return state.messages.map((message): SharedEveMessage => {
