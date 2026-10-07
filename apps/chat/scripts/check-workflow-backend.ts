@@ -10,12 +10,34 @@ import {
   assertEvePostgresRuntimeCompatibility,
   resolveEveStepVersion,
 } from "../lib/db/workflow-runtime-compatibility";
+import { resolveWorkflowDatabaseUrl } from "../lib/eve/environment";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
+const checkPostgresRuntime = async (): Promise<void> => {
+  const workflowSettings = databaseConnection(
+    {
+      DATABASE_URL: resolveWorkflowDatabaseUrl(process.env),
+    },
+    "migration"
+  );
+  const workflowConnection = postgres(
+    workflowSettings.url,
+    workflowSettings.options
+  );
+  try {
+    await assertEvePostgresRuntimeCompatibility(
+      workflowConnection,
+      resolveEveStepVersion(evePackage.name, evePackage.version)
+    );
+  } finally {
+    await workflowConnection.end();
+  }
+};
+
 const check = async (): Promise<void> => {
   const world = resolveWorkflowWorld();
   const settings = databaseConnection(
@@ -28,10 +50,7 @@ const check = async (): Promise<void> => {
   const connection = postgres(settings.url, settings.options);
   try {
     if (world === "@workflow/world-postgres") {
-      await assertEvePostgresRuntimeCompatibility(
-        connection,
-        resolveEveStepVersion(evePackage.name, evePackage.version)
-      );
+      await checkPostgresRuntime();
     }
     await ensureWorkflowBackend(connection, world);
   } finally {
