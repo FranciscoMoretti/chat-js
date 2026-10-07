@@ -108,8 +108,11 @@ export const restoreMessageAttachments = async (
     .snapshot({ signal: AbortSignal.timeout(HISTORY_READ_TIMEOUT_MS) });
   const reducer = defaultMessageReducer();
   const reduceEvent = reducer.reduce.bind(reducer);
-  // oxlint-disable-next-line unicorn/no-array-reduce -- Project trusted native history with EVE's reducer.
-  const { messages } = snapshot.events.reduce(reduceEvent, reducer.initial());
+  let state = reducer.initial();
+  for (const event of snapshot.events) {
+    state = reduceEvent(state, event);
+  }
+  const { messages } = state;
   const message = messages.find(
     (item: Readonly<Pick<(typeof messages)[number], "id" | "role">>) =>
       item.id === input.messageId && item.role === "user"
