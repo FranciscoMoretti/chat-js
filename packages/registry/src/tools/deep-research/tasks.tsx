@@ -84,27 +84,34 @@ const StepWrapper = ({ update, children, isLast }: StepWrapperProps) => (
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const ResearchTasks = ({
   updates,
-}: ReadonlyNativeSurface<{ updates: ResearchUpdate[] }>) => (
-  <div className="relative">
-    {updates.map((update: ReadonlyNativeSurface<ResearchUpdate>, index) => (
-      <StepWrapper
-        isLast={index === updates.length - 1}
-        // oxlint-disable-next-line react/no-array-index-key -- executeEveResearch appends progress slots and replaces completion at the captured slot; child search snapshots preserve invocation/event order and only append updates. The slot stays stable while its animated progress row is mounted, while toolCallId alone repeats across root workflow updates.
-        key={`${update.toolCallId}-${index}`}
-        update={update}
-      >
-        <ResearchTask
-          isRunning={
-            (update.type === "web" && update.status === "running") ||
-            (index === updates.length - 1 && update.type !== "completed")
-          }
-          minimal={false}
-          update={update}
-        />
-      </StepWrapper>
-    ))}
-  </div>
-);
+}: ReadonlyNativeSurface<{ updates: ResearchUpdate[] }>) => {
+  const occurrences = new Map<string, number>();
+  return (
+    <div className="relative">
+      {updates.map((update: ReadonlyNativeSurface<ResearchUpdate>, index) => {
+        const identity = `${update.type}:${update.toolCallId}`;
+        const occurrence = occurrences.get(identity) ?? 0;
+        occurrences.set(identity, occurrence + 1);
+        return (
+          <StepWrapper
+            isLast={index === updates.length - 1}
+            key={`${identity}:${occurrence}`}
+            update={update}
+          >
+            <ResearchTask
+              isRunning={
+                (update.type === "web" && update.status === "running") ||
+                (index === updates.length - 1 && update.type !== "completed")
+              }
+              minimal={false}
+              update={update}
+            />
+          </StepWrapper>
+        );
+      })}
+    </div>
+  );
+};
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */

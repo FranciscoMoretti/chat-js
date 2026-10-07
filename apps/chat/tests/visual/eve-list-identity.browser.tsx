@@ -24,7 +24,7 @@ Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
 vi.mock("@/components/ai-elements/response", () => ({
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- React child elements retain the framework's ReactNode type in this mock signature.
   Response: ({ children }: Readonly<{ children: React.ReactNode }>) => (
-    <div>{children}</div>
+    <div data-testid="response">{children}</div>
   ),
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -41,40 +41,70 @@ const searchItems = [
     title: "Research report",
   },
 ];
-const messages: readonly EveMessage[] = [
+const streamedTextPart = {
+  text: "One more streamed text part.",
+  type: "text" as const,
+};
+const userMessage: EveMessage = {
+  id: "user-message",
+  parts: [
+    { text: "Summarize this report.", type: "text" },
+    {
+      filename: "quarterly-report.pdf",
+      mediaType: "application/pdf",
+      type: "file",
+      url: "/api/files/abcdefghijklmnopqrstuvwx.pdf",
+    },
+  ],
+  role: "user",
+};
+const assistantParts: EveMessage["parts"] = [
   {
-    id: "user-message",
-    parts: [
-      { text: "Summarize this report.", type: "text" },
-      {
-        filename: "quarterly-report.pdf",
-        mediaType: "application/pdf",
-        type: "file",
-        url: "/api/files/abcdefghijklmnopqrstuvwx.pdf",
-      },
-    ],
-    role: "user",
+    state: "done",
+    text: "Revenue grew this quarter.",
+    type: "text",
   },
   {
-    id: "assistant-message",
-    metadata: { status: "complete", turnId: "turn-1" },
-    parts: [
-      {
-        state: "done",
-        stepIndex: 0,
-        text: "Revenue grew this quarter.",
-        type: "text",
-      },
-      {
-        state: "done",
-        stepIndex: 0,
-        text: "The source totals agree.",
-        type: "reasoning",
-      },
-    ],
-    role: "assistant",
+    text: "The answer is ready.",
+    type: "text",
+  },
+  {
+    state: "done",
+    stepIndex: 0,
+    text: "The source totals agree.",
+    type: "reasoning",
   },
 ];
+const assistantMessage: EveMessage = {
+  id: "assistant-message",
+  metadata: { status: "complete", turnId: "turn-1" },
+  parts: assistantParts,
+  role: "assistant",
+};
+const streamedAssistantMessage: EveMessage = {
+  id: "assistant-message",
+  metadata: { status: "complete", turnId: "turn-1" },
+  parts: [...assistantParts, streamedTextPart],
+  role: "assistant",
+};
+const messages: readonly EveMessage[] = [userMessage, assistantMessage];
+const streamedMessages: readonly EveMessage[] = [
+  userMessage,
+  streamedAssistantMessage,
+];
+const responseCountBeforeStream = 3;
+const responseCountAfterStream = 4;
+type ResponseContainer = Readonly<Pick<ParentNode, "querySelectorAll">>;
+const findResponse = (container: ResponseContainer, text: string): Element => {
+  for (const response of container.querySelectorAll(
+    '[data-testid="response"]'
+  )) {
+    if (response.textContent === text) {
+      return response;
+    }
+  }
+  throw new Error("The streamed assistant response was not rendered.");
+};
 
 /* oxlint-disable-next-line eslint/max-statements -- Keep the focused browser capture's setup, assertions, and cleanup together. */
 /* oxlint-disable-next-line eslint/max-statements, oxc/no-async-await -- eslint/max-statements: Keep this browser scenario setup, precise highlight assertions, capture, and cleanup together; oxc/no-async-await: Await the visual capture and sequence it before cleanup. */
@@ -124,13 +154,13 @@ test("search results retain distinct repeated highlight locations", async () => 
   }
 });
 
-/* oxlint-disable-next-line eslint/max-statements -- Keep the focused browser capture's setup, assertions, and cleanup together. */
-/* oxlint-disable-next-line eslint/max-statements, oxc/no-async-await -- eslint/max-statements: Keep this browser scenario setup, rendered assertions, capture, and cleanup together; oxc/no-async-await: Await the visual capture and sequence it before cleanup. */
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function, oxc/no-async-await -- Keep the focused browser lifecycle's render, stream append assertion, capture, and cleanup together; the awaited snapshot must finish before teardown. */
 test("EVE messages render streamed content and file parts", async () => {
   const container = document.createElement("main");
   container.className = "p-6";
   document.body.append(container);
   const root = createRoot(container);
+  const consoleError = vi.spyOn(console, "error");
   try {
     act(() => {
       root.render(
@@ -144,11 +174,38 @@ test("EVE messages render streamed content and file parts", async () => {
     });
     expect(container.querySelector('[data-testid="attachments"]')).toBeTruthy();
     expect(container.textContent).toContain("Revenue grew this quarter.");
+    expect(container.querySelectorAll('[data-testid="response"]')).toHaveLength(
+      responseCountBeforeStream
+    );
+    expect(consoleError).not.toHaveBeenCalledWith(
+      expect.stringContaining("same key")
+    );
+    const streamedResponse = findResponse(
+      container,
+      "Revenue grew this quarter."
+    );
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must flush the streamed append before verifying the existing response stayed mounted.
+    await act(() =>
+      root.render(
+        <EveMessages
+          disabled={false}
+          isReadonly
+          messages={streamedMessages}
+          respond={noop}
+        />
+      )
+    );
+    expect(container.contains(streamedResponse)).toBe(true);
+    expect(container.querySelectorAll('[data-testid="response"]')).toHaveLength(
+      responseCountAfterStream
+    );
     await takeSnapshot("eve-message-parts-and-attachments");
   } finally {
     act(() => {
       root.unmount();
     });
     container.remove();
+    consoleError.mockRestore();
   }
 });
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function, oxc/no-async-await */

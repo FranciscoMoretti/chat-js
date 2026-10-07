@@ -68,6 +68,42 @@ const activeUpdates = updates.filter(
   (update: ReadonlyNativeSurface<ResearchUpdate>) => update.type !== "completed"
 );
 
+const workflowStarted: ResearchUpdate = {
+  timestamp: 1,
+  title: "Research started",
+  toolCallId: "workflow",
+  type: "started",
+};
+const childSearch: ResearchUpdate = {
+  queries: ["independent search"],
+  status: "running",
+  title: "Searching the web",
+  toolCallId: "child-search",
+  type: "web",
+};
+const workflowThought: ResearchUpdate = {
+  message: "Researching another topic.",
+  status: "running",
+  title: "Researching topic",
+  toolCallId: "workflow",
+  type: "thoughts",
+};
+const workflowWithSearch: ResearchUpdate[] = [workflowStarted, childSearch];
+const workflowAfterAnotherUpdate: ResearchUpdate[] = [
+  workflowStarted,
+  workflowThought,
+  childSearch,
+];
+type SearchRowContainer = Readonly<Pick<ParentNode, "querySelectorAll">>;
+const findSearchRow = (container: SearchRowContainer): Element => {
+  for (const row of container.querySelectorAll(".group")) {
+    if ((row.textContent ?? "").includes("independent search")) {
+      return row;
+    }
+  }
+  throw new Error("The child search row was not rendered.");
+};
+
 /* oxlint-disable max-statements, oxc/no-async-await -- One visual fixture lifecycle mounts progress states, waits for motion to settle, captures, and unmounts in order. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- Keep the paired ResearchTasks and progress-panel states in one browser fixture and capture lifecycle.
 test("research task progress renders its update states together", async () => {
@@ -124,6 +160,31 @@ test("research task progress renders its update states together", async () => {
     await takeSnapshot("research-progress-active-and-complete");
   } finally {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush unmount before teardown.
+    await act(() => root.unmount());
+    container.remove();
+  }
+});
+/* oxlint-enable max-statements, oxc/no-async-await */
+
+/* oxlint-disable max-statements, oxc/no-async-await -- Verify row identity across the actual workflow/search ordering before cleaning up the browser fixture. */
+test("search rows keep identity when workflow updates append", async () => {
+  const container = document.createElement("main");
+  const root = createRoot(container);
+  try {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable; await it to flush rendering before reading the search row.
+    await act(() =>
+      root.render(<ResearchTasks updates={workflowWithSearch} />)
+    );
+    const initialSearchRow = findSearchRow(container);
+
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must flush the workflow insertion before checking that the same row remains mounted.
+    await act(() =>
+      root.render(<ResearchTasks updates={workflowAfterAnotherUpdate} />)
+    );
+    const updatedSearchRow = findSearchRow(container);
+    expect(updatedSearchRow).toBe(initialSearchRow);
+  } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await React act to flush unmount before tearing down the DOM container.
     await act(() => root.unmount());
     container.remove();
   }
