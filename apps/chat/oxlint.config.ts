@@ -58,7 +58,7 @@ export default defineConfig({
     "import/no-anonymous-default-export": "error",
     "import/no-commonjs": "error",
     "import/no-dynamic-require": "error",
-    // Stylesheets and server-only markers intentionally execute on import (#531).
+    // Keep required CSS side effects and Next's server-only environment-poisoning marker allowed (#531).
     "import/no-unassigned-import": [
       "error",
       { allow: ["**/*.css", "server-only"] },
