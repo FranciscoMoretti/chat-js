@@ -1,5 +1,5 @@
-import type { LucideIcon } from "lucide-react";
 import { Brain, Eye, FileText, Image, Mic, Zap } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface FeatureConfig {
   category: "capability" | "input" | "output";
@@ -77,13 +77,14 @@ const AVAILABLE_FEATURES: Record<string, FeatureConfig> = {
   },
 } as const;
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEnabledFeatures's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEnabledFeatures accepts feature; left; right; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Get only enabled features
-const getEnabledFeatures = () =>
+const getEnabledFeatures = (): FeatureConfig[] =>
   Object.values(AVAILABLE_FEATURES)
-    .filter((feature) => feature.enabled)
-    .toSorted((left, right) => left.order - right.order);
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+    .filter((feature: { readonly enabled: boolean }) => feature.enabled)
+    .toSorted(
+      (left: { readonly order: number }, right: { readonly order: number }) =>
+        left.order - right.order
+    );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AVAILABLE_FEATURES, getEnabledFeatures); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { AVAILABLE_FEATURES, getEnabledFeatures };
+/* oxlint-enable import/no-named-export */

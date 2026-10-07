@@ -1,5 +1,6 @@
 import { config } from "@/lib/config";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getDeepResearchConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const getDeepResearchConfig = (): {
   allow_clarification: typeof config.ai.tools.deepResearch.allowClarification;
   compression_model: typeof config.ai.tools.deepResearch.defaultModel;
@@ -20,3 +21,4 @@ export const getDeepResearchConfig = (): {
     search_api_max_queries: options.maxSearchQueries,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

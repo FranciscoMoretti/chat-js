@@ -11,11 +11,16 @@
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { afterAll, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -30,6 +35,7 @@ import {
   recordEveConversationActivity,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import {
   eveChat,
   eveConversation,
@@ -38,23 +44,30 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createToolResult } from "../lib/eve/tool-result";
+/* oxlint-enable sort-imports */
 import { ingestEveUsage } from "../lib/eve/usage";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates its owner before registering conversation contract scenarios.
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Eve test" });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-lines-per-function (#510): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("billing replay is atomic, rounds per turn and preserves unknown costs") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -77,13 +90,16 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     turnId: "turn_0",
   };
   await Promise.all(Array.from({ length: 8 }, () => recordEveUsage(entry)));
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await recordEveUsage({ ...entry, eventId: crypto.randomUUID() });
   let [balance] = await db
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from balance; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(balance?.credits).toBe(49);
   const unknown = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...entry,
     costUsd: undefined,
     eventId: crypto.randomUUID(),
@@ -94,19 +110,25 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
     .select()
     .from(eveUsage)
     .where(eq(eveUsage.eventId, unknown.eventId));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.costUsd).toBeNull();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing unknown own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(await recordEveUsage({ ...unknown, costUsd: 0.015 })).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing unknown own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await recordEveUsage({ ...unknown, costUsd: 0.015 });
   [balance] = await db
     .select()
     .from(userCredit)
     .where(eq(userCredit.userId, owner));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading credits from balance; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(balance?.credits).toBe(47);
   expect(await recordEveUsage(unknown)).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await expect(recordEveUsage({ ...entry, costUsd: 0.5 })).rejects.toThrow(
     "amount changed"
   );
   const precise = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing entry own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...entry,
     costUsd: 0.0010000000000000002,
     eventId: crypto.randomUUID(),
@@ -115,6 +137,8 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
   await recordEveUsage(precise);
   await recordEveUsage(precise);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
  * max-statements (#512): test("concurrent retry reserves once and cannot cross owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -153,6 +177,8 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
     createEveConversation(owner, operation, "changed", start)
   ).rejects.toThrow("different");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("a lost create reply is recovered through the same native operation") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -164,9 +190,10 @@ test("a lost create reply is recovered through the same native operation", async
   const nativeSession = `test-${crypto.randomUUID()}`;
   const start = (id: string): Promise<string> => {
     dispatched.push(id);
-    return dispatched.length === 1
-      ? Promise.reject(new Error("lost reply"))
-      : Promise.resolve(nativeSession);
+    if (dispatched.length === 1) {
+      return Promise.reject(new Error("lost reply"));
+    }
+    return Promise.resolve(nativeSession);
   };
   await expect(
     createEveConversation(owner, operation, "uncertain", start)
@@ -184,6 +211,8 @@ test("a lost create reply is recovered through the same native operation", async
   ).toEqual(recovered);
   expect(dispatched).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -207,6 +236,8 @@ test("a stopped creator's reservation can be resumed without changing its identi
     sessionId: `test-${reservation.id}`,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -227,6 +258,7 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from conversationBeforeOwnerActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading updatedAt from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationBeforeOwnerActivity?.updatedAt).toEqual(before?.updatedAt);
   await recordEveConversationActivity(owner, bound.sessionId, activityAt);
   await recordEveConversationActivity(
@@ -242,6 +274,7 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from conversationAfterOwnerActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationAfterOwnerActivity?.updatedAt).toEqual(activityAt);
   expect(
     await updateEveConversationMetadata("other", bound.id, {
@@ -252,8 +285,11 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
     owner,
     bound.id
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstMessage from conversationAfterMetadataEdit; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(conversationAfterMetadataEdit?.firstMessage).toBe("activity");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -292,6 +328,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   expect(starts).toBe(2);
   await expect(
     createEveConversation(owner, operation, "replacement", start, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...fork, beforeTurnId: "turn_2" },
     })
   ).rejects.toThrow("source turn");
@@ -308,12 +345,18 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
     { fork: { beforeTurnId: "turn_2", conversationId: branch.id } }
   );
   const row = await getEveConversation(owner, nested.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootConversationId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.rootConversationId).toBe(root.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.parentConversationId).toBe(branch.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkTurnId from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.forkTurnId).toBe("turn_2");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading visibility from row; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(row?.visibility).toBe("private");
   const family = await listEveConversationBranches(owner, nested.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.rootId).toBe(root.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branches from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.branches.map((item) => item.id)).toEqual([
     root.id,
     branch.id,
@@ -329,6 +372,8 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   ).rejects.toThrow("source conversation");
   expect(starts).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -373,6 +418,8 @@ test("database constraints reject partial and cross-owner branch ancestry", asyn
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["codeExecution", "webSearch"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -408,7 +455,9 @@ test.each(["codeExecution", "webSearch"])(
     await Promise.all(
       Array.from({ length: 8 }, () =>
         ingestEveUsage(owner, sessionId, {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.meta own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           meta: { ...event.meta, id: crypto.randomUUID() },
         })
       )
@@ -420,10 +469,13 @@ test.each(["codeExecution", "webSearch"])(
     expect(Number(row.costUsd)).toBe(0.05);
     expect(row.chargedCents).toBe(5);
     const unknown = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...event,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...event.data,
         result: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing event.data.result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...event.data.result,
           callId: crypto.randomUUID(),
           output: "result lost its receipt",
@@ -444,6 +496,8 @@ test.each(["codeExecution", "webSearch"])(
     expect(unpriced.chargedCents).toBe(0);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["deleting", "deleted"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -476,6 +530,7 @@ test.each(["deleting", "deleted"] as const)(
     const [before] = await db
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from creation; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
       .where(eq(eveChat.id, creation?.chatId ?? ""));
     expect(await getEveConversation(owner, bound.id)).toBeUndefined();
     expect(await getPublicEveConversation(bound.id)).toBeUndefined();
@@ -518,7 +573,9 @@ test.each(["deleting", "deleted"] as const)(
     const [afterActivity] = await db
       .select({ updatedAt: eveChat.updatedAt })
       .from(eveChat)
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from creation; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
       .where(eq(eveChat.id, creation?.chatId ?? ""));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from afterActivity; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading updatedAt from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(afterActivity?.updatedAt).toEqual(before?.updatedAt);
     await expect(
       createEveConversation(owner, operation, "deleted marker", start)
@@ -537,6 +594,8 @@ test.each(["deleting", "deleted"] as const)(
     ).toBe(state === "deleting");
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -563,7 +622,9 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await getPublicEveConversation(root.id)).toBeDefined();
   const rootCreation = await getEveConversation(owner, root.id);
   const deletion = await beginEveConversationDeletion(owner, child.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from deletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading chatId from rootCreation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(deletion?.rootId).toBe(rootCreation?.chatId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversations from deletion; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(deletion?.conversations.map((row) => row.id)).toEqual(
     [root.id, child.id].toSorted()
   );
@@ -571,6 +632,8 @@ test("deletion fences the entire owned family and is retryable", async () => {
   expect(await ownsEveSession(owner, child.sessionId)).toBe(false);
   expect(await beginEveConversationDeletion(owner, root.id)).toEqual(deletion);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -628,6 +691,8 @@ test("deletion waits for document commits and fences a concurrent fork", async (
     await deletion;
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -654,6 +719,8 @@ test("unresolved creation prevents a partial family deletion", async () => {
   );
   expect(await ownsEveSession(owner, root.sessionId)).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -728,6 +795,7 @@ test("final application deletion erases family content, preserves accounting and
       visibility: "private",
     });
     expect(row.sessionId).toBe(
+      // oxlint-disable-next-line no-ternary -- Keep expect(row.sessionId).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       id === root.id ? root.sessionId : child.sessionId
     );
     expect(await getEveConversation(owner, id)).toBeUndefined();
@@ -746,8 +814,10 @@ test("final application deletion erases family content, preserves accounting and
     activeConversationId: null,
   });
   const tombstonedCreationReplay = await getEveCreation(owner, operation);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from tombstonedCreationReplay; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(tombstonedCreationReplay?.operationId).toBe(operation);
   const unrelatedConversation = await getEveConversation(owner, unrelated.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading firstMessage from unrelatedConversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(unrelatedConversation?.firstMessage).toBe("Keep this");
   expect(
     await db
@@ -763,6 +833,7 @@ test("final application deletion erases family content, preserves accounting and
   ).rejects.toThrow("can no longer be created");
   expect(start).toHaveBeenCalledTimes(3);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
@@ -770,6 +841,7 @@ const copyReservationStates: (typeof eveConversation.$inferSelect.state)[] = [
   "uncertain",
   "bound",
 ];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(copyReservationStates)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async, unicorn/no-null --
  * typescript/promise-function-async (#606): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * unicorn/no-null (#570): test.each(copyReservationStates)("ordinary creation cannot consume a %s copy reservat preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -778,6 +850,7 @@ test.each(copyReservationStates)(
   "ordinary creation cannot consume a %s copy reservation",
   async (state) => {
     const operationId = crypto.randomUUID();
+    // oxlint-disable-next-line no-ternary -- Keep sessionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const sessionId = state === "bound" ? crypto.randomUUID() : null;
     const [copy] = await insertEveConversationFixtures({
       creationKind: "copy",
@@ -800,6 +873,8 @@ test.each(copyReservationStates)(
     });
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -832,6 +907,8 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
     creationKind: "message",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -866,6 +943,7 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
   );
   expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-contracts.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

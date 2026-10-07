@@ -16,14 +16,7 @@ vi.mock("../ai/active-gateway", () => ({
   }),
 }));
 /* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/to-model-data")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("../ai/to-model-data", () => ({
-  toModelData: (value: unknown) => value,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
-
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("combines API and nested model usage without rounding each call") uses 5, 0.0505 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -34,6 +27,8 @@ test("combines API and nested model usage without rounding each call", async () 
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
   expect(await cost.totalUsd()).toBeCloseTo(0.0505);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("includes dedicated image pricing in the durable total") uses 2, 0.08 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -43,6 +38,8 @@ test("includes dedicated image pricing in the durable total", async () => {
   cost.addImageCost("priced-image", 2, {}, "image");
   expect(await cost.totalUsd()).toBeCloseTo(0.08);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 test("missing pricing and missing usage remain unknown rather than free", async () => {
   const missing = createEveToolCost();
@@ -52,7 +49,8 @@ test("missing pricing and missing usage remain unknown rather than free", async 
   empty.addLLMCost("priced", {}, "image");
   await expect(empty.totalUsd()).resolves.toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([{ inputTokens: 100 }, { outputTokens: 100 }])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): test.each([{ inputTokens: 100 }, { outputTokens: 100 }])("partial usage remains unres accepts usage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -64,4 +62,5 @@ test.each([{ inputTokens: 100 }, { outputTokens: 100 }])(
     await expect(cost.totalUsd()).resolves.toBeUndefined();
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

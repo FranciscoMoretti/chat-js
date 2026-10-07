@@ -1,14 +1,20 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   issueGuestCredential,
   newGuestClaims,
 } from "@/lib/eve/disposable-guest";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { sameOrigin } from "@/lib/eve/request-policy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): input uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -19,9 +25,9 @@ const createdSession = z.object({
   sessionId: z.string().regex(/^[A-Za-z0-9_-]+$/u),
 });
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): POST uses 60_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -29,8 +35,12 @@ const createdSession = z.object({
  * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; host; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** The creation credential stays on the server. The browser receives only a
- * session-scoped credential, which it keeps in memory. */
+/**
+ * Starts a guest Eve session and returns a browser-safe, session-scoped credential.
+ * The creation credential remains server-side; the client keeps the guest credential in memory.
+ * @param {Request} request Same-origin request containing the selected guest model.
+ * @returns {Promise<Response>} JSON with the guest session details, or an error response.
+ */
 export const POST = async (request: Request): Promise<Response> => {
   if (!sameOrigin(request, new URL(env.APP_URL ?? request.url).origin)) {
     return new Response(null, { status: 403 });
@@ -45,6 +55,7 @@ export const POST = async (request: Request): Promise<Response> => {
       { status: 400 }
     );
   }
+  // oxlint-disable-next-line no-ternary -- Keep host as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const host = env.VERCEL_URL ? `https://${env.VERCEL_URL}` : env.APP_URL;
   if (!host) {
     return Response.json(
@@ -64,6 +75,7 @@ export const POST = async (request: Request): Promise<Response> => {
       body: "{}",
       cache: "no-store",
       headers: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...connection.headers,
         authorization: `Bearer ${issueGuestCredential(claims)}`,
         "content-type": "application/json",
@@ -82,6 +94,7 @@ export const POST = async (request: Request): Promise<Response> => {
   const { sessionId } = createdSession.parse(await response.json());
   return Response.json(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing claims own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       credential: issueGuestCredential({ ...claims, sessionId }),
       expiresAt: claims.expiresAt,
       sessionId,
@@ -89,4 +102,6 @@ export const POST = async (request: Request): Promise<Response> => {
     { headers: { "cache-control": "no-store" } }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

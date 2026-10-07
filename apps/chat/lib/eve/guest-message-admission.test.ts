@@ -1,9 +1,11 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "./guest-message-admission";
+/* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
 
 const mocks = vi.hoisted(() => ({
@@ -46,6 +48,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("requires an explicit operation and allowed model before charging", async () => {
   const missing = await admitGuestMessage(
     new Request(request.url),
@@ -57,13 +60,15 @@ it("requires an explicit operation and allowed model before charging", async () 
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(
     await admitGuestMessage(request, "owner", "native", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       modelId: "premium",
     })
   ).toBeInstanceOf(Response);
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("permits dispatch only for the first reservation and never marks replays as unsent uses 409 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -89,6 +94,8 @@ it("permits dispatch only for the first reservation and never marks replays as u
     });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -101,13 +108,15 @@ it("distinguishes content and destination in quota identity", async () => {
     ["two", "hello"],
     ["one", "changed"],
   ]) {
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
+    // oxlint-disable-next-line eslint/no-await-in-loop, oxc/no-rest-spread-properties -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.reserve.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }
   expect(new Set(hashes).size).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/no-null --
@@ -146,4 +155,5 @@ it("retains quota on timeout/server failure and refunds only explicit native non
     admission.reservationId
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

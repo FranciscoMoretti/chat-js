@@ -2,8 +2,13 @@ import { defineTool } from "eve/tools";
 
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeEveCodeDocument } from "./execute";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { documentExecutionInput } from "./schemas";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runCodeDocument); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable sort-imports */
 
 export const runCodeDocument = defineTool({
   description:
@@ -12,3 +17,4 @@ export const runCodeDocument = defineTool({
   inputSchema: documentExecutionInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

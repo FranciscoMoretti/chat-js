@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createEveGuestCredential, eveGuestIpHash } from "./guest-credential";
+/* oxlint-enable sort-imports */
 
 test("legacy cleanup fixture credentials are independently generated", () => {
   const first = createEveGuestCredential();

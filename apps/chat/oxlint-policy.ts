@@ -1,23 +1,26 @@
 import type { OxlintConfig } from "oxlint";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (auditedRestrictionRules); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 // Audited policy is shared by the repository and generated apps.
-// Deliberate policy exclusions are documented here; retained-rule exceptions belong beside the source.
+// Reviewed rule conflicts and contract exceptions belong beside the source.
 export const auditedRestrictionRules = {
   "id-length": "error",
   "import/exports-last": "error",
   "import/group-exports": "error",
   "import/max-dependencies": "error",
   "import/no-default-export": "error",
-  // Named exports are the documented package and application API convention.
-  "import/no-named-export": "off",
+  // Existing named module contracts explain the conflicting export convention locally.
+  "import/no-named-export": "error",
   "import/no-namespace": "error",
   "import/no-nodejs-modules": "error",
   "import/no-relative-parent-imports": "error",
-  // A single named export preserves the same API convention as multi-export modules.
-  "import/prefer-default-export": "off",
+  // Single named bindings retain their reviewed module/API contracts beside the source.
+  "import/prefer-default-export": "error",
   "init-declarations": "error",
   "jsdoc/require-param": "error",
+  "jsdoc/require-param-type": "error",
   "jsdoc/require-returns": "error",
+  "jsdoc/require-returns-type": "error",
   "max-lines": ["error", { skipComments: true }],
   "max-lines-per-function": ["error", { skipComments: true }],
   "max-params": "error",
@@ -25,20 +28,21 @@ export const auditedRestrictionRules = {
   "no-console": "error",
   "no-continue": "error",
   "no-magic-numbers": "error",
-  // Value-selecting ternaries are allowed; no-nested-ternary still limits nesting.
-  "no-ternary": "off",
+  "no-restricted-properties": "error",
+  // Guard returns are preferred; conflicts with prefer-ternary are explained at each value-selection site.
+  "no-ternary": "error",
   "no-undefined": "error",
   "no-underscore-dangle": "error",
   "node/no-process-env": "error",
   "node/no-sync": "error",
-  // ESM tooling uses top-level await, also required by unicorn/prefer-top-level-await.
-  "node/no-top-level-await": "off",
-  // Node 24 and modern browsers support await; promise safety rules enforce correct usage.
-  "oxc/no-async-await": "off",
-  // Optional chaining is required by the application coding guidance and supported by the target runtimes.
-  "oxc/no-optional-chaining": "off",
-  // Modern targets support typed object composition; no-map-spread still prevents accumulator copying.
-  "oxc/no-rest-spread-properties": "off",
+  // ESM command and test initialization exceptions are documented at their source.
+  "node/no-top-level-await": "error",
+  // Reviewed native async and iterator contracts are explained at their source.
+  "oxc/no-async-await": "error",
+  // Reviewed nullish access, callback and fallback contracts are explained beside each chain.
+  "oxc/no-optional-chaining": "error",
+  // Reviewed object composition, omitted keys and snapshot contracts are explained locally.
+  "oxc/no-rest-spread-properties": "error",
   "react-perf/jsx-no-jsx-as-prop": "error",
   // Native DOM props do not form component memoization boundaries; custom components remain checked.
   "react-perf/jsx-no-new-array-as-prop": ["error", { nativeAllowList: "all" }],
@@ -47,18 +51,18 @@ export const auditedRestrictionRules = {
     { nativeAllowList: "all" },
   ],
   "react-perf/jsx-no-new-object-as-prop": ["error", { nativeAllowList: "all" }],
-  // Tailwind and primitive components expose className/style as supported typed APIs.
-  "react/forbid-component-props": "off",
+  // Reviewed component styling contracts are documented beside the affected props.
+  "react/forbid-component-props": "error",
   "react/jsx-max-depth": "error",
-  // UI copy has no translation-layer contract; expression wrapping would not add localization.
-  "react/jsx-no-literals": "off",
+  // Authored product, legal and fixture copy is reviewed beside its rendering declaration.
+  "react/jsx-no-literals": "error",
   "react/jsx-props-no-spreading": "error",
   "react/no-multi-comp": "error",
   "react/only-export-components": "error",
-  // The automatic react-jsx runtime does not require a React binding.
-  "react/react-in-jsx-scope": "off",
-  // Oxfmt owns declaration and member ordering; a second sorter creates conflicting rewrites.
-  "sort-imports": "off",
+  // Components using the automatic JSX runtime explain that compiler contract locally.
+  "react/react-in-jsx-scope": "error",
+  // Conflicting declaration ordering is reviewed locally; named members remain sorted.
+  "sort-imports": "error",
   "typescript/consistent-type-definitions": "error",
   "typescript/explicit-function-return-type": "error",
   "typescript/explicit-module-boundary-types": "error",
@@ -69,3 +73,4 @@ export const auditedRestrictionRules = {
   "unicorn/max-nested-calls": "error",
   "unicorn/no-null": "error",
 } satisfies NonNullable<OxlintConfig["rules"]>;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

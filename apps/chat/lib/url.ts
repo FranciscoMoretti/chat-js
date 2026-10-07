@@ -1,26 +1,29 @@
 import { env } from "@/lib/env";
 
-/* oxlint-disable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions --
- * jsdoc/require-returns (#535): getBaseUrl's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * node/no-process-env (#537): getBaseUrl reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-boolean-expressions (#610): getBaseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; env.VERCEL_BRANCH_URL; env.VERCEL_URL; process.env.PORT; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getBaseUrl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Returns the base URL for the application.
  * Priority: APP_URL > preview branch URL > VERCEL_URL > localhost
+ * @returns {string} Configured app URL, deployed HTTPS origin, or localhost origin using the active listener port.
  */
 export const getBaseUrl = (): string => {
-  if (env.APP_URL) {
+  if (typeof env.APP_URL === "string" && env.APP_URL !== "") {
     return env.APP_URL;
   }
-  if (env.VERCEL_ENV === "preview" && env.VERCEL_BRANCH_URL) {
+  if (
+    env.VERCEL_ENV === "preview" &&
+    typeof env.VERCEL_BRANCH_URL === "string" &&
+    env.VERCEL_BRANCH_URL !== ""
+  ) {
     return `https://${env.VERCEL_BRANCH_URL}`;
   }
-  if (env.VERCEL_URL) {
+  if (typeof env.VERCEL_URL === "string" && env.VERCEL_URL !== "") {
     return `https://${env.VERCEL_URL}`;
   }
   // Next sets PORT to the actual listener, including --port and automatic fallback.
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
-  return `http://localhost:${process.env.PORT || "3000"}`;
+  // oxlint-disable-next-line node/no-process-env -- Read the active Next listener at call time; deployment env validation does not own this runtime override.
+  const port = process.env.PORT;
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  return `http://localhost:${typeof port === "string" && port !== "" ? port : "3000"}`;
 };
-/* oxlint-enable jsdoc/require-returns, node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

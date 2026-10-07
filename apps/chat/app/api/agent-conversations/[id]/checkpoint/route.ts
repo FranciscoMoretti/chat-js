@@ -1,15 +1,23 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   readEveCheckpoint,
   waitForEveCheckpoint,
 } from "@/lib/eve/checkpoint-readiness";
+/* oxlint-enable sort-imports */
 import { CheckpointRejectedError } from "@/lib/eve/checkpoint-rejection";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { sameOrigin } from "@/lib/eve/request-policy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveRequest } from "@/lib/eve/server";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): inputSchema uses 64 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -23,11 +31,11 @@ const inputSchema = z
     checkpointId: z.uuid(),
   })
   .strict();
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): POST's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * max-lines-per-function (#510): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): POST keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): POST uses 15_000, 202 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -35,7 +43,13 @@ const inputSchema = z
  * typescript/strict-boolean-expressions (#610): POST intentionally keeps the existing falsy-value behavior of source?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): POST preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** The caller retains this checkpoint identity before posting and on ambiguous failure. */
+/**
+ * Requests checkpoint capture for a bound source conversation.
+ * On an ambiguous response, the caller must retain this request for a same-request retry.
+ * @param {Request} request Same-origin request containing checkpoint identity and turn data.
+ * @param {{ params: Promise<{ id: string }> }} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} JSON confirming readiness or explaining rejection or uncertainty.
+ */
 export const POST = async (
   request: Request,
   context: {
@@ -60,6 +74,7 @@ export const POST = async (
     );
   }
   const source = await getEveConversation(principal.ownerId, id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!source?.sessionId || source.state !== "bound") {
     return Response.json(
       { error: "Source conversation not found." },
@@ -95,6 +110,7 @@ export const POST = async (
       );
     }
     return Response.json(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { conversationId: id, ready: true, ...input.data },
       { headers: { "cache-control": "no-store" } }
     );
@@ -106,6 +122,7 @@ export const POST = async (
           conversationId: id,
           error: error.message,
           reason: error.reason,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...input.data,
         },
         { headers: { "cache-control": "no-store" }, status: 409 }
@@ -120,4 +137,6 @@ export const POST = async (
     );
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

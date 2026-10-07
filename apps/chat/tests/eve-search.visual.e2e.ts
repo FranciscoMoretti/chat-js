@@ -3,7 +3,9 @@
  */
 import { execFileSync } from "node:child_process";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { serialize } from "superjson";
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */
@@ -14,6 +16,7 @@ import { z } from "zod";
 const searchBatchSchema = z.object({
   "0": z.object({ json: z.object({ search: z.string() }) }),
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -61,6 +64,8 @@ test("search states", async ({ page }, testInfo) => {
     path: testInfo.outputPath("search-states.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -139,6 +144,8 @@ test("debounces requests, hides obsolete results, and navigates to the matching 
     /\/chat\/00000000-0000-4000-8000-000000000002$/u
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -241,6 +248,8 @@ test("does not publish a response for text superseded during the debounce window
   await expect(page.getByRole("listbox")).toHaveAttribute("aria-busy", "false");
   expect(requests).toEqual(["original", "intermediate", "latest", "original"]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -265,7 +274,9 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
         .slice("/api/trpc/".length)
         .split(",");
       // Preserve unrelated results when tRPC batches the sidebar queries.
+      // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const response = procedures.length > 1 ? await route.fetch() : undefined;
+      // oxlint-disable-next-line no-ternary -- Keep data as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const data: unknown = response ? await response.json() : [];
       if (!Array.isArray(data)) {
         throw new TypeError("Expected a tRPC batch response");
@@ -273,24 +284,25 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
       const batchResults: readonly unknown[] = data;
       await recent.promise;
       await route.fulfill({
-        json: procedures.map((procedure, procedureIndex) =>
-          procedure === "eve.list"
-            ? {
-                result: {
-                  data: serialize({
-                    items: Array.from({ length: 8 }, (_, index) => ({
-                      conversationId: `branch-${index}`,
-                      createdAt: "2026-09-25T10:00:00Z",
-                      id: `chat-${index}`,
-                      state: "bound",
-                      title: `Recent conversation ${index + 1}`,
-                    })),
-                    nextCursor: null,
-                  }),
-                },
-              }
-            : batchResults[procedureIndex]
-        ),
+        json: procedures.map((procedure, procedureIndex) => {
+          if (procedure === "eve.list") {
+            return {
+              result: {
+                data: serialize({
+                  items: Array.from({ length: 8 }, (_, index) => ({
+                    conversationId: `branch-${index}`,
+                    createdAt: "2026-09-25T10:00:00Z",
+                    id: `chat-${index}`,
+                    state: "bound",
+                    title: `Recent conversation ${index + 1}`,
+                  })),
+                  nextCursor: null,
+                }),
+              },
+            };
+          }
+          return batchResults[procedureIndex];
+        }),
         response,
       });
     }
@@ -319,7 +331,9 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
   await expect(dialog.getByRole("option")).toHaveCount(8);
   await expect(dialog.locator('[data-slot="skeleton"]')).toHaveCount(0);
   const after = await dialog.boundingBox();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading height from after; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading height from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(after?.height).toBe(before?.height);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading y from after; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading y from before; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(after?.y).toBe(before?.y);
   await expect(
     dialog.getByText("Search across your conversations")
@@ -351,6 +365,7 @@ test("recent-chat skeletons reserve the loaded dialog height", async ({
     },
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- #509: This eve-search.visual.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

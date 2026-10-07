@@ -34,6 +34,7 @@ beforeEach(() => {
   mocks.tools.mockResolvedValue({});
   mocks.create.mockResolvedValue({ close: mocks.close, tools: mocks.tools });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 it("connects, discovers and closes without web cache dependencies", async () => {
@@ -58,7 +59,8 @@ it("connects, discovers and closes without web cache dependencies", async () => 
     })
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/strict-void-return --
  * no-magic-numbers (#517): it("notifies the web owner after disconnect and authentication errors") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/strict-void-return (#611): it("notifies the web owner after disconnect and authentication errors")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
@@ -78,6 +80,8 @@ it("notifies the web owner after disconnect and authentication errors", async ()
   await client.close();
   expect(invalidate).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/strict-void-return */
 
 /* oxlint-disable no-undefined --
@@ -101,6 +105,8 @@ it("concurrent connection requests share one transport and close it once", async
   await client.close();
   expect(mocks.close).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -118,6 +124,8 @@ it("a failed connection can be retried without retaining a failed promise", asyn
   expect(mocks.create).toHaveBeenCalledTimes(2);
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable typescript/strict-void-return --
@@ -137,6 +145,8 @@ it("domain errors mentioning tokens do not invalidate authentication", async () 
   expect(invalidate).not.toHaveBeenCalled();
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-void-return */
 
 /* oxlint-disable no-undefined --
@@ -168,6 +178,8 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
   );
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-undefined --
@@ -191,6 +203,8 @@ it("closing an in-flight connection prevents the late transport from becoming ac
   expect(client.status).toBe("disconnected");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -202,7 +216,7 @@ it("connection initialization always receives a cancellation signal", async () =
     url: "https://mcp.test",
   });
   await client.connect();
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.create.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
   expect(signal).toBeInstanceOf(AbortSignal);
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
@@ -211,6 +225,8 @@ it("connection initialization always receives a cancellation signal", async () =
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(signal.aborted).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -244,6 +260,8 @@ it("callers cancel their shared connection waits independently", async () => {
   expect(mocks.create).toHaveBeenCalledOnce();
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -272,6 +290,8 @@ it("a fresh connection starts immediately after closing a pending attempt", asyn
   expect(client.status).toBe("connected");
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["tools", "listResources", "listPrompts"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-statements, typescript/promise-function-async, typescript/strict-void-return --
@@ -314,6 +334,8 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
     await client.close();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async, typescript/strict-void-return */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -352,4 +374,5 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   expect(mocks.close).not.toHaveBeenCalled();
   await client.close();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */

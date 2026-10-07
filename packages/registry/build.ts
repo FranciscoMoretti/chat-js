@@ -6,7 +6,9 @@ import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
 import { spawn } from "bun";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { format } from "oxfmt";
+/* oxlint-enable sort-imports */
 
 import { registry } from "./registry";
 
@@ -16,11 +18,16 @@ const SUCCESS_EXIT_CODE = 0;
 const NO_FORMATTING_ERRORS = 0;
 
 const cwd = import.meta.dir;
+// oxlint-disable-next-line node/no-top-level-await -- This Bun build executable removes prior artifacts before creating the new registry output.
 await rm(path.join(cwd, "dist"), { force: true, recursive: true });
+// oxlint-disable-next-line node/no-top-level-await -- This Bun build executable creates the source directory before writing registry items.
 await mkdir(path.join(cwd, "dist/source"), { recursive: true });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun build executable completes all item copies before serializing the registry manifest.
 await Promise.all(
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The build appends descriptor files to each mutable Shadcn RegistryItem before serializing registry.json.
   registry.items.map(async (item) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const metadata: unknown = item.meta?.chatjs;
     if (
       typeof metadata === "object" &&
@@ -41,6 +48,7 @@ await Promise.all(
       item.files.push({
         path: sourcePath,
         target:
+          // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           metadata.kind === "feature"
             ? `~/features/${item.name}/chatjs.json`
             : `~/tools/chatjs/${item.name}/chatjs.json`,
@@ -49,6 +57,8 @@ await Promise.all(
     }
   })
 );
+/* oxlint-enable oxc/no-async-await */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun build executable writes the registry manifest before invoking shadcn.
 await writeFile(
   path.join(cwd, "registry.json"),
   // oxlint-disable-next-line unicorn/no-null -- JSON.stringify accepts null as its identity replacer; no metadata fields are filtered or transformed.
@@ -66,6 +76,7 @@ const process = spawn(
   ],
   { cwd, stderr: "inherit", stdout: "inherit" }
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun build executable checks the shadcn child exit status before declaring success.
 if ((await process.exited) !== SUCCESS_EXIT_CODE) {
   throw new Error("shadcn registry build failed");
 }

@@ -1,16 +1,22 @@
 import { electronClient } from "@better-auth/electron/client";
 import { storage } from "@better-auth/electron/storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createAuthClient } from "better-auth/client";
+/* oxlint-enable sort-imports */
 import { safeStorage } from "electron";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
 } from "@/lib/electron-auth";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../config import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { APP_SCHEME, APP_URL } from "../config";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env -- auth-client.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
@@ -39,6 +45,7 @@ const memoryStorage = () => {
 
 /* oxlint-disable node/no-process-env -- electronAuthStorage: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 const electronAuthStorage =
+  // oxlint-disable-next-line no-ternary -- Keep electronAuthStorage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   process.env.NODE_ENV === "production" ? storage() : memoryStorage();
 /* oxlint-enable node/no-process-env */
 
@@ -59,4 +66,6 @@ const electronAuthClient = createAuthClient({
   ],
 });
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (electronAuthClient); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { electronAuthClient };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

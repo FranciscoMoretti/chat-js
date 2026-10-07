@@ -9,25 +9,19 @@ const TaskUpdateSchema = BaseStreamUpdateSchema.extend({
   status: z.enum(["running", "completed"]),
 });
 
-/* oxlint-disable unicorn/max-nested-calls --
- * unicorn/max-nested-calls (#568): WebSearchSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+const SearchResultItemSchema = z.object({
+  content: z.string(),
+  source: z.enum(["web", "academic", "x"]),
+  title: z.string(),
+  // Optional `tweetId` field, currently disabled.
+  url: z.string(),
+});
+
 const WebSearchSchema = TaskUpdateSchema.extend({
   queries: z.array(z.string()),
-  results: z
-    .array(
-      z.object({
-        content: z.string(),
-        source: z.enum(["web", "academic", "x"]),
-        title: z.string(),
-        // Optional `tweetId` field, currently disabled.
-        url: z.string(),
-      })
-    )
-    .optional(),
+  results: z.array(SearchResultItemSchema).optional(),
   type: z.literal("web"),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
 type WebSearchUpdate = z.infer<typeof WebSearchSchema>;
 
@@ -62,5 +56,9 @@ const ResearchUpdateSchema = z.discriminatedUnion("type", [
 ]);
 
 type ResearchUpdate = z.infer<typeof ResearchUpdateSchema>;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ResearchUpdateSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { ResearchUpdateSchema };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResearchUpdate, SearchResultItem, WebSearchUpdate); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ResearchUpdate, SearchResultItem, WebSearchUpdate };
+/* oxlint-enable import/no-named-export */

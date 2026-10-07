@@ -46,6 +46,7 @@ const context = (signal = new AbortController().signal) => ({
   abortSignal: signal,
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -66,6 +67,8 @@ test("reserves a recoverable key and enters the deletion lock before external up
     mocks.upload.mock.invocationCallOrder[0]
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable unicorn/max-nested-calls --
  * unicorn/max-nested-calls (#568): test("reservation failure and cancellation prevent external upload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -81,4 +84,5 @@ test("reservation failure and cancellation prevent external upload", async () =>
   ).rejects.toThrow();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/max-nested-calls */

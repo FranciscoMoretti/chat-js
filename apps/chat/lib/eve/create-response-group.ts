@@ -1,12 +1,20 @@
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { CreationRejectedError } from "./create-conversation";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { finishCreation, readCreationRequest } from "./pending-create";
+/* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
 import { eveResponseGroupResult } from "./response-group-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveResponseGroupInput } from "./response-group-input";
+/* oxlint-enable sort-imports */
 
 const RESPONSE_GROUP_REQUEST_TIMEOUT_MS = 75_000;
 const FIRST_ALTERNATE_CANDIDATE_INDEX = 1;
@@ -16,26 +24,29 @@ const recoveryKey = (ownerId: string, groupId: string): string =>
 
 type StorageAccess = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): readResponseGroupDraft uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): readResponseGroupDraft intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable no-undefined -- no-undefined (#519): readResponseGroupDraft uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const readResponseGroupDraft = (
   storage: StorageAccess,
   ownerId: string,
   groupId: string
 ): z.output<typeof eveResponseGroupInput> | undefined => {
   const saved = storage.getItem(recoveryKey(ownerId, groupId));
-  return saved ? eveResponseGroupInput.parse(JSON.parse(saved)) : undefined;
+
+  if (saved !== null && saved !== "") {
+    return eveResponseGroupInput.parse(JSON.parse(saved));
+  }
+  return undefined;
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable max-params --max-params (#511): retainResponseGroupDraft keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 /**
  * Moves unresolved request recovery to its bound group before a new composer request is allowed.
- * @param storage Browser storage holding composer requests and group-specific recovery drafts.
- * @param ownerId Owner whose request/recovery namespaces are checked and updated.
- * @param operation Original comparison request retained when any candidate remains unresolved.
- * @param result Current group candidate states deciding whether recovery remains necessary.
- * @param scope Composer scope cleared only when it still holds this same operation.
+ * @param {StorageAccess} storage Browser storage holding composer requests and group-specific recovery drafts.
+ * @param {string} ownerId Owner whose request/recovery namespaces are checked and updated.
+ * @param {ReadonlyNativeSurface<z.infer<typeof eveResponseGroupInput>>} operation Original comparison request retained when any candidate remains unresolved.
+ * @param {ReadonlyNativeSurface<z.infer<typeof eveResponseGroupResult>>} result Current group candidate states deciding whether recovery remains necessary.
+ * @param {Readonly<CreationScope> | undefined} scope Composer scope cleared only when it still holds this same operation.
  */
 const retainResponseGroupDraft = (
   storage: StorageAccess,
@@ -53,12 +64,14 @@ const retainResponseGroupDraft = (
     storage.removeItem(recoveryKey(ownerId, result.id));
   }
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from readCreationRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     readCreationRequest(storage, ownerId, scope)?.operationId ===
     operation.operationId
   ) {
     finishCreation(storage, ownerId, scope);
   }
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestResponseGroup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params */
 
 const requestResponseGroup = async (
@@ -78,6 +91,7 @@ const requestResponseGroup = async (
   const result = eveResponseGroupResult.parse(await response.json());
   const [primary] = result.candidates;
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from primary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     primary?.state === "rejected" &&
     (result.candidates
       .slice(FIRST_ALTERNATE_CANDIDATE_INDEX)
@@ -91,9 +105,11 @@ const requestResponseGroup = async (
   }
   return result;
 };
-
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readResponseGroupDraft, requestResponseGroup, retainResponseGroupDraft); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 export {
   readResponseGroupDraft,
   requestResponseGroup,
   retainResponseGroupDraft,
 };
+/* oxlint-enable import/no-named-export */

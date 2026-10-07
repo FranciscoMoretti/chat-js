@@ -57,6 +57,7 @@ const request = (headers: Record<string, string> = {}) =>
     headers: {
       "content-type": "application/json",
       origin: "http://localhost:3790",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...headers,
     },
     method: "POST",
@@ -77,6 +78,7 @@ beforeEach(() => {
   );
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("requires a message operation ID before dispatch") uses 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -91,6 +93,8 @@ test("requires a message operation ID before dispatch", async () => {
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -122,6 +126,8 @@ test("stamps the validated operation into server-owned durable metadata", async 
     "createTextDocument"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -143,4 +149,5 @@ test("keeps a busy admission retryable without dispatching or rejecting its mess
   });
   expect(mocks.eveRequest).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

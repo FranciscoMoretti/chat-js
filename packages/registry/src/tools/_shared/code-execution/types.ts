@@ -24,10 +24,14 @@ interface CodeExecutionContext {
   requestId: string;
   sandbox: ExecutionSandbox;
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (supportedExecutionLanguages); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { supportedExecutionLanguages };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ExecutionSandbox, CodeExecutionContext, CodeExecutionResult, SupportedExecutionLanguage); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   ExecutionSandbox,
   CodeExecutionContext,
   CodeExecutionResult,
   SupportedExecutionLanguage,
 };
+/* oxlint-enable import/no-named-export */

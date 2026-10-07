@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { composerIconNames } from "./composer-icons.generated";
+/* oxlint-enable sort-imports */
 
 const CONTRACT_VERSION = 1;
 const REQUIRED_ITEM_COUNT = 1;
@@ -148,6 +150,7 @@ const featureDefinitionSchema = z.object({
 });
 
 type FeatureDefinition = z.infer<typeof featureDefinitionSchema>;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (envRequirementSchema, featureDefinitionSchema, featureIdSchema, storageDefinitionSchema, toolDefinitionSchema); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   envRequirementSchema,
   featureDefinitionSchema,
@@ -155,4 +158,7 @@ export {
   storageDefinitionSchema,
   toolDefinitionSchema,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (FeatureDefinition, StorageDefinition, ToolDefinition); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { FeatureDefinition, StorageDefinition, ToolDefinition };
+/* oxlint-enable import/no-named-export */

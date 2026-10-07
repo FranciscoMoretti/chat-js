@@ -1,10 +1,19 @@
 import { getVercelOidcTokenSync } from "@vercel/oidc";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { APIError, Sandbox } from "@vercel/sandbox";
+/* oxlint-enable sort-imports */
 
 import type { CodeSandboxCleanupCapability } from "@/lib/ai/installed-tool-capabilities";
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-disable sort-imports -- Oxfmt groups imports by module path while sort-imports orders the aliased types by name. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SupportedExecutionLanguage } from "@/tools/chatjs/_shared/code-execution/types";
+/* oxlint-enable sort-imports */
 
 interface SandboxAuth {
   projectId: string;
@@ -13,11 +22,12 @@ interface SandboxAuth {
 }
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const tokenClaims = (token: string) => {
+const tokenClaims = (
+  token: string
+): { projectId: string; teamId: string } | undefined => {
   const parts = token.split(".");
   if (parts.length !== 3) {
     return;
@@ -54,7 +64,6 @@ const tokenClaims = (token: string) => {
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 
 const getTokenAuth = (): Partial<SandboxAuth> => {
@@ -115,10 +124,12 @@ const resolveSandboxAuth = (): SandboxAuth => {
   } catch {
     throw new Error("Sandbox provider identity is unavailable.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep identity as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const identity = token ? tokenClaims(token) : undefined;
   if (!(identity && token)) {
     throw new Error("Sandbox provider identity is unavailable.");
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...identity, token };
 };
 /* oxlint-enable eslint/no-undefined */
@@ -141,13 +152,12 @@ const getSandboxRuntime = (language: SupportedExecutionLanguage): string => {
 
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const createSandbox = (
   runtime: string,
-  signal?: AbortSignal,
+  signal?: ReadonlyNativeSurface<AbortSignal>,
   name?: string,
-  auth?: SandboxAuth
+  auth?: Readonly<SandboxAuth>
 ): Promise<Sandbox> =>
   Sandbox.create({
     name,
@@ -157,10 +167,11 @@ const createSandbox = (
     runtime,
     signal,
     timeout: 5 * 60 * 1000,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (auth ?? getTokenAuth()) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...(auth ?? getTokenAuth()),
   });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupSandbox's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
 
@@ -188,17 +199,22 @@ const cleanupSandbox = async (
     throw closeError;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findSandboxForCleanup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
+const findSandboxForCleanup = async (
+  name: string,
+  auth: Readonly<SandboxAuth>
+) => {
   try {
     return await Sandbox.get({
       name,
       resume: false,
       signal: AbortSignal.timeout(15_000),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auth own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...auth,
     });
   } catch (error) {
@@ -209,7 +225,7 @@ const findSandboxForCleanup = async (name: string, auth: SandboxAuth) => {
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -218,6 +234,7 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
     const auth = resolveSandboxAuth();
     const log = createModuleLogger("eve-code-sandbox-cleanup");
     return {
+      /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteAndConfirmAbsent's awaited sequencing and rejected-Promise behavior. */
       async deleteAndConfirmAbsent(name): Promise<void> {
         const sandbox = await findSandboxForCleanup(name, auth);
         if (sandbox) {
@@ -232,13 +249,19 @@ const codeSandboxCleanupCapability: CodeSandboxCleanupCapability = {
           }
         }
       },
+      /* oxlint-enable oxc/no-async-await */
       provider: auth,
     };
   },
 };
 
-const getErrorMessage = (err: unknown): string =>
-  err instanceof Error ? err.message : "Unknown error";
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return "Unknown error";
+};
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (cleanupSandbox, codeSandboxCleanupCapability, createSandbox, getErrorMessage, getSandboxRuntime, getTokenAuth, resolveSandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   cleanupSandbox,
   codeSandboxCleanupCapability,
@@ -248,4 +271,7 @@ export {
   getTokenAuth,
   resolveSandboxAuth,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SandboxAuth); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { SandboxAuth };
+/* oxlint-enable import/no-named-export */

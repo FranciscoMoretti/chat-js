@@ -5,7 +5,9 @@ import type { EveMessage, EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSharedMessages } from "../components/eve/eve-shared-messages";
+/* oxlint-enable sort-imports */
 import { sharedEvePart } from "../lib/eve/shared-messages";
 /* oxlint-enable import/no-relative-parent-imports */
 

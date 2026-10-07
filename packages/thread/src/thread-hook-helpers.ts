@@ -1,8 +1,11 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ChatStatus, UIMessage } from "ai";
+/* oxlint-enable sort-imports */
 
 import type { AbstractThread } from "./abstract-thread";
 import type { RequestReader } from "./ai-sdk-run-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CanonicalMessage,
   MessageTreeSnapshot,
@@ -12,6 +15,7 @@ import type {
   ThreadStateSnapshot,
   TreeSendOptions,
 } from "./types";
+/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 
@@ -197,5 +201,9 @@ const createThreadHelpers = <TMessage extends UIMessage>({
   tree: createTreeHelpers({ snapshot, status: treeStatus, thread }),
 });
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { createThreadHelpers };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TreeHelpers, UseThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { TreeHelpers, UseThreadHelpers };
+/* oxlint-enable import/no-named-export */

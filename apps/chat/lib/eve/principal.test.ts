@@ -11,6 +11,7 @@ vi.mock("../db/eve-guests", () => {
  * unicorn/no-null (#570): beforeEach preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 beforeEach(() => session.mockResolvedValue(null));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 test("old guest cookies no longer authorize application history", async () => {
@@ -20,7 +21,8 @@ test("old guest cookies no longer authorize application history", async () => {
     )
   ).toBeNull();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("registered ownership is unchanged", async () => {
   session.mockResolvedValue({ user: { id: "registered-owner" } });
   expect(await resolveEvePrincipal(new Headers())).toEqual({
@@ -28,3 +30,4 @@ test("registered ownership is unchanged", async () => {
     ownerId: "registered-owner",
   });
 });
+/* oxlint-enable oxc/no-async-await */

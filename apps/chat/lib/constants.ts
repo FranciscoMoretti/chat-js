@@ -6,4 +6,6 @@ const isPlaywrightTestEnvironment = getIsPlaywrightTestEnvironment(process.env);
 /* oxlint-enable node/no-process-env */
 
 const FILE_STORAGE_PREFIX = `${config.appPrefix}/files/`;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (FILE_STORAGE_PREFIX, isPlaywrightTestEnvironment); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { FILE_STORAGE_PREFIX, isPlaywrightTestEnvironment };
+/* oxlint-enable import/no-named-export */

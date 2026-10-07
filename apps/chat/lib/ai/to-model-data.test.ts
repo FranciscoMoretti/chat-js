@@ -1,5 +1,7 @@
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { toModelData } from "./to-model-data";
 
@@ -18,7 +20,10 @@ const model: AiGatewayModel = {
 
 test("missing positive tool tags remain unknown instead of declaring no support", () => {
   expect(toModelData(model).toolCall).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, tags: ["vision"] }).toolCall).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, tags: ["tool-use"] }).toolCall).toBe(true);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(toModelData({ ...model, type: "image" }).toolCall).toBe(false);
 });

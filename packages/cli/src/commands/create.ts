@@ -1,107 +1,87 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { intro, outro } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import { Command } from "commander";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { buildConfigTs } from "../helpers/config-builder";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { ensureTargetEmpty } from "../helpers/ensure-target";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { collectEnvChecklist } from "../helpers/env-checklist";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { EnvVarEntry } from "../helpers/env-checklist";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureGatewayProvider } from "../helpers/gateway-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { buildConfigTs } from "#cli/helpers/config-builder";
+/* oxlint-enable sort-imports */
+import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { EnvVarEntry } from "#cli/helpers/env-checklist";
+/* oxlint-enable sort-imports */
+import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { parseJsonObject } from "#cli/helpers/json-object";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   promptAssistantTools,
   promptAuth,
+  promptCodeExecutionTool,
   promptCoreFeatures,
-  promptObservability,
   promptDocumentTypes,
   promptElectron,
   promptGateway,
-  promptProjectName,
-  promptStorage,
-  promptSearchTool,
-  promptUrlRetrievalTool,
   promptImageGenerationTool,
+  promptObservability,
+  promptProjectName,
+  promptSearchTool,
+  promptStorage,
+  promptUrlRetrievalTool,
   promptVideoGenerationTool,
-  promptCodeExecutionTool,
-} from "../helpers/prompts";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+  // oxlint-disable-next-line import/max-dependencies -- The creation command composes validation, prompts, source scaffolding, registry planning, configuration writing, and process installation directly.
+} from "#cli/helpers/prompts";
+/* oxlint-enable sort-imports */
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
-} from "../helpers/scaffold";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { configureStorageProvider } from "../helpers/storage-provider";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveGateway } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { itemAddress, listTools, readItem } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { launcherPackageManager } from "../utils/get-package-manager";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { handleError } from "../utils/handle-error";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/helpers/scaffold";
+/* oxlint-enable sort-imports */
+import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import { resolveGateway } from "#cli/registry/gateways";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
+import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { PackageManager } from "#cli/types";
+/* oxlint-enable sort-imports */
+import { launcherPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
+import { highlighter } from "#cli/utils/highlighter";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   installPlan,
-  recordInstalledSource,
   plannedSourceTargets,
-} from "../utils/install-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { planInstallation } from "../utils/installation-plan";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { runCommand } from "../utils/run-command";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { spinner } from "../utils/spinner";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncFeatures } from "../utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
+  recordInstalledSource,
+} from "#cli/utils/install-plan";
+/* oxlint-enable sort-imports */
+import { planInstallation } from "#cli/utils/installation-plan";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { logger } from "#cli/utils/logger";
+/* oxlint-enable sort-imports */
+import { runCommand } from "#cli/utils/run-command";
+import { spinner } from "#cli/utils/spinner";
+import { syncFeatures } from "#cli/utils/sync-features";
+import { syncTools } from "#cli/utils/sync-tools";
+
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { toolDefinitionSchema } from "../../../registry/metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { observabilityItems } from "../../../registry/src/features/observability";
+/* oxlint-enable sort-imports */
 
 const resolveCreateTarget = (
   targetArg: string | undefined
@@ -133,8 +113,7 @@ const resolveCreateTarget = (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const printEnvChecklist = (entries: EnvVarEntry[]): void => {
+const printEnvChecklist = (entries: readonly Readonly<EnvVarEntry>[]): void => {
   logger.info("Required for your configuration:");
   logger.break();
 
@@ -162,12 +141,10 @@ const printEnvChecklist = (entries: EnvVarEntry[]): void => {
     entryIndex -= 1;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const createOptionsSchema = z.object({
   attachments: z.boolean().optional(),
   codeExecutionTool: z.string().optional(),
@@ -186,7 +163,11 @@ const createOptionsSchema = z.object({
           .map((id): string => id.trim())
           .filter(Boolean)
           .every((id): boolean =>
-            observabilityItems.some((item): boolean => item.name === id)
+            observabilityItems.some(
+              (
+                item: ReadonlyInput<(typeof observabilityItems)[number]>
+              ): boolean => item.name === id
+            )
           ),
       "Observability must select vercel-analytics, vercel-speed-insights or langfuse."
     )
@@ -199,7 +180,6 @@ const createOptionsSchema = z.object({
   videoGenerationTool: z.string().optional(),
   yes: z.boolean(),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type CreateOptions = z.infer<typeof createOptionsSchema>;
 type AssistantTools = Awaited<ReturnType<typeof promptAssistantTools>>;
@@ -213,13 +193,13 @@ interface ProjectTarget {
   targetDir: string;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectToolSources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const collectToolSources = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Selection resolves deep research dependencies and explicit provider choices by updating the shared builtInTools flags consumed by configuration writing.
   assistantTools: AssistantTools,
   targetDir: string
 ): Promise<string[]> => {
@@ -263,10 +243,10 @@ const collectToolSources = async (
   ] as const;
 
   const addSelection = async (index: number): Promise<void> => {
-    const selection = selections[index];
-    if (!selection) {
+    if (index >= selections.length) {
       return;
     }
+    const selection = selections[index];
     if (typeof selection.source === "string" && selection.source !== "") {
       assistantTools.builtInTools[selection.feature] = true;
     }
@@ -276,6 +256,7 @@ const collectToolSources = async (
         "tool"
       );
       const item = await readItem(source, targetDir);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const metadata = toolDefinitionSchema.parse(item.meta?.chatjs);
       if (metadata.slot !== selection.slot) {
         throw new Error(
@@ -290,15 +271,15 @@ const collectToolSources = async (
   await addSelection(0);
   return toolSources;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptProjectTarget's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptProjectTarget = async (
-  options: CreateOptions
+  options: Readonly<CreateOptions>
 ): Promise<ProjectTarget> => {
   const initialTarget = resolveCreateTarget(options.target);
   const projectName = await promptProjectName(
@@ -306,10 +287,12 @@ const promptProjectTarget = async (
     options.yes
   );
   const targetDir =
+    // oxlint-disable-next-line no-ternary -- Keep targetDir as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof options.target === "string" && options.target !== ""
       ? initialTarget.targetDir
       : path.resolve(process.cwd(), projectName);
   const displayPath =
+    // oxlint-disable-next-line no-ternary -- Keep displayPath as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof options.target === "string" && options.target !== ""
       ? initialTarget.displayPath
       : projectName;
@@ -327,10 +310,12 @@ const promptProjectTarget = async (
     targetDir,
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve loadInstallableTools's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 const loadInstallableTools = async (
-  options: CreateOptions,
+  options: Readonly<CreateOptions>,
   targetDir: string
 ): Promise<Awaited<ReturnType<typeof listTools>>> => {
   if (options.yes) {
@@ -345,6 +330,7 @@ const loadInstallableTools = async (
   } catch (error) {
     registrySpinner.fail("Could not load installable tools.");
     logger.warn(
+      // oxlint-disable-next-line no-ternary -- Keep logger.warn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error
         ? error.message
         : "Continuing with built-in tools only."
@@ -352,15 +338,17 @@ const loadInstallableTools = async (
     return [];
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCreateSetup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
-const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
+const promptCreateSetup = async (
+  options: Readonly<CreateOptions>,
+  targetDir: string
+) => {
   const gatewaySource = options.gateway ?? (await promptGateway(options.yes));
   const gatewaySelection = await resolveGateway(gatewaySource, targetDir);
   const coreFeatures = await promptCoreFeatures(
@@ -372,6 +360,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     coreFeatures.attachments = options.attachments;
   }
   const observability =
+    // oxlint-disable-next-line no-ternary -- Keep observability as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options.observability === undefined
       ? await promptObservability(options.yes)
       : options.observability
@@ -401,6 +390,7 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
   const selectedTools = await Promise.all(
     toolSources.map(async (source) => {
       const item = await readItem(source, targetDir);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       return toolDefinitionSchema.parse(item.meta?.chatjs);
     })
   );
@@ -419,18 +409,25 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     coreFeatures.documents &&
     documentTypes.code &&
     selectedTools.some(
-      (tool) => tool.slot === "codeExecution" && tool.codeExecutorExport
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.slot === "codeExecution" &&
+        typeof tool.codeExecutorExport === "string" &&
+        tool.codeExecutorExport !== ""
     )
   ) {
     toolSources.push(itemAddress("saved-code-execution", "tool"));
   }
   const usesStorage =
     coreFeatures.attachments ||
-    selectedTools.some((tool) => tool.requiresStorage === true) ||
+    selectedTools.some(
+      (tool: ReadonlyInput<z.output<typeof toolDefinitionSchema>>) =>
+        tool.requiresStorage === true
+    ) ||
     assistantTools.builtInTools.imageGeneration ||
     assistantTools.builtInTools.videoGeneration ||
     options.storageProvider !== undefined ||
     options.storageConfig !== undefined;
+  // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const storage = usesStorage
     ? await promptStorage(
         options.yes,
@@ -447,7 +444,9 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     {
       features: [
         ...observability,
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(coreFeatures.mcp ? ["mcp"] : []),
+        // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(coreFeatures.attachments ? ["attachment-uploads"] : []),
       ],
       gateway: gatewaySelection.source,
@@ -474,16 +473,15 @@ const promptCreateSetup = async (options: CreateOptions, targetDir: string) => {
     withElectron,
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const scaffoldProject = async (
-  project: ProjectTarget,
+  project: Readonly<ProjectTarget>,
   packageManager: PackageManager,
   withElectron: boolean
 ): Promise<void> => {
@@ -495,24 +493,21 @@ const scaffoldProject = async (
     });
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeConfiguration's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const writeConfiguration = async (
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<void> => {
   const configSpinner = spinner("Writing configuration...").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Commander supplies an open option object that is immediately checked by the create-options schema.
-    const packageJson = JSON.parse(
-      await readFile(packageJsonPath, "utf-8")
-    ) as {
-      name?: string;
-    };
+    const packageJson = parseJsonObject(
+      await readFile(packageJsonPath, "utf-8"),
+      "Scaffold package.json"
+    );
     packageJson.name = project.projectName;
     await writeFile(
       packageJsonPath,
@@ -537,7 +532,7 @@ const writeConfiguration = async (
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -551,13 +546,13 @@ const oxfmtCommandFor = (packageManager: PackageManager): string[] => {
   return commands[packageManager];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installRegistryItems's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const installRegistryItems = async (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>
 ): Promise<Awaited<ReturnType<typeof syncTools>>> => {
   const installSpinner = spinner(
     "Installing selected registry items..."
@@ -619,19 +614,18 @@ const installRegistryItems = async (
     throw error;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const printNextSteps = (
   packageManager: PackageManager,
-  project: ProjectTarget,
-  setup: Awaited<ReturnType<typeof promptCreateSetup>>,
-  installedTools: Awaited<ReturnType<typeof syncTools>>
+  project: Readonly<ProjectTarget>,
+  setup: ReadonlyInput<Awaited<ReturnType<typeof promptCreateSetup>>>,
+  installedTools: ReadonlyInput<Awaited<ReturnType<typeof syncTools>>>
 ): void => {
   const envEntries = collectEnvChecklist({
     auth: setup.auth,
@@ -642,8 +636,15 @@ const printNextSteps = (
     installableToolEnvRequirements: [
       ...installedTools.flatMap((tool) => tool.envRequirements),
       ...observabilityItems
-        .filter((item): boolean => setup.observability.includes(item.name))
-        .flatMap((item) => item.meta.chatjs.envRequirements ?? []),
+        .filter(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>): boolean =>
+            setup.observability.includes(item.name)
+        )
+        .flatMap(
+          (item: ReadonlyInput<(typeof observabilityItems)[number]>) =>
+            item.meta.chatjs.envRequirements ?? []
+        ),
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(setup.usesStorage ? setup.storage.definition.envRequirements : []),
     ],
   });
@@ -680,7 +681,7 @@ const printNextSteps = (
     `  For detailed setup instructions, visit ${highlighter.info("https://www.chatjs.dev/docs/quickstart")}`
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createProject's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -688,8 +689,9 @@ const printNextSteps = (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const createProject = async (options: CreateOptions): Promise<void> => {
+const createProject = async (
+  options: Readonly<CreateOptions>
+): Promise<void> => {
   const packageManager = launcherPackageManager();
   if (!options.yes) {
     intro("Create ChatJS App");
@@ -698,7 +700,7 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   await ensureTargetEmpty(project.targetDir);
   if (typeof options.fromGit === "string" && options.fromGit !== "") {
     const selectionOptions = Object.entries(options).filter(
-      ([key, value]): boolean =>
+      ([key, value]: readonly [string, unknown]): boolean =>
         !["target", "fromGit", "yes"].includes(key) && value !== undefined
     );
     if (selectionOptions.length > 0) {
@@ -726,7 +728,9 @@ const createProject = async (options: CreateOptions): Promise<void> => {
   );
   printNextSteps(packageManager, project, setup, installedTools);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (create); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */
@@ -784,15 +788,21 @@ export const create = new Command()
     "--storage-config <json>",
     "non-secret JSON options for the storage adapter; credentials use env vars"
   )
-  .action(async (directory, opts): Promise<void> => {
-    try {
-      await createProject(
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Commander supplies an open option object that is immediately checked by the create-options schema.
-        createOptionsSchema.parse({ target: directory, ...opts })
-      );
-    } catch (error) {
-      handleError(error);
+  .action(
+    async (
+      directory: unknown,
+      opts: Readonly<Record<string, unknown>>
+    ): Promise<void> => {
+      try {
+        await createProject(
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing opts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          createOptionsSchema.parse({ target: directory, ...opts })
+        );
+      } catch (error) {
+        handleError(error);
+      }
     }
-  });
-
+  );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

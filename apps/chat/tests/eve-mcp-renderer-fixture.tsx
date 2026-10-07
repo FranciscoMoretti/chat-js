@@ -5,7 +5,9 @@ import type { EveMessagePart } from "eve/client";
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveMcpResult } from "../components/eve/eve-mcp-result";
+/* oxlint-enable sort-imports */
 import { McpToolResult } from "../components/part/mcp-tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -20,9 +22,12 @@ const common = {
  * unicorn/no-null (#570): parts preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, inputText: "", state: "input-streaming" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, state: "input-available" },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: {
       kind: "chatjs.mcp-result",
@@ -33,6 +38,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
   },
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Each output case needs an independent copy of the shared tool-result fixture.
   ...[false, 0, true, null, ""].map((output, index) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: {
       kind: "chatjs.mcp-result",
@@ -43,12 +49,15 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     toolCallId: `value-${index}`,
     toolName: `local__value_${index}`,
   })),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, errorText: "private connector URL", state: "output-error" },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     approval: { approved: false, id: "fixture" },
     state: "output-denied",
   },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, output: { invalid: true }, state: "output-available" },
 ];
 /* oxlint-enable no-magic-numbers, unicorn/no-null */

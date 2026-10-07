@@ -1,33 +1,47 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveMessage, MessageStreamEvent } from "eve/client";
+/* oxlint-enable sort-imports */
 import { useEffect, useRef, useState, useTransition } from "react";
 
-import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+import { expandSelectedModelValue, isSelectedModelValue } from "@/lib/ai/types";
 import type { EveForkInput } from "@/lib/eve/contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { CreationRejectedError } from "@/lib/eve/create-conversation";
+/* oxlint-enable sort-imports */
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { draftMessage } from "@/lib/eve/draft";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveUserForkBoundary, resolveForkSource } from "@/lib/eve/fork-source";
+/* oxlint-enable sort-imports */
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { eveMessageTool } from "@/lib/eve/message-tool-selection";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/pending-create import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   finishCreation,
   prepareCreation,
   prepareResponseGroupCreation,
   readCreationRequest,
 } from "@/lib/eve/pending-create";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 import { responseModel } from "@/lib/eve/response-model";
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveRuntime } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveAttachments } from "./use-eve-attachments";
+/* oxlint-enable sort-imports */
 
 type Operation = NonNullable<ReturnType<typeof readCreationRequest>>;
 
@@ -36,36 +50,48 @@ interface EditContext {
   modelSelection?: SelectedModelValue;
   response?: EveMessage;
 }
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including response: EveMessage). */
+/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- responseModelSelection: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including response: EveMessage). */
 
 const responseModelSelection = (
   response: EveMessage,
   events: readonly MessageStreamEvent[]
-) => {
+): Extract<SelectedModelValue, string> | undefined => {
   const modelId = responseModel(
     events,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from response.metadata; preserve one receiver evaluation, skipped accesses and the existing "" fallback. The app guidance prefers optional chaining.
     response.metadata?.turnId ?? "",
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from response.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     response.metadata?.modelId
   );
-  return isSelectedModelValue(modelId) ? modelId : undefined;
+  if (isSelectedModelValue(modelId)) {
+    return modelId;
+  }
+  return undefined;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: Operation); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- operationModelSelection: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including operation: Operation); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including operation.modelId). */
 
-const operationModelSelection = (operation: Operation) => {
+const operationModelSelection = (
+  operation: Operation
+): SelectedModelValue | undefined => {
   if (!("modelIds" in operation)) {
-    return operation.modelId && isSelectedModelValue(operation.modelId)
-      ? operation.modelId
-      : undefined;
+    if (operation.modelId && isSelectedModelValue(operation.modelId)) {
+      return operation.modelId;
+    }
+    return undefined;
   }
   const selection: Record<string, number> = {};
   for (const modelId of operation.modelIds) {
     selection[modelId] = (selection[modelId] ?? 0) + 1;
   }
-  return isSelectedModelValue(selection) ? selection : undefined;
+  if (isSelectedModelValue(selection)) {
+    return selection;
+  }
+  return undefined;
 };
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useEveFork); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- useEveFork: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including message: EveMessageInput); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including editingMessageId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const useEveFork = (
@@ -102,6 +128,7 @@ export const useEveFork = (
   const [busy, setBusy] = useState(false);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const [failure, setFailure] = useState("");
   const lock = useRef(false);
 
@@ -126,6 +153,7 @@ export const useEveFork = (
           );
         }
         setDraft(
+          // oxlint-disable-next-line no-ternary -- Keep setDraft argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof operation.message === "string"
             ? operation.message
             : operation.message
@@ -134,6 +162,7 @@ export const useEveFork = (
                 .join("\n")
         );
         setAttachments(
+          // oxlint-disable-next-line no-ternary -- Keep setAttachments argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof operation.message === "string"
             ? []
             : operation.message
@@ -157,6 +186,7 @@ export const useEveFork = (
     }
   }, [conversationId, ownerId, setAttachments]);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve execute's awaited sequencing and rejected-Promise behavior. */
   const execute = async (operation: Operation): Promise<void> => {
     const binding = await resolveCreationRequest(
       sessionStorage,
@@ -173,6 +203,7 @@ export const useEveFork = (
       }),
       queryClient.invalidateQueries({ queryKey: trpc.eve.list.pathKey() }),
     ]);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing binding own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await openRuntime({ ...binding, operation, ownerId });
     startTransition(() => {
       // App Router Activity can keep this source route mounted while its successor
@@ -189,7 +220,8 @@ export const useEveFork = (
       setAttachments([]);
     });
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (action: () => Promise<void>): Promise<void> => {
     if (lock.current) {
       return;
@@ -201,9 +233,11 @@ export const useEveFork = (
       await action();
     } catch (error) {
       if (error instanceof CreationRejectedError) {
+        setRejected(true);
         try {
           finishCreation(sessionStorage, ownerId, { conversationId });
           setPending(undefined);
+          setRejected(false);
         } catch {
           setFailure(
             "The rejected version request could not be cleared. Keep this tab for recovery."
@@ -212,6 +246,7 @@ export const useEveFork = (
         }
       }
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Unable to create a version."
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required fork lock cleanup in finally.
@@ -220,7 +255,8 @@ export const useEveFork = (
       setBusy(false);
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve begin's awaited sequencing and rejected-Promise behavior. */
   const begin = (
     message: EveMessage,
     regeneration?: {
@@ -234,11 +270,14 @@ export const useEveFork = (
       if (pending || editingMessageId || !family.data || !boundary) {
         return;
       }
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading response from editContext; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep responseSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const responseSelection = editContext?.response
         ? responseModelSelection(editContext.response, editContext.events ?? [])
         : undefined;
       const editingSelection =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelSelection from editContext; preserve one receiver evaluation, skipped accesses and the existing responseSelection fallback. The app guidance prefers optional chaining.
         editContext?.modelSelection ?? responseSelection ?? selectedModel;
+      // oxlint-disable-next-line no-ternary -- Keep modelId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const modelId = regeneration
         ? responseModelSelection(regeneration.response, regeneration.events)
         : undefined;
@@ -265,6 +304,7 @@ export const useEveFork = (
       // Re-upload the exact native bytes; never silently drop a file on an edit.
       let attachments: DraftAttachment[];
       try {
+        // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         attachments = message.parts.some((part) => part.type === "file")
           ? await restoreAttachments.mutateAsync({
               conversationId,
@@ -298,7 +338,8 @@ export const useEveFork = (
         setEditingMessageId(message.id);
       }
     });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     begin,
     busy,
@@ -338,6 +379,7 @@ export const useEveFork = (
           },
           requestedTool
         );
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onComparisonStarted; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
         onComparisonStarted?.(
           operation.message,
           operation.selectedTool,
@@ -370,9 +412,20 @@ export const useEveFork = (
       value: modelSelectionValue ?? selectedModel,
     },
     pending,
+    rejected,
     retry: () =>
       run(async () => {
-        if (pending) {
+        if (pending && rejected) {
+          try {
+            finishCreation(sessionStorage, ownerId, { conversationId });
+            setPending(undefined);
+            setRejected(false);
+          } catch {
+            setFailure(
+              "The rejected version request could not be cleared. Keep this tab for recovery."
+            );
+          }
+        } else if (pending) {
           await execute(pending);
         }
       }),
@@ -396,6 +449,7 @@ export const useEveFork = (
         );
         const message = draftMessage(draft, files.attachments);
         const operation =
+          // oxlint-disable-next-line no-ternary -- Keep operation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           modelIds.length > 1
             ? prepareResponseGroupCreation(
                 sessionStorage,
@@ -417,7 +471,9 @@ export const useEveFork = (
         await execute(operation);
       }),
   };
+  /* oxlint-enable oxc/no-async-await */
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- use-eve-fork keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

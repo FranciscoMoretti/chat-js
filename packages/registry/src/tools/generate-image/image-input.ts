@@ -2,15 +2,19 @@ import type { FileUIPart } from "ai";
 
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getBaseUrl } from "@/lib/url";
+/* oxlint-enable sort-imports */
 
 const INLINE_IMAGE =
   /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchImageBuffer's awaited sequencing and rejected-Promise behavior. */
 const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   // Inline images do not initiate a network request.
   const inline = INLINE_IMAGE.exec(value);
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading base64 from inline.groups; read groups from inline; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     typeof inline?.groups?.base64 === "string" &&
     inline.groups.base64 !== ""
   ) {
@@ -33,7 +37,8 @@ const fetchImageBuffer = async (value: string): Promise<Buffer> => {
   const file = await downloadFile(key);
   return Buffer.from(await file.arrayBuffer());
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collectEditImages's awaited sequencing and rejected-Promise behavior. */
 const collectEditImages = async ({
   imageParts,
   lastGeneratedImage,
@@ -42,6 +47,7 @@ const collectEditImages = async ({
   lastGeneratedImage: Readonly<{ imageUrl: string }> | null;
 }>): Promise<Buffer[]> =>
   await Promise.all([
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(lastGeneratedImage
       ? [fetchImageBuffer(lastGeneratedImage.imageUrl)]
       : []),
@@ -49,5 +55,7 @@ const collectEditImages = async ({
       async (imagePart) => await fetchImageBuffer(imagePart.url)
     ),
   ]);
-
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (collectEditImages); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export { collectEditImages };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -16,6 +16,7 @@ export default defineConfig({
   testMatch: "eve-browser.e2e.ts",
   timeout: 60_000,
   use: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing devices["Desktop Chrome"] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...devices["Desktop Chrome"],
     // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
     baseURL: `http://localhost:${process.env.PORT || 3000}`,

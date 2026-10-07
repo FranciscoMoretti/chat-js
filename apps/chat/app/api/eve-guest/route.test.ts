@@ -2,7 +2,9 @@ import { beforeEach, expect, test, vi } from "vitest";
 
 import { readGuestCredential } from "@/lib/eve/disposable-guest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { POST } from "./route";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({ fetch: vi.fn(), model: vi.fn() }));
 const settings = vi.hoisted(
@@ -52,6 +54,7 @@ const request = (body: unknown, origin = "https://chat.example") =>
     headers: { origin },
     method: "POST",
   });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
@@ -73,10 +76,13 @@ test("creates a native session without application state, returning only its sco
   const [[, init]] = mocks.fetch.mock.calls;
   // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const creation = readGuestCredential(init.headers.authorization.slice(7));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from creation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(creation?.sessionId).toBeUndefined();
-  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #594: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading ownerId from creation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading ownerId from readGuestCredential(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(creation?.ownerId).toBe(readGuestCredential(body.credential)?.ownerId);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -95,6 +101,8 @@ test("rejects cross-origin and unauthorized model creation before calling EVE", 
   expect(arbitrarySession.status).toBe(400);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
@@ -107,6 +115,8 @@ test("failed native creation never issues a browser credential", async () => {
   expect(response.status).toBe(502);
   expect(await response.json()).not.toHaveProperty("credential");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 test("protected custom-domain bootstrap uses this deployment rather than a separate registered worker", async () => {
@@ -121,7 +131,8 @@ test("protected custom-domain bootstrap uses this deployment rather than a separ
     "deployment-bypass-test"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("non-Vercel guest bootstrap stays on the application origin without leaking bypass credentials", async () => {
   await POST(request({ modelId: "guest-model" }));
   const [[url, init]] = mocks.fetch.mock.calls;
@@ -129,7 +140,8 @@ test("non-Vercel guest bootstrap stays on the application origin without leaking
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(init.headers["x-vercel-protection-bypass"]).toBeUndefined();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("never sends a creation credential to a request-derived host") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("never sends a creation credential to a request-derived host") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -146,4 +158,5 @@ test("never sends a creation credential to a request-derived host", async () => 
   expect(response.status).toBe(503);
   expect(mocks.fetch).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, no-undefined */

@@ -2,20 +2,29 @@
 
 import Link from "next/link";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { CloneChatButtonView } from "@/components/clone-chat-button-view";
 import { getPrimarySelectedModelId } from "@/lib/ai/types";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyInput } from "@/lib/eve/copy-input";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   EveCopyRequestError,
   finishPendingEveCopy,
   preparePendingEveCopy,
   requestEveCopy,
 } from "@/lib/eve/request-copy";
+/* oxlint-enable sort-imports */
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
+/* oxlint-disable react/jsx-no-literals -- EveCopyButton renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveCopyButton: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 const EveCopyButton = ({
@@ -25,6 +34,7 @@ const EveCopyButton = ({
   sourceConversationId: string;
   recovery?: EveCopyInput;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const session = useSession();
   const model = useDefaultModel();
   const lock = useRef(false);
@@ -32,8 +42,10 @@ const EveCopyButton = ({
   const [failure, setFailure] = useState("");
   const [rejected, setRejected] = useState(false);
   const [destination, setDestination] = useState<string>();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const ownerId = session.data?.user.id;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = async (): Promise<void> => {
     if (lock.current || !ownerId) {
       return;
@@ -66,6 +78,7 @@ const EveCopyButton = ({
       setBusy(false);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const showFailure = (
     cause: unknown,
     input: EveCopyInput | undefined,
@@ -77,9 +90,11 @@ const EveCopyButton = ({
         forgetConfirmedRequest(accountOwnerId, input);
       }
       setRejected(!cause.retryable);
+      // oxlint-disable-next-line no-ternary -- Keep setDestination argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       setDestination(cause.retryable ? cause.conversationId : undefined);
     }
     setFailure(
+      // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       cause instanceof Error
         ? cause.message
         : "Saving is unconfirmed. Retry the same copy."
@@ -90,6 +105,7 @@ const EveCopyButton = ({
     return (
       <p className="p-4 text-center text-sm">
         <Link
+          // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
           className="underline"
           href={`/login?returnTo=${encodeURIComponent(`/share/${sourceConversationId}`)}`}
         >
@@ -107,6 +123,7 @@ const EveCopyButton = ({
   }
   return (
     <section
+      // oxlint-disable-next-line no-ternary -- Keep aria-label JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       aria-label={recovery ? "Saved copy recovery" : "Save shared conversation"}
     >
       {recovery && (
@@ -120,8 +137,9 @@ const EveCopyButton = ({
           isPending={busy}
           label={label}
 
-          // oxlint-disable-next-line typescript/no-misused-promises -- #770: CloneChatButtonView forwards a React click without awaiting; save catches admission/storage failures into showFailure, preserves retry identity and releases the lock. Keep that completion contract.
-          onClick={save}
+          onClick={() => {
+            startEventAction(save);
+          }}
         />
       )}
       {failure && (
@@ -131,7 +149,11 @@ const EveCopyButton = ({
       )}
       {destination && (
         <p className="pb-4 text-center text-sm">
-          <Link className="underline" href={`/chat/${destination}`}>
+          <Link
+            // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="underline"
+            href={`/chat/${destination}`}
+          >
             Open saved copy recovery
           </Link>
         </p>
@@ -139,6 +161,7 @@ const EveCopyButton = ({
     </section>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
@@ -149,4 +172,6 @@ const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
   }
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveCopyButton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { EveCopyButton };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

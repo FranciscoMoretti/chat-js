@@ -1,9 +1,15 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import ts from "typescript";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewaySelection } from "#cli/registry/gateways";
+/* oxlint-enable sort-imports */
 
 const INITIAL_REFERENCE_COUNT = 0;
 const REFERENCE_INCREMENT = 1;
@@ -34,8 +40,8 @@ const unwrap = (expression: ReadonlyNative<ts.Expression>): ts.Expression => {
 };
 
 // Read generated data without importing or executing application code.
-// oxlint-disable-next-line eslint/max-statements, typescript/prefer-readonly-parameter-types -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit. TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-const literalValue = (input: ts.Expression): unknown => {
+// oxlint-disable-next-line eslint/max-statements -- Keep validation, ownership checks and updates in their ordered operation so failure boundaries remain explicit.
+const literalValue = (input: ReadonlyNative<ts.Expression>): unknown => {
   const value = unwrap(input);
   if (ts.isStringLiteralLike(value)) {
     return value.text;
@@ -54,19 +60,20 @@ const literalValue = (input: ts.Expression): unknown => {
   }
   if (ts.isObjectLiteralExpression(value)) {
     return Object.fromEntries(
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-      value.properties.map((property) => {
-        if (
-          !ts.isPropertyAssignment(property) ||
-          !(
-            ts.isIdentifier(property.name) ||
-            ts.isStringLiteralLike(property.name)
-          )
-        ) {
-          throw new Error("Provider data must use literal properties.");
+      value.properties.map(
+        (property: ReadonlyNative<ts.ObjectLiteralElementLike>) => {
+          if (
+            !ts.isPropertyAssignment(property) ||
+            !(
+              ts.isIdentifier(property.name) ||
+              ts.isStringLiteralLike(property.name)
+            )
+          ) {
+            throw new Error("Provider data must use literal properties.");
+          }
+          return [property.name.text, literalValue(property.initializer)];
         }
-        return [property.name.text, literalValue(property.initializer)];
-      })
+      )
     );
   }
   throw new Error(
@@ -74,6 +81,7 @@ const literalValue = (input: ts.Expression): unknown => {
   );
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderLiteral's awaited sequencing and rejected-Promise behavior. */
 const readProviderLiteral = async (
   cwd: string,
   file: string,
@@ -88,10 +96,15 @@ const readProviderLiteral = async (
   );
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .flatMap((statement) => statement.declarationList.declarations)
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TypeScript/compiler and registry APIs expose mutable library types; this boundary only reads them.
-    .find((item) => item.name.getText(parsed) === name);
+    .flatMap(
+      (statement: ReadonlyNative<ts.VariableStatement>) =>
+        statement.declarationList.declarations
+    )
+    .find(
+      (item: { readonly name: Readonly<Pick<ts.Node, "getText">> }) =>
+        item.name.getText(parsed) === name
+    );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (!declaration?.initializer) {
     throw new Error(
       `Missing ${name} in ${file}. Reinstall the provider before adding dependent tools.`
@@ -99,8 +112,7 @@ const readProviderLiteral = async (
   }
   return literalValue(declaration.initializer);
 };
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 // Object properties apply in order. A later spread or computed key can override
 // a named property; only a subsequent explicit assignment makes it safe again.
@@ -121,22 +133,28 @@ const activeProperty = (
         ts.isStringLiteralLike(property.name)) &&
       property.name.text === name
     ) {
-      selected = ts.isPropertyAssignment(property) ? property : undefined;
+      selected = undefined;
+      if (ts.isPropertyAssignment(property)) {
+        selected = property;
+      }
     }
   }
   return selected;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readProviderId's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable eslint/max-statements -- File absence, provider-specific discriminator selection and literal AST validation determine one installed-provider lookup result. */
 const readProviderId = async (
   cwd: string,
   kind: "gateway" | "storage"
 ): Promise<string | undefined> => {
-  const file =
-    kind === "gateway"
-      ? "lib/ai/gateway-model-defaults.ts"
-      : "lib/storage-options.ts";
+  let file = "lib/storage-options.ts";
+  let name = "storageId";
+  if (kind === "gateway") {
+    file = "lib/ai/gateway-model-defaults.ts";
+    name = "gatewayType";
+  }
   const source = await readFile(path.join(cwd, file), "utf-8").catch(
     (error: unknown): string => {
       if (
@@ -155,7 +173,6 @@ const readProviderId = async (
     ts.ScriptTarget.Latest,
     true
   );
-  const name = kind === "gateway" ? "gatewayType" : "storageId";
   const declaration = parsed.statements
     .filter(ts.isVariableStatement)
     .flatMap(
@@ -169,6 +186,7 @@ const readProviderId = async (
   if (!source.trim()) {
     return;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declaration; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const value = declaration?.initializer && unwrap(declaration.initializer);
   if (!value || !ts.isStringLiteralLike(value)) {
     throw new Error(
@@ -178,16 +196,17 @@ const readProviderId = async (
   // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
   return value.text;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve gatewayConfigEdit's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function -- The gateway edit resolves one const/export chain against a shared declaration list and cycle/reference tracking before replacing only the verified discriminator span. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /**
  * Change the discriminator; preserve editable model/parameter selections.
- * @param cwd Project directory containing chat.config.ts.
- * @param selection Gateway whose ID replaces the active discriminator.
- * @returns Updated configuration source without writing the file.
+ * @param {string} cwd Project directory containing chat.config.ts.
+ * @param {ReadonlyNative<GatewaySelection>} selection Gateway whose ID replaces the active discriminator.
+ * @returns {Promise<string>} Updated configuration source without writing the file.
  */
 const gatewayConfigEdit = async (
   cwd: string,
@@ -223,8 +242,7 @@ const gatewayConfigEdit = async (
       return value;
     }
     if (seen.has(value.text)) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
     seen.add(value.text);
     // A binding used elsewhere may have its object mutated before configuration.
@@ -238,40 +256,51 @@ const gatewayConfigEdit = async (
     };
     visit(parsed);
     if (references !== SINGLE_BINDING_REFERENCE_COUNT) {
-      // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-      return;
+      return undefined;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initializer from declarations.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const initializer = declarations.find(
       (declaration: ReadonlyNative<ts.VariableDeclaration>): boolean =>
         declaration.name.getText(parsed) === value.text
     )?.initializer;
-    return initializer === undefined ? undefined : resolve(initializer);
+    if (initializer === undefined) {
+      return undefined;
+    }
+    return resolve(initializer);
   };
-  const expression =
-    exported === undefined ? undefined : resolve(exported.expression);
-  const configArgument =
+  let expression: ts.Expression | undefined = undefined;
+  if (exported !== undefined) {
+    expression = resolve(exported.expression);
+  }
+  let configArgument: ts.Expression | undefined = undefined;
+  if (
     expression !== undefined &&
     ts.isCallExpression(expression) &&
     ts.isIdentifier(expression.expression) &&
     expression.expression.text === "defineConfig"
-      ? expression.arguments[CONFIG_ARGUMENT_INDEX]
-      : undefined;
-  const resolvedConfigArgument =
-    configArgument === undefined ? undefined : resolve(configArgument);
-  const config =
-    expression !== undefined && ts.isCallExpression(expression)
-      ? resolvedConfigArgument
-      : expression;
-  const aiProperty =
-    config !== undefined && ts.isObjectLiteralExpression(config)
-      ? activeProperty(config, "ai")
-      : undefined;
-  const ai =
-    aiProperty === undefined ? undefined : unwrap(aiProperty.initializer);
-  const gateway =
-    ai !== undefined && ts.isObjectLiteralExpression(ai)
-      ? activeProperty(ai, "gateway")
-      : undefined;
+  ) {
+    configArgument = expression.arguments[CONFIG_ARGUMENT_INDEX];
+  }
+  let resolvedConfigArgument: ts.Expression | undefined = undefined;
+  if (configArgument !== undefined) {
+    resolvedConfigArgument = resolve(configArgument);
+  }
+  let config = expression;
+  if (expression !== undefined && ts.isCallExpression(expression)) {
+    config = resolvedConfigArgument;
+  }
+  let aiProperty: ts.PropertyAssignment | undefined = undefined;
+  if (config !== undefined && ts.isObjectLiteralExpression(config)) {
+    aiProperty = activeProperty(config, "ai");
+  }
+  let ai: ts.Expression | undefined = undefined;
+  if (aiProperty !== undefined) {
+    ai = unwrap(aiProperty.initializer);
+  }
+  let gateway: ts.PropertyAssignment | undefined = undefined;
+  if (ai !== undefined && ts.isObjectLiteralExpression(ai)) {
+    gateway = activeProperty(ai, "gateway");
+  }
   if (gateway === undefined) {
     throw new Error(
       "chat.config.ts must have a literal ai.gateway without later spreads or computed keys that could override it to replace the gateway automatically. Integrate the new gateway configuration manually."
@@ -283,7 +312,9 @@ const gatewayConfigEdit = async (
     source.slice(gateway.initializer.end)
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (gatewayConfigEdit, readProviderId, readProviderLiteral); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/max-statements */
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function */
 export { gatewayConfigEdit, readProviderId, readProviderLiteral };
+/* oxlint-enable import/no-named-export */

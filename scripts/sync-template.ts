@@ -1,22 +1,31 @@
 #!/usr/bin/env bun
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/scaffold-content import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
-  normalizeScaffoldContent,
 } from "../packages/cli/src/helpers/scaffold-content";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/vendor-patched-package import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectSnapshot } from "./sync-template-snapshot";
+/* oxlint-enable sort-imports */
 
 const join = (...segments: readonly string[]): string => path.join(...segments);
 const relative = (from: string, to: string): string => path.relative(from, to);
@@ -66,6 +75,7 @@ const TEMPLATE_STRIPPED_IMPORTS = [
   'import { GitHubLink } from "@/components/github-link";',
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyTemplateTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- applyTemplateTransforms: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/max-lines-per-function -- applyTemplateTransforms: The operation keeps its validation, ordered side effects and cleanup in one scope. */
 /* oxlint-disable unicorn/no-null -- applyTemplateTransforms: The SDK/wire/OS contract uses null as an explicit absence value. */
@@ -132,6 +142,8 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
     `${JSON.stringify(packageJson, null, MANIFEST_INDENT_SPACES)}\n`
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyElectronTemplateTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -161,7 +173,8 @@ const applyElectronTemplateTransforms = async (
   );
   await writeFile(packageJsonPath, packageJson);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyElectronTemplate's awaited sequencing and rejected-Promise behavior. */
 const copyElectronTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(electronSourceDir, destination, {
@@ -171,7 +184,8 @@ const copyElectronTemplate = async (destination: string): Promise<void> => {
   });
   await applyElectronTemplateTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyTemplate's awaited sequencing and rejected-Promise behavior. */
 const copyTemplate = async (destination: string): Promise<void> => {
   await rm(destination, { force: true, recursive: true });
   await cp(sourceDir, destination, {
@@ -180,7 +194,8 @@ const copyTemplate = async (destination: string): Promise<void> => {
   });
   await applyTemplateTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertSynced's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- assertSynced: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable unicorn/no-null -- assertSynced: The SDK/wire/OS contract uses null as an explicit absence value. */
 /* oxlint-disable eslint/no-console -- assertSynced: This command or desktop boundary reports startup, progress and failures to its operator. */
@@ -190,6 +205,7 @@ const assertSynced = async (
   copyFn: (dest: string) => Promise<void>
 ): Promise<boolean> => {
   const templateStats = await stat(actualDir).catch(() => null);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading isDirectory from templateStats; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (templateStats?.isDirectory() !== true) {
     console.error(
       `${label}: template folder missing. Run \`bun template:sync\`.`
@@ -230,12 +246,14 @@ const assertSynced = async (
   console.log(`${label}: template is synced.`);
   return true;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/no-console -- sync-template.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 if (isCheck) {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits both template comparisons before setting its check exit status.
   const results = await Promise.all([
     assertSynced("chat-app", templateDir, copyTemplate),
     assertSynced("electron", electronTemplateDir, copyElectronTemplate),
@@ -244,8 +262,10 @@ if (isCheck) {
     process.exit(FAILURE_EXIT_STATUS);
   }
 } else {
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command completes chat template copying before reporting synchronization.
   await copyTemplate(templateDir);
   console.log("Synced templates/chat-app from apps/chat.");
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command completes Electron template copying before reporting synchronization.
   await copyElectronTemplate(electronTemplateDir);
   console.log("Synced templates/electron from apps/electron.");
 }

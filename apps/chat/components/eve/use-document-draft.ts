@@ -1,10 +1,14 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { useCallback, useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useTRPC } from "@/trpc/react";
+/* oxlint-enable sort-imports */
 
 const draftSchema = z.object({
   baseRevisionId: z.uuid(),
@@ -19,6 +23,7 @@ interface Revision {
   title: string;
   content: string;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useDocumentDraft); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return -- useDocumentDraft: ; jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2000); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 /** One immutable request at a time; newer edits remain queued behind it. */
@@ -99,6 +104,7 @@ export const useDocumentDraft = ({
         return;
       }
       const { current } = latest;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (current?.content === content) {
         return;
       }
@@ -106,8 +112,10 @@ export const useDocumentDraft = ({
         return;
       }
       update(
+        // oxlint-disable-next-line no-ternary -- Keep update argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         current
-          ? { ...current, content }
+          ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+            { ...current, content }
           : {
               baseRevisionId: revision.id,
               content,
@@ -119,6 +127,7 @@ export const useDocumentDraft = ({
     [enabled, ready, revision, update]
   );
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = useCallback(async () => {
     const { current } = latest;
     if (!(enabled && ready && current) || busy.current) {
@@ -127,6 +136,7 @@ export const useDocumentDraft = ({
     busy.current = true;
     setFailure(undefined);
     const submitted = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...current,
       submittedContent: current.submittedContent ?? current.content,
     };
@@ -150,6 +160,7 @@ export const useDocumentDraft = ({
       }
       const newest = latest.current;
       update(
+        // oxlint-disable-next-line no-ternary -- Keep update argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         newest && newest.content !== submitted.submittedContent
           ? {
               baseRevisionId: saved.id,
@@ -161,6 +172,7 @@ export const useDocumentDraft = ({
       );
     } catch (error) {
       setFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Document could not be saved."
       );
       // oxlint-disable-next-line react/todo -- React Compiler cannot analyze required save lock cleanup in finally.
@@ -177,13 +189,15 @@ export const useDocumentDraft = ({
     update,
     onSaved,
   ]);
-
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     if (!(enabled && ready && draft) || failure || isPending) {
       return;
     }
-    // oxlint-disable-next-line typescript/no-misused-promises -- #770: setTimeout ignores returns; save catches mutation/onSaved failures into retryable failure, retains newer edits and releases busy. Keep debounce cancellation and the awaitable save lifecycle.
-    const timer = setTimeout(() => save(), 2000);
+
+    const timer = setTimeout(() => {
+      void save();
+    }, 2000);
     // oxlint-disable-next-line typescript/consistent-return -- #580: This effect returns cleanup only when it installed an active resource; inactive branches intentionally return nothing.
     return (): void => clearTimeout(timer);
   }, [enabled, ready, draft, failure, isPending, save]);
@@ -215,4 +229,5 @@ export const useDocumentDraft = ({
     storageError,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return */

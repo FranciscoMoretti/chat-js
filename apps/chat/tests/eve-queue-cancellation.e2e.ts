@@ -7,8 +7,12 @@
 import { createServer } from "node:http";
 
 import { createWorld } from "@workflow/world-postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Pool } from "pg";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { env } from "../lib/env";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
@@ -17,6 +21,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("Queue cancellation acceptance requires local Postgres.");
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * max-lines-per-function (#510): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("distinct deliveries wake a pending workflow while exact duplicates remain dedup keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -29,14 +34,24 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
   const release = Promise.withResolvers<undefined>();
   const calls: string[] = [];
-  // oxlint-disable-next-line typescript/no-misused-promises -- #770: Node request listeners ignore returns; the only awaited producer is release.promise, resolved in test/finally and never rejected. Keep the first delivery open until that gate without changing queue scheduling.
-  const server = createServer(async (request, response) => {
-    const id = request.headers["x-vqs-message-id"];
-    calls.push(String(id));
-    if (calls.length === 1) {
-      await release.promise;
-    }
-    response.writeHead(200).end();
+
+  const server = createServer((request, response) => {
+    void (async (): Promise<void> => {
+      try {
+        const id = request.headers["x-vqs-message-id"];
+        calls.push(String(id));
+        if (calls.length === 1) {
+          await release.promise;
+        }
+        response.writeHead(200).end();
+      } catch (error) {
+        if (error instanceof Error) {
+          response.destroy(error);
+        } else {
+          response.destroy(new Error(String(error)));
+        }
+      }
+    })();
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -81,6 +96,7 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
   } finally {
     release.resolve(undefined);
     server.closeAllConnections();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling queue.close; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     await queue.close?.();
     await pool.query(
       "delete from graphile_worker._private_jobs where task_id in (select id from graphile_worker._private_tasks where identifier=$1)",
@@ -95,4 +111,5 @@ test("distinct deliveries wake a pending workflow while exact duplicates remain 
     vi.unstubAllEnvs();
   }
 }, 15_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */

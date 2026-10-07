@@ -2,26 +2,31 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "./client";
 import { lockEveCopyOwners } from "./eve-copy-journal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveFileReference, eveStoredFile } from "./schema";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readPublicEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readPublicEveCopyFile's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): readPublicEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): readPublicEveCopyFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep readPublicEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep readPublicEveCopyFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): readPublicEveCopyFile accepts source: { id: string; ownerId: string; sessionId: string; }; tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): readPublicEveCopyFile intentionally keeps the existing falsy-value behavior of reference; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
-/** Read only active files retained by this exact public source; supplied URLs are not authority. */
+/** Read only active files retained by this exact public source; supplied URLs are not authority.
+ * @param {{ readonly id: string; readonly ownerId: string; readonly sessionId: string }} source Exact public source identity whose owner is locked while its file reference is checked.
+ * @param {string} key Stored file identity that must remain active and referenced by this bound public source.
+ * @param {(key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>} read Storage reader invoked only after the ownership/reference checks succeed.
+ * @returns {Promise<Blob>} A fresh Blob containing the authorized stored bytes and MIME type; rejects when the source reference is unavailable or reading fails.
+ */
 export const readPublicEveCopyFile = async (
   source: {
-    id: string;
-    ownerId: string;
-    sessionId: string;
+    readonly id: string;
+    readonly ownerId: string;
+    readonly sessionId: string;
   },
   key: string,
   read: (key: string) => Promise<Pick<Blob, "type" | "arrayBuffer">>
-) =>
+): Promise<Blob> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- lockEveCopyOwners requires the complete native Drizzle transaction to retain transaction-bound lock provenance; mapped readonly views erase protected schema/nestedIndex, while shallow readonly leaves mutable session/table metadata.
   await db.transaction(async (tx) => {
     await lockEveCopyOwners(tx, [source.ownerId]);
     const [reference] = await tx
@@ -59,4 +64,6 @@ export const readPublicEveCopyFile = async (
     const file = await read(reference.key);
     return new Blob([await file.arrayBuffer()], { type: file.type });
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/strict-boolean-expressions */

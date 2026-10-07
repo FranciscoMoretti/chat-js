@@ -18,6 +18,7 @@ const getPlanTypesLabel = ({
   }
   return "free";
 };
+/* oxlint-disable react/jsx-no-literals -- PricingSection renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): PricingSection keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -66,17 +67,19 @@ const PricingSection = ({
       </p>
       <ul>
         {hasFree && (
-          <li>
+          <li /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from config.pricing.free; read free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading summary from config.pricing.free; read free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          >
             <strong>{config.pricing?.free?.name}:</strong>{" "}
             {config.pricing?.free?.summary}
-          </li>
+          </li /* oxlint-enable oxc/no-optional-chaining */>
         )}
         {hasPro && (
-          <li>
+          <li /* oxlint-disable oxc/no-optional-chaining -- Keep this JSX structure; narrower inline directives make pinned Oxfmt add or restructure JSX text/expression nodes. Keep the existing nullish guard when reading name from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading monthlyPrice from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading summary from config.pricing.pro; read pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          >
             <strong>{config.pricing?.pro?.name}:</strong> {currencySymbol}
             {config.pricing?.pro?.monthlyPrice}/month —{" "}
             {config.pricing?.pro?.summary}
-          </li>
+          </li /* oxlint-enable oxc/no-optional-chaining */>
         )}
       </ul>
       {paymentProcessors.length > 0 && (
@@ -99,6 +102,8 @@ const PricingSection = ({
     </>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- TermsPage renders authored authored legal prose, headings and configured service labels; no translation-layer contract is defined here. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- * max-lines-per-function (#510): TermsPage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -114,13 +119,18 @@ const TermsPage = (): React.JSX.Element => {
     USD: "$",
   };
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading currency from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const currencyCode = config.pricing?.currency;
+  // oxlint-disable-next-line no-ternary -- Keep currencySymbol as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const currencySymbol = currencyCode
     ? (currencySymbolMap[currencyCode] ?? currencyCode)
     : "";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading free from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasFree = Boolean(config.pricing?.free);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pro from config.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const hasPro = Boolean(config.pricing?.pro);
   const hasAnyPlan = hasFree || hasPro;
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading paymentProcessors from config.services; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep paymentProcessors as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const paymentProcessors = Array.isArray(config.services?.paymentProcessors)
     ? config.services.paymentProcessors
     : [];
@@ -129,11 +139,14 @@ const TermsPage = (): React.JSX.Element => {
   return (
     <main className="prose dark:prose-invert container mx-auto max-w-3xl py-10">
       <h1>{config.policies.terms.title}</h1>
-      {config.policies.terms.lastUpdated ? (
-        <p>
-          <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
-        </p>
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        config.policies.terms.lastUpdated ? (
+          <p>
+            <strong>Last updated:</strong> {config.policies.terms.lastUpdated}
+          </p>
+        ) : null
+      }
 
       <p>
         Welcome to {config.appName}. These Terms of Service govern your use of
@@ -198,12 +211,15 @@ const TermsPage = (): React.JSX.Element => {
       <ul>
         <li>Hosting: {config.services.hosting}</li>
         <li>AI providers: {config.services.aiProviders.join(", ")}</li>
-        {config.services.paymentProcessors.length > 0 ? (
-          <li>
-            Payments: {config.services.paymentProcessors.join(", ")} for billing
-            and subscription management
-          </li>
-        ) : null}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          config.services.paymentProcessors.length > 0 ? (
+            <li>
+              Payments: {config.services.paymentProcessors.join(", ")} for
+              billing and subscription management
+            </li>
+          ) : null
+        }
       </ul>
       <p>
         These third-party services have their own terms and privacy policies and
@@ -278,6 +294,7 @@ const TermsPage = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-array-as-prop, react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/no-default-export -- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract. */

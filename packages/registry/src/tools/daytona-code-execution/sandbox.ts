@@ -1,11 +1,14 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Daytona request types and AbortSignal are SDK-owned mutable contracts; these adapters forward them without changing their public assignability. */
 /* oxlint-disable-next-line import/no-nodejs-modules -- Server-side credential scope hashing must use Node crypto and never expose the API key. */
 import { createHash } from "node:crypto";
 
-import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CreateSandboxFromSnapshotParams, Sandbox } from "@daytona/sdk";
+/* oxlint-enable sort-imports */
+import { Daytona, DaytonaNotFoundError } from "@daytona/sdk";
 
 import type { CodeSandboxCleanupSession } from "@/lib/ai/installed-tool-capabilities";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-disable-next-line sort-imports -- Oxfmt orders canonical imports by module path while sort-imports orders these type imports by local binding. */
 import type { ExecutionSandbox } from "@/tools/chatjs/_shared/code-execution/types";
 
 const API_URL = "https://app.daytona.io/api";
@@ -23,6 +26,7 @@ interface DaytonaResource {
 }
 interface DaytonaClient {
   readonly create: (
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep the exact native Daytona create request; ReadonlyNativeSurface makes nested volumes readonly and rejects the real Daytona client’s VolumeMount[] parameter (app TypeScript TS2345).
     params: CreateSandboxFromSnapshotParams,
     options?: Readonly<{ timeout?: number }>
   ) => Promise<DaytonaResource>;
@@ -40,9 +44,10 @@ type Credentials = Readonly<{ apiKey: string; organizationId: string }>;
 const shellArgument = (value: string): string =>
   `'${value.replaceAll("'", String.raw`'\''`)}'`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitForCommand's awaited sequencing and rejected-Promise behavior. */
 const waitForCommand = async <Result>(
-  operation: Promise<Result>,
-  signal: AbortSignal
+  operation: Readonly<Promise<Result>>,
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): Promise<Result> => {
   const cancelled = Promise.withResolvers<never>();
   const stop = (): void => {
@@ -58,12 +63,16 @@ const waitForCommand = async <Result>(
     signal.removeEventListener("abort", stop);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 const commandSandbox = (
   resource: DaytonaResource,
-  signal: AbortSignal
+  signal: ReadonlyNativeSurface<AbortSignal>
 ): ExecutionSandbox => ({
-  async runCommand({ cmd, args }) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runCommand's awaited sequencing and rejected-Promise behavior. */
+  async runCommand({
+    cmd,
+    args,
+  }: Readonly<{ cmd: string; args: readonly string[] }>) {
     signal.throwIfAborted();
     const result = await waitForCommand(
       resource.process.executeCommand(
@@ -82,6 +91,7 @@ const commandSandbox = (
       stdout: async () => await Promise.resolve(result.result),
     };
   },
+  /* oxlint-enable oxc/no-async-await */
 });
 
 const assertIdentity = (
@@ -96,6 +106,7 @@ const assertIdentity = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findResource's awaited sequencing and rejected-Promise behavior. */
 const findResource = async (
   client: DaytonaClient,
   identity: Readonly<{ name: string; organizationId: string }>
@@ -112,11 +123,12 @@ const findResource = async (
     throw error;
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 const cleanupSession = (
   client: DaytonaClient,
   credentials: Credentials
 ): CodeSandboxCleanupSession => ({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteAndConfirmAbsent's awaited sequencing and rejected-Promise behavior. */
   async deleteAndConfirmAbsent(name) {
     const identity = { name, organizationId: credentials.organizationId };
     const resource = await findResource(client, identity);
@@ -129,6 +141,7 @@ const cleanupSession = (
       throw new Error("Daytona sandbox remains available after deletion.");
     }
   },
+  /* oxlint-enable oxc/no-async-await */
   provider: {
     // API-key auth ignores organizationId in the SDK. Pin the credential scope
     // so replacing it cannot turn a foreign 404 into proof of prior deletion.
@@ -160,6 +173,7 @@ const createDaytonaProvider = (
     });
   return {
     cleanup: cleanupSession(selectedClient, credentials),
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
     async create(name, language): Promise<DaytonaResource> {
       const resource = await selectedClient.create(
         {
@@ -176,8 +190,13 @@ const createDaytonaProvider = (
       assertIdentity(resource, name, credentials.organizationId);
       return resource;
     },
+    /* oxlint-enable oxc/no-async-await */
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (commandSandbox, createDaytonaProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { commandSandbox, createDaytonaProvider };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (DaytonaProvider, DaytonaResource); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { DaytonaProvider, DaytonaResource };
+/* oxlint-enable import/no-named-export */

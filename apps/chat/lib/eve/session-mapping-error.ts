@@ -8,6 +8,7 @@ type EveSessionMappingErrorCode =
   | "receipt_pending"
   | "receipt_unavailable";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveSessionMappingError); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export class EveSessionMappingError extends Error {
   public readonly code: EveSessionMappingErrorCode;
 
@@ -17,3 +18,4 @@ export class EveSessionMappingError extends Error {
     this.code = code;
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1,12 +1,23 @@
 import { retryEveAdmission } from "./admission-retry";
 
-/* oxlint-disable jsdoc/require-param, max-params, max-statements, no-magic-numbers --
- * jsdoc/require-param (#534): sendCommand's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-params (#511): sendCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+const RECONCILIATION_TIMEOUT_MS = 15_000;
+const RECONCILIATION_RETRY_DELAY_MS = 250;
+
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (sendCommand); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendCommand's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-params, max-statements --
+ * max-params (#511): sendCommand exposes five existing arguments for send/resume callbacks, cancellation state, error lookup and optional acceptance lookup; keep existing caller argument order and default acceptance behavior.
  * max-statements (#512): sendCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): sendCommand uses 15_000, 250 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
-/** Eve may report errors through onError even when the command promise resolves. */
+/**
+ * Send with admission retries, then reconnect past a preceding cancellation when needed.
+ * Eve may report errors through onError even when the command promise resolves.
+ * @param {() => Promise<void>} send - Submit the command; admission retries may invoke it again.
+ * @param {() => Promise<void>} resume - Reopen the reader after a preceding cancellation boundary.
+ * @param {boolean} afterCancellation - Whether the command needs cancellation-boundary reconciliation.
+ * @param {() => Error | undefined} getError - Read the latest error reported by the command or resumed reader.
+ * @param {() => boolean} hasAcceptedInput - Check whether reconciliation has accepted the submitted input.
+ */
 export const sendCommand = async (
   send: () => Promise<void>,
   resume: () => Promise<void>,
@@ -23,9 +34,9 @@ export const sendCommand = async (
   });
   // Eve 0.52.2 can end a send reader at the preceding cancellation boundary.
   if (afterCancellation) {
-    const deadline = Date.now() + 15_000;
+    const deadline = Date.now() + RECONCILIATION_TIMEOUT_MS;
     do {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Retry only after the preceding attempt and delay have completed.
+      // oxlint-disable-next-line eslint/no-await-in-loop -- Resume after the preceding reader finishes; inspect reconciliation/error state before starting another reader.
       await resume();
       if (getError() || hasAcceptedInput()) {
         break;
@@ -35,9 +46,9 @@ export const sendCommand = async (
           "The accepted message is still being reconciled. Reconnect before retrying."
         );
       }
-      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Retry only after the preceding attempt and delay have completed.
+      // oxlint-disable-next-line eslint/no-await-in-loop, promise/avoid-new -- Yield 250 ms after an unaccepted resume before checking input and opening another reader.
       await new Promise<void>((resolve) => {
-        setTimeout(resolve, 250);
+        setTimeout(resolve, RECONCILIATION_RETRY_DELAY_MS);
       });
     } while (!hasAcceptedInput());
   }
@@ -46,4 +57,6 @@ export const sendCommand = async (
     throw replayError;
   }
 };
-/* oxlint-enable jsdoc/require-param, max-params, max-statements, no-magic-numbers */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-params, max-statements */

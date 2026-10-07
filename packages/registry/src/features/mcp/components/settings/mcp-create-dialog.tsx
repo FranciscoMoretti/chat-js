@@ -1,20 +1,31 @@
+/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+/* oxlint-enable sort-imports */
 import { ChevronDown } from "lucide-react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
 import { useForm } from "react-hook-form";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import {
   Dialog,
@@ -34,6 +45,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Select,
   SelectContent,
@@ -41,8 +53,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+/* oxlint-enable sort-imports */
 import { Spinner } from "@/components/ui/spinner";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
+/* oxlint-enable sort-imports */
 import { config } from "@/lib/config";
 import { useTRPC } from "@/trpc/react";
 
@@ -67,10 +82,10 @@ const mcpConnectorFormSchema = z.object({
 /* oxlint-enable eslint/no-magic-numbers */
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpCreateDialog); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- McpCreateDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
@@ -80,13 +95,15 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
+// oxlint-disable-next-line max-statements -- Connector form setup and its Action failure owner share this component lifecycle.
 export const McpCreateDialog = ({
   open,
   onClose,
 }: {
-  open: boolean;
-  onClose: () => void;
-}) => {
+  readonly open: boolean;
+  readonly onClose: () => void;
+}): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
@@ -135,11 +152,14 @@ export const McpCreateDialog = ({
 
   const handleSubmit = (values: McpConnectorFormValues): void => {
     const trimmed: McpConnectorFormValues = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing values own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...values,
       name: values.name.trim(),
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from values.oauthClientId; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep oauthClientId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthClientId: values.oauthClientId?.trim()
         ? values.oauthClientId
         : undefined,
+      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading trim from values.oauthClientSecret; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.; no-ternary: Keep oauthClientSecret as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthClientSecret: values.oauthClientSecret?.trim()
         ? values.oauthClientSecret
         : undefined,
@@ -172,11 +192,18 @@ export const McpCreateDialog = ({
       }}
       open={open}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        // oxlint-disable-next-line react/forbid-component-props -- DialogContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="sm:max-w-md"
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle
+            // oxlint-disable-next-line react/forbid-component-props -- DialogTitle accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="flex items-center gap-2"
+          >
             Add custom connector
             <Badge
+              // oxlint-disable-next-line react/forbid-component-props -- Badge accepts className in its styling contract; preserve this caller's layout and appearance.
               className="rounded-sm px-1 py-0 text-[10px] uppercase"
               variant="secondary"
             >
@@ -192,17 +219,20 @@ export const McpCreateDialog = ({
         <Form {...form}>
           <form
             className="space-y-4"
-            // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores submit returns; this handler awaits RHF validation/submission and reports rethrown errors while retaining input. prefer-await-to-then rejects a catch-only adapter; mutation failure stays with its onError.
-            onSubmit={async (event): Promise<void> => {
-              try {
-                await form.handleSubmit(handleSubmit)(event);
-              } catch (error) {
-                toast.error(
-                  error instanceof Error
-                    ? error.message
-                    : "Failed to add connector"
-                );
-              }
+
+            onSubmit={(event) => {
+              startEventAction(async () => {
+                try {
+                  await form.handleSubmit(handleSubmit)(event);
+                } catch (error) {
+                  toast.error(
+                    // oxlint-disable-next-line no-ternary -- Preserve lazy error-message fallback; if/else value assignment conflicts with pinned unicorn/prefer-ternary.
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to add connector"
+                  );
+                }
+              });
             }}
           >
             <FormField
@@ -244,18 +274,23 @@ export const McpCreateDialog = ({
             <Collapsible onOpenChange={setAdvancedOpen} open={advancedOpen}>
               <CollapsibleTrigger asChild>
                 <Button
+                  // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="text-muted-foreground hover:text-foreground h-auto p-0 hover:bg-transparent"
                   size="sm"
                   type="button"
                   variant="ghost"
                 >
                   <ChevronDown
+                    // oxlint-disable-next-line react/forbid-component-props, no-ternary -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     className={`mr-1.5 size-4 transition-transform ${advancedOpen ? "" : "-rotate-90"}`}
                   />
                   Advanced settings
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-2">
+              <CollapsibleContent
+                // oxlint-disable-next-line react/forbid-component-props -- CollapsibleContent accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="space-y-4 pt-2"
+              >
                 <FormField
                   control={form.control}
                   name="type"
@@ -344,6 +379,8 @@ export const McpCreateDialog = ({
     </Dialog>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -353,8 +390,8 @@ export const McpCreateDialog = ({
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+
+/* oxlint-enable oxc/no-async-await */

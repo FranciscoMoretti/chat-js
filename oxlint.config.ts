@@ -1,9 +1,13 @@
 import { defineConfig } from "oxlint";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import core from "ultracite/oxlint/core";
+/* oxlint-enable sort-imports */
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auditedRestrictionRules } from "./apps/chat/oxlint-policy.ts";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-default-export -- Oxlint loads its configuration through this required default export.
 export default defineConfig({
@@ -17,28 +21,6 @@ export default defineConfig({
   ],
   options: { typeAware: true },
   overrides: [
-    // #529: CLI, build scripts and Electron main run with Node/Bun capabilities.
-    // Preload, renderer code and generated app payloads keep the browser restriction.
-    {
-      files: [
-        "packages/cli/src/**",
-        "packages/cli/test/**",
-        "packages/cli/scripts/**",
-        "scripts/**",
-        "apps/electron/src/main.ts",
-        "apps/electron/scripts/**",
-        "apps/electron/forge.config.ts",
-      ],
-      rules: { "import/no-nodejs-modules": "off" },
-    },
-    // Typed primitive wrappers forward the supported events, refs and accessibility props.
-    {
-      files: [
-        "apps/chat/components/ui/**",
-        "apps/chat/components/ai-elements/**",
-      ],
-      rules: { "react/jsx-props-no-spreading": "off" },
-    },
     // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
     // This zero-offset rule does not honor source disable directives.
     {
@@ -57,6 +39,7 @@ export default defineConfig({
     },
   ],
   rules: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auditedRestrictionRules own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...auditedRestrictionRules,
     "capitalized-comments": [
       "error",

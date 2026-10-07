@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "chatjs-monorepo",
@@ -15,6 +16,7 @@
         "oxlint": "1.82.0",
         "oxlint-tsgolint": "7.0.2001",
         "playwright": "^1.59.1",
+        "postgres": "3.4.9",
         "turbo": "2.10.12",
         "typescript": "6.0.2",
         "uiverify": "^1.4.2",
@@ -107,7 +109,6 @@
         "fast-deep-equal": "^3.1.3",
         "files-sdk": "2.5.0",
         "guarded-fetch": "^0.1.4",
-        "js-tiktoken": "^1.0.19",
         "langfuse": "^3.37.0",
         "langfuse-vercel": "^3.37.0",
         "lexical": "^0.32.1",
@@ -370,6 +371,7 @@
         "superjson": "^2.2.2",
         "typescript": "6.0.2",
         "ultracite": "7.11.1",
+        "vite": "8.1.4",
         "zod": "^4.3.6",
       },
     },

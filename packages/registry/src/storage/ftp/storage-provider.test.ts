@@ -4,6 +4,7 @@ import { Client } from "basic-ftp";
 
 import { createStorageAdapter } from "./storage-provider";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connectStorage's awaited sequencing and rejected-Promise behavior. */
 const connectStorage = async (
   secure: "implicit" | undefined
 ): Promise<Client> => {
@@ -14,7 +15,7 @@ const connectStorage = async (
   const client = await raw.connect();
   return client;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable node/no-process-env -- This environment fixture clears FTP_SECURE and returns ownership of restoring its exact previous presence/value. */
 const isolateSecureEnvironment = (): (() => void) => {
   const previous = process.env.FTP_SECURE;
@@ -35,6 +36,7 @@ const variants: { readonly label: string; readonly secure?: "implicit" }[] = [
   { label: "implicit TLS", secure: "implicit" },
 ];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(variants)'s awaited sequencing and rejected-Promise behavior. */
 it.each(variants)("uses $label for FTP connections", async ({ secure }) => {
   const access = spyOn(Client.prototype, "access").mockResolvedValue({
     code: 220,
@@ -52,3 +54,4 @@ it.each(variants)("uses $label for FTP connections", async ({ secure }) => {
     restoreEnvironment();
   }
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import type { ComponentType } from "react";
+import React from "react";
 import { z } from "zod";
 
 type ValidatedToolRenderer = ComponentType<{
@@ -48,11 +48,14 @@ const envelope = z.object({
   toolCallId: z.string(),
   updates: z.array(z.unknown()).optional(),
 });
+/* oxlint-disable react/jsx-no-literals -- InvalidResult renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/only-export-components -- * react/only-export-components (#553): InvalidResult is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const InvalidResult = (): React.JSX.Element => (
   <p role="alert">This tool result could not be displayed.</p>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (defineToolRenderer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-disable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- import/group-exports: #619: Keep defineToolRenderer directly exported: grouping the factory in Oxlint 1.82 classifies its local ValidatedToolBody and ValidatedToolRenderer as unexported Fast Refresh components despite identical runtime and public types.
@@ -88,6 +91,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     isReadonly: boolean;
   }>;
 }) => {
+  /* oxlint-disable react/jsx-no-literals -- ValidatedToolBody renders tool validation errors and pending-result labels; these are authored interface copy. */
   const ValidatedToolBody = ({
     tool,
     messageId,
@@ -117,12 +121,15 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       return <p>Waiting for the tool.</p>;
     }
     if (value.state === "input-streaming") {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from streamingInputSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const input = streamingInputSchema?.safeParse(value.input);
       return (
         <Renderer
           {...common}
           tool={{
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...identity,
+            // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading success from input; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep input as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             input: input?.success ? input.data : undefined,
             state: value.state,
           }}
@@ -137,7 +144,11 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       return (
         <Renderer
           {...common}
-          tool={{ ...identity, input: input.data, state: value.state }}
+          tool={
+            /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+            { ...identity, input: input.data, state: value.state }
+            /* oxlint-enable oxc/no-rest-spread-properties */
+          }
         />
       );
     }
@@ -149,6 +160,7 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       <Renderer
         {...common}
         tool={{
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...identity,
           input: input.data,
           output: output.data,
@@ -157,16 +169,23 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
       />
     );
   };
+  /* oxlint-enable react/jsx-no-literals */
   const ValidatedToolRenderer = (props: {
     tool: unknown;
     messageId: string;
     isReadonly: boolean;
   }): React.JSX.Element => {
     const parsed = envelope.safeParse(props.tool);
+    // oxlint-disable-next-line no-ternary -- Keep flatMap receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const updates = (parsed.success ? (parsed.data.updates ?? []) : []).flatMap(
       (update) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading safeParse from updateSchema; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const value = updateSchema?.safeParse(update);
-        return value?.success ? [value.data] : [];
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading success from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        if (value?.success) {
+          return [value.data];
+        }
+        return [];
       }
     );
     return (
@@ -180,8 +199,13 @@ export const defineToolRenderer = <TInput, TOutput, TUpdate = never>({
     validatedToolRenderer: true as const,
   });
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isValidatedToolRenderer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable import/group-exports, jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-object-as-prop, react/jsx-props-no-spreading, react/no-multi-comp, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 // oxlint-disable-next-line import/group-exports -- Keep defineToolRenderer directly exported to preserve Oxlint Fast Refresh factory classification; group the remaining value export here.
 export { isValidatedToolRenderer };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ValidatedToolRenderer, ToolRendererProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ValidatedToolRenderer, ToolRendererProps };
+/* oxlint-enable import/no-named-export */

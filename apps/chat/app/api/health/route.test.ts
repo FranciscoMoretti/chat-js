@@ -16,6 +16,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.resetAllMocks();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("requires a genuine Eve health response, not a login page") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("requires a genuine Eve health response, not a login page") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -29,6 +30,8 @@ test("requires a genuine Eve health response, not a login page", async () => {
   const resolvedResult1 = await GET();
   expect(resolvedResult1.status).toBe(503);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("reports ready only with database and Eve available") uses 200, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -50,6 +53,8 @@ test("reports ready only with database and Eve available", async () => {
   const resolvedResult3 = await GET();
   expect(resolvedResult3.status).toBe(503);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("bounds a stalled database check") uses 4500, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -75,9 +80,11 @@ test("bounds a stalled database check", async () => {
   const resolvedResult4 = await response;
   expect(resolvedResult4.status).toBe(503);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 const unavailableStatus = 503;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a failed guest worker makes the production instance unavailable", async () => {
   vi.stubGlobal(
     "fetch",
@@ -92,3 +99,4 @@ test("a failed guest worker makes the production instance unavailable", async ()
   expect(response.status).toBe(unavailableStatus);
   expect(await response.json()).toEqual({ status: "unavailable" });
 });
+/* oxlint-enable oxc/no-async-await */

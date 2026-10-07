@@ -1,9 +1,13 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { GetWeatherRenderer } from "./renderer";
+/* oxlint-enable sort-imports */
 import type { weatherResult } from "./schemas";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
@@ -50,6 +54,7 @@ test.each([
       messageId="weather-test"
       tool={{
         input: { latitude: 0, longitude: 0 },
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing weather own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing weather.current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         output: { ...weather, current: { ...weather.current, time } },
         state: "output-available",
         toolCallId: "weather-test",

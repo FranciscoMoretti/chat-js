@@ -1,23 +1,25 @@
-/* oxlint-disable import/no-nodejs-modules, import/no-relative-parent-imports --
- * import/no-nodejs-modules (#529): This server/tooling module requires import { spawnSync } from "node:child_process";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
+/* oxlint-disable import/no-nodejs-modules --
+ * import/no-nodejs-modules (#529): This executable uses node:child_process to run Bun/EVE commands and node:path to resolve the application and guest working directories.
  */
 import { spawnSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps node:child_process before node:path by module specifier, while sort-imports orders the local bindings path before spawnSync. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
+/* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-console --
- * no-console (#514): console.log emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
+ * no-console (#514): write the selected backend to CLI stdout before starting the compatibility check and EVE builds.
  */
 console.log(
+  // oxlint-disable-next-line no-ternary -- Keep backend selection in the template interpolation; direct if/else triggers pinned unicorn/prefer-ternary.
   `Workflow backend: ${resolveWorkflowWorld() === "vercel" ? "Vercel (managed)" : "PostgreSQL (local/self-hosted)"}`
 );
 /* oxlint-enable no-console */
 
 /* oxlint-disable node/no-sync --
- * node/no-sync (#538): backendCheck uses spawnSync( "bun", ["x", "tsx", "scripts/check-workflow-backend.ts"], { stdio: "inheri within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
+ * node/no-sync (#538): Wait for the compatibility subprocess to finish before checking its status and starting either EVE build; inherit its stdio in this CLI.
  */
 const backendCheck = spawnSync(
   "bun",
@@ -28,7 +30,7 @@ const backendCheck = spawnSync(
 );
 /* oxlint-enable node/no-sync */
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): if (backendCheck.status !== 0) { throw new Error( "Work uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-magic-numbers (#517): spawnSync status 0 is the Node child-process success value; treat every other status, including null after a signal, as failure.
  */
 if (backendCheck.status !== 0) {
   throw new Error(
@@ -38,8 +40,8 @@ if (backendCheck.status !== 0) {
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, node/no-sync --
- * no-magic-numbers (#517): for (const root of [".", "guest"]) { const result = spa uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * node/no-sync (#538): for (const root of [".", "guest"]) { const result = spa uses spawnSync("bun", ["x", "eve", "build"], { cwd: path.resolve(process.cwd(), root), std within its synchronous startup or SDK contract; asynchronous conversion changes its callers and lifecycle.
+ * no-magic-numbers (#517): spawnSync status 0 is the Node child-process success value; treat every other status, including null after a signal, as failure.
+ * node/no-sync (#538): Build the application and guest roots sequentially, inheriting each child's stdio and checking its status before advancing.
  */
 for (const root of [".", "guest"]) {
   const result = spawnSync("bun", ["x", "eve", "build"], {

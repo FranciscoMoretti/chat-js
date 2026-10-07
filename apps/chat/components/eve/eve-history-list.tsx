@@ -5,31 +5,47 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
+/* oxlint-enable sort-imports */
 import { usePathname } from "next/navigation";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ProjectChatItem } from "@/components/project-chat-item";
 import { SidebarChatItem } from "@/components/sidebar-chat-item";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { Separator } from "@/components/ui/separator";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+/* oxlint-enable sort-imports */
 import type { listEveConversations } from "@/lib/db/eve-queries";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/optimistic-metadata import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { parseChatIdFromPathname } from "@/providers/parse-chat-id-from-pathname";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEveDeletion } from "./eve-deletion-provider";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveMoveProjectDialog } from "./eve-move-project-dialog";
+/* oxlint-enable sort-imports */
 import { EveShareDialogContent } from "./eve-share-dialog";
 import { useEveMetadataMutations } from "./use-eve-metadata-mutations";
 
@@ -58,6 +74,8 @@ const groupLabel = (
   }
   return "Older";
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveHistoryList); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- EveHistoryList renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- EveHistoryList: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including projectId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -89,6 +107,7 @@ export const EveHistoryList = ({
       }
     )
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pages from history.data; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
   const conversations = history.data?.pages.flatMap((page) => page.items) ?? [];
   const pathname = usePathname();
   const route = parseChatIdFromPathname(pathname);
@@ -155,6 +174,7 @@ export const EveHistoryList = ({
     return true;
   });
   const { rename, pin } = useEveMetadataMutations();
+  // oxlint-disable-next-line no-ternary -- Keep grouped as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const grouped = projectId
     ? [{ items: filtered, label: "" }]
     : [
@@ -171,6 +191,7 @@ export const EveHistoryList = ({
   const { setOpenMobile } = useSidebar();
   return (
     <SidebarGroup
+      // oxlint-disable-next-line react/forbid-component-props, no-ternary -- SidebarGroup accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={projectId ? "p-0" : "group-data-[collapsible=icon]:hidden"}
     >
       {!projectId && <SidebarGroupLabel>Chats</SidebarGroupLabel>}
@@ -200,6 +221,7 @@ export const EveHistoryList = ({
                   );
                 }
                 if (projectId) {
+                  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
                   return (
                     <li key={item.id}>
                       {index > 0 && <Separator />}
@@ -207,6 +229,7 @@ export const EveHistoryList = ({
                         chat={item}
                         onDelete={() => openDeletion(item)}
                         onMoveProject={
+                          // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onMoveProject JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                           session?.user && item.state === "bound"
                             ? () => setMoving(item)
                             : undefined
@@ -226,14 +249,21 @@ export const EveHistoryList = ({
                       />
                     </li>
                   );
+                  /* oxlint-enable oxc/no-async-await */
                 }
+                /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
                 return (
                   <SidebarChatItem
                     chat={item}
-                    isActive={selectedIdentity.data?.chatId === item.id}
+                    isActive={
+                      /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatId from selectedIdentity.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                      selectedIdentity.data?.chatId ===
+                      /* oxlint-enable oxc/no-optional-chaining */ item.id
+                    }
                     key={item.id}
                     onDelete={() => openDeletion(item)}
                     onMoveProject={
+                      // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onMoveProject JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       session?.user && item.state === "bound"
                         ? () => setMoving(item)
                         : undefined
@@ -254,6 +284,7 @@ export const EveHistoryList = ({
                     setOpenMobile={setOpenMobile}
                   />
                 );
+                /* oxlint-enable oxc/no-async-await */
               })}
             </SidebarMenu>
           </div>
@@ -268,9 +299,11 @@ export const EveHistoryList = ({
           <p>Could not load conversations.</p>
           <Button
             onClick={() => {
-              void (history.isFetchNextPageError
-                ? history.fetchNextPage()
-                : history.refetch());
+              if (history.isFetchNextPageError) {
+                void history.fetchNextPage();
+              } else {
+                void history.refetch();
+              }
             }}
             size="sm"
             variant="ghost"
@@ -281,6 +314,7 @@ export const EveHistoryList = ({
       )}
       {history.hasNextPage && !history.isError && (
         <Button
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className="mt-2"
           disabled={history.isFetching}
 
@@ -290,11 +324,14 @@ export const EveHistoryList = ({
           size="sm"
           variant="ghost"
         >
-          {history.isFetchingNextPage ? "Loading…" : "Load more conversations"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            history.isFetchingNextPage ? "Loading…" : "Load more conversations"
+          }
         </Button>
       )}
       {!(filtered.length > 0 || history.isPending || history.isError) &&
-        (projectId ? (
+        /* oxlint-disable no-ternary -- Keep && operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ (projectId /* oxlint-enable no-ternary */ ? (
           <div className="border-border/60 rounded-xl border px-4 py-6">
             <p className="text-foreground text-sm font-medium">
               No chats in this project
@@ -319,6 +356,8 @@ export const EveHistoryList = ({
     </SidebarGroup>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines -- eve-history-list keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */

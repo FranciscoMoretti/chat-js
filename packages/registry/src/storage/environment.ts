@@ -1,5 +1,5 @@
-import { getProvider } from "files-sdk/providers";
 import type { EnvGroup, EnvVar, ProviderSlug } from "files-sdk/providers";
+import { getProvider } from "files-sdk/providers";
 
 /* oxlint-disable typescript/consistent-type-definitions -- Preserve this exported closed-record type's existing implicit assignability to Record<string, unknown>; an augmentable interface changes that public type contract. */
 type StorageEnvironmentVariable = {
@@ -38,13 +38,16 @@ const toVariable = (
   secret: variable.secret,
 });
 
-const credentialOptions = (
+const collectCredentialModes = (
   modes: readonly Readonly<{
     label: string;
     vars: readonly Readonly<EnvGroup["vars"][number]>[];
   }>[],
   adapterOptions: Readonly<Record<string, unknown>>
-): StorageEnvironmentVariable[][] => {
+): {
+  credentialModes: StorageEnvironmentVariable[][];
+  hasUnvalidatedCredentialMode: boolean;
+} => {
   const credentialModes: StorageEnvironmentVariable[][] = [];
   let hasUnvalidatedCredentialMode = false;
   for (const mode of modes) {
@@ -54,22 +57,39 @@ const credentialOptions = (
     if (variables.length > EMPTY_VARIABLE_COUNT) {
       credentialModes.push(variables);
     } else {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const optionName = STORAGE_OPTION_HINT.exec(mode.label)?.groups?.option;
       hasUnvalidatedCredentialMode ||=
         optionName === ABSENT_ADAPTER_OPTION ||
         adapterOptions[optionName] !== ABSENT_ADAPTER_OPTION;
     }
   }
-  return credentialModes.length > EMPTY_VARIABLE_COUNT &&
+  return { credentialModes, hasUnvalidatedCredentialMode };
+};
+
+const credentialOptions = (
+  modes: readonly Readonly<{
+    label: string;
+    vars: readonly Readonly<EnvGroup["vars"][number]>[];
+  }>[],
+  adapterOptions: Readonly<Record<string, unknown>>
+): StorageEnvironmentVariable[][] => {
+  const { credentialModes, hasUnvalidatedCredentialMode } =
+    collectCredentialModes(modes, adapterOptions);
+  if (
+    credentialModes.length > EMPTY_VARIABLE_COUNT &&
     !hasUnvalidatedCredentialMode
-    ? credentialModes
-    : [];
+  ) {
+    return credentialModes;
+  }
+  return [];
 };
 
 const requiresEnvironmentVariable = (
   variable: Readonly<EnvVar>,
   adapterOptions: Readonly<Record<string, unknown>>
 ): boolean => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading option from STORAGE_OPTION_HINT.exec(...).groups; read groups from STORAGE_OPTION_HINT.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const optionName = STORAGE_OPTION_HINT.exec(variable.description)?.groups
     ?.option;
   return (
@@ -92,10 +112,12 @@ const getStorageEnvironmentRequirements = (
     return [];
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filter from metadata.env.required; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const required = metadata.env.required?.filter((variable: Readonly<EnvVar>) =>
     requiresEnvironmentVariable(variable, adapterOptions)
   );
   const requirements: StorageEnvironmentRequirement[] =
+    // oxlint-disable-next-line no-ternary -- Keep requirements as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     required && required.length > EMPTY_VARIABLE_COUNT
       ? [
           {
@@ -119,5 +141,9 @@ const getStorageEnvironmentRequirements = (
 
   return requirements;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getStorageEnvironmentRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { getStorageEnvironmentRequirements };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (StorageEnvironmentRequirement, StorageEnvironmentVariable); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { StorageEnvironmentRequirement, StorageEnvironmentVariable };
+/* oxlint-enable import/no-named-export */

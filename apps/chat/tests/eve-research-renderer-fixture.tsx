@@ -7,8 +7,12 @@ import type { EveMessagePart } from "eve/client";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveToolResult } from "../components/eve/eve-tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ArtifactProvider } from "../hooks/use-artifact";
+/* oxlint-enable sort-imports */
 import { createToolResult } from "../lib/eve/tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -22,9 +26,12 @@ const common = {
  * no-magic-numbers (#517): parts uses 0, 0.5 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, inputText: "", state: "input-streaming" },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, state: "input-available" },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: createToolResult({ searches: [] }, 0, [
       {
@@ -37,6 +44,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     state: "output-available",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: createToolResult(
       {
@@ -48,6 +56,7 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     state: "output-available",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: createToolResult(
       {
@@ -65,20 +74,24 @@ const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     state: "output-available",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     errorText: "Research provider unavailable",
     state: "output-error",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     approval: { approved: false, id: "fixture" },
     state: "output-denied",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...common,
     output: createToolResult({ error: "Report could not be saved." }, 0.5),
     state: "output-available",
   },
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   { ...common, output: { invalid: true }, state: "output-available" },
 ];
 /* oxlint-enable no-magic-numbers */

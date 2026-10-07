@@ -1,6 +1,8 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AbstractThread } from "./abstract-thread";
+/* oxlint-enable sort-imports */
 
 const DISABLED_THROTTLE_WAIT_MS = 0;
 
@@ -75,4 +77,6 @@ class SnapshotStore<TMessage extends UIMessage> {
   };
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SnapshotStore); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { SnapshotStore };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

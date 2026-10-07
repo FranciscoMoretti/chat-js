@@ -1,22 +1,32 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Toaster, toast } from "sonner";
+/* oxlint-enable sort-imports */
 import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ConnectorsSettings } from "@/components/settings/connectors-settings";
+/* oxlint-enable sort-imports */
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { McpCreateDialog } from "@/components/settings/mcp-create-dialog";
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
 /* oxlint-disable import/max-dependencies -- @/components/settings/settings-page import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type -- mocks: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -55,6 +65,7 @@ const mocks = vi.hoisted(() => {
     sharedConnector: false,
   };
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 afterEach(async () => {
@@ -68,7 +79,7 @@ afterEach(async () => {
   vi.clearAllMocks();
   mocks.search = new URLSearchParams();
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable unicorn/no-null -- connector: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 const connector = {
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -125,11 +136,14 @@ vi.mock("@tanstack/react-query", () => ({
       },
       list: [
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...connector,
           requireApproval: mocks.approvalRequired,
+          // oxlint-disable-next-line no-ternary -- Keep userId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           userId: mocks.sharedConnector ? null : connector.userId,
         },
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...connector,
           id: "global",
           name: "Shared reference server",
@@ -150,6 +164,7 @@ vi.mock("@tanstack/react-query", () => ({
     }
     return {
       data:
+        // oxlint-disable-next-line no-ternary -- Keep data as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         queryKey[0] === "list" && mocks.listError && !mocks.cachedData
           ? undefined
           : responses[queryKey[0]],
@@ -160,6 +175,7 @@ vi.mock("@tanstack/react-query", () => ({
   },
   useQueryClient: () => mocks.queryClient,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve renderPage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable max-statements, typescript/strict-void-return -- renderPage: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
@@ -193,6 +209,7 @@ const renderPage = async (
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
   await act(() =>
     root.render(
+      /* oxlint-disable no-ternary -- Keep details/list settings headings and description as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
       <SettingsPage>
         <SettingsPageHeader>
           <h2 className="text-lg font-semibold">
@@ -207,6 +224,7 @@ const renderPage = async (
         <Toaster position="top-center" theme="dark" />
         {content}
       </SettingsPage>
+      /* oxlint-enable no-ternary */
     )
   );
   return async (): Promise<void> => {
@@ -215,6 +233,8 @@ const renderPage = async (
     container.remove();
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/strict-void-return */
 
 test("connector list shows custom and shared connectors with their management links", async () => {
@@ -243,7 +263,8 @@ test("connector list shows custom and shared connectors with their management li
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("connector details show discovery, owner controls and the back link", async () => {
   const cleanup = await renderPage(true);
   try {
@@ -273,8 +294,10 @@ test("connector details show discovery, owner controls and the back link", async
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const details of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`connector ${details ? "details" : "list"} displays missing credentials instead of an empty state`, async () => {
     mocks.listError = true;
     const cleanup = await renderPage(details);
@@ -288,15 +311,19 @@ for (const details of [false, true]) {
       await expect
         .element(page.getByText("Connector not found", { exact: true }))
         .not.toBeInTheDocument();
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       await takeSnapshot(`mcp-${details ? "details" : "list"}-setup-error`);
     } finally {
       mocks.listError = false;
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
 for (const details of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`cached ${details ? "details" : "list"} remains usable after a background refresh error`, async () => {
     mocks.listError = true;
     mocks.cachedData = true;
@@ -306,6 +333,7 @@ for (const details of [false, true]) {
         .element(page.getByText("Documentation server", { exact: true }))
         .toBeVisible();
       await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       await takeSnapshot(`mcp-${details ? "details" : "list"}-refresh-error`);
     } finally {
       mocks.listError = false;
@@ -313,8 +341,10 @@ for (const details of [false, true]) {
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("expired OAuth discovery offers reconnect instead of a permanent spinner", async () => {
   mocks.needsOAuth = true;
   const cleanup = await renderPage(true);
@@ -328,6 +358,8 @@ test("expired OAuth discovery offers reconnect instead of a permanent spinner", 
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, typescript/promise-function-async -- mcp-settings.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
 test("custom connector advanced settings expose transport and credentials and reject a blank name", async () => {
@@ -359,6 +391,8 @@ test("custom connector advanced settings expose transport and credentials and re
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -382,6 +416,8 @@ test("pending OAuth can be dismissed", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -409,6 +445,8 @@ test("dismissed OAuth ignores a late authorization result", async () => {
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   { clientId: "   ", expectedClientId: undefined },   { clientId: " client id ", expecte's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- mcp-settings.browser route: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { clientId, expectedClientId }); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -455,6 +493,8 @@ test.each([
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 test("OAuth callback errors display the safe actionable message", async () => {
@@ -470,6 +510,7 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await expect
       .poll(
         () =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dataset from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
             .mounted
       )
@@ -479,7 +520,8 @@ test("OAuth callback errors display the safe actionable message", async () => {
     await cleanup();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async -- mcp-settings.browser route: ; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 test("invalid authorization links keep the dialog open and display an error", async () => {
   const cleanup = await renderPage(false, false, true);
@@ -501,6 +543,7 @@ test("invalid authorization links keep the dialog open and display an error", as
     await expect
       .poll(
         () =>
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dataset from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           document.querySelector<HTMLElement>("[data-sonner-toast]")?.dataset
             .mounted
       )
@@ -510,11 +553,13 @@ test("invalid authorization links keep the dialog open and display an error", as
     await cleanup();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- mcp-settings.browser keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 
 for (const state of ["off", "enabled", "saving", "shared"] as const) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line max-statements -- Keep each approval state, interaction, capture and cleanup together so the persisted setting is verified as one scenario.
   test(`connection approval setting is ${state}`, async () => {
     Object.assign(mocks, {
@@ -542,10 +587,12 @@ for (const state of ["off", "enabled", "saving", "shared"] as const) {
       await cleanup();
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 
 // A synchronous onValid failure becomes a rejected RHF handleSubmit promise.
 /* oxlint-disable max-statements -- Keep RHF rejection feedback and retained fields in one submission scenario. */
+// oxlint-disable-next-line oxc/no-async-await -- Await the native form failure and the retained-field assertions in their original order.
 test("custom connector submission reports RHF rejection and retains entered fields", async () => {
   mocks.mutate.mockImplementationOnce(() => {
     throw new Error("Connector submission failed");

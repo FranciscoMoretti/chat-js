@@ -1,6 +1,8 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { MessageTreeSnapshot } from "./types";
+/* oxlint-enable sort-imports */
 
 type SnapshotInput<TMessage extends UIMessage> = Readonly<
   Omit<MessageTreeSnapshot<TMessage>, "nodes">
@@ -66,5 +68,9 @@ const readMessageTreeIndexes = <TMessage extends UIMessage>({
   rootIds: [...readRootIds()],
 });
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readMessageTreeIndexes); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { readMessageTreeIndexes };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SnapshotInput, TreeStorageReader); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { SnapshotInput, TreeStorageReader };
+/* oxlint-enable import/no-named-export */

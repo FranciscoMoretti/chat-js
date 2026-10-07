@@ -2,7 +2,7 @@
 
 import { ExternalLink, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, {
   useEffect,
   useMemo,
@@ -10,12 +10,19 @@ import React, {
   useState,
   useTransition,
 } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
 import config from "@/chat.config";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Session } from "@/lib/auth";
+/* oxlint-enable sort-imports */
 import authClient from "@/lib/auth-client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "./ui/button";
+/* oxlint-disable react/jsx-no-literals -- ElectronBrowserSignIn renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+/* oxlint-enable sort-imports */
 /* oxlint-disable no-console, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, unicorn/no-null -- ElectronBrowserSignIn: no-console: retain browser error diagnostics for this caught failure; silently swallowing it removes the existing debugging signal; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 300); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ElectronBrowserSignIn = ({
@@ -32,6 +39,7 @@ const ElectronBrowserSignIn = ({
         Keychain so it can store your session securely.
       </p>
       <Button
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-full"
         onClick={() => {
           // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
@@ -39,6 +47,7 @@ const ElectronBrowserSignIn = ({
           if (typeof requestAuth !== "function") {
             return;
           }
+          /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve launchBrowserSignIn's awaited sequencing and rejected-Promise behavior. */
           const launchBrowserSignIn = async (): Promise<void> => {
             try {
               await Promise.resolve();
@@ -47,15 +56,19 @@ const ElectronBrowserSignIn = ({
               console.error("Failed to launch browser sign-in", error);
             }
           };
+          /* oxlint-enable oxc/no-async-await */
           void launchBrowserSignIn();
           globalThis.setTimeout(() => setOpened(true), 300);
         }}
         type="button"
         variant="outline"
       >
-        <ExternalLink className="mr-2 size-4" />
+        <ExternalLink
+          // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="mr-2 size-4"
+        />
         {buttonLabel}
-      </Button>
+      </Button /* oxlint-disable no-ternary -- Keep the opened browser-sign-in status as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */>
 
       {opened ? (
         <p className="text-muted-foreground text-center text-sm">
@@ -63,9 +76,11 @@ const ElectronBrowserSignIn = ({
           access, allow it to keep your session saved securely.
         </p>
       ) : null}
-    </div>
+    </div /* oxlint-enable no-ternary */>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- ElectronTransferUser renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable no-console, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ElectronTransferUser: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
@@ -88,7 +103,10 @@ const ElectronTransferUser = ({
     params.delete("code_challenge_method");
 
     const nextQuery = params.toString();
-    return nextQuery ? `/login?${nextQuery}` : "/login";
+    if (nextQuery) {
+      return `/login?${nextQuery}`;
+    }
+    return "/login";
   }, [query]);
 
   useEffect(() => {
@@ -97,10 +115,12 @@ const ElectronTransferUser = ({
     }
     hasStartedTransferRef.current = true;
 
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startTransition's awaited sequencing and rejected-Promise behavior. */
     startTransition(async () => {
       await authClient.electron.transferUser({ fetchOptions: { query } });
       router.refresh();
     });
+    /* oxlint-enable oxc/no-async-await */
   }, [query, router]);
 
   return (
@@ -111,31 +131,48 @@ const ElectronTransferUser = ({
       </div>
 
       <Button
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
         className="w-full"
         disabled={isPending}
         onClick={() => {
+          /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startTransition's awaited sequencing and rejected-Promise behavior. */
           startTransition(async () => {
             await authClient.electron.transferUser({ fetchOptions: { query } });
             router.refresh();
           });
+          /* oxlint-enable oxc/no-async-await */
         }}
         type="button"
       >
-        {isPending ? (
-          <>
-            <LoaderCircle className="mr-2 size-4 animate-spin" />
-            Connecting…
-          </>
-        ) : (
-          "Continue to desktop app"
-        )}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          isPending ? (
+            <>
+              <LoaderCircle
+                // oxlint-disable-next-line react/forbid-component-props -- LoaderCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="mr-2 size-4 animate-spin"
+              />
+              Connecting…
+            </>
+          ) : (
+            "Continue to desktop app"
+          )
+        }
       </Button>
 
-      <Button asChild className="w-full" variant="ghost">
+      <Button
+        asChild
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="w-full"
+        variant="ghost"
+      >
         <a href={useAnotherAccountHref}>Use another account</a>
       </Button>
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ElectronBrowserSignIn, ElectronTransferUser); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { ElectronBrowserSignIn, ElectronTransferUser };
+/* oxlint-enable import/no-named-export */

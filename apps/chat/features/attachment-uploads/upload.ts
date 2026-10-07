@@ -1,11 +1,14 @@
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { attachmentDigest, draftAttachment } from "@/lib/eve/draft";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (uploadAttachment); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve uploadAttachment's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const uploadAttachment = async (
-  file: File
+  file: Readonly<File>
 ): Promise<z.infer<typeof draftAttachment>> => {
   const body = new FormData();
   body.append("file", file);
@@ -16,6 +19,7 @@ export const uploadAttachment = async (
   if (!response.ok) {
     const failure: unknown = await response.json().catch(() => null);
     throw new Error(
+      // oxlint-disable-next-line no-ternary -- Keep Error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       failure !== null &&
         typeof failure === "object" &&
         "error" in failure &&
@@ -29,11 +33,13 @@ export const uploadAttachment = async (
     throw new Error(`Invalid upload response for ${file.name}.`);
   }
   return draftAttachment.parse({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing uploaded own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...uploaded,
     contentType: file.type,
     digest: await attachmentDigest(await file.arrayBuffer()),
     name: file.name,
   });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

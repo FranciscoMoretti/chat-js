@@ -1,7 +1,11 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { execFileSync, spawn } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The development supervisor owns child processes and restart delays in the host runtime.
 import { setTimeout as delay } from "node:timers/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { checkHealth } from "./dev-health";
+/* oxlint-enable sort-imports */
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
 
 const INITIAL_RESTART_BACKOFF_MS = 5000;
@@ -40,8 +44,8 @@ const hasChildProcessId = (pid: number | undefined): pid is number =>
   typeof pid === "number" && pid !== NO_CHILD_PID && !Number.isNaN(pid);
 /* oxlint-disable eslint/max-statements -- trackChildren: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable node/no-sync -- trackChildren: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- trackChildren: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const trackChildren = (): void => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading pid from child; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const childPid = child?.pid;
   if (!hasChildProcessId(childPid)) {
     return;
@@ -59,7 +63,9 @@ const trackChildren = (): void => {
         started: started.join(" "),
       };
     });
-  const alive = new Map(rows.map((row) => [row.pid, row.started]));
+  const alive = new Map(
+    rows.map((row: Readonly<(typeof rows)[number]>) => [row.pid, row.started])
+  );
   for (const [pid, started] of descendants) {
     if (alive.get(pid) !== started) {
       descendants.delete(pid);
@@ -88,7 +94,6 @@ const trackChildren = (): void => {
     }
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-statements */
 const terminate = (signal: NodeJS.Signals): void => {
@@ -118,6 +123,7 @@ while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
   child = spawn(process.execPath, ["run", "dev"], {
     detached: true,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=4096" },
     stdio: "inherit",
   });
@@ -136,7 +142,7 @@ while (!stopping) {
   while (!stopping && !exited) {
     trackChildren();
     try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+      // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor awaits each readiness probe before deciding whether startup succeeded. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
       await checkHealth(origin);
       if (!wasReady) {
         console.info("ChatJS, Eve and database are ready");
@@ -148,13 +154,14 @@ while (!stopping) {
       backoff = INITIAL_RESTART_BACKOFF_MS;
     } catch {
       failures += FAILED_STARTUP_INCREMENT;
+      const unreadyForMs = Date.now() - lastReadyAt;
       if (
-        shouldRestartAfterReadinessFailures(
-          failures,
-          Date.now() - lastReadyAt,
-          wasReady,
-          failedStartups
-        )
+        shouldRestartAfterReadinessFailures({
+          consecutiveFailures: failures,
+          failedStartups,
+          hasBeenReady: wasReady,
+          unreadyForMs,
+        })
       ) {
         console.error(
           "Readiness remained unavailable through the recovery grace period; restarting the local runtime"
@@ -162,14 +169,14 @@ while (!stopping) {
         break;
       }
     }
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor spaces readiness probes within the current startup attempt. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(READINESS_POLL_INTERVAL_MS);
   }
   if (!wasReady) {
     failedStartups += FAILED_STARTUP_INCREMENT;
   }
   terminate("SIGTERM");
-  // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+  // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor allows graceful shutdown before escalating to SIGKILL. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
   await sleep(GRACEFUL_SHUTDOWN_DELAY_MS);
   terminate("SIGKILL");
   // Clearing the process handle releases the exited ChildProcess between restarts.
@@ -178,7 +185,7 @@ while (!stopping) {
   descendants = new Map();
   if (!stopping) {
     console.info(`Restarting in ${backoff / MILLISECONDS_PER_SECOND}s`);
-    // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
+    // oxlint-disable-next-line eslint/no-await-in-loop, node/no-top-level-await -- This Bun supervisor waits for its bounded restart backoff before launching another child. Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
     await sleep(backoff);
     backoff = Math.min(backoff * BACKOFF_MULTIPLIER, MAX_RESTART_BACKOFF_MS);
   }

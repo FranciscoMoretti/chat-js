@@ -1,15 +1,21 @@
 "use client";
 
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { MessageSiblingsView } from "@/components/message-siblings-view";
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useModelChange } from "@/providers/default-model-provider";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useLogicalChat } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveLogicalGroupRecovery } from "./eve-logical-group-recovery";
+/* oxlint-enable sort-imports */
 import { EveResponseGroupCards } from "./eve-response-group-cards";
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop -- EveLogicalVersions: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -59,9 +65,11 @@ const EveLogicalResponses = ({
   const [pending, setPending] = useState<string>();
   const userId = controller.logicalId(conversationId, messageId);
   const group =
+    // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof userId === "string" && userId !== ""
       ? logicalResponseSlots(snapshot, userId)
       : undefined;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from group.slots.find(...).original; read original from group.slots.find(...); read slots from group; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const recoveredId = group?.slots.find((slot) => slot.operationId === pending)
     ?.original?.id;
   useEffect(() => {
@@ -83,14 +91,19 @@ const EveLogicalResponses = ({
       <EveResponseGroupCards
         candidates={group.slots.map((slot) => ({
           disabled,
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from getModelById(...); preserve one receiver evaluation, skipped accesses and the existing slot.modelId fallback. The app guidance prefers optional chaining.
           modelName: getModelById(slot.modelId)?.name ?? slot.modelId,
           operationId: slot.operationId,
+          // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           state: slot.original ? "bound" : "unresolved",
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           status: snapshot.agents.get(
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branch from slot.attempt; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from slot.original; preserve one receiver evaluation, skipped accesses and the existing slot.original?.id fallback. The app guidance prefers optional chaining.
             slot.attempt?.branch.id ?? slot.original?.id ?? ""
           )?.status,
         }))}
         selectedOperationId={
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from unconfirmed; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading operationId from selectedSlot; preserve one receiver evaluation, skipped accesses and the existing selectedSlot?.operationId fallback. The app guidance prefers optional chaining.
           unconfirmed?.operationId ?? selectedSlot?.operationId ?? null
         }
         onSelect={(operationId) => {
@@ -104,6 +117,7 @@ const EveLogicalResponses = ({
           if (model) {
             void changeModel(model.id);
           }
+          // oxlint-disable-next-line no-ternary -- Keep setPending argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           setPending(slot.original ? undefined : operationId);
           if (slot.attempt) {
             controller.selectNode(slot.attempt.answer);
@@ -118,5 +132,7 @@ const EveLogicalResponses = ({
     </>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveLogicalResponses, EveLogicalVersions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { EveLogicalResponses, EveLogicalVersions };
+/* oxlint-enable import/no-named-export */

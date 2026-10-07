@@ -1,7 +1,10 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveSubagentSession } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveSubagent's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- typescript/explicit-function-return-type (#560): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep getEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
@@ -32,17 +35,28 @@ const getEveSubagent = async (ownerId: string, sessionId: string) => {
     );
   return binding;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve registerEveSubagent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- jsdoc/require-param (#534): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): registerEveSubagent's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
 max-params (#511): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): registerEveSubagent keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): registerEveSubagent uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/explicit-function-return-type (#560): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep registerEveSubagent's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/strict-boolean-expressions (#610): registerEveSubagent intentionally keeps the existing falsy-value behavior of root; rootTurnId; bound; distinguishing empty, zero, and absent states requires a domain behavior decision. */
-/** Call only with native hook lineage or a trusted EVE subagent.called event. */
+/**
+ * Registers a native child session under an owned root conversation or subagent.
+ * Existing lineage is checked after insertion so conflicting ownership fails.
+ * Call only with native hook lineage or a trusted EVE subagent.called event.
+ * @param {string} ownerId Owner of the root conversation.
+ * @param {string} parentSessionId Native session ID of the root or parent subagent.
+ * @param {string} sessionId Native session ID of the child being registered.
+ * @param {string} parentTurnId Turn that launched the child from its direct parent.
+ * @returns {Promise<NonNullable<Awaited<ReturnType<typeof getEveSubagent>>>>} The persisted child binding with its root conversation and turn.
+ * @throws {Error} when the parent lineage is not owned or the child binding conflicts.
+ */
 const registerEveSubagent = async (
   ownerId: string,
   parentSessionId: string,
@@ -59,10 +73,13 @@ const registerEveSubagent = async (
         inArray(eveConversation.state, ["bound", "deleting"])
       )
     );
+  // oxlint-disable-next-line no-ternary -- Keep parent as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const parent = root
     ? undefined
     : await getEveSubagent(ownerId, parentSessionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from root; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading conversationId from parent; preserve one receiver evaluation, skipped accesses and the existing parent?.conversationId fallback. The app guidance prefers optional chaining.
   const conversationId = root?.id ?? parent?.conversationId;
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading rootTurnId from parent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep rootTurnId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const rootTurnId = root ? parentTurnId : parent?.rootTurnId;
   if (!conversationId || !rootTurnId || sessionId === parentSessionId) {
     throw new Error("Native child has no owned parent conversation.");
@@ -84,7 +101,9 @@ const registerEveSubagent = async (
   }
   return bound;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listEveSubagents's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-params, max-statements, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions -- no-undefined (#519): listEveSubagents uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
 typescript/explicit-function-return-type (#560): Keep listEveSubagents's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -109,9 +128,12 @@ const listEveSubagents = async (ownerId: string, rootSessionId?: string) =>
     .where(
       and(
         eq(eveConversation.ownerId, ownerId),
+        // oxlint-disable-next-line no-ternary -- Keep and argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         rootSessionId ? eq(eveConversation.sessionId, rootSessionId) : undefined
       )
     );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveSubagentUsageCursor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers -- no-magic-numbers (#517): advanceEveSubagentUsageCursor uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
@@ -135,6 +157,8 @@ const advanceEveSubagentUsageCursor = async (
       )
     );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveSubagentUsageCursor, getEveSubagent, listEveSubagents, registerEveSubagent); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 export {
   advanceEveSubagentUsageCursor,
@@ -142,3 +166,4 @@ export {
   listEveSubagents,
   registerEveSubagent,
 };
+/* oxlint-enable import/no-named-export */

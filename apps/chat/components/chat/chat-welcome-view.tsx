@@ -2,6 +2,7 @@ import React from "react";
 
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
+/* oxlint-disable react/jsx-no-literals -- WelcomeMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 const WelcomeMessage = (): React.JSX.Element => (
   <div className="pointer-events-none text-center">
@@ -10,6 +11,8 @@ const WelcomeMessage = (): React.JSX.Element => (
     </h1>
   </div>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ChatWelcomeView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-disable react/jsx-max-depth, react/no-multi-comp -- ChatWelcomeView: ; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
@@ -34,4 +37,5 @@ export const ChatWelcomeView = ({
     </div>
   </div>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp */

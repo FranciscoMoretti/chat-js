@@ -1,11 +1,19 @@
 import { tool } from "ai";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineTool } from "eve/tools";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expectTypeOf, test } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toolResultToModelOutput } from "./tool-model-output";
-import { defineToolSet } from "./tool-types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { NativeToolUI } from "./tool-types";
+/* oxlint-enable sort-imports */
+import { defineToolSet } from "./tool-types";
 import { executeWithToolUsage } from "./tool-usage";
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -27,10 +35,12 @@ test("declared EVE generics preserve schema and output types across overloads", 
   });
   const streamed = defineTool({
     description: "Stream",
+    /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve execute's asynchronous iteration and rejection behavior. The async *execute fixture deliberately exercises defineTool async-generator overload and inferred streaming result, not its synchronous overload. */
     // oxlint-disable-next-line typescript/require-await -- This fixture exercises the async-generator overload and its inferred streamed output type.
     async *execute({ count }) {
       yield { count };
     },
+    /* oxlint-enable oxc/no-async-await */
     inputSchema: z.object({ count: z.number() }),
   });
   const declared = defineTool({

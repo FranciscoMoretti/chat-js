@@ -25,4 +25,6 @@ const generateVideoResult = z.object({
   prompt: z.string(),
   videoUrl: z.string(),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (generateVideoInput, generateVideoResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { generateVideoInput, generateVideoResult };
+/* oxlint-enable import/no-named-export */

@@ -7,7 +7,9 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 import { createHash, randomUUID } from "node:crypto";
 import { createServer } from "node:http";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { IncomingMessage, ServerResponse } from "node:http";
+/* oxlint-enable sort-imports */
 
 import { z } from "zod";
 /* oxlint-enable import/no-nodejs-modules */
@@ -90,6 +92,8 @@ function sendJson(
     .writeHead(status, { "content-type": "application/json" })
     .end(JSON.stringify(value));
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startEveOAuthMcpServer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startEveOAuthMcpServer's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
@@ -173,6 +177,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     clients.set(clientId, { redirectUris: body.redirect_uris });
     counters.registrations += 1;
     sendJson(response, 201, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing body own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...body,
       client_id: clientId,
       token_endpoint_auth_method: "none",
@@ -186,11 +191,13 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     const codeChallenge = url.searchParams.get("code_challenge") ?? "";
     const client = clients.get(clientId);
     const valid =
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading redirectUris from client; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       client?.redirectUris.includes(redirectUri) &&
       state &&
       url.searchParams.get("response_type") === "code" &&
       url.searchParams.get("code_challenge_method") === "S256" &&
       codeChallenge &&
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from url.searchParams.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       url.searchParams.get("scope")?.split(" ").includes("mcp:tools");
     if (!valid) {
       sendJson(response, 400, { error: "invalid_authorization_request" });
@@ -279,6 +286,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     request: IncomingMessage,
     response: ServerResponse
   ): Promise<void> {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replace from request.headers.authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const token = request.headers.authorization?.replace(BEARER_PREFIX, "");
     if (!(token && accessTokens.has(token))) {
       reject(response);
@@ -314,6 +322,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
       });
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (rpc.method === "tools/call" && rpc.params?.name === "read_token") {
       counters.toolCalls += 1;
       sendMcpResult(response, rpc.id, {
@@ -372,8 +381,19 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     }
   }
 
-  // oxlint-disable-next-line typescript/no-misused-promises -- #770: Node request listeners ignore returns; route catches body/OAuth/RPC failures and ends the response or sends 400. Keep route completion/streaming order; Node does not capture rejections by default.
-  const server = createServer(route);
+  const server = createServer((request, response) => {
+    void (async () => {
+      try {
+        await route(request, response);
+      } catch (error) {
+        if (error instanceof Error) {
+          response.destroy(error);
+        } else {
+          response.destroy(new Error(String(error)));
+        }
+      }
+    })();
+  });
 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();
@@ -385,7 +405,13 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     async close(): Promise<void> {
       server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
-        server.close((error) => (error ? reject(error) : resolve()))
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        })
       );
     },
     counters,
@@ -397,6 +423,8 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     tokenResult: eveOAuthMcpTokenResultMarker,
   };
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-oauth-mcp-server.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

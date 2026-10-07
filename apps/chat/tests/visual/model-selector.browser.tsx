@@ -1,186 +1,260 @@
+/* oxlint-disable import/max-dependencies -- This integration fixture mounts the actual Next, query, tRPC, session and catalog providers and uses their native test and type APIs. */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TRPCClientError, createTRPCClient } from "@trpc/client";
+// oxlint-disable-next-line sort-imports -- Oxfmt places @tanstack before @trpc and retains this separate type declaration; that module grouping conflicts with local-binding name order.
+import type { OperationResultObserver, TRPCLink } from "@trpc/client";
+import { observable } from "@trpc/server/observable";
 import { takeSnapshot } from "@uiverify/vitest";
-import React, { act } from "react";
-import { createRoot } from "react-dom/client";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import React, { act, useState } from "react";
 import { expect, test, vi } from "vitest";
-import { page } from "vitest/browser";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import { commands, page } from "vitest/browser";
 
 import { ModelSelector } from "@/components/model-selector";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import type { SelectedModelValue } from "@/lib/ai/types";
-import { config } from "@/lib/config";
+import type { Session } from "@/lib/auth";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import { ChatModelsProvider } from "@/providers/chat-models-provider";
+import { SessionProvider } from "@/providers/session-provider";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import { mount, unmount } from "@/tests/visual/primitive-mount";
+import { TRPCProvider } from "@/trpc/react";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import type { AppRouter } from "@/trpc/routers/_app";
 
-import "./sandbox.css";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups imports by module and retains separate type declarations; its header order conflicts with sort-imports local-binding syntax order.
+import "@/tests/visual/sandbox.css";
 
-const primary = config.ai.workflows.title;
-const secondary = config.ai.tools.code.edits;
-const createModel = (
-  id: AppModelDefinition["id"],
-  name: string
-): AppModelDefinition => ({
-  apiModelId: id,
-  context_window: 128_000,
-  description: name,
-  id,
-  input: { audio: false, image: false, pdf: false, text: true, video: false },
-  max_tokens: 16_384,
-  name,
-  object: "model",
-  output: { audio: false, image: false, text: true, video: false },
-  owned_by: "openai",
-  pricing: {},
-  reasoning: false,
-  toolCall: false,
-  type: "language",
-});
-const models = [
-  createModel(primary, "Primary model"),
-  createModel(secondary, "Secondary model"),
-];
-vi.mock("@/providers/chat-models-provider", () => ({
-  useChatModels: (): object => ({
-    allModels: models,
-    getModelById: (id: string): AppModelDefinition | undefined =>
-      models.find(({ id: modelId }: { readonly id: string }) => modelId === id),
-    models,
-  }),
-}));
-vi.mock("next/navigation", () => ({ useRouter: (): object => ({}) }));
-vi.mock("@/providers/session-provider", () => ({
-  useSession: (): object => ({ data: { user: { id: "fixture" } } }),
-}));
-
-class SelectionBoundary extends React.Component<
-  { readonly children: React.ReactNode },
-  { failed: boolean }
-> {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- ReactNode uses React's element and portal declarations; the fixture constructor forwards props without mutation.
-  public constructor(props: SelectionBoundary["props"]) {
-    super(props);
-    this.state = { failed: false };
-  }
-  public static getDerivedStateFromError(): { failed: boolean } {
-    return { failed: true };
-  }
-  public override render(): React.ReactNode {
-    return this.state.failed ? (
-      <p role="alert">Selection failed. Try again.</p>
-    ) : (
-      this.props.children
-    );
+/* oxlint-enable import/max-dependencies */
+declare module "vitest/browser" {
+  interface BrowserCommands {
+    modelAssets: () => Promise<void>;
   }
 }
-
-const mount = async (
-  action: (selection: SelectedModelValue) => void | Promise<void>,
-  selection: SelectedModelValue = primary
-): Promise<() => Promise<void>> => {
-  const container = document.createElement("div");
-  container.className = "p-8";
-  document.body.append(container);
-  const root = createRoot(container, {
-    onCaughtError: vi.fn<(error: unknown) => void>(),
-  });
-  await act(async () => {
-    await Promise.resolve();
-    root.render(
-      <SelectionBoundary>
-        <ModelSelector
-          onModelSelectionChangeAction={action}
-          selectedModelId={primary}
-          selectedModelSelection={selection}
-        />
-      </SelectionBoundary>
-    );
-  });
-  return async (): Promise<void> => {
-    await act(async () => {
-      await Promise.resolve();
-      root.unmount();
-    });
-    container.remove();
-  };
-};
-
-/* oxlint-disable max-statements -- Verify deferred selection completion, immediate menu close, and rejection routing using the actual React 19 transition. */
-test("model selection keeps optimism while pending and routes rejection to React", async () => {
-  const pending = Promise.withResolvers<undefined>();
-  const action = vi.fn().mockReturnValue(pending.promise);
-  const cleanup = await mount(action);
-  try {
-    await page.getByTestId("model-selector").click();
-    await page.getByRole("option", { name: /Secondary model/u }).click();
-    expect(action).toHaveBeenCalledWith(secondary);
-    await expect
-      .element(page.getByTestId("model-selector"))
-      .toHaveTextContent("Secondary model");
-    await expect
-      .element(page.getByRole("option", { name: /Secondary model/u }))
-      .not.toBeInTheDocument();
-    await takeSnapshot("model-selector-pending-action");
-    await act(async () => {
-      await Promise.resolve();
-      pending.reject(new Error("Selection rejected"));
-    });
-    await expect
-      .element(page.getByRole("alert"))
-      .toHaveTextContent("Selection failed. Try again.");
-  } finally {
-    pending.reject(new Error("Test cleanup"));
-    await cleanup();
-  }
-});
-/* oxlint-enable max-statements */
-
-const modes = ["multiple-on", "multiple-off", "toggle-model", "increase-count"];
-/* oxlint-disable max-statements -- Drive each selection input through the same native React Action rejection boundary. */
-test.each(modes)(
-  "%s forwards its promise to the React rejection owner",
-  async (mode) => {
-    const pending = Promise.withResolvers<undefined>();
-    const action = vi.fn().mockReturnValue(pending.promise);
-    const selection = mode === "multiple-on" ? primary : { [primary]: 1 };
-    const cleanup = await mount(action, selection);
-    try {
-      await page.getByTestId("model-selector").click();
-      if (mode === "multiple-on" || mode === "multiple-off") {
-        await page.getByRole("switch", { name: "Use Multiple Models" }).click();
-      } else if (mode === "toggle-model") {
-        await page.getByRole("option", { name: /Secondary model/u }).click();
-      } else {
-        await page.getByRole("button", { exact: true, name: "1×" }).click();
-        await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
-      }
-      expect(action).toHaveBeenCalledOnce();
-      await act(async () => {
-        await Promise.resolve();
-        pending.reject(new Error("Selection rejected"));
-      });
-      await expect
-        .element(page.getByRole("alert"))
-        .toHaveTextContent("Selection failed. Try again.");
-    } finally {
-      pending.reject(new Error("Test cleanup"));
-      await cleanup();
-    }
-  }
-);
-
-/* oxlint-enable max-statements */
-
-test("a synchronous action throw retains the React error boundary owner", async () => {
-  const action = vi.fn<(selection: SelectedModelValue) => void | Promise<void>>(
-    () => {
-      throw new Error("Synchronous selection failure");
-    }
+vi.mock("@/lib/auth-client", () => ({
+  default: {
+    useSession: (): {
+      readonly data: Session;
+      readonly error: null;
+      readonly isPending: false;
+    } => ({
+      data: {
+        session: {
+          createdAt: new Date("2026-09-25T10:00:00Z"),
+          expiresAt: new Date("2026-10-25T10:00:00Z"),
+          id: "fixture-session",
+          token: "local-fixture-token",
+          updatedAt: new Date("2026-09-25T10:00:00Z"),
+          userId: "fixture-user",
+        },
+        user: {
+          createdAt: new Date("2026-09-25T10:00:00Z"),
+          email: "fixture@example.test",
+          emailVerified: true,
+          id: "fixture-user",
+          name: "Fixture member",
+          updatedAt: new Date("2026-09-25T10:00:00Z"),
+        },
+      },
+      // oxlint-disable-next-line unicorn/no-null -- Better Auth reports an absent error as null; keep the native settled-session result.
+      error: null,
+      isPending: false,
+    }),
+  },
+}));
+const models: AppModelDefinition[] = [
+  {
+    apiModelId: "openai/gpt-4.1",
+    context_window: 128_000,
+    description: "Controlled catalog text model",
+    id: "openai/gpt-4.1",
+    input: { audio: false, image: true, pdf: true, text: true, video: false },
+    max_tokens: 4096,
+    name: "Fixture Alpha",
+    object: "model",
+    output: { audio: false, image: false, text: true, video: false },
+    owned_by: "openai",
+    pricing: { input: "0.1", output: "0.2" },
+    reasoning: false,
+    toolCall: true,
+    type: "language",
+  },
+  {
+    apiModelId: "google/gemini-2.5-flash",
+    context_window: 128_000,
+    description: "Controlled catalog text model",
+    id: "google/gemini-2.5-flash",
+    input: { audio: false, image: true, pdf: true, text: true, video: false },
+    max_tokens: 4096,
+    name: "Fixture Beta",
+    object: "model",
+    output: { audio: false, image: false, text: true, video: false },
+    owned_by: "google",
+    pricing: { input: "0.1", output: "0.2" },
+    reasoning: false,
+    toolCall: true,
+    type: "language",
+  },
+];
+/* oxlint-disable react/only-export-components -- This browser-test entrypoint mounts its local stateful controller; exporting a test-only component would create an unused API. */
+const Controller = ({
+  initialSelection,
+}: {
+  readonly initialSelection: SelectedModelValue;
+}): React.JSX.Element => {
+  const [selection, setSelection] =
+    useState<SelectedModelValue>(initialSelection);
+  return (
+    <section>
+      <output data-testid="selection">{JSON.stringify(selection)}</output>
+      <ModelSelector
+        selectedModelId="openai/gpt-4.1"
+        selectedModelSelection={selection}
+        onModelSelectionChangeAction={setSelection}
+      />
+    </section>
   );
-  const cleanup = await mount(action);
-  try {
+};
+/* oxlint-enable react/only-export-components */
+const scenarios: {
+  readonly name: string;
+  readonly initialSelection: SelectedModelValue;
+  readonly expectedSelection: string;
+}[] = [
+  {
+    expectedSelection: '"google/gemini-2.5-flash"',
+    initialSelection: "openai/gpt-4.1",
+    name: "single",
+  },
+  {
+    expectedSelection: '{"openai/gpt-4.1":1,"google/gemini-2.5-flash":1}',
+    initialSelection: { "openai/gpt-4.1": 1 },
+    name: "multiple",
+  },
+];
+const router = {
+  back: vi.fn(),
+  bfcacheId: "native-model-fixture",
+  forward: vi.fn(),
+  prefetch: vi.fn(),
+  push: vi.fn(),
+  refresh: vi.fn(),
+  replace: vi.fn(),
+};
+const createPreferencesClient = (): {
+  readonly client: ReturnType<typeof createTRPCClient<AppRouter>>;
+  readonly requests: readonly string[];
+} => {
+  const requests: string[] = [];
+  const client = createTRPCClient<AppRouter>({
+    links: [
+      (): ReturnType<TRPCLink<AppRouter>> =>
+        ({
+          op,
+        }: {
+          readonly op: { readonly path: string };
+        }): ReturnType<ReturnType<TRPCLink<AppRouter>>> =>
+          observable(
+            (
+              observer: Readonly<OperationResultObserver<AppRouter, unknown>>
+            ): void => {
+              requests.push(op.path);
+              if (op.path !== "settings.getModelPreferences") {
+                observer.error(
+                  TRPCClientError.from(
+                    new Error(`Unhandled fixture procedure ${op.path}`)
+                  )
+                );
+                return;
+              }
+              observer.next({
+                result: {
+                  data: models.map(
+                    (model: { readonly id: AppModelDefinition["id"] }) => ({
+                      enabled: true,
+                      modelId: model.id,
+                    })
+                  ),
+                },
+              });
+              observer.complete();
+            }
+          ),
+    ],
+  });
+
+  return { client, requests };
+};
+/* oxlint-disable oxc/no-async-await -- Await the native-provider mount before interactions use the portal and query state. */
+const mountSelector = async (
+  initialSelection: Readonly<SelectedModelValue>
+): Promise<{
+  readonly fixture: Awaited<ReturnType<typeof mount>>;
+  readonly queryClient: QueryClient;
+  readonly requests: readonly string[];
+}> => {
+  const { client, requests } = createPreferencesClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  /* oxlint-disable react/jsx-max-depth -- The actual Next router, QueryClient, tRPC, session and catalog providers must wrap this component in their native order. */
+  const fixture = await mount(
+    <AppRouterContext.Provider value={router}>
+      <QueryClientProvider client={queryClient}>
+        <TRPCProvider trpcClient={client} queryClient={queryClient}>
+          <SessionProvider>
+            <ChatModelsProvider models={models}>
+              <Controller initialSelection={initialSelection} />
+            </ChatModelsProvider>
+          </SessionProvider>
+        </TRPCProvider>
+      </QueryClientProvider>
+    </AppRouterContext.Provider>
+  );
+  /* oxlint-enable react/jsx-max-depth */
+  return { fixture, queryClient, requests };
+};
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await actual portal visibility, capture and selection before checking the state contract. */
+const selectBeta = async (name: string): Promise<void> => {
+  await expect.element(page.getByTestId("model-selector")).toBeVisible();
+  await act(async () => {
     await page.getByTestId("model-selector").click();
-    await page.getByRole("option", { name: /Secondary model/u }).click();
-    await expect
-      .element(page.getByRole("alert"))
-      .toHaveTextContent("Selection failed. Try again.");
-  } finally {
-    await cleanup();
-  }
-});
+  });
+  await expect
+    .element(page.getByRole("option", { name: /Fixture Beta/u }))
+    .toBeVisible();
+  await takeSnapshot(`model-native-${name}-before`);
+  await act(async () => {
+    await page.getByRole("option", { name: /Fixture Beta/u }).click();
+  });
+};
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Await the real selection result, state capture and guaranteed fixture cleanup. */
+for (const scenario of scenarios) {
+  test(`native model selection ${scenario.name}`, async () => {
+    await commands.modelAssets();
+
+    const { fixture, queryClient, requests } = await mountSelector(
+      scenario.initialSelection
+    );
+    try {
+      await selectBeta(scenario.name);
+      await expect
+        .poll(() => page.getByTestId("selection").element().textContent)
+        .toBe(scenario.expectedSelection);
+      expect(requests).toContain("settings.getModelPreferences");
+      await takeSnapshot(`model-native-${scenario.name}-after`);
+    } finally {
+      await unmount(fixture);
+      queryClient.clear();
+    }
+  });
+}
+
+/* oxlint-enable oxc/no-async-await */

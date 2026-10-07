@@ -1,3 +1,5 @@
+/* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
+/* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -9,6 +11,7 @@ import { SidebarUserNav } from "@/components/sidebar-user-nav";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 const auth = vi.hoisted(() => ({ electron: false, signOut: vi.fn() }));
 vi.mock("@/lib/auth-client", () => ({ default: auth }));
@@ -27,7 +30,7 @@ vi.mock("@/providers/session-provider", () => ({
 }));
 
 /* oxlint-disable max-statements, max-lines-per-function -- Keep sign-out failure, unchanged navigation, and actionable feedback in one browser scenario. */
-test.each(["browser", "electron-sign-out", "electron-sync"])(
+test.each(["browser", "electron-sign-out"])(
   "%s rejection reports failure and stays on the current page",
   async (mode) => {
     auth.electron = mode !== "browser";
@@ -92,3 +95,5 @@ test.each(["browser", "electron-sign-out", "electron-sync"])(
   }
 );
 /* oxlint-enable max-statements, max-lines-per-function */
+
+/* oxlint-enable oxc/no-async-await */

@@ -2,15 +2,21 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/mcp" dependency within this package instead of introducing an alias or barrel API.
  */
 import { jsonSchema, tool } from "ai";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import mcp from "../../agent/tools/mcp";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "./mcp-tools";
-import { hasEveToolReceipt, createToolResult } from "./tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { createToolResult, hasEveToolReceipt } from "./tool-result";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
@@ -121,6 +127,7 @@ beforeEach(() => {
   mocks.tools.mockResolvedValue({ echo: definition });
   execute.mockResolvedValue("Echo output");
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 it("returns serializable namespaced discovery without credentials or live connections", async () => {
@@ -136,13 +143,15 @@ it("returns serializable namespaced discovery without credentials or live connec
   expect(JSON.stringify(tools)).not.toContain("secret");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([{ userId: "stranger" }, { enabled: false }])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it.each([{ userId: "stranger" }, { enabled: false }])("rejects inaccessible or disabl accepts change; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([{ userId: "stranger" }, { enabled: false }])(
   "rejects inaccessible or disabled connectors before connection: %j",
   async (change) => {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing change own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     mocks.get.mockResolvedValue({ ...connector, ...change });
     await expect(
       executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
@@ -151,6 +160,8 @@ it.each([{ userId: "stranger" }, { enabled: false }])(
     expect(execute).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
@@ -164,6 +175,8 @@ it("revalidates after discovery and refuses a revoked connector", async () => {
   ).rejects.toThrow("unavailable");
   expect(execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 it("keeps the execution connection open and preserves the MCP model output", async () => {
@@ -186,7 +199,8 @@ it("keeps the execution connection open and preserves the MCP model output", asy
   });
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("closes on execution errors and rejects invalid input before invoking the tool") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -202,21 +216,27 @@ it("closes on execution errors and rejects invalid input before invoking the too
   ).rejects.toThrow("remote failure");
   expect(mocks.close).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("permits global connectors with a separate namespace") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 it("permits global connectors with a separate namespace", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.list.mockResolvedValue([{ ...connector, userId: null }]);
   expect(await discoverEveMcpTools("owner", context.abortSignal)).toMatchObject(
     [{ name: "global__server__echo" }]
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValue({ ...connector, userId: null });
   expect(
     await executeEveMcpTool("connector", "echo", { text: "test" }, context, [])
   ).toMatchObject({ output: "Echo output" });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -241,6 +261,7 @@ it("forwards cancellation and closes the connection once", async () => {
     "connector",
     "echo",
     { text: "test" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: cancellation.signal },
     []
   );
@@ -250,6 +271,8 @@ it("forwards cancellation and closes the connection once", async () => {
   await rejected;
   expect(mocks.close).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
 /* oxlint-disable no-undefined --
@@ -268,6 +291,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
       type: "object" as const,
     };
     mocks.tools.mockResolvedValue({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       echo: { ...definition, inputSchema: jsonSchema(schema) },
     });
     await expect(
@@ -285,6 +309,8 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
     ).resolves.toMatchObject({ output: "Echo output" });
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -293,6 +319,7 @@ it.each([undefined, "https://json-schema.org/draft/2020-12/schema"])(
 it("retains explicitly declared draft-07 tuple validation", async () => {
   mocks.tools.mockResolvedValue({
     echo: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...definition,
       inputSchema: jsonSchema({
         $schema: "http://json-schema.org/draft-07/schema#",
@@ -320,6 +347,8 @@ it("retains explicitly declared draft-07 tuple validation", async () => {
     executeEveMcpTool("connector", "echo", { pair: ["hello", 1] }, context, [])
   ).resolves.toMatchObject({ output: "Echo output" });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("requires native owner approval when the connection setting is enabled", async () => {
@@ -327,6 +356,7 @@ it("requires native owner approval when the connection setting is enabled", asyn
     await requestEveMcpApproval("connector", "echo", { text: "test" }, context)
   ).toBe("user-approval");
   expect(execute).not.toHaveBeenCalled();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   await expect(
     executeEveMcpTool(
@@ -339,7 +369,8 @@ it("requires native owner approval when the connection setting is enabled", asyn
   ).rejects.toThrow("owner approval receipt");
   expect(execute).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects a receipt from another principal", async () => {
   await expect(
     executeEveMcpTool(
@@ -347,9 +378,12 @@ it("rejects a receipt from another principal", async () => {
       "echo",
       { text: "test" },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...context,
         approval: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...context.approval,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.approval.responder own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           responder: { ...context.approval.responder, principalId: "other" },
         },
       },
@@ -358,14 +392,16 @@ it("rejects a receipt from another principal", async () => {
   ).rejects.toThrow("owner approval receipt");
   expect(execute).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("validates tool input before asking for consent", async () => {
   await expect(
     requestEveMcpApproval("connector", "echo", { text: 123 }, context)
   ).rejects.toThrow("Invalid tool input");
   expect(execute).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null --
  * max-lines-per-function (#510): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it("registers native per-call approval restricted to the session owner") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -417,12 +453,15 @@ it("registers native per-call approval restricted to the session owner", async (
   expect(await approval.response(response)).toEqual({ status: "allowed" });
   expect(
     await approval.response({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing response own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...response,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing initiator own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       responder: { ...initiator, principalId: "other" },
     })
   ).toMatchObject({ status: "rejected" });
   expect(execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
@@ -433,6 +472,7 @@ vi.mock("./turn-tools", () => ({
   eveTurnGuest: { get: (): boolean => false },
   eveTurnTool: { get: () => null },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -452,6 +492,8 @@ it("isolates a remote billing-shaped payload inside the MCP result namespace", a
   expect(result.kind).toBe("chatjs.mcp-result");
   expect(hasEveToolReceipt(result)).toBe(false);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("does not discover or execute when the MCP registration is absent", async () => {
@@ -463,7 +505,8 @@ it("does not discover or execute when the MCP registration is absent", async () 
   ).rejects.toThrow("unavailable");
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("reports missing credentials even before an installed MCP feature has connectors", async () => {
   mocks.list.mockResolvedValue([]);
   mocks.requireCredentials.mockImplementation(() => {
@@ -475,7 +518,8 @@ it("reports missing credentials even before an installed MCP feature has connect
   expect(mocks.list).not.toHaveBeenCalled();
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("bounds database discovery by cancellation", async () => {
   mocks.list.mockReturnValueOnce(Promise.withResolvers().promise);
   const controller = new AbortController();
@@ -483,7 +527,8 @@ it("bounds database discovery by cancellation", async () => {
   controller.abort(new Error("cancelled"));
   await expect(result).rejects.toThrow("cancelled");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("cancels a hung tools listing and closes its transport", async () => {
   mocks.tools.mockReturnValueOnce(Promise.withResolvers().promise);
   const controller = new AbortController();
@@ -493,7 +538,8 @@ it("cancels a hung tools listing and closes its transport", async () => {
   await expect(result).rejects.toThrow("cancelled");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("normalizes dotted and long model IDs without losing original tool names or collid uses 20, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("normalizes dotted and long model IDs without losing original tool names or collid accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -518,6 +564,8 @@ it("normalizes dotted and long model IDs without losing original tool names or c
     expect(item.name).toMatch(/^[a-zA-Z0-9_-]{1,64}$/u);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 it("approval requests inherit cancellation", async () => {
@@ -527,6 +575,7 @@ it("approval requests inherit cancellation", async () => {
     "connector",
     "echo",
     { text: "test" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: controller.signal }
   );
   await vi.waitFor(() => expect(mocks.tools).toHaveBeenCalled());
@@ -534,7 +583,8 @@ it("approval requests inherit cancellation", async () => {
   await expect(result).rejects.toThrow("approval cancelled");
   expect(mocks.close).toHaveBeenCalledOnce();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): it("unsupported descriptions do not suppress later valid tools") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -552,6 +602,8 @@ it("unsupported descriptions do not suppress later valid tools", async () => {
   const descriptions = await discoverEveMcpTools("owner", context.abortSignal);
   expect(descriptions.map((item) => item.remoteName)).toEqual(["echo"]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 it("approval cancellation bounds connector lookup before any transport opens", async () => {
@@ -561,13 +613,15 @@ it("approval cancellation bounds connector lookup before any transport opens", a
     "connector",
     "echo",
     {},
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...context, abortSignal: controller.signal }
   );
   controller.abort(new Error("cancelled lookup"));
   await expect(result).rejects.toThrow("cancelled lookup");
   expect(mocks.connect).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("discovery sends configured OAuth credentials to the provider rather than transport headers", async () => {
   await discoverEveMcpTools("owner", context.abortSignal);
   expect(mocks.configure).toHaveBeenCalledWith({
@@ -577,7 +631,8 @@ it("discovery sends configured OAuth credentials to the provider rather than tra
     url: connector.url,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): it("a timed-out connector does not discard completed discovery or suppress the next c keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): it("a timed-out connector does not discard completed discovery or suppress the next c uses 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -593,7 +648,9 @@ it("a timed-out connector does not discard completed discovery or suppress the n
   try {
     mocks.list.mockResolvedValue([
       connector,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...connector, id: "slow", nameId: "slow" },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...connector, id: "later", nameId: "later" },
     ]);
     mocks.tools
@@ -613,6 +670,8 @@ it("a timed-out connector does not discard completed discovery or suppress the n
     timeout.mockRestore();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async --
@@ -630,7 +689,9 @@ it("schema conversion cancellation stops later tool conversions after the pendin
   const laterSchema = vi.fn(() => ({ type: "object" as const }));
   try {
     mocks.tools.mockResolvedValueOnce({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       first: { ...definition, inputSchema: jsonSchema(firstSchema) },
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       later: { ...definition, inputSchema: jsonSchema(laterSchema) },
     });
     const discovery = discoverEveMcpTools("owner", context.abortSignal);
@@ -647,12 +708,16 @@ it("schema conversion cancellation stops later tool conversions after the pendin
     timeout.mockRestore();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This mcp-tools.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 
 it("runs without a receipt when approval is disabled for this connection", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValue({ ...connector, requireApproval: false });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   expect(
     await requestEveMcpApproval(
@@ -672,9 +737,12 @@ it("runs without a receipt when approval is disabled for this connection", async
     )
   ).resolves.toMatchObject({ output: "Echo output" });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rechecks the connection policy when approval is enabled after request evaluation", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   mocks.get.mockResolvedValueOnce({ ...connector, requireApproval: false });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding unapprovedContext excludes approval from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { approval: _approval, ...unapprovedContext } = context;
   expect(
     await requestEveMcpApproval(
@@ -695,3 +763,4 @@ it("rechecks the connection policy when approval is enabled after request evalua
   ).rejects.toThrow("owner approval receipt");
   expect(execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

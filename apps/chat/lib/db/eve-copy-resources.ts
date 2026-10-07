@@ -3,16 +3,21 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  assertEveCopySourceAvailable,
   EveCopySourceChangedError,
+  assertEveCopySourceAvailable,
   lockEveCopyOwners,
   readEveCopy,
 } from "./eve-copy-journal";
+/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversationCopy,
   eveConversationCopyFile,
@@ -23,10 +28,12 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveStoredFile,
 } from "./schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const FIRST_ROW_INDEX = 0;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types --
 max-lines-per-function (#510): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): writeEveCopyFile keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -34,13 +41,13 @@ max-statements (#512): writeEveCopyFile keeps its ordered workflow and input con
 typescript/prefer-readonly-parameter-types (#565): writeEveCopyFile accepts storage: { readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffe; file: Blob; tx; candidate; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * The family lock fences writes against rejection/deletion, including an uncertain storage reply.
- * @param ownerId Owner of the allocated destination copy.
- * @param conversationId Destination conversation whose file inventory is already allocated.
- * @param key Allocated destination file key to verify and write.
- * @param storage Source reader and destination writer used while the copy family is locked.
- * @param storage.readSourceFile Read the source bytes and content type for an allocated file.
- * @param storage.writeDestinationFile Acknowledge the destination write before recording its receipt.
- * @returns The allocated receipt, with writtenAt recorded after content type, size, and digest verification.
+ * @param {string} ownerId Owner of the allocated destination copy.
+ * @param {string} conversationId Destination conversation whose file inventory is already allocated.
+ * @param {string} key Allocated destination file key to verify and write.
+ * @param {{ readSourceFile: ( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffer">>; writeDestinationFile: (key: string, file: Blob) => Promise<void>; }} storage Source reader and destination writer used while the copy family is locked.
+ * @param {( key: string ) => Promise<Pick<Blob, "type" | "arrayBuffer">>} storage.readSourceFile Read the source bytes and content type for an allocated file.
+ * @param {(key: string, file: Blob) => Promise<void>} storage.writeDestinationFile Acknowledge the destination write before recording its receipt.
+ * @returns {Promise<typeof eveConversationCopyFile.$inferSelect>} The allocated receipt, with writtenAt recorded after content type, size, and digest verification.
  */
 const writeEveCopyFile = async (
   ownerId: string,
@@ -84,12 +91,14 @@ const writeEveCopyFile = async (
     if (receipt.writtenAt) {
       return receipt;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from copy.plan; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const file = copy.plan?.files.find((candidate) => candidate.key === key);
     if (copy.phase !== "preparing" || !file) {
       throw new Error("Saved copy preparation is unavailable.");
     }
     await assertEveCopySourceAvailable(tx, copy);
     const blob =
+      // oxlint-disable-next-line no-ternary -- Keep blob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       file.source.kind === "inline"
         ? new Blob([Buffer.from(file.source.base64, "base64")], {
             type: file.mediaType,
@@ -122,6 +131,8 @@ const writeEveCopyFile = async (
     return written;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writeEveCopyDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -132,8 +143,8 @@ typescript/prefer-readonly-parameter-types (#565): writeEveCopyDocuments accepts
 unicorn/no-null (#570): writeEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * All ancestry and heads commit together, before any copy can be accepted.
- * @param ownerId Owner whose copy family lock authorizes the destination writes.
- * @param conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
+ * @param {string} ownerId Owner whose copy family lock authorizes the destination writes.
+ * @param {string} conversationId Allocated copy receiving revision ancestry, checkpoint entries, and document heads atomically.
  */
 const writeEveCopyDocuments = async (
   ownerId: string,
@@ -160,6 +171,7 @@ const writeEveCopyDocuments = async (
     }
     const revisions = copy.plan.documents.flatMap((document) =>
       document.revisions.map((revision) => ({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...revision,
         conversationId,
         createdAt: new Date(revision.createdAt),
@@ -195,6 +207,7 @@ const writeEveCopyDocuments = async (
           conversationId,
           messageIndex: checkpoint.messageIndex,
           ownerId,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing head own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...head,
         }))
       );
@@ -208,6 +221,8 @@ const writeEveCopyDocuments = async (
       .where(eq(eveConversationCopy.conversationId, conversationId));
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve acceptEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
@@ -219,9 +234,9 @@ unicorn/max-nested-calls (#568): acceptEveCopy keeps its ordered workflow and in
 unicorn/no-null (#570): acceptEveCopy preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * This short transaction is the publication boundary; no native or storage I/O runs inside it.
- * @param ownerId Owner whose copy and source family are locked for publication.
- * @param conversationId Copy whose file receipts, committed documents, and current source heads must match its plan.
- * @returns The accepted phase, or the existing bound phase for an idempotent publication replay.
+ * @param {string} ownerId Owner whose copy and source family are locked for publication.
+ * @param {string} conversationId Copy whose file receipts, committed documents, and current source heads must match its plan.
+ * @returns {Promise<"accepted" | "bound">} The accepted phase, or the existing bound phase for an idempotent publication replay.
  */
 const acceptEveCopy = async (
   ownerId: string,
@@ -249,6 +264,7 @@ const acceptEveCopy = async (
     }
     await assertEveCopySourceAvailable(tx, copy);
     const heads =
+      // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       copy.plan.sourceHeads.length > 0
         ? await tx
             .select({
@@ -328,5 +344,8 @@ const acceptEveCopy = async (
     return "accepted";
   });
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
 export { acceptEveCopy, writeEveCopyDocuments, writeEveCopyFile };
+/* oxlint-enable import/no-named-export */

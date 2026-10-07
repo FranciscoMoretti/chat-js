@@ -3,10 +3,14 @@ import { describe, expect, test } from "bun:test";
 import { Chat } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ThreadRunChat } from "#thread-source/ai-sdk-run-chat";
+/* oxlint-enable sort-imports */
 import type { ThreadRunSpec } from "#thread-source/ai-sdk-run-chat";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ControlledTransport } from "./support/run-chat-controlled-transport";
+/* oxlint-enable sort-imports */
 import { TestRunHost } from "./support/test-run-host";
 
 const userMessage = (): UIMessage => ({
@@ -38,6 +42,7 @@ const emitRichResponse = (
   transport.finish();
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve waitFor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 const waitFor = async (
   predicate: () => boolean,
@@ -52,12 +57,14 @@ const waitFor = async (
   await Bun.sleep(1);
   await waitFor(predicate, attemptsRemaining - 1);
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("ThreadRunChat", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("matches the AI SDK React Chat reducer for one response", async (): Promise<void> => {
     const spec = createSpec();
     const standardTransport = new ControlledTransport();
@@ -74,10 +81,14 @@ describe("ThreadRunChat", (): void => {
     const standardRequest = standardChat.sendMessage(input);
     const threadRequest = threadRunChat.start();
     await Bun.sleep(0);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messages from threadTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(threadTransport.request?.messages).toEqual(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messages from standardTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       standardTransport.request?.messages
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from threadTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(threadTransport.request?.messageId).toBe(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading messageId from standardTransport.request; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       standardTransport.request?.messageId
     );
     emitRichResponse(standardTransport);
@@ -89,7 +100,8 @@ describe("ThreadRunChat", (): void => {
     );
     expect(host.status).toBe("ready");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("adopts the server response identity from the start chunk", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -109,10 +121,12 @@ describe("ThreadRunChat", (): void => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
     expect(spec.messageId).toBe("server-id");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("reports a failed stream exactly once without adding a response", async (): Promise<void> => {
     const error = new Error("stream failed");
     const callbackErrors: Error[] = [];
@@ -134,7 +148,8 @@ describe("ThreadRunChat", (): void => {
     expect(host.status).toBe("error");
     expect(host.tree.getChildren(spec.parentMessageId)).toEqual([]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues one response after an automatic tool follow-up", async (): Promise<void> => {
     const spec = createSpec();
     const transport = new ControlledTransport();
@@ -164,6 +179,7 @@ describe("ThreadRunChat", (): void => {
     transport.finish();
 
     await waitFor((): boolean => transport.requests.length === 2);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
     transport.emit(
       { messageId: "assistant-1", type: "start" },
@@ -181,6 +197,7 @@ describe("ThreadRunChat", (): void => {
         .getChildren(spec.parentMessageId)
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
       expect.objectContaining({
         output: { temperature: 22 },
@@ -195,6 +212,7 @@ describe("ThreadRunChat", (): void => {
     ]);
     expect(host.status).toBe("ready");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */

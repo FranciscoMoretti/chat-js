@@ -1,5 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   boolean,
   check,
@@ -17,8 +18,11 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyPlan, EveCopySeed } from "@/lib/eve/copy-journal-contract";
+/* oxlint-enable sort-imports */
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
 
@@ -70,7 +74,6 @@ type UserCredit = InferSelectModel<typeof userCredit>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): userModelPreference accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const userModelPreference = pgTable(
   "UserModelPreference",
   {
@@ -85,19 +88,16 @@ const userModelPreference = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    UserModelPreference_user_id_idx: index(
-      "UserModelPreference_user_id_idx"
-    ).on(columns.userId),
-    pk: primaryKey({ columns: [columns.userId, columns.modelId] }),
-  })
+  (columns) => [
+    index("UserModelPreference_user_id_idx").on(columns.userId),
+    primaryKey({ columns: [columns.userId, columns.modelId] }),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type UserModelPreference = InferSelectModel<typeof userModelPreference>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): project accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const project = pgTable(
   "Project",
   {
@@ -115,10 +115,10 @@ const project = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    Project_id_user: unique("Project_id_user").on(columns.id, columns.userId),
-    Project_user_id_idx: index("Project_user_id_idx").on(columns.userId),
-  })
+  (columns) => [
+    unique("Project_id_user").on(columns.id, columns.userId),
+    index("Project_user_id_idx").on(columns.userId),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -264,7 +264,6 @@ const verification = pgTable("verification", {
 });
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpConnector accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpConnector = pgTable(
   "McpConnector",
   {
@@ -288,25 +287,20 @@ const mcpConnector = pgTable(
     // Null = global.
     userId: text("userId").references(() => user.id, { onDelete: "cascade" }),
   },
-  (columns) => ({
-    McpConnector_user_id_idx: index("McpConnector_user_id_idx").on(
-      columns.userId
-    ),
-    McpConnector_user_name_id_idx: index("McpConnector_user_name_id_idx").on(
+  (columns) => [
+    index("McpConnector_user_id_idx").on(columns.userId),
+    index("McpConnector_user_name_id_idx").on(columns.userId, columns.nameId),
+    uniqueIndex("McpConnector_user_name_id_unique").on(
       columns.userId,
       columns.nameId
     ),
-    McpConnector_user_name_id_unique: uniqueIndex(
-      "McpConnector_user_name_id_unique"
-    ).on(columns.userId, columns.nameId),
-  })
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type McpConnector = InferSelectModel<typeof mcpConnector>;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): mcpOAuthSession accepts columns; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-// oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve the existing schema constraint definitions; changing Drizzle table configuration requires migration diff verification.
 const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {
@@ -329,14 +323,10 @@ const mcpOAuthSession = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (columns) => ({
-    McpOAuthSession_connector_idx: index("McpOAuthSession_connector_idx").on(
-      columns.mcpConnectorId
-    ),
-    McpOAuthSession_state_idx: index("McpOAuthSession_state_idx").on(
-      columns.state
-    ),
-  })
+  (columns) => [
+    index("McpOAuthSession_connector_idx").on(columns.mcpConnectorId),
+    index("McpOAuthSession_state_idx").on(columns.state),
+  ]
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
@@ -1073,6 +1063,7 @@ const eveSearchText = pgTable(
     ),
   ]
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (account, eveChat, eveChatProject, eveCodeSandbox, eveConversation, eveConversationCopy, eveConversationCopyFile, eveDocumentCheckpoint, eveDocumentCheckpointEntry, eveDocumentHead, eveDocumentRevision, eveFileReference, eveGuest, eveGuestMessage, eveGuestRate, eveImportedDocumentCheckpoint, eveImportedDocumentCheckpointEntry, eveNamedDocumentCheckpoint, eveNamedDocumentCheckpointEntry, eveResponseGroup, eveSearchText, eveStoredFile, eveSubagentSession, eveUsage, eveVote, eveWorkflowBackend, mcpConnector, mcpOAuthSession, project, schema, session, user, userCredit, userModelPreference, verification); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
@@ -1113,6 +1104,8 @@ export {
   userModelPreference,
   verification,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveChat, EveDocumentRevision, McpConnector, McpOAuthSession, Project, User, UserCredit, UserModelPreference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   EveChat,
   EveDocumentRevision,
@@ -1123,3 +1116,4 @@ export type {
   UserCredit,
   UserModelPreference,
 };
+/* oxlint-enable import/no-named-export */

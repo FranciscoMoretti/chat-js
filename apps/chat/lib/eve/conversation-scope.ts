@@ -1,13 +1,18 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   bindAcceptedEveConversation,
   readEveSessionMapping,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { eveRequest } from "./server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSessionMappingError } from "./session-mapping-error";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertNativeReceipt's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable init-declarations, max-params, max-statements, no-magic-numbers -- * init-declarations (#507): assertNativeReceipt assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-params (#511): assertNativeReceipt keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -50,6 +55,9 @@ const assertNativeReceipt = async (
     throw new EveSessionMappingError("binding_conflict");
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveEveConversationScope); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveEveConversationScope's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-params, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-params, max-statements, typescript/strict-boolean-expressions -- * max-params (#511): resolveEveConversationScope keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -57,11 +65,11 @@ const assertNativeReceipt = async (
  * typescript/strict-boolean-expressions (#610): resolveEveConversationScope intentionally keeps the existing falsy-value behavior of ownerId; identity.data; row; row.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Auth attributes locate a reservation; only its exact native receipt authorizes binding.
- * @param ownerId - Authenticated owner; absence raises an authentication error.
- * @param sessionId - Native session identity that must match the durable binding or receipt.
- * @param abortSignal - Cancellation checked before lookup and after native receipt failures.
- * @param reservationId - Optional creation UUID from auth attributes, validated before lookup.
- * @returns Durable conversation identity and the authenticated owner after receipt reconciliation.
+ * @param {string | undefined} ownerId - Authenticated owner; absence raises an authentication error.
+ * @param {string} sessionId - Native session identity that must match the durable binding or receipt.
+ * @param {ReadonlyNativeSurface<AbortSignal>} abortSignal - Cancellation checked before lookup and after native receipt failures.
+ * @param {unknown | undefined} reservationId - Optional creation UUID from auth attributes, validated before lookup.
+ * @returns {Promise<{ conversationId: string; ownerId: string }>} Durable conversation identity and the authenticated owner after receipt reconciliation.
  */
 export const resolveEveConversationScope = async (
   ownerId: string | undefined,
@@ -78,10 +86,12 @@ export const resolveEveConversationScope = async (
     throw new EveSessionMappingError("binding_conflict");
   }
   const row = await readEveSessionMapping(
+    // oxlint-disable-next-line no-ternary -- Keep readEveSessionMapping argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     identity.data ? { reservationId: identity.data } : { sessionId }
   );
   if (!row) {
     throw new EveSessionMappingError(
+      // oxlint-disable-next-line no-ternary -- Keep EveSessionMappingError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       identity.data ? "identity_missing" : "identity_pending"
     );
   }
@@ -111,4 +121,6 @@ export const resolveEveConversationScope = async (
   await bindAcceptedEveConversation(ownerId, row.id, sessionId);
   return { conversationId: row.id, ownerId };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, typescript/strict-boolean-expressions */

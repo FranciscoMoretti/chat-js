@@ -1,4 +1,5 @@
 import React from "react";
+/* oxlint-disable react/jsx-no-literals -- GitIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable no-magic-numbers, react/jsx-max-depth -- GitIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
 
 const GitIcon = ({
@@ -27,6 +28,8 @@ const GitIcon = ({
     </defs>
   </svg>
 );
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- SummarizeIcon renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable no-magic-numbers, react/jsx-max-depth */
 
 /* oxlint-disable no-magic-numbers, react/no-multi-comp -- SummarizeIcon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { size = 16 }: { size?: number }). */
@@ -52,5 +55,8 @@ const SummarizeIcon = ({
     />
   </svg>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (GitIcon, SummarizeIcon); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp */
 export { GitIcon, SummarizeIcon };
+/* oxlint-enable import/no-named-export */

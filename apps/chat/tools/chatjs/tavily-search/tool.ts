@@ -1,16 +1,24 @@
 import { tavily } from "@tavily/core";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineTool } from "eve/tools";
+/* oxlint-enable sort-imports */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+/* oxlint-enable sort-imports */
 
 import { webSearchInput } from "./schemas";
 
@@ -35,6 +43,7 @@ type ResearchExecution = Readonly<{
 
 const FIRST_TOPIC_INDEX = 0;
 const NEWS_LOOKBACK_DAYS = 7;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createTavilySearch's awaited sequencing and rejected-Promise behavior. */
 const createTavilySearch =
   (
     options: Readonly<{
@@ -57,7 +66,7 @@ const createTavilySearch =
     const response = await tavily({ apiKey: env.TAVILY_API_KEY }).search(
       query,
       {
-        // oxlint-disable-next-line eslint/no-undefined -- Tavily merges default days=3 before caller options; the own undefined days value overrides that default so general-search JSON omits days.
+        // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Tavily merges default days=3 before caller options; the own undefined days value overrides that default so general-search JSON omits days.; no-ternary: Keep days as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         days: topic === "news" ? NEWS_LOOKBACK_DAYS : undefined,
         excludeDomains: [...options.excludeDomains],
         includeAnswer: true,
@@ -78,7 +87,9 @@ const createTavilySearch =
       })
     );
   };
-
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (webSearch); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve webSearch's awaited sequencing and rejected-Promise behavior. */
 export const webSearch = defineTool({
   description: `Multi-query web search (supports depth, topic & result limits). Always cite sources inline.
 
@@ -143,3 +154,5 @@ Avoid:
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

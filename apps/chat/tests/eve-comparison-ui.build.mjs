@@ -21,6 +21,7 @@ const replacements = {
  * no-magic-numbers (#517): result uses 2, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): result accepts builder; args; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder waits for its comparison bundle before publishing it to stdout.
 const result = await build({
   define: {
     "process.env": "{}",
@@ -85,5 +86,6 @@ if (!result.success) {
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): process.stdout.write uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun fixture builder reads the completed comparison bundle before writing it to stdout.
 process.stdout.write(await result.outputs[0].text());
 /* oxlint-enable no-magic-numbers */

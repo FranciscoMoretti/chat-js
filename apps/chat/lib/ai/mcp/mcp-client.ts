@@ -2,13 +2,17 @@ import {
   auth,
   experimental_createMCPClient as createMCPClient,
 } from "@ai-sdk/mcp";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
+/* oxlint-enable sort-imports */
 import type { Tool } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
+/* oxlint-enable sort-imports */
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
@@ -25,6 +29,7 @@ type McpClientStatus =
   | "authorizing"
   | "incompatible";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MCPClient); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
@@ -94,6 +99,7 @@ export class MCPClient {
         software_id: config.appPrefix,
         software_version: "1.0.0",
         token_endpoint_auth_method:
+          // oxlint-disable-next-line no-ternary -- Keep token_endpoint_auth_method as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           typeof this.serverConfig.oauthClientId === "string" &&
           this.serverConfig.oauthClientId !== "" &&
           typeof this.serverConfig.oauthClientSecret === "string" &&
@@ -130,13 +136,16 @@ export class MCPClient {
   }
 
   public get serverInfo() {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Class client is absent before connection and reset to undefined by close; serverInfo getter must remain absent then.
     return this.client?.serverInfo;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connect's awaited sequencing and rejected-Promise behavior. */
   public async connect(
     oauthState?: string,
     abortSignal?: AbortSignal
   ): Promise<McpClientInstance | undefined> {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Connect exposes an optional caller AbortSignal; omitted signal still permits shared initialization.
     abortSignal?.throwIfAborted();
     if (!this.connectPromise) {
       // oxlint-disable-next-line promise/prefer-await-to-then -- Shared initialization clears independently of any cancelled caller's wait.
@@ -162,7 +171,8 @@ export class MCPClient {
       abortSignal.removeEventListener("abort", cancel);
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connectOnce's awaited sequencing and rejected-Promise behavior. */
   private async connectOnce(
     oauthState?: string
   ): Promise<McpClientInstance | undefined> {
@@ -229,7 +239,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve attemptConnection's awaited sequencing and rejected-Promise behavior. */
   /**
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
@@ -257,15 +268,18 @@ export class MCPClient {
       }
       return {
         needsAuth: false,
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         status: this.client ? "connected" : "disconnected",
       };
     } catch (error) {
       const errorMessage =
+        // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : String(error);
       log.error(
         {
           connectorId: this.id,
           errorMessage,
+          // oxlint-disable-next-line no-ternary -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           errorStack: error instanceof Error ? error.stack : undefined,
         },
         "attemptConnection failed"
@@ -287,7 +301,8 @@ export class MCPClient {
       return { error: errorMessage, needsAuth: false, status: "disconnected" };
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve finishAuth's awaited sequencing and rejected-Promise behavior. */
   /**
    * Called after callback receives code to complete the OAuth flow.
    */
@@ -310,7 +325,8 @@ export class MCPClient {
     this.authorizationUrl = undefined;
     // Don't set to connected - tokens are saved, next connect() will use them
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tools's awaited sequencing and rejected-Promise behavior. */
   /**
    * Get tools from the MCP server, already in AI SDK format.
    */
@@ -328,7 +344,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listResources's awaited sequencing and rejected-Promise behavior. */
   /**
    * List resources from the MCP server.
    */
@@ -344,7 +361,8 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listPrompts's awaited sequencing and rejected-Promise behavior. */
   /**
    * List prompts from the MCP server.
    */
@@ -360,12 +378,14 @@ export class MCPClient {
       throw error;
     }
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve close's awaited sequencing and rejected-Promise behavior. */
   /**
    * Close the connection to the MCP server.
    */
   public async close(): Promise<void> {
     this.generation += 1;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Connection abort controller is optional before the first initialization; close also works before connecting.
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
     this.connectPromise = undefined;
     this.oauthProvider = this.createOAuthProvider();
@@ -374,13 +394,16 @@ export class MCPClient {
     this.authorizationUrl = undefined;
     this._status = "disconnected";
     try {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Close snapshots possibly absent class client then resets it. await client?.close() also preserves a microtask yield when no client exists; an if(client) without await would change invalidation timing.
       await client?.close();
     } catch (error) {
       log.error({ connectorId: this.id, error }, "Error closing MCP client");
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Optional cache invalidation callback is supplied by client configuration; closing must work with no callback.
     this.invalidateCache?.();
   }
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handlePotentialAuthError's awaited sequencing and rejected-Promise behavior. */
   /**
    * Check if an error is an auth error (401/403) and invalidate caches if so.
    */
@@ -391,6 +414,7 @@ export class MCPClient {
     if (this.client !== origin) {
       return;
     }
+    // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const errorMessage = error instanceof Error ? error.message : String(error);
     const isAuthError =
       errorMessage.includes("401") ||
@@ -406,7 +430,9 @@ export class MCPClient {
       await this.close();
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable jsdoc/require-param */

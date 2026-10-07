@@ -1,17 +1,23 @@
 "use client";
 
 import { XIcon } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LucideIcon } from "lucide-react";
+/* oxlint-enable sort-imports */
 import React from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentProps, HTMLAttributes } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 type ArtifactProps = HTMLAttributes<HTMLDivElement>;
@@ -20,6 +26,7 @@ type ArtifactProps = HTMLAttributes<HTMLDivElement>;
 
 const Artifact = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactProps): React.JSX.Element => (
   <div
@@ -27,6 +34,7 @@ const Artifact = ({
       "bg-background flex flex-col overflow-hidden rounded-lg border shadow-sm",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Artifact's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -38,6 +46,7 @@ type ArtifactHeaderProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactHeaderProps): React.JSX.Element => (
   <div
@@ -45,12 +54,14 @@ const ArtifactHeader = ({
       "bg-muted/50 flex items-center justify-between border-b px-4 py-3",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactCloseProps = ComponentProps<typeof Button>;
+/* oxlint-disable react/jsx-no-literals -- ArtifactClose renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ArtifactClose: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
@@ -59,9 +70,11 @@ const ArtifactClose = ({
   children,
   size = "sm",
   variant = "ghost",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactCloseProps): React.JSX.Element => (
   <Button
+    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "text-muted-foreground hover:text-foreground size-8 p-0",
       className
@@ -69,12 +82,19 @@ const ArtifactClose = ({
     size={size}
     type="button"
     variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactClose's Button prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    {children ?? <XIcon className="size-4" />}
+    {children ?? (
+      <XIcon
+        // oxlint-disable-next-line react/forbid-component-props -- XIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-4"
+      />
+    )}
     <span className="sr-only">Close</span>
   </Button>
 );
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
@@ -83,10 +103,12 @@ type ArtifactTitleProps = HTMLAttributes<HTMLParagraphElement>;
 
 const ArtifactTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactTitleProps): React.JSX.Element => (
   <p
     className={cn("text-foreground text-sm font-medium", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactTitle's native p attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
@@ -98,9 +120,14 @@ type ArtifactDescriptionProps = HTMLAttributes<HTMLParagraphElement>;
 
 const ArtifactDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactDescriptionProps): React.JSX.Element => (
-  <p className={cn("text-muted-foreground text-sm", className)} {...props} />
+  <p
+    className={cn("text-muted-foreground text-sm", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactDescription's native p attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -110,9 +137,14 @@ type ArtifactActionsProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactActions = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactActionsProps): React.JSX.Element => (
-  <div className={cn("flex items-center gap-1", className)} {...props} />
+  <div
+    className={cn("flex items-center gap-1", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactActions's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
@@ -132,10 +164,12 @@ const ArtifactAction = ({
   className,
   size = "sm",
   variant = "ghost",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, label, icon, children, className, size, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactActionProps): React.JSX.Element => {
   const button = (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "text-muted-foreground hover:text-foreground size-8 p-0",
         className
@@ -143,9 +177,20 @@ const ArtifactAction = ({
       size={size}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactAction's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      {Icon ? <Icon className="size-4" /> : children}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        Icon ? (
+          <Icon
+            // oxlint-disable-next-line react/forbid-component-props -- Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="size-4"
+          />
+        ) : (
+          children
+        )
+      }
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
       <span className="sr-only">{label || tooltip}</span>
     </Button>
@@ -174,10 +219,16 @@ type ArtifactContentProps = HTMLAttributes<HTMLDivElement>;
 
 const ArtifactContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ArtifactContentProps): React.JSX.Element => (
-  <div className={cn("flex-1 overflow-auto p-4", className)} {...props} />
+  <div
+    className={cn("flex-1 overflow-auto p-4", className)}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ArtifactContent's native div attributes, preserving caller events and accessibility props.
+    {...props}
+  />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Artifact, ArtifactAction, ArtifactActions, ArtifactClose, ArtifactContent, ArtifactDescription, ArtifactHeader, ArtifactTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export {
   Artifact,
@@ -189,6 +240,8 @@ export {
   ArtifactHeader,
   ArtifactTitle,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ArtifactActionProps, ArtifactActionsProps, ArtifactCloseProps, ArtifactContentProps, ArtifactDescriptionProps, ArtifactHeaderProps, ArtifactProps, ArtifactTitleProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   ArtifactActionProps,
   ArtifactActionsProps,
@@ -199,3 +252,4 @@ export type {
   ArtifactProps,
   ArtifactTitleProps,
 };
+/* oxlint-enable import/no-named-export */

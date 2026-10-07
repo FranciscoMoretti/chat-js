@@ -1,7 +1,9 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
@@ -26,6 +28,7 @@ const SettingsLayoutShell = ({
     </div>
   </div>
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve SettingsLayoutContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsLayoutContent: ; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, }: { children: React.ReactNode; }). */
 
@@ -36,12 +39,14 @@ const SettingsLayoutContent = async ({
 }): Promise<ReactJSX.Element> => {
   const session = await auth.api.getSession({ headers: await headers() });
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!session?.user) {
     redirect("/login");
   }
 
   return <SettingsLayoutShell>{children}</SettingsLayoutShell>;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- SettingsLayout: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children }: { children: React.ReactNode }). */

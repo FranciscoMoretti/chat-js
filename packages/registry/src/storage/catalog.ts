@@ -2,19 +2,29 @@
 import { readFileSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-import { getProvider, PROVIDER_NAMES } from "files-sdk/providers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { PROVIDER_NAMES, getProvider } from "files-sdk/providers";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { storageDefinitionSchema } from "../../metadata";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getStorageEnvironmentRequirements } from "./environment";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
@@ -38,7 +48,11 @@ const sdkPackage = z
 /* oxlint-enable node/no-sync */
 
 const unsupported = new Set(["box", "bun-s3", "convex", "fs", "s3-fetch"]);
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+type StorageEnvironmentRequirementReader = Readonly<{
+  description: string;
+  options: readonly (readonly Readonly<{ key: string }>[])[];
+}>;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInStorage); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const builtInStorage = PROVIDER_NAMES.filter(
   (id) => !unsupported.has(id)
 ).map((id) => {
@@ -70,7 +84,7 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         configKeys: provider.env.config ?? [],
         contractVersion: 1,
         envRequirements: getStorageEnvironmentRequirements(id).map(
-          (requirement) => ({
+          (requirement: StorageEnvironmentRequirementReader) => ({
             description: requirement.description,
             options: requirement.options.map((option) =>
               option.map(({ key }) => key)
@@ -79,7 +93,11 @@ export const builtInStorage = PROVIDER_NAMES.filter(
         ),
         id,
         kind: "storage",
-        optionalEnv: provider.env.optional?.map(({ key }) => key) ?? [],
+        optionalEnv:
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.env.optional; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
+          provider.env.optional?.map(
+            ({ key }: Readonly<{ key: string }>) => key
+          ) ?? [],
       }),
     },
     name: `${id}-storage`,
@@ -87,4 +105,4 @@ export const builtInStorage = PROVIDER_NAMES.filter(
     type: "registry:item" as const,
   };
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

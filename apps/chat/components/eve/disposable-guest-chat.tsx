@@ -2,25 +2,35 @@
 
 import type { EveMessage } from "eve/client";
 import { useEveAgent } from "eve/react";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useEffect, useRef, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+/* oxlint-enable sort-imports */
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatLayout, ChatLayoutMain } from "@/components/chat/chat-layout";
+/* oxlint-enable sort-imports */
 import { ChatWelcomeView } from "@/components/chat/chat-welcome-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import type { UiToolName } from "@/lib/ai/types";
 /* oxlint-disable import/max-dependencies -- @/providers/default-model-provider import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useDefaultModel } from "@/providers/default-model-provider";
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveComposer } from "./eve-composer";
+/* oxlint-enable sort-imports */
 import { EveMessages } from "./eve-messages";
 import { useEveAttachments } from "./use-eve-attachments";
 
@@ -33,6 +43,7 @@ type Binding = z.infer<typeof bindingSchema> & {
   firstMessage: string;
   modelId: string;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- retireGuest: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including binding: Binding). */
 
 const retireGuest = async (binding: Binding): Promise<void> => {
@@ -50,6 +61,8 @@ const retireGuest = async (binding: Binding): Promise<void> => {
     // Unload delivery is best effort. EVE's session timeout handles abandonment.
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createGuestSession's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type -- createGuestSession: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
@@ -65,6 +78,8 @@ const createGuestSession = async (modelId: string) => {
   }
   return bindingSchema.parse(await response.json());
 };
+/* oxlint-disable react/jsx-no-literals -- GuestConversationView renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- GuestConversationView: jsdoc/require-param: the TypeScript signature describes these parameters; the prose documents behavior rather than duplicate tags; jsdoc/require-returns: the inferred or annotated return type describes the value; the prose documents behavior rather than duplicate tags; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including failure); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -94,8 +109,14 @@ const GuestConversationView = ({
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
   return (
     <>
-      <Conversation className="min-h-0 flex-1">
-        <ConversationContent className="mx-auto w-full max-w-3xl">
+      <Conversation
+        // oxlint-disable-next-line react/forbid-component-props -- Conversation accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="min-h-0 flex-1"
+      >
+        <ConversationContent
+          // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="mx-auto w-full max-w-3xl"
+        >
           <EveMessages
             messages={messages}
             isReadonly={false}
@@ -139,6 +160,7 @@ const GuestConversationView = ({
           selectedTool={selectedTool}
           onToolChange={setSelectedTool}
           retainedModelId={modelId}
+          // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           status={busy ? "streaming" : "ready"}
           disabled={busy || expired}
           draft={draft}
@@ -147,6 +169,7 @@ const GuestConversationView = ({
             onSend(draft.trim());
           }}
           onStop={
+            // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             busy && !expired
               ? (): void => {
                   onStop();
@@ -158,6 +181,7 @@ const GuestConversationView = ({
     </>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- GuestConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { binding }: { binding: Binding }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including agent.error?.message). */
@@ -182,6 +206,7 @@ const GuestConversation = ({
     agent.status === "submitted" ||
     agent.status === "streaming" ||
     agent.status === "resuming";
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve send's awaited sequencing and rejected-Promise behavior. */
   const send = async (text: string): Promise<void> => {
     if (pending.current) {
       return;
@@ -197,12 +222,14 @@ const GuestConversation = ({
       await agent.send(text);
     } catch (error) {
       setCommandError(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Message could not be sent."
       );
       setDraft(text);
     }
     pending.current = false;
   };
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     // EVE attaches its observer on the next task. Defer the initial send too,
     // so React Strict Mode's probe cleanup cannot abort the first message.
@@ -228,6 +255,7 @@ const GuestConversation = ({
     window.addEventListener("pagehide", retire);
     return (): void => window.removeEventListener("pagehide", retire);
   }, [binding]);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stop's awaited sequencing and rejected-Promise behavior. */
   const stop = async (): Promise<void> => {
     try {
       await agent.cancel();
@@ -235,6 +263,7 @@ const GuestConversation = ({
       setCommandError("Could not stop the response.");
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const latestTurn = agent.events.findLast(
     (event) =>
       event.type === "turn.started" ||
@@ -244,8 +273,9 @@ const GuestConversation = ({
   );
   const failure =
     commandError ||
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value.
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing, oxc/no-optional-chaining -- #602: Falsy state or empty error text intentionally selects the existing fallback; coalescing would retain the empty value. Optional chain: Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     agent.error?.message ||
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined);
   return (
     <GuestConversationView
@@ -279,6 +309,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
   const [commandError, setCommandError] = useState("");
   const pending = useRef(false);
   const generation = useRef(0);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submit's awaited sequencing and rejected-Promise behavior. */
   const submit = async (): Promise<void> => {
     if (pending.current || !draft.trim()) {
       return;
@@ -289,6 +320,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     setCommandError("");
     try {
       const created = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing (await createGuestSession(modelId)) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...(await createGuestSession(modelId)),
         firstMessage: draft.trim(),
         modelId,
@@ -304,6 +336,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
         return;
       }
       setCommandError(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error ? error.message : "Could not start chat."
       );
     }
@@ -312,6 +345,7 @@ const DisposableGuestChat = (): ReactJSX.Element => {
       setBusy(false);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   useEffect(() => {
     const reset = (): void => {
       generation.current += 1;
@@ -340,38 +374,48 @@ const DisposableGuestChat = (): ReactJSX.Element => {
     <ChatLayout isSecondaryPanelVisible={false}>
       <ChatLayoutMain defaultSize={100}>
         <section className="flex h-full min-h-0 flex-col">
-          <ChatHeaderView breadcrumb={null} className="h-(--header-height)" />
-          {binding ? (
-            <GuestConversation binding={binding} key={binding.sessionId} />
-          ) : (
-            <ChatWelcomeView>
-              {commandError && (
-                <p role="alert" className="text-destructive mb-3 text-sm">
-                  {commandError}
-                </p>
-              )}
-              <EveComposer
-                // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
-                autoFocus
-                status={busy ? "submitted" : "ready"}
-                disabled={busy || !modelId}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSubmit={() => {
-                  void submit();
-                }}
-                files={files}
-                selectedTool={selectedTool}
-                onToolChange={setSelectedTool}
-              />
-            </ChatWelcomeView>
-          )}
+          <ChatHeaderView
+            breadcrumb={null}
+            // oxlint-disable-next-line react/forbid-component-props -- ChatHeaderView accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-(--header-height)"
+          />
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            binding ? (
+              <GuestConversation binding={binding} key={binding.sessionId} />
+            ) : (
+              <ChatWelcomeView>
+                {commandError && (
+                  <p role="alert" className="text-destructive mb-3 text-sm">
+                    {commandError}
+                  </p>
+                )}
+                <EveComposer
+                  // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Preserve the guest welcome typing workflow; changing initial page focus requires accessibility and UX review.
+                  autoFocus
+                  // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  status={busy ? "submitted" : "ready"}
+                  disabled={busy || !modelId}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSubmit={() => {
+                    void submit();
+                  }}
+                  files={files}
+                  selectedTool={selectedTool}
+                  onToolChange={setSelectedTool}
+                />
+              </ChatWelcomeView>
+            )
+          }
         </section>
       </ChatLayoutMain>
     </ChatLayout>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DisposableGuestChat, GuestConversationView); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- disposable-guest-chat keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { DisposableGuestChat, GuestConversationView };
+/* oxlint-enable import/no-named-export */

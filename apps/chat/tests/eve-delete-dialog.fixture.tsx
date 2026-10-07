@@ -4,7 +4,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDeleteDialogView } from "../components/eve/eve-delete-dialog";
+/* oxlint-enable sort-imports */
 import type { EveDeletionPhase } from "../components/eve/eve-delete-dialog";
 /* oxlint-enable import/no-relative-parent-imports */
 

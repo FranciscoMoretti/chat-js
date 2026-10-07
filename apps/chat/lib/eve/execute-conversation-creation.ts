@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CreationConflictError,
   CreationProjectNotFoundError,
@@ -11,18 +12,25 @@ import {
   getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
-import type { createConversationInput, EveForkInput } from "./contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { EveForkInput, createConversationInput } from "./contracts";
+/* oxlint-enable sort-imports */
 import { eveConversationTitleFallback } from "./conversation-title";
 import { eveCreationContentHash } from "./creation-content-hash";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
+/* oxlint-enable sort-imports */
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageDeliveryMetadata } from "./message-delivery";
+/* oxlint-enable sort-imports */
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
@@ -34,19 +42,29 @@ const SESSION_DISPATCH_TIMEOUT_MS = 30_000;
 const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
-
- * typescript/explicit-function-return-type (#560): Keep resolveFork's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveFork's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
+ */
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
-) => {
+): Promise<
+  | Response
+  | { beforeMessageId: string; sessionId: string }
+  | {
+      checkpointId?: string;
+      beforeTurnId: string | undefined;
+      sessionId: string;
+      beforeMessageId?: undefined;
+    }
+  | undefined
+> => {
   if (!input) {
     return;
   }
   const source = await getEveConversation(ownerId, input.conversationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!source?.sessionId || source.state !== "bound") {
     // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return Response.json(
@@ -65,10 +83,12 @@ const resolveFork = async (
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (input.checkpointId ? { checkpointId: input.checkpointId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
@@ -83,8 +103,10 @@ const creationFailure = (cause: unknown): Response => {
   }
   return Response.json(
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (cause instanceof CreationConflictError ? { code: cause.code } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(cause instanceof CreationConflictError ? { code: cause.code } : {}),
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         cause instanceof CreationConflictError
           ? cause.message
           : "Creation is unresolved. Retain this operation for reconciliation before retrying.",
@@ -93,6 +115,8 @@ const creationFailure = (cause: unknown): Response => {
   );
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveConversationCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveConversationCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
 
  * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -105,11 +129,11 @@ const creationFailure = (cause: unknown): Response => {
   */
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
- * @param ownerId Owner used to resolve source conversations and reserve the creation.
- * @param input Original creation request reused when an uncertain dispatch is retried.
- * @param guestReservationId Optional admission reservation attached to the created conversation.
- * @param initialPreparedMessage Optional prepared message reused without preparing it again.
- * @returns The bound conversation, or an error response that leaves unresolved creation recoverable.
+ * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
+ * @param {z.infer<typeof createConversationInput>} input Original creation request reused when an uncertain dispatch is retried.
+ * @param {string | undefined} guestReservationId Optional admission reservation attached to the created conversation.
+ * @param {Awaited<ReturnType<typeof prepareEveMessage>> | undefined} initialPreparedMessage Optional prepared message reused without preparing it again.
+ * @returns {Promise<Response>} The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
 export const executeEveConversationCreation = async (
   ownerId: string,
@@ -230,8 +254,10 @@ export const executeEveConversationCreation = async (
   } catch (error) {
     logger.error(
       {
+        // oxlint-disable-next-line no-ternary -- Keep errorType as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (error instanceof EveCreationTransportError           ? { stage: error.stage, status: error.status }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(error instanceof EveCreationTransportError
           ? { stage: error.stage, status: error.status }
           : {}),
@@ -241,4 +267,6 @@ export const executeEveConversationCreation = async (
     return creationFailure(error);
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

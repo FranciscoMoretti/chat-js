@@ -1,7 +1,9 @@
 import React from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import "./presentation.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Caption: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
 const Caption = ({
@@ -58,21 +60,27 @@ const ClickPulse = ({
   readonly age: number;
   readonly x: number;
   readonly y: number;
-}): React.JSX.Element | null =>
-  age >= 0 && age < 0.5 ? (
-    <div
-      className="clickPulse"
-      style={{
-        left: x,
-        opacity: 1 - age / 0.5,
-        top: y,
-        transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
-      }}
-    />
-  ) : null;
+}): React.JSX.Element | null => {
+  if (age >= 0 && age < 0.5) {
+    return (
+      <div
+        className="clickPulse"
+        style={{
+          left: x,
+          opacity: 1 - age / 0.5,
+          top: y,
+          transform: `translate(-50%,-50%) scale(${0.6 + age * 3})`,
+        }}
+      />
+    );
+  }
+  return null;
+};
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Caption, ClickPulse, Pointer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable react/no-multi-comp */
 export { Caption, ClickPulse, Pointer };
+/* oxlint-enable import/no-named-export */

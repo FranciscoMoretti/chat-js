@@ -2,11 +2,18 @@ import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveUsageReconciliationBusyError } from "@/lib/eve/usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "./connection";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveGuest,
@@ -14,6 +21,7 @@ import {
   user,
   userCredit,
 } from "./schema";
+/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 const NO_CHARGED_CENTS = 0;
@@ -32,6 +40,7 @@ const hasConflictingCost = (
 ): boolean =>
   stored !== null && incoming !== null && Number(stored) !== Number(incoming);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve debitTurnUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): debitTurnUsage accepts tx: UsageTransaction; input: { ownerId: string; sessionId: string; turnId: string; eventId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -59,6 +68,7 @@ const debitTurnUsage = async (
       )
     );
   const delta =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading due from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading paid from totals; preserve one receiver evaluation, skipped accesses and the existing NO_CHARGED_CENTS fallback. The app guidance prefers optional chaining.
     (totals?.due ?? NO_CHARGED_CENTS) - (totals?.paid ?? NO_CHARGED_CENTS);
   if (delta > NO_CHARGED_CENTS) {
     await tx
@@ -71,6 +81,8 @@ const debitTurnUsage = async (
       .where(eq(eveUsage.eventId, input.eventId));
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve recordEveUsage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): recordEveUsage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -82,14 +94,14 @@ unicorn/no-null (#570): recordEveUsage preserves explicit null in its storage/AP
  */
 /**
  * A replay can arrive concurrently with the hook. Both use the same durable event ID.
- * @param input Native usage event identity and optional provider cost evidence.
- * @param input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
- * @param input.sessionId Native session whose turn cost is recorded.
- * @param input.turnId Native turn whose decimal costs are rounded and charged together.
- * @param input.ownerId Owner whose credit or guest quota identity scopes the record.
- * @param input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
- * @param input.generationId Optional provider generation identifier used for later reconciliation.
- * @returns Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
+ * @param {{ eventId: string; sessionId: string; turnId: string; ownerId: string; costUsd?: number; generationId?: string; }} input Native usage event identity and optional provider cost evidence.
+ * @param {string} input.eventId Durable event identity used to deduplicate concurrent hook and replay ingestion.
+ * @param {string} input.sessionId Native session whose turn cost is recorded.
+ * @param {string} input.turnId Native turn whose decimal costs are rounded and charged together.
+ * @param {string} input.ownerId Owner whose credit or guest quota identity scopes the record.
+ * @param {number | undefined} input.costUsd Optional nonnegative provider cost, preserved as decimal evidence.
+ * @param {string | undefined} input.generationId Optional provider generation identifier used for later reconciliation.
+ * @returns {Promise<boolean>} Whether priced evidence is durably available after idempotent ingestion and any registered-user debit.
  */
 const recordEveUsage = async (input: {
   eventId: string;
@@ -122,6 +134,7 @@ const recordEveUsage = async (input: {
     );
   if (settled) {
     const incoming =
+      // oxlint-disable-next-line no-ternary -- Keep incoming as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -148,6 +161,7 @@ const recordEveUsage = async (input: {
         .for("update");
     }
     const costUsd =
+      // oxlint-disable-next-line no-ternary -- Keep costUsd as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       input.costUsd === undefined
         ? null
         : input.costUsd.toFixed(COST_DECIMAL_PLACES);
@@ -175,6 +189,7 @@ const recordEveUsage = async (input: {
           .where(eq(eveUsage.eventId, input.eventId));
       }
     } else {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       await tx.insert(eveUsage).values({ ...input, costUsd });
     }
     // Guest admission spends message quota. Keep provider costs without granting
@@ -182,25 +197,26 @@ const recordEveUsage = async (input: {
     if (!guest) {
       await debitTurnUsage(tx, input);
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading costUsd from existing; preserve one receiver evaluation, skipped accesses and the existing existing?.costUsd fallback. The app guidance prefers optional chaining.
     const recordedCost = costUsd ?? existing?.costUsd;
     return recordedCost !== null && recordedCost !== undefined;
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): getEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * This cursor is billing progress, never a second copy of the transcript.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose durable billing cursor is read.
- * @returns The current ingestion stream index; missing owned bindings throw.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose durable billing cursor is read.
+ * @returns {Promise<number>} The current ingestion stream index; missing owned bindings throw.
  */
 const getEveUsageCursor = async (
   ownerId: string,
   sessionId: string
 ): Promise<number> => {
-  const [row] = await db
+  const rows = await db
     .select({ streamIndex: eveConversation.usageStreamIndex })
     .from(eveConversation)
     .where(
@@ -210,20 +226,20 @@ const getEveUsageCursor = async (
         eq(eveConversation.state, "bound")
       )
     );
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
+  const [row] = rows;
   return row.streamIndex;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve advanceEveUsageCursor's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): advanceEveUsageCursor intentionally keeps the existing falsy-value behavior of row; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 /**
  * Advance only after durable ingestion; concurrent older readers cannot rewind it.
- * @param ownerId Owner whose bound session is authorized.
- * @param sessionId Native session whose billing cursor advances.
- * @param streamIndex Nonnegative safe ingestion index committed after durable usage recording.
+ * @param {string} ownerId Owner whose bound session is authorized.
+ * @param {string} sessionId Native session whose billing cursor advances.
+ * @param {number} streamIndex Nonnegative safe ingestion index committed after durable usage recording.
  */
 const advanceEveUsageCursor = async (
   ownerId: string,
@@ -236,7 +252,7 @@ const advanceEveUsageCursor = async (
   ) {
     throw new Error("Invalid Eve usage cursor.");
   }
-  const [row] = await db
+  const rows = await db
     .update(eveConversation)
     .set({
       usageStreamIndex: sql`greatest(${eveConversation.usageStreamIndex}, ${streamIndex})`,
@@ -249,11 +265,12 @@ const advanceEveUsageCursor = async (
       )
     )
     .returning({ id: eveConversation.id });
-  if (!row) {
+  if (rows.length < SINGLE_USAGE_MATCH_LIMIT) {
     throw new Error("Conversation not found.");
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withManagedUsageReconciliation's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-lines-per-function (#510): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): withManagedUsageReconciliation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -262,8 +279,8 @@ typescript/strict-boolean-expressions (#610): withManagedUsageReconciliation int
  */
 /**
  * Serialize managed fallback sweeps across deployments, without locking credit debits.
- * @param ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
- * @param reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
+ * @param {string} ownerId Registered owner whose dedicated reconciliation lock fences the sweep.
+ * @param {(sweepDue: boolean, unpricedSessions: Set<string>) => Promise<void>} reconcile Recovery callback receiving sweep eligibility and the current unpriced session identities.
  */
 const withManagedUsageReconciliation = async (
   ownerId: string,
@@ -273,6 +290,7 @@ const withManagedUsageReconciliation = async (
   // deadlock deployments configured with DATABASE_MAX_CONNECTIONS=1.
   const settings = databaseConnection(env);
   const connection = postgres(settings.url, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing settings.options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...settings.options,
     max: 1,
     prepare: false,
@@ -320,6 +338,7 @@ const withManagedUsageReconciliation = async (
       }
     });
   } catch (error) {
+    // oxlint-disable-next-line no-ternary -- Keep cause as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const cause = error instanceof Error && error.cause ? error.cause : error;
     if (cause instanceof postgres.PostgresError && cause.code === "55P03") {
       throw new EveUsageReconciliationBusyError();
@@ -329,6 +348,8 @@ const withManagedUsageReconciliation = async (
     await connection.end();
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (advanceEveUsageCursor, getEveUsageCursor, recordEveUsage, withManagedUsageReconciliation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export {
   advanceEveUsageCursor,
@@ -336,3 +357,4 @@ export {
   recordEveUsage,
   withManagedUsageReconciliation,
 };
+/* oxlint-enable import/no-named-export */

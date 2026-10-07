@@ -15,6 +15,7 @@ const isTypingSurface = (element: Element | null): boolean =>
     !element.readOnly &&
     !element.disabled) ||
   (element instanceof HTMLElement && element.isContentEditable);
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useAutoFocus); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- useAutoFocus: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -60,4 +61,5 @@ export const useAutoFocus = ({
     };
   }, [autoFocus, editor]);
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */

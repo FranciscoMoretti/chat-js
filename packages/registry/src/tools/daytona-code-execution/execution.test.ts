@@ -6,11 +6,14 @@
 import { describe, expect, test } from "bun:test";
 
 import { executeInDaytona } from "./execution";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { DaytonaResource } from "./sandbox";
+/* oxlint-enable sort-imports */
 
 const setup = () => {
   const events: string[] = [];
   const controller = new AbortController();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resource's required Promise and rejection contract. DaytonaResource.delete resolves void for a fixture with no external resource. DaytonaResource.process.executeCommand resolves the execution receipt after recording execute. */
   const resource = {
     delete: async () => {
       // No external resource exists in this fixture.
@@ -28,6 +31,8 @@ const setup = () => {
     },
     state: "started",
   } satisfies DaytonaResource;
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve selected's required Promise and rejection contract. selected.cleanup.deleteAndConfirmAbsent resolves after recording deletion. selected.create resolves the allocation after recording create. */
   const selected = {
     cleanup: {
       deleteAndConfirmAbsent: async () => {
@@ -40,6 +45,8 @@ const setup = () => {
       return resource;
     },
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ownership's required Promise and rejection contract. ownership.created resolves after recording ownership confirmation. ownership.release resolves after recording release. ownership.reserve resolves the allocation identifier. */
   const ownership = {
     created: async () => {
       events.push("confirm");
@@ -52,6 +59,7 @@ const setup = () => {
       return "allocation";
     },
   };
+  /* oxlint-enable oxc/no-async-await */
   return { controller, events, ownership, resource, selected };
 };
 const input = {
@@ -61,6 +69,7 @@ const input = {
 } as const;
 
 describe("Daytona allocation lifecycle", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("executes exact source only after ownership confirmation and cleans before release", async () => {
     const state = setup();
     const result = await executeInDaytona(
@@ -79,6 +88,8 @@ describe("Daytona allocation lifecycle", () => {
       "release",
     ]);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.create rejects with create reply lost, exercising ambiguous provider completion. */
   test("an ambiguous create remains reserved and cannot execute or release", async () => {
     const state = setup();
     state.selected.create = async () => {
@@ -94,6 +105,8 @@ describe("Daytona allocation lifecycle", () => {
     ).rejects.toThrow("create reply lost");
     expect(state.events).toEqual(["reserve"]);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.create aborts the signal then resolves the late allocation. */
   test("cancellation during create deletes the eventual allocation without executing", async () => {
     const state = setup();
     state.selected.create = async () => {
@@ -110,6 +123,8 @@ describe("Daytona allocation lifecycle", () => {
     ).rejects.toThrow();
     expect(state.events).toEqual(["reserve", "delete", "confirm", "release"]);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. resource.process.executeCommand aborts the signal then resolves late command output. */
   test("cancellation during a command deletes once and never returns its result", async () => {
     const state = setup();
     state.resource.process.executeCommand = async () => {
@@ -132,6 +147,8 @@ describe("Daytona allocation lifecycle", () => {
       "release",
     ]);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. selected.cleanup.deleteAndConfirmAbsent rejects with delete failed. */
   test("failed deletion retains ownership for cleanup after restart", async () => {
     const state = setup();
     state.selected.cleanup.deleteAndConfirmAbsent = async () => {
@@ -147,6 +164,8 @@ describe("Daytona allocation lifecycle", () => {
     ).rejects.toThrow("delete failed");
     expect(state.events).not.toContain("release");
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. ownership.created rejects with database unavailable. */
   test("failed durable confirmation still deletes the known resource", async () => {
     const state = setup();
     state.ownership.created = async () => {
@@ -162,17 +181,23 @@ describe("Daytona allocation lifecycle", () => {
     ).rejects.toThrow("database unavailable");
     expect(state.events).toEqual(["reserve", "create", "delete", "release"]);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectedMessage's awaited sequencing and rejected-Promise behavior. */
 const rejectedMessage = async (pending: Promise<unknown>): Promise<string> => {
   try {
     await pending;
     return "completed";
   } catch (error) {
-    return error instanceof Error ? error.message : "unknown";
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return "unknown";
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the deferred command, deletion barrier, cancellation and release assertions in one race regression test. */
 test("cancellation settles even when the command never responds, after deletion confirms", async () => {
   const state = setup();
@@ -201,7 +226,8 @@ test("cancellation settles even when the command never responds, after deletion 
   expect(await rejected).toContain("cancelled");
   expect(state.events).toContain("release");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. resource.process.executeCommand resolves successive pip installation receipts selected by call count. */
 /* oxlint-enable eslint/max-statements */
 
 test.each([false, true])(
@@ -211,12 +237,14 @@ test.each([false, true])(
     let calls = 0;
     state.resource.process.executeCommand = async () => {
       calls += 1;
-      return extra && calls === 1
-        ? { exitCode: 0, result: "installed" }
-        : { exitCode: 1, result: "pip: no matching distribution" };
+      if (extra && calls === 1) {
+        return { exitCode: 0, result: "installed" };
+      }
+      return { exitCode: 1, result: "pip: no matching distribution" };
     };
     const result = await executeInDaytona(
       {
+        // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         code: extra ? "!pip install missing-package\nprint(42)" : "print(42)",
         language: "python",
         title: "test",
@@ -229,3 +257,4 @@ test.each([false, true])(
     expect(state.events).toContain("release");
   }
 );
+/* oxlint-enable oxc/no-async-await */

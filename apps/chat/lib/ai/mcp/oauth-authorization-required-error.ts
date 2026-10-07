@@ -10,6 +10,7 @@ type ReadonlyNativeSurface<Value> = Value extends (
       }
     : Value;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (OAuthAuthorizationRequiredError); the enabled import/no-default-export convention rejects the default-export alternative. */
 /**
  * Signals that OAuth authorization must be completed before the MCP client can continue.
  */
@@ -22,3 +23,4 @@ export class OAuthAuthorizationRequiredError extends Error {
     this.authorizationUrl = authorizationUrl;
   }
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

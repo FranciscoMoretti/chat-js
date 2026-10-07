@@ -3,7 +3,10 @@
  */
 import { execFileSync } from "node:child_process";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -45,4 +48,5 @@ test("deletion dialog state gallery", async ({ page }, testInfo) => {
     path: testInfo.outputPath("deletion-states.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -5,21 +5,28 @@ import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:url import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
-import { chromium } from "playwright";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Page } from "playwright";
+/* oxlint-enable sort-imports */
+import { chromium } from "playwright";
 
 // Run through `bun test:visual:site` with `bun dev:site` already running.
 // Frozen time and reduced motion make stream states and captures repeatable.
+// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable launches Chromium before creating its ordered browser scenario.
 const browser = await chromium.launch();
 const output = fileURLToPath(
   new URL("../uiverify-screenshots/", import.meta.url)
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun visual-test executable prepares its screenshot directory before capturing the scenario.
 await mkdir(output, { recursive: true });
 const errors: string[] = [];
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- capture: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 const capture = async (page: Page, name: string): Promise<void> => {
   await page.getByTestId("thread-playground").screenshot({
@@ -29,6 +36,7 @@ const capture = async (page: Page, name: string): Promise<void> => {
       "header:has(> nav), nextjs-portal { visibility: hidden !important; }",
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable node/no-process-env -- thread-playground.visual.ts: The scenario explicitly controls process environment inputs and restores them during cleanup. */
@@ -36,6 +44,7 @@ const capture = async (page: Page, name: string): Promise<void> => {
 /* oxlint-disable eslint/no-console -- thread-playground.visual.ts: Console output is the observable diagnostic exercised by this fixture. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- thread-playground.visual.ts: The test intentionally exercises mutable SDK/fixture objects; deep-readonly parameters would change their assignability. */
 /* oxlint-disable typescript/promise-function-async -- thread-playground.visual.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable node/no-top-level-await -- This Bun visual-test executable runs one ordered Playwright scenario and awaits browser disposal in finally; it is not a require(esm) library entrypoint. */
 try {
   const page = await browser.newPage({
     reducedMotion: "reduce",
@@ -154,6 +163,7 @@ try {
   assert.equal(
     await page.locator("aside").evaluate((panel): boolean => {
       const viewport =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from panel.querySelector(...).parentElement; read parentElement from panel.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         panel.querySelector("[data-node-id]")?.parentElement?.parentElement;
       if (!viewport) {
         return false;
@@ -275,6 +285,7 @@ try {
 } finally {
   await browser.close();
 }
+/* oxlint-enable node/no-top-level-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-console */

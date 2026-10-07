@@ -1,8 +1,12 @@
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
-import { LogicalChat, logicalChatBusy } from "./logical-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, NativeChatAgent } from "./logical-chat";
+/* oxlint-enable sort-imports */
+import { LogicalChat, logicalChatBusy } from "./logical-chat";
 
 /* oxlint-disable max-params --
  * max-params (#511): message keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -34,6 +38,7 @@ const branch = (
   operationId: id,
   parentConversationId: null,
   sessionId: `session-${id}`,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing extra own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...extra,
 });
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
@@ -220,6 +225,7 @@ describe("logical chat over native sessions", () => {
       ])
     );
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from chat.getSnapshot(...).nodes.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       chat.getSnapshot().nodes.get(chat.logicalId("root", "u1") ?? "missing")
         ?.message.parts
     ).toEqual(original[0].parts);
@@ -294,6 +300,7 @@ it("navigation revokes a delayed pending response without affecting its native o
     )
   );
   expect(chat.getSnapshot().conversationId).toBe("root");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from chat.getSnapshot(...).agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(chat.getSnapshot().agents.get("retry")?.status).toBe("streaming");
 });
 
