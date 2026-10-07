@@ -53,9 +53,48 @@ jobs:
             fi
           fi
 
+  prepare:
+    name: Scaffold prepare
+    needs: affected
+    if: needs.affected.outputs.run == 'true'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+      - run: bun install --frozen-lockfile
+      - name: Build CLI and run shared unit tests
+        run: bunx turbo run test:unit --filter=@chat-js/cli
+      - name: Verify installed gateway contracts
+        run: bun run --cwd packages/cli test:gateways
+      - name: Pack prepared scaffold inputs
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/scaffold-prepared"
+          bun pm --cwd packages/gateways pack --filename "$RUNNER_TEMP/scaffold-prepared/gateways.tgz"
+          tar -czf "$RUNNER_TEMP/scaffold-prepared/workspace.tgz" packages/cli/dist packages/cli/templates packages/registry/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: scaffold-prepared
+          path: ${{ runner.temp }}/scaffold-prepared/*.tgz
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+
   scaffold:
     name: Scaffold (${{ matrix.package-manager }}, electron=${{ matrix.electron }})
-    needs: affected
+    needs: [affected, prepare]
     if: needs.affected.outputs.run == 'true'
     runs-on: ubuntu-22.04
     strategy:
@@ -86,21 +125,28 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
       - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: scaffold-prepared
+          path: ${{ runner.temp }}/scaffold-prepared
+      - name: Restore prepared scaffold inputs
+        run: tar -xzf "$RUNNER_TEMP/scaffold-prepared/workspace.tgz"
       - name: Test scaffold compatibility
         env:
           SCAFFOLD_PACKAGE_MANAGER: ${{ matrix.package-manager }}
           SCAFFOLD_ELECTRON: ${{ matrix.electron }}
-        run: bunx turbo run test:scaffold --filter=@chat-js/cli -- "$SCAFFOLD_PACKAGE_MANAGER" "$SCAFFOLD_ELECTRON"
+        run: bash packages/cli/scripts/test-scaffold.sh "$SCAFFOLD_PACKAGE_MANAGER" "$SCAFFOLD_ELECTRON" "$RUNNER_TEMP/scaffold-prepared/gateways.tgz"
 
   cli-scaffold:
     name: CLI Scaffold
-    needs: [affected, scaffold]
+    needs: [affected, prepare, scaffold]
     if: always()
     runs-on: ubuntu-22.04
     steps:
       - name: Require all scaffold cases
         env:
           AFFECTED_RESULT: ${{ needs.affected.result }}
+          PREPARE_RESULT: ${{ needs.prepare.result }}
           SCAFFOLD_REQUIRED: ${{ needs.affected.outputs.run }}
           SCAFFOLD_RESULT: ${{ needs.scaffold.result }}
         run: |
@@ -109,10 +155,10 @@ jobs:
             echo "Affected check did not succeed: $AFFECTED_RESULT"
             exit 1
           fi
-          case "$SCAFFOLD_REQUIRED:$SCAFFOLD_RESULT" in
-            true:success|false:skipped) ;;
+          case "$SCAFFOLD_REQUIRED:$PREPARE_RESULT:$SCAFFOLD_RESULT" in
+            true:success:success|false:skipped:skipped) ;;
             *)
-              echo "Scaffold cases did not succeed: $SCAFFOLD_REQUIRED:$SCAFFOLD_RESULT"
+              echo "Scaffold cases did not succeed: $SCAFFOLD_REQUIRED:$PREPARE_RESULT:$SCAFFOLD_RESULT"
               exit 1
               ;;
           esac
