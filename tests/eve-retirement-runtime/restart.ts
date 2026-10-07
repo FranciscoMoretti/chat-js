@@ -164,7 +164,10 @@ try {
   assert.equal(effects.trim().split("\n").length, singleEffect);
   if (operatorRecovery) {
     await runtime.crash();
-    await Bun.write(Bun.stdout, `Operator recovery evidence retained: ${runtime.directory}\n`);
+    await Bun.write(
+      Bun.stdout,
+      `Operator recovery evidence retained: ${runtime.directory}\n`
+    );
   } else {
     await runtime.remove();
   }

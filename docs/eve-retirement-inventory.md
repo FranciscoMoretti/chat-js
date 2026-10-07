@@ -1,6 +1,6 @@
 # Remaining EVE fork consumers and removal gates
 
-Audited 6 October 2026 in ChatJS's Lane D worktree. Target: [published EVE 0.71.3](eve-retirement-baseline.md). Production stays on `npm:@chat-js/eve@0.61.0-chatjs.0`.
+Audited 6 October 2026; integration updated 7 October 2026 in ChatJS's Lane D worktree. Target: [published EVE 0.71.3](eve-retirement-baseline.md). Production stays on `npm:@chat-js/eve@0.61.0-chatjs.0`.
 
 ## Scope and evidence
 
@@ -17,7 +17,7 @@ Paths below are repository-relative. A subsystem row covers its named entry poin
 
 | Fork contract / behavior | Remaining ChatJS consumers | Removal criterion / owner |
 | --- | --- | --- |
-| Exact `ToolContext.approval` receipt | `apps/chat/lib/eve/mcp-tools.ts`, `apps/chat/agent/tools/mcp.ts`, `apps/chat/tools/chatjs/delete-document/execute.ts`; native-approval tests | A: prove private native deletion across every reachable route, including released `invokeTool`. B: preserve final policy check and exact winning-human continuation evidence, including restart. Stock 0.71.3 has caller propagation but no fork receipt contract; do not infer consent from caller identity. |
+| Exact `ToolContext.approval` receipt | `apps/chat/lib/eve/mcp-tools.ts`, `apps/chat/agent/tools/mcp.ts`, `apps/chat/tools/chatjs/delete-document/tool.ts`; native-approval tests | A: prove private native deletion across every reachable route, including released `invokeTool`. B: preserve final policy check and exact winning-human continuation evidence, including restart. Stock 0.71.3 has caller propagation but no fork receipt contract; do not infer consent from caller identity. |
 | `messageMetadata` on create/send and `message.received.data.metadata`, reducer `metadata.custom` | `apps/chat/app/api/eve/[...path]/route.ts`, `lib/eve/execute-conversation-creation.ts`, `message-delivery.ts`, `message-input.ts`, `tool-selection.ts`, `shared-messages.ts`, `copy-transcript.ts`, `response-group-input.ts`, `components/eve` and delivery/proxy tests | C: caller tokens on actual create/send routes, exact-message receipts retaining every coalesced token, lost-response recovery, authenticated/session-scoped annotation lookup. Preserve last-contributor tool selection and historical display. No automatic resend. |
 | Returned completion-hook results, `hook.result`, `HookModelCall`, `TurnCompletedHookResult`, reducer `metadata.annotations` | `apps/chat/agent/hooks/followup-suggestions.ts`, `lib/eve/generate-followup-suggestions.ts`, `followup-suggestions.ts`, `agent/hooks/billing.ts`, `lib/eve/usage.ts`, `reconcile-usage.ts`; suggestion UI and shared/copy projection | Separate auxiliary-jobs lane: supported durable auxiliary results and cost evidence, deduplication, failures and replay; migrate stored annotations. A/B/C do not remove this dependency. |
 | Per-call `compaction.usage`, including failed/rejected summary attempts; model-usage extraction | `apps/chat/agent/hooks/billing.ts`, `lib/eve/usage.ts`, `reconcile-usage.ts`, `lib/db/eve-billing.ts` | Prove complete costs for each real compaction model call without duplication, including delegated sessions and replay; migrate reconciliation for old events. Not covered by normal tool smoke proof. |
@@ -39,7 +39,8 @@ The fork's remaining changed files implement or validate the rows above: approva
 
 ## Integration status
 
-- Baseline and shared harness only; no production fork consumers removed.
-- A/B/C changes have not been integrated; wait for the parent to supply exact worktree/commit and authorize integration.
-- The shared smoke proof establishes fresh local-world create/send/tool/replay behavior. It does not establish approval winner/restart, response-loss correlation, coalescing, Postgres compatibility, deployment, provider calls, sandbox lifecycle, or migration of existing runs.
-- Keep each removal independent and record its runtime version, command, result, consumer removed and blockers. A successful fork-local experiment is not a supported upstream removal.
+A/B/C final artifacts are integrated locally; see [validated integration and exact limits](eve-retirement-integration-plan.md). The private deletion executor export is removed in application and canonical registry source, but its exact receipt check remains. C's durable submission and annotation ledger prepares the application while preserving native metadata and immutable creation lookup. Experimental runtime patches are not installed in production.
+
+Fresh local and PostgreSQL smoke, private deletion guards, ledger ownership/CAS, graceful restart, and explicitly supported operator recovery have real-runtime/database evidence. Automatic abrupt PostgreSQL recovery retains dead worker locks for four hours. Old 0.61 active runs fail continuation under 0.71.3 even though snapshot history remains readable. The read-only version preflight prevents that incompatible cutover; it does not migrate runs.
+
+Keep old sessions on the original runtime until an explicit migration/retirement policy is reviewed. Keep every remaining contract above until it has a supported replacement and its own proof. Fresh-runtime success and application preparation do not authorize a production dependency switch.

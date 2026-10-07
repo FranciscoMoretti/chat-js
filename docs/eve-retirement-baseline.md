@@ -34,7 +34,7 @@ Unlike the prior `0.71.2` review, `0.71.3` includes public channel `invokeTool`,
 
 This selects a published upstream proof target, not a production dependency upgrade or a claim of supported fork removal. Workflow's local bundled backend is the first proof backend. Compatibility with ChatJS's patched Postgres backend, old durable runs/checkpoints, and the complete fork inventory remain separate gates. Do not replace the production alias until all its consumers have proven replacements.
 
-## Lane D verification
+## Initial Lane D verification (6 October)
 
 Run in `/Users/fran/.codex/worktrees/e70d/chat-js` on 6 October 2026 with Bun `1.3.11`, Node `24.20.0` for the runtime child:
 
@@ -53,3 +53,7 @@ The lint exception baseline adds only the harness's scoped EVE default-export, N
 No feature lane was integrated and no production manifest, production lockfile or adapter was changed. The current proof reads durable state through a new client while the worker remains running; it does not certify process restart or deployment migration. No specific user decision is needed for this baseline/harness handoff. Production retirement remains gated by the inventory and A/B/C proofs.
 
 Subsequent shared support adds a real parked-approval process restart and two explicitly failing acceptance probes. See [restart controls and results](../tests/eve-retirement-runtime/RESTART.md) and [lane integration/exception ownership](eve-retirement-integration-plan.md). The baseline version remains unchanged; these results do not establish complete approval recovery.
+
+## Integrated update — 7 October 2026
+
+The initial lint failure is resolved by a normal typed Postgres import and exact development dependency. A/B/C final artifacts are now integrated locally; production EVE/Workflow dependencies remain unchanged. Full lint and all seven workspace type tasks pass. Real PostgreSQL, durable submission/creation, private deletion, browser recovery, explicit operator recovery and incompatible old-run continuation evidence are recorded in the [integration report](eve-retirement-integration-plan.md). The historical results above describe the initial baseline only. Whole-fork retirement remains blocked by supported runtime contracts and the active-run cutover decision.

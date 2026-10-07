@@ -1,39 +1,49 @@
-# Lane D shared integration plan
+# Lane D integrated validation
 
-Reviewed final A `12dfce419`, B `19a4035fbf6184910374824911e6cec206add286`, and C `1a359d1f8081a3d358e0234eb8d8c977d6972b72` atop `db96edc6d` and `8296d3ef9`. No lane commit or runtime patch has been integrated; production dependencies remain unchanged.
+Validated 7 October 2026 in `codex/eve-retirement-baseline-d`. A, B and C's final authorized artifacts are integrated locally. Production remains on `npm:@chat-js/eve@0.61.0-chatjs.0`; the receipt and metadata/creation lookup seams remain. Nothing was published or deployed.
 
-## Shared support and conflicting restart observations
+## Integrated changes
 
-Use the corrected [persistent runtime controls](../tests/eve-retirement-runtime/RESTART.md), retaining the isolated EVE 0.71.3 / AI SDK 7.0.106 installation. D's prior callback timeout used the default 860-second ownership lease with a 60-second wait and did not wait for the detached server to close. B's final runner uses a one-second lease and waits for server-state removal. D now matches those controls, checks different process IDs and retains its one-effect assertion. The corrected callback case passes. B's later barrier is inside the executor after receipt context; D's is inside the settlement hook. This resolves the apparent contradiction without adopting B's experimental patch.
+- A's private deletion request/executor now live in one tool module, including the canonical registry source. The standalone executor export is removed. Ownership, document revision, cancellation and exact receipt checks remain. Final source/evidence: `4b259ad902`, `4e35fd69b`, `52ee835bd`, `ab29d5eb1`, integrated through `90f7108e4`.
+- B's preserved-binding experiment and migration evidence `87b1e035e` integrate as `f2eb649c5`. Approved continuations retain original discovery, parsed arguments and history/output. New calls require fresh discovery and consent; live owner/enabled revocation still applies. The patch remains experimental.
+- C's final `ee7086139` and `bf55c8c4f` integrate as `44a6e76cd` and `d33bef992`. Immutable owner/operation/conversation bindings, durable uncertain-before-dispatch CAS, ordered display annotations, scoped reconciliation, legacy/public/copy projection and content-erasing deletion tombstones are implemented. Creation still uses the original immutable allocation-receipt seam. See [submission journal](eve-submission-journal.md).
+- D supplies disposable PostgreSQL and verified abrupt server controls. Explicit operator recovery uses supported `forceUnlockWorkers` only after verified process death and exclusive fixture database checks. No approval is resent or workflow/event record rewritten.
+- The application backend preflight rejects active EVE runs with incompatible persisted step versions before registration. It reads the configured Workflow database, including `WORKFLOW_POSTGRES_URL`, rather than assuming the application database. Unknown package distributions require a reviewed mapping.
 
-The same-name dynamic connector replacement counterexample remains independent. Retain the receipt adapter pending an accepted replacement. C's final completed-world restart is a distinct, narrower boundary than in-flight recovery; absent receipts are not terminal cancellation. Neither lane establishes production Postgres, old durable-run compatibility or exactly-once external effects.
+## Integration review and checks
 
-## Final scoped exception review
+Reviewed CAS ownership, immutable JSONB command equality, exact owner/session joins, rejection transitions, historical annotation imports, public/copy sanitization, and deletion erasure. Uncertain/admitted/received operations cannot be claimed again. Cancellation, timeout and absent receipts do not grant resend permission. Inherited history contributes display without acknowledging a new submission.
 
-A's `tests/eve-retirement-lane-a/lint-exception-additions.json` matches its final files: **60 occurrences across 14 files**, no missing reasons. SHA-256: `06359a3fa6b234ca581738441c2bb928985e2f240b93f9b4e137e3c775cb70d0`.
+Migrations 0009/0010 apply to fresh D-only cluster `chatjs-retirement-pg.IWppeT`, lane_d. All 11 database checksums match committed SQL; migration files 0000–0008 are unchanged. No other lane database received these migrations. The scoped lint baseline was regenerated from integrated source, and every changed entry/fingerprint belongs to C's integrated files or D's formatted restart driver. Lane snapshots were review inputs, not baseline replacements. `demo:check` confirms canonical installation parity.
 
-- Default exports, native Node imports, ordered awaited scenarios and SDK-owned callback types are fixture boundaries. Numeric/function-size and template inference exceptions stay local.
-- The two `.mjs` internal-runtime probes contribute 27 occurrences; their unsafe/template-expression waivers remain research-only boundaries, not precedent for production code. The added installed dynamic proof introduces no unsafe waivers.
+| Verification | Result |
+| --- | --- |
+| `bun lint` with Node 24 on PATH | Pass, including exception budget, formatting, type-aware lint, docs doctor and canonical demo check. |
+| `bun test:types` | All 7 workspace tasks pass. Run after lint, not concurrently: both prepare generated gateway declarations. |
+| Explicit D runtime, D Postgres, A and C isolated TypeScript checks | Pass. |
+| C actual PostgreSQL ledger and creation recovery | 13 tests pass. |
+| C delivery/tool selection/logical graph/copy/proxy plus migration-history tests | 59 tests pass. |
+| D SQL compatibility preflight | 6 tests pass; actual CLI override pass/reject cases also verified. |
+| Browser delivery hook | 1 test passes; pending/recovered captures inspected, foreign receipts do not clear pending, earlier coalesced contributor does. Local proof only; no UI Verify fleet baseline. |
+| A deletion guards + gateway/MCP tests | 34 tests pass; dedicated PostgreSQL deletion suite 9 pass. |
+| Existing PostgreSQL stream/resource/queue/cancellation/lifecycle contracts | 28 tests pass. |
+| Preview-build regression tests | 16 tests / 69 assertions pass. |
 
-C's `experiments/eve-delivery-correlation/lint-exception-additions.json` matches its final files: **102 occurrences across 15 files, 46 rule/directive records**, no missing reasons or `no-unsafe-*` waivers. SHA-256: `10efc4200c9ca18fa7ff525fde79038b0a75ef169ea8eb7d4c17f13d527c8797`. Scoped Node/SDK, ordered-loop, default-export, mock callback and JSON-wire roundtrip exceptions are justified for these experiments. The two added `require-await` records cover an async HTTP route that returns only the serving process ID. Recomputed counts, fingerprints and reasons match the final snapshot exactly. C now SHA-256-verifies the shared controller from `7a312a544`, asserts detached-server state cleanup and distinct HTTP serving PIDs across its completed-world restart. Its final evidence reports stock 84516 → 84771 and experimental 84470 → 84706, with one follow-up dispatch and no resend; this remains completed-world replay evidence.
+Node is 24.20.0, Bun 1.3.11 and disposable PostgreSQL 17.11. The former seven root lint errors were fixed with a normal typed Postgres import and an exact root development dependency. Graphile Worker 0.16.6 is a development dependency for the operator proof. The lockfile changes do not change the installed package-version/integrity set.
 
-B has no lane manifest: shell and patch-text artifacts do not add executable-root exception entries. Materialized patched fixtures still require their own type/proof checks before promotion. These snapshots are review aids; verify hashes against the exact integrated commits and never overwrite the central budget with a lane-only snapshot.
+Host-local evidence: `/tmp/e70d-final-{lint,types,c-pg,c-unit,preflight,browser,migrations}.log`, `/tmp/e70d-final-migration-hashes.txt`, and `apps/chat/.eve/d-integration-captures/`. Prior A/backend proof logs are `/tmp/e70d-integrated-a-{pg,unit}.log` and `/tmp/e70d-pg-contracts.log`. These temporary artifacts supplement the checked-in reproducible commands, not portable release artifacts.
 
-## Integration sequence (only after parent authorization)
+## Proven limits and remaining decisions
 
-1. Parent supplies each final worktree/commit and which artifact is approved for integration. Do not cherry-pick B/C's provisional runtime patches as a dependency replacement.
-2. Integrate the shared controller before feature fixtures, retaining the isolated manifest/lockfile. A's fixture may consume the shared installation; B/C experiments must use separate installations with explicit provenance.
-3. Bring in one lane at a time. Review its production diff separately from experimental/runtime proof code. Review A's final installed dynamic-path proof and guarded database mutation coverage; a static authored tool or internal `invokeTool` call alone is insufficient.
-4. Read that lane's scoped exceptions and regenerate the central budget from final integrated source with `bun scripts/lint-exceptions.ts --write-baseline --allow-new`. Inspect the diff: only reviewed lane/shared files may gain entries, counts or fingerprints. Do not replace the central JSON with a lane-only snapshot or silently bless unrelated waivers.
-5. Run `bun lint:exceptions`, targeted `bunx oxlint <lane paths>`, explicit isolated fixture type checks, each lane's real-runtime commands, `bun lint`, and `bun test:types`. Root Turbo type checks do not cover packages outside workspace globs. Record expected negative probes as failures/counterexamples, not green acceptance tests.
-6. Keep each proven removal independently reviewable. Do not switch production EVE/Workflow until the [complete inventory](eve-retirement-inventory.md), old durable runs and patched Postgres adapter pass their own gates.
+1. **Old active runs cannot cut over.** B's production-fork 0.61 seed retains identical 13-event snapshot history, but active continuation under 0.71.3 fails `CORRUPTED_EVENT_LOG`: persisted `step//eve@0.61.0//createSessionStep` differs from the compiled 0.71.3 step. A completed turn is not necessarily a terminal long-lived run. Keep these sessions on their original runtime. Version routing or explicit session retirement requires a reviewed product decision; no dual-runtime router was introduced. Stream-version compatibility is separate from stored snapshot readability.
+2. **Automatic abrupt PostgreSQL recovery remains slow.** Graphile 0.16.6 retains dead worker locks until its four-hour stale-lock threshold. A/B/C/D observe a new server with old jobs locked; short probes cannot establish automatic recovery. Never describe lock clearing as automatic baseline success.
+3. **Explicit operator recovery passes.** D's fresh exclusive fixture recovers candidate and settlement crashes, different serving PIDs, exact original action and one effect. Evidence: retained `chatjs-eve-retirement-p0MOJ6`, `operator-recovery-{1,2}.json`, `crash-{1,2}.json`, snapshots/effect ledger, `/tmp/e70d-operator-final.log`. This is not a distributed fencing algorithm or a production automatic-unlock policy.
+4. **Creation reuse is limited.** Stock 0.71.3 reuses an operation within the same live session, but creates another allocation after terminal reset; the read-only operation lookup is absent. Retain the immutable allocation receipt/first-hook ownership seam. Do not report generic creation idempotency as absent.
+5. **Replay can duplicate native events.** C's PostgreSQL in-flight graceful restart recovers a queued token with one dispatch, while appending the initial received message under a new event ID. The application aliases scoped operation identity for display; native history remains authoritative and no exactly-once event/effect guarantee is claimed.
+6. **Supported replacements remain missing.** B/C's isolated patches are proposals. The [full inventory](eve-retirement-inventory.md) also retains hook results, compaction usage, checkpoint/import/attachment, sandbox and deployment contracts. Local application preparation is complete; whole-fork retirement is not.
 
-## Independent lint attribution
+## Reproduction and database lifecycle
 
-The seven `typescript/no-unsafe-*` errors at `scripts/vercel-preview-build.ts:127–137` reproduce from a clean `git archive` of unchanged ChatJS `3a6dfcbef5da45df8e0f089b0604796c40150066`, without any D harness files or exception changes. Both root and `apps/chat` installed dependency directories were linked read-only from D's frozen install. No source was edited in the archive. The command was:
+Use [disposable PostgreSQL instructions](../tests/eve-retirement-postgres/README.md), [A tests](../tests/eve-retirement-lane-a/README.md), [B final validation](../experiments/eve-approval-receipt/VALIDATION-2026-10-07.md), and [C experiment](../experiments/eve-delivery-correlation/README.md). Materialize C's hash-pinned shared controller with its `setup-postgres.ts` before root type-aware lint. Use Node 24 for Vitest/Playwright.
 
-```sh
-bunx --no-install oxlint scripts/vercel-preview-build.ts
-```
-
-The unchanged file and its config/policy come from the baseline archive. This attributes the failure to the existing source/dependency-resolution combination, not D's new files; it does not establish whether another dependency layout would pass. Evidence remains at `/tmp/chatjs-lint-baseline.kWI7sT` and `/tmp/e70d-pristine-lint.log` on this host. The same errors occur in D's `bun lint`. No suppression or unrelated fix was made.
+Shared cluster `chatjs-retirement-pg.H2ZFmo` remains available for the lanes until the parent confirms teardown. D-only cluster data/logs are retained when stopped. `cluster.sh stop` verifies ownership and stops without deleting evidence. No live database credentials or production databases are used.

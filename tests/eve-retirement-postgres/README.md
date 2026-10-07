@@ -71,7 +71,7 @@ Both candidate-authorizer and durable-settlement abrupt boundaries pass with thi
 
 ## Package-cutover preflight
 
-The existing application backend build check now reads active EVE run/step identities before backend registration. It rejects a mismatched compiled step version, and excludes terminal historical-only run rows. Six SQL tests cover pending/running rejection, completed/failed/cancelled exclusion, unchanged records and matching versions. The check is a necessary deployment prerequisite, not a migration or a guarantee about all fork contracts. Both reviewed distributions have explicit step-version mappings; unknown distributions require compatibility review.
+The existing application backend build check now reads active EVE run/step identities from the resolved Workflow database (including an explicit `WORKFLOW_POSTGRES_URL`) before backend registration. It rejects a mismatched compiled step version, and excludes terminal historical-only run rows. Six SQL tests cover pending/running rejection, completed/failed/cancelled exclusion, unchanged records and matching versions. The check is a necessary deployment prerequisite, not a migration or a guarantee about all fork contracts. Both reviewed distributions have explicit step-version mappings; unknown distributions require compatibility review.
 
 ```sh
 EVE_RETIREMENT_POSTGRES_FILE=/absolute/connection.json bunx --no-install vitest run tests/eve-retirement-postgres/compatibility.test.ts
