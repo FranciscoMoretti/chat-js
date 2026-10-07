@@ -333,3 +333,26 @@ it("registration before the URL transition does not revoke initial follow", () =
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This logical-chat.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+
+// oxlint-disable-next-line max-statements, no-magic-numbers -- Reproduce the observed native replay shape and assert one logical node with both native aliases.
+it("aliases repeated received events through their scoped submission identity", () => {
+  const chat = new LogicalChat("chat", "root");
+  chat.setBranches([branch("root")]);
+  const operationId = "00000000-0000-4000-8000-000000000001";
+  const metadata = {
+    custom: { chatjs: { operationIds: [operationId] } },
+    turnId: "turn_0",
+  };
+  chat.observe(
+    "root",
+    agent([
+      { ...message("first-native", "user", "turn_0", "same"), metadata },
+      { ...message("replayed-native", "user", "turn_0", "same"), metadata },
+    ])
+  );
+  expect(chat.logicalId("root", "first-native")).toBe(
+    chat.logicalId("root", "replayed-native")
+  );
+  const expectedNodes = 1;
+  expect(chat.getSnapshot().nodes.size).toBe(expectedNodes);
+});

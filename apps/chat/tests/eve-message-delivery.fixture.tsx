@@ -8,10 +8,22 @@ import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): event preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
-const event = (operationId: string): MessageStreamEvent => ({
+const event = (
+  operationId: string,
+  sessionId = "fixture-session"
+): MessageStreamEvent => ({
   data: {
     message: "same text",
-    metadata: eveMessageDeliveryMetadata(operationId, null),
+    metadata: {
+      chatjs: {
+        ...eveMessageDeliveryMetadata(
+          "00000000-0000-4000-8000-000000000003",
+          null
+        ).chatjs,
+        operationIds: [operationId, "00000000-0000-4000-8000-000000000003"],
+        sessionId,
+      },
+    },
     sequence: 1,
     turnId: "turn_1",
   },
@@ -64,6 +76,20 @@ const Fixture = (): React.JSX.Element => {
           type="button"
         >
           Acknowledge another operation
+        </button>
+        <button
+          onClick={() =>
+            delivery.accept(
+              event(
+                delivery.pending?.operationId ??
+                  "00000000-0000-4000-8000-000000000002",
+                "foreign-session"
+              )
+            )
+          }
+          type="button"
+        >
+          Acknowledge foreign session
         </button>
         <button
           disabled={!delivery.pending?.operationId}

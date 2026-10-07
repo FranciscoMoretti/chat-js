@@ -5,6 +5,7 @@ import { getPublicEveConversation } from "@/lib/db/eve-queries";
 import { getEveConnectionOptions } from "./connection-options";
 import { assertEveConfigured } from "./server";
 import { sharedEveMessages } from "./shared-messages";
+import { projectEveSubmissionEvents } from "./submission-projection";
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
  * no-magic-numbers (#517): getPublicEveTranscript uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -23,13 +24,18 @@ export const getPublicEveTranscript = async (id: string) => {
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
+  const events = await projectEveSubmissionEvents(
+    row.ownerId,
+    row.sessionId,
+    snapshot.events
+  );
   // A revocation during a slow snapshot read must take effect before disclosure.
   if (!(await getPublicEveConversation(id))) {
     return null;
   }
   return {
     id: row.id,
-    messages: sharedEveMessages(snapshot.events),
+    messages: sharedEveMessages(events),
     title: row.title ?? row.firstMessage.slice(0, 100),
   };
 };

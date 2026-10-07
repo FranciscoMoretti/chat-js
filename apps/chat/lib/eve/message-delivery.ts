@@ -19,9 +19,43 @@ const pendingMessage = z.object({
   selectedTool: frontendToolsSchema.optional(),
 });
 
+const deliveryOperationIds = z.array(z.uuid()).optional();
+const projectedDeliveryMetadata = z.object({
+  chatjs: z.object({
+    operationIds: deliveryOperationIds,
+    sessionId: z.string(),
+  }),
+});
+
 const deliveryMetadata = z.object({
   chatjs: z.object({ operationId: z.uuid() }),
 });
+
+/* oxlint-disable no-undefined, unicorn/max-nested-calls --
+ * no-undefined: Undefined represents absent stream evidence or an optional query result; null is a persisted value.
+ * unicorn/max-nested-calls: Validate nested wire metadata at the projection boundary without inventing intermediate domain values.
+ */
+const receiptMatches = (
+  metadata: unknown,
+  sessionId: string,
+  operationId: string
+): boolean => {
+  const projected = projectedDeliveryMetadata.safeParse(metadata);
+  if (projected.success) {
+    if (projected.data.chatjs.sessionId !== sessionId) {
+      return false;
+    }
+    if (projected.data.chatjs.operationIds !== undefined) {
+      return projected.data.chatjs.operationIds.includes(operationId);
+    }
+  }
+  return (
+    deliveryMetadata.safeParse(metadata).data?.chatjs.operationId ===
+    operationId
+  );
+};
+
+/* oxlint-enable no-undefined, unicorn/max-nested-calls */
 
 type PendingEveMessage = z.infer<typeof pendingMessage>;
 
@@ -91,8 +125,7 @@ const eveMessageDelivery = {
     if (
       event.type !== "message.received" ||
       !pending.operationId ||
-      deliveryMetadata.safeParse(event.data.metadata).data?.chatjs
-        .operationId !== pending.operationId
+      !receiptMatches(event.data.metadata, sessionId, pending.operationId)
     ) {
       return false;
     }
@@ -174,19 +207,9 @@ const eveMessageDeliveryMetadata = (
   },
 });
 
-/* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types -- no-undefined (#519): eveMessageOperationId uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/prefer-readonly-parameter-types (#565): eveMessageOperationId accepts event: MessageStreamEvent; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-const eveMessageOperationId = (
-  event: MessageStreamEvent
-): string | undefined =>
-  event.type === "message.received"
-    ? deliveryMetadata.safeParse(event.data.metadata).data?.chatjs.operationId
-    : undefined;
-/* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */
 export {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDelivery,
   eveMessageDeliveryMetadata,
-  eveMessageOperationId,
 };
 export type { ActivePendingEveMessage, PendingEveMessage };

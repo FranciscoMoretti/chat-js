@@ -1,0 +1,2 @@
+ALTER TABLE "EveSubmission" DROP CONSTRAINT "EveSubmission_state";--> statement-breakpoint
+ALTER TABLE "EveSubmission" ADD CONSTRAINT "EveSubmission_state" CHECK ("EveSubmission"."state" in ('pending', 'uncertain', 'admitted', 'received', 'rejected', 'retired'));

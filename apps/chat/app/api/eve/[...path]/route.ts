@@ -8,6 +8,12 @@ import type { UiToolName } from "@/lib/ai/types";
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
+import {
+  claimEveSubmission,
+  reserveEveSubmission,
+  rejectEveSubmissionAdmission,
+  settleEveSubmission,
+} from "@/lib/db/queries";
 import { env } from "@/lib/env";
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
@@ -31,6 +37,7 @@ import {
   sameOrigin,
 } from "@/lib/eve/request-policy";
 import { eveRequest } from "@/lib/eve/server";
+import { projectEveSubmissionStream } from "@/lib/eve/submission-projection";
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
@@ -127,6 +134,7 @@ const readCommand = async (
   let message: EveMessageInput | undefined;
   let modelId: string | undefined;
   let selectedTool: UiToolName | undefined;
+  let messageOperationId: string | undefined;
   if (request.method === "POST") {
     const input = policy.schema.safeParse(
       await request.json().catch(() => null)
@@ -142,6 +150,7 @@ const readCommand = async (
       if (!operationId.success) {
         return rejectEveCommand("A message operation ID is required.", 400);
       }
+      messageOperationId = operationId.data;
       const suppliedTool = request.headers.get("x-chatjs-selected-tool");
       const tool = parseToolSelection(suppliedTool, input.data.selectedTool);
       if (!tool.success) {
@@ -178,7 +187,14 @@ const readCommand = async (
     }
     isNewMessage = "message" in input.data;
   }
-  return { body, isNewMessage, message, modelId, selectedTool };
+  return {
+    body,
+    isNewMessage,
+    message,
+    modelId,
+    operationId: messageOperationId,
+    selectedTool,
+  };
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -190,6 +206,7 @@ const readCommand = async (
  * typescript/prefer-readonly-parameter-types (#565): handle accepts request: Request; context: { params: Promise<{ path: string[]; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): handle intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+/* oxlint-disable eslint/complexity, unicorn/no-null -- This authenticated proxy sequences admission, immutable submission ownership and native dispatch; null explicitly binds absent selections. */
 const handle = async (
   request: Request,
   context: {
@@ -232,6 +249,31 @@ const handle = async (
   }
   const { body, modelId, selectedTool } = command;
   try {
+    if (command.operationId !== undefined) {
+      const submission = await reserveEveSubmission({
+        command: {
+          kind: "message",
+          message: command.message,
+          modelId: modelId ?? null,
+          selectedTool: selectedTool ?? null,
+          sessionId: policy.sessionId,
+        },
+        conversationId: conversation.id,
+        operationId: command.operationId,
+        ownerId: principal.ownerId,
+        selectedTool: selectedTool ?? null,
+      });
+      if (submission.state !== "pending") {
+        return Response.json(
+          {
+            code: "chatjs_message_operation_exists",
+            error: "This submission already exists. Reconnect to reconcile it.",
+            state: submission.state,
+          },
+          { status: 409 }
+        );
+      }
+    }
     const admission = await checkTurnAdmission(
       request,
       principal,
@@ -239,7 +281,36 @@ const handle = async (
       command
     );
     if (admission instanceof Response) {
+      const rejection = z
+        .object({ code: z.literal("chatjs_command_rejected") })
+        .safeParse(
+          await admission
+            .clone()
+            .json()
+            .catch(() => null)
+        );
+      // A duplicate guest reservation is not rejection of the original dispatch.
+      if (command.operationId !== undefined && rejection.success) {
+        await settleEveSubmission(
+          principal.ownerId,
+          command.operationId,
+          "rejected"
+        );
+      }
       return admission;
+    }
+    if (
+      command.operationId !== undefined &&
+      !(await claimEveSubmission(principal.ownerId, command.operationId))
+    ) {
+      return Response.json(
+        {
+          code: "chatjs_message_operation_exists",
+          error:
+            "This submission is already being handled. Reconnect to reconcile it.",
+        },
+        { status: 409 }
+      );
     }
     const result = await eveRequest(
       principal.ownerId,
@@ -257,6 +328,29 @@ const handle = async (
       modelId,
       selectedTool
     );
+    if (command.operationId !== undefined && result.ok) {
+      await settleEveSubmission(
+        principal.ownerId,
+        command.operationId,
+        "admitted"
+      );
+    }
+    if (command.operationId !== undefined && result.status === 409) {
+      const refused = z
+        .object({ code: z.literal("session_not_active") })
+        .safeParse(
+          await result
+            .clone()
+            .json()
+            .catch(() => null)
+        );
+      if (refused.success) {
+        await rejectEveSubmissionAdmission(
+          principal.ownerId,
+          command.operationId
+        );
+      }
+    }
     if (admission) {
       await settleGuestMessage(result, principal.ownerId, admission);
     }
@@ -273,7 +367,15 @@ const handle = async (
         headers.set(key, value);
       }
     }
-    return new Response(result.body, { headers, status: result.status });
+    const responseBody =
+      request.method === "GET" && result.ok && result.body !== null
+        ? projectEveSubmissionStream(
+            principal.ownerId,
+            policy.sessionId,
+            result.body
+          )
+        : result.body;
+    return new Response(responseBody, { headers, status: result.status });
   } catch (error) {
     if (error instanceof EveUsageReconciliationBusyError) {
       return eveUsageBusyResponse(error);
@@ -293,3 +395,7 @@ const GET = handle;
 
 const POST = handle;
 export { GET, POST };
+
+/* oxlint-disable max-lines -- This boundary keeps the existing query or proxy API and the new submission contract together. */
+
+/* oxlint-enable eslint/complexity, unicorn/no-null */

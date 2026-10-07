@@ -64,3 +64,28 @@ The queued non-materialization check holds the first model turn at a file barrie
 - Remaining gates: upstream supported contract/release, production immutable submission and annotation storage, old-history/copy migration, in-flight restart/Postgres proof, terminal cancellation disposition and independent creation allocation recovery.
 
 No user decision is needed now. Retain the existing fork seam. Lane D can integrate these reviewable proofs and the reviewed exception-budget additions independently of upstream acceptance. This lane does not alter D’s shared harness.
+
+## Application migration and additional runtime proofs
+
+See `docs/eve-submission-journal.md` for the implemented immutable submission journal, app annotation projection, authenticated status read, preserved metadata/creation seams, and database/browser gates.
+
+Additional isolated commands (run from the repository root):
+
+```sh
+EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node bun experiments/eve-delivery-correlation/creation-lookup.ts
+EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node bun experiments/eve-delivery-correlation/cancellation.ts
+bun experiments/eve-delivery-correlation/setup-postgres.ts /absolute/D/tests/eve-retirement-runtime
+EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node bun experiments/eve-delivery-correlation/postgres-restart.ts /absolute/disposable/connection.json
+```
+
+Postgres setup uses D controller commit `49385ae69` and records copied file hashes in `.eve/lane-c-pg-shared/controller-provenance.json`. It uses only lane_c, validated by D's preparer. PostgreSQL 17.11 / patched world-postgres 5.0.0-beta.40 / bundled Workflow 5.0.1 / eve 0.71.3. It does not mutate the original isolated EVE installation or shared database locks. The optional controller serving-PID argument verifies that the killed server belongs to its CLI.
+
+Observed results:
+
+- Creation: two same-operation POSTs reused `wrun_01M4BYF4W890S91C6KPYDSHQY6`. After terminal reset, the same POST allocated `wrun_01M4BYF5CZF6CZ6SBRCE7G4X2Y`. The immutable allocation lookup remains a separate requirement; live-session create replay exists.
+- Cancellation: a held turn accepted a queued message, then emitted `turn.cancelled`; the queued message subsequently emitted its own correlated receipt and completed. There was no follow-up resend. Cancel does not prove queued non-admission.
+- PG graceful shutdown boundary: PIDs 49406 → 49797; one queued dispatch survived restart. Initial input was also replay-appended under a new native event ID. App receipt and logical-node regressions cover that shape.
+- PG abrupt boundary: corrected controller killed serving PID 57046, completed cleanup and launched worker2. No queued receipt within 15 seconds; root `wrun_01M4BYHPQDC5BTDD250VMEQW1K` remained running. Read-only SQL found jobs 46/49 locked to dead workers. No artificial lock aging/unlocking was done. The proof currently fails this bounded liveness assertion, and is not claimed as a pass. D owns separate supported operator recovery.
+- Earlier abrupt attempt with the pre-fix controller timed out in its shutdown record wait; it is harness-only evidence, superseded for runtime interpretation by the corrected attempt.
+
+The proof has no claim about native/public-copy duplicate-history elimination, exactly-once effects, production package switching, or automatic resend.

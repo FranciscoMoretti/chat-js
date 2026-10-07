@@ -3,10 +3,7 @@
 import type { MessageStreamEvent } from "eve/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  eveMessageDelivery,
-  eveMessageOperationId,
-} from "@/lib/eve/message-delivery";
+import { eveMessageDelivery } from "@/lib/eve/message-delivery";
 import type { PendingEveMessage } from "@/lib/eve/message-delivery";
 /* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, unicorn/no-null -- useEveMessageDelivery: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including current); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -32,10 +29,6 @@ export const useEveMessageDelivery = (sessionId: string) => {
 
   const accept = useCallback(
     (event: MessageStreamEvent) => {
-      const operationId = eveMessageOperationId(event);
-      if (!(typeof operationId === "string" && operationId !== "")) {
-        return;
-      }
       const current =
         pendingRef.current === undefined
           ? eveMessageDelivery.read(sessionStorage, sessionId)
@@ -43,7 +36,6 @@ export const useEveMessageDelivery = (sessionId: string) => {
       pendingRef.current = current;
       if (
         !current ||
-        current.operationId !== operationId ||
         !eveMessageDelivery.acknowledge(
           sessionStorage,
           sessionId,
@@ -53,6 +45,7 @@ export const useEveMessageDelivery = (sessionId: string) => {
       ) {
         return;
       }
+      const { operationId } = current;
       acknowledged.current = operationId;
       pendingRef.current = null;
       setPending((pendingMessage) =>

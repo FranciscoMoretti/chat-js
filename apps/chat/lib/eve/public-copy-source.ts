@@ -6,6 +6,7 @@ import { getEveConnectionOptions } from "./connection-options";
 import { eveCopyBoundaries } from "./copy-boundaries";
 import { prepareEveCopyTranscript } from "./copy-transcript";
 import { assertEveConfigured } from "./server";
+import { projectEveSubmissionEvents } from "./submission-projection";
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): readPublicEveCopySource uses 15_000, 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -13,6 +14,7 @@ import { assertEveConfigured } from "./server";
  * typescript/explicit-module-boundary-types (#562): Keep readPublicEveCopySource's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): readPublicEveCopySource intentionally keeps the existing falsy-value behavior of row?.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
+/* oxlint-disable max-statements -- Keep snapshot, annotation projection and revocation recheck in order before exposing a copy source. */
 export const readPublicEveCopySource = async (id: string) => {
   const row = await getPublicEveConversation(id);
   if (!row?.sessionId) {
@@ -23,17 +25,24 @@ export const readPublicEveCopySource = async (id: string) => {
   const snapshot = await client.sessions
     .attach(row.sessionId)
     .snapshot({ signal: AbortSignal.timeout(15_000) });
+  const events = await projectEveSubmissionEvents(
+    row.ownerId,
+    row.sessionId,
+    snapshot.events
+  );
   const current = await getPublicEveConversation(id);
   if (current?.sessionId !== row.sessionId || current.ownerId !== row.ownerId) {
     throw new Error("Shared conversation is unavailable.");
   }
   return {
-    boundaries: eveCopyBoundaries(snapshot.events),
+    boundaries: eveCopyBoundaries(events),
     id: row.id,
     ownerId: row.ownerId,
-    projection: prepareEveCopyTranscript(snapshot.events),
+    projection: prepareEveCopyTranscript(events),
     sessionId: row.sessionId,
     title: row.title ?? row.firstMessage.slice(0, 100),
   };
 };
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+
+/* oxlint-enable max-statements */

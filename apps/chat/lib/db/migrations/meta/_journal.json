@@ -64,6 +64,20 @@
       "when": 1791136783105,
       "tag": "0008_mysterious_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791401586506,
+      "tag": "0009_clumsy_argent",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791401828848,
+      "tag": "0010_talented_bullseye",
+      "breakpoints": true
     }
   ]
 }

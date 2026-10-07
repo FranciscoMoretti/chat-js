@@ -11,6 +11,11 @@ import {
   getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
+import {
+  reserveEveSubmission,
+  settleEveSubmission,
+  markEveCreationSubmissionDispatch,
+} from "@/lib/db/queries";
 import { createModuleLogger } from "@/lib/logger";
 
 import { waitForEveCheckpoint } from "./checkpoint-readiness";
@@ -111,6 +116,7 @@ const creationFailure = (cause: unknown): Response => {
  * @param initialPreparedMessage Optional prepared message reused without preparing it again.
  * @returns The bound conversation, or an error response that leaves unresolved creation recoverable.
  */
+/* oxlint-disable unicorn/no-null -- The persisted annotation uses explicit null for no selected tool. */
 export const executeEveConversationCreation = async (
   ownerId: string,
   input: z.infer<typeof createConversationInput>,
@@ -132,6 +138,13 @@ export const executeEveConversationCreation = async (
       input.operationId,
       eveMessageTitle(input.message),
       async (operationId) => {
+        await reserveEveSubmission({
+          command: { kind: "creation", ...input },
+          conversationId: operationId,
+          operationId: input.operationId,
+          ownerId,
+          selectedTool: input.selectedTool ?? null,
+        });
         const existing = await requestEveCreation(
           "lookup",
           ownerId,
@@ -141,6 +154,7 @@ export const executeEveConversationCreation = async (
           }
         );
         if (existing.ok) {
+          await settleEveSubmission(ownerId, input.operationId, "admitted");
           return z
             .object({
               sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
@@ -182,6 +196,7 @@ export const executeEveConversationCreation = async (
             input.modelId
           );
         }
+        await markEveCreationSubmissionDispatch(ownerId, input.operationId);
         const result = await requestEveCreation(
           "dispatch",
           ownerId,
@@ -205,6 +220,7 @@ export const executeEveConversationCreation = async (
         if (!result.ok) {
           throw new EveCreationTransportError("dispatch", result.status);
         }
+        await settleEveSubmission(ownerId, input.operationId, "admitted");
         return z
           .object({
             sessionId: z.string().min(MINIMUM_SESSION_IDENTIFIER_LENGTH),
@@ -242,3 +258,5 @@ export const executeEveConversationCreation = async (
   }
 };
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+
+/* oxlint-enable unicorn/no-null */

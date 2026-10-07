@@ -19,6 +19,8 @@ import {
   eveNamedDocumentCheckpoint,
   eveNamedDocumentCheckpointEntry,
   eveVote,
+  eveSubmission,
+  eveMessageAnnotation,
   eveSearchText,
   eveSubagentSession,
 } from "./schema";
@@ -129,6 +131,19 @@ const completeEveConversationDeletion = async (
     await tx
       .delete(eveSubagentSession)
       .where(inArray(eveSubagentSession.conversationId, ids));
+    // Retain the opaque identity fence while erasing private command contents.
+    await tx
+      .update(eveSubmission)
+      .set({
+        command: {},
+        messageId: null,
+        selectedTool: null,
+        state: "retired",
+      })
+      .where(inArray(eveSubmission.conversationId, ids));
+    await tx
+      .delete(eveMessageAnnotation)
+      .where(inArray(eveMessageAnnotation.conversationId, ids));
     await tx.delete(eveVote).where(inArray(eveVote.conversationId, ids));
     await tx
       .update(eveConversation)
