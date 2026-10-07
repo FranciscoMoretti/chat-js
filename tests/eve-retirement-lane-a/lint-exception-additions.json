@@ -4,6 +4,9 @@
     "[\"apps/chat/lib/eve/document-deletion.test.ts\",\"no-undefined\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/delete-document/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
     "[\"apps/chat/tools/chatjs/delete-document/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/delete-document/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/delete-document/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": 1,
+    "[\"packages/registry/src/tools/documents.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable-next-line\"]": 2,
     "[\"tests/eve-retirement-lane-a/dynamic/prepare.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-lane-a/dynamic/prepare.mjs\",\"unicorn/no-null\",\"oxlint-disable\"]": 1,
     "[\"tests/eve-retirement-lane-a/dynamic/prepare.mjs\",\"eslint/no-await-in-loop\",\"oxlint-disable\"]": 1,
@@ -101,6 +104,16 @@
     ],
     "[\"apps/chat/tools/chatjs/delete-document/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
       "701969c643090e07cb3daef70e29f6a16cfe5cfd19cbba53da1cf3483fc22017"
+    ],
+    "[\"packages/registry/src/tools/delete-document/tool.ts\",\"typescript/prefer-readonly-parameter-types\",\"oxlint-disable\"]": [
+      "c9ff08d1352b4ca0095574bdb449dca6261a87fe1ccacda2ecb410bfbccb064a"
+    ],
+    "[\"packages/registry/src/tools/delete-document/tool.ts\",\"typescript/promise-function-async\",\"oxlint-disable\"]": [
+      "701969c643090e07cb3daef70e29f6a16cfe5cfd19cbba53da1cf3483fc22017"
+    ],
+    "[\"packages/registry/src/tools/documents.ts\",\"import/no-relative-parent-imports\",\"oxlint-disable-next-line\"]": [
+      "d1cd8c70d89e06aa02c1356125415ac835662a30d788e0f8c598458ba34d3c01",
+      "14ae0f459e3da18c5f78541a0725ac042b0877d6e7a5d8b3e10b719012922cf9"
     ],
     "[\"tests/eve-retirement-lane-a/dynamic/prepare.mjs\",\"eslint/no-magic-numbers\",\"oxlint-disable\"]": [
       "f788f702e07160a2e1b8474e74cdf572fca476c4507cb19d1795e7c4ff0cfe7b"
