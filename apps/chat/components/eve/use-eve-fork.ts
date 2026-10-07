@@ -128,6 +128,7 @@ export const useEveFork = (
   const [busy, setBusy] = useState(false);
   const [restoreFailed, setRestoreFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const [failure, setFailure] = useState("");
   const lock = useRef(false);
 
@@ -232,8 +233,17 @@ export const useEveFork = (
       await action();
     } catch (error) {
       if (error instanceof CreationRejectedError) {
-        finishCreation(sessionStorage, ownerId, { conversationId });
-        setPending(undefined);
+        setRejected(true);
+        try {
+          finishCreation(sessionStorage, ownerId, { conversationId });
+          setPending(undefined);
+          setRejected(false);
+        } catch {
+          setFailure(
+            "The rejected version request could not be cleared. Keep this tab for recovery."
+          );
+          return;
+        }
       }
       setFailure(
         // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -402,9 +412,20 @@ export const useEveFork = (
       value: modelSelectionValue ?? selectedModel,
     },
     pending,
+    rejected,
     retry: () =>
       run(async () => {
-        if (pending) {
+        if (pending && rejected) {
+          try {
+            finishCreation(sessionStorage, ownerId, { conversationId });
+            setPending(undefined);
+            setRejected(false);
+          } catch {
+            setFailure(
+              "The rejected version request could not be cleared. Keep this tab for recovery."
+            );
+          }
+        } else if (pending) {
           await execute(pending);
         }
       }),

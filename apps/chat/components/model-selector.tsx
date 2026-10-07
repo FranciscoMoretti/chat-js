@@ -9,12 +9,12 @@ import {
 } from "lucide-react";
 import React, {
   memo,
-  startTransition,
   useCallback,
   useMemo,
   useOptimistic,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import type { JSX as ReactJSX, ReactNode } from "react";
 
@@ -296,7 +296,9 @@ const PureModelSelector = ({
   allowMultiple?: boolean;
   selectedModelId: AppModelId;
   selectedModelSelection: SelectedModelValue;
-  onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
+  onModelSelectionChangeAction?: (
+    selection: SelectedModelValue
+  ) => void | Promise<void>;
   className?: string;
 }): ReactJSX.Element => {
   const { data: session } = useSession();
@@ -304,6 +306,7 @@ const PureModelSelector = ({
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
+  const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [optimisticSelection, setOptimisticSelection] = useOptimistic(
@@ -463,86 +466,95 @@ const PureModelSelector = ({
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selectedItem; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   }, [selectedItem?.model.name, selectedModelCount, useMultipleModels]);
 
+  const dispatchSelection = useCallback(
+    (selection: SelectedModelValue): void => {
+      try {
+        // Run the producer before the transition so Send sees its local selection immediately.
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the optional Action's skipped call and original completion value.
+        const completion = onModelSelectionChangeAction?.(selection);
+        // oxlint-disable-next-line typescript/promise-function-async -- React receives the original Action promise without changing its identity or synchronous producer contract.
+        startTransition(() => {
+          setOptimisticSelection(selection);
+          return completion;
+        });
+      } catch (error) {
+        startTransition(() => {
+          // oxlint-disable-next-line react/todo -- Preserve React's boundary ownership for a synchronously throwing selection producer.
+          throw error;
+        });
+      }
+    },
+    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
+  );
+
   const selectSingleModel = useCallback(
     (id: AppModelId) => {
-      startTransition(() => {
-        setOptimisticSelection(id);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        onModelSelectionChangeAction?.(id);
-        setOpen(false);
-      });
+      dispatchSelection(id);
+      setOpen(false);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection]
   );
 
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof current === "string" ? { [current]: 1 } : current;
+      const { current } = optimisticSelectionRef;
+      const currentCounts: SelectedModelCounts =
+        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
+      const isAlreadySelected = (currentCounts[id] ?? 0) > 0;
 
-        let nextSelection: SelectedModelCounts;
-        if (isAlreadySelected) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          nextSelection = { ...currentCounts, [id]: 1 };
+      let nextSelection: SelectedModelCounts;
+      if (isAlreadySelected) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        nextSelection = { ...currentCounts, [id]: 1 };
+      }
 
-        setOptimisticSelection(nextSelection);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection]
   );
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
-      startTransition(() => {
-        const { current } = optimisticSelectionRef;
-        const currentCounts: SelectedModelCounts =
-          // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof current === "string" ? { [current]: 1 } : current;
+      const { current } = optimisticSelectionRef;
+      const currentCounts: SelectedModelCounts =
+        // oxlint-disable-next-line no-ternary -- Keep currentCounts as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        typeof current === "string" ? { [current]: 1 } : current;
 
-        const newCount = (currentCounts[id] ?? 0) + delta;
-        let nextSelection: SelectedModelValue;
+      const newCount = (currentCounts[id] ?? 0) + delta;
+      let nextSelection: SelectedModelValue;
 
-        if (newCount <= 0) {
-          const remaining = Object.entries(currentCounts).filter(
-            ([candidateId, selectionCount]) =>
-              candidateId !== id &&
-              typeof selectionCount === "number" &&
-              selectionCount > 0
-          );
-          if (remaining.length === 0) {
-            return;
-          }
-          nextSelection = Object.fromEntries(remaining);
-        } else {
-          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-          nextSelection = { ...currentCounts, [id]: newCount };
+      if (newCount <= 0) {
+        const remaining = Object.entries(currentCounts).filter(
+          ([candidateId, selectionCount]) =>
+            candidateId !== id &&
+            typeof selectionCount === "number" &&
+            selectionCount > 0
+        );
+        if (remaining.length === 0) {
+          return;
         }
+        nextSelection = Object.fromEntries(remaining);
+      } else {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentCounts own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        nextSelection = { ...currentCounts, [id]: newCount };
+      }
 
-        setOptimisticSelection(nextSelection);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        onModelSelectionChangeAction?.(nextSelection);
-      });
+      dispatchSelection(nextSelection);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [dispatchSelection]
   );
 
   const handleMultipleModelsToggle = useCallback(
@@ -550,22 +562,13 @@ const PureModelSelector = ({
       setUseMultipleModels(checked);
 
       if (checked) {
-        const nextSelection = buildMultiModelSelection([optimisticModelId]);
-        startTransition(() => {
-          setOptimisticSelection(nextSelection);
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-          onModelSelectionChangeAction?.(nextSelection);
-        });
+        dispatchSelection(buildMultiModelSelection([optimisticModelId]));
         return;
       }
 
-      startTransition(() => {
-        setOptimisticSelection(optimisticModelId);
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onModelSelectionChangeAction; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        onModelSelectionChangeAction?.(optimisticModelId);
-      });
+      dispatchSelection(optimisticModelId);
     },
-    [onModelSelectionChangeAction, optimisticModelId, setOptimisticSelection]
+    [dispatchSelection, optimisticModelId]
   );
 
   return (

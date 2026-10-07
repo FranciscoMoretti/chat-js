@@ -23,19 +23,25 @@ import { resolveCreationRequest } from "@/lib/eve/resolve-creation-request";
 /* oxlint-disable react/jsx-no-literals -- EveCreationRecovery renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveCreationRecovery: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including scope?.projectId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
+// oxlint-disable-next-line complexity -- Keep the existing persisted-request, project fallback and rejected-cleanup branches in the same recovery owner.
 export const EveCreationRecovery = ({
   ownerId,
   operationId,
   firstMessage,
   scope,
   initiallyRejected = false,
+  initialFailure = "",
+  onClearRejected,
 }: {
-  ownerId: string;
-  operationId?: string;
-  firstMessage: string;
-  scope?: CreationScope;
-  initiallyRejected?: boolean;
+  readonly ownerId: string;
+  readonly operationId?: string;
+  readonly firstMessage: string;
+  readonly scope?: CreationScope;
+  readonly initiallyRejected?: boolean;
+  readonly initialFailure?: string;
+  readonly onClearRejected?: () => void;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const router = useRouter();
   const lock = useRef(false);
   const [pending, setPending] =
@@ -128,7 +134,10 @@ export const EveCreationRecovery = ({
       ? "Conversation creation is unconfirmed. Retry the saved request to recover it."
       : "This browser does not have the original request. Return to the tab where you sent it, or check again if creation is still running.";
   }
-  if (rejected) {
+  if (rejected && onClearRejected) {
+    status =
+      "The original request was rejected. Clear the saved request before sending again.";
+  } else if (rejected) {
     status =
       "The original request was rejected. You can continue with the saved message outside this project.";
   }
@@ -144,10 +153,16 @@ export const EveCreationRecovery = ({
         }
       </p>
       <output className="block">{status}</output>
-      {failure && <p role="alert">{failure}</p>}
+      {(failure || initialFailure) && (
+        <p role="alert">{failure || initialFailure}</p>
+      )}
+      {rejected && onClearRejected && (
+        <Button onClick={onClearRejected}>Clear rejected request</Button>
+      )}
       {
         // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        rejected /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+        rejected &&
+        !onClearRejected /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
         scope?.projectId ? (
           /* oxlint-enable oxc/no-optional-chaining */ <Button
             onClick={continueWithoutProject}
@@ -161,8 +176,14 @@ export const EveCreationRecovery = ({
         !rejected && pending ? (
           <Button
             disabled={busy}
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Creation recovery owns its durable operation and displayed failures; the button triggers that existing lifecycle.
-            onClick={retry}
+
+            onClick={() => {
+              const completion = retry();
+              // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+              startEventAction(async () => {
+                await completion;
+              });
+            }}
           >
             {
               // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.

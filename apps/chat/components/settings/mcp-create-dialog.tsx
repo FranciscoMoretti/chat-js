@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -94,6 +95,7 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
+// oxlint-disable-next-line max-statements -- Connector form setup and its Action failure owner share this component lifecycle.
 export const McpCreateDialog = ({
   open,
   onClose,
@@ -101,6 +103,7 @@ export const McpCreateDialog = ({
   readonly open: boolean;
   readonly onClose: () => void;
 }): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const queryKey = trpc.mcp.list.queryKey();
@@ -216,8 +219,21 @@ export const McpCreateDialog = ({
         <Form {...form}>
           <form
             className="space-y-4"
-            // oxlint-disable-next-line typescript/no-misused-promises -- React Hook Form owns submission validation and completion; the DOM event dispatcher does not consume the returned promise.
-            onSubmit={form.handleSubmit(handleSubmit)}
+
+            onSubmit={(event) => {
+              startEventAction(async () => {
+                try {
+                  await form.handleSubmit(handleSubmit)(event);
+                } catch (error) {
+                  toast.error(
+                    // oxlint-disable-next-line no-ternary -- Preserve lazy error-message fallback; if/else value assignment conflicts with pinned unicorn/prefer-ternary.
+                    error instanceof Error
+                      ? error.message
+                      : "Failed to add connector"
+                  );
+                }
+              });
+            }}
           >
             <FormField
               control={form.control}
@@ -377,3 +393,5 @@ export const McpCreateDialog = ({
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+
+/* oxlint-enable oxc/no-async-await */

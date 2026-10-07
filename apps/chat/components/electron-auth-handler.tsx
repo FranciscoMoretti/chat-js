@@ -21,6 +21,7 @@ const ElectronAuthOverlay = ({
 }: {
   state: ElectronRendererAuthState;
 }): ReactJSX.Element | null => {
+  const [, startEventAction] = React.useTransition();
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (state.status === "idle" || !state.message) {
@@ -78,17 +79,18 @@ const ElectronAuthOverlay = ({
                   // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                   className="mt-2"
 
-                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
-                  onClick={async () => {
-                    try {
-                      // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-                      await window.electronAPI?.cancelAuthFlow?.();
-                    } catch (error) {
-                      console.error(
-                        "Failed to cancel Electron auth flow",
-                        error
-                      );
-                    }
+                  onClick={() => {
+                    startEventAction(async () => {
+                      try {
+                        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.cancelAuthFlow; read cancelAuthFlow from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+                        await window.electronAPI?.cancelAuthFlow?.();
+                      } catch (error) {
+                        console.error(
+                          "Failed to cancel Electron auth flow",
+                          error
+                        );
+                      }
+                    });
                   }}
                   size="sm"
                   type="button"

@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 import { Play } from "lucide-react";
 import React from "react";
@@ -53,6 +54,7 @@ export const EveDocumentRun = ({
   buttonOnly = false,
   resultOnly = false,
 }: DocumentRunProps) => {
+  const [, startEventAction] = React.useTransition();
   const run = latestDocumentRun(messages, documentId, revisionId);
   const canRun =
     onAction &&
@@ -79,13 +81,15 @@ export const EveDocumentRun = ({
               // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
               className="hover:bg-accent h-fit px-2 py-1.5 [&_svg]:size-[18px]"
               disabled={disabled}
-              // oxlint-disable-next-line typescript/no-misused-promises -- TanStack Query tracks refetch state and errors; this UI event deliberately initiates refresh without awaiting a DOM return value.
-              onClick={(): Promise<void> =>
-                onAction({
-                  message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
-                  modelId: config.ai.tools.code.edits,
-                })
-              }
+
+              onClick={() => {
+                startEventAction(async () => {
+                  await onAction({
+                    message: `Run the saved code using runCodeDocument with documentId "${documentId}" and revisionId "${revisionId}". Execute exactly this revision once. Do not edit the document or substitute codeExecution. Report the result briefly.`,
+                    modelId: config.ai.tools.code.edits,
+                  });
+                });
+              }}
               size="sm"
               variant="outline"
             >
@@ -121,3 +125,5 @@ export const EveDocumentRun = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
+
+/* oxlint-enable oxc/no-async-await */

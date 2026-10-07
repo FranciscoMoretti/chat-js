@@ -78,17 +78,19 @@ vi.mock("@/features/installed-uploads", async () => {
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- composer-menu.browser route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 24); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including file: File); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
+/* oxlint-disable oxc/no-async-await -- The deferred upload fixture preserves the production awaited completion boundary. */
 vi.mock("@/features/attachment-uploads/upload", () => ({
-  uploadAttachment: (file: File) => {
-    state.upload(file);
-    return Promise.resolve({
+  uploadAttachment: async (file: File) => {
+    await state.upload(file);
+    return {
       contentType: file.type,
       digest: "fixture",
       name: file.name,
       url: `/api/files/${String(state.upload.mock.calls.length).padStart(24, "0")}.png`,
-    });
+    };
   },
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- composer-menu.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -340,6 +342,7 @@ afterEach(() => {
   state.globalConnector = false;
   state.connectors = [{ enabled: true, id: "docs", name: "Documentation" }];
   vi.clearAllMocks();
+  state.upload.mockReset();
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
@@ -791,6 +794,91 @@ test("installed tool without display metadata remains selectable and can send", 
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null -- composer-menu.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+
+test.each(["picker", "paste", "drop"])(
+  "%s locks Send before a deferred upload completes",
+  async (source) => {
+    const pending = Promise.withResolvers<boolean>();
+    state.upload.mockReturnValue(pending.promise);
+    const cleanup = await mount(false, null, true);
+    try {
+      const transfer = new DataTransfer();
+      transfer.items.add(
+        new File([new Uint8Array([1, 2, 3])], "pending.png", {
+          type: "image/png",
+        })
+      );
+      if (source === "picker") {
+        const input =
+          document.querySelector<HTMLInputElement>('input[type="file"]');
+        if (!input) {
+          throw new Error("Missing installed upload picker");
+        }
+        input.files = transfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      } else if (source === "paste") {
+        page
+          .getByRole("textbox", { exact: true, name: "Message" })
+          .element()
+          .dispatchEvent(
+            new ClipboardEvent("paste", {
+              bubbles: true,
+              cancelable: true,
+              clipboardData: transfer,
+            })
+          );
+      } else {
+        page
+          .getByRole("group", { name: "Message composer" })
+          .element()
+          .dispatchEvent(
+            new DragEvent("drop", {
+              bubbles: true,
+              cancelable: true,
+              dataTransfer: transfer,
+            })
+          );
+      }
+      await vi.waitFor(() => expect(state.upload).toHaveBeenCalledOnce());
+      await expect
+        .element(page.getByRole("button", { exact: true, name: "Send" }))
+        .toBeDisabled();
+      await expect
+        .element(page.getByRole("button", { name: "Composer options" }))
+        .toBeDisabled();
+      await expect
+        .element(page.getByTestId("input-attachment-preview"))
+        .toBeVisible();
+      expect(state.handleSubmit).not.toHaveBeenCalled();
+      if (source === "picker") {
+        await takeSnapshot("composer-pending-upload-lock");
+        await page
+          .getByRole("group", { name: "Message composer" })
+          .screenshot();
+      }
+      await act(async () => {
+        await Promise.resolve();
+        pending.resolve(true);
+      });
+      await expect
+        .element(page.getByTestId("input-attachment-preview"))
+        .toBeVisible();
+      await expect
+        .element(page.getByRole("button", { exact: true, name: "Send" }))
+        .toBeEnabled();
+      if (source === "picker") {
+        await expect
+          .element(page.getByLabelText("Attach files"))
+          .toHaveValue("");
+      }
+      await page.getByRole("button", { exact: true, name: "Send" }).click();
+      expect(state.handleSubmit).toHaveBeenCalledOnce();
+    } finally {
+      pending.resolve(true);
+      await cleanup();
+    }
+  }
+);
 
 test("installed uploads handle picker, paste and drop; omitted uploads leave no input or upload handlers", async () => {
   const cleanup = await mount(false, null, true);

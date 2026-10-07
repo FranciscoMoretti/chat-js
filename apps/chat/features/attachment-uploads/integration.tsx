@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -34,6 +35,7 @@ import { processFilesForUpload } from "./upload-prep";
 /* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
 type UploadInput = ReadonlyNativeSurface<AttachmentUploadInput>;
 const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
+  const [, startEventAction] = React.useTransition();
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -96,8 +98,15 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,
-    // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
-    onDrop: upload,
+
+    onDrop: (files: ReadonlyNativeSurface<File[]>) => {
+      // Start outside the transition so the upload queue locks Send immediately.
+      const completion = upload(files);
+      // oxlint-disable-next-line oxc/no-async-await -- Await upload completion inside the React Action failure owner.
+      startEventAction(async () => {
+        await completion;
+      });
+    },
   });
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
@@ -110,15 +119,20 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
           multiple
           ref={input}
           type="file"
-          // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
-          onChange={async (
+
+          onChange={(
             // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Reset the original input element's value after reading its FileList so the same file can be selected again.
             event: React.ChangeEvent<HTMLInputElement>
-          ): Promise<void> => {
-            if (!disabled) {
-              await upload([...(event.target.files ?? [])]);
+          ) => {
+            if (disabled) {
+              event.target.value = "";
+              return;
             }
-            event.target.value = "";
+            const completion = upload([...(event.target.files ?? [])]);
+            startEventAction(async () => {
+              await completion;
+              event.target.value = "";
+            });
           }}
         />
       ),
@@ -154,7 +168,10 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
-                void upload([...event.clipboardData.files]);
+                const completion = upload([...event.clipboardData.files]);
+                startEventAction(async () => {
+                  await completion;
+                });
               }
             },
           },
@@ -178,3 +195,5 @@ export const attachmentUploads = {
   useUploads,
 } satisfies AttachmentUploadIntegration;
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
+
+/* oxlint-enable oxc/no-async-await */

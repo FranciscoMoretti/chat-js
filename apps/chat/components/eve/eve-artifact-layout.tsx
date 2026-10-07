@@ -79,6 +79,7 @@ const DocumentSaveStatus = ({
 }: {
   editing: ReturnType<typeof useDocumentDraft>;
 }): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const handleRetry = editing.retry;
   const handleDiscard = editing.discard;
   return (
@@ -94,8 +95,14 @@ const DocumentSaveStatus = ({
           <p>{editing.error} Your draft has been kept.</p>
           <div className="flex gap-2">
             <Button
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Draft retry and query refetch expose asynchronous lifecycle state through their owning hooks.
-              onClick={handleRetry}
+              // oxlint-disable-next-line react-perf/jsx-no-new-function-as-prop -- This error-only retry binds the current draft save action to its React rejection owner.
+              onClick={() => {
+                const completion = handleRetry();
+                // oxlint-disable-next-line oxc/no-async-await -- Start urgent draft updates before React owns the completion promise.
+                startEventAction(async () => {
+                  await completion;
+                });
+              }}
               size="sm"
               variant="outline"
             >

@@ -58,6 +58,7 @@ export const ProjectDetailsDialog = ({
   onSubmit: (data: ProjectDetailsData) => void | Promise<void>;
   isLoading: boolean;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const [submitError, setSubmitError] = useState("");
   const [name, setName] = useState(initialName ?? "");
   const [icon, setIcon] = useState<ProjectIconName | null>(initialIcon ?? null);
@@ -189,8 +190,10 @@ export const ProjectDetailsDialog = ({
           </Button>
           <Button
             disabled={isDisabled}
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Project submission owns dialog state and failure feedback; the button only triggers that lifecycle.
-            onClick={handleSubmit}
+
+            onClick={() => {
+              startEventAction(handleSubmit);
+            }}
           >
             {buttonText}
           </Button>

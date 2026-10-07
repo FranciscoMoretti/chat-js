@@ -34,14 +34,24 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
   const release = Promise.withResolvers<undefined>();
   const calls: string[] = [];
-  // oxlint-disable-next-line typescript/no-misused-promises -- This controlled HTTP fixture awaits a resolve-only gate to hold the first delivery open; no rejected task escapes the handler.
-  const server = createServer(async (request, response) => {
-    const id = request.headers["x-vqs-message-id"];
-    calls.push(String(id));
-    if (calls.length === 1) {
-      await release.promise;
-    }
-    response.writeHead(200).end();
+
+  const server = createServer((request, response) => {
+    void (async (): Promise<void> => {
+      try {
+        const id = request.headers["x-vqs-message-id"];
+        calls.push(String(id));
+        if (calls.length === 1) {
+          await release.promise;
+        }
+        response.writeHead(200).end();
+      } catch (error) {
+        if (error instanceof Error) {
+          response.destroy(error);
+        } else {
+          response.destroy(new Error(String(error)));
+        }
+      }
+    })();
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();

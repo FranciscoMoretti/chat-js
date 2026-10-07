@@ -34,6 +34,7 @@ const EveCopyButton = ({
   sourceConversationId: string;
   recovery?: EveCopyInput;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const session = useSession();
   const model = useDefaultModel();
   const lock = useRef(false);
@@ -136,8 +137,13 @@ const EveCopyButton = ({
           isPending={busy}
           label={label}
 
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Copy recovery owns durable request identity, retry state, and failure feedback.
-          onClick={save}
+          onClick={() => {
+            const completion = save();
+            // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+            startEventAction(async () => {
+              await completion;
+            });
+          }}
         />
       )}
       {failure && (

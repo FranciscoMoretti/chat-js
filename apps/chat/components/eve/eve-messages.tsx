@@ -310,6 +310,7 @@ export const EveMessages = ({
   disabled: boolean;
   respond: (response: InputResponse) => void;
 }) => {
+  const [, startEventAction] = React.useTransition();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toolCallId from messages.flatMap(...).filter(...).findLast(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const latestDocumentCallId = messages
     .flatMap((message) => message.parts)
@@ -324,6 +325,7 @@ export const EveMessages = ({
   return messages.map((message) => {
     const userMessage = precedingUser;
     if (message.role === "user") {
+      // oxlint-disable-next-line react/immutability -- This local accumulator is assigned during the synchronous render map; it never changes after render.
       precedingUser = message;
     }
     // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading messageId from editor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep editing as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -381,18 +383,19 @@ export const EveMessages = ({
           /* oxlint-enable oxc/no-optional-chaining */
         }
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message copy manages clipboard failures and feedback within the async handler.
-        onCopy={async () => {
-          if (!text.trim()) {
-            toast.error("There's no text to copy!");
-            return;
-          }
-          try {
-            await navigator.clipboard.writeText(text.trim());
-            toast.success("Copied to clipboard!");
-          } catch {
-            toast.error("Unable to copy this message.");
-          }
+        onCopy={() => {
+          startEventAction(async () => {
+            if (!text.trim()) {
+              toast.error("There's no text to copy!");
+              return;
+            }
+            try {
+              await navigator.clipboard.writeText(text.trim());
+              toast.success("Copied to clipboard!");
+            } catch {
+              toast.error("Unable to copy this message.");
+            }
+          });
         }}
 
         feedback={

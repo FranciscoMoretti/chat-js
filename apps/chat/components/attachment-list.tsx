@@ -178,6 +178,7 @@ const AttachmentItem = ({
   onImageClick?: (imageUrl: string, imageName?: string) => void;
   variant?: "card" | "pill";
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const { name, url, contentType } = attachment;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isImage = Boolean(contentType?.startsWith("image/") && url);
@@ -244,34 +245,35 @@ const AttachmentItem = ({
             <Button
               className="size-7"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Attachment preview owns asynchronous loading and fallback display; preserve its event cancellation and preview lifecycle.
-              onClick={async (event) => {
-                event.stopPropagation();
-                /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
-                try {
-                  const response = await fetch(url);
-                  if (response.status === 404) {
-                    toast.error("File unavailable");
-                    return;
+              onClick={(event) => {
+                startEventAction(async () => {
+                  event.stopPropagation();
+                  /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */
+                  try {
+                    const response = await fetch(url);
+                    if (response.status === 404) {
+                      toast.error("File unavailable");
+                      return;
+                    }
+                    if (!response.ok) {
+                      // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
+                      throw new Error(
+                        `File download failed (${response.status})`
+                      );
+                    }
+                    const blob = await response.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+                    link.href = blobUrl;
+                    link.download = name || "file";
+                    link.click();
+                    URL.revokeObjectURL(blobUrl);
+                  } catch {
+                    // Fallback: open in new tab if fetch fails
+                    window.open(url, "_blank");
                   }
-                  if (!response.ok) {
-                    // oxlint-disable-next-line react/todo -- Preserve the explicit download failure for fallback handling.
-                    throw new Error(
-                      `File download failed (${response.status})`
-                    );
-                  }
-                  const blob = await response.blob();
-                  const blobUrl = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-                  link.href = blobUrl;
-                  link.download = name || "file";
-                  link.click();
-                  URL.revokeObjectURL(blobUrl);
-                } catch {
-                  // Fallback: open in new tab if fetch fails
-                  window.open(url, "_blank");
-                }
-                /* oxlint-enable react/todo */
+                  /* oxlint-enable react/todo */
+                });
               }}
               size="icon"
               title="Download"

@@ -22,6 +22,7 @@ export const EveFeedbackActions = ({
   readonly messageId: string;
   readonly disabled: boolean;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   // All messages share one cached query and one request per conversation.
@@ -53,9 +54,10 @@ export const EveFeedbackActions = ({
       <MessageAction
         disabled={votes.isFetching}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns retry state and error reporting for this refetch interaction.
-        onClick={async () => {
-          await votes.refetch();
+        onClick={() => {
+          startEventAction(async () => {
+            await votes.refetch();
+          });
         }}
         tooltip="Retry loading feedback"
       >

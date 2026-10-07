@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 /* oxlint-enable sort-imports */
 import type { JSX as ReactJSX } from "react";
+import { toast } from "sonner";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { InternalLink } from "@/components/internal-link";
@@ -41,10 +42,14 @@ import {
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/use-credits";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/max-dependencies -- This sidebar directly composes existing navigation, auth and failure owners.
 import authClient from "@/lib/auth-client";
 /* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/lib/electron-auth import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { isElectronRenderer } from "@/lib/electron-auth";
+/* oxlint-disable import/max-dependencies -- This sidebar composes navigation, auth and sign-out feedback through their owning modules. */
+import { signOutAndNavigate } from "@/lib/sign-out";
+/* oxlint-enable import/max-dependencies */
 /* oxlint-enable import/max-dependencies */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
@@ -55,6 +60,7 @@ import { useSession } from "@/providers/session-provider";
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/strict-boolean-expressions, typescript/strict-void-return -- SidebarUserNav: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including user.image); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 export const SidebarUserNav = (): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const { data: session, isPending } = useSession();
   const { credits } = useGetCredits();
   const { setTheme, resolvedTheme } = useTheme();
@@ -227,21 +233,58 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Sign-out coordinates Electron session synchronization and navigation; changing failure handling requires authentication lifecycle review.
-              onClick={async () => {
-                if (
-                  isElectronRenderer() &&
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  typeof window.signOut === "function"
-                ) {
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  await window.signOut();
-                  // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global. Optional chain: Keep the existing nullish guard when calling window.electronAPI.syncAuthSession; read syncAuthSession from window.electronAPI; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-                  await window.electronAPI?.syncAuthSession?.();
-                } else {
-                  await authClient.signOut();
-                }
-                globalThis.location.href = "/";
+              onClick={() => {
+                startEventAction(async () => {
+                  if (
+                    isElectronRenderer() &&
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface.
+                    typeof window.signOut === "function"
+                  ) {
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Preserve the preload bridge's Window receiver and narrowed binding.
+                    const nativeSignOut = window.signOut.bind(window);
+                    await signOutAndNavigate({
+                      navigate: () => {
+                        globalThis.location.href = "/";
+                      },
+                      onFailure: () => {
+                        toast.error("Unable to sign out. Try again.");
+                      },
+                      onSyncFailure: (error) => {
+                        // oxlint-disable-next-line no-console -- Native sign-out already completed; retain the failed renderer refresh diagnostic before navigation.
+                        console.error(
+                          "Failed to refresh the signed-out Electron session",
+                          error
+                        );
+                      },
+                      signOut: nativeSignOut,
+                      syncSession: async () => {
+                        // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: Preserve the optional Electron preload method and its receiver.
+                        await window.electronAPI?.syncAuthSession?.();
+                      },
+                    });
+                  } else {
+                    await signOutAndNavigate({
+                      navigate: () => {
+                        globalThis.location.href = "/";
+                      },
+                      onFailure: () => {
+                        toast.error("Unable to sign out. Try again.");
+                      },
+                      onSyncFailure: (error) => {
+                        // oxlint-disable-next-line no-console -- Native sign-out already completed; retain the failed renderer refresh diagnostic before navigation.
+                        console.error(
+                          "Failed to refresh the signed-out session",
+                          error
+                        );
+                      },
+                      signOut: async () => {
+                        await authClient.signOut({
+                          fetchOptions: { throw: true },
+                        });
+                      },
+                    });
+                  }
+                });
               }}
             >
               <LogOut

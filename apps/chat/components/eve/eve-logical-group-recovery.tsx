@@ -28,6 +28,7 @@ export const EveLogicalGroupRecovery = ({
   readonly groupId: string;
   readonly ownerId: string;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const queryClient = useQueryClient();
   const trpc = useTRPC();
   const [busy, setBusy] = useState(false);
@@ -69,8 +70,14 @@ export const EveLogicalGroupRecovery = ({
       {failure && <p role="alert">{failure}</p>}
       <Button
         disabled={busy}
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Response recovery owns admission/retry state; React Query owns branch invalidation failures.
-        onClick={recover}
+
+        onClick={() => {
+          const completion = recover();
+          // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+          startEventAction(async () => {
+            await completion;
+          });
+        }}
       >
         Retry response
       </Button>

@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
 import {
@@ -69,6 +70,7 @@ export const EveDocumentAssistantActions = ({
   readonly busy?: boolean;
   readonly onStop?: () => Promise<void>;
 }): ReactJSX.Element | null => {
+  const [, startEventAction] = React.useTransition();
   const [expanded, setExpanded] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined
@@ -114,8 +116,13 @@ export const EveDocumentAssistantActions = ({
                 className="h-auto w-auto rounded-full p-3"
                 variant="ghost"
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
-                onClick={onStop}
+                onClick={() => {
+                  startEventAction(async () => {
+                    if (typeof onStop === "function") {
+                      await onStop();
+                    }
+                  });
+                }}
               >
                 <Square size={16} />
               </Button>
@@ -157,3 +164,5 @@ export const EveDocumentAssistantActions = ({
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
+
+/* oxlint-enable oxc/no-async-await */

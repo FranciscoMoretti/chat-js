@@ -54,77 +54,93 @@ const requestSchema = z.object({
  * typescript/strict-void-return (#611): localMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
-  // oxlint-disable-next-line typescript/no-misused-promises -- The async fixture handler catches request failures and writes an HTTP response; Node does not consume its return value.
-  const server = createServer(async (request, response) => {
-    if (request.method !== "POST") {
-      response.writeHead(405).end();
-      return;
-    }
-    try {
-      let body = "";
-      for await (const chunk of request) {
-        if (typeof chunk !== "string" && !Buffer.isBuffer(chunk)) {
-          throw new TypeError("Expected a string or Buffer HTTP body chunk");
-        }
-        body += chunk.toString();
-      }
-      const rpc = requestSchema.parse(JSON.parse(body));
-      if (rpc.id === undefined) {
-        response.writeHead(202).end();
-        return;
-      }
-      let result: unknown;
-      switch (rpc.method) {
-        case "initialize": {
-          result = {
-            protocolVersion: "2025-03-26",
-            capabilities: { tools: {} },
-            serverInfo: { name: "ChatJS local fixture", version: "1.0.0" },
-          };
-          break;
-        }
-        case "tools/list": {
-          result = {
-            tools: [
-              {
-                name: "read_token",
-                description:
-                  "Return the local acceptance token. Call once when asked.",
-                inputSchema: {
-                  type: "object",
-                  properties: {},
-                  additionalProperties: false,
-                },
-              },
-            ],
-          };
-          break;
-        }
-        case "tools/call": {
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-          if (rpc.params?.name !== "read_token") {
-            throw new Error("Unknown fixture tool");
-          }
-          result = await invoke(response);
-          break;
-        }
-        default: {
-          response.writeHead(200, { "content-type": "application/json" }).end(
-            JSON.stringify({
-              jsonrpc: "2.0",
-              id: rpc.id,
-              error: { code: -32_601, message: "Method not found" },
-            })
-          );
+  const server = createServer((request, response) => {
+    void (async (): Promise<void> => {
+      try {
+        if (request.method !== "POST") {
+          response.writeHead(405).end();
           return;
         }
+        try {
+          let body = "";
+          for await (const chunk of request) {
+            if (typeof chunk !== "string" && !Buffer.isBuffer(chunk)) {
+              throw new TypeError(
+                "Expected a string or Buffer HTTP body chunk"
+              );
+            }
+            body += chunk.toString();
+          }
+          const rpc = requestSchema.parse(JSON.parse(body));
+          if (rpc.id === undefined) {
+            response.writeHead(202).end();
+            return;
+          }
+          let result: unknown;
+          switch (rpc.method) {
+            case "initialize": {
+              result = {
+                protocolVersion: "2025-03-26",
+                capabilities: { tools: {} },
+                serverInfo: {
+                  name: "ChatJS local fixture",
+                  version: "1.0.0",
+                },
+              };
+              break;
+            }
+            case "tools/list": {
+              result = {
+                tools: [
+                  {
+                    name: "read_token",
+                    description:
+                      "Return the local acceptance token. Call once when asked.",
+                    inputSchema: {
+                      type: "object",
+                      properties: {},
+                      additionalProperties: false,
+                    },
+                  },
+                ],
+              };
+              break;
+            }
+            case "tools/call": {
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from rpc.params; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+              if (rpc.params?.name !== "read_token") {
+                throw new Error("Unknown fixture tool");
+              }
+              result = await invoke(response);
+              break;
+            }
+            default: {
+              response
+                .writeHead(200, { "content-type": "application/json" })
+                .end(
+                  JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: rpc.id,
+                    error: { code: -32_601, message: "Method not found" },
+                  })
+                );
+              return;
+            }
+          }
+          response
+            .writeHead(200, { "content-type": "application/json" })
+            .end(JSON.stringify({ id: rpc.id, jsonrpc: "2.0", result }));
+        } catch {
+          response.writeHead(400).end();
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          response.destroy(error);
+        } else {
+          response.destroy(new Error(String(error)));
+        }
       }
-      response
-        .writeHead(200, { "content-type": "application/json" })
-        .end(JSON.stringify({ id: rpc.id, jsonrpc: "2.0", result }));
-    } catch {
-      response.writeHead(400).end();
-    }
+    })();
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address();

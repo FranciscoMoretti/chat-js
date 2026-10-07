@@ -90,6 +90,7 @@ const EveConversation = ({
   initialMessage?: EveMessageInput;
   draftScopeId?: string;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const {
     fork,
     composerDraft,
@@ -433,8 +434,14 @@ const EveConversation = ({
                               files={fork.files}
                               modelSelection={fork.modelSelection}
                               onDraftChange={handleEditDraft}
-                              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The fork hook owns edit submission errors and pending state.
-                              onSubmit={handleEditSubmit}
+
+                              onSubmit={() => {
+                                const completion = handleEditSubmit();
+                                // oxlint-disable-next-line oxc/no-async-await -- Start urgent fork updates before React owns the completion promise.
+                                startEventAction(async () => {
+                                  await completion;
+                                });
+                              }}
                               onToolChange={handleEditToolChange}
                               selectedTool={fork.selectedTool}
                             />
@@ -482,7 +489,6 @@ const EveConversation = ({
                   `${sessionId}:${message.id}`
                 }
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
                 onEdit={(message) => {
                   const following = messages.slice(
                     messages.indexOf(message) + 1
@@ -508,7 +514,7 @@ const EveConversation = ({
                     groupModels[slot.modelId] =
                       (groupModels[slot.modelId] ?? 0) + 1;
                   }
-                  return fork.begin(message, undefined, {
+                  const completion = fork.begin(message, undefined, {
                     events: agent.events,
                     // oxlint-disable-next-line no-ternary -- Keep modelSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     modelSelection: group ? groupModels : undefined,
@@ -517,6 +523,10 @@ const EveConversation = ({
                       response && modelForMessage(response)
                         ? response
                         : undefined,
+                  });
+                  // oxlint-disable-next-line oxc/no-async-await -- Begin editing urgently, then let React own unexpected promise rejection.
+                  startEventAction(async () => {
+                    await completion;
                   });
                 }}
 
@@ -550,10 +560,12 @@ const EveConversation = ({
                   /* oxlint-enable oxc/no-async-await */
                 }}
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-                respond={(response) =>
-                  run(() => send(() => agent.respond([response])))
-                }
+                respond={(response) => {
+                  // oxlint-disable-next-line oxc/no-async-await -- Await the response Action so React owns any unexpected rejection.
+                  startEventAction(async () => {
+                    await run(() => send(() => agent.respond([response])));
+                  });
+                }}
               />
               <EveThinkingMessage messages={messages} status={agent.status} />
               {comparison &&
@@ -663,8 +675,9 @@ const EveConversation = ({
               modelSelection={modelSelection}
               onDraftChange={setDraft}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
-              onStop={cancel}
+              onStop={() => {
+                startEventAction(cancel);
+              }}
 
               onSubmit={() => {
                 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */

@@ -58,6 +58,7 @@ export const NewEveConversation = ({
   readonly projectId?: string;
   readonly onPendingChange?: (pending: boolean) => void;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const openRuntime = useEveRuntime();
   const scope = useMemo((): { projectId: string } | undefined => {
     if (typeof projectId === "string" && projectId !== "") {
@@ -72,6 +73,7 @@ export const NewEveConversation = ({
   const { setAttachments } = files;
   const [draft, setDraft] = useState("");
   const [selectedTool, setSelectedTool] = useState<UiToolName | null>(null);
+  const [cleanupRejected, setCleanupRejected] = useState(false);
   const [projectRejected, setProjectRejected] = useState(false);
   const [retainedOperationId, setRetainedOperationId] = useState<string>();
   const retained = retainedOperationId !== undefined;
@@ -165,11 +167,19 @@ export const NewEveConversation = ({
       ) {
         setProjectRejected(true);
       } else if (error instanceof CreationRejectedError) {
-        finishCreation(sessionStorage, ownerId, scope);
-        setRetainedModelId(undefined);
-        setRetainedModelIds(undefined);
-        setOptimisticComparison(undefined);
-        setRetainedOperationId(undefined);
+        try {
+          finishCreation(sessionStorage, ownerId, scope);
+          setRetainedModelId(undefined);
+          setRetainedModelIds(undefined);
+          setOptimisticComparison(undefined);
+          setRetainedOperationId(undefined);
+        } catch {
+          setCleanupRejected(true);
+          setFailure(
+            "The rejected request could not be cleared. Keep this tab for recovery."
+          );
+          return;
+        }
       }
       setFailure(
         // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -187,11 +197,29 @@ export const NewEveConversation = ({
     /* oxlint-enable react/todo */
   };
   /* oxlint-enable oxc/no-async-await */
+  const clearRejected = (): void => {
+    try {
+      finishCreation(sessionStorage, ownerId, scope);
+      setRetainedModelId(undefined);
+      setRetainedModelIds(undefined);
+      setOptimisticComparison(undefined);
+      setRetainedOperationId(undefined);
+      setCleanupRejected(false);
+      setFailure("");
+    } catch {
+      setFailure(
+        "The rejected request could not be cleared. Keep this tab for recovery."
+      );
+    }
+  };
   if (projectRejected || (retained && !busy)) {
     return (
       <EveCreationRecovery
         firstMessage={draft}
-        initiallyRejected={projectRejected}
+        initiallyRejected={projectRejected || cleanupRejected}
+        initialFailure={failure}
+        // oxlint-disable-next-line no-ternary -- Preserve the optional cleanup control; if/else value assignment conflicts with pinned unicorn/prefer-ternary.
+        onClearRejected={cleanupRejected ? clearRejected : undefined}
         operationId={retainedOperationId}
         ownerId={ownerId}
         scope={scope}
@@ -232,8 +260,13 @@ export const NewEveConversation = ({
           }
         }}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Submission owns creation admission and retained recovery state; the composer delegates that lifecycle.
-        onSubmit={submit}
+        onSubmit={() => {
+          const completion = submit();
+          // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+          startEventAction(async () => {
+            await completion;
+          });
+        }}
         onToolChange={setSelectedTool}
         readOnly={retained}
         retainedModelId={retainedModelId}

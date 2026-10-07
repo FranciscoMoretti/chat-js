@@ -8,6 +8,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
+  useTransition,
 } from "react";
 import { codeToHtml } from "shiki";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -157,9 +158,12 @@ const CodeBlock = ({
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- CodeBlockCopyButtonProps: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including error: Error). */
 
-type CodeBlockCopyButtonProps = ComponentProps<typeof Button> & {
-  onCopy?: () => void;
-  onError?: (error: Error) => void;
+type CodeBlockCopyButtonProps = Omit<
+  ComponentProps<typeof Button>,
+  "onCopy" | "onError"
+> & {
+  readonly onCopy?: () => void | Promise<void>;
+  readonly onError?: (error: Error) => void | Promise<void>;
   timeout?: number;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -175,6 +179,7 @@ const CodeBlockCopyButton = ({
   ...props
 }: CodeBlockCopyButtonProps): ReactJSX.Element => {
   const [isCopied, setIsCopied] = useState(false);
+  const [, startCopyTransition] = useTransition();
   const { code } = useContext(CodeBlockContext);
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyToClipboard's awaited sequencing and rejected-Promise behavior. */
@@ -182,19 +187,22 @@ const CodeBlockCopyButton = ({
     // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-optional-chaining -- #572: This tests for a browser window; globalThis also exists during server rendering. Optional chain: Keep the existing nullish guard when reading writeText from navigator.clipboard; read clipboard from navigator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (typeof window === "undefined" || !navigator?.clipboard?.writeText) {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-      onError?.(new Error("Clipboard API not available"));
+      await onError?.(new Error("Clipboard API not available"));
       return;
     }
 
     try {
       await navigator.clipboard.writeText(code);
       setIsCopied(true);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCopy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-      onCopy?.();
       setTimeout(() => setIsCopied(false), timeout);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCopy; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+      await onCopy?.();
     } catch (error) {
       // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when calling onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep onError argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      onError?.(error instanceof Error ? error : new Error(String(error)));
+      await onError?.(
+        // oxlint-disable-next-line no-ternary -- Normalize the callback error lazily; if/else value assignment conflicts with pinned unicorn/prefer-ternary.
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   };
   /* oxlint-enable oxc/no-async-await */
@@ -206,8 +214,7 @@ const CodeBlockCopyButton = ({
       // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("shrink-0", className)}
 
-      // oxlint-disable-next-line typescript/no-misused-promises -- #585: The clipboard handler catches failures and invokes onError; the click does not consume a return value.
-      onClick={copyToClipboard}
+      onClick={() => startCopyTransition(copyToClipboard)}
       size="icon"
       variant="ghost"
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward CodeBlockCopyButton's Button prop contract, preserving caller options, children and callbacks.

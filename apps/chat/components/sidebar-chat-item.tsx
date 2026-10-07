@@ -62,6 +62,7 @@ const PureSidebarChatItem = ({
     onClose: () => void
   ) => ReactNode;
 }): ReactJSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const chatHref: `/project/${string}/chat/${string}` | `/chat/${string}` =
     // oxlint-disable-next-line no-ternary -- Keep chatHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     chat.projectId
@@ -111,8 +112,9 @@ const PureSidebarChatItem = ({
               className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
               maxLength={255}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
-              onBlur={handleRename}
+              onBlur={() => {
+                startEventAction(handleRename);
+              }}
               onChange={(event) => setEditTitle(event.target.value)}
               onKeyDown={handleKeyDown}
               value={editTitle}

@@ -61,7 +61,6 @@ export const EveModelPicker = ({
         className="h-8 w-fit max-w-none shrink justify-start truncate px-2 text-xs @[500px]:h-10 @[500px]:px-3 @[500px]:text-sm"
         allowMultiple={Boolean(modelSelection)}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Model selection awaits persistence before updating its parent; callback typing must preserve that coordination.
         onModelSelectionChangeAction={async (selection) => {
           if (modelSelection) {
             await modelSelection.onChange(selection);

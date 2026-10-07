@@ -1,8 +1,8 @@
+/* oxlint-disable max-lines -- This existing module keeps sharing, permissions and the link controls together; Action ownership adds no separate public feature. */
 "use client";
 
 import { Copy, GlobeIcon, Loader2, LockIcon, Share } from "lucide-react";
-import type React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
 /* oxlint-enable sort-imports */
@@ -50,6 +50,7 @@ const ShareDialogView = ({
   readonly onClose: () => void;
   readonly setVisibility: (visibility: "private" | "public") => Promise<void>;
 }): React.JSX.Element => {
+  const [, startEventAction] = React.useTransition();
   const [step, setStep] = useState<ShareStep>("info");
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleShare's awaited sequencing and rejected-Promise behavior. */
   const handleShare = async (): Promise<void> => {
@@ -137,8 +138,9 @@ const ShareDialogView = ({
                     className="flex-1"
                     disabled={isPending}
 
-                    // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-                    onClick={handleUnshare}
+                    onClick={() => {
+                      startEventAction(handleUnshare);
+                    }}
                     variant="outline"
                   >
                     {isPending ? (
@@ -167,8 +169,9 @@ const ShareDialogView = ({
                   className="w-full"
                   disabled={isPending}
 
-                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-                  onClick={handleShare}
+                  onClick={() => {
+                    startEventAction(handleShare);
+                  }}
                 >
                   {isPending ? (
                     <>
@@ -211,8 +214,9 @@ const ShareDialogView = ({
             <Button
               className="px-3"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-              onClick={handleCopyLink}
+              onClick={() => {
+                startEventAction(handleCopyLink);
+              }}
               size="sm"
               type="submit"
             >
@@ -227,8 +231,9 @@ const ShareDialogView = ({
             <Button /* oxlint-disable no-ternary -- Keep the pending unshare icon and label as lazy JSX values; equivalent if/else assignments conflict with pinned unicorn/prefer-ternary. */
               disabled={isPending}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
-              onClick={handleUnshare}
+              onClick={() => {
+                startEventAction(handleUnshare);
+              }}
               size="sm"
               variant="outline"
             >
