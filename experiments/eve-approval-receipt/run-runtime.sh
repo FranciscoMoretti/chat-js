@@ -16,13 +16,13 @@ bun install --cwd "$runtime_root" --frozen-lockfile
 git clone --no-hardlinks "$source_repo" "$runtime_root/source"
 git -C "$runtime_root/source" checkout --detach fab8ba1424eddfdedd6a177cac21710258da0e81
 git -C "$runtime_root/source" apply "$proof_dir/receipt.patch"
-# Replace only three isolated distribution modules from the patched release
+# Replace only four isolated distribution modules from the patched release
 # source. Atomic rename avoids modifying any package-manager hardlinked cache.
 bun --eval '
 const {rename}=await import("node:fs/promises");
 const root=process.argv[1];
 const compiler=new Bun.Transpiler({loader:"ts",target:"node"});
-for(const name of ["context/tool-approval-receipts","execution/tool-auth","harness/tool-loop"]){
+for(const name of ["context/tool-approval-receipts","execution/tool-auth","harness/tool-loop","harness/tools"]){
  const source=await Bun.file(`${root}/source/packages/eve/src/${name}.ts`).text();
  const target=`${root}/node_modules/eve/dist/src/${name}.js`;
  await Bun.write(`${target}.lane-b`,compiler.transformSync(source));

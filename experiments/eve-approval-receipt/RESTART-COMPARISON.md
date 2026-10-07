@@ -1,5 +1,7 @@
 # Lane B/D restart comparison and binding recommendation
 
+**7 October follow-up:** the user authorized a bounded local preserved-binding experiment. It now implements the recommendation below and passes the expanded local runtime cases in README.md. Statements below about an unchanged experimental patch and conservative metadata equality describe the prior comparison; production adapter and API adoption remain unchanged.
+
 Compared Lane B `19a4035fb` with Lane D `422e371e3` on EVE 0.71.3 / `fab8ba1424eddfdedd6a177cac21710258da0e81`. This is a source/evidence comparison, not a new runtime reproduction. The experimental patch and production adapter remain unchanged.
 
 ## Resolved status — Lane D `7a312a544`

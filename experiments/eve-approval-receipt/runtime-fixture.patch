@@ -2,7 +2,7 @@ diff --git a/runtime-proof.mjs b/runtime-proof.mjs
 new file mode 100644
 --- /dev/null
 +++ b/runtime-proof.mjs
-@@ -0,0 +1,370 @@
+@@ -0,0 +1,501 @@
 +import assert from "node:assert/strict";
 +import { spawn } from "node:child_process";
 +import {
@@ -24,21 +24,26 @@ new file mode 100644
 +    path.join(dependencies, "node_modules/eve/dist/src/client/index.js")
 +  )
 +);
-+const app = await mkdtemp(path.join(tmpdir(), "lane-b-workflow-"));
-+await cp(new URL("./runtime-fixture", import.meta.url), app, {
-+  recursive: true,
-+});
-+await symlink(
-+  path.join(dependencies, "node_modules"),
-+  path.join(app, "node_modules")
-+);
-+await writeFile(
-+  path.join(app, "package.json"),
-+  JSON.stringify({
-+    type: "module",
-+    dependencies: { eve: "0.71.3", ai: "7.0.106" },
-+  })
-+);
++const externalRuntime = globalThis.laneBRuntime;
++const app =
++  externalRuntime?.directory ??
++  (await mkdtemp(path.join(tmpdir(), "lane-b-workflow-")));
++if (!externalRuntime) {
++  await cp(new URL("./runtime-fixture", import.meta.url), app, {
++    recursive: true,
++  });
++  await symlink(
++    path.join(dependencies, "node_modules"),
++    path.join(app, "node_modules")
++  );
++  await writeFile(
++    path.join(app, "package.json"),
++    JSON.stringify({
++      type: "module",
++      dependencies: { eve: "0.71.3", ai: "7.0.106" },
++    })
++  );
++}
 +const file = (name) => path.join(app, name);
 +const put = (name, value) => writeFile(file(name), value);
 +const rows = async (name) => {
@@ -67,6 +72,11 @@ new file mode 100644
 +  url,
 +  logs = "";
 +async function start(resume = false) {
++  if (externalRuntime) {
++    await externalRuntime.start();
++    url = externalRuntime.url;
++    return;
++  }
 +  logs = "";
 +  worker = spawn(
 +    process.execPath,
@@ -102,7 +112,13 @@ new file mode 100644
 +    "startup"
 +  );
 +}
-+async function stop(crash = false) {
++async function stop(crash = false, serverPid) {
++  if (externalRuntime) {
++    await externalRuntime.crash(
++      crash && globalThis.laneBAbruptCrash ? serverPid : undefined
++    );
++    return;
++  }
 +  if (!worker || worker.exitCode !== null || worker.signalCode !== null) return;
 +  const stopped = new Promise((resolve) => worker.once("exit", resolve));
 +  worker.kill(crash ? "SIGKILL" : "SIGTERM");
@@ -142,120 +158,221 @@ new file mode 100644
 +    assert.equal(entry.receipt.responder.principalId, "owner");
 +  else assert.equal(entry.receipt, undefined);
 +}
-+const watchdog = setTimeout(() => {
-+  worker?.kill("SIGKILL");
-+  console.error("Runtime proof timeout:", app);
-+  process.exit(1);
-+}, 180000);
++const watchdog = setTimeout(
++  () => {
++    worker?.kill("SIGKILL");
++    console.error("Runtime proof timeout:", app);
++    if (externalRuntime)
++      void externalRuntime.crash().finally(() => process.exit(1));
++    else process.exit(1);
++  },
++  externalRuntime ? 300000 : 180000
++);
 +const results = [];
++let entry;
 +try {
++  await put("owner.txt", "owner");
++  await put("enabled.txt", "true");
 +  await put("connector.txt", "original");
 +  await put("suffix.txt", ":original");
 +  await put("policy.txt", "flip");
 +  await start();
 +
-+  async function invoke(name) {
-+    const response = await fetch(url + "/proof/invoke", {
-+      method: "POST",
-+      headers: { "content-type": "application/json" },
-+      body: JSON.stringify({ name }),
-+    });
-+    assert.equal(response.status, 200);
-+    return await response.json();
-+  }
-+  await put("policy.txt", "required");
-+  assert.equal((await invoke("static-gate")).status, "approval-required");
-+  await put("policy.txt", "flip");
-+  const outOfTurn = await invoke("static-gate");
-+  assert.equal(outOfTurn.status, "completed");
-+  assert.equal(outOfTurn.output.blocked, true);
-+  assert.equal(outOfTurn.output.caller.principalId, "owner");
-+  assert.equal((await rows("invoke-effects.jsonl")).length, 0);
-+  assert.equal((await invoke("conditional")).status, "failed");
-+  results.push(
-+    "invokeTool: required approval blocks, policy flip has no receipt, dynamic name is unavailable"
-+  );
-+  await put("policy.txt", "flip");
-+  const flipped = await create();
-+  await flipped.response.result();
-+  assert.equal((await rows("effects.jsonl")).length, 0);
-+  assert.equal((await rows("entries.jsonl")).at(-1).receipt, undefined);
-+  assert.equal(
-+    (await rows("entries.jsonl")).at(-1).caller.principalId,
-+    "owner"
-+  );
-+  results.push("policy flip: owner caller without consent blocked");
-+  const { made, waiting } = await required();
-+  const requestPid = (await rows("requests.jsonl")).at(-1).pid;
-+  await stop(true);
-+  await start(true);
-+  const restored = new Client({ host: url }).sessions.attach(
-+    made.session.state.sessionId,
-+    { streamIndex: made.session.state.streamIndex }
-+  );
-+  await (
-+    await restored.respond(
-+      waiting.inputRequests.map((request) => ({
-+        requestId: request.requestId,
-+        optionId: "approve",
-+      }))
-+    )
-+  ).result();
-+  let entry = (await rows("entries.jsonl")).at(-1);
-+  assert.notEqual(entry.pid, requestPid);
-+  checkEntry(entry);
-+  assert.equal(
-+    (await rows("effects.jsonl")).length,
-+    mode === "patched" ? 1 : 0
-+  );
-+  results.push(
-+    "actual Workflow restart before response: original dynamic closure and transformed input retained"
-+  );
++  if (!globalThis.laneBRestartOnly) {
++    async function invoke(name) {
++      const response = await fetch(url + "/proof/invoke", {
++        method: "POST",
++        headers: { "content-type": "application/json" },
++        body: JSON.stringify({ name }),
++      });
++      assert.equal(response.status, 200);
++      return await response.json();
++    }
++    await put("policy.txt", "required");
++    assert.equal((await invoke("static-gate")).status, "approval-required");
++    await put("policy.txt", "flip");
++    const outOfTurn = await invoke("static-gate");
++    assert.equal(outOfTurn.status, "completed");
++    assert.equal(outOfTurn.output.blocked, true);
++    assert.equal(outOfTurn.output.caller.principalId, "owner");
++    assert.equal((await rows("invoke-effects.jsonl")).length, 0);
++    assert.equal((await invoke("conditional")).status, "failed");
++    results.push(
++      "invokeTool: required approval blocks, policy flip has no receipt, dynamic name is unavailable"
++    );
++    await put("policy.txt", "flip");
++    const flipped = await create();
++    await flipped.response.result();
++    assert.equal((await rows("effects.jsonl")).length, 0);
++    assert.equal((await rows("entries.jsonl")).at(-1).receipt, undefined);
++    assert.equal(
++      (await rows("entries.jsonl")).at(-1).caller.principalId,
++      "owner"
++    );
++    results.push("policy flip: owner caller without consent blocked");
++    const { made, waiting } = await required();
++    const requestPid = (await rows("requests.jsonl")).at(-1).pid;
++    await stop(true, requestPid);
++    await start(true);
++    const restored = new Client({ host: url }).sessions.attach(
++      made.session.state.sessionId,
++      {
++        streamIndex: made.session.state.streamIndex,
++      }
++    );
++    await (
++      await restored.respond(
++        waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    ).result();
++    entry = (await rows("entries.jsonl")).at(-1);
++    assert.notEqual(entry.pid, requestPid);
++    checkEntry(entry);
++    assert.equal(
++      (await rows("effects.jsonl")).length,
++      mode === "patched" ? 1 : 0
++    );
++    results.push(
++      "actual Workflow restart before response: original dynamic closure and transformed input retained"
++    );
 +
-+  const changed = await required();
-+  await stop(true);
-+  await put("connector.txt", "replacement");
-+  await start(true);
-+  const changedSession = new Client({ host: url }).sessions.attach(
-+    changed.made.session.state.sessionId,
-+    { streamIndex: changed.made.session.state.streamIndex }
-+  );
-+  await (
-+    await changedSession.respond(
-+      changed.waiting.inputRequests.map((request) => ({
-+        requestId: request.requestId,
-+        optionId: "approve",
-+      }))
-+    )
-+  ).result();
-+  const changedEntry = (await rows("entries.jsonl")).at(-1);
-+  assert.equal(changedEntry.connector, "replacement");
-+  assert.equal(changedEntry.receipt, undefined);
-+  assert.equal(
-+    (await rows("effects.jsonl")).length,
-+    mode === "patched" ? 1 : 0
-+  );
-+  results.push(
-+    "step discovery replaced connector behind same name: old consent fails closed"
-+  );
-+  // A new session starts with original values again. Crash after the runtime
-+  // supplied the settled receipt but before the fixture remote effect begins.
-+  await put("connector.txt", "original");
-+  await put("suffix.txt", ":original");
-+  const cancelled = await required();
-+  await (
-+    await cancelled.made.session.respond(
-+      cancelled.waiting.inputRequests.map((request) => ({
-+        requestId: request.requestId,
-+        optionId: "cancel",
-+      }))
-+    )
-+  ).result();
-+  assert.equal(
-+    (await rows("effects.jsonl")).length,
-+    mode === "patched" ? 1 : 0
-+  );
-+  results.push("owner cancellation: zero new effects");
++    const originalRequest = (await rows("requests.jsonl")).find(
++      (row) => row.sessionId === entry.sessionId && row.callId === entry.callId
++    );
++    if (mode === "patched")
++      assert.equal(entry.messages, originalRequest.messages);
++    else assert.notEqual(entry.messages, originalRequest.messages);
++    assert.ok(
++      (await rows("discovery.jsonl")).some(
++        (row) =>
++          row.sessionId === entry.sessionId &&
++          row.messages !== originalRequest.messages
++      )
++    );
++    results.push(
++      "captured history change: original approved closure retained only in patched mode"
++    );
++    const changed = await required();
++    await stop(true, (await rows("requests.jsonl")).at(-1).pid);
++    await put("connector.txt", "replacement");
++    await put("suffix.txt", ":replacement");
++    await start(true);
++    const changedSession = new Client({ host: url }).sessions.attach(
++      changed.made.session.state.sessionId,
++      { streamIndex: changed.made.session.state.streamIndex }
++    );
++    await (
++      await changedSession.respond(
++        changed.waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    ).result();
++    const changedEntry = (await rows("entries.jsonl")).at(-1);
++    if (mode === "patched") checkEntry(changedEntry);
++    else {
++      assert.equal(changedEntry.connector, "replacement");
++      assert.equal(changedEntry.receipt, undefined);
++    }
++    assert.equal(
++      (await rows("effects.jsonl")).length,
++      mode === "patched" ? 2 : 0
++    );
++    results.push(
++      "step discovery replacement cannot inherit consent: original bound connector executes only in patched mode"
++    );
++    const projection = (await rows("projections.jsonl")).find(
++      (row) =>
++        row.output.callId === changedEntry.callId &&
++        row.output.sessionId === changedEntry.sessionId
++    );
++    assert.equal(
++      projection.connector,
++      mode === "patched" ? "original" : "replacement"
++    );
++    if (mode === "patched")
++      assert.equal(projection.messages, changedEntry.messages);
++    const nextWaiting = await (await changedSession.send("next")).result();
++    assert.equal(nextWaiting.inputRequests.length, 1);
++    assert.equal(
++      (await rows("effects.jsonl")).length,
++      mode === "patched" ? 2 : 0
++    );
++    await (
++      await changedSession.respond(
++        nextWaiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "approve",
++        }))
++      )
++    ).result();
++    const nextEntry = (await rows("entries.jsonl")).at(-1);
++    assert.equal(nextEntry.connector, "replacement");
++    assert.deepEqual(nextEntry.input, {
++      label: "NEXT:replacement",
++      amount: 2,
++      mode: "safe",
++    });
++    assert.notEqual(nextEntry.callId, changedEntry.callId);
++    if (mode === "patched")
++      assert.equal(
++        nextEntry.receipt.requestId,
++        nextWaiting.inputRequests[0].requestId
++      );
++    assert.equal(
++      (await rows("effects.jsonl")).length,
++      mode === "patched" ? 3 : 0
++    );
++    results.push(
++      "new call uses refreshed connector/schema and requires separate consent; resumed output keeps original projection"
++    );
++    // A new session starts with original values again. Crash after the runtime
++    // supplied the settled receipt but before the fixture remote effect begins.
++    await put("connector.txt", "original");
++    await put("suffix.txt", ":original");
++    for (const [name, revoked, restored] of [
++      ["owner.txt", "other", "owner"],
++      ["enabled.txt", "false", "true"],
++    ]) {
++      const revokedCall = await required();
++      await put(name, revoked);
++      await (
++        await revokedCall.made.session.respond(
++          revokedCall.waiting.inputRequests.map((request) => ({
++            requestId: request.requestId,
++            optionId: "approve",
++          }))
++        )
++      ).result();
++      assert.equal(
++        (await rows("effects.jsonl")).length,
++        mode === "patched" ? 3 : 0
++      );
++      await put(name, restored);
++    }
++    results.push(
++      "live owner and enabled checks block effects despite valid prior consent"
++    );
++    const cancelled = await required();
++    await (
++      await cancelled.made.session.respond(
++        cancelled.waiting.inputRequests.map((request) => ({
++          requestId: request.requestId,
++          optionId: "cancel",
++        }))
++      )
++    ).result();
++    assert.equal(
++      (await rows("effects.jsonl")).length,
++      mode === "patched" ? 3 : 0
++    );
++    results.push("owner cancellation: zero new effects");
++  }
++  const priorEffects = (await rows("effects.jsonl")).length;
 +  const beforeCandidate = await required();
 +  const responseCount = (await rows("responses.jsonl")).length;
 +  const entryCount = (await rows("entries.jsonl")).length;
@@ -276,12 +393,13 @@ new file mode 100644
 +  const candidatePid = (await rows("responses.jsonl")).at(-1).pid;
 +  assert.equal((await rows("entries.jsonl")).length, entryCount);
 +  candidateAbort.abort();
-+  await stop(true);
++  await stop(true, candidatePid);
 +  await rm(file("pause-response"));
 +  await start(true);
 +  await until(
 +    async () => (await rows("entries.jsonl")).length > entryCount,
-+    "candidate settlement after Workflow restart"
++    "candidate settlement after Workflow restart",
++    externalRuntime ? 15000 : 60000
 +  );
 +  const candidateEntry = (await rows("entries.jsonl")).at(-1);
 +  assert.notEqual(candidateEntry.pid, candidatePid);
@@ -292,7 +410,9 @@ new file mode 100644
 +      beforeCandidate.waiting.inputRequests[0].requestId
 +    );
 +  await until(
-+    async () => mode === "stock" || (await rows("effects.jsonl")).length === 2,
++    async () =>
++      mode === "stock" ||
++      (await rows("effects.jsonl")).length === priorEffects + 1,
 +    "candidate effect"
 +  );
 +  results.push(
@@ -324,7 +444,7 @@ new file mode 100644
 +      second.waiting.inputRequests[0].requestId
 +    );
 +  streamAbort.abort();
-+  await stop(true);
++  await stop(true, enteredPid);
 +  await rm(file("pause-before-effect"));
 +  await start(true);
 +  await until(
@@ -333,18 +453,20 @@ new file mode 100644
 +      return all.length > before + 1 && all.at(-1).pid !== enteredPid;
 +    },
 +    "Workflow replay of interrupted executor",
-+    90000
++    externalRuntime ? 15000 : 90000
 +  );
 +  entry = (await rows("entries.jsonl")).at(-1);
 +  checkEntry(entry);
 +  assert.deepEqual(entry.receipt, settledReceipt);
 +  await until(
-+    async () => mode === "stock" || (await rows("effects.jsonl")).length === 3,
++    async () =>
++      mode === "stock" ||
++      (await rows("effects.jsonl")).length === priorEffects + 2,
 +    "effect after replay"
 +  );
 +  assert.equal(
 +    (await rows("effects.jsonl")).length,
-+    mode === "patched" ? 3 : 0
++    mode === "patched" ? priorEffects + 2 : 0
 +  );
 +  results.push(
 +    mode === "patched"
@@ -367,10 +489,248 @@ new file mode 100644
 +  console.log(JSON.stringify({ mode, results, evidence: app }, null, 2));
 +} catch (error) {
 +  await writeFile(file("failure.log"), logs);
++  await writeFile(
++    file("failure.json"),
++    JSON.stringify(
++      { error: String(error), stack: error.stack, results },
++      null,
++      2
++    )
++  );
++  console.error(error);
 +  console.error("Retained failure evidence:", app);
 +  throw error;
 +} finally {
 +  await stop();
++  clearTimeout(watchdog);
++}
+diff --git a/runtime-postgres.ts b/runtime-postgres.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-postgres.ts
+@@ -0,0 +1,37 @@
++import { pathToFileURL } from "node:url";
++import path from "node:path";
++const [harness, dependencies, handoff] = process.argv.slice(2);
++if (!harness || !dependencies || !handoff)
++  throw new Error("Pass D harness, experimental installation, and disposable handoff");
++const { preparePostgresFixture } = await import(
++  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
++);
++const { createPersistentRuntime } = await import(
++  pathToFileURL(path.join(harness, "persistent-runtime.ts")).href
++);
++const prepared = await preparePostgresFixture({
++  source: path.join(import.meta.dir, "runtime-fixture"),
++  nodeModules: path.join(dependencies, "node_modules"),
++  handoff,
++  lane: "lane_b",
++});
++const runtime = await createPersistentRuntime(
++  prepared.source,
++  {
++    nodeModules: prepared.nodeModules,
++    provenance:
++      "B preserved callback binding; EVE 0.71.3 fab8ba1424eddfdedd6a177cac21710258da0e81 plus receipt.patch",
++  },
++  { world: "postgres", inlineOwnershipLeaseSeconds: 1 },
++);
++console.log("Postgres fixture:", runtime.directory);
++globalThis.laneBRuntime = runtime;
++globalThis.laneBAbruptCrash = true;
++globalThis.laneBRestartOnly = process.argv.includes("--restart-only");
++process.argv = [
++  process.argv[0],
++  path.join(import.meta.dir, "runtime-proof.mjs"),
++  dependencies,
++  "patched",
++];
++await import("./runtime-proof.mjs");
+diff --git a/runtime-old-run.ts b/runtime-old-run.ts
+new file mode 100644
+--- /dev/null
++++ b/runtime-old-run.ts
+@@ -0,0 +1,182 @@
++import assert from "node:assert/strict";
++import { readFile, writeFile, unlink, symlink } from "node:fs/promises";
++import path from "node:path";
++import { pathToFileURL } from "node:url";
++const [harness, productionModules, targetModules, handoff] =
++  process.argv.slice(2);
++if (!handoff)
++  throw new Error(
++    "Pass D harness, production node_modules, target node_modules, handoff"
++  );
++const { preparePostgresFixture } = await import(
++  pathToFileURL(path.join(harness, "postgres-fixture.ts")).href
++);
++const { createPersistentRuntime } = await import(
++  pathToFileURL(path.join(harness, "persistent-runtime.ts")).href
++);
++const prepared = await preparePostgresFixture({
++  source: path.join(import.meta.dir, "runtime-fixture"),
++  nodeModules: productionModules,
++  handoff,
++  lane: "lane_b",
++});
++const runtime = await createPersistentRuntime(
++  prepared.source,
++  {
++    nodeModules: prepared.nodeModules,
++    distribution: "production-fork",
++    provenance:
++      "Old seed @chat-js/eve 0.61.0-chatjs.0 / 3a7acfe6; same PG data switched to experimental .71.3",
++  },
++  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
++);
++console.log("Old-run evidence:", runtime.directory);
++const put = (name, value) =>
++  writeFile(path.join(runtime.directory, name), value);
++const rows = async (name) => {
++  try {
++    return (await readFile(path.join(runtime.directory, name), "utf8"))
++      .trim()
++      .split("\n")
++      .filter(Boolean)
++      .map(JSON.parse);
++  } catch (error) {
++    if (error.code === "ENOENT") return [];
++    throw error;
++  }
++};
++const { Client: OldClient } = await import(
++  pathToFileURL(path.join(productionModules, "eve/dist/src/client/index.js"))
++    .href
++);
++const { Client: NewClient } = await import(
++  pathToFileURL(path.join(targetModules, "eve/dist/src/client/index.js")).href
++);
++let stage = "seed-start";
++const watchdog = setTimeout(() => {
++  void runtime.crash().finally(() => process.exit(1));
++}, 180000);
++try {
++  for (const [name, value] of Object.entries({
++    "owner.txt": "owner",
++    "enabled.txt": "true",
++    "connector.txt": "original",
++    "suffix.txt": ":original",
++    "policy.txt": "open",
++  }))
++    await put(name, value);
++  await runtime.start();
++  const oldClient = new OldClient({ host: runtime.url });
++  const historical = await oldClient.sessions.create({
++    message: "history",
++    signal: AbortSignal.timeout(45000),
++  });
++  await historical.response.result();
++  const snapshot = await historical.session.snapshot({
++    signal: AbortSignal.timeout(15000),
++  });
++  assert.ok(snapshot.events.length > 0);
++  assert.equal(
++    (await rows("effects.jsonl")).filter(
++      (row) => row.sessionId === historical.session.state.sessionId
++    ).length,
++    1
++  );
++  stage = "seed-pending";
++  await put("policy.txt", "required");
++  const pending = await oldClient.sessions.create({
++    message: "hello",
++    signal: AbortSignal.timeout(45000),
++  });
++  const waiting = await pending.response.result();
++  assert.equal(waiting.inputRequests.length, 1);
++  const pendingState = pending.session.state;
++  await put(
++    "old-seed.json",
++    JSON.stringify(
++      {
++        historical: historical.session.state,
++        snapshot,
++        pending: pendingState,
++        waiting,
++      },
++      null,
++      2
++    )
++  );
++  await runtime.crash();
++  stage = "switch";
++  await unlink(path.join(prepared.nodeModules, "eve"));
++  await symlink(
++    path.join(targetModules, "eve"),
++    path.join(prepared.nodeModules, "eve")
++  );
++  await put(
++    "package-switch.json",
++    JSON.stringify({
++      from: "@chat-js/eve@0.61.0-chatjs.0 / 3a7acfe6",
++      to: "eve@0.71.3 / fab8ba1424eddfdedd6a177cac21710258da0e81 + receipt.patch",
++      targetModules,
++      retainedDatabase: "lane_b",
++      retainedCompiledDirectory: path.join(runtime.directory, ".eve"),
++    })
++  );
++  await runtime.start();
++  const client = new NewClient({ host: runtime.url });
++  stage = "read-history";
++  const restoredHistory = await client.sessions
++    .attach(historical.session.state.sessionId)
++    .snapshot({ signal: AbortSignal.timeout(15000) });
++  assert.deepEqual(restoredHistory.events, snapshot.events);
++  await put("history-decoded.json", JSON.stringify(restoredHistory, null, 2));
++  stage = "resume-pending";
++  const session = client.sessions.attach(pendingState.sessionId, {
++    streamIndex: pendingState.streamIndex,
++  });
++  const response = await session.respond(
++    waiting.inputRequests.map((request) => ({
++      requestId: request.requestId,
++      optionId: "approve",
++    })),
++    { signal: AbortSignal.timeout(45000) }
++  );
++  await response.result();
++  const effects = (await rows("effects.jsonl")).filter(
++    (row) =>
++      row.sessionId === historical.session.state.sessionId ||
++      row.sessionId === pendingState.sessionId
++  );
++  assert.equal(effects.length, 2);
++  assert.equal(
++    effects.at(-1).receipt.requestId,
++    waiting.inputRequests[0].requestId
++  );
++  assert.equal(effects.at(-1).connector, "original");
++  assert.deepEqual(effects.at(-1).input, {
++    label: "HELLO:original",
++    amount: 2,
++    mode: "safe",
++  });
++  await put(
++    "old-run-results.json",
++    JSON.stringify(
++      { status: "passed", historyEvents: snapshot.events.length, effects },
++      null,
++      2
++    )
++  );
++  console.log("Historical decode and old pending approval passed");
++} catch (error) {
++  await put(
++    "old-run-results.json",
++    JSON.stringify(
++      { status: "failed", stage, error: String(error), stack: error.stack },
++      null,
++      2
++    )
++  );
++  throw error;
++} finally {
++  await runtime.crash();
 +  clearTimeout(watchdog);
 +}
 diff --git a/runtime-fixture/agent/agent.ts b/runtime-fixture/agent/agent.ts
@@ -383,8 +743,8 @@ new file mode 100644
 +export default defineAgent({
 +  defaultTools: false,
 +  description: "Conditional approval runtime proof",
-+  model: mockModel(({ toolResults, lastUserMessage }) =>
-+    toolResults.length
++  model: mockModel(({ toolResults, lastUserMessage, userMessageCount }) =>
++    toolResults.length >= userMessageCount
 +      ? "done"
 +      : {
 +          toolCalls: [
@@ -393,7 +753,7 @@ new file mode 100644
 +              input: { label: lastUserMessage, amount: "2" },
 +            },
 +          ],
-+        }
++        },
 +  ),
 +  modelContextWindowTokens: 128000,
 +});
@@ -451,13 +811,8 @@ diff --git a/runtime-fixture/agent/tools/mcp.ts b/runtime-fixture/agent/tools/mc
 new file mode 100644
 --- /dev/null
 +++ b/runtime-fixture/agent/tools/mcp.ts
-@@ -0,0 +1,90 @@
-+import {
-+  appendFileSync,
-+  existsSync,
-+  readFileSync,
-+  writeFileSync,
-+} from "node:fs";
+@@ -0,0 +1,105 @@
++import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 +import { setTimeout } from "node:timers/promises";
 +
 +import { defineDynamic, defineTool } from "eve/tools";
@@ -466,19 +821,29 @@ new file mode 100644
 +// Disposable files are the fixture's policy source and remote-effect spy.
 +export default defineDynamic({
 +  events: {
-+    "step.started": () => {
++    "step.started": (_event, context) => {
++      const messages = JSON.stringify(context.messages);
++      appendFileSync(
++        "discovery.jsonl",
++        JSON.stringify({ messages, sessionId: context.session.id }) + "\n",
++      );
 +      const connector = readFileSync("connector.txt", "utf8");
 +      const suffix = readFileSync("suffix.txt", "utf8");
 +      return {
 +        conditional: defineTool({
 +          description: "Fixture MCP effect",
 +          inputSchema: z.object({
-+            label: z
-+              .string()
-+              .transform((value) => value.toUpperCase() + suffix),
++            label: z.string().transform((value) => value.toUpperCase() + suffix),
 +            amount: z.coerce.number(),
 +            mode: z.string().default("safe"),
 +          }),
++          toModelOutput(output) {
++            appendFileSync(
++              "projections.jsonl",
++              JSON.stringify({ connector, messages, output }) + "\n",
++            );
++            return { type: "text", value: JSON.stringify(output) };
++          },
 +          approval: {
 +            request(ctx) {
 +              const policy = readFileSync("policy.txt", "utf8");
@@ -486,9 +851,12 @@ new file mode 100644
 +                "requests.jsonl",
 +                JSON.stringify({
 +                  connector,
++                  messages,
++                  sessionId: ctx.session.id,
++                  callId: ctx.callId,
 +                  input: ctx.toolInput,
 +                  pid: process.pid,
-+                }) + "\n"
++                }) + "\n",
 +              );
 +              if (policy === "flip") {
 +                writeFileSync("policy.txt", "required");
@@ -502,7 +870,7 @@ new file mode 100644
 +                JSON.stringify({
 +                  pid: process.pid,
 +                  decision: response.decision,
-+                }) + "\n"
++                }) + "\n",
 +              );
 +              while (existsSync("pause-response")) await setTimeout(50);
 +              return response.principal.principalId === "owner"
@@ -519,6 +887,8 @@ new file mode 100644
 +              | undefined;
 +            const evidence = {
 +              connector,
++              messages,
++              sessionId: ctx.session.id,
 +              input,
 +              receipt,
 +              caller: ctx.session.auth.current,
@@ -528,6 +898,11 @@ new file mode 100644
 +            appendFileSync("entries.jsonl", JSON.stringify(evidence) + "\n");
 +            while (existsSync("pause-before-effect")) await setTimeout(50);
 +            ctx.abortSignal.throwIfAborted();
++            if (
++              readFileSync("owner.txt", "utf8") !== ctx.session.auth.initiator?.principalId ||
++              readFileSync("enabled.txt", "utf8") !== "true"
++            )
++              return { blocked: "current connector unavailable", ...evidence };
 +            if (
 +              readFileSync("policy.txt", "utf8") === "required" &&
 +              (receipt?.responder.principalId !== "owner" ||

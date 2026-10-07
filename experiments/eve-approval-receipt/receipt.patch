@@ -1,9 +1,12 @@
 diff --git a/packages/eve/src/context/tool-approval-receipts.ts b/packages/eve/src/context/tool-approval-receipts.ts
 new file mode 100644
-index 0000000..1ab64b3
+index 0000000..ff7b275
 --- /dev/null
 +++ b/packages/eve/src/context/tool-approval-receipts.ts
-@@ -0,0 +1,102 @@
+@@ -0,0 +1,150 @@
++import { AsyncLocalStorage } from "node:async_hooks";
++import type { HarnessToolDefinition } from "#harness/execute-tool.js";
++import type { HarnessToolMap } from "#harness/types.js";
 +import { isDeepStrictEqual } from "node:util";
 +
 +import { contextStorage, type AlsContext } from "#context/container.js";
@@ -28,11 +31,15 @@ index 0000000..1ab64b3
 +
 +type Entry = {
 +  readonly input: unknown;
++  readonly definition?: HarnessToolDefinition;
++  consumed?: boolean;
 +  readonly dynamicIdentity: unknown;
 +  readonly receipt: ToolApprovalReceipt;
 +  readonly sessionId: string;
 +  readonly toolName: string;
 +};
++
++const executingBinding = new AsyncLocalStorage<Entry>();
 +
 +const ToolApprovalReceiptsKey = new ContextKey<Map<string, Entry>>(
 +  "eve.runtime.toolApprovalReceipts",
@@ -44,6 +51,7 @@ index 0000000..1ab64b3
 +  sessionId: string,
 +  batches: readonly ResolvedInputBatch[] | undefined,
 +  state: SessionStateMap | undefined,
++  tools?: HarnessToolMap,
 +): void {
 +  const settlements = getApprovalAuditState(state).settlements;
 +  const receipts = new Map<string, Entry>();
@@ -59,10 +67,13 @@ index 0000000..1ab64b3
 +      }
 +      seen.add(callId);
 +      if (input.outcome !== "approved") continue;
++      if (tools !== undefined && tools.get(request.action.toolName)?.execute === undefined)
++        continue;
 +      const matches = settlements.filter((entry) => entry.requestId === request.requestId);
 +      if (matches.length !== 1 || matches[0]?.outcome !== "allowed") continue;
 +      receipts.set(callId, {
 +        input: structuredClone(request.action.input),
++        definition: tools?.get(request.action.toolName),
 +        dynamicIdentity: structuredClone(dynamicIdentity(ctx, request.action.toolName)),
 +        receipt: Object.freeze({
 +          requestId: request.requestId,
@@ -86,15 +97,18 @@ index 0000000..1ab64b3
 +  const entry = ctx.get(ToolApprovalReceiptsKey)?.get(callId);
 +  if (
 +    entry === undefined ||
++    entry.consumed === true ||
 +    entry.sessionId !== ctx.require(SessionKey).sessionId ||
 +    entry.toolName !== toolName ||
 +    !isDeepStrictEqual(entry.input, input) ||
-+    !isDeepStrictEqual(entry.dynamicIdentity, dynamicIdentity(ctx, toolName))
++    (entry.definition === undefined
++      ? !isDeepStrictEqual(entry.dynamicIdentity, dynamicIdentity(ctx, toolName))
++      : executingBinding.getStore() !== entry)
 +  ) {
 +    return undefined;
 +  }
 +  // A replay rebuilds this ephemeral map; another callback in this invocation cannot reuse it.
-+  ctx.get(ToolApprovalReceiptsKey)?.delete(callId);
++  entry.consumed = true;
 +  return entry.receipt;
 +}
 +
@@ -105,6 +119,40 @@ index 0000000..1ab64b3
 +    TurnDynamicToolMetadataKey,
 +    StepDynamicToolMetadataKey,
 +  ].map((key) => (ctx.get(key) ?? []).filter((metadata) => metadata.name === toolName));
++}
++
++/** Resolve only the pending call; a same-named newly generated call keeps discovery's definition. */
++export function approvedToolDefinition(
++  callId: string | undefined,
++  toolName: string,
++): HarnessToolDefinition | undefined {
++  if (callId === undefined) return undefined;
++  const ctx = contextStorage.getStore();
++  const entry = ctx?.get(ToolApprovalReceiptsKey)?.get(callId);
++  if (entry === undefined) return undefined;
++  if (entry.sessionId !== ctx!.require(SessionKey).sessionId || entry.toolName !== toolName) {
++    throw new Error("Approved tool continuation identity changed.");
++  }
++  return entry.definition;
++}
++
++/** Bind receipt issuance to the exact runtime-selected executor, not ambient discovery metadata. */
++export function executeApprovedBinding<T>(
++  callId: string,
++  definition: HarnessToolDefinition,
++  input: unknown,
++  execute: () => T,
++): T {
++  const entry = contextStorage.getStore()?.get(ToolApprovalReceiptsKey)?.get(callId);
++  if (entry?.definition === undefined) return execute();
++  if (
++    entry.consumed === true ||
++    entry.definition !== definition ||
++    !isDeepStrictEqual(entry.input, input)
++  ) {
++    throw new Error("Approved tool continuation input or binding changed.");
++  }
++  return executingBinding.run(entry, execute);
 +}
 diff --git a/packages/eve/src/execution/tool-auth.ts b/packages/eve/src/execution/tool-auth.ts
 index 2f72e47..a81cf11 100644
@@ -125,10 +173,10 @@ index 2f72e47..a81cf11 100644
      };
 diff --git a/packages/eve/src/harness/receipt.lane-b.integration.test.ts b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
 new file mode 100644
-index 0000000..7f982ba
+index 0000000..7dd4d80
 --- /dev/null
 +++ b/packages/eve/src/harness/receipt.lane-b.integration.test.ts
-@@ -0,0 +1,421 @@
+@@ -0,0 +1,478 @@
 +import { jsonSchema } from "ai";
 +import { MockLanguageModelV4 } from "ai/test";
 +import { expect, it, vi } from "vitest";
@@ -550,8 +598,65 @@ index 0000000..7f982ba
 +    expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 }) !== undefined).toBe(!changed);
 +  });
 +});
++
++import { approvedToolDefinition, executeApprovedBinding } from "#context/tool-approval-receipts.js";
++it("pins only the approved call and issues receipt only inside its selected callback", async () => {
++  const ctx = createApprovalContext();
++  const definition = {
++    name: "mcp",
++    description: "original",
++    inputSchema: jsonSchema({ type: "object" }),
++    execute: async () => "ok",
++  };
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(
++    ctx,
++    "generate-approval-resume-session",
++    [batch],
++    state,
++    new Map([["mcp", definition]]),
++  );
++  await contextStorage.run(ctx, async () => {
++    expect(approvedToolDefinition("call-1", "mcp")).toBe(definition);
++    expect(approvedToolDefinition("new-call", "mcp")).toBeUndefined();
++    expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 })).toBeUndefined();
++    expect(() =>
++      executeApprovedBinding("call-1", { ...definition }, { value: 1 }, () => {}),
++    ).toThrow("binding changed");
++    expect(() => executeApprovedBinding("call-1", definition, { value: 2 }, () => {})).toThrow(
++      "binding changed",
++    );
++    const receipt = executeApprovedBinding("call-1", definition, { value: 1 }, () =>
++      getToolApprovalReceipt("call-1", "mcp", { value: 1 }),
++    );
++    expect(receipt?.requestId).toBe("approval-1");
++    expect(() => executeApprovedBinding("call-1", definition, { value: 1 }, () => {})).toThrow(
++      "binding changed",
++    );
++  });
++});
++it("does not mint authority when the restored callback is absent", async () => {
++  const ctx = createApprovalContext();
++  const state = settleDirectApprovalResponse({
++    actor: ctx.require(AuthKey),
++    outcome: "allowed",
++    requestId: "approval-1",
++    settledAt: 1,
++    state: undefined,
++  }).state;
++  prepareToolApprovalReceipts(ctx, "generate-approval-resume-session", [batch], state, new Map());
++  await contextStorage.run(ctx, async () =>
++    expect(getToolApprovalReceipt("call-1", "mcp", { value: 1 })).toBeUndefined(),
++  );
++});
 diff --git a/packages/eve/src/harness/tool-loop.ts b/packages/eve/src/harness/tool-loop.ts
-index 5245166..b75e978 100644
+index 5245166..f3f80fd 100644
 --- a/packages/eve/src/harness/tool-loop.ts
 +++ b/packages/eve/src/harness/tool-loop.ts
 @@ -1,3 +1,4 @@
@@ -572,11 +677,68 @@ index 5245166..b75e978 100644
        stepInput: coordinated.stepInput,
      });
 +    if (store !== undefined) {
-+      prepareToolApprovalReceipts(store, session.sessionId, pending.resolvedInputs, pending.session.state);
++      prepareToolApprovalReceipts(store, session.sessionId, pending.resolvedInputs, pending.session.state, responseAuthorizationTools);
 +    }
      if (pending.outcome === "unresolved") {
        // The coordination batch owns the assistant messages. Once that batch
        // resolves, commit its results before the still-pending HITL batch parks.
+diff --git a/packages/eve/src/harness/tools.ts b/packages/eve/src/harness/tools.ts
+index b091bd8..c0c898a 100644
+--- a/packages/eve/src/harness/tools.ts
++++ b/packages/eve/src/harness/tools.ts
+@@ -1,3 +1,4 @@
++import { approvedToolDefinition, executeApprovedBinding } from "#context/tool-approval-receipts.js";
+ import { type ToolApprovalConfiguration, type ToolApprovalStatus, type ToolSet, tool } from "ai";
+
+ import type { RuntimeModelReference } from "#runtime/agent/bootstrap.js";
+@@ -69,7 +70,12 @@ export function buildToolSet(input: {
+             }: {
+               readonly output: unknown;
+               readonly toolCallId?: string;
+-            }) => toolCallModelOutput(definition, output, toolCallId),
++            }) =>
++              toolCallModelOutput(
++                approvedToolDefinition(toolCallId, definition.name) ?? definition,
++                output,
++                toolCallId,
++              ),
+           }
+         : {}),
+     });
+@@ -122,7 +128,13 @@ export function wrapToolExecute(
+   return (input, options) => {
+     let output: unknown;
+     try {
+-      output = runAsApprover(options.toolCallId, () => execute(input, options));
++      const selected = approvedToolDefinition(options.toolCallId, definition.name) ?? definition;
++      if (selected.execute === undefined) throw new Error("Approved tool executor is unavailable.");
++      output = runAsApprover(options.toolCallId, () =>
++        executeApprovedBinding(options.toolCallId, selected, input, () =>
++          selected.execute!(input, options),
++        ),
++      );
+     } catch (error) {
+       return Promise.reject(error);
+     }
+@@ -231,7 +243,8 @@ function buildApprovalFn(
+   input: { readonly approvedTools?: ReadonlySet<string> },
+ ): ApprovalFn {
+   return async (toolInput, callId, abortSignal, recheck) => {
+-    if (definition.approval === undefined) return undefined;
++    const selected = approvedToolDefinition(callId, definition.name) ?? definition;
++    if (selected.approval === undefined) return undefined;
+
+     const toolInputRecord = isObject(toolInput) ? toolInput : undefined;
+     const context = {
+@@ -243,7 +256,7 @@ function buildApprovalFn(
+       toolName: definition.name,
+     };
+
+-    const status = await resolveApprovalPolicy(definition.approval)(
++    const status = await resolveApprovalPolicy(selected.approval)(
+       recheck ? markApprovalRecheck(context) : context,
+     );
+     return typeof status === "boolean" ? (status ? "user-approval" : "not-applicable") : status;
 diff --git a/packages/eve/src/tools/definition.ts b/packages/eve/src/tools/definition.ts
 index 0091635..f674cef 100644
 --- a/packages/eve/src/tools/definition.ts

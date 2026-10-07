@@ -19,7 +19,7 @@ Omit the final argument to clone upstream instead of the available read-only sou
 
 `runtime-fixture.patch` contains the standalone Node scenario runner and EVE fixture. These are external-runtime fixtures, materialized in the isolated package rather than installed as ChatJS application modules. The launcher retains storage, entry/effect evidence and `proof-results.json` in the printed temporary directory. It allows 180 seconds per mode and stops workers on failure. Auth is fixture-owned; the effect is an append-only disposable file. Approval settlement, HTTP ingress, tool compilation, dynamic callback restoration, AI SDK execution and Workflow storage/recovery are real.
 
-The patched mode replaces only three isolated published distribution modules with transpiled source: receipt projection, auth wrapper, and tool loop. Atomic file replacement avoids modifying package-manager hardlinks. This is an experimental package, **not** an upstream release. Other published modules and bundled Workflow stay unchanged.
+The patched mode replaces only four isolated published distribution modules with transpiled source: receipt projection, auth wrapper, tool loop, and tool dispatch. Atomic file replacement avoids modifying package-manager hardlinks. This is an experimental package, **not** an upstream release. Other published modules and bundled Workflow stay unchanged.
 
 ## Executed versions
 
@@ -37,14 +37,17 @@ Published-runtime dependencies use Lane D commit `858d36fe8`'s frozen lockfile. 
 
 ## Published-runtime results
 
-Both stock and patched modes pass seven scenarios, each with explicit assertions:
+Both stock and patched modes pass ten scenarios, each with explicit assertions:
 
 | Scenario | Stock 0.71.3 | Experimental patch |
 | --- | --- | --- |
 | `invokeTool`: required policy, false→true policy flip, dynamic tool name | Required returns `approval-required`; flip reaches the owner caller but missing consent blocks effect; dynamic name is unavailable. | Same; no fabricated receipt for out-of-turn execution. |
 | Conversation policy flips false→true between request and executor | Owner caller exists but receipt is absent; zero effects. | Same. |
 | Kill server before human response, then `--resume` from the same Workflow storage | Restores exact parsed input and original unchanged connector; receipt absent, zero effects. | Restores exact owner receipt and executes once in this bounded fixture. |
-| Kill while approval is pending, replace connector behind the same `step.started` tool name, then approve | Replacement is discovered; missing receipt blocks effect. | Dynamic metadata mismatch suppresses the old receipt; zero new effects. |
+| Kill while approval is pending, replace connector behind the same `step.started` tool name, then approve | Replacement is discovered; missing receipt blocks effect. | Executes only the original bound connector, parsed input and output projection; the replacement receives no old consent. |
+| Captured message history changes during approval | Uses rediscovered history; no receipt. | Preserves original history and consent. |
+| New same-name call after replacement/schema change | Fresh discovery; no receipt. | Fresh connector/schema and a separate approval, never old consent. |
+| Current owner changes or connector becomes disabled | Zero effects. | Zero new effects despite settled consent. |
 | Owner cancellation | Zero new effects. | Zero new effects. |
 | Kill after response candidate ingestion while authorizer is paused, before settlement; restart without resending | Durable candidate resumes; caller remains owner but no receipt/effect. | Authorizer resumes in a new process, settles the original request and supplies its receipt before the effect. |
 | Kill after settlement and executor entry, before effect; restart with `--resume` | Replays in a different PID; owner caller still has no receipt, zero effects. | Replays in a different PID with the same request receipt, exact parsed input and connector, then performs the effect. |
@@ -57,9 +60,9 @@ The after-settlement test writes an entry marker after runtime receipt construct
 
 The initial 0.71.2-derived backport matched only session, call, tool name and parsed input. The compiled step-scoped test demonstrated that a refreshed connector closure could receive that receipt after restart. That local experimental patch was insufficient.
 
-The revised patch snapshots matching persisted dynamic metadata across session, turn and step scopes before lifecycle refresh. Receipt retrieval compares that metadata with the executing tool's current metadata. A changed connector closure, resolver/entry identity or schema now fails closed. It also clears ephemeral receipts at every harness entry and consumes a matching receipt at callback-context construction. Legitimate replay reconstructs a fresh map from the current resolved input batch and winning settlement.
+The resumed experiment preserves the callback definition restored from pending dynamic metadata before lifecycle refresh. Execution and approval rechecks select it only for the matching pending call. A private async context permits receipt construction only inside that selected callback, with exact parsed input, session and tool checks. Its output projection stays bound to the same definition. New calls retain fresh discovery and require their own consent. Ephemeral authority is cleared at harness entry and consumed at callback-context construction; replay reconstructs it from the resolved batch and durable winner.
 
-The comparison is deliberately conservative: a change to any captured metadata, even non-authority data such as ChatJS’s serialized model messages, suppresses the receipt. This proves safety for the demonstrated identity replacement, not availability of every real MCP approval. Upstream must preserve the approved callback binding or define a stable exact-action identity before production integration; application callers must not choose which closure fields to ignore.
+The compiled fixture captures real `context.messages`, matching the production MCP adapter's closure pattern. Rediscovery changes that history during approval, but the approved executor sees the original captured history. A replacement connector and changed schema suffix do not alter the resumed action. A subsequent call in the same session uses the replacement connector and new suffix, with a distinct approval. Live owner and enabled-state revocation each block the effect despite a valid receipt. These are bounded experiment results, not a supported upstream API or proof of arbitrary source migration.
 
 This finding concerns the experimental backport on 0.71.3. It is not a claim that the deployed fork has been reproduced with the same failure.
 
@@ -70,7 +73,7 @@ EVE_TEST_NODE=/opt/homebrew/opt/node@24/bin/node \
   bash experiments/eve-approval-receipt/run.sh /tmp/chatjs-lane-b-0713
 ```
 
-The stock counterexample passes **2 tests**: removing the final gate permits the effect after a policy flip; retaining it blocks the effect. The patched source suite passes **24 tests, 1 skipped** (the opt-in JSON checkpoint case). The runner's three legacy checkpoint processes each pass separately. Those JSON checkpoint cases remain supplemental; the published-runtime proof above establishes actual Workflow restart.
+The stock counterexample passes **2 tests**: removing the final gate permits the effect after a policy flip; retaining it blocks the effect. The patched source suite passes **26 tests, 1 skipped** (the opt-in JSON checkpoint case). The runner's three legacy checkpoint processes each pass separately. Those JSON checkpoint cases remain supplemental; the published-runtime proof above establishes actual Workflow restart.
 
 Source cases cover owner and foreign approve/cancel, foreign issuer with the same ID, competing decisions in both orders, stale losing candidates, absent/cancelled settlement, call/tool/input/session mismatch, duplicate evidence, historical-only evidence, reused receipt, fresh context, early park, cancellation, immutable capture and unchanged/replaced dynamic closure identity. EVE's coordinator/tool loop and AI SDK execute real code, with a mock model and effect spy.
 
@@ -82,6 +85,19 @@ After `bun install --frozen-lockfile --ignore-scripts` in this worktree, shared 
 - `bun run --cwd apps/chat test:unit lib/eve/mcp-tools.test.ts`: PASS, 29 tests against the retained adapter.
 - `bun lint`: FAIL on seven existing `typescript/no-unsafe-*` errors in `scripts/vercel-preview-build.ts:127–137`, matching Lane D’s baseline. Exception budget, preparation and formatting passed; later stages did not run.
 - `bash -n` on both launchers and patch application checks: PASS.
+
+## PostgreSQL and old-run evidence
+
+[7 October validation](VALIDATION-2026-10-07.md) records the real patched-Postgres run, bounded abrupt-crash queue-lock observation, and production-fork package-switch failure. Old history decodes, but the old active workflow fails on versioned framework step identity before receipt execution. These are executed compatibility findings, not deferred proof work.
+
+The fixture patch also materializes `runtime-postgres.ts` and `runtime-old-run.ts`. Run them with Bun and `EVE_TEST_NODE` pointing to Node 24.20.0. PostgreSQL requires D's committed helper and a provisioned dedicated `lane_b` database; do not reuse another lane's database. Arguments:
+
+```sh
+bun runtime-postgres.ts /absolute/D/tests/eve-retirement-runtime /absolute/experimental-install /absolute/connection.json --restart-only
+bun runtime-old-run.ts /absolute/D/tests/eve-retirement-runtime /absolute/production/node_modules /absolute/experimental/node_modules /absolute/connection.json
+```
+
+The first runner uses the verified serving PID for abrupt crashes and a bounded observation window. Omitting `--restart-only` runs all scenarios. The old-run probe intentionally exits nonzero when compatibility fails; inspect its saved stage/error and worker logs. Neither runner deletes durable rows or resends consent.
 
 ## Remaining dependency and integration gates
 
