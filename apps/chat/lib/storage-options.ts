@@ -14,4 +14,5 @@ const storageEnvRequirements: EnvRequirement[] = [
     ],
   },
 ];
+// oxlint-disable-next-line import/no-named-export -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export { storageOptions, storageId, storageEnvRequirements };

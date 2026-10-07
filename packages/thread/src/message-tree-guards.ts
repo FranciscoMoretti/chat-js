@@ -65,6 +65,7 @@ const validateMessagePath = (
   }
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ROOT_PARENT_ID, ABSENT_MESSAGE, assertLeaf, assertParentUnchanged, assertParentExistsAndAcyclic, validateMessagePath); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   ROOT_PARENT_ID,
   ABSENT_MESSAGE,
@@ -73,3 +74,4 @@ export {
   assertParentExistsAndAcyclic,
   validateMessagePath,
 };
+/* oxlint-enable import/no-named-export */

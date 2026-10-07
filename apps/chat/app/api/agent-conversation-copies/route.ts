@@ -1,13 +1,18 @@
 import { auth } from "@/lib/auth";
 import { getEveCreation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { eveCopyInput } from "@/lib/eve/copy-input";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveCopyNotReadyError } from "@/lib/eve/copy-transcript";
+/* oxlint-enable sort-imports */
 import { sameOrigin } from "@/lib/eve/request-policy";
 import { saveEveCopyOperation } from "@/lib/eve/save-copy-operation";
 
 const headers = { "cache-control": "no-store" };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCopyBody's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * max-statements (#512): readCopyBody keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): readCopyBody uses 2048 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -15,6 +20,7 @@ const headers = { "cache-control": "no-store" };
  * unicorn/no-null (#570): readCopyBody preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const readCopyBody = async (request: Request): Promise<unknown> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getReader from request.body; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const reader = request.body?.getReader();
   if (!reader) {
     return null;
@@ -46,6 +52,9 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
     reader.releaseLock();
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve POST's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -59,6 +68,7 @@ const readCopyBody = async (request: Request): Promise<unknown> => {
  */
 export const POST = async (request: Request): Promise<Response> => {
   const session = await auth.api.getSession({ headers: request.headers });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!session?.user) {
     return new Response(null, { headers, status: 401 });
   }
@@ -99,12 +109,16 @@ export const POST = async (request: Request): Promise<Response> => {
     return Response.json(
       {
         conversationId:
+          // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep conversationId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           existing?.creationKind === "copy" ? existing.id : undefined,
         error: message,
         retryable: !rejected,
       },
+      // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       { headers, status: rejected ? 409 : 503 }
     );
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */

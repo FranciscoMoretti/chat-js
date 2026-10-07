@@ -1,5 +1,8 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UIMessage } from "ai";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   useCallback,
   useEffect,
@@ -8,17 +11,22 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import type { AbstractThread } from "./abstract-thread";
 import { Thread } from "./thread";
-import { createThreadHelpers } from "./thread-hook-helpers";
 import type { UseThreadHelpers } from "./thread-hook-helpers";
+import { createThreadHelpers } from "./thread-hook-helpers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { SnapshotStore } from "./thread-snapshot-store";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CanonicalMessage,
   ThreadInit,
   ThreadStateSnapshot,
 } from "./types";
+/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 
@@ -29,7 +37,7 @@ const OMITTED_HOOK_INPUT = undefined;
 const NO_SUPPLIED_THREAD = undefined;
 
 const useIsomorphicLayoutEffect =
-  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
+  // oxlint-disable-next-line unicorn/prefer-global-this, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering.; no-ternary: Keep useIsomorphicLayoutEffect as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface ThreadHookOptions {
@@ -62,9 +70,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     dataPart: Parameters<
       NonNullable<ThreadCallbacks<TMessage>["onData"]>
     >[typeof FIRST_PARAMETER_INDEX]
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onData; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   ): void => this.#callbacks.onData?.(dataPart);
 
   public readonly onError = (error: Readonly<Error>): void =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onError; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     this.#callbacks.onError?.(error);
 
   public readonly onFinish = (
@@ -74,8 +84,10 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
         NonNullable<ThreadCallbacks<TMessage>["onFinish"]>
       >[typeof FIRST_PARAMETER_INDEX]
     >
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onFinish; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   ): void => this.#callbacks.onFinish?.(event);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve onToolCall's awaited sequencing and rejected-Promise behavior. */
   public readonly onToolCall = async (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the SDK static/dynamic tool-call union into the current callback; deep readonly generic tool inputs cannot satisfy its original conditional tool specialization.
     event: Readonly<
@@ -84,9 +96,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
       >[typeof FIRST_PARAMETER_INDEX]
     >
   ): Promise<void> => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.onToolCall; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await this.#callbacks.onToolCall?.(event);
   };
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendAutomaticallyWhen's awaited sequencing and rejected-Promise behavior. */
   public readonly sendAutomaticallyWhen = async (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The current SDK auto-send callback receives its original mutable message array; readonly array forwarding rejects existing callback implementations.
     event: Readonly<
@@ -95,13 +109,15 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
       >[typeof FIRST_PARAMETER_INDEX]
     >
   ): Promise<boolean> =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling this.#callbacks.sendAutomaticallyWhen; preserve one receiver evaluation, skipped call arguments and the existing false fallback.
     await (this.#callbacks.sendAutomaticallyWhen?.(event) ?? false);
-
+  /* oxlint-enable oxc/no-async-await */
   public readonly setMessages = (
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The SDK setter accepts mutable message arrays and synchronous updater callbacks that may mutate/return their provided array; readonly collections reject that existing updater contract.
     messages: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["setMessages"]
     >[typeof FIRST_PARAMETER_INDEX]
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setMessages from this.#thread; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   ): void => this.#thread?.setMessages(messages);
 }
 
@@ -184,6 +200,7 @@ const createOwnedThread = <TMessage extends UIMessage>(
   dispatchers: DispatcherReader<TMessage>
 ): Thread<TMessage> =>
   new Thread<TMessage>({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ownOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...ownOptions,
     onData: dispatchers.onData,
     onError: dispatchers.onError,
@@ -212,12 +229,15 @@ const useSelectedController = <TMessage extends UIMessage>({
   });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
   if (
     previousExternalThread !== externalThread ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     previousThreadId !== ownOptions?.id
   ) {
     setPreviousExternalThread(externalThread);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     setPreviousThreadId(ownOptions?.id);
     setThread(externalThread ?? createOwnedThread(ownOptions, dispatchers));
   }
@@ -250,15 +270,22 @@ const useThreadController = <TMessage extends UIMessage>(
   dispatchers: LatestThreadDispatchers<TMessage>;
 } => {
   const hasExternalThread = hasSuppliedThread(options);
+  // oxlint-disable-next-line no-ternary -- Keep externalThread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const externalThread = hasExternalThread
     ? options.thread
     : OMITTED_HOOK_INPUT;
+  // oxlint-disable-next-line no-ternary -- Keep ownOptions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onData from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onData: ownOptions?.onData,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onError from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onError: ownOptions?.onError,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onFinish from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onFinish: ownOptions?.onFinish,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onToolCall from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     onToolCall: ownOptions?.onToolCall,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sendAutomaticallyWhen from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     sendAutomaticallyWhen: ownOptions?.sendAutomaticallyWhen,
   };
   const dispatchers = useLatestDispatchers<TMessage>(callbacks);
@@ -298,7 +325,13 @@ const useThread = <TMessage extends UIMessage = UIMessage>(
   });
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (useThread); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { useThread };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (UseThreadOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { UseThreadOptions };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (TreeHelpers, UseThreadHelpers); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { TreeHelpers, UseThreadHelpers } from "./thread-hook-helpers";
+/* oxlint-enable import/no-named-export */

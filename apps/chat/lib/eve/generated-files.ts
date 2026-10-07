@@ -1,14 +1,20 @@
 import type { ToolContext } from "eve/tools";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
 } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 import type { FileUploader } from "@/lib/file-storage";
 
 import { resolveEveConversationScope } from "./conversation-scope";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveGeneratedFileUploader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveGeneratedFileUploader's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): eveGeneratedFileUploader accepts context: Pick<ToolContext, "abortSignal"> & { session?: { id: string; auth: { ; body; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
@@ -30,6 +36,7 @@ export const eveGeneratedFileUploader =
       throw new Error("Generated files require a native session.");
     }
     const scope = await resolveEveConversationScope(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       context.session.auth.initiator?.principalId,
       context.session.id,
       context.abortSignal
@@ -46,4 +53,6 @@ export const eveGeneratedFileUploader =
       }
     );
   };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

@@ -1,16 +1,26 @@
 import { headers } from "next/headers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { notFound, redirect } from "next/navigation";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-enable sort-imports */
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-enable sort-imports */
 import { getEveCopyOperation } from "@/lib/db/eve-copy-journal";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveChatPageConversation } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CreationScope } from "@/lib/eve/pending-create";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DisposableGuestChat } from "./disposable-guest-chat";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- ./eve-artifact-layout import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { EveArtifactLayout } from "./eve-artifact-layout";
 /* oxlint-enable import/max-dependencies */
@@ -18,6 +28,8 @@ import { EveCopyButton } from "./eve-copy-button";
 import { EveCreationRecovery } from "./eve-creation-recovery";
 import { EveRuntimeRoute } from "./eve-runtime-provider";
 import { NewEveConversation } from "./new-eve-conversation";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveChatPage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve EveChatPage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions, unicorn/no-null -- EveChatPage: ; init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; ; react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { conversationId, }: { conversationId?: string; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including conversationId); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This server boundary selects the authenticated, recovery, comparison, and chat states.
@@ -38,6 +50,7 @@ export const EveChatPage = async ({
     notFound();
   }
   const selected =
+    // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof conversationId === "string" && conversationId !== ""
       ? await getEveChatPageConversation(principal.ownerId, conversationId)
       : undefined;
@@ -45,14 +58,17 @@ export const EveChatPage = async ({
     notFound();
   }
   let recoveryScope: CreationScope | undefined;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentConversationId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (selected?.parentConversationId) {
     recoveryScope = { conversationId: selected.parentConversationId };
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialProjectId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   } else if (selected?.initialProjectId) {
     recoveryScope = { projectId: selected.initialProjectId };
   }
   const header = (
     <ChatHeaderView
       breadcrumb={
+        // oxlint-disable-next-line no-ternary -- Keep breadcrumb JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         selected ? (
           <h1 className="ml-2 truncate text-sm font-medium">
             {selected.title ?? selected.firstMessage.slice(0, 100)}
@@ -61,6 +77,7 @@ export const EveChatPage = async ({
       }
     />
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (selected?.sessionId && selected.state === "bound") {
     return (
       <EveRuntimeRoute
@@ -74,6 +91,7 @@ export const EveChatPage = async ({
   }
 
   const copy =
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading creationKind from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep copy as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     selected?.creationKind === "copy"
       ? await getEveCopyOperation(principal.ownerId, selected.operationId)
       : undefined;
@@ -91,6 +109,7 @@ export const EveChatPage = async ({
       />
     );
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialModelId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (copy && selected?.initialModelId) {
     content = (
       <EveCopyButton
@@ -112,4 +131,6 @@ export const EveChatPage = async ({
     </EveArtifactLayout>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-object-as-prop, typescript/strict-boolean-expressions, unicorn/no-null */

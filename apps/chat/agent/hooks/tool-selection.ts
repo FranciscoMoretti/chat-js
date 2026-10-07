@@ -4,7 +4,9 @@
 import { defineHook } from "eve/hooks";
 
 import { frontendToolsSchema } from "../../lib/ai/types";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveTurnGuest, eveTurnTool } from "../../lib/eve/turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-default-export, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -17,10 +19,13 @@ export default defineHook({
   events: {
     "turn.started": (_event, context) => {
       eveTurnGuest.update(
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         () => context.session.auth.current?.attributes.chatjsGuest === "true"
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attributes from context.session.auth.current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       const supplied = context.session.auth.current?.attributes.selectedTool;
       const selected =
+        // oxlint-disable-next-line no-ternary -- Keep selected as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         supplied === undefined ? null : frontendToolsSchema.parse(supplied);
       eveTurnTool.update(() => selected);
     },

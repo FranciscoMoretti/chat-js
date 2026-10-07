@@ -1,10 +1,12 @@
 import { expect, test } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   authEnvRequirements,
   formatRequirementDescription,
   getMissingRequirement,
 } from "./config-requirements";
+/* oxlint-enable sort-imports */
 import type { EnvRequirement } from "./config-requirements";
 
 const sandbox: EnvRequirement = {
@@ -92,6 +94,7 @@ test("formats nested allOf requirements without losing credential names", () => 
 
 test("code execution credential descriptions retain actionable environment key names", () => {
   const described: EnvRequirement = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sandbox own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...sandbox,
     description: "Vercel OIDC or team/project/token credentials",
   };
@@ -119,6 +122,7 @@ test("credential descriptions avoid duplicate exact key names across separators"
   const requirement = authEnvRequirements.github;
   expect(
     getMissingRequirement(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...requirement, description: "" },
       { NODE_ENV: "test" }
     )
@@ -129,6 +133,7 @@ test("credential descriptions avoid duplicate exact key names across separators"
   expect(
     getMissingRequirement(
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...requirement,
         description: "AUTH_GITHUB_ID_EXTRA, AUTH_GITHUB_SECRET",
       },

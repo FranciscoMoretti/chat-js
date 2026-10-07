@@ -1,8 +1,8 @@
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-export type RegistryIndexItem = {
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (RegistryIndexItem); the enabled import/no-default-export convention rejects the default-export alternative. */
+export interface RegistryIndexItem {
   name: string;
   description?: string;
   hidden?: boolean;
   meta?: { chatjs?: { documentRunExport?: string; slot?: string } };
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
+/* oxlint-enable import/no-named-export */

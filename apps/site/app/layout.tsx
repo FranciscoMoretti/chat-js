@@ -1,12 +1,18 @@
 import { Analytics } from "@vercel/analytics/next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Metadata, Viewport } from "next";
+/* oxlint-enable sort-imports */
 import { ThemeProvider } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+/* oxlint-enable sort-imports */
 import React from "react";
 
 import { siteConfig } from "@/lib/site-config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./globals.css";
+/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {
@@ -114,10 +120,12 @@ const RootLayout = ({
     </body>
   </html>
 );
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;

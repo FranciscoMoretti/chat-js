@@ -1,6 +1,8 @@
 import { expect, test } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createToolResult, toolResultSchema } from "./tool-result";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("tool receipts preserve known zero cost and reject invalid billing values") uses 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

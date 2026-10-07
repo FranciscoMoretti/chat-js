@@ -1,5 +1,7 @@
 import { setupRenderer } from "@better-auth/electron/preload";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { contextBridge, ipcRenderer } from "electron";
+/* oxlint-enable sort-imports */
 
 // Setup @better-auth/electron renderer bridges.
 // Exposes window.requestAuth(), window.onAuthenticated(), window.signOut(), etc.

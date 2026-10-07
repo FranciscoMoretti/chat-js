@@ -3,7 +3,9 @@ import React from "react";
 
 import { siteLinks } from "@/lib/site-config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ThemeToggle } from "./theme-toggle";
+/* oxlint-enable sort-imports */
 
 const NAV_LINKS = [
   { href: siteLinks.threads, label: "Threads" },
@@ -14,6 +16,8 @@ const NAV_LINKS = [
     label: "GitHub",
   },
 ];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Navbar); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- Navbar renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- Navbar: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
@@ -23,6 +27,7 @@ export const Navbar = (): React.JSX.Element => (
   <header className="border-border/40 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-xl">
     <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
       <Link
+        // oxlint-disable-next-line react/forbid-component-props -- Link accepts className in its styling contract; preserve this caller's layout and appearance.
         className="flex items-center gap-2.5 text-lg font-semibold tracking-tight"
         href="/"
       >
@@ -93,6 +98,8 @@ export const Navbar = (): React.JSX.Element => (
     </nav>
   </header>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 

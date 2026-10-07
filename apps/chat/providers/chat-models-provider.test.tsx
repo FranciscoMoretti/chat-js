@@ -1,11 +1,15 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { act, create } from "react-test-renderer";
+/* oxlint-enable sort-imports */
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { config } from "@/lib/config";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChatModelsProvider, useChatModels } from "./chat-models-provider";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type --
  * no-undefined (#519): vi.mock("@tanstack/react-query") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -177,7 +181,9 @@ describe("ChatModelsProvider", () => {
 
       const updatedValue = values.at(-1);
       expect(updatedValue).not.toBe(values[0]);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading models from updatedValue; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(updatedValue?.models).toEqual(updatedModels);
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getModelById from updatedValue; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(updatedValue?.getModelById(config.ai.workflows.chat)).toBe(
         updatedModels[0]
       );

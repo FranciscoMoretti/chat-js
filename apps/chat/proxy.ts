@@ -2,7 +2,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config as appConfig } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 
 const EVE_CHAT_PAGE = /^\/chat\/[^/]+$/u;
@@ -50,11 +52,14 @@ const isAuthPage = (pathname: string): boolean =>
  */
 const getSafeReturnTo = (url: URL): string | null => {
   const returnTo = url.searchParams.get("returnTo");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from returnTo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!returnTo?.startsWith("/") || returnTo.startsWith("//")) {
     return null;
   }
   return returnTo;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (proxy); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve proxy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
@@ -78,6 +83,7 @@ export const proxy = async (req: NextRequest) => {
   }
 
   const session = await auth.api.getSession({ headers: req.headers });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isLoggedIn = Boolean(session?.user);
   const isDeviceLoginRoute = isDeviceLoginPage(pathname);
   const returnTo = getSafeReturnTo(url);
@@ -96,6 +102,9 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL("/login", url));
   }
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/group-exports, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable import/group-exports --
@@ -118,4 +127,5 @@ export const config = {
     "/((?!api|docs|_next/static|_next/image|favicon.ico|opengraph-image|manifest|models|compare|privacy|terms|.*[.](?:svg|png|jpg|jpeg|gif|webp|ico|json|webmanifest)$).*)",
   ],
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable import/group-exports */

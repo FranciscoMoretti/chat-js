@@ -3,19 +3,28 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
 import { readFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable unicorn/max-nested-calls --
@@ -52,6 +61,8 @@ test("compiled ChatJS tools exclude optional Eve defaults that bypass applicatio
     "mcp",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -127,6 +138,7 @@ test("Canvas selection survives native history and edits while later turns reset
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   await expect(page.getByText("Words", { exact: true })).toHaveCount(0);
   const conflict = await page.request.post("/api/agent-conversations", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     data: { ...operation, selectedTool: "webSearch" },
     headers: { origin },
   });
@@ -186,4 +198,5 @@ test("Canvas selection survives native history and edits while later turns reset
     path: testInfo.outputPath("tool-selection-edit-mobile.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

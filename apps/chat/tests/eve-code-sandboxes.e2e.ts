@@ -4,39 +4,51 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   confirmEveCodeSandboxCreation,
   listEveCodeSandboxesForDeletion,
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
+/* oxlint-enable sort-imports */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { eveCodeSandbox, eveConversation, user } from "../lib/db/schema";
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
 assertEveTestDatabase(env.DATABASE_URL);
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the sandbox owner before registering ownership scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Sandbox ownership",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db.delete(eveCodeSandbox).where(eq(eveCodeSandbox.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve conversation's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -48,6 +60,8 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements --
@@ -61,6 +75,7 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
   ).rejects.toThrow("Reconcile");
   await expect(
     reserveEveCodeSandbox(owner, row.id, "call-1", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...provider,
       projectId: "other-project",
     })
@@ -81,6 +96,8 @@ test("unresolved allocation blocks final deletion until confirmed cleanup; retri
     reserveEveCodeSandbox(owner, row.id, "call-2", provider)
   ).rejects.toThrow("unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
 test("foreign owners cannot reserve or resolve resources, and completed calls cannot reallocate", async () => {
@@ -97,7 +114,8 @@ test("foreign owners cannot reserve or resolve resources, and completed calls ca
     reserveEveCodeSandbox(owner, row.id, "call", provider)
   ).rejects.toThrow("Reconcile");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("concurrent allocation and deletion cannot leave an untracked admitted resource", async () => {
   const row = await conversation();
   const [allocation] = await Promise.allSettled([
@@ -118,7 +136,8 @@ test("concurrent allocation and deletion cannot leave an untracked admitted reso
     ).toEqual([]);
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
  * max-statements (#512): test("only a retired owned family can inventory confirmed creation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -156,4 +175,5 @@ test("only a retired owned family can inventory confirmed creation", async () =>
     confirmEveCodeSandboxCreation(owner, row.id, name)
   ).rejects.toThrow("ownership");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */

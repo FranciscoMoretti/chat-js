@@ -1,8 +1,11 @@
 import { ClientError } from "eve/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { isEveCommandRejection, rejectEveCommand } from "./command-rejection";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
  * no-magic-numbers (#517): it("recognizes an explicit local refusal without treating a failed connection as reje uses 402, 502, 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * unicorn/max-nested-calls (#568): it("recognizes an explicit local refusal without treating a failed connection as reje keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -34,4 +37,5 @@ it("recognizes an explicit local refusal without treating a failed connection as
     false
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */

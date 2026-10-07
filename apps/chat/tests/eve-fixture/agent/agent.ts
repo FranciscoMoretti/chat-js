@@ -4,6 +4,7 @@
 import { defineAgent } from "eve";
 import { mockModel } from "eve/evals";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * import/no-default-export (#526): Preserve the existing default export import contract; converting its consumers requires a public module API migration.
  * max-statements (#512): default export keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -14,6 +15,7 @@ import { mockModel } from "eve/evals";
 export default defineAgent({
   experimental: { workflow: { world: "@workflow/world-postgres" } },
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("slow")) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
@@ -33,6 +35,7 @@ export default defineAgent({
         ],
       };
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("confirm")) {
       if (toolResults.length > 0) {
         return "Approval handled.";
@@ -41,7 +44,9 @@ export default defineAgent({
       return {
         toolCalls: [
           {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from tool; preserve one receiver evaluation, skipped accesses and the existing "run_tool" fallback. The app guidance prefers optional chaining.
             name: tool?.name ?? "run_tool",
+            // oxlint-disable-next-line no-ternary -- Keep input as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             input: tool
               ? { note: "Review release" }
               : { name: "confirm_note", input: { note: "Review release" } },
@@ -53,4 +58,5 @@ export default defineAgent({
   }),
   modelContextWindowTokens: 128_000,
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-default-export, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, typescript/strict-void-return */

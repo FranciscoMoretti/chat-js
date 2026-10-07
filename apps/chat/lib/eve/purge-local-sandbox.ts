@@ -1,12 +1,14 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { readdir, readFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { readdir, readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import nodePath from "node:path";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 import { localEveSandboxOwnerSchema } from "./local-sandbox-inventory";
 /* oxlint-enable import/no-nodejs-modules */
@@ -45,6 +47,7 @@ const metadataSchema = z.object({
   version: z.literal(SANDBOX_METADATA_VERSION),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readResourceRecords's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-continue, unicorn/max-nested-calls --
  * max-statements (#512): readResourceRecords keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): readResourceRecords skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -80,6 +83,7 @@ const readResourceRecords = async (
       )
     );
     const pattern =
+      // oxlint-disable-next-line no-ternary -- Keep pattern as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       record.kind === "sandbox" ? sandboxNamePattern : stateSnapshotPattern;
     if (
       record.sessionKey !== input.sessionKey ||
@@ -92,6 +96,8 @@ const readResourceRecords = async (
   }
   return records;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readLocalSandboxResources's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-continue, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -118,13 +124,16 @@ const readLocalSandboxResources = async (
     throw error;
   });
   const metadata =
+    // oxlint-disable-next-line no-ternary -- Keep metadata as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     metadataText === undefined
       ? undefined
       : metadataSchema.parse(JSON.parse(metadataText));
+  // oxlint-disable-next-line no-ternary -- Keep Set argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const sandboxNames = new Set<string>(metadata ? [metadata.sandboxName] : []);
   const recordedSnapshots = new Set<string>();
   const recorded = await readResourceRecords(input);
   for (const record of recorded) {
+    // oxlint-disable-next-line no-ternary -- Keep add receiver as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (record.kind === "sandbox" ? sandboxNames : recordedSnapshots).add(
       record.name
     );
@@ -136,6 +145,7 @@ const readLocalSandboxResources = async (
     }
     throw error;
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading stateSnapshotName from metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep snapshots as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const snapshots: string[] = metadata?.stateSnapshotName
     ? [metadata.stateSnapshotName, ...recordedSnapshots]
     : [...recordedSnapshots];
@@ -184,6 +194,8 @@ const readLocalSandboxResources = async (
     snapshotNames: [...new Set(snapshots)],
   };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeRecordedSnapshots's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-undefined, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable max-statements --
@@ -224,6 +236,9 @@ const removeRecordedSnapshots = async (
     }
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeLocalEveSandboxes); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeLocalEveSandboxes's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -232,8 +247,8 @@ const removeRecordedSnapshots = async (
  */
 /**
  * Purges only validated local-provider resources after every supplied family member is retired.
- * @param inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
- * @returns Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
+ * @param {readonly SessionResourceInput[]} inputs Session-key/directory identities whose complete resource inventories are validated before provider I/O.
+ * @returns {Promise<Awaited<ReturnType<typeof readLocalSandboxResources>>[]>} Each validated resource inventory after owned sandboxes and snapshots are removed; identity records remain for retries.
  */
 export const purgeLocalEveSandboxes = async (
   inputs: readonly SessionResourceInput[]
@@ -286,4 +301,6 @@ export const purgeLocalEveSandboxes = async (
   // Keep all identity records so process loss and partial failures remain retryable.
   return resources;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, typescript/promise-function-async */

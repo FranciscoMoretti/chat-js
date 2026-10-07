@@ -3,10 +3,15 @@
  */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentHead,
@@ -14,12 +19,15 @@ import {
   eveImportedDocumentCheckpointEntry,
   eveUsage,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -27,6 +35,7 @@ assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash";
 const boundaryReply = /^boundary-ready\.?$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("copied document history survives source deletion and supports native editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -151,6 +160,7 @@ test("copied document history survives source deletion and supports native editi
     )
   ).toBe(false);
   const latest = revisions.find((revision) => revision.id === head.revisionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(latest?.content).toBe("# Orchard\n\nCobalt pears.");
   expect(
     await db
@@ -171,6 +181,7 @@ test("copied document history survives source deletion and supports native editi
     },
   ]);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading content from revisions.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading parentRevisionId from latest; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     revisions.find((revision) => revision.id === latest?.parentRevisionId)
       ?.content
   ).toBe(original.content);
@@ -297,6 +308,7 @@ test("copied document history survives source deletion and supports native editi
   const seed = forkSnapshot.events.find(
     (event) => event.type === "history.seeded"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from seed; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(seed?.data.messages).toHaveLength(2);
   expect(
     forkSnapshot.events.some(
@@ -313,13 +325,16 @@ test("copied document history survives source deletion and supports native editi
   expect(await replay.json()).toEqual(forked);
   const changed = await page.request.post("/api/agent-conversations", {
     data: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...forkInput,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing forkInput.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       fork: { ...forkInput.fork, beforeMessageId: "seed_message_0" },
     },
     headers: { origin },
   });
   expect(changed.status()).toBe(409);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-documents-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

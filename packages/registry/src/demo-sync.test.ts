@@ -13,11 +13,15 @@ import fs, {
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- Resolve repository, staging, and temporary paths with host path semantics; URL/string concatenation does not preserve arbitrary Windows filesystem paths. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable import/no-relative-parent-imports -- Exercise the canonical package demo installer; @/ resolves application source and package exports expose only registry JSON artifacts. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { generateDemo, syncDemo } from "../scripts/demo-sync";
+/* oxlint-enable sort-imports */
 import {
   observeGeneratorFailure,
   prepareReplacement,
@@ -26,10 +30,13 @@ import {
 } from "./demo-sync-test-support";
 import type { ReadonlyNativeSurface } from "./demo-sync-test-support";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { jsonObject, parseJsonObject } from "./test-json";
+/* oxlint-enable sort-imports */
 
 const FIRST_DIRECTORY_INDEX = 0;
 const directories: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 afterEach(async () => {
   await Promise.all(
     directories.splice(FIRST_DIRECTORY_INDEX).map(async (directory) => {
@@ -37,6 +44,8 @@ afterEach(async () => {
     })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 const fixture = async (): Promise<{
   baseline: string;
   expected: Map<string, string>;
@@ -51,22 +60,27 @@ const fixture = async (): Promise<{
   await syncDemo({ baseline, expected, root });
   return { baseline, expected, root };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyCanonicalChange's awaited sequencing and rejected-Promise behavior. */
 const verifyCanonicalChange = async (
   original: ReadonlyNativeSurface<Awaited<ReturnType<typeof fixture>>>,
   source: string
 ): Promise<void> => {
   const options = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...original,
     expected: new Map([...original.expected, ["implementation.ts", source]]),
   };
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     "Demo source drift"
   );
   await syncDemo(options);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, check: true });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("types and comments drift; canonical changes sync and repeated sync is deterministic", async () => {
   const fixtureOptions = await fixture();
   const before = await readFile(fixtureOptions.baseline, "utf-8");
@@ -81,7 +95,8 @@ test("types and comments drift; canonical changes sync and repeated sync is dete
     "// canonical\nexport type Result = number;\n"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("local edits stop all writes; explicit discard restores canonical source", async () => {
   const options = await fixture();
   await writeFile(
@@ -95,6 +110,7 @@ test("local edits stop all writes; explicit discard restores canonical source", 
     false
   );
   expect(await readFile(options.baseline, "utf-8")).toBe(before);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, discard: true });
   const actual = await readFile(
     path.join(options.root, "implementation.ts"),
@@ -102,17 +118,20 @@ test("local edits stop all writes; explicit discard restores canonical source", 
   );
   expect(options.expected.get("implementation.ts")).toBe(actual);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("missing tracked files are edits and an untracked existing file is protected", async () => {
   const options = await fixture();
   await rm(path.join(options.root, "implementation.ts"));
   expect(syncDemo(options)).rejects.toThrow("Edited registry-owned demo files");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, discard: true });
   await writeFile(path.join(options.root, "new.ts"), "// user file\n");
   options.expected.set("new.ts", "// canonical file\n");
   expect(syncDemo(options)).rejects.toThrow("new.ts");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("sync preserves app-owned UI order and extensions and rejects removed ownership", async () => {
   const options = await fixture();
   const files = [
@@ -141,11 +160,13 @@ test("sync preserves app-owned UI order and extensions and rejects removed owner
       })
     )
   ).toEqual(files.map(() => "// app-owned order and extensions\n"));
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, expected: new Map() })).rejects.toThrow(
     "removal is outside demo sync scope"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("symlink destinations are rejected before writes", async () => {
   const options = await fixture();
   await symlink(
@@ -157,28 +178,33 @@ test("symlink destinations are rejected before writes", async () => {
     path.join(options.root, "implementation.ts"),
     "utf-8"
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, discard: true })).rejects.toThrow("symlink");
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(before);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("edits moved upstream can advance the baseline without discarding", async () => {
   const options = await fixture();
   const source =
     "// edit now canonical upstream\nexport type Result = number;\n";
   await writeFile(path.join(options.root, "implementation.ts"), source);
   options.expected.set("implementation.ts", source);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(syncDemo({ ...options, check: true })).rejects.toThrow(
     `Baseline drift: ${options.baseline}`
   );
   await syncDemo(options);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await syncDemo({ ...options, check: true });
   expect(
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe(source);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("baseline key ordering uses locale-independent code-unit order", async () => {
   const options = await fixture();
   const names = ["z.ts", "é.ts", "a.ts", "Z.ts", "_a.ts"];
@@ -200,7 +226,8 @@ test("baseline key ordering uses locale-independent code-unit order", async () =
     [...options.expected.keys()].toSorted()
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["source", "baseline"])'s awaited sequencing and rejected-Promise behavior. */
 test.each(["source", "baseline"])(
   "a failed %s replacement restores prior source and baseline, permitting retry",
   async (failure) => {
@@ -217,10 +244,12 @@ test.each(["source", "baseline"])(
     injected.assertTriggered();
     await verifyRollback(options, previous);
     await syncDemo(options);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await syncDemo({ ...options, check: true });
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a symlinked baseline is rejected before source or external target writes", async () => {
   const options = await fixture();
   const external = path.join(options.root, "external.json");
@@ -235,7 +264,7 @@ test("a symlinked baseline is rejected before source or external target writes",
     await readFile(path.join(options.root, "implementation.ts"), "utf-8")
   ).toBe("// canonical\nexport type Result = string;\n");
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("generator setup failure removes its temporary installation directory", () => {
   const observed = observeGeneratorFailure();
   try {

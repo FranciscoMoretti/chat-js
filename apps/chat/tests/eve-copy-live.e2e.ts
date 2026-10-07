@@ -5,30 +5,41 @@
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveConversationCopy,
   eveFileReference,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
 import { eveCopyInput } from "../lib/eve/copy-input";
 import { prepareEveCopyTranscript } from "../lib/eve/copy-transcript";
 import { textPdf } from "./eve-attachment-fixtures";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const modelId = "google/gemini-2.5-flash-lite";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("saves without generation, recovers after source revocation and reload, and cont assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("saves without generation, recovers after source revocation and reload, and cont keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -73,6 +84,7 @@ test("saves without generation, recovers after source revocation and reload, and
           snapshot.events.some(
             (event) =>
               event.type === "message.completed" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim() === "COPY-ORCHID"
           )
         );
@@ -185,6 +197,7 @@ test("saves without generation, recovers after source revocation and reload, and
   ).toBe(false);
   // Reproduce a crash after native acceptance but before application binding commits.
   const seed = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepareEveCopyTranscript(snapshot.events).seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...prepareEveCopyTranscript(snapshot.events).seed,
     attachments: "channel",
   };
@@ -195,6 +208,7 @@ test("saves without generation, recovers after source revocation and reload, and
       .where(eq(eveConversation.id, destination.id));
     await tx
       .update(eveConversationCopy)
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .set({ phase: "accepted", seed: { ...seed, attachments: "channel" } })
       .where(eq(eveConversationCopy.conversationId, destination.id));
   });
@@ -259,6 +273,7 @@ test("saves without generation, recovers after source revocation and reload, and
         return continued.events.some(
           (event) =>
             event.type === "message.completed" &&
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             event.data.message?.trim() === "COPY-ORCHID"
         );
       },
@@ -273,6 +288,7 @@ test("saves without generation, recovers after source revocation and reload, and
     )
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -306,6 +322,7 @@ for (const attachment of [
       "What is the verification code in the document attached earlier? Reply only with the code. Do not call tools.",
   },
 ]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`copied ${attachment.name} survives source deletion, continuation, and imported editing`, async ({
     page,
   }, testInfo) => {
@@ -345,6 +362,7 @@ for (const attachment of [
           {
             type: "text",
             text:
+              // oxlint-disable-next-line no-ternary -- Keep text as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               attachment.mediaType === "application/pdf"
                 ? "Do not read or transcribe this PDF yet. Save it for my next question. For now respond with only: attachment-ready"
                 : "Reply exactly attachment-ready as plain text. Do not describe the attachment or call tools.",
@@ -373,6 +391,7 @@ for (const attachment of [
             snapshot.events.some(
               (event) =>
                 event.type === "message.completed" &&
+                // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
                 event.data.message?.trim() === "attachment-ready"
             )
           );
@@ -459,6 +478,7 @@ for (const attachment of [
           return continued.events.some(
             (event) =>
               event.type === "message.completed" &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from event.data.message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               event.data.message?.trim().toLowerCase().replaceAll(".", "") ===
                 attachment.answer
           );
@@ -506,6 +526,7 @@ for (const attachment of [
           .getAnimations({ subtree: true })
           .filter(
             (animation) =>
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getTiming from animation.effect; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               animation.effect?.getTiming().iterations !==
               Number.POSITIVE_INFINITY
           )
@@ -554,7 +575,9 @@ for (const attachment of [
       { times: 1 }
     );
     await editor.getByRole("button", { exact: true, name: "Send" }).click();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect.poll(() => edited?.id, { timeout: 95_000 }).toBeTruthy();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from edited; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(page).toHaveURL(`${origin}/chat/${edited?.id}`, {
       timeout: 120_000,
     });
@@ -573,6 +596,7 @@ for (const attachment of [
     expect(originalCopyFile.status()).toBe(200);
     expect(await originalCopyFile.body()).toEqual(attachment.bytes);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 

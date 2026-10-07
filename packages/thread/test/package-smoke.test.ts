@@ -13,7 +13,9 @@ import {
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const smokeTimeout = 180_000;
@@ -40,6 +42,7 @@ const run = (command: readonly string[], cwd: string): void => {
     );
   }
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 
@@ -143,9 +146,11 @@ assert.throws(() => import.meta.resolve("@ai-sdk/react"), { code: "ERR_MODULE_NO
       const packageMetadata: unknown = await Bun.file(
         path.join(installedPackage, "package.json")
       ).json();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chunk from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...).groups; read groups from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const indexChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
         indexSource
       )?.groups?.chunk;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chunk from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...).groups; read groups from /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const reactChunk = /from "(?<chunk>\.\/chunk-[^"]+\.js)"/u.exec(
         reactSource
       )?.groups?.chunk;
@@ -282,6 +287,7 @@ function checkNormalizedHook() {
   },
   smokeTimeout
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/max-lines-per-function */

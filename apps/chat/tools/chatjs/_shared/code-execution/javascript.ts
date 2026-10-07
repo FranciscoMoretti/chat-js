@@ -121,15 +121,17 @@ const findExecutionTrailer = (
   const index = lines.findLastIndex((line) =>
     line.startsWith(EXECUTION_STATUS_PREFIX)
   );
-  return index === MISSING_STATUS_LINE_INDEX
-    ? { found: false }
-    : {
-        found: true,
-        index,
-        raw: lines[index].slice(EXECUTION_STATUS_PREFIX.length),
-      };
+  if (index === MISSING_STATUS_LINE_INDEX) {
+    return { found: false };
+  }
+  return {
+    found: true,
+    index,
+    raw: lines[index].slice(EXECUTION_STATUS_PREFIX.length),
+  };
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve parseExecutionOutput's awaited sequencing and rejected-Promise behavior. */
 const parseExecutionOutput = async (
   execResult: Readonly<{
     stdout: () => Promise<string>;
@@ -164,7 +166,7 @@ const parseExecutionOutput = async (
     outputText: lines.join("\n").trim(),
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const formatExecutionMessage = (
   parts: Readonly<{
     outputText: string;
@@ -194,6 +196,8 @@ const formatExecutionMessage = (
     .trim();
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeJavaScriptInSandbox); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeJavaScriptInSandbox's awaited sequencing and rejected-Promise behavior. */
 export const executeJavaScriptInSandbox = async ({
   sandbox,
   code,
@@ -220,3 +224,5 @@ export const executeJavaScriptInSandbox = async ({
     ),
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

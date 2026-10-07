@@ -10,14 +10,22 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { mkdir } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import type { Page } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -26,6 +34,7 @@ const conversationUrl = /\/chat\/[^/]+$/u;
 const failureMessage = /failure|failed/iu;
 const connectionFailure = /fetch|failed/iu;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve capture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): capture accepts page: Page; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -38,6 +47,8 @@ async function capture(page: Page, name: string): Promise<void> {
       "nextjs-portal, #react-scan-toolbar, #react-scan-root { visibility: hidden !important; }",
   });
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.beforeEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -52,6 +63,8 @@ test.beforeEach(async ({ page }) => {
     page.getByRole("heading", { exact: true, name: "Chat" })
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve create's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -64,6 +77,8 @@ async function create(page: Page, message: string): Promise<void> {
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(conversationUrl);
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -128,6 +143,8 @@ test("native transcript survives reload; streaming preserves the next draft; can
     )
   ).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -150,12 +167,14 @@ test("freeform agent question survives reload and accepts an answer", async ({
     page.getByText("Answer received.", { exact: true })
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): for (const decision of ["Approve", "Cancel"]) { test(`p accepts { page, }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 for (const decision of ["Approve", "Cancel"]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`pending tool survives reload and ${decision.toLowerCase()} completes`, async ({
     page,
   }) => {
@@ -174,13 +193,16 @@ for (const decision of ["Approve", "Cancel"]) {
     ).toBeVisible();
     await expect(
       page.getByText(
+        // oxlint-disable-next-line no-ternary -- Keep page.getByText argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         decision === "Approve" ? "Tool completed." : "Request declined.",
         { exact: true }
       )
     ).toBeVisible();
     await capture(page, `tool-${decision.toLowerCase()}`);
   });
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
@@ -212,6 +234,8 @@ test("failed turn is visible and the conversation can continue", async ({
     page.getByText("Verified: recovered", { exact: true })
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -286,6 +310,8 @@ test("lost creation reply retries the same conversation and access checks reject
     await anonymous.close();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -344,6 +370,8 @@ test("exhausted credits block new messages but permit rejecting an approval", as
       .where(eq(userCredit.userId, owner.id));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -369,6 +397,7 @@ test("unknown completed usage prevents new admission until its cost is reconcile
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!conversation?.sessionId) {
     throw new Error("Missing session binding.");
   }
@@ -403,6 +432,8 @@ test("unknown completed usage prevents new admission until its cost is reconcile
       .where(eq(eveUsage.eventId, usage.eventId));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
@@ -456,6 +487,8 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
   ).toBeVisible();
   expect(legacyRequests).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -484,6 +517,8 @@ test("unknown conversations and removed legacy APIs are unavailable", async ({
     expect(response.status()).toBe(404);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
@@ -514,6 +549,8 @@ test("ChatJS editor supports Enter, multiline drafts and composition", async ({
   await expect(page.getByRole("log")).toContainText("Verified: keyboard send");
   expect(errors).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -558,6 +595,7 @@ test("stalled creation releases the composer and retries the retained operation"
     await expect(composer).toBeEditable();
     await expect(composer).toHaveText("retained timeout message");
     await capture(page, "creation-timeout");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
     await page.getByRole("button", { exact: true, name: "Send" }).click();
     await expect(
@@ -566,9 +604,12 @@ test("stalled creation releases the composer and retries the retained operation"
     expect(attempts).toHaveLength(2);
     expect(attempts[1]).toEqual(attempts[0]);
   } finally {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling release; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     release?.();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -598,6 +639,8 @@ test("reload during an accepted turn restores the user message and follows the r
     page.getByText("Verified: slow reload recovery", { exact: true })
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -636,6 +679,8 @@ test("reload before acceptance recovers a late message without resending", async
   ).toHaveText("");
   await capture(page, "reload-recovered");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-void-return --
@@ -688,6 +733,7 @@ test("reload retains text when the send never reaches the server", async ({
     page.getByRole("alert").filter({ hasText: "Delivery is unconfirmed" })
   ).toBeVisible();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-browser.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

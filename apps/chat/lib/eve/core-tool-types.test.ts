@@ -5,11 +5,17 @@ import { beforeEach, expect, expectTypeOf, test, vi } from "vitest";
 
 import type research from "../../agent/tools/deepResearch";
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { readDocument } from "../../tools/chatjs/read-document/tool";
+/* oxlint-enable sort-imports */
 import type { runCodeDocument } from "../../tools/chatjs/saved-code-execution/tool";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { createTextDocument } from "../../tools/chatjs/text-documents/tool";
+/* oxlint-enable sort-imports */
 import type { editTextDocument } from "../../tools/chatjs/text-documents/tool";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { NativeToolUI } from "./tool-types";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
@@ -20,6 +26,7 @@ vi.mock("./document-tools", () => ({ executeEveDocumentTool: mocks.execute }));
  * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  */
 vi.mock("./turn-tools", () => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of tools rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   filterEveTools: <T>(tools: T): Partial<T> => ({ ...tools }),
 }));
 /* oxlint-enable id-length */
@@ -53,6 +60,7 @@ test("document definitions retain distinct create, edit, and read contracts", ()
   >().toEqualTypeOf<string>();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("document output is validated before crossing the native result boundary", async () => {
   mocks.execute.mockResolvedValue({ revisionId: "invalid", status: "success" });
   await expect(
@@ -62,7 +70,7 @@ test("document output is validated before crossing the native result boundary", 
     )
   ).rejects.toThrow();
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("native workflow outputs retain the report revision and clarification contracts", () => {
   type Research = NativeToolUI<typeof research>;
   expectTypeOf<

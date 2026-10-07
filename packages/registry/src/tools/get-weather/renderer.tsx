@@ -3,12 +3,21 @@ import { format, isWithinInterval } from "date-fns";
 import React from "react";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { useIsMobile } from "@/hooks/use-mobile";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { weatherInput, weatherResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -181,12 +190,9 @@ const roundUp = (num: number): number => Math.ceil(num);
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const WeatherCard = ({
   weatherAtLocation,
-}: {
-  weatherAtLocation: WeatherAtLocation;
-}) => {
+}: ReadonlyNativeSurface<{ weatherAtLocation: WeatherAtLocation }>) => {
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
@@ -200,12 +206,14 @@ const WeatherCard = ({
   });
 
   const isMobile = useIsMobile();
+  // oxlint-disable-next-line no-ternary -- Keep hoursToShow as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hoursToShow = isMobile ? 5 : 6;
   const currentTimeIndex = weatherAtLocation.hourly.time.findIndex(
     (time): boolean =>
       new Date(time) >= new Date(weatherAtLocation.current.time)
   );
   const displayStartIndex =
+    // oxlint-disable-next-line no-ternary -- Keep displayStartIndex as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     currentTimeIndex === -1
       ? Math.max(0, weatherAtLocation.hourly.time.length - hoursToShow)
       : currentTimeIndex;
@@ -267,7 +275,6 @@ const WeatherCard = ({
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -277,15 +284,14 @@ const WeatherCard = ({
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: GetWeatherRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>) => {
   if (tool.state !== "output-available") {
     return (
       <div className="skeleton" key={tool.toolCallId}>
@@ -300,8 +306,8 @@ const GetWeatherView = ({
 
   return <WeatherCard weatherAtLocation={tool.output} />;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetWeatherRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
@@ -311,3 +317,4 @@ export const GetWeatherRenderer = defineToolRenderer({
   outputSchema: weatherResult,
   render: GetWeatherView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

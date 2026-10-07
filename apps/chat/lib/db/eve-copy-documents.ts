@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import type { EveCopyBoundary } from "@/lib/eve/copy-boundaries";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveDocumentCheckpoint,
@@ -12,6 +13,8 @@ import {
   eveImportedDocumentCheckpoint,
   eveImportedDocumentCheckpointEntry,
 } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve snapshotCopyCheckpoints's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): snapshotCopyCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -127,6 +130,7 @@ const snapshotCopyCheckpoints = async (
     }
     const heads = checkpointEntries.get(key) ?? [];
     for (const head of heads) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentId from byId.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (byId.get(head.revisionId)?.documentId !== head.documentId) {
         throw new Error(
           "Published document boundary is outside accessible ancestry."
@@ -142,11 +146,12 @@ const snapshotCopyCheckpoints = async (
   });
   return checkpoints;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (snapshotPublicEveCopyDocuments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve snapshotPublicEveCopyDocuments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
- * jsdoc/require-param (#534): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): snapshotPublicEveCopyDocuments's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * max-lines-per-function (#510): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -157,7 +162,17 @@ const snapshotCopyCheckpoints = async (
  * typescript/strict-boolean-expressions (#610): snapshotPublicEveCopyDocuments intentionally keeps the existing falsy-value behavior of identity; source; id; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/max-nested-calls (#568): snapshotPublicEveCopyDocuments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-/** Internal copy preparation: IDs must come from the sanitized published transcript. */
+/**
+ * Captures published document heads, their revision ancestry, and checkpoint metadata.
+ * Conversation and document locks keep the snapshot consistent with writers and deletion.
+ * IDs must come from the sanitized published transcript.
+ * @param {string} conversationId Public source conversation to copy from.
+ * @param {string} sessionId Native session ID currently bound to the source.
+ * @param {{ documentIds: readonly string[]; revisionIds: readonly string[] }} resources Document and revision IDs referenced by the published transcript.
+ * @param {readonly EveCopyBoundary[]} boundaries Checkpoint boundaries to preserve in the copy snapshot.
+ * @returns {Promise<{ checkpoints: Array<{ heads: Array<{ documentId: string; revisionId: string }>; messageIndex: number }>; documents: Array<{ documentId: string; headRevisionId: string; revisions: Array<Pick<typeof eveDocumentRevision.$inferSelect, "content" | "createdAt" | "documentId" | "fileIds" | "id" | "kind" | "parentRevisionId" | "title">> }> }>} Accessible documents and checkpoints captured under the source locks.
+ * @throws {Error} when the source is unavailable or a referenced document or revision is inaccessible.
+ */
 export const snapshotPublicEveCopyDocuments = async (
   conversationId: string,
   sessionId: string,
@@ -202,6 +217,7 @@ export const snapshotPublicEveCopyDocuments = async (
       ...new Set(resources.documentIds.map((id) => id.toLowerCase())),
     ].toSorted();
     const heads =
+      // oxlint-disable-next-line no-ternary -- Keep heads as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       documentIds.length > 0
         ? await tx
             .select({
@@ -222,6 +238,7 @@ export const snapshotPublicEveCopyDocuments = async (
       throw new Error("A published document is no longer accessible.");
     }
     const revisions =
+      // oxlint-disable-next-line no-ternary -- Keep revisions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       heads.length > 0
         ? await tx
             .select({
@@ -296,4 +313,6 @@ export const snapshotPublicEveCopyDocuments = async (
     return { checkpoints, documents };
   });
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

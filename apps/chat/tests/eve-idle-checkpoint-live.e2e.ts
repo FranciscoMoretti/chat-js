@@ -7,26 +7,41 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { readFile, realpath } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { eq } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveDocumentRevision,
   saveEveDocumentRevision,
 } from "../lib/db/eve-documents";
+/* oxlint-enable sort-imports */
 import { eveConversation } from "../lib/db/schema";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
 import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * init-declarations (#507): test("compiled idle capture preserves native history and exact document revisions in  assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("compiled idle capture preserves native history and exact document revisions in  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -125,6 +140,7 @@ test("compiled idle capture preserves native history and exact document revision
       if (captureRequests.length === 1) {
         await saveEveDocumentRevision(
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...document,
             content: "Later source edit",
             expectedRevisionId: original.id,
@@ -162,6 +178,7 @@ test("compiled idle capture preserves native history and exact document revision
     storageKey
   );
   expect(JSON.parse(saved ?? "null")).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing captureRequests[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fork: { conversationId: source.id, ...captureRequests[0] },
     message: followUp,
     modelIds: ["google/gemini-2.5-flash-lite", "google/gemini-2.5-flash-lite"],
@@ -201,6 +218,7 @@ test("compiled idle capture preserves native history and exact document revision
       candidate.conversationId,
       document.documentId
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from followupDocumentRevision; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(followupDocumentRevision?.id).toBe(original.id);
     await page.goto(`/chat/${candidate.conversationId}`);
     await expect(
@@ -208,6 +226,7 @@ test("compiled idle capture preserves native history and exact document revision
     ).toHaveCount(2, { timeout: 60_000 });
     await expect(page.getByText("Ready", { exact: true })).toBeVisible();
     expect(await birthIdentity(candidate.sessionId)).toEqual({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sourceIdentity own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...sourceIdentity,
       sessionId: candidate.sessionId,
     });
@@ -275,6 +294,8 @@ test("compiled idle capture preserves native history and exact document revision
     page.getByRole("button", { exact: true, name: "Send" })
   ).toBeEnabled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -352,6 +373,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
         checkpointRejected: true,
         conversationId: source.id,
         reason: "source_advanced",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing checkpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...checkpoint,
       });
       await route.fulfill({ response: rejected });
@@ -375,6 +397,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
       )
     ).toBeVisible({ timeout: 40_000 });
     expect(groups).toBe(0);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading beforeTurnId from checkpoint; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(checkpoint?.beforeTurnId).toBe("turn_1");
     await expect(
       page.getByRole("textbox", { exact: true, name: "Message" })
@@ -400,6 +423,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     expect(await repeated.json()).toMatchObject({
       checkpointRejected: true,
       reason: "source_advanced",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing checkpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...checkpoint,
     });
     await page
@@ -421,6 +445,7 @@ test("an advanced source rejects the exact comparison checkpoint and keeps the e
     await other.close();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-idle-checkpoint-live.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

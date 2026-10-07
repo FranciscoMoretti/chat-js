@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { preflight } from "./preflight";
@@ -6,6 +8,8 @@ import { preflight } from "./preflight";
 const notFound = -1;
 const startOfFile = 0;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (updateEnvironmentExample); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateEnvironmentExample's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Preserve the owned section boundary and verify unrelated user configuration in the same ordered operation.
 export const updateEnvironmentExample = async (
   cwd: string,
@@ -34,11 +38,16 @@ export const updateEnvironmentExample = async (
     .filter((name) => !new RegExp(`^${name}=`, "mu").test(preserved))
     .map((name) => `${name}=`);
   const block = `${start}\n# Credentials for installed source. Fill applicable alternatives in .env.local.\n${entries.join("\n")}\n${end}`;
-  const result =
-    from !== notFound && to >= from
-      ? original.slice(startOfFile, from) +
+  if (from !== notFound && to >= from) {
+    await writeFile(
+      file,
+      original.slice(startOfFile, from) +
         block +
         original.slice(to + end.length)
-      : `${original}\n${block}\n`;
-  await writeFile(file, result);
+    );
+    return;
+  }
+  await writeFile(file, `${original}\n${block}\n`);
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

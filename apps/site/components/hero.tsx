@@ -23,6 +23,8 @@ const Sparkle = ({
     <path d="M12 0L14.2 9.8L24 12L14.2 14.2L12 24L9.8 14.2L0 12L9.8 9.8Z" />
   </svg>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Hero); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- Hero renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable react/no-multi-comp -- Hero: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -46,18 +48,22 @@ export const Hero = (): React.JSX.Element => (
 
     {/* Decorative sparkles */}
     <Sparkle
+      // oxlint-disable-next-line react/forbid-component-props -- Sparkle accepts className in its styling contract; preserve this caller's layout and appearance.
       className="animate-sparkle text-foreground/7 pointer-events-none absolute top-32 left-[12%] hidden sm:block"
       size={20}
     />
     <Sparkle
+      // oxlint-disable-next-line react/forbid-component-props -- Sparkle accepts className in its styling contract; preserve this caller's layout and appearance.
       className="animate-sparkle text-foreground/5 pointer-events-none absolute top-48 right-[18%] hidden sm:block"
       size={14}
     />
     <Sparkle
+      // oxlint-disable-next-line react/forbid-component-props -- Sparkle accepts className in its styling contract; preserve this caller's layout and appearance.
       className="animate-sparkle text-foreground/6 pointer-events-none absolute bottom-[30%] left-[8%] hidden lg:block"
       size={10}
     />
     <Sparkle
+      // oxlint-disable-next-line react/forbid-component-props -- Sparkle accepts className in its styling contract; preserve this caller's layout and appearance.
       className="animate-sparkle text-foreground/4 pointer-events-none absolute top-[60%] right-[8%] hidden lg:block"
       size={16}
     />
@@ -81,7 +87,10 @@ export const Hero = (): React.JSX.Element => (
             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
           </svg>
           Open Source — Apache 2.0
-          <ArrowRight className="h-3 w-3" />
+          <ArrowRight
+            // oxlint-disable-next-line react/forbid-component-props -- ArrowRight accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-3 w-3"
+          />
         </a>
       </div>
 
@@ -112,14 +121,20 @@ export const Hero = (): React.JSX.Element => (
           href={siteLinks.docsGettingStarted}
         >
           Get Started
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight
+            // oxlint-disable-next-line react/forbid-component-props -- ArrowRight accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-4 w-4"
+          />
         </a>
         <a
           className="border-foreground/15 text-foreground/70 hover:border-foreground/25 hover:text-foreground/90 inline-flex items-center gap-2 rounded-xl border px-8 py-3.5 text-sm font-medium transition-all hover:-translate-y-0.5"
           href={siteLinks.demo}
         >
           Live Demo
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight
+            // oxlint-disable-next-line react/forbid-component-props -- ArrowRight accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-4 w-4"
+          />
         </a>
       </div>
 
@@ -137,6 +152,7 @@ export const Hero = (): React.JSX.Element => (
           <div className="overflow-hidden rounded-2xl">
             <Image
               alt="ChatJS — AI chat interface"
+              // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
               className="block h-auto w-full dark:hidden"
               fetchPriority="high"
               height={1536}
@@ -146,6 +162,7 @@ export const Hero = (): React.JSX.Element => (
             />
             <Image
               alt="ChatJS — AI chat interface"
+              // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
               className="hidden h-auto w-full dark:block"
               height={1536}
               sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1024px"
@@ -158,6 +175,8 @@ export const Hero = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

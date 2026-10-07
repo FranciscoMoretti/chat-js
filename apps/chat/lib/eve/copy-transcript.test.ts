@@ -1,7 +1,10 @@
 import type { EveMessage, MessageStreamEvent } from "eve/client";
 import { createSessionHistorySeed } from "eve/transcript";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EveCopyNotReadyError,
   eveCopyInlineAttachments,
@@ -10,6 +13,7 @@ import {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 } from "./copy-transcript";
+/* oxlint-enable sort-imports */
 
 const sourceFile = "aaaaaaaaaaaaaaaaaaaaaaaa.png";
 const copiedFile = "bbbbbbbbbbbbbbbbbbbbbbbb.png";
@@ -271,6 +275,7 @@ it("canonicalizes file links so a copied private key is never sent to the source
   );
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("keeps MCP document identifiers separate from native ChatJS artifacts", async () => {
   const prepared = prepareEveCopyTranscript(
     history([
@@ -300,9 +305,11 @@ it("keeps MCP document identifiers separate from native ChatJS artifacts", async
     },
     "https://chatjs.example"
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   expect(result).toEqual({ ...prepared.seed, attachments: "channel" });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it("materializes only allocated destination attachments and remaps case-insensitive n preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -354,6 +361,7 @@ it("materializes only allocated destination attachments and remaps case-insensit
   expect(JSON.stringify(result)).not.toContain(sourceFile);
   expect(JSON.stringify(prepared.seed)).toContain(sourceFile);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it("does not mutate frozen inputs while collecting copy resources", () => {
@@ -361,6 +369,7 @@ it("does not mutate frozen inputs while collecting copy resources", () => {
   expect(eveCopyResources(value).fileKeys).toEqual([sourceFile]);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): it("keeps attachment bytes out of the seed and reads destination metadata once per fi uses 1, 1024, 0, 6, 2048 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/promise-function-async (#606): it("keeps attachment bytes out of the seed and reads destination metadata once per fi preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -394,6 +403,8 @@ it("keeps attachment bytes out of the seed and reads destination metadata once p
   expect(result.messages[0].parts).toHaveLength(6);
   expect(Buffer.byteLength(JSON.stringify(result))).toBeLessThan(2048);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -429,6 +440,7 @@ it("externalizes six distinct inline images through durable destination allocati
   );
   const result = await materializeEveCopyTranscript(
     prepared.seed,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...allocations, inlineFiles },
     () =>
       Promise.resolve({
@@ -443,6 +455,8 @@ it("externalizes six distinct inline images through durable destination allocati
     expect(file.bytes[0]).toBe(index);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
@@ -477,6 +491,7 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     materializeEveCopyTranscript(
       prepared.seed,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         inlineFiles: new Map([[file.id, "abcdefghijklmnopqrstuvwZ.png"]]),
       },
@@ -485,6 +500,7 @@ it("refuses missing inline allocations and metadata changes before dispatch", as
     )
   ).rejects.toThrow("metadata changed");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 
 it.each([
@@ -509,6 +525,7 @@ it.each([
 it("rejects resource allocations that reuse source identities or collide", () => {
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([[sourceFile, sourceFile]]),
     })
@@ -517,6 +534,7 @@ it("rejects resource allocations that reuse source identities or collide", () =>
     rewriteEveCopyResources(
       { documentId },
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...allocations,
         documents: new Map([[documentId, documentId.toUpperCase()]]),
       },
@@ -525,6 +543,7 @@ it("rejects resource allocations that reuse source identities or collide", () =>
   ).toThrow("fresh document identities");
   expect(() =>
     rewriteEveCopyResources(sourceUrl, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing allocations own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...allocations,
       files: new Map([
         [sourceFile, copiedFile],
@@ -548,6 +567,7 @@ it("does not inject destination keys into a foreign URL's query string", () => {
   expect(rewriteEveCopyResources(url, allocations)).toBe(url);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["not-a-valid-document-id", documentId])'s awaited sequencing and rejected-Promise behavior. */
 it.each(["not-a-valid-document-id", documentId])(
   "preserves failed document arguments that do not denote copied artifacts: %s",
   async (id) => {
@@ -582,10 +602,11 @@ it.each(["not-a-valid-document-id", documentId])(
       },
       "https://chatjs.example"
     );
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared.seed own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(seed).toEqual({ ...prepared.seed, attachments: "channel" });
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("retains model provenance in copies of copies without carrying private metadata") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -676,7 +697,9 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
       role: "tool",
     },
   ]);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from imported.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const tool = imported.seed.messages[1]?.parts[0];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from tool; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (tool?.type !== "dynamic-tool" || tool.state !== "output-available") {
     throw new Error("Expected settled imported tool");
   }
@@ -688,11 +711,13 @@ it("preserves imported text tool results through the ChatJS shared-copy projecti
     },
     {
       id: "seed_message_1",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing tool own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       parts: [{ ...tool, toolCallId: "seed_tool_0" }],
       role: "assistant",
     },
   ];
   const copied = prepareEveCopyTranscript(history(messages));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from copied.seed.messages[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(copied.seed.messages[1]?.parts[0]).toMatchObject({
     output: "plain text",
     outputType: "text",

@@ -2,19 +2,27 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- Exercise the server PKCE contract using SHA-256.
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { betterAuth } from "better-auth";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import authClient from "./auth-client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  buildSocialAuthRequest,
   ELECTRON_APP_SCHEME,
   ELECTRON_AUTH_CALLBACK_PATH,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
   ELECTRON_TRUSTED_ORIGINS,
+  buildSocialAuthRequest,
 } from "./electron-auth";
+/* oxlint-enable sort-imports */
 import { electronAuthPlugin } from "./electron-auth-plugin";
 
 vi.mock("@/lib/config", () => ({
@@ -55,6 +63,7 @@ it("keeps desktop social callbacks on the session transfer page", () => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("transfers a browser login through PKCE and accepts only the current desktop origin", async () => {
   const auth = createTestAuth();
   const login = await auth.handler(
@@ -125,12 +134,13 @@ it("transfers a browser login through PKCE and accepts only the current desktop 
   });
   expect((await exchange(`${ELECTRON_APP_SCHEME}:/`)).status).toBe(404);
 });
-
+/* oxlint-enable oxc/no-async-await */
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the inferred browser client delivers the transfer cookie to the current desktop callback", async () => {
   vi.useFakeTimers();
   const replace = vi.fn();
@@ -146,3 +156,4 @@ it("the inferred browser client delivers the transfer cookie to the current desk
   await vi.advanceTimersByTimeAsync(100);
   expect(replace).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,10 +1,14 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+/* oxlint-enable sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-enable sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 import { z } from "zod";
@@ -93,6 +97,7 @@ class LiteLLMGateway
     return this.env.LITELLM_BASE_URL;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
     const baseURL = this.getBaseURL();
@@ -143,7 +148,10 @@ class LiteLLMGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, LiteLLMGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { LiteLLMGateway as Gateway, LiteLLMGateway };
+/* oxlint-enable import/no-named-export */

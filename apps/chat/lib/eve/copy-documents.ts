@@ -1,7 +1,11 @@
 import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { eveCopyResources, rewriteEveCopyResources } from "./copy-transcript";
+/* oxlint-enable sort-imports */
 
 const ALLOCATIONS_PARAMETER_INDEX = 1;
 type CopyDocumentSnapshot = Awaited<
@@ -22,9 +26,9 @@ typescript/prefer-readonly-parameter-types (#565): prepareEveCopyDocuments retai
 unicorn/no-null (#570): prepareEveCopyDocuments preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /**
  * Converts an authorized, completely allocated ancestry into idle imported revisions.
- * @param snapshot Accessible document heads and their complete root-to-head revisions.
- * @param allocations Ownership-checked destination document, revision, and file allocations.
- * @returns Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
+ * @param {CopyDocumentSnapshot} snapshot Accessible document heads and their complete root-to-head revisions.
+ * @param {Parameters< typeof rewriteEveCopyResources >[typeof ALLOCATIONS_PARAMETER_INDEX]} allocations Ownership-checked destination document, revision, and file allocations.
+ * @returns {PreparedCopyDocument[]} Copied documents with rewritten identities and idle copy operations; incomplete ancestry throws.
  */
 const prepareEveCopyDocuments = (
   snapshot: CopyDocumentSnapshot,
@@ -57,8 +61,10 @@ const prepareEveCopyDocuments = (
   const copied = rewriteEveCopyResources(snapshot, allocations, true);
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Decorate copied document revisions without mutating resource-rewrite results.
   return copied.map((document) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...document,
     revisions: document.revisions.map((revision) => ({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing revision own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...revision,
       operationId: `copy:${revision.id}`,
       turnIndex: null,
@@ -69,8 +75,8 @@ const prepareEveCopyDocuments = (
 
 /**
  * Inventories every accessible revision, including files removed from the current head.
- * @param snapshot Authorized document ancestry whose historical file references must remain available.
- * @returns Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
+ * @param {ReadonlyNativeSurface<CopyDocumentSnapshot>} snapshot Authorized document ancestry whose historical file references must remain available.
+ * @returns {ReturnType<typeof eveCopyResources>} Sorted unique file keys, document IDs, and revision IDs across the entire snapshot.
  */
 const eveCopyDocumentResources = (
   snapshot: ReadonlyNativeSurface<CopyDocumentSnapshot>
@@ -94,4 +100,6 @@ const eveCopyDocumentResources = (
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyDocumentResources, prepareEveCopyDocuments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveCopyDocumentResources, prepareEveCopyDocuments };
+/* oxlint-enable import/no-named-export */

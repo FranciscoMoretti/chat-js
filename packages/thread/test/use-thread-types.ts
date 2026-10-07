@@ -1,12 +1,18 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UIMessage } from "ai";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { AbstractThread, Thread } from "#thread-source/index";
+/* oxlint-enable sort-imports */
 import type { ThreadInit, ThreadState } from "#thread-source/index";
 import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-import { useThread } from "#thread-source/react";
 import type { UseThreadHelpers } from "#thread-source/react";
+import { useThread } from "#thread-source/react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MemoryThreadState } from "#thread-source/thread-state";
+/* oxlint-enable sort-imports */
 
 declare const messageId: string;
 
@@ -91,6 +97,7 @@ const useCanonicalMetadataCheck = (): void => {
   const labeled = new Thread<LabeledMessage>();
   const helpers = useThread({ thread: labeled });
   const [message] = helpers.messages;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading label from message.metadata; read metadata from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const label: string | undefined = message?.metadata?.label;
   void label;
 };
@@ -114,6 +121,7 @@ const useNormalizedHookCheck = (): void => {
   const helpers = useThread({ thread: new Thread<ExtendedMessage>() });
   const [message] = helpers.messages;
   // @ts-expect-error Hooks must not reintroduce the unsupported extension.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tenant from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   void message?.tenant;
 };
 
@@ -125,6 +133,7 @@ declare const labeledInitialMessages: LabeledMessage[];
 const useInitialMessageInferenceCheck = (): void => {
   const inferred = new Thread({ messages: labeledInitialMessages });
   const [message] = inferred.getSnapshot().messages;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading label from message.metadata; read metadata from message; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const label: string | undefined = message?.metadata?.label;
   void label;
 };

@@ -1,26 +1,26 @@
 import type {
-  ExecutionSandbox,
   CodeExecutionContext,
   CodeExecutionResult,
+  ExecutionSandbox,
 } from "./types";
 
 const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable eslint/no-magic-numbers -- Split the package requirement at its first version/operator delimiter; index 0 is the package name passed to pip. */
 const packageName = (spec: string): string =>
   spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
+/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/no-magic-numbers -- Sandbox exit code 0 is the success sentinel; retain the exact process status check. */
+/* oxlint-disable eslint/max-params -- Keep the private installer inputs explicit at its sole call site; a configuration object adds no distinct domain contract. */
 const installBasePackages = async (
-  sandbox: ExecutionSandbox,
+  sandbox: Readonly<ExecutionSandbox>,
   basePackages: readonly string[],
   requestId: string,
-  log: CodeExecutionContext["log"]
+  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
@@ -32,6 +32,7 @@ const installBasePackages = async (
   if (installStep.exitCode !== 0) {
     const errorOutput = await installStep.stderr();
     const standardOutput =
+      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await installStep.stdout() : "";
     const installStderr = errorOutput.trim() || standardOutput.trim();
     log.error(
@@ -49,22 +50,22 @@ const installBasePackages = async (
   log.info({ requestId }, "base packages installed");
   return { success: true };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
+/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
+/* oxlint-disable eslint/max-statements -- This helper filters pip install lines, excludes base packages, and reports an install failure before execution. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep extra-package filtering and its failure fallback together around their shared parsed code and package list. */
+/* oxlint-disable eslint/max-params -- Keep the private helper's code, package list, and execution context explicit at its sole call site. */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/no-magic-numbers -- Empty package lists and process exit code 0 are the two protocol sentinels used by this installer. */
 const processExtraPackages = async (
   code: string,
   basePackages: readonly string[],
-  sandbox: ExecutionSandbox,
+  sandbox: Readonly<ExecutionSandbox>,
   requestId: string,
-  log: CodeExecutionContext["log"]
+  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>
 ): Promise<{
   codeToRun: string;
   installResult: {
@@ -108,6 +109,7 @@ const processExtraPackages = async (
   if (dynamicInstall.exitCode !== 0) {
     const errorOutput = await dynamicInstall.stderr();
     const standardOutput =
+      // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       errorOutput.trim() === "" ? await dynamicInstall.stdout() : "";
     const stderr = errorOutput.trim() || standardOutput.trim();
     log.error(
@@ -131,14 +133,14 @@ const processExtraPackages = async (
     installResult: { success: true },
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the generated Python preamble and its code/path interpolations in one template to preserve script syntax. */
 const createWrappedCode = (codeToRun: string, chartPath: string): string => `
 import sys
 import json
@@ -190,17 +192,19 @@ except Exception as e:
     print(json.dumps(error_info))
     sys.exit(1)
 `;
+/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 /* oxlint-enable eslint/max-lines-per-function */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable eslint/max-statements -- Parse the status trailer, remove optional chart output, and retain the raw-output fallback for malformed protocol text. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the sandbox output parsing and fallback branches together so they share one protocol state. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const parseExecutionOutput = async (execResult: {
-  stdout: () => Promise<string>;
-  exitCode: number;
-}): Promise<{
+/* oxlint-disable eslint/no-magic-numbers -- Use -1 as Array.at's last-line index and findIndex's missing-line sentinel; 0 is the process-success code. */
+const parseExecutionOutput = async (
+  execResult: Readonly<{
+    stdout: () => Promise<string>;
+    exitCode: number;
+  }>
+): Promise<{
   outputText: string;
   chartData: Record<string, unknown> | null;
   execInfo: {
@@ -254,21 +258,21 @@ const parseExecutionOutput = async (execResult: {
 
   return { chartData, execInfo, outputText };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/no-magic-numbers -- Sandbox command exit code 0 means the chart file exists and is ready to encode. */
+/* oxlint-disable eslint/max-params -- Keep the file-check command's four direct operation inputs visible at its sole call site. */
 // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
-  sandbox: ExecutionSandbox,
+  sandbox: Readonly<ExecutionSandbox>,
   chartPath: string,
   requestId: string,
-  log: CodeExecutionContext["log"]
+  log: Readonly<Pick<CodeExecutionContext["log"], "info">>
 ): Promise<{ base64: string; format: string } | undefined> => {
   const chartCheck = await sandbox.runCommand({
     args: ["-f", chartPath],
@@ -284,28 +288,27 @@ const checkForChart = async (
     return { base64: (b64 ?? "").trim(), format: "png" };
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable eslint/no-magic-numbers */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-params */
+/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/no-magic-numbers -- A zero-length trimmed stderr string is the empty-output case before formatting the response. */
 const buildResponseMessage = ({
   outputText,
   stderr,
   execInfo,
   log,
   requestId,
-}: {
+}: Readonly<{
   outputText: string;
   stderr: string;
-  execInfo: {
+  execInfo: Readonly<{
     success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  };
-  log: CodeExecutionContext["log"];
+    error?: Readonly<{ name: string; value: string; traceback: string }>;
+  }>;
+  log: Readonly<Pick<CodeExecutionContext["log"], "error">>;
   requestId: string;
-}): string => {
+}>): string => {
   let message = "";
 
   if (outputText) {
@@ -321,18 +324,23 @@ const buildResponseMessage = ({
 
   return message;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executePythonInSandbox); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable eslint/max-statements -- This entry point installs dependencies, runs the sandbox, then parses output and checks for a chart. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered Python execution stages together because later stages consume earlier install and output results. */
 export const executePythonInSandbox = async ({
   sandbox,
   code,
   log,
   requestId,
-}: CodeExecutionContext): Promise<CodeExecutionResult> => {
+}: Readonly<
+  Pick<CodeExecutionContext, "code" | "requestId"> & {
+    sandbox: Readonly<Pick<CodeExecutionContext["sandbox"], "runCommand">>;
+    log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
+  }
+>): Promise<CodeExecutionResult> => {
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -391,8 +399,9 @@ export const executePythonInSandbox = async ({
     message: message.trim(),
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
+/* oxlint-disable max-lines -- Keep the generated Python wrapper and its stdout protocol parser together; splitting only to satisfy a file-line quota separates their producer and consumer. */

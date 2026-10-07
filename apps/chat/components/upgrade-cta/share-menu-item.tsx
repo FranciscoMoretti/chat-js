@@ -1,21 +1,29 @@
 "use client";
 
 import { Share } from "lucide-react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-enable sort-imports */
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 
 interface ShareMenuItemProps {
   children?: ReactNode;
   onShare: () => void;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ShareMenuItem); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- ShareMenuItem renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ShareMenuItem: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { onShare, children }: ShareMenuItemProps). */
 
 export const ShareMenuItem = ({
@@ -23,6 +31,7 @@ export const ShareMenuItem = ({
   children,
 }: ShareMenuItemProps): ReactJSX.Element => {
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAuthenticated = Boolean(session?.user);
 
   if (!isAuthenticated) {
@@ -30,6 +39,7 @@ export const ShareMenuItem = ({
       <Popover>
         <PopoverTrigger asChild>
           <DropdownMenuItem
+            // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
             className="cursor-pointer opacity-50"
             onSelect={(event) => event.preventDefault()}
           >
@@ -37,7 +47,10 @@ export const ShareMenuItem = ({
             <span>Share</span>
           </DropdownMenuItem>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-2">
+        <PopoverContent
+          // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="w-auto p-2"
+        >
           <p className="text-sm">Sign in to share your chats</p>
         </PopoverContent>
       </Popover>
@@ -45,11 +58,17 @@ export const ShareMenuItem = ({
   }
 
   return (
-    <DropdownMenuItem className="cursor-pointer" onClick={onShare}>
+    <DropdownMenuItem
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuItem accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="cursor-pointer"
+      onClick={onShare}
+    >
       <Share size={16} />
       <span>Share</span>
       {children}
     </DropdownMenuItem>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

@@ -21,18 +21,21 @@ const barElement = z.object({
   value: z.number(),
 });
 const lineChart = z.object({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...chartLabels,
   elements: z.array(series),
   type: z.literal("line"),
   x_scale: z.literal("datetime").nullish(),
 });
 const scatterChart = z.object({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...chartLabels,
   elements: z.array(series),
   type: z.literal("scatter"),
   x_scale: z.literal("datetime").nullish(),
 });
 const barChart = z.object({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chartLabels own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...chartLabels,
   elements: z.array(barElement),
   type: z.literal("bar"),
@@ -62,14 +65,17 @@ const documentExecutionLanguage = (
   if (!title.includes(".")) {
     return "python";
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from title.split(...).at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const extension = title.split(".").at(LAST_EXTENSION_INDEX)?.toLowerCase();
   if (!(typeof extension === "string" && extension !== "")) {
     return "python";
   }
   return executionLanguageByExtension.get(extension);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (documentExecutionInput, documentExecutionLanguage, eveCodeExecutionResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   documentExecutionInput,
   documentExecutionLanguage,
   eveCodeExecutionResult,
 };
+/* oxlint-enable import/no-named-export */

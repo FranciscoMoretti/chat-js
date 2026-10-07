@@ -1,11 +1,13 @@
 import type React from "react";
 
 import { cn } from "@/lib/utils";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Favicon); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types -- Favicon: ; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
 export const Favicon = ({
   url,
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes url, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: {
   url: string;
@@ -22,8 +24,10 @@ export const Favicon = ({
     onError={(event) => {
       const target = event.currentTarget;
       target.style.display = "none";
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading classList from target.nextElementSibling; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       target.nextElementSibling?.classList.remove("hidden");
     }}
   />
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

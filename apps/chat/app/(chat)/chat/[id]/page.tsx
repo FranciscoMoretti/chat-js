@@ -1,8 +1,11 @@
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveChatPage } from "@/components/eve/eve-chat-page";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConversationPage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ConversationPage: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { params, }: { params: Promise<{ id: string; }>; }). */
 
 const ConversationPage = async ({
@@ -15,6 +18,7 @@ const ConversationPage = async ({
   const resolvedResult1 = await params;
   return <EveChatPage conversationId={resolvedResult1.id} />;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ChatPageRoute: react-perf/jsx-no-jsx-as-prop: this component composition slot accepts an element from the current render; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { params, }: { params: Promise<{ id: string; }>; }). */
 

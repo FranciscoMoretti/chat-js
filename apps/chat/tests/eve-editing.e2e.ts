@@ -4,7 +4,9 @@
 import { expect, test } from "@playwright/test";
 
 import { conversationBinding } from "../lib/eve/contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -15,6 +17,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 
 const sourceModelId = "openai/gpt-5-nano";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null --
  * init-declarations (#507): test("edit recovery and regeneration create navigable versions inside ChatJS") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("edit recovery and regeneration create navigable versions inside ChatJS") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -105,6 +108,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
         .filter({ hasText: "Response creation is unconfirmed" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Recover version" }).click();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from accepted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     await expect(page).toHaveURL(new RegExp(`/chat/${accepted?.id}$`, "u"), {
       timeout: 60_000,
     });
@@ -152,6 +156,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the actual regeneration request payload; this assertion verifies the selected model survives editing.
     expect(regeneration.request().postDataJSON().modelId).toBe(sourceModelId);
     await expect(page).not.toHaveURL(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from accepted; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       new RegExp(`/chat/${accepted?.id}$`, "u"),
       {
         timeout: 60_000,
@@ -266,6 +271,7 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
               const response = await page.request
                 .delete(url, { headers, timeout: 30_000 })
                 .catch(() => null);
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from response; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               if (response?.status() !== 200) {
                 return null;
               }
@@ -290,4 +296,5 @@ test("edit recovery and regeneration create navigable versions inside ChatJS", a
     throw cleanupFailure.error;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/no-null */

@@ -3,12 +3,15 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "./client";
 import { eveStoredFile } from "./schema";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): storageKeyForFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): storageKeyForFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/strict-boolean-expressions (#610): storageKeyForFile intentionally keeps the existing falsy-value behavior of file; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve storageKeyForFile's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable typescript/strict-boolean-expressions --
+ * typescript/strict-boolean-expressions (#610): The Drizzle query's first selected row is absent when no file matches; keep its ordinary missing-file Error and first-row check. A direct undefined check conflicts with no-undefined, while the native typeof guard triggers prefer-type-error and a length/index check adds numeric exceptions.
  */
-/** File references use the stable record key; only storage sees storageKey. */
+/**
+ * File references use the stable record key; only storage sees storageKey.
+ * @param {string} fileId Registered application file identity to resolve.
+ * @returns {Promise<string>} Provider storage key; unregistered identities throw before provider access.
+ */
 const storageKeyForFile = async (fileId: string): Promise<string> => {
   const [file] = await db
     .select({ storageKey: eveStoredFile.storageKey })
@@ -19,7 +22,9 @@ const storageKeyForFile = async (fileId: string): Promise<string> => {
   }
   return file.storageKey;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fileIdsForStorageKeys's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): fileIdsForStorageKeys uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -36,6 +41,9 @@ const fileIdsForStorageKeys = async (
     .where(inArray(eveStoredFile.storageKey, storageKeys));
   return new Map(files.map((file) => [file.storageKey, file.fileId]));
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (storageKeyForFile, fileIdsForStorageKeys); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 export { storageKeyForFile, fileIdsForStorageKeys };
+/* oxlint-enable import/no-named-export */

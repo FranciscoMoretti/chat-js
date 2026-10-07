@@ -2,10 +2,14 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../agent/tools/installed" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { ModelMessage } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import installed from "../../agent/tools/installed";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { eveImageContext } from "./image-context";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const state = vi.hoisted(() => ({
@@ -13,6 +17,8 @@ const state = vi.hoisted(() => ({
 }));
 vi.mock("./tool-image-context", () => ({ eveToolImageContext: state }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve definitions's awaited sequencing and rejected-Promise behavior. */
+// oxlint-disable-next-line node/no-top-level-await -- Vitest awaits hoisted tool definitions before applying the tool-registry mocks that consume them.
 const definitions = await vi.hoisted(async () => {
   const { defineTool } = await import("eve/tools");
   const { z: zod } = await import("zod");
@@ -26,13 +32,14 @@ const definitions = await vi.hoisted(async () => {
     }),
   };
 });
-
+/* oxlint-enable oxc/no-async-await */
 vi.mock("../../tools/chatjs/tools", () => ({ tools: definitions }));
 /* oxlint-disable id-length, typescript/explicit-function-return-type --
  * id-length (#506): vi.mock("./turn-tools") uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./turn-tools")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 vi.mock("./turn-tools", () => ({ filterEveTools: <T>(tools: T) => tools }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, typescript/explicit-function-return-type */
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("installed and custom definitions retain their native policies and concrete defi uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -55,6 +62,8 @@ test("installed and custom definitions retain their native policies and concrete
   expect(Object.values(result)[0]).toBe(definitions.customEcho);
   expect(state.update).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -98,8 +107,11 @@ test("steps retain only current image inputs, not the conversation history", asy
     session: { auth: { current: null, initiator: null }, id: "test" },
   };
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const initial = state.update.mock.lastCall?.[0]();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(initial?.attachments).toHaveLength(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(initial?.attachments[0].url).toBe("data:image/png;base64,bmV3");
   messages.push({
     content: [
@@ -116,8 +128,11 @@ test("steps retain only current image inputs, not the conversation history", asy
     role: "tool",
   });
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const next = state.update.mock.lastCall?.[0]();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading attachments from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading attachments from initial; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(next?.attachments).toEqual(initial?.attachments);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading imageUrl from next.lastGeneratedImage; read lastGeneratedImage from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(next?.lastGeneratedImage?.imageUrl).toBe(
     "/api/files/abcdefghijklmnopqrstuvwx.png"
   );
@@ -125,9 +140,12 @@ test("steps retain only current image inputs, not the conversation history", asy
   expect(JSON.stringify(next)).not.toContain("b2xk");
   messages.push({ content: "Edit it", role: "user" });
   await resolve({}, context);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from state.update.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(state.update.mock.lastCall?.[0]()).toEqual({
     attachments: [],
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading lastGeneratedImage from next; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     lastGeneratedImage: next?.lastGeneratedImage,
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */

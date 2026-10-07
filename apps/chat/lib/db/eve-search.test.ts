@@ -5,40 +5,50 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { PGlite } from "@electric-sql/pglite";
+/* oxlint-enable sort-imports */
 import type { SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const DATABASE_SETUP_TIMEOUT_MS = 30_000;
 const postgres = new PGlite();
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): vi.mock("./client") accepts query: SQL; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 vi.mock("./client", () => {
   const database = drizzle(postgres);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     db: {
-      execute: async (query: SQL) => {
+      execute: async (query: ReadonlyNativeSurface<SQL>) => {
         const result = await database.execute(query);
         return result.rows;
       },
       transaction: database.transaction.bind(database),
     },
   };
+  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type */
 vi.mock("@/lib/env", () => ({ env: {} }));
 
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../eve/search-text" dependency within this package instead of introducing an alias or barrel API.
  */
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search-text helpers after installing the test environment mocks.
 const { eveEventSearchText } = await import("../eve/search-text");
 /* oxlint-enable import/no-relative-parent-imports */
 const { indexEveSearchText, searchEveConversations } =
+  // oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads search queries after installing the PGlite adapter mock.
   await import("./eve-search");
+// oxlint-disable-next-line node/no-top-level-await -- This Vitest database suite loads deletion helpers against the same mocked database used by search.
 const { completeEveConversationDeletion } = await import("./eve-deletion");
 const chat = "00000000-0000-4000-8000-000000000001";
 const branch = "00000000-0000-4000-8000-000000000002";
@@ -47,6 +57,7 @@ const titleBranch = "00000000-0000-4000-8000-000000000004";
 const otherChat = "00000000-0000-4000-8000-000000000005";
 const otherBranch = "00000000-0000-4000-8000-000000000006";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 beforeAll(async () => {
   for (const filename of [
     "0000_eve_baseline.sql",
@@ -86,15 +97,16 @@ beforeAll(async () => {
     );
   }
 }, DATABASE_SETUP_TIMEOUT_MS);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): afterAll preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 afterAll(() => postgres.close());
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c uses 1, 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds message-only matches, boosts titles, highlights excerpts and deduplicates c accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds message-only matches, boosts titles, highlights excerpts and deduplicates chats", async () => {
   await indexEveSearchText("alice", branch, [
@@ -117,7 +129,9 @@ it("finds message-only matches, boosts titles, highlights excerpts and deduplica
   );
   expect(count.rows[0].count).toBe(2);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
 it("rejects cross-owner indexing and handles punctuation-only searches", async () => {
   await indexEveSearchText("bob", branch, [
@@ -128,10 +142,10 @@ it("rejects cross-owner indexing and handles punctuation-only searches", async (
   const punctuation = await searchEveConversations("alice", { search: "!!!" });
   expect(punctuation.items).toEqual([]);
 });
-
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["saff", [titleChat, chat]],   ["SAFF", [titleChat, chat]],   ["saffron coo", [titleChat's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["saff", [titleChat, chat]], ["SAFF", [titleChat, chat]], ["saffron coo", [ accepts ids; item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it.each([
   ["saff", [titleChat, chat]],
@@ -150,7 +164,7 @@ it.each([
   ["' | & :*", []],
 ])(
   "matches the last positive unquoted word as a prefix: %s",
-  async (search, ids) => {
+  async (search: string, ids: readonly string[]) => {
     const result = await searchEveConversations("alice", { search });
     expect(result.items.map((item) => item.id)).toEqual(ids);
     if (search === "saffron ri") {
@@ -158,7 +172,9 @@ it.each([
     }
   }
 );
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("keeps the title boost while selecting the branch and excerpt with matching text") uses 0, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -181,11 +197,10 @@ it("keeps the title boost while selecting the branch and excerpt with matching t
   expect(result.items[0].rank).toBeGreaterThan(2);
   expect(result.items[0].excerpt).toContain("⟦Saff⟧ron");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ["SAFF", "⟦Saff⟧ron"],   ["saffron OR saff", "⟦Saffron⟧"],   ['"saffron cooking"', "⟦Saf's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ["SAFF", "⟦Saff⟧ron"], ["saffron OR saff", "⟦Saffron⟧"], ['"saffron cooking accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ["SAFF", "⟦Saff⟧ron"],
   ["saffron OR saff", "⟦Saffron⟧"],
@@ -200,7 +215,8 @@ it.each([
     );
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("shows an assistant-only Hello match even when the title also matches") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -237,11 +253,10 @@ it("shows an assistant-only Hello match even when the title also matches", async
     [titleChat]
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],   ["istan", "İsta's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): it.each([ ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"], ["is accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 it.each([
   ['-"bar baz" ba', "bar ba baz baalone", "⟦ba⟧r ⟦ba⟧ ⟦ba⟧z ⟦ba⟧alone"],
   ["istan", "İstanbul", "⟦İstan⟧bul"],
@@ -252,16 +267,17 @@ it.each([
       { key: `highlight:${search}`, text },
     ]);
     const result = await searchEveConversations("alice", { search });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading excerpt from result.items.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(result.items.find((item) => item.id === chat)?.excerpt).toContain(
       excerpt
     );
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("continues past tied ranks and timestamps without skipping when an earlier result  uses 20, 0, 5, 25 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("continues past tied ranks and timestamps without skipping when an earlier result  accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("continues past tied ranks and timestamps without skipping when an earlier result disappears", async () => {
   await postgres.exec(`
@@ -274,6 +290,7 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
   `);
   const first = await searchEveConversations("pager", { search: "pagin" });
   expect(first.items).toHaveLength(20);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from first.nextCursor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(first.nextCursor?.updatedAt).toBe("2026-09-25T10:00:00.123456Z");
   await postgres.query(
     `update "EveConversation" set state = 'deleting' where "chatId" = $1`,
@@ -289,11 +306,12 @@ it("continues past tied ranks and timestamps without skipping when an earlier re
     new Set([...first.items, ...second.items].map((item) => item.id)).size
   ).toBe(25);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("finds a maximum-length quoted phrase crossing a chunk boundary") uses 48, 2, 255, 1999, 0, 8200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("finds a maximum-length quoted phrase crossing a chunk boundary") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("finds a maximum-length quoted phrase crossing a chunk boundary", async () => {
   const phrase = `start ${"word ".repeat(48)}endingz`;
@@ -313,11 +331,12 @@ it("finds a maximum-length quoted phrase crossing a chunk boundary", async () =>
   });
   expect(result.items.map((item) => item.id)).toEqual([chat]);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("hides deleting chats and permanently erases text without allowing a late backfill uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): it("hides deleting chats and permanently erases text without allowing a late backfill accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 it("hides deleting chats and permanently erases text without allowing a late backfill", async () => {
   await postgres.query(
@@ -334,7 +353,9 @@ it("hides deleting chats and permanently erases text without allowing a late bac
   );
   expect(count.rows[0].count).toBe(0);
 });
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve repairPreviewSearchHistory's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): it("repairs only the known unpublished preview history and preserves conversation dat keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -403,24 +424,29 @@ const repairPreviewSearchHistory = async (
   );
   expect(removedTable.rows[0]).toMatchObject({ table_name: null });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 describe("preview search history", (): void => {
   const preview = new PGlite();
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
   // WASM database startup belongs to fixture setup; keep the repair assertions
   // under Vitest's normal test timeout, just like the other database cases.
   beforeAll(async (): Promise<void> => {
     await preview.waitReady;
   }, DATABASE_SETUP_TIMEOUT_MS);
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
   afterAll(async (): Promise<void> => {
     await preview.close();
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("repairs only the known unpublished preview history and preserves conversation data", async (): Promise<void> => {
     await repairPreviewSearchHistory(preview);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 
 /* oxlint-disable max-lines -- #509: This eve-search.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

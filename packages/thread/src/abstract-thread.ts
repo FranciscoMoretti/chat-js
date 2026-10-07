@@ -1,13 +1,17 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ThreadCore } from "./thread-core";
+/* oxlint-enable sort-imports */
 import type { ThreadCoreOptions } from "./thread-core";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CanonicalMessage,
-  MessageMetadata,
   MessageData,
+  MessageMetadata,
   MessageTools,
 } from "./types";
+/* oxlint-enable sort-imports */
 
 abstract class AbstractThread<
   TMessage extends UIMessage = UIMessage,
@@ -28,4 +32,6 @@ abstract class AbstractThread<
   }
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AbstractThread); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { AbstractThread };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

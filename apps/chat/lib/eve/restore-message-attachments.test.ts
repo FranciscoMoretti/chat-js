@@ -102,6 +102,7 @@ beforeEach(() => {
     },
   ];
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("restores exact trusted inline history without an installed upload feature") uses 0, 2, 1, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -121,10 +122,13 @@ it("restores exact trusted inline history without an installed upload feature", 
     "owner",
     "abcdefghijklmnopqrstuvwx.png"
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 2 from mocks.upload.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(new Uint8Array(mocks.upload.mock.calls[0]?.[2])).toEqual(
     new Uint8Array([1, 2, 3])
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("requires owned bound history and a native user message before copying") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -140,10 +144,13 @@ it("requires owned bound history and a native user message before copying", asyn
     state: "bound",
   });
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     restoreMessageAttachments("owner", { ...input, messageId: "missing" })
   ).rejects.toThrow("Message is unavailable");
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-disable max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
  * max-statements (#512): it("rechecks file access and size and never fetches a remote history URL") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -151,6 +158,7 @@ it("requires owned bound history and a native user message before copying", asyn
  * typescript/strict-boolean-expressions (#610): it("rechecks file access and size and never fetches a remote history URL") intentionally keeps the existing falsy-value behavior of part; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 it("rechecks file access and size and never fetches a remote history URL", async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from mocks.messages[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const part = mocks.messages[0]?.parts[0];
   if (!part) {
     throw new Error("Missing native fixture");
@@ -175,6 +183,8 @@ it("rechecks file access and size and never fetches a remote history URL", async
   );
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
@@ -189,6 +199,8 @@ it("rejects oversized metadata before downloading or reserving", async () => {
   expect(mocks.download).not.toHaveBeenCalled();
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])("rejects malformed or oversized inli uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -202,6 +214,8 @@ it.each(["AQID!!!", "", "AQIDBAUGBwgJCgsMDQ4P"])(
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects a remote reference before storage access") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -214,6 +228,8 @@ it("rejects a remote reference before storage access", async () => {
   expect(mocks.access).not.toHaveBeenCalled();
   expect(mocks.download).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -247,6 +263,8 @@ it.each(["missing", "inaccessible", "oversized", "unsupported", "malformed"])(
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -269,4 +287,5 @@ it("preflights all files then copies valid mixed history in order", async () => 
   );
   expect(mocks.upload).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

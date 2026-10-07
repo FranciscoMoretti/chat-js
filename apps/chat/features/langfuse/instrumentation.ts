@@ -1,7 +1,11 @@
 import type { InstrumentationRegistration } from "@/lib/installation-contracts";
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getLangfuseEnvironment } from "./credentials";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (register); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve register's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 export const register: InstrumentationRegistration = async ({
   appPrefix,
@@ -21,3 +25,5 @@ export const register: InstrumentationRegistration = async ({
     traceExporter: new LangfuseExporter(environment),
   });
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

@@ -1,17 +1,25 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+/* oxlint-enable sort-imports */
 import { EveDocumentRunResult } from "@/tools/chatjs/saved-code-execution/result";
 /* oxlint-disable import/no-relative-parent-imports -- ../../../../packages/registry/visual/charts-finished import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
 
 import { chartsFinished } from "../../../../packages/registry/visual/charts-finished";
 /* oxlint-enable import/no-relative-parent-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports, typescript/promise-function-async -- eve-tool-results.browser route: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
 
@@ -40,6 +48,7 @@ const common = {
   toolCallId: "fixture",
   type: "dynamic-tool",
 } as const;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-tool-results.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including chart). */
 
 test("saved-code results display interactive and PNG charts with text fallback", async () => {
@@ -93,6 +102,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
             <section key={id}>
               <EveDocumentRunResult
                 part={{
+                  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                   ...common,
                   output: createToolResult(
                     { chart, message: `Result ${index + 1}` },
@@ -112,6 +122,7 @@ test("saved-code results display interactive and PNG charts with text fallback",
     await expect
       .poll(() => {
         const heading = container.querySelector("h3");
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; read parentElement from heading; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const panel = heading?.parentElement?.parentElement?.parentElement;
         return panel && getComputedStyle(panel).opacity === "1";
       })
@@ -129,6 +140,8 @@ test("saved-code results display interactive and PNG charts with text fallback",
     container.remove();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- eve-tool-results.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0.05); ; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership. */
@@ -147,6 +160,7 @@ test("failed research keeps validated progress alongside its error", async () =>
           isReadonly
           messageId="research"
           part={{
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...common,
             output: createToolError(0.05, [
               {
@@ -163,6 +177,7 @@ test("failed research keeps validated progress alongside its error", async () =>
         />
       )
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(container.querySelector('[role="alert"]')?.textContent).toBe(
       "The tool did not complete."
     );
@@ -175,6 +190,8 @@ test("failed research keeps validated progress alongside its error", async () =>
     container.remove();
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- eve-tool-results.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); ; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership. */
@@ -198,6 +215,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               state: "input-available",
@@ -208,9 +226,11 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               output: createToolResult(
+                // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
                 { ...input, chart: "", message: "Saved revision completed" },
                 0
               ),
@@ -221,6 +241,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
             isReadonly
             messageId="saved-code"
             part={{
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing common own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
               ...common,
               input,
               output: createToolError(0),
@@ -232,6 +253,7 @@ test("installed saved-code transcript covers loading, completion and failure", a
     );
     expect(container.textContent).toContain("Running saved code");
     expect(container.textContent).toContain("Saved revision completed");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(container.querySelector('[role="alert"]')?.textContent).toContain(
       "The tool did not complete"
     );
@@ -242,4 +264,5 @@ test("installed saved-code transcript covers loading, completion and failure", a
     container.remove();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

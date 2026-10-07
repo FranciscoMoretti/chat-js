@@ -15,5 +15,7 @@ const subscribe = (onStoreChange: () => void): (() => void) => {
 const getSnapshot = (): boolean => window.innerWidth < MOBILE_BREAKPOINT;
 
 const getServerSnapshot = (): boolean => false;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (useIsMobile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const useIsMobile = (): boolean =>
   useReactSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

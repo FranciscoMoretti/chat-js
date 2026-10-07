@@ -10,6 +10,7 @@ type ImageModelSelection =
       >["id"];
     }
   | { modelId: string; multimodal: false; usageModelId?: never };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve findMultimodalModel's awaited sequencing and rejected-Promise behavior. */
 const findMultimodalModel = async (
   provider: Readonly<ToolModelProvider>,
   modelId: unknown
@@ -33,6 +34,8 @@ const findMultimodalModel = async (
   }
   return { multimodal: false };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveImageModel's awaited sequencing and rejected-Promise behavior. */
 const resolveImageModel = async (
   provider: Readonly<ToolModelProvider>,
   selectedModel: unknown
@@ -48,9 +51,16 @@ const resolveImageModel = async (
     );
   }
   const fallback = await findMultimodalModel(provider, defaultId);
-  return fallback.multimodal
-    ? fallback
-    : { modelId: defaultId, multimodal: false };
+
+  if (fallback.multimodal) {
+    return fallback;
+  }
+  return { modelId: defaultId, multimodal: false };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveImageModel); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export { resolveImageModel };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ImageModelSelection); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ImageModelSelection };
+/* oxlint-enable import/no-named-export */

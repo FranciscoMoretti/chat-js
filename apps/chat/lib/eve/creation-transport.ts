@@ -6,6 +6,7 @@ class EveCreationTransportError extends Error {
   public readonly status?: number;
   public constructor(stage: "lookup" | "dispatch", status?: number) {
     super(
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `Native creation ${stage} failed${status ? ` (HTTP ${status})` : " before receiving a response"}.`
     );
     this.name = "EveCreationTransportError";
@@ -13,12 +14,16 @@ class EveCreationTransportError extends Error {
     this.status = status;
   }
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestEveCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): requestEveCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): requestEveCreation's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/prefer-readonly-parameter-types (#565): requestEveCreation accepts ...args: Parameters<typeof eveRequest>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Record the failing boundary without logging bearer tokens, signed URLs or message bodies. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): requestEveCreation accepts ...args: Parameters<typeof eveRequest>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/**
+ * Record the failing boundary without logging credentials or message bodies.
+ * @param {"lookup" | "dispatch"} stage Boundary reported when the native request fails.
+ * @param {Parameters<typeof eveRequest>} args Owner, native path, request options and optional model/tool header inputs forwarded unchanged.
+ * @returns {Promise<Response>} Native response; transport failures throw EveCreationTransportError for the specified stage.
+ */
 const requestEveCreation = async (
   stage: "lookup" | "dispatch",
   ...args: Parameters<typeof eveRequest>
@@ -29,5 +34,8 @@ const requestEveCreation = async (
     throw new EveCreationTransportError(stage);
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveCreationTransportError, requestEveCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { EveCreationTransportError, requestEveCreation };
+/* oxlint-enable import/no-named-export */

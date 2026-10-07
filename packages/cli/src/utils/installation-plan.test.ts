@@ -1,16 +1,22 @@
 import { afterEach, expect, test } from "bun:test";
-import { mkdir, mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../../registry/metadata";
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { planInstallation } from "./installation-plan";
+/* oxlint-enable sort-imports */
 
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = path;
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async (): Promise<void> => {
   await Promise.all(
@@ -22,13 +28,14 @@ afterEach(async (): Promise<void> => {
       )
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("plans transitive dependencies and repairs against the complete resulting installation without writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-"));
   roots.push(root);
   const reader = toolDefinitionSchema.parse({
     contractVersion: 1,
@@ -45,12 +52,14 @@ test("plans transitive dependencies and repairs against the complete resulting i
     tools: [{ toolExport: "createTextDocument" }],
   });
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const isReader = new URL(request.url).pathname.includes("read-document");
+      // oxlint-disable-next-line no-ternary -- Keep definition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       const definition = isReader ? reader : documents;
       return Response.json({
         meta: { chatjs: definition },
         name: definition.id,
+        // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         registryDependencies: isReader
           ? []
           : [`http://127.0.0.1:${server.port}/read-document.json`],
@@ -73,27 +82,30 @@ test("plans transitive dependencies and repairs against the complete resulting i
         { documents: false, fresh: true }
       )
     ).rejects.toThrow("--no-documents");
-    expect(await Bun.file(join(root, "package.json")).exists()).toBe(false);
+    expect(await Bun.file(path.join(root, "package.json")).exists()).toBe(
+      false
+    );
     const first = await planInstallation(root, {
       features: [],
       tools: [`${source}/text-documents.json`],
     });
-    expect(first.expected.map((item): string => item.id).toSorted()).toEqual([
-      "read-document",
-      "text-documents",
-    ]);
-    expect(await Bun.file(join(root, "tools/chatjs/tools.ts")).exists()).toBe(
-      false
-    );
-    const dir = join(root, "tools/chatjs/text-documents");
+    expect(
+      first.expected
+        .map((item: { readonly id: string }): string => item.id)
+        .toSorted()
+    ).toEqual(["read-document", "text-documents"]);
+    expect(
+      await Bun.file(path.join(root, "tools/chatjs/tools.ts")).exists()
+    ).toBe(false);
+    const dir = path.join(root, "tools/chatjs/text-documents");
     await mkdir(dir, { recursive: true });
-    await writeFile(join(dir, "chatjs.json"), JSON.stringify(documents));
+    await writeFile(path.join(dir, "chatjs.json"), JSON.stringify(documents));
     await writeFile(
-      join(dir, "document.tsx"),
+      path.join(dir, "document.tsx"),
       "export const documentUi = {};\n"
     );
     await writeFile(
-      join(dir, "tool.ts"),
+      path.join(dir, "tool.ts"),
       "export const createTextDocument = {};\n"
     );
     expect(planInstallation(root, { features: [], tools: [] })).rejects.toThrow(
@@ -104,28 +116,29 @@ test("plans transitive dependencies and repairs against the complete resulting i
       tools: [`${source}/read-document.json`],
     });
     expect(repair.expected).toEqual([reader]);
-    expect(await readFile(join(dir, "tool.ts"), "utf-8")).toContain(
+    expect(await readFile(path.join(dir, "tool.ts"), "utf-8")).toContain(
       "createTextDocument"
     );
   } finally {
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("validates feature dependencies and exclusive storage slots before writing", async (): Promise<void> => {
-  const root = await mkdtemp(join(tmpdir(), "chatjs-plan-feature-"));
+  const root = await mkdtemp(path.join(tmpdir(), "chatjs-plan-feature-"));
   roots.push(root);
   const server = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const name = new URL(request.url).pathname.slice(1).replace(".json", "");
       const chatjs =
+        // oxlint-disable-next-line no-ternary -- Keep chatjs as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         name === "langfuse"
           ? {
               contractVersion: 1,
@@ -136,12 +149,14 @@ test("validates feature dependencies and exclusive storage slots before writing"
           : {
               contractVersion: 1,
               id: name,
+              // oxlint-disable-next-line no-ternary -- Keep kind as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               kind: name === "mcp" ? "feature" : "storage",
             };
       return Response.json({
         meta: { chatjs },
         name,
         registryDependencies:
+          // oxlint-disable-next-line no-ternary -- Keep registryDependencies as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           name === "first"
             ? [`http://127.0.0.1:${server.port}/second.json`]
             : [],
@@ -163,10 +178,11 @@ test("validates feature dependencies and exclusive storage slots before writing"
       features: [`${source}/mcp.json`, `${source}/langfuse.json`],
       tools: [],
     });
-    expect(plan.features.map((feature) => feature.id).toSorted()).toEqual([
-      "langfuse",
-      "mcp",
-    ]);
+    expect(
+      plan.features
+        .map((feature: { readonly id: string }): string => feature.id)
+        .toSorted()
+    ).toEqual(["langfuse", "mcp"]);
     expect(
       planInstallation(root, {
         features: [`${source}/mcp.json`],
@@ -174,10 +190,10 @@ test("validates feature dependencies and exclusive storage slots before writing"
         tools: [],
       })
     ).rejects.toThrow("Selected gateway item has incompatible ChatJS metadata");
-    const dir = join(root, "features/mcp");
+    const dir = path.join(root, "features/mcp");
     await mkdir(dir, { recursive: true });
     await writeFile(
-      join(dir, "chatjs.json"),
+      path.join(dir, "chatjs.json"),
       JSON.stringify({ contractVersion: 1, id: "mcp", kind: "feature" })
     );
     expect(
@@ -194,13 +210,13 @@ test("validates feature dependencies and exclusive storage slots before writing"
       })
     ).rejects.toThrow("Only one storage provider");
     expect(
-      await Bun.file(join(root, "features/installed-routers.ts")).exists()
+      await Bun.file(path.join(root, "features/installed-routers.ts")).exists()
     ).toBe(false);
   } finally {
     await server.stop(true);
   }
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

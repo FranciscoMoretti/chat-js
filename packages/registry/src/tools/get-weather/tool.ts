@@ -1,14 +1,22 @@
 import { defineTool } from "eve/tools";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+import { executeWithToolUsage } from "@/lib/eve/tool-usage";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { weatherInput, weatherResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 const UNBILLED_TOOL_COST_USD = 0;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getWeather); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getWeather's awaited sequencing and rejected-Promise behavior. */
 export const getWeather = defineTool({
   description: "Get the current weather at a location",
   execute: async (
@@ -32,3 +40,5 @@ export const getWeather = defineTool({
   inputSchema: weatherInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

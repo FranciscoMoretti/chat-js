@@ -5,23 +5,33 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   recordEveCodeSandboxDeletion,
   reserveEveCodeSandbox,
 } from "../lib/db/eve-code-sandboxes";
+/* oxlint-enable sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveCodeSandbox,
   eveConversation,
   user,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { deleteLocalEveConversationFamily } from "../lib/eve/delete-local-conversation";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
@@ -65,11 +75,13 @@ const native = postgres(env.WORKFLOW_POSTGRES_URL, { max: 2 });
 const provider = { projectId: "fixture-project", teamId: "fixture-team" };
 const owner = crypto.randomUUID();
 const sessionIds: string[] = [];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the deletion-fixture owner before registering family-deletion scenarios.
 await db.insert(user).values({
   email: `${owner}@test.invalid`,
   id: owner,
   name: "Deletion fixture",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements --
  * max-statements (#512): afterAll keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
@@ -87,6 +99,8 @@ afterAll(async () => {
   }
   await native.end();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 /* oxlint-disable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * no-undefined (#519): fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -106,12 +120,16 @@ async function fixture(parentId?: string) {
     crypto.randomUUID(),
     "Private fixture",
     () => Promise.resolve(sessionId),
+    // oxlint-disable-next-line no-ternary -- Keep createEveConversation argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     parentId
       ? { fork: { beforeTurnId: "turn_0", conversationId: parentId } }
       : undefined
   );
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing conversation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...conversation, sessionId };
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
@@ -186,6 +204,8 @@ test("full deletion keeps uncertain resources pending, then erases only its fami
     .where(eq(eveConversation.id, unrelated.id));
   expect(survivor.state).toBe("bound");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
 test("compatibility failure blocks the complete coordinator before revoking access", async () => {
@@ -207,3 +227,4 @@ test("compatibility failure blocks the complete coordinator before revoking acce
     await native`alter table graphile_worker._private_jobs enable trigger eve_queue_fence`;
   }
 });
+/* oxlint-enable oxc/no-async-await */

@@ -27,9 +27,13 @@ import {
 } from "lucide-react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { getColorValue } from "@/lib/project-icons";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
   book: Book,
@@ -60,12 +64,13 @@ const ICON_MAP: Record<ProjectIconName, typeof Folder> = {
 };
 
 interface ProjectIconProps {
-  className?: string;
-  color: ProjectColorName;
-  icon: ProjectIconName;
-  size?: number;
+  readonly className?: string;
+  readonly color: ProjectColorName;
+  readonly icon: ProjectIconName;
+  readonly size?: number;
 }
-/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectIcon); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-object-as-prop -- no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 16); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { icon, color, size = 16, className, }: ProjectIconProps). */
 
 export const ProjectIcon = ({
   icon,
@@ -78,10 +83,13 @@ export const ProjectIcon = ({
 
   return (
     <IconComponent
+      // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("shrink-0", className)}
       size={size}
+      // oxlint-disable-next-line react/forbid-component-props -- IconComponent accepts style in its styling contract; preserve this caller's layout and appearance.
       style={{ color: colorValue }}
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable no-magic-numbers, react-perf/jsx-no-new-object-as-prop */

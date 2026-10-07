@@ -80,11 +80,12 @@ const completeInlineCode = (value: string): string => {
   return value;
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (parseIncompleteMarkdown); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Parses markdown text and removes incomplete tokens to prevent partial rendering
  * of links, images, bold, and italic formatting during streaming.
- * @param text Streamed Markdown text.
- * @returns Text with unfinished links removed and unmatched delimiters closed.
+ * @param {string} text Streamed Markdown text.
+ * @returns {string} Text with unfinished links removed and unmatched delimiters closed.
  */
 export const parseIncompleteMarkdown = (text: string): string => {
   if (text === "" || typeof text !== "string") {
@@ -92,8 +93,10 @@ export const parseIncompleteMarkdown = (text: string): string => {
   }
 
   const incompleteMarker =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading marker from incompleteLinkOrImagePattern.exec(...).groups; read groups from incompleteLinkOrImagePattern.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     incompleteLinkOrImagePattern.exec(text)?.groups?.marker;
   let result =
+    // oxlint-disable-next-line no-ternary -- Keep result as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof incompleteMarker === "string" && incompleteMarker !== ""
       ? text.slice(textStartOffset, text.lastIndexOf(incompleteMarker))
       : text;
@@ -131,3 +134,4 @@ export const parseIncompleteMarkdown = (text: string): string => {
     value: result,
   });
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

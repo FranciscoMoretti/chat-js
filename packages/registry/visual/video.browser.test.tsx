@@ -1,14 +1,21 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GenerateVideoRenderer } from "../src/tools/generate-video/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "../../../apps/chat/app/globals.css";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -80,9 +87,11 @@ test("video tool streaming, loading, player, and error states", async () => {
     video.currentTime = 0;
     await expect.poll(() => video.seeking).toBe(false);
     expect(video.controls).toBe(true);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).toContain(
       "Preparing prompt"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.firstElementChild; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(container.firstElementChild?.textContent).not.toContain("Couldn");
     expect(container.textContent).toContain("Provider failed");
     await takeSnapshot("video-tool-states");
@@ -93,6 +102,7 @@ test("video tool streaming, loading, player, and error states", async () => {
     style.remove();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 /* oxlint-enable eslint/max-lines-per-function */

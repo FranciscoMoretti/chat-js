@@ -1,8 +1,7 @@
 #!/usr/bin/env bun
-/* oxlint-disable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports --
+/* oxlint-disable import/max-dependencies, import/no-nodejs-modules --
  * import/max-dependencies (#524): import from "node:fs/promises" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-nodejs-modules (#529): This server/tooling module requires import fs from "node:fs/promises";; import path from "node:path";; its Node runtime boundary deliberately permits these built-ins.
- * import/no-relative-parent-imports (#530): Keep the explicit "../features/installed"; "../lib/ai/gateway-model-defaults"; "../lib/ai/models.generated"; "../lib/config"; "../lib/config-requirements" dependency within this package instead of introducing an alias or barrel API.
  */
 /**
  * Build-time config validation script.
@@ -12,61 +11,86 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import { config as loadEnvConfig } from "dotenv";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
-import { installedFeatures } from "../features/installed";
-import { gatewayEnvRequirements } from "../lib/ai/gateway-model-defaults";
-import { generatedForGateway } from "../lib/ai/models.generated";
-import { config } from "../lib/config";
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
+import { installedFeatures } from "@/features/installed";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
+import { gatewayEnvRequirements } from "@/lib/ai/gateway-model-defaults";
+/* oxlint-enable sort-imports */
+import { generatedForGateway } from "@/lib/ai/models.generated";
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
+import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
 import {
   authEnvRequirements,
   getMissingRequirement,
   isRequirementSatisfied,
-} from "../lib/config-requirements";
-import { databaseEnvOptions } from "../lib/db/connection";
-import { getEveRuntimeEnvOptions } from "../lib/env-schema";
-import { resolveEveEnvironment } from "../lib/eve/environment";
-import { isPlaywrightTestEnvironment } from "../lib/playwright-test-environment";
-import { storageEnvRequirements, storageId } from "../lib/storage-options";
-import { installedToolNames } from "../tools/chatjs/installed-features";
-/* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
+} from "@/lib/config-requirements";
+/* oxlint-enable sort-imports */
+import { databaseEnvOptions } from "@/lib/db/connection";
+import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
+import { resolveEveEnvironment } from "@/lib/eve/environment";
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
+import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Pinned Oxfmt restores module-path order, while Oxlint sort-imports requires imported-member and syntax-group order; formatting the lint-sorted order reintroduces this diagnostic. */
+import { storageEnvRequirements, storageId } from "@/lib/storage-options";
+/* oxlint-enable sort-imports */
+import { installedToolNames } from "@/tools/chatjs/installed-features";
+
+/* oxlint-disable sort-imports -- Pinned Oxfmt places this relative import after alias imports, while sort-imports requires multiple named bindings before single-binding imports. */
+import {
+  reportEnvironmentFailure,
+  reportEnvironmentSuccess,
+} from "./environment-validation-report";
+/* oxlint-enable sort-imports */
+/* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 loadEnvConfig({ path: ".env.local" });
 loadEnvConfig();
+
+type RequirementInput = Parameters<typeof getMissingRequirement>["0"];
 
 interface ValidationError {
   feature: string;
   missing: string[];
 }
 
-const projectRoot = path.resolve(import.meta.dirname, "..");
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): toolEnvironmentSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/max-nested-calls (#568): toolEnvironmentSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-const toolEnvironmentSchema = z.object({
-  envRequirements: z
-    .array(
-      z.object({
-        description: z.string().optional(),
-        options: z.array(z.array(z.string()).min(1)).min(1),
-        runtimeAuth: z.literal("vercel-oidc").optional(),
-      })
-    )
-    .default([]),
-});
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
+const VALIDATION_FAILURE_EXIT_STATUS = 1;
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+const projectRoot = path.resolve(import.meta.dirname, "..");
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): toolEnvironmentSchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ */
+const nonEmptyEnvironmentOptionSchema = z.array(z.string()).min(1);
+const toolEnvironmentRequirementSchema = z.object({
+  description: z.string().optional(),
+  options: z.array(nonEmptyEnvironmentOptionSchema).min(1),
+  runtimeAuth: z.literal("vercel-oidc").optional(),
+});
+const toolEnvironmentSchema = z.object({
+  envRequirements: z.array(toolEnvironmentRequirementSchema).default([]),
+});
+/* oxlint-enable no-magic-numbers */
+
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): validateGatewayKey uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): validateGatewayKey accepts env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): validateGatewayKey preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateGatewayKey = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   const gateway: string = config.ai.gateway;
   const missing = gatewayEnvRequirements
-    .map((requirement) => getMissingRequirement(requirement, env))
+    .map((requirement: RequirementInput) =>
+      getMissingRequirement(requirement, env)
+    )
     .filter((value) => value !== null);
   if (missing.length === 0) {
     return null;
@@ -76,14 +100,15 @@ const validateGatewayKey = (env: NodeJS.ProcessEnv): ValidationError | null => {
     missing,
   };
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): validateStorage uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): validateStorage accepts env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): validateStorage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateStorage = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   if (
     !(
       installedFeatures.has("attachment-uploads") ||
@@ -94,40 +119,36 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
     return null;
   }
   const missing = storageEnvRequirements
-    .map((requirement) => getMissingRequirement(requirement, env))
+    .map((requirement: RequirementInput) =>
+      getMissingRequirement(requirement, env)
+    )
     .filter((value) => value !== null);
-  return missing.length > 0
-    ? { feature: `fileStorage (${storageId})`, missing }
-    : null;
+
+  if (missing.length > 0) {
+    return { feature: `fileStorage (${storageId})`, missing };
+  }
+  return null;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-statements (#512): validateAuthentication keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-continue (#515): validateAuthentication skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/prefer-readonly-parameter-types (#565): validateAuthentication accepts env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): validateAuthentication intentionally keeps the existing falsy-value behavior of missing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
-  const errors: ValidationError[] = [];
-
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
+const validateAuthentication = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys widens the keys of the owned authentication requirement record to string; this assertion retains its AuthenticationConfig provider keys without duplicating the provider list.
   const authKeys = Object.keys(
     authEnvRequirements
   ) as (keyof typeof authEnvRequirements)[];
-  for (const provider of authKeys) {
+  const errors = authKeys.flatMap((provider): ValidationError[] => {
     if (!config.authentication[provider]) {
-      continue;
+      return [];
     }
     const requirement = authEnvRequirements[provider];
     const missing = getMissingRequirement(requirement, env);
-    if (missing) {
-      errors.push({
-        feature: `authentication.${provider}`,
-        missing: [missing],
-      });
+    if (typeof missing === "string" && missing !== "") {
+      return [{ feature: `authentication.${provider}`, missing: [missing] }];
     }
-  }
+    return [];
+  });
 
   const hasAuth = authKeys.some((provider) => {
     if (!config.authentication[provider]) {
@@ -145,14 +166,11 @@ const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
 
   return errors;
 };
-/* oxlint-enable max-statements, no-continue, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateInstalledItems's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): validateInstalledItems accepts env: NodeJS.ProcessEnv; entry; toolEnvVar; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): validateInstalledItems intentionally keeps the existing falsy-value behavior of missing; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable typescript/strict-boolean-expressions -- The missing requirement result is string or null; the current truthy branch excludes both null and empty descriptions. */
 const validateInstalledItems = async (
-  env: NodeJS.ProcessEnv,
+  env: Readonly<NodeJS.ProcessEnv>,
   directory: "tools/chatjs" | "features"
 ): Promise<ValidationError[]> => {
   const toolsDir = path.join(projectRoot, directory);
@@ -169,7 +187,7 @@ const validateInstalledItems = async (
       throw error;
     });
   const toolErrors = await Promise.all(
-    entries.map(async (entry): Promise<ValidationError[]> => {
+    entries.map(async (entry: Readonly<(typeof entries)[number]>) => {
       if (!entry.isDirectory() || entry.name.startsWith("_")) {
         return [];
       }
@@ -183,30 +201,35 @@ const validateInstalledItems = async (
 
       const toolSource = await fs.readFile(toolPath, "utf-8");
       const mod = toolEnvironmentSchema.parse(JSON.parse(toolSource));
-      return mod.envRequirements.flatMap((toolEnvVar) => {
+      return mod.envRequirements.flatMap((toolEnvVar: RequirementInput) => {
         const missing = getMissingRequirement(toolEnvVar, env);
-        return missing
-          ? [
-              {
-                feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
-                missing: [missing],
-              },
-            ]
-          : [];
+
+        if (missing) {
+          return [
+            {
+              // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              feature: `${directory === "tools/chatjs" ? "tools" : "features"}.${entry.name}`,
+              missing: [missing],
+            },
+          ];
+        }
+        return [];
       });
     })
   );
 
   return toolErrors.flat();
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * typescript/prefer-readonly-parameter-types (#565): validateBaseUrl accepts env: NodeJS.ProcessEnv; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions, unicorn/no-null --
  * typescript/strict-boolean-expressions (#610): validateBaseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): validateBaseUrl preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
+const validateBaseUrl = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError | null => {
   const isProduction = env.NODE_ENV === "production" || env.VERCEL === "1";
   if (!isProduction) {
     return null;
@@ -225,7 +248,7 @@ const validateBaseUrl = (env: NodeJS.ProcessEnv): ValidationError | null => {
     ],
   };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): checkGatewaySnapshot preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
@@ -239,17 +262,73 @@ const checkGatewaySnapshot = (): string | null => {
 };
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * max-lines-per-function (#510): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): checkEnv keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-console (#514): checkEnv emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): checkEnv uses 0, 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): checkEnv accepts issue; validationError; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): checkEnv intentionally keeps the existing falsy-value behavior of snapshotWarning; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+const validateDatabaseEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
+  const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
+  if (databaseOptions.success) {
+    return [];
+  }
+  return [
+    {
+      feature: "database",
+      missing: databaseOptions.error.issues.map(
+        (issue: {
+          readonly path: readonly PropertyKey[];
+          readonly message: string;
+        }) => `${issue.path.join(".")}: ${issue.message}`
+      ),
+    },
+  ];
+};
+
+const validateEveEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
+  const eveOptions = z
+    .object(getEveRuntimeEnvOptions(env))
+    .safeParse(resolveEveEnvironment(env));
+  if (eveOptions.success) {
+    return [];
+  }
+  return [
+    {
+      feature: "Eve",
+      missing: eveOptions.error.issues.map(
+        (issue: {
+          readonly path: readonly PropertyKey[];
+          readonly message: string;
+        }) => `${issue.path.join(".")}: ${issue.message}`
+      ),
+    },
+  ];
+};
+
+const validateConfiguredEnvironment = (
+  env: Readonly<NodeJS.ProcessEnv>
+): ValidationError[] => {
+  const databaseErrors = validateDatabaseEnvironment(env);
+  const eveErrors = validateEveEnvironment(env);
+  const baseUrlError = validateBaseUrl(env);
+  const gatewayError = validateGatewayKey(env);
+  const storageError = validateStorage(env);
+  return [
+    ...eveErrors,
+    ...databaseErrors,
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    ...(baseUrlError ? [baseUrlError] : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    ...(gatewayError ? [gatewayError] : []),
+    // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    ...(storageError ? [storageError] : []),
+  ];
+};
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkEnv's awaited sequencing and rejected-Promise behavior. */
 const checkEnv = async (): Promise<void> => {
   const { env } = process;
   if (isPlaywrightTestEnvironment(env)) {
+    // oxlint-disable-next-line no-console -- This CLI reports its explicit Playwright validation bypass.
     console.log(
       "✅ Skipping optional environment validation in Playwright test mode"
     );
@@ -258,78 +337,28 @@ const checkEnv = async (): Promise<void> => {
     return;
   }
 
-  const databaseOptions = z.object(databaseEnvOptions).safeParse(env);
-  const databaseErrors = databaseOptions.success
-    ? []
-    : [
-        {
-          feature: "database",
-          missing: databaseOptions.error.issues.map(
-            (issue) => `${issue.path.join(".")}: ${issue.message}`
-          ),
-        },
-      ];
-
-  const eveOptions = z
-    .object(getEveRuntimeEnvOptions(env))
-    .safeParse(resolveEveEnvironment(env));
-  const eveErrors = eveOptions.success
-    ? []
-    : [
-        {
-          feature: "Eve",
-          missing: eveOptions.error.issues.map(
-            (issue) => `${issue.path.join(".")}: ${issue.message}`
-          ),
-        },
-      ];
-
-  const baseUrlError = validateBaseUrl(env);
-  const gatewayError = validateGatewayKey(env);
-  const storageError = validateStorage(env);
+  const configuredErrors = validateConfiguredEnvironment(env);
   const installedToolErrors = await validateInstalledItems(env, "tools/chatjs");
   const errors = [
-    ...eveErrors,
-    ...databaseErrors,
-    ...(baseUrlError ? [baseUrlError] : []),
-    ...(gatewayError ? [gatewayError] : []),
-    ...(storageError ? [storageError] : []),
+    ...configuredErrors,
     ...validateAuthentication(env),
     ...installedToolErrors,
     ...(await validateInstalledItems(env, "features")),
   ];
 
-  if (errors.length > 0) {
-    const message = errors
-      .map(
-        (validationError) =>
-          `  - ${validationError.feature}: ${validationError.missing.join(", ")}`
-      )
-      .join("\n");
-
-    console.error(
-      `❌ Environment validation failed:\n${message}\n\nSet the required environment variables and check your app configuration.`
-    );
-    process.exit(1);
+  if (reportEnvironmentFailure(errors)) {
+    process.exit(VALIDATION_FAILURE_EXIT_STATUS);
   }
-
-  const snapshotWarning = checkGatewaySnapshot();
-  if (snapshotWarning) {
-    console.warn(`⚠️  ${snapshotWarning}`);
-  }
-
-  console.log("✅ Environment validation passed");
+  reportEnvironmentSuccess(checkGatewaySnapshot());
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable no-console, no-magic-numbers --
- * no-console (#514): try { await checkEnv(); } catch (error) { console.error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * no-magic-numbers (#517): try { await checkEnv(); } catch (error) { console.error uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-disable no-console -- This CLI reports unexpected setup exceptions through console.error. */
 try {
+  // oxlint-disable-next-line node/no-top-level-await -- This setup executable awaits environment validation so its existing catch supplies the failure exit status.
   await checkEnv();
 } catch (error) {
   console.error(error);
-  process.exit(1);
+  process.exit(VALIDATION_FAILURE_EXIT_STATUS);
 }
-/* oxlint-enable no-console, no-magic-numbers */
+/* oxlint-enable no-console */

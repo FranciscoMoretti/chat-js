@@ -1,5 +1,7 @@
 import { asSchema } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ModelMessage, Tool } from "ai";
+/* oxlint-enable sort-imports */
 import type { ToolContext } from "eve/tools";
 import { z } from "zod";
 
@@ -11,9 +13,10 @@ const isAsyncIterable = <Output>(
   Symbol.asyncIterator in value &&
   typeof value[Symbol.asyncIterator] === "function";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve describeMcpTool's awaited sequencing and rejected-Promise behavior. */
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration.
- * @param definition - Tool whose JSON schema is described.
- * @returns A serializable description and validated JSON input schema.
+ * @param {Tool<TInput, TOutput>} definition - Tool whose JSON schema is described.
+ * @returns {Promise<{ description: string; inputSchema: Record<string, z.infer<ReturnType<typeof z.json>>>; }>} A serializable description and validated JSON input schema.
  */
 const describeMcpTool = async <TInput, TOutput>(
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- asSchema receives the existing FlexibleSchema<Input> instance; recursive readonly changes its generic _type and fails that actual native SDK receiver.
@@ -37,9 +40,13 @@ const describeMcpTool = async <TInput, TOutput>(
       JSON.parse(
         JSON.stringify(
           await schema.jsonSchema,
-          (key: string, value: unknown): unknown =>
-            // oxlint-disable-next-line eslint/no-undefined -- JSON.stringify requires the undefined replacer result to omit the executable ~standard schema metadata while preserving all other JSON values.
-            key === "~standard" ? undefined : value
+          (key: string, value: unknown): unknown => {
+            if (key === "~standard") {
+              // oxlint-disable-next-line eslint/no-undefined -- JSON.stringify requires an undefined replacer result to omit executable Standard Schema metadata; other values are returned unchanged.
+              return undefined;
+            }
+            return value;
+          }
         )
       )
     );
@@ -48,13 +55,14 @@ const describeMcpTool = async <TInput, TOutput>(
     inputSchema,
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve executeMcpTool's asynchronous iteration and rejection behavior. */
 /**
  * Resolve module-level definitions at execution time, avoiding executable captures in durable closures.
- * @param definition - SDK tool resolved for execution.
- * @param input - Untrusted input validated by the SDK schema.
- * @param context - Call identity and cancellation.
- * @param messages - Prior model messages.
+ * @param {Tool<TInput, TOutput>} definition - SDK tool resolved for execution.
+ * @param {unknown} input - Untrusted input validated by the SDK schema.
+ * @param {Readonly<{ callId: ToolContext["callId"]; abortSignal: Readonly<AbortSignal>; }>} context - Call identity and cancellation.
+ * @param {readonly ModelMessage[]} messages - Prior model messages.
  * @yields {unknown} Each output emitted by the installed AI SDK tool.
  */
 // oxlint-disable-next-line max-params -- Preserve the exported four-argument SDK adapter contract used by discovered-tool execution and the independent native-invocation contract test; grouping context/messages into a DTO changes existing callers.
@@ -90,4 +98,7 @@ const executeMcpTool = async function* executeMcpTool<TInput, TOutput>(
     yield output;
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (describeMcpTool, executeMcpTool); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export { describeMcpTool, executeMcpTool };
+/* oxlint-enable import/no-named-export */

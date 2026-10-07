@@ -133,6 +133,7 @@ const openaiDefaults = {
 } satisfies GatewayModelDefaults<Gateways["openai"]>;
 
 const openaiCompatibleDefaults = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of openaiDefaults rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   ...openaiDefaults,
 } satisfies GatewayModelDefaults<Gateways["openai-compatible"]>;
 
@@ -170,6 +171,7 @@ const litellmDefaults = {
   },
 } satisfies GatewayModelDefaults<Gateways["litellm"]>;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GATEWAY_MODEL_DEFAULTS); the enabled import/no-default-export convention rejects the default-export alternative. */
 // Record ensures a compile error if a new gateway is added but not here.
 export const GATEWAY_MODEL_DEFAULTS = {
   litellm: litellmDefaults,
@@ -180,3 +182,4 @@ export const GATEWAY_MODEL_DEFAULTS = {
 } satisfies {
   [Gateway in GatewayType]: GatewayModelDefaults<Gateways[Gateway]>;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

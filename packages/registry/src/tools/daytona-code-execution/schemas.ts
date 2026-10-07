@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { supportedExecutionLanguages } from "@/tools/chatjs/_shared/code-execution/types";
+/* oxlint-enable sort-imports */
 
 const codeExecutionInput = z.object({
   code: z
@@ -24,5 +26,7 @@ const codeExecutionResult = z.object({
   ]),
   message: z.string(),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecutionInput, codeExecutionResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/max-nested-calls */
 export { codeExecutionInput, codeExecutionResult };
+/* oxlint-enable import/no-named-export */

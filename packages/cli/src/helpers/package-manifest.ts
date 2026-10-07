@@ -1,21 +1,23 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { execFileSync } from "node:child_process";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { PackageManager } from "#cli/types";
+/* oxlint-enable sort-imports */
 
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;
 
-/* oxlint-disable typescript/consistent-type-definitions -- Keep this structural alias closed to declaration merging and compatible with the existing generic/record API. */
-type PackageJson = {
+interface PackageJson {
   type?: "module" | "commonjs";
   packageManager?: string;
   scripts?: ScriptMap;
   dependencies?: DependencyMap;
   devDependencies?: DependencyMap;
   overrides?: Record<string, unknown>;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [
@@ -50,7 +52,7 @@ const resolveBetterAuthVersion = (
   return "";
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper writes matching dependency versions into the caller-owned dependency map; readonly entries would prohibit those updates. */
 const pinBetterAuthVersions = (
   dependencyGroup: DependencyMap | undefined,
   version: string
@@ -68,7 +70,7 @@ const pinBetterAuthVersions = (
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform replaces and removes entries in the supplied scripts map before the original manifest is serialized. */
 const normalizeChatAppScripts = (scripts: ScriptMap): void => {
   scripts.prebuild = "tsx scripts/check-env.ts";
   scripts.dev = "tsx scripts/check-env.ts && next dev";
@@ -101,7 +103,7 @@ const normalizeChatAppScripts = (scripts: ScriptMap): void => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This transform edits the supplied scripts map in place, including Forge commands and removal of obsolete distribution aliases. */
 const normalizeElectronScripts = (scripts: ScriptMap): void => {
   const prebuild =
     "tsx scripts/write-branding.ts && tsx scripts/generate-icons.ts";
@@ -136,7 +138,7 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map. */
 const normalizeElectronDevDependencies = (
   devDependencies: DependencyMap | undefined,
   tsxVersion?: string
@@ -150,6 +152,7 @@ const normalizeElectronDevDependencies = (
     devDependencies.tsx = tsxVersion;
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (normalizeScaffoldedPackageJson); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -157,7 +160,7 @@ const normalizeElectronDevDependencies = (
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This exported normalizer returns the original manifest after updating its dependency, script, override, type, and packageManager fields; callers rely on in-place normalization. */
 export const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: Readonly<{
@@ -173,11 +176,13 @@ export const normalizeScaffoldedPackageJson = (
     pinBetterAuthVersions(packageJson.dependencies, betterAuthVersion);
     pinBetterAuthVersions(packageJson.devDependencies, betterAuthVersion);
     packageJson.overrides = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing packageJson.overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...packageJson.overrides,
       "@better-auth/core": betterAuthVersion,
     };
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading template from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   switch (options?.template) {
     case "chat-app": {
       packageJson.type = "module";
@@ -192,6 +197,7 @@ export const normalizeScaffoldedPackageJson = (
       }
       normalizeElectronDevDependencies(
         packageJson.devDependencies,
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tsxVersion from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         options?.tsxVersion
       );
       break;
@@ -201,8 +207,11 @@ export const normalizeScaffoldedPackageJson = (
     }
   }
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading persistPackageManager from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   if (options?.persistPackageManager !== false) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading packageManager from options; preserve one receiver evaluation, skipped accesses and the existing "bun" fallback.
     const packageManager = options?.packageManager ?? "bun";
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from process.env.npm_config_user_agent.match(...); read match from process.env.npm_config_user_agent; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     const launcherVersion = process.env.npm_config_user_agent?.match(
       new RegExp(`^${packageManager}/([0-9]+\\.[0-9]+\\.[0-9]+)`, "u")
     )?.[1];
@@ -220,6 +229,7 @@ export const normalizeScaffoldedPackageJson = (
 
   return packageJson;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */

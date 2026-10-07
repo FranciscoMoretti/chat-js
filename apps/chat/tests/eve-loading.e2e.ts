@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-statements (#512): test("restoring a saved chat shows a loader without runtime wording") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("restoring a saved chat shows a loader without runtime wording") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -55,4 +56,5 @@ test("restoring a saved chat shows a loader without runtime wording", async ({
     page.getByRole("status", { name: "Loading conversation" })
   ).toHaveCount(0);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

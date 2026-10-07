@@ -1,8 +1,13 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeUnlockedJobs's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): removeUnlockedJobs uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -28,6 +33,7 @@ const removeUnlockedJobs = async (
     throw new Error("Wait for active queue workers before cleanup.");
   }
   const removed =
+    // oxlint-disable-next-line no-ternary -- Keep removed as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     locked.length > 0
       ? z
           .array(z.object({ id: z.string() }))
@@ -40,6 +46,9 @@ const removeUnlockedJobs = async (
   }
   return removed.map((job) => job.id).toSorted();
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresQueue); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresQueue's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -54,12 +63,12 @@ const removeUnlockedJobs = async (
  * Remove queued payloads for an authorized resource set already fenced by the
  * session coordinator. Returns newly discovered queued run IDs for the caller's
  * deletion inventory. Never force-unlocks workers or claims full session purge.
- * @param connection PostgreSQL connection used for an atomic inventory/fence/removal transaction.
- * @param input Authorized session root, fenced run inventory, and configured queue task identifier.
- * @param input.sessionId Session root required in the cleanup inventory.
- * @param input.runIds Authorized run identities whose queue payloads may be removed.
- * @param input.taskIdentifier Installed queue task whose fence governs these payloads.
- * @returns Removed unlocked job identities and the durably retained discovered run inventory.
+ * @param {Sql} connection PostgreSQL connection used for an atomic inventory/fence/removal transaction.
+ * @param {{ sessionId: string; runIds: string[]; taskIdentifier: string; }} input Authorized session root, fenced run inventory, and configured queue task identifier.
+ * @param {string} input.sessionId Session root required in the cleanup inventory.
+ * @param {string[]} input.runIds Authorized run identities whose queue payloads may be removed.
+ * @param {string} input.taskIdentifier Installed queue task whose fence governs these payloads.
+ * @returns {Promise<{ removedJobIds: string[]; runIds: string[] }>} Removed unlocked job identities and the durably retained discovered run inventory.
  */
 export const purgeEvePostgresQueue = async (
   connection: Sql,
@@ -115,9 +124,12 @@ export const purgeEvePostgresQueue = async (
         if (inventory.jobs.some((job) => job.locked)) {
           throw new Error("Wait for active queue workers before cleanup.");
         }
-        const newIds = inventory.jobs.flatMap((job) =>
-          job.runId && !known.has(job.runId) ? [job.runId] : []
-        );
+        const newIds = inventory.jobs.flatMap((job) => {
+          if (job.runId && !known.has(job.runId)) {
+            return [job.runId];
+          }
+          return [];
+        });
         if (newIds.length > 0) {
           for (const id of newIds) {
             known.add(id);
@@ -148,4 +160,6 @@ export const purgeEvePostgresQueue = async (
     }
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

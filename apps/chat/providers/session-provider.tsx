@@ -57,6 +57,7 @@ const SessionProvider = ({
   const isSeeded = serverSession !== undefined;
 
   const value = useMemo<SessionContextValue>(() => {
+    // oxlint-disable-next-line no-ternary -- Keep seededSession as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const seededSession = isSeeded ? serverSession : null;
 
     // Unknown until the server tree seeds us or the client session settles.
@@ -71,6 +72,7 @@ const SessionProvider = ({
     // seed while the client fetch is still pending or failed (e.g. blocked
     // get-session / trustedOrigins mismatch).
     const effective =
+      // oxlint-disable-next-line no-ternary -- Keep effective as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       isClientPending || (clientError !== null && clientError !== undefined)
         ? (clientSession ?? seededSession)
         : clientSession;
@@ -120,6 +122,8 @@ const useSession = (): SessionContextValue => {
   return ctx;
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SessionProvider, SessionSeed, useSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/only-export-components -- #620: Consumers import SessionProvider, SessionSeed, useSession from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { SessionProvider, SessionSeed, useSession };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

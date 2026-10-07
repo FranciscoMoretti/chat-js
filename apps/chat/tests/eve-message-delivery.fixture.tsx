@@ -1,10 +1,14 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/use-eve-message-delivery"; "../lib/eve/message-delivery" dependency within this package instead of introducing an alias or barrel API. */
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 
 import { useEveMessageDelivery } from "../components/eve/use-eve-message-delivery";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageDeliveryMetadata } from "../lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable unicorn/no-null -- * unicorn/no-null (#570): event preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics. */
@@ -18,6 +22,7 @@ const event = (operationId: string): MessageStreamEvent => ({
   meta: { at: "2026-09-13T00:00:00.000Z", id: crypto.randomUUID() },
   type: "message.received",
 });
+/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -66,8 +71,13 @@ const Fixture = (): React.JSX.Element => {
           Acknowledge another operation
         </button>
         <button
-          disabled={!delivery.pending?.operationId}
+          disabled={
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from delivery.pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            !delivery.pending?.operationId
+            /* oxlint-enable oxc/no-optional-chaining */
+          }
           onClick={() => {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from delivery.pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             const operationId = delivery.pending?.operationId;
             if (operationId) {
               delivery.accept(event(operationId));
@@ -102,28 +112,32 @@ const Fixture = (): React.JSX.Element => {
         </button>
       </div>
       <output aria-live="polite" className="block rounded-md border p-3">
-        {delivery.pending ? (
-          <div className="space-y-1">
-            <span className="block">Pending: {delivery.pending.message}</span>
-            <span
-              className="inline-block font-mono text-xs"
-              data-testid="operation"
-            >
-              {delivery.pending.operationId}
-            </span>
-            {delivery.pending.rejection && (
-              <span className="block">
-                Rejected: {delivery.pending.rejection}
+        {
+          // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          delivery.pending ? (
+            <div className="space-y-1">
+              <span className="block">Pending: {delivery.pending.message}</span>
+              <span
+                className="inline-block font-mono text-xs"
+                data-testid="operation"
+              >
+                {delivery.pending.operationId}
               </span>
-            )}
-          </div>
-        ) : (
-          "No pending message"
-        )}
+              {delivery.pending.rejection && (
+                <span className="block">
+                  Rejected: {delivery.pending.rejection}
+                </span>
+              )}
+            </div>
+          ) : (
+            "No pending message"
+          )
+        }
       </output>
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/only-export-components, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions*/
 
 const root = document.querySelector("#root");

@@ -1,8 +1,10 @@
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { BrainIcon, ChevronDownIcon } from "lucide-react";
-import type { JSX as ReactJSX, ComponentProps } from "react";
+/* oxlint-enable sort-imports */
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, {
   createContext,
   memo,
@@ -13,14 +15,18 @@ import React, {
   useState,
 } from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Response } from "./response";
+/* oxlint-enable sort-imports */
 import { Shimmer } from "./shimmer";
 
 interface ReasoningContextValue {
@@ -64,6 +70,7 @@ const Reasoning = memo(
     onOpenChange,
     duration: durationProp,
     children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, isStreaming, open, defaultOpen, onOpenChange, duration, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReasoningProps) => {
     const [isOpen, setIsOpen] = useControllableState({
@@ -120,9 +127,11 @@ const Reasoning = memo(
     return (
       <ReasoningContext.Provider value={contextValue}>
         <Collapsible
+          // oxlint-disable-next-line react/forbid-component-props -- Collapsible accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("not-prose mb-4", className)}
           onOpenChange={handleOpenChange}
           open={isOpen}
+          // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Reasoning's Collapsible prop contract, preserving caller options, children and callbacks.
           {...props}
         >
           {children}
@@ -134,6 +143,7 @@ const Reasoning = memo(
 /* oxlint-enable max-lines-per-function, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
+/* oxlint-disable react/jsx-no-literals -- getThinkingMessage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable no-magic-numbers, no-undefined -- getThinkingMessage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
@@ -149,28 +159,37 @@ const getThinkingMessage = (
   }
   return <p>Thought for {duration} seconds</p>;
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- ReasoningTrigger: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: ReasoningTriggerProps). */
 
 const ReasoningTrigger = memo(
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ({ className, children, ...props }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning();
 
     return (
       <CollapsibleTrigger
+        // oxlint-disable-next-line react/forbid-component-props -- CollapsibleTrigger accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
           className
         )}
+        // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ReasoningTrigger's CollapsibleTrigger prop contract, preserving caller options, children and callbacks.
         {...props}
       >
         {children ?? (
           <>
-            <BrainIcon className="size-4" />
+            <BrainIcon
+              // oxlint-disable-next-line react/forbid-component-props -- BrainIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
             {getThinkingMessage(isStreaming, duration)}
             <ChevronDownIcon
+              // oxlint-disable-next-line react/forbid-component-props -- ChevronDownIcon accepts className in its styling contract; preserve this caller's layout and appearance.
               className={cn(
                 "size-4 transition-transform",
+                // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 isOpen ? "rotate-180" : "rotate-0"
               )}
             />
@@ -192,17 +211,25 @@ const ReasoningContent = memo(
   ({
     className,
     children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReasoningContentProps): React.JSX.Element => (
     <CollapsibleContent
+      // oxlint-disable-next-line react/forbid-component-props -- CollapsibleContent accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
         "mt-4 text-sm",
         "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-muted-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
         className
       )}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ReasoningContent's CollapsibleContent prop contract, preserving caller options, children and callbacks.
       {...props}
     >
-      <Response className="grid gap-2">{children}</Response>
+      <Response
+        // oxlint-disable-next-line react/forbid-component-props -- Response accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="grid gap-2"
+      >
+        {children}
+      </Response>
     </CollapsibleContent>
   )
 );
@@ -211,5 +238,9 @@ const ReasoningContent = memo(
 Reasoning.displayName = "Reasoning";
 ReasoningTrigger.displayName = "ReasoningTrigger";
 ReasoningContent.displayName = "ReasoningContent";
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Reasoning, ReasoningContent, ReasoningTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { Reasoning, ReasoningContent, ReasoningTrigger };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReasoningContentProps, ReasoningProps, ReasoningTriggerProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ReasoningContentProps, ReasoningProps, ReasoningTriggerProps };
+/* oxlint-enable import/no-named-export */

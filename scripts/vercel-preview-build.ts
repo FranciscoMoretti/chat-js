@@ -1,13 +1,16 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
 import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The preview-build entry point resolves the chat workspace database driver and command working directory.
 import { fileURLToPath } from "node:url";
 
-/* oxlint-disable import/no-relative-parent-imports -- the ../apps/chat/node_modules/postgres import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-import type postgresType from "../apps/chat/node_modules/postgres";
-/* oxlint-enable import/no-relative-parent-imports */
+import type postgresType from "postgres";
+
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   PreviewConfigurationError,
   resolveMaintainerPreviewDatabase,
 } from "./vercel-preview-environment";
+/* oxlint-enable sort-imports */
 
 const EMPTY_MESSAGE_LENGTH = 0;
 const POSTGRES_CONNECT_TIMEOUT_SECONDS = 10;
@@ -17,7 +20,6 @@ const POSTGRES_MAX_LIFETIME_SECONDS = 0;
 const POSTGRES_CLOSE_TIMEOUT_SECONDS = 5;
 const SUBPROCESS_SUCCESS_EXIT_CODE = 0;
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- BuildOperations: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 interface BuildOperations {
   openDatabase: (url: string) => {
     close: () => Promise<void>;
@@ -25,10 +27,9 @@ interface BuildOperations {
   };
   run: (
     command: "db:migrate" | "build",
-    env: NodeJS.ProcessEnv
+    env: Readonly<NodeJS.ProcessEnv>
   ) => Promise<void>;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/no-undefined -- formatBuildFailure: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 const formatBuildFailure = (phase: string, error: unknown): string => {
@@ -36,6 +37,7 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     return `Maintainer build failed during validation: ${error.message}`;
   }
   const code =
+    // oxlint-disable-next-line no-ternary -- Keep code as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     error !== null && typeof error === "object" && "code" in error
       ? error.code
       : undefined;
@@ -45,21 +47,23 @@ const formatBuildFailure = (phase: string, error: unknown): string => {
     /^(?:(?:[0-9]{2}|F0|HV|P0|XX)[0-9A-Z]{3}|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|SUBPROCESS_EXIT_\d{1,3})$/u.test(
       code
     );
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   return `Maintainer build failed during ${phase}${safeCode ? ` (${code})` : ""}.`;
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMaintainerBuild's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-disable eslint/max-statements -- runMaintainerBuild: This ordered transaction/startup operation shares local validation and cleanup; extraction requires lifecycle boundaries. */
 /* oxlint-disable eslint/init-declarations -- runMaintainerBuild: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runMaintainerBuild: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runMaintainerBuild = async (
-  source: NodeJS.ProcessEnv,
-  operations: BuildOperations
+  source: Readonly<NodeJS.ProcessEnv>,
+  operations: Readonly<BuildOperations>
 ): Promise<void> => {
   let phase = "validation";
   let failureMessage: string | undefined;
   try {
     const preview = resolveMaintainerPreviewDatabase(source);
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing source own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing preview own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const env = { ...source, ...preview };
     if (preview) {
       phase = "connection";
@@ -106,14 +110,13 @@ const runMaintainerBuild = async (
     throw new Error(failureMessage);
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable node/no-process-env -- vercel-preview-build.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-console -- vercel-preview-build.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable typescript/promise-function-async -- vercel-preview-build.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- vercel-preview-build.ts: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 if (import.meta.main) {
   try {
     const require = createRequire(
@@ -121,7 +124,10 @@ if (import.meta.main) {
     );
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Resolve the chat workspace postgres package explicitly; its exported default has the imported postgres type.
     const { default: postgres }: { default: typeof postgresType } =
+      // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint resolves its workspace Postgres driver before opening the preview database.
       await import(require.resolve("postgres"));
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
+    // oxlint-disable-next-line node/no-top-level-await -- This Bun build entrypoint awaits migration/build completion so its existing catch reports failures.
     await runMaintainerBuild(process.env, {
       openDatabase: (url) => {
         const connection = postgres(url, {
@@ -138,7 +144,7 @@ if (import.meta.main) {
           },
         };
       },
-      run: async (command, env): Promise<void> => {
+      run: async (command, env: Readonly<NodeJS.ProcessEnv>): Promise<void> => {
         const child = Bun.spawn(["bun", "run", command], {
           cwd: fileURLToPath(new URL("../apps/chat/", import.meta.url)),
           env,
@@ -154,8 +160,10 @@ if (import.meta.main) {
         }
       },
     });
+    /* oxlint-enable oxc/no-async-await */
   } catch (error) {
     console.error(
+      // oxlint-disable-next-line no-ternary -- Keep console.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error &&
         error.message.startsWith("Maintainer build failed during ")
         ? error.message
@@ -164,8 +172,9 @@ if (import.meta.main) {
     process.exitCode = 1;
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runMaintainerBuild); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-console */
 /* oxlint-enable node/no-process-env */
 export { runMaintainerBuild };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

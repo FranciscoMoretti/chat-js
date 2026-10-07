@@ -10,7 +10,9 @@ import React, {
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
 
 interface DefaultModelContextType {
   changeModel: (modelId: AppModelId) => Promise<void>;
@@ -38,6 +40,7 @@ const DefaultModelProvider = ({
 }: DefaultModelClientProviderProps): React.JSX.Element => {
   const [currentModel, setCurrentModel] = useState<AppModelId>(initialModel);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve changeModel's awaited sequencing and rejected-Promise behavior. */
   const changeModel = useCallback(
     async (modelId: AppModelId) => {
       // Update local state immediately
@@ -61,7 +64,7 @@ const DefaultModelProvider = ({
     },
     [initialModel]
   );
-
+  /* oxlint-enable oxc/no-async-await */
   const value = useMemo(
     () => ({
       changeModel,
@@ -106,7 +109,9 @@ const useModelChange = () => {
   }
   return context.changeModel;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DefaultModelProvider, useDefaultModel, useModelChange); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable react/only-export-components -- #620: Consumers import DefaultModelProvider, useDefaultModel, useModelChange from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { DefaultModelProvider, useDefaultModel, useModelChange };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

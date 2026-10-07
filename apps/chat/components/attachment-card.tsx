@@ -8,20 +8,30 @@ import {
   XIcon,
 } from "lucide-react";
 import Image from "next/image";
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AttachmentViewData } from "@/components/attachment-list";
+/* oxlint-enable sort-imports */
 import { Button } from "@/components/ui/button";
 import { useImageLoadError } from "@/hooks/use-image-load-error";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getFileImageProps } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 const LoadingPreview = (): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
-    <Loader2Icon className="text-muted-foreground size-5 animate-spin" />
+    <Loader2Icon
+      // oxlint-disable-next-line react/forbid-component-props -- Loader2Icon accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="text-muted-foreground size-5 animate-spin"
+    />
   </div>
 );
+/* oxlint-disable react/jsx-no-literals -- ImagePreview renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable react/no-multi-comp -- ImagePreview: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { name, url }: { name: string; url: string }). */
 
@@ -36,7 +46,10 @@ const ImagePreview = ({
   if (imageUnavailable) {
     return (
       <output className="text-muted-foreground flex size-full flex-col items-center justify-center gap-1">
-        <ImageOffIcon className="size-5" />
+        <ImageOffIcon
+          // oxlint-disable-next-line react/forbid-component-props -- ImageOffIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-5"
+        />
         <span className="text-[10px]">Unavailable</span>
       </output>
     );
@@ -46,6 +59,7 @@ const ImagePreview = ({
   return (
     <Image
       alt={name || "attachment"}
+      // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
       className="object-cover"
       fill
       onError={handleImageError}
@@ -55,6 +69,7 @@ const ImagePreview = ({
     />
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- FilePreview: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { isPdf }: { isPdf: boolean }). */
@@ -65,11 +80,20 @@ const FilePreview = ({
   readonly isPdf: boolean;
 }): React.JSX.Element => (
   <div className="flex size-full items-center justify-center">
-    {isPdf ? (
-      <FileTextIcon className="size-5 text-red-500" />
-    ) : (
-      <PaperclipIcon className="text-muted-foreground size-5" />
-    )}
+    {
+      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      isPdf ? (
+        <FileTextIcon
+          // oxlint-disable-next-line react/forbid-component-props -- FileTextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="size-5 text-red-500"
+        />
+      ) : (
+        <PaperclipIcon
+          // oxlint-disable-next-line react/forbid-component-props -- PaperclipIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-muted-foreground size-5"
+        />
+      )
+    }
   </div>
 );
 /* oxlint-enable react/no-multi-comp */
@@ -97,6 +121,8 @@ const AttachmentPreview = ({
   }
   return <FilePreview isPdf={isPdf} />;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (AttachmentCard); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- AttachmentCard renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- AttachmentCard: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
@@ -112,6 +138,7 @@ export const AttachmentCard = ({
   className?: string;
 }): ReactJSX.Element => {
   const { name, url, contentType } = attachment;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from contentType; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isImage = Boolean(contentType?.startsWith("image/") && url);
   const isPdf = contentType === "application/pdf";
 
@@ -135,6 +162,7 @@ export const AttachmentCard = ({
       {onRemove && !isUploading && (
         <Button
           aria-label="Remove attachment"
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className="border-border bg-background/90 supports-[backdrop-filter]:bg-background/70 absolute top-1 right-1 size-6 rounded-full border p-0 opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100 [&>svg]:size-3"
           onClick={(event) => {
             event.stopPropagation();
@@ -151,4 +179,6 @@ export const AttachmentCard = ({
     </div>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */

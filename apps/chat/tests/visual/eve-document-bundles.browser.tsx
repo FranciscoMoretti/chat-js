@@ -1,15 +1,25 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { page } from "vitest/browser";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentBody } from "@/components/eve/eve-document-body";
+/* oxlint-enable sort-imports */
 import { documentUi } from "@/tools/chatjs/document-ui";
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDocumentRun } from "@/tools/chatjs/saved-code-execution/document";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- eve-document-bundles.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -48,6 +58,8 @@ const editorProps = {
   onSaveContent: () => null,
   status: "idle" as const,
 };
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 /* oxlint-disable max-statements, react-perf/jsx-no-new-object-as-prop -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership */
 
@@ -71,7 +83,11 @@ test("installed text, code and sheet bundles render saved content", async () => 
               <DocumentBody
                 kind={kind}
                 title={title}
-                editorProps={{ ...editorProps, content }}
+                editorProps={
+                  /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing editorProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+                  { ...editorProps, content }
+                  /* oxlint-enable oxc/no-rest-spread-properties */
+                }
               />
             </section>
           ))}
@@ -82,11 +98,17 @@ test("installed text, code and sheet bundles render saved content", async () => 
       .poll(() => container.textContent)
       .toContain("A saved research note.");
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => container.querySelector(".cm-content")?.textContent)
       .toContain("Installed code editor");
     await expect
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       .poll(() => container.querySelector('[role="grid"]')?.textContent)
       .toContain("Apples");
+    // Lexical imports nonempty content before its placeholder state settles.
+    await expect
+      .poll(() => container.textContent)
+      .not.toContain("Start typing...");
     await takeSnapshot("installed-document-bundles");
   } finally {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act returns a runtime thenable even for the legacy synchronous overload; await it to flush updates before assertions or teardown.
@@ -94,6 +116,9 @@ test("installed text, code and sheet bundles render saved content", async () => 
     container.remove();
   }
 });
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-disable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types -- eve-document-bundles.browser route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 2); react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including element). */
@@ -112,12 +137,21 @@ test("a removed editor has an explicit notice in panel and inline views", async 
         <div>
           {[false, true].map((inline): React.JSX.Element => (
             <section key={String(inline)}>
-              <h2>{inline ? "Inline preview" : "Document panel"}</h2>
+              <h2>
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  inline ? "Inline preview" : "Document panel"
+                }
+              </h2>
               <DocumentBody
                 kind="text"
                 title="Notes"
                 inline={inline}
-                editorProps={{ ...editorProps, content: "Saved content" }}
+                editorProps={
+                  /* oxlint-disable oxc/no-rest-spread-properties -- Keep the existing editorProps own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. */
+                  { ...editorProps, content: "Saved content" }
+                  /* oxlint-enable oxc/no-rest-spread-properties */
+                }
               />
             </section>
           ))}
@@ -139,6 +173,9 @@ test("a removed editor has an explicit notice in panel and inline views", async 
     container.remove();
   }
 });
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, react-perf/jsx-no-new-object-as-prop, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-props-no-spreading, typescript/promise-function-async -- eve-document-bundles.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -189,6 +226,7 @@ test("saved code run controls follow installed execution and retain disabled sta
       .element(page.getByRole("button", { exact: true, name: "Run" }).nth(1))
       .toBeDisabled();
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading querySelector from container.querySelectorAll(...)[2]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       container.querySelectorAll("section")[2]?.querySelector("button")
     ).toBeNull();
     await takeSnapshot("saved-code-installed-run-controls");
@@ -222,4 +260,6 @@ test("saved code run controls follow installed execution and retain disabled sta
     container.remove();
   }
 });
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-props-no-spreading, typescript/promise-function-async */

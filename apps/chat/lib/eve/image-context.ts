@@ -1,19 +1,24 @@
-import type { FileUIPart, ModelMessage } from "ai";
+import type { FileUIPart, ModelMessage, UserModelMessage } from "ai";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 const imageResult = z.object({
   imageUrl: z.string(),
   prompt: z.string().optional(),
 });
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
- * typescript/explicit-function-return-type (#560): Keep latestImageAttachments's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): latestImageAttachments accepts messages: readonly ModelMessage[]; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const latestImageAttachments = (messages: readonly ModelMessage[]) => {
-  const user = messages.findLast((message) => message.role === "user");
+const latestImageAttachments = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit during native user-message narrowing; the outer list is already readonly.
+  messages: readonly ModelMessage[]
+): FileUIPart[] => {
+  const user = messages.findLast(
+    (message: {
+      readonly role: ModelMessage["role"];
+    }): message is UserModelMessage => message.role === "user"
+  );
   const attachments: FileUIPart[] = [];
   if (user && Array.isArray(user.content)) {
     for (const part of user.content) {
@@ -34,26 +39,30 @@ const latestImageAttachments = (messages: readonly ModelMessage[]) => {
   }
   return attachments;
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): eveImageContext's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-continue --
  * max-statements (#512): eveImageContext keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): eveImageContext skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
- * typescript/explicit-function-return-type (#560): Keep eveImageContext's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep eveImageContext's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): eveImageContext accepts messages: readonly ModelMessage[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): eveImageContext intentionally keeps the existing falsy-value behavior of keyFromFileUrl(parsed.data.imageUrl); distinguishing empty, zero, and absent states requires a domain behavior decision.
- * unicorn/no-null (#570): eveImageContext preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Derive image references from the native branch, without another image-history store. */
-export const eveImageContext = (messages: readonly ModelMessage[]) => {
+/** Derive image references from the native branch, without another image-history store.
+ * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
+ * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
+ */
+export const eveImageContext = (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Keep native message data types: recursively mapping SDK JSON to readonly exceeds TypeScript's instantiation limit when parsing tool output; the outer list is already readonly.
+  messages: readonly ModelMessage[]
+): {
+  attachments: FileUIPart[];
+  lastGeneratedImage: { imageUrl: string; name: string } | null;
+} => {
   const attachments = latestImageAttachments(messages);
+  /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
   let lastGeneratedImage: {
     imageUrl: string;
     name: string;
   } | null = null;
+  /* oxlint-enable unicorn/no-null */
   for (const message of messages) {
     if (message.role !== "tool") {
       continue;
@@ -70,7 +79,7 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
       if (
         parsed.success &&
         parsed.data.imageUrl.startsWith("/api/files/") &&
-        keyFromFileUrl(parsed.data.imageUrl)
+        keyFromFileUrl(parsed.data.imageUrl) !== null
       ) {
         lastGeneratedImage = {
           imageUrl: parsed.data.imageUrl,
@@ -81,4 +90,5 @@ export const eveImageContext = (messages: readonly ModelMessage[]) => {
   }
   return { attachments, lastGeneratedImage };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, no-continue, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable max-statements, no-continue */

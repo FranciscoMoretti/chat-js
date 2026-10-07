@@ -13,13 +13,16 @@ const serializeError = (
   if (typeof error === "object" && error !== null && "message" in error) {
     const message = String(error.message);
     const hasName = Boolean(Reflect.get(error, "name"));
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const name: unknown = hasName
       ? Reflect.get(error, "name")
       : ABSENT_DIAGNOSTIC_VALUE;
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     return { message, name: hasName ? String(name) : ABSENT_DIAGNOSTIC_VALUE };
   }
   return { message: String(error), raw: error };
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveError's awaited sequencing and rejected-Promise behavior. */
 const resolveError = async (thrownValue: unknown): Promise<unknown> => {
   if (
     typeof thrownValue === "object" &&
@@ -34,6 +37,7 @@ const resolveError = async (thrownValue: unknown): Promise<unknown> => {
   }
   return thrownValue;
 };
+/* oxlint-enable oxc/no-async-await */
 const constructorName = (value: unknown): unknown => {
   if (value === null || value === ABSENT_DIAGNOSTIC_VALUE) {
     return ABSENT_DIAGNOSTIC_VALUE;
@@ -49,12 +53,15 @@ const getErrorDebugInfo = (
 ): { errorConstructor: unknown; errorKeys: string[]; errorType: string } => ({
   errorConstructor: constructorName(error),
   errorKeys:
+    // oxlint-disable-next-line no-ternary -- Keep errorKeys as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     typeof error === "object" && error !== null ? Object.keys(error) : [],
   errorType: typeof error,
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (serializeError, resolveError, getErrorDebugInfo, ABSENT_DIAGNOSTIC_VALUE); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   serializeError,
   resolveError,
   getErrorDebugInfo,
   ABSENT_DIAGNOSTIC_VALUE,
 };
+/* oxlint-enable import/no-named-export */

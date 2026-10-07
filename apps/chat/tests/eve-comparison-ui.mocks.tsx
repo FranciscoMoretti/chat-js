@@ -2,11 +2,17 @@
 import React, { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ComposerMenu } from "../components/composer/composer-menu";
+/* oxlint-enable sort-imports */
 import { useEveComposerDraft } from "../components/eve/use-eve-composer-draft";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { models } from "../lib/ai/models.generated";
+/* oxlint-enable sort-imports */
 import { useDefaultModel } from "../providers/default-model-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { firstModel, secondModel } from "./eve-comparison-data.fixture";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- * typescript/prefer-readonly-parameter-types (#565): fixtureModels accepts model; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration. */
@@ -14,9 +20,11 @@ const fixtureModels = models
   .filter((model) => model.id === firstModel || model.id === secondModel)
   // oxlint-disable-next-line oxc/no-map-spread -- #541: Override fixture model IDs without mutating the shared model catalog.
   .map((model) => ({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...model,
     apiModelId: model.id,
     input: { image: true, pdf: true, text: true },
+    // oxlint-disable-next-line no-ternary -- Keep name as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     name: model.id === firstModel ? "First model" : "Second model",
   }));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -82,6 +90,7 @@ const useRouter = () => ({
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 const usePathname = (): string => globalThis.location.pathname;
+/* oxlint-disable react/jsx-no-literals -- EveConversation renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- max-lines-per-function (#510): EveConversation keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 react-perf/jsx-no-new-function-as-prop (#557): EveConversation creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -110,9 +119,11 @@ const EveConversation = ({
   const model = useDefaultModel();
   const draft = useEveComposerDraft(ownerId, draftScopeId);
   const [pending, setPending] = useState(false);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onStatusChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   useEffect(() => onStatusChange?.("ready"), [onStatusChange]);
   useEffect(
     () =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onNavigationBlockedChange; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
       onNavigationBlockedChange?.(
         !draft.loaded || Boolean(draft.error) || pending
       ),
@@ -122,7 +133,11 @@ const EveConversation = ({
     <main>
       {header}
       <section className="mx-auto max-w-3xl space-y-4 p-4">
-        {comparisonPresentation?.cards}
+        {
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading cards from comparisonPresentation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+          comparisonPresentation?.cards
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         <p>Selected native session: {sessionId}</p>
         <p>Follow-up model: {model}</p>
         <ComposerMenu
@@ -159,12 +174,17 @@ const EveConversation = ({
           <p key={file.url}>{file.name}</p>
         ))}
         <button onClick={() => setPending((value) => !value)} type="button">
-          {pending ? "Resolve pending send" : "Simulate pending send"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            pending ? "Resolve pending send" : "Simulate pending send"
+          }
         </button>
       </section>
     </main>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatWelcomeView, ConnectorsControl, EveArtifactLayout, EveConversation, InternalLink, useChatModels, usePathname, useRouter, useSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #620: This comparison fixture intentionally exports hook mocks and reference components from one test module; it is not a production Fast Refresh boundary. */
 export {
@@ -178,4 +198,5 @@ export {
   useRouter,
   useSession,
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

@@ -1,10 +1,16 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { updateEnvironmentExample } from "./environment-example";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Preserve the owned section boundary and verify unrelated user configuration in the same ordered operation.
 test("replacement updates owned credential examples while preserving user entries and real credentials", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-env-example-"));
@@ -34,7 +40,8 @@ test("replacement updates owned credential examples while preserving user entrie
     await rm(cwd, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/max-statements -- Exercise both independent provider replacements and legacy user ownership in one sequence.
 test("independent provider sections retain shared credentials and preserve unmarked legacy entries", async () => {
   const cwd = await mkdtemp(path.join(tmpdir(), "chatjs-shared-env-"));
@@ -64,3 +71,4 @@ test("independent provider sections retain shared credentials and preserve unmar
     await rm(cwd, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */

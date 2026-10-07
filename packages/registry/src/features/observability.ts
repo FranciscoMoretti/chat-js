@@ -3,6 +3,7 @@ import type { RegistryItem } from "shadcn/schema";
 // oxlint-disable-next-line import/no-relative-parent-imports -- The registry catalog imports its package-local descriptor schema; the inherited @/ alias resolves app code and cannot address packages/registry/metadata.ts.
 import { featureDefinitionSchema } from "../../metadata";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (observabilityItems); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const observabilityItems = [
   {
     dependencies: ["@vercel/analytics@^1.5.0"],
@@ -31,6 +32,7 @@ export const observabilityItems = [
     description,
     dependencies,
     files,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding definition excludes id, description, dependencies, files from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...definition
   }: Readonly<{
     id: string;
@@ -53,6 +55,7 @@ export const observabilityItems = [
         contractVersion: 1,
         id,
         kind: "feature",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing definition own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...definition,
       }),
     },
@@ -60,3 +63,4 @@ export const observabilityItems = [
     type: "registry:item" as const,
   })
 ) satisfies RegistryItem[];
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

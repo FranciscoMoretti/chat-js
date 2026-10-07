@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   mkdtemp,
@@ -7,30 +8,43 @@ import {
   rm,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture converts module URLs into filesystem paths using native URL semantics.
 import { fileURLToPath } from "node:url";
+/* oxlint-enable sort-imports */
 
 import gatewayPackage from "@chat-js/gateways/package.json";
 import { z } from "zod";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { gatewayMetadata } from "../../registry/src/gateways/metadata";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import cliPackage from "../package.json";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GATEWAYS } from "../src/types";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 // oxlint-disable-next-line import/max-dependencies -- The installer orchestrates explicit planning, provider and package-manager boundaries.
 import { externalGatewayFixture } from "./external-gateway";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   nativeToolFixture,
   verifyNativeToolRuntime,
 } from "./native-tool-fixture";
-/* oxlint-enable import/max-dependencies */
+/* oxlint-enable sort-imports */
 import { run } from "./run-command";
 
 // oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
@@ -39,6 +53,7 @@ const { dirname, join } = pathModule;
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalRegistryUrl = process.env.CHATJS_REGISTRY_URL;
 /* oxlint-enable node/no-process-env */
+// oxlint-disable-next-line node/no-top-level-await -- This Bun integration suite creates the shared temporary root before registering its gateway setup and cleanup hooks.
 const root = await mkdtemp(join(tmpdir(), "chatjs-gateway-integration-"));
 const packageDirectory = dirname(
   fileURLToPath(import.meta.resolve("@chat-js/gateways/package.json"))
@@ -47,6 +62,7 @@ const cliDirectory = join(import.meta.dir, "..");
 const cliEntry = join(root, "cli/node_modules/@chat-js/cli/dist/index.js");
 const archive = join(root, `chat-js-gateways-${gatewayPackage.version}.tgz`);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterAll(async () => {
@@ -65,6 +81,7 @@ afterAll(async () => {
     clearTimeout(timeout);
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/init-declarations */
 
@@ -92,6 +109,7 @@ const external = externalGatewayFixture();
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const registryServer = Bun.serve({
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
   async fetch(request): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (path === "/paid-counter.json") {
@@ -296,15 +314,15 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
     }
     if (path === "/gateway.json") {
       return Response.json({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing external.root own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...external.root,
-        dependencies: external.root.dependencies.map((dependency) =>
-          dependency.startsWith("@chat-js/gateways@")
-            ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-              `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-            : dependency
-        ),
+        dependencies: external.root.dependencies.map((dependency) => {
+          if (dependency.startsWith("@chat-js/gateways@")) {
+            return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
+          }
+          return dependency;
+        }),
         registryDependencies: [
-          // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
           `http://127.0.0.1:${registryServer.port}/adapter.json`,
         ],
       });
@@ -348,21 +366,23 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
         // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
         if (item.dependencies) {
           // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-          item.dependencies = item.dependencies.map((dependency: string) =>
-            dependency.startsWith("@chat-js/gateways@")
-              ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-                `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`
-              : dependency
-          );
+          item.dependencies = item.dependencies.map((dependency: string) => {
+            if (dependency.startsWith("@chat-js/gateways@")) {
+              return `@chat-js/gateways@http://127.0.0.1:${registryServer.port}/contracts.tgz`;
+            }
+            return dependency;
+          });
         }
         return Response.json(item);
       }
     }
     return new Response("Not found", { status: 404 });
   },
+  /* oxlint-enable oxc/no-async-await */
   hostname: "127.0.0.1",
   port: 0,
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -378,20 +398,15 @@ beforeAll(async () => {
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   const output = join(cliDirectory, "../registry/dist/r");
   const outputNames = await readdir(output);
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const names = outputNames.toSorted();
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   const first = await Promise.all(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     names.map((name) => readFile(join(output, name), "utf-8"))
   );
   await run(join(cliDirectory, "../registry"), ["bun", "run", "build"]);
   const rebuiltOutputNames = await readdir(output);
-  // oxlint-disable-next-line typescript/no-unsafe-call -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   expect(rebuiltOutputNames.toSorted()).toEqual(names);
   expect(
     await Promise.all(
-      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       names.map((name) => readFile(join(output, name), "utf-8"))
     )
   ).toEqual(first);
@@ -409,9 +424,10 @@ beforeAll(async () => {
     })
   );
   await run(join(root, "cli"), ["bun", "install"]);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   process.env.CHATJS_REGISTRY_URL = `http://127.0.0.1:${registryServer.port}/{name}.json`;
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/max-statements */
@@ -419,7 +435,6 @@ beforeAll(async () => {
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 afterAll(async () => {
-  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
   await registryServer.stop(true);
   if (originalRegistryUrl === undefined) {
     delete process.env.CHATJS_REGISTRY_URL;
@@ -427,21 +442,21 @@ afterAll(async () => {
     process.env.CHATJS_REGISTRY_URL = originalRegistryUrl;
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */
 
-const gatewaySource = (gateway: string): string =>
-  // oxlint-disable-next-line typescript/no-unsafe-return -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-  gateway === "acme"
-    ? // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-      `http://127.0.0.1:${registryServer.port}/gateway.json`
-    : gateway;
+const gatewaySource = (gateway: string): string => {
+  if (gateway === "acme") {
+    return `http://127.0.0.1:${registryServer.port}/gateway.json`;
+  }
+  return gateway;
+};
 
 const storageArguments = (gateway: string): string[] => {
   if (gateway === "acme") {
     return [
       "--storage-provider",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-storage.json`,
       "--storage-config",
       '{"bucket":"test"}',
@@ -458,6 +473,7 @@ const storageArguments = (gateway: string): string[] => {
   return [];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   [     "unsupported-video",     "openai",     "--video-generation-tool",     "generate-vi's awaited sequencing and rejected-Promise behavior. */
 it.each([
   [
     "unsupported-video",
@@ -503,7 +519,7 @@ it.each([
     );
   }
 );
-
+/* oxlint-enable oxc/no-async-await */
 const toolArguments = (gateway: string): string[] => {
   if (gateway === "vercel") {
     return [
@@ -526,25 +542,21 @@ const toolArguments = (gateway: string): string[] => {
   if (gateway === "acme") {
     return [
       "--video-generation-tool",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-video.json`,
       "--image-generation-tool",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-image.json`,
       "--url-retrieval-tool",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-retrieval.json`,
       "--code-execution-tool",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-execution.json`,
       "--search-tool",
-      // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       `http://127.0.0.1:${registryServer.port}/external-search.json`,
     ];
   }
   return [];
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyResearchInstallation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -646,6 +658,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -655,7 +668,9 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 for (const gateway of [...GATEWAYS, "acme"]) {
+  // oxlint-disable-next-line no-ternary -- Keep electronFlag as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const electronFlag = gateway === "vercel" ? "--electron" : "--no-electron";
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line eslint/complexity -- The installation matrix branches on explicit independent selections at this orchestration boundary.
   it(`${gateway}: independently installed ChatJS app typechecks and loads the registry adapter`, async () => {
     const cwd = join(root, gateway);
@@ -667,6 +682,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       "--gateway",
       gatewaySource(gateway),
       ...storageArguments(gateway),
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(gateway === "openrouter" ? ["--no-documents"] : []),
       "--yes",
       electronFlag,
@@ -766,6 +782,7 @@ for (const gateway of [...GATEWAYS, "acme"]) {
     }
 
     const selectedSdk =
+      // oxlint-disable-next-line no-ternary -- Keep selectedSdk as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       gateway === "acme"
         ? "@ai-sdk/openai-compatible"
         : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -900,6 +917,7 @@ assert.equal(await files.exists("test.txt"), false);
       expect(manifest.dependencies["@vercel/blob"]).toBeUndefined();
     }
 
+    // oxlint-disable-next-line no-ternary -- Keep other as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const other = gateway === "vercel" ? "openai" : "vercel";
     await writeFile(
       join(cwd, "gateway-type-check.ts"),
@@ -907,12 +925,14 @@ assert.equal(await files.exists("test.txt"), false);
 // @ts-expect-error An uninstalled gateway must not typecheck.
 defineConfig({ ai: { gateway: "${other}" } });
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel" || gateway === "openai"
     ? `// @ts-expect-error Preserve the selected SDK's model ID type across package declarations.
 defineConfig({ ai: { gateway: "${gateway}", workflows: { chat: "not-a-model" } } });`
     : ""
 }
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel"
     ? ""
     : `// @ts-expect-error This gateway has no video model IDs.
@@ -951,7 +971,6 @@ assert.equal(new Gateway().type, "${gateway}");
     await run(cwd, ["bunx", "--no-install", "tsx", "probe.ts"]);
 
     if (gateway === "acme") {
-      // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- The local registry fixture exposes the bound server port used by this generated probe. The local fixture serves generated registry JSON and preserves the runtime checks used by the integration test.
       const registryPort = registryServer.port ?? 0;
       await writeFile(
         join(cwd, "probe-generation.ts"),
@@ -984,6 +1003,7 @@ assert.equal(applyDefaults(config).ai.gateway, "${gateway}");
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, tools: { ...applyDefaults(config).ai.tools, image: {} } }).success, true);
 assert.equal(aiConfigSchema.safeParse({ ...applyDefaults(config).ai, gateway: "${other}" }).success, false);
 ${
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   gateway === "vercel"
     ? ""
     : `const ai = applyDefaults(config).ai;
@@ -1178,11 +1198,11 @@ ${originalSearch}`
         "WordCountRendererWithAnIntentionallyLongNameForFormattingVerification";
       await writeFile(
         join(longDirectory, "tool.ts"),
-        `/* oxlint-disable import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { wordCount as ${toolExport} } from "../word-count/tool";\n/* oxlint-enable import/no-relative-parent-imports */\n`
+        `// oxlint-disable-next-line import/no-relative-parent-imports, import/no-named-export, import/prefer-default-export -- This fixture intentionally exposes the long named tool export recorded in chatjs.json.\nexport { wordCount as ${toolExport} } from "../word-count/tool";\n`
       );
       await writeFile(
         join(longDirectory, "renderer.tsx"),
-        `/* oxlint-disable import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n/* oxlint-enable import/no-relative-parent-imports */\n`
+        `// oxlint-disable-next-line import/no-relative-parent-imports, import/no-named-export, import/prefer-default-export -- This fixture intentionally exposes the long named renderer export recorded in chatjs.json.\nexport { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n`
       );
       await writeFile(
         join(longDirectory, "chatjs.json"),
@@ -1204,7 +1224,9 @@ ${originalSearch}`
       ).exists()
     ).toBe(false);
   }, 180_000);
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -1228,7 +1250,6 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
     "node",
     cliEntry,
     "add",
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     `http://127.0.0.1:${registryServer.port}/paid-counter.json`,
     "--yes",
   ]);
@@ -1245,13 +1266,17 @@ it("native tools: a minimal scaffold installs external EVE tools and preserves d
   await run(cwd, ["bun", "run", "test:types"]);
   await verifyNativeToolRuntime(cwd);
 }, 240_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 for (const installAtCreation of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   it(`MCP: create ${installAtCreation ? "with" : "without"} MCP and add preserve core, UI order and setup errors`, async () => {
+    // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const name = `mcp-${installAtCreation ? "installed" : "omitted"}`;
     const cwd = join(root, name);
     await run(root, [
@@ -1263,7 +1288,9 @@ for (const installAtCreation of [false, true]) {
       "openai",
       "--yes",
       "--no-electron",
+      // oxlint-disable-next-line no-ternary -- Keep ArrayLiteralExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       installAtCreation ? "--mcp" : "--no-mcp",
+      // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ...(installAtCreation
         ? [
             "--attachments",
@@ -1389,6 +1416,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
       computedSettings
     );
   }, 180_000);
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -1398,6 +1426,7 @@ requireCredentials("mcp", descriptor.envRequirements, {NODE_ENV: "test", MCP_ENC
 
 /* oxlint-disable eslint/max-lines-per-function, eslint/max-statements -- The packed CLI case proves fresh installation and both replacement directions before checking the resulting generated source. */
 const DAYTONA_INSTALL_TEST_TIMEOUT_MS = 180_000;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it(
   "Daytona installs and replaces Vercel through the packed CLI",
   async () => {
@@ -1459,4 +1488,5 @@ it(
   },
   DAYTONA_INSTALL_TEST_TIMEOUT_MS
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function, eslint/max-statements */

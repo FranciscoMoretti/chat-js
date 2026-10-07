@@ -1,10 +1,14 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-thinking-message" dependency within this package instead of introducing an alias or barrel API. */
 import type { EveMessage } from "eve/client";
-import type { ComponentProps } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
+import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
+/* oxlint-enable sort-imports */
 import { EveThinkingMessage } from "../components/eve/eve-thinking-message";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -46,6 +50,7 @@ const states: {
   },
   { cancellable: true, name: "Ready", status: "ready" },
 ];
+/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 
 /* oxlint-disable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types -- * no-undefined (#519): Fixture uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -61,13 +66,16 @@ const Fixture = (): React.JSX.Element => {
         <section aria-label={name} key={name}>
           <h2>{name}</h2>
           <EveThinkingMessage
+            // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             status={name === "Resuming" ? "resuming" : (status ?? "ready")}
+            // oxlint-disable-next-line no-ternary -- Keep messages JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             messages={parts ? [{ id: name, parts, role: "assistant" }] : []}
           />
           <ControlledChatComposer
             disabled={status !== "ready"}
             draft=""
             onDraftChange={() => setStopped("draft changed")}
+            // oxlint-disable-next-line no-ternary -- Keep onStop JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onStop={cancellable ? () => setStopped(name) : undefined}
             onSubmit={() => setStopped("unexpected submission")}
             status={status}
@@ -79,6 +87,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 const root = document.querySelector("#root");

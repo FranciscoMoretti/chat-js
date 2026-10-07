@@ -1,23 +1,33 @@
 import { Client, defaultMessageReducer } from "eve/client";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   canReadEveFile,
   reserveEveUpload,
   writeEveUpload,
 } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createFileId,
   downloadFile,
   getFileMetadata,
   uploadFileAtKey,
 } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "@/lib/file-url";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveConnectionOptions } from "./connection-options";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { attachmentDigest, draftAttachment } from "./draft";
+/* oxlint-enable sort-imports */
 import { assertEveConfigured } from "./server";
 
 const EMPTY_ATTACHMENT_BYTES = 0;
@@ -67,6 +77,8 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
   return blob;
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (restoreMessageAttachments); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve restoreMessageAttachments's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): restoreMessageAttachments keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -76,15 +88,16 @@ const inlineAttachment = (url: string, contentType: string): Blob => {
  */
 /**
  * Copy trusted native history for editing after validating every historical attachment.
- * @param ownerId Owner whose conversation and file access authorize each copy.
- * @param input Conversation and user message identifying the native history to restore.
- * @returns Owned attachment references copied sequentially from the validated history.
+ * @param {string} ownerId Owner whose conversation and file access authorize each copy.
+ * @param {Readonly<{ conversationId: string; messageId: string }>} input Conversation and user message identifying the native history to restore.
+ * @returns {Promise<z.output<typeof draftAttachment>[]>} Owned attachment references copied sequentially from the validated history.
  */
 export const restoreMessageAttachments = async (
   ownerId: string,
   input: Readonly<{ conversationId: string; messageId: string }>
 ): Promise<z.output<typeof draftAttachment>[]> => {
   const conversation = await getEveConversation(ownerId, input.conversationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!(conversation?.sessionId && conversation.state === "bound")) {
     throw new Error("Conversation is unavailable for editing.");
   }
@@ -156,6 +169,7 @@ export const restoreMessageAttachments = async (
     );
     attachments.push(
       draftAttachment.parse({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing copied own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...copied,
         contentType,
         // oxlint-disable-next-line eslint/no-await-in-loop -- Digest exact historical bytes.
@@ -166,4 +180,6 @@ export const restoreMessageAttachments = async (
   }
   return attachments;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -38,6 +38,7 @@ const connector = (id: string) => ({
   type: "http" as const,
   url: "https://mcp.test",
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 it("a failed state cannot remove another active authorization", async () => {
@@ -47,6 +48,8 @@ it("a failed state cannot remove another active authorization", async () => {
   expect(getOrCreateMcpClient(config)).toBe(client);
   expect(mocks.close).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("a failed state cannot close an established connection", async () => {
   mocks.state.status = "connected";
   const config = connector("connected");
@@ -55,6 +58,8 @@ it("a failed state cannot close an established connection", async () => {
   expect(getOrCreateMcpClient(config)).toBe(client);
   expect(mocks.close).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the matching authorizing client is removed and closed", async () => {
   const config = connector("matching");
   const client = getOrCreateMcpClient(config);
@@ -62,7 +67,8 @@ it("the matching authorizing client is removed and closed", async () => {
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("unconditional removal closes and evicts an established client", async () => {
   mocks.state.status = "connected";
   const config = connector("unconditional");
@@ -71,3 +77,4 @@ it("unconditional removal closes and evicts an established client", async () => 
   expect(mocks.close).toHaveBeenCalledOnce();
   expect(getOrCreateMcpClient(config)).not.toBe(client);
 });
+/* oxlint-enable oxc/no-async-await */

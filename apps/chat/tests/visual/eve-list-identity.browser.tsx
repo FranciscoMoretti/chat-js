@@ -1,13 +1,19 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable-next-line sort-imports -- Keep the type-only EVE message fixture contract with the browser test imports. */
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Preserve React's default and named test imports as required by existing browser fixtures. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve the fixture's grouped Vitest APIs. */
 import { expect, test, vi } from "vitest";
 
 import { EveMessages } from "@/components/eve/eve-messages";
 import { EveSearchResultsView } from "@/components/eve/eve-search-results-view";
 
+/* oxlint-disable sort-imports -- Keep the browser-only stylesheet after the components it styles, matching the adjacent visual fixtures. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 Object.defineProperty(globalThis, "IS_REACT_ACT_ENVIRONMENT", {
   configurable: true,
@@ -71,14 +77,14 @@ const messages: readonly EveMessage[] = [
 ];
 
 /* oxlint-disable-next-line eslint/max-statements -- Keep the focused browser capture's setup, assertions, and cleanup together. */
+/* oxlint-disable-next-line eslint/max-statements, oxc/no-async-await -- eslint/max-statements: Keep this browser scenario setup, precise highlight assertions, capture, and cleanup together; oxc/no-async-await: Await the visual capture and sequence it before cleanup. */
 test("search results retain distinct repeated highlight locations", async () => {
   const container = document.createElement("main");
   container.className = "p-6";
   document.body.append(container);
   const root = createRoot(container);
   try {
-    await act(async () => {
-      await Promise.resolve();
+    act(() => {
       root.render(
         <EveSearchResultsView
           disableLoadMore
@@ -98,12 +104,20 @@ test("search results retain distinct repeated highlight locations", async () => 
         />
       );
     });
-    // oxlint-disable-next-line no-magic-numbers -- The fixture contains two repeated highlighted spans.
-    expect(container.querySelectorAll("mark")).toHaveLength(2);
+    const marks = [...container.querySelectorAll("mark")];
+    const markTexts: string[] = [];
+    const textAfterMarks: string[] = [];
+    for (const mark of marks) {
+      markTexts.push(mark.textContent ?? "");
+      const sibling = mark.nextSibling;
+      // oxlint-disable-next-line oxc/no-optional-chaining -- DOM sibling access is nullable; preserve a clear fixture failure when a marked span has no following text node.
+      textAfterMarks.push(sibling?.textContent ?? "missing following text");
+    }
+    expect(markTexts).toEqual(["identity", "identity"]);
+    expect(textAfterMarks).toEqual([" twice, then ", " again."]);
     await takeSnapshot("eve-search-repeated-highlights");
   } finally {
-    await act(async () => {
-      await Promise.resolve();
+    act(() => {
       root.unmount();
     });
     container.remove();
@@ -111,14 +125,14 @@ test("search results retain distinct repeated highlight locations", async () => 
 });
 
 /* oxlint-disable-next-line eslint/max-statements -- Keep the focused browser capture's setup, assertions, and cleanup together. */
+/* oxlint-disable-next-line eslint/max-statements, oxc/no-async-await -- eslint/max-statements: Keep this browser scenario setup, rendered assertions, capture, and cleanup together; oxc/no-async-await: Await the visual capture and sequence it before cleanup. */
 test("EVE messages render streamed content and file parts", async () => {
   const container = document.createElement("main");
   container.className = "p-6";
   document.body.append(container);
   const root = createRoot(container);
   try {
-    await act(async () => {
-      await Promise.resolve();
+    act(() => {
       root.render(
         <EveMessages
           disabled={false}
@@ -132,8 +146,7 @@ test("EVE messages render streamed content and file parts", async () => {
     expect(container.textContent).toContain("Revenue grew this quarter.");
     await takeSnapshot("eve-message-parts-and-attachments");
   } finally {
-    await act(async () => {
-      await Promise.resolve();
+    act(() => {
       root.unmount();
     });
     container.remove();

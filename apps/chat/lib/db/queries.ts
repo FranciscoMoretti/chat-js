@@ -1,7 +1,14 @@
 import "server-only";
 import { and, desc, eq, or, sql } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps this erased Drizzle type import after the runtime named import; sort-imports requires the opposite local-name order. */
+import type { PgSelectBase, PgSelectWithout } from "drizzle-orm/pg-core";
+/* oxlint-enable sort-imports */
+import type { GetSelectTableName } from "drizzle-orm/query-builders/select.types";
 
 import { db } from "./client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { User, UserModelPreference } from "./schema";
+/* oxlint-enable sort-imports */
 import {
   eveChat,
   eveChatProject,
@@ -11,7 +18,6 @@ import {
   user,
   userModelPreference,
 } from "./schema";
-import type { User, UserModelPreference } from "./schema";
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- typescript/explicit-function-return-type (#560): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep createProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -34,7 +40,9 @@ const createProject = ({
 }) =>
   db.insert(project).values({
     createdAt: new Date(),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (icon && { icon }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(icon && { icon }),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Conditional spread (iconColor && { iconColor }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.
     ...(iconColor && { iconColor }),
     id,
     instructions,
@@ -53,6 +61,7 @@ const getProjectsByUserId = ({ userId }: { userId: string }) =>
     .from(project)
     .where(eq(project.userId, userId))
     .orderBy(desc(project.updatedAt));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getProjectById's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep getProjectById's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -65,6 +74,7 @@ const getProjectById = async ({ id }: { id: string }) => {
     .where(eq(project.id, id));
   return selectedProject;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- typescript/explicit-function-return-type (#560): Keep updateProject's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -84,6 +94,7 @@ const updateProject = ({
 }) =>
   db
     .update(project)
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing updates own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     .set({ ...updates, updatedAt: new Date() })
     .where(eq(project.id, id));
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
@@ -93,6 +104,7 @@ typescript/explicit-module-boundary-types (#562): Keep deleteProject's return ty
 typescript/prefer-readonly-parameter-types (#565): deleteProject accepts { id }: { id: string }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const deleteProject = ({ id }: { id: string }) =>
   db.delete(project).where(eq(project.id, id));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getUserById's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): getUserById uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -109,6 +121,7 @@ const getUserById = async ({
     .limit(1);
   return users[0];
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- typescript/prefer-readonly-parameter-types (#565): getUserModelPreferences accepts { userId, }: { userId: string; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -122,6 +135,7 @@ const getUserModelPreferences = ({
     .select()
     .from(userModelPreference)
     .where(eq(userModelPreference.userId, userId));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve upsertUserModelPreference's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): upsertUserModelPreference accepts { userId, modelId, enabled, }: { userId: string; modelId: string; enabled: boolean; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -148,14 +162,33 @@ const upsertUserModelPreference = async ({
       target: [userModelPreference.userId, userModelPreference.modelId],
     });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- jsdoc/require-param (#534): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): getEveMessageVotes's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep getEveMessageVotes's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
-/** Feedback is owner-only, including when a conversation is publicly shared. */
-const getEveMessageVotes = (ownerId: string, conversationId: string) =>
+/**
+ * Reads vote state for messages in one bound conversation owned by the user.
+ * Public sharing does not grant access to these owner-only votes.
+ * @param {string} ownerId Owner whose vote state is requested.
+ * @param {string} conversationId Bound conversation to read.
+ * @returns {PromiseLike<Pick<typeof eveVote.$inferSelect, "isUpvoted" | "messageId">[]>} Lazy owner-filtered query. Await it or consume it with .then or .execute to read matching rows; Drizzle query methods remain available before consumption.
+ */
+const getEveMessageVotes = (
+  ownerId: string,
+  conversationId: string
+): PgSelectWithout<
+  PgSelectBase<
+    GetSelectTableName<typeof eveVote>,
+    Pick<typeof eveVote, "isUpvoted" | "messageId">,
+    "partial",
+    Record<
+      | GetSelectTableName<typeof eveVote>
+      | GetSelectTableName<typeof eveConversation>,
+      "not-null"
+    >
+  >,
+  false,
+  "where"
+> =>
   db
     .select({ isUpvoted: eveVote.isUpvoted, messageId: eveVote.messageId })
     .from(eveVote)
@@ -167,10 +200,9 @@ const getEveMessageVotes = (ownerId: string, conversationId: string) =>
         eq(eveConversation.state, "bound")
       )
     );
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveMessageVote's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null -- jsdoc/require-param (#534): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): saveEveMessageVote's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
 max-params (#511): saveEveMessageVote keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/explicit-function-return-type (#560): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep saveEveMessageVote's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
@@ -178,7 +210,15 @@ typescript/prefer-readonly-parameter-types (#565): saveEveMessageVote accepts tx
 typescript/promise-function-async (#606): saveEveMessageVote preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
 typescript/strict-boolean-expressions (#610): saveEveMessageVote intentionally keeps the existing falsy-value behavior of conversation; distinguishing empty, zero, and absent states requires a domain behavior decision.
 unicorn/no-null (#570): saveEveMessageVote preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Call only after validating the message against the native Eve snapshot. */
+/**
+ * Saves a message vote after validating the message against the native Eve snapshot.
+ * The owner and bound-conversation check runs under the conversation-family lock.
+ * @param {string} ownerId Owner submitting the vote.
+ * @param {string} conversationId Bound conversation containing the message.
+ * @param {string} messageId Native message ID being rated.
+ * @param {boolean} isUpvoted Whether the message received a positive vote.
+ * @returns {Promise<{ isUpvoted: boolean; messageId: string } | null>} The saved vote, or null when the conversation is no longer bound to the owner.
+ */
 const saveEveMessageVote = (
   ownerId: string,
   conversationId: string,
@@ -215,7 +255,9 @@ const saveEveMessageVote = (
       });
     return saved;
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assignEveConversationProject's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-params, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null -- max-lines-per-function (#510): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): assignEveConversationProject keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -288,6 +330,8 @@ const assignEveConversationProject = (
       .where(eq(eveChat.id, logicalChat.id));
     return { conversationId: routeId, projectId };
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assignEveConversationProject, createProject, deleteProject, getEveMessageVotes, getProjectById, getProjectsByUserId, getUserById, getUserModelPreferences, saveEveMessageVote, updateProject, upsertUserModelPreference); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls, unicorn/no-null */
 export {
   assignEveConversationProject,
@@ -302,3 +346,4 @@ export {
   updateProject,
   upsertUserModelPreference,
 };
+/* oxlint-enable import/no-named-export */

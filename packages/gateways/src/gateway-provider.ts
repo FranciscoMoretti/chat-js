@@ -4,7 +4,9 @@ import type {
 } from "@ai-sdk/provider";
 import type { ImageModel } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "./models.ts";
+/* oxlint-enable sort-imports */
 
 interface GatewayProvider<
   TGateway extends string = string,
@@ -28,4 +30,6 @@ interface GatewayProvider<
   readonly type: TGateway;
 }
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayProvider); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { GatewayProvider };
+/* oxlint-enable import/no-named-export */

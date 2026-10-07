@@ -1,5 +1,7 @@
 import { MockLanguageModelV3 } from "ai/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { generateEveFollowupSuggestions } from "./generate-followup-suggestions";
 
@@ -44,6 +46,7 @@ vi.mock("../config", () => ({
   },
 }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("the real AI SDK delivers usage before rejecting invalid structured suggestions") uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -52,8 +55,11 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
     assistant: "Because.",
     user: "Why?",
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseMetadata from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.responseMetadata).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls).toHaveLength(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from result.modelCalls; read modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls?.[0]).toMatchObject({
     modelId: "google/gemini-2.5-flash-lite",
     providerMetadata: {
@@ -61,7 +67,9 @@ it("the real AI SDK delivers usage before rejecting invalid structured suggestio
     },
     usage: { inputTokens: 20, outputTokens: 10 },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from result.modelCalls; read modelCalls from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(result?.modelCalls?.[0].failed).toBeUndefined();
   expect(model.doGenerateCalls).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

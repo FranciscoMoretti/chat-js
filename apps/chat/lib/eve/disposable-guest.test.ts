@@ -4,7 +4,9 @@
 /* oxlint-disable eslint/no-await-in-loop -- Sequential adversarial requests keep each authorization assertion explicit. */
 import { randomUUID } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import {
   issueGuestCredential,
@@ -25,6 +27,7 @@ afterEach(() => vi.useRealTimers());
  * typescript/explicit-function-return-type (#560): Keep claims's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
 const claims = () => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing newGuestClaims("test-model") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...newGuestClaims("test-model"),
   sessionId: "session-owned",
 });
@@ -35,11 +38,13 @@ const claims = () => ({
  */
 const request = (token: string, path: string, body?: unknown) =>
   new Request(`https://chat.example/eve/v1/${path}`, {
+    // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     body: body === undefined ? undefined : JSON.stringify(body),
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
+    // oxlint-disable-next-line no-ternary -- Keep method as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     method: body === undefined ? "GET" : "POST",
   });
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
@@ -52,12 +57,14 @@ test("credentials are signed, expire, and cannot be edited to name another sessi
   const original = claims();
   const token = issueGuestCredential(original);
   expect(readGuestCredential(token)).toEqual(original);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const forged = `${Buffer.from(JSON.stringify({ ...original, sessionId: "victim" })).toString("base64url")}.${token.split(".")[1]}`;
   expect(readGuestCredential(forged)).toBeNull();
   expect(readGuestCredential(`${token}.extra`)).toBeNull();
   vi.setSystemTime(original.expiresAt);
   expect(readGuestCredential(token)).toBeNull();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("every read, send, cancel and retirement is restricted to the signed session", async () => {
@@ -105,7 +112,8 @@ test("every read, send, cancel and retirement is restricted to the signed sessio
     )
   ).toBeNull();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("browser credentials cannot create, fork, read checkpoints or submit tools, files or privileged context", async () => {
   const token = issueGuestCredential(claims());
   expect(
@@ -132,7 +140,8 @@ test("browser credentials cannot create, fork, read checkpoints or submit tools,
     ).toBeNull();
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("server-only bootstrap credentials authorize empty creation, never session access", async () => {
   const token = issueGuestCredential(newGuestClaims("test-model"));
   expect(
@@ -149,3 +158,4 @@ test("server-only bootstrap credentials authorize empty creation, never session 
     )
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */

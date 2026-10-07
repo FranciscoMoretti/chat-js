@@ -1,5 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
 
@@ -52,11 +54,13 @@ vi.mock("eve/client", () => ({
   Client: class {
     public sessions = {
       attach: (sessionId: string) => ({
+        /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve stream's asynchronous iteration and rejection behavior. */
         async *stream(options: unknown) {
           mocks.streamOptions(options);
           await mocks.read(sessionId);
           yield* mocks.events.get(sessionId) ?? [];
         },
+        /* oxlint-enable oxc/no-async-await */
       }),
     };
   },
@@ -83,6 +87,7 @@ beforeEach(() => {
     }))
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -123,6 +128,8 @@ it("keeps four reads busy when one conversation is slow", async () => {
     "7",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
@@ -156,6 +163,8 @@ it("stops scheduling on failure and waits for in-flight billing reads", async ()
   await rejection;
   expect(mocks.read).toHaveBeenCalledTimes(4);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
 
 /* oxlint-disable unicorn/no-null --
@@ -172,6 +181,8 @@ it("rejects uncertain ownership bindings before reading any stream", async () =>
   expect(mocks.read).not.toHaveBeenCalled();
   expect(mocks.positions).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -196,6 +207,8 @@ it("skips only streams whose exact position matches the durable billing cursor",
     "missing",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -211,6 +224,8 @@ it("refuses a stream shorter than its durable billing cursor", async () => {
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("fails closed when authoritative stream positions cannot be read", async () => {
@@ -220,7 +235,8 @@ it("fails closed when authoritative stream positions cannot be read", async () =
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("finishes interrupted commands before selecting usage streams", async () => {
   mocks.recover.mockImplementation(() => {
     mocks.bindings.mockResolvedValue([
@@ -231,6 +247,8 @@ it("finishes interrupted commands before selecting usage streams", async () => {
   expect(mocks.recover).toHaveBeenCalledWith("owner");
   expect(mocks.read).toHaveBeenCalledWith("recovered");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not admit new work when recovery remains unavailable", async () => {
   mocks.recover.mockRejectedValue(new Error("worker unavailable"));
   await expect(reconcileEveOwnerUsage("owner")).rejects.toThrow(
@@ -238,7 +256,8 @@ it("does not admit new work when recovery remains unavailable", async () => {
   );
   expect(mocks.bindings).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("resumes managed reads at the persisted billing cursor without following live work uses 17 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -252,6 +271,8 @@ it("resumes managed reads at the persisted billing cursor without following live
     expect.objectContaining({ follow: false, startIndex: 17 })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -274,6 +295,8 @@ it("reconciles only the target during a managed owner cooldown, then sweeps when
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read).toHaveBeenCalledTimes(8);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("does not bypass managed reconciliation failures", async () => {
@@ -283,7 +306,8 @@ it("does not bypass managed reconciliation failures", async () => {
     "Unpriced usage"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("replays historical unpriced evidence even when its stream cursor already advanced uses 20 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -302,6 +326,8 @@ it("replays historical unpriced evidence even when its stream cursor already adv
     expect.objectContaining({ startIndex: 0 })
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -346,6 +372,8 @@ it("reconciles child tails even when the root cursor is unchanged and preserves 
   });
   expect(mocks.advanceChild).toHaveBeenCalledWith("owner", "child", 3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("blocks admission without advancing child progress when a completed child charge remains unknown", async () => {
@@ -377,7 +405,8 @@ it("blocks admission without advancing child progress when a completed child cha
   );
   expect(mocks.advanceChild).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("settles newly discovered descendants before admitting the next turn", async () => {
   mocks.bindings.mockResolvedValue([
     { sessionId: "root", state: "bound", usageStreamIndex: 0 },
@@ -416,7 +445,8 @@ it("settles newly discovered descendants before admitting the next turn", async 
   await reconcileEveOwnerUsage("owner");
   expect(mocks.read.mock.calls).toEqual([["root"], ["child"], ["grandchild"]]);
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("skips settled research history with one owner-wide child lookup") uses 20, 5, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -449,6 +479,8 @@ it("skips settled research history with one owner-wide child lookup", async () =
   ]);
   expect(mocks.read).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -477,6 +509,7 @@ it("rejects a rewound child even when its parent is settled", async () => {
   );
   expect(mocks.read).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This reconcile-usage.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

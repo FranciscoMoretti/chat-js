@@ -8,6 +8,7 @@ afterEach(() => {
   vi.useRealTimers();
   request.mockReset();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("waits through source initialization and verifies exact checkpoint identity") uses 250, 2, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -33,6 +34,8 @@ it("waits through source initialization and verifies exact checkpoint identity",
     "/eve/chat/v1/session/source/checkpoint?beforeTurnId=turn_0",
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("does not accept an unrelated source receipt or a generic not found") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -52,6 +55,8 @@ it("does not accept an unrelated source receipt or a generic not found", async (
   ).rejects.toThrow("lookup is unavailable");
   expect(request).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("times out without allocating or changing the requested checkpoint") uses 15_000, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -77,6 +82,8 @@ it("times out without allocating or changing the requested checkpoint", async ()
     )
   ).toBe(true);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
@@ -98,8 +105,11 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     `/eve/chat/v1/session/source/checkpoint/${checkpointId}?beforeTurnId=turn_1`,
   ]);
   for (const invalid of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, checkpointId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, checkpointId: undefined },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing receipt own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...receipt, ready: false },
   ]) {
     request.mockResolvedValueOnce(Response.json(invalid));
@@ -109,6 +119,8 @@ it("requires the exact named checkpoint receipt and never falls back to a turn l
     ).rejects.toThrow("Invalid source checkpoint");
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["source_not_idle", "source_advanced"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -129,6 +141,8 @@ it.each(["source_not_idle", "source_advanced"])(
     expect(request).toHaveBeenCalledTimes(1);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   { checkpointRejected: true, error: "Identity conflict" },   { checkpointRejected: false,'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -144,4 +158,5 @@ it.each([
     waitForEveCheckpoint("owner", "source", "turn_1", crypto.randomUUID())
   ).rejects.toThrow("lookup is unavailable");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

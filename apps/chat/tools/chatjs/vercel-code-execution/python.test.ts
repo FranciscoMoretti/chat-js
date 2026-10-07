@@ -1,6 +1,8 @@
 import { Sandbox } from "@vercel/sandbox";
 import pino from "pino";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
@@ -11,6 +13,7 @@ const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
   Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -65,4 +68,5 @@ it.each([0, 1])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

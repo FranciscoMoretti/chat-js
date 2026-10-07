@@ -99,6 +99,7 @@ class ThreadRunState<
 
   private withResumePrefix(message: TMessage): TMessage {
     const prefix = this.resumePrefix;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from prefix; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (prefix?.id === message.id) {
       // Seed the SDK's response object once, so later tool/approval updates
       // operate on the same restored parts instead of a separate projection.
@@ -113,4 +114,6 @@ class ThreadRunState<
   }
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ThreadRunState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { ThreadRunState };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

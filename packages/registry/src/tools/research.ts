@@ -83,4 +83,6 @@ const researchItem: RegistryItem = {
   registryDependencies: ["@chatjs/text-documents"],
   type: "registry:item",
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (researchAgentDirectories, researchAgentFiles, researchItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { researchAgentDirectories, researchAgentFiles, researchItem };
+/* oxlint-enable import/no-named-export */

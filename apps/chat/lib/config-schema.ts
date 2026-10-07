@@ -1,14 +1,19 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
+/* oxlint-enable sort-imports */
 
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyNativeSurface } from "./readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 // Helper to create typed model ID schemas
 const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();
@@ -68,22 +73,21 @@ const deepResearchToolConfigSchema = z.object({
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable id-length, max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls --
- * id-length (#506): createAiSchema uses G; g as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls --
  * max-lines-per-function (#510): createAiSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/explicit-function-return-type (#560): Keep createAiSchema's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * unicorn/max-nested-calls (#568): createAiSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */
-const createAiSchema = <G extends GatewayType>(gateway: G) =>
+const createAiSchema = <Gateway extends GatewayType>(gateway: Gateway) =>
   z.object({
     anonymousModels: z
-      .array(gatewayModelId<G>())
+      .array(gatewayModelId<Gateway>())
       .describe("Models available to anonymous users"),
     curatedDefaults: z
-      .array(gatewayModelId<G>())
+      .array(gatewayModelId<Gateway>())
       .describe("Default models enabled for new users"),
     disabledModels: z
-      .array(gatewayModelId<G>())
+      .array(gatewayModelId<Gateway>())
       .describe("Models to hide from all users"),
     gateway: z.literal(gateway),
     providerOrder: z
@@ -92,46 +96,47 @@ const createAiSchema = <G extends GatewayType>(gateway: G) =>
     tools: z
       .object({
         code: z.object({
-          edits: gatewayModelId<G>(),
+          edits: gatewayModelId<Gateway>(),
         }),
         deepResearch: deepResearchToolConfigSchema.extend({
-          defaultModel: gatewayModelId<G>(),
-          finalReportModel: gatewayModelId<G>(),
+          defaultModel: gatewayModelId<Gateway>(),
+          finalReportModel: gatewayModelId<Gateway>(),
         }),
         followupSuggestions: z.object({
-          default: gatewayModelId<G>(),
+          default: gatewayModelId<Gateway>(),
           enabled: z.boolean(),
         }),
         image: z.object({
-          default: gatewayImageModelId<G>().optional(),
+          default: gatewayImageModelId<Gateway>().optional(),
         }),
         sheet: z.object({
-          analyze: gatewayModelId<G>(),
-          format: gatewayModelId<G>(),
+          analyze: gatewayModelId<Gateway>(),
+          format: gatewayModelId<Gateway>(),
         }),
         text: z.object({
-          polish: gatewayModelId<G>(),
+          polish: gatewayModelId<Gateway>(),
         }),
         video: z.object({
-          default: gatewayVideoModelId<G>().optional(),
+          default: gatewayVideoModelId<Gateway>().optional(),
         }),
       })
       .describe("Default model and runtime configuration grouped by tool"),
     workflows: z
       .object({
-        chat: gatewayModelId<G>(),
-        chatImageCompatible: gatewayModelId<G>(),
-        pdf: gatewayModelId<G>(),
-        title: gatewayModelId<G>(),
+        chat: gatewayModelId<Gateway>(),
+        chatImageCompatible: gatewayModelId<Gateway>(),
+        pdf: gatewayModelId<Gateway>(),
+        title: gatewayModelId<Gateway>(),
       })
       .describe("Default model for shared app workflows"),
   });
-/* oxlint-enable id-length, max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls */
+/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls */
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
 const aiConfigSchema = installedGatewaySchema.default({
   gateway: gatewayType,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayModelDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...gatewayModelDefaults,
 });
 
@@ -404,156 +409,139 @@ type ZodConfigInput = z.input<typeof configSchema>;
 type AiShape = z.input<typeof installedGatewaySchema>;
 type AiToolsShape = AiShape["tools"];
 
-/* oxlint-disable id-length --
- * id-length (#506): DeepResearchToolInputFor uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
 // All helper types are Partial — fields not provided are filled by applyDefaults
-type DeepResearchToolInputFor<G extends GatewayType> = Partial<
+type DeepResearchToolInputFor<Gateway extends GatewayType> = Partial<
   Omit<AiToolsShape["deepResearch"], "defaultModel" | "finalReportModel"> & {
-    defaultModel: GatewayModelIdMap[G];
-    finalReportModel: GatewayModelIdMap[G];
+    defaultModel: GatewayModelIdMap[Gateway];
+    finalReportModel: GatewayModelIdMap[Gateway];
   }
 >;
-/* oxlint-enable id-length */
-/* oxlint-disable id-length, typescript/consistent-type-definitions --
- * id-length (#506): ImageToolInputFor uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/consistent-type-definitions (#559): ImageToolInputFor preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): ImageToolInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
  */
-type ImageToolInputFor<G extends GatewayType> = {
-  default?: GatewayImageModelIdMap[G];
+type ImageToolInputFor<Gateway extends GatewayType> = {
+  default?: GatewayImageModelIdMap[Gateway];
 };
-/* oxlint-enable id-length, typescript/consistent-type-definitions */
-/* oxlint-disable id-length, typescript/consistent-type-definitions --
- * id-length (#506): VideoToolInputFor uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/consistent-type-definitions (#559): VideoToolInputFor preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+/* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): VideoToolInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
  */
-type VideoToolInputFor<G extends GatewayType> = {
-  default?: GatewayVideoModelIdMap[G];
+type VideoToolInputFor<Gateway extends GatewayType> = {
+  default?: GatewayVideoModelIdMap[Gateway];
 };
-/* oxlint-enable id-length, typescript/consistent-type-definitions */
-/* oxlint-disable id-length --
- * id-length (#506): FollowupSuggestionsToolInputFor uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
-type FollowupSuggestionsToolInputFor<G extends GatewayType> = Partial<{
+/* oxlint-enable typescript/consistent-type-definitions */
+type FollowupSuggestionsToolInputFor<Gateway extends GatewayType> = Partial<{
   enabled: boolean;
-  default: GatewayModelIdMap[G];
+  default: GatewayModelIdMap[Gateway];
 }>;
-/* oxlint-enable id-length */
-/* oxlint-disable id-length --
- * id-length (#506): AiToolsInputFor uses G; P as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
-interface AiToolsInputFor<G extends GatewayType> {
-  code?: Partial<{ [P in keyof AiToolsShape["code"]]: GatewayModelIdMap[G] }>;
-  deepResearch?: DeepResearchToolInputFor<G>;
-  followupSuggestions?: FollowupSuggestionsToolInputFor<G>;
-  image?: ImageToolInputFor<G>;
-  sheet?: Partial<{ [P in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[G] }>;
-  text?: Partial<{ [P in keyof AiToolsShape["text"]]: GatewayModelIdMap[G] }>;
-  video?: VideoToolInputFor<G>;
+interface AiToolsInputFor<Gateway extends GatewayType> {
+  code?: Partial<{
+    [ToolOption in keyof AiToolsShape["code"]]: GatewayModelIdMap[Gateway];
+  }>;
+  deepResearch?: DeepResearchToolInputFor<Gateway>;
+  followupSuggestions?: FollowupSuggestionsToolInputFor<Gateway>;
+  image?: ImageToolInputFor<Gateway>;
+  sheet?: Partial<{
+    [ToolOption in keyof AiToolsShape["sheet"]]: GatewayModelIdMap[Gateway];
+  }>;
+  text?: Partial<{
+    [ToolOption in keyof AiToolsShape["text"]]: GatewayModelIdMap[Gateway];
+  }>;
+  video?: VideoToolInputFor<Gateway>;
 }
-/* oxlint-enable id-length */
 
-/* oxlint-disable id-length, typescript/consistent-type-definitions --
- * id-length (#506): AiInputFor uses G; W as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/consistent-type-definitions (#559): AiInputFor preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
+/* oxlint-disable typescript/consistent-type-definitions --
+ * typescript/consistent-type-definitions (#559): AiInputFor is part of exported ConfigInput; retaining an object alias preserves implicit index-signature assignability for consumers accepting records.
  */
 // Only gateway is required; everything else is an override on top of GATEWAY_MODEL_DEFAULTS
-type AiInputFor<G extends GatewayType> = {
-  gateway: G;
+type AiInputFor<Gateway extends GatewayType> = {
+  gateway: Gateway;
   providerOrder?: AiShape["providerOrder"];
-  disabledModels?: GatewayModelIdMap[G][];
-  curatedDefaults?: GatewayModelIdMap[G][];
-  anonymousModels?: GatewayModelIdMap[G][];
+  disabledModels?: GatewayModelIdMap[Gateway][];
+  curatedDefaults?: GatewayModelIdMap[Gateway][];
+  anonymousModels?: GatewayModelIdMap[Gateway][];
   workflows?: Partial<{
-    [W in keyof AiShape["workflows"]]: GatewayModelIdMap[G];
+    [Workflow in keyof AiShape["workflows"]]: GatewayModelIdMap[Gateway];
   }>;
-  tools?: AiToolsInputFor<G>;
+  tools?: AiToolsInputFor<Gateway>;
 };
-/* oxlint-enable id-length, typescript/consistent-type-definitions */
+/* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable id-length --
- * id-length (#506): ConfigInputForGateway uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- */
-type ConfigInputForGateway<G extends GatewayType> = Omit<
+type ConfigInputForGateway<Gateway extends GatewayType> = Omit<
   ZodConfigInput,
   "ai"
 > & {
-  ai?: AiInputFor<G>;
+  ai?: AiInputFor<Gateway>;
 };
-/* oxlint-enable id-length */
 
 // Each installation selects one gateway and its corresponding model IDs.
 type ConfigInput = ConfigInputForGateway<GatewayType>;
 
-/* oxlint-disable id-length, jsdoc/require-param, jsdoc/require-returns -- id-length (#506): defineConfig uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-moving it below executable initialization can obscure ordering and API ownership.
-jsdoc/require-param (#534): defineConfig's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): defineConfig's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
 /**
- * Type-safe config helper. Infers the gateway type from `ai.gateway` so
- * autocomplete and error messages are scoped to the chosen gateway's model IDs.
- * Only `ai.gateway` is required — all other `ai` fields are optional overrides
- * on top of the gateway defaults supplied by `applyDefaults`.
+ * Preserve literal gateway/model selections for configuration autocomplete.
+ * Defaults and runtime validation are applied later by applyDefaults.
+ * @param {InputConfig} config Partial configuration with gateway-specific model selections.
+ * @returns {InputConfig} The exact input object, retaining its inferred literal field types.
  */
-const defineConfig = <const T extends ConfigInput>(config: T): T => config;
-/* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns */
+const defineConfig = <const InputConfig extends ConfigInput>(
+  config: InputConfig
+): InputConfig => config;
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): mergeToolsConfig uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): mergeToolsConfig accepts user: Record<string, unknown> | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- */
-const mergeToolsConfig = <T extends Record<string, unknown>>(
-  defaults: T,
-  user: Record<string, unknown> | undefined
-): T => {
+const mergeToolsConfig = (
+  defaults: Readonly<Record<string, unknown>>,
+  user: ReadonlyNativeSurface<AiToolsInputFor<GatewayType>> | undefined
+): Record<string, unknown> => {
   if (!user) {
     return defaults;
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of defaults rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
   const result: Record<string, unknown> = { ...defaults };
-  for (const [key, val] of Object.entries(user)) {
-    const defVal = result[key];
+  const entries: [string, unknown][] = Object.entries(user);
+  for (const [key, value] of entries) {
+    const defaultValue = result[key];
     result[key] =
-      val !== null &&
-      typeof val === "object" &&
-      !Array.isArray(val) &&
-      defVal !== null &&
-      typeof defVal === "object" &&
-      !Array.isArray(defVal)
-        ? { ...defVal, ...val }
-        : val;
+      // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      defaultValue !== null &&
+      typeof defaultValue === "object" &&
+      !Array.isArray(defaultValue)
+        ? // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaultValue own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+          { ...defaultValue, ...value }
+        : value;
   }
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-  return result as T;
+  return result;
 };
-/* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): applyDefaults accepts input: ConfigInput; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 // Apply defaults to partial config
-const applyDefaults = (input: ConfigInput): Config => {
+const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading gateway from input.ai; preserve one receiver evaluation, skipped accesses and the existing gatewayType fallback. The app guidance prefers optional chaining.
   const gateway = input.ai?.gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;
-  const aiInput = input.ai as Record<string, unknown> | undefined;
+  const aiInput = input.ai;
 
   const mergedAi = {
     gateway,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...gatewayDefaults,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing aiInput own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...aiInput,
-    tools: mergeToolsConfig(
-      gatewayDefaults.tools,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-      aiInput?.tools as Record<string, unknown> | undefined
-    ),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tools from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    tools: mergeToolsConfig(gatewayDefaults.tools, aiInput?.tools),
     workflows: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayDefaults.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...gatewayDefaults.workflows,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-      ...(aiInput?.workflows as Record<string, unknown> | undefined),
+      // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining -- Keep the existing aiInput?.workflows own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Optional chain: Keep the existing nullish guard when reading workflows from aiInput; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      ...aiInput?.workflows,
     },
   };
 
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return configSchema.parse({ ...input, ai: mergedAi });
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (aiConfigSchema, ANONYMOUS_DEFAULTS, anonymousConfigObjectSchema, anonymousConfigSchema, applyDefaults, ATTACHMENTS_DEFAULTS, attachmentsConfigObjectSchema, attachmentsConfigSchema, AUTHENTICATION_DEFAULTS, authenticationConfigObjectSchema, authenticationConfigSchema, configDescriptionSchema, configSchema, defineConfig, DESKTOP_APP_DEFAULTS, desktopAppConfigObjectSchema, desktopAppConfigSchema, FEATURES_DEFAULTS, featuresConfigObjectSchema, featuresConfigSchema, pricingConfigSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable max-lines -- #509: This config-schema.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
   aiConfigSchema,
@@ -578,6 +566,8 @@ export {
   featuresConfigSchema,
   pricingConfigSchema,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AiConfig, AnonymousConfig, AttachmentsConfig, AuthenticationConfig, Config, ConfigInput, DesktopAppConfig, FeaturesConfig, PricingConfig); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   AiConfig,
   AnonymousConfig,
@@ -589,4 +579,7 @@ export type {
   FeaturesConfig,
   PricingConfig,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { GatewayType } from "@/lib/ai/gateways/registry";
+/* oxlint-enable import/no-named-export */

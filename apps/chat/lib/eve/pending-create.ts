@@ -1,9 +1,13 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 
 import { createConversationInput } from "./contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveForkInput, EveForkKind } from "./contracts";
+/* oxlint-enable sort-imports */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
 import { eveResponseGroupInput } from "./response-group-input";
 
@@ -26,8 +30,10 @@ type CreationScope =
  */
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (scope?.conversationId) {
     suffix = `:fork:${scope.conversationId}`;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   } else if (scope?.projectId) {
     suffix = `:project:${scope.projectId}`;
   }
@@ -43,7 +49,11 @@ const readCreationRequest = (
   scope?: Readonly<CreationScope>
 ): z.output<typeof creationRequest> | undefined => {
   const stored = storage.getItem(keyFor(ownerId, scope));
-  return stored ? creationRequest.parse(JSON.parse(stored)) : undefined;
+
+  if (stored) {
+    return creationRequest.parse(JSON.parse(stored));
+  }
+  return undefined;
 };
 /* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
 
@@ -71,11 +81,14 @@ const prepareResponseGroupCreation = (
     return saved;
   }
   const request = eveResponseGroupInput.parse({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message,
     modelIds,
     operationId: crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
@@ -118,11 +131,14 @@ const prepareCreation = (
     return stored;
   }
   const pending = createConversationInput.safeParse({
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading fork from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     fork: context?.fork,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading forkKind from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     forkKind: context?.forkKind,
     message: draft,
     modelId,
     operationId: crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     projectId: context?.projectId,
     selectedTool,
   });
@@ -147,23 +163,25 @@ const prepareSelectedCreation = (
   if (saved) {
     return saved;
   }
-  return modelIds.length > SINGLE_MODEL_COUNT
-    ? prepareResponseGroupCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds,
-        scope,
-        selectedTool
-      )
-    : prepareCreation(
-        storage,
-        ownerId,
-        draft,
-        modelIds[FIRST_MODEL_INDEX],
-        scope,
-        selectedTool
-      );
+
+  if (modelIds.length > SINGLE_MODEL_COUNT) {
+    return prepareResponseGroupCreation(
+      storage,
+      ownerId,
+      draft,
+      modelIds,
+      scope,
+      selectedTool
+    );
+  }
+  return prepareCreation(
+    storage,
+    ownerId,
+    draft,
+    modelIds[FIRST_MODEL_INDEX],
+    scope,
+    selectedTool
+  );
 };
 /* oxlint-enable max-params */
 
@@ -179,11 +197,11 @@ const finishCreation = (
 no-undefined (#519): moveRejectedProjectCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.*/
 /**
  * Moves a definitively rejected project request into New Chat under a fresh operation.
- * @param storage Browser storage holding the original project draft and any New Chat draft.
- * @param ownerId Owner whose pending draft namespace must be preserved.
- * @param projectId Project scope containing the rejected request.
- * @param operationId Original operation checked before moving or deleting its stored draft.
- * @returns A fresh request with the original message/model selection; changed or conflicting drafts throw.
+ * @param {StorageAccess} storage Browser storage holding the original project draft and any New Chat draft.
+ * @param {string} ownerId Owner whose pending draft namespace must be preserved.
+ * @param {string} projectId Project scope containing the rejected request.
+ * @param {string} operationId Original operation checked before moving or deleting its stored draft.
+ * @returns {z.output<typeof creationRequest>} A fresh request with the original message/model selection; changed or conflicting drafts throw.
  */
 const moveRejectedProjectCreation = (
   storage: StorageAccess,
@@ -193,6 +211,7 @@ const moveRejectedProjectCreation = (
 ): z.output<typeof creationRequest> => {
   const scope = { projectId };
   const pending = readCreationRequest(storage, ownerId, scope);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (pending?.operationId !== operationId || pending.projectId !== projectId) {
     throw new Error("The saved request changed. Reload before continuing.");
   }
@@ -202,6 +221,7 @@ const moveRejectedProjectCreation = (
     );
   }
   const next =
+    // oxlint-disable-next-line no-ternary -- Keep next as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     "modelIds" in pending
       ? prepareResponseGroupCreation(
           storage,
@@ -222,6 +242,7 @@ const moveRejectedProjectCreation = (
   finishCreation(storage, ownerId, scope);
   return next;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (finishCreation, moveRejectedProjectCreation, prepareCreation, prepareResponseGroupCreation, prepareSelectedCreation, readCreation, readCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-params, no-undefined */
 export {
   finishCreation,
@@ -232,4 +253,7 @@ export {
   readCreation,
   readCreationRequest,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (CreationScope); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { CreationScope };
+/* oxlint-enable import/no-named-export */

@@ -8,6 +8,7 @@ import { eveResponseGroupResult } from "../lib/eve/response-group-contracts";
 
 const nano = /GPT-5 Nano/iu;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("nested comparisons retain both groups, duplicate-model slots and retry attempts keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -138,6 +139,8 @@ test("nested comparisons retain both groups, duplicate-model slots and retry att
   await expect(cards).toHaveCount(4);
   expect(page.url()).toBe(url);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -183,4 +186,5 @@ test("new-chat recovery survives an ambiguous reply and reload without a new ope
     page.getByRole("button", { name: "Retry creation" })
   ).toBeEnabled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

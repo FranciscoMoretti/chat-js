@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { GET } from "./route";
 
@@ -41,6 +43,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "", "   "])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test.each([undefined, "", " "])("unconfigured cleanup rejects a matching interpolated uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test.each([undefined, "", " "])("unconfigured cleanup rejects a matching interpolated uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -60,6 +63,8 @@ test.each([undefined, "", "   "])(
     expect(mocks.cleanupGuests).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -82,11 +87,13 @@ test("cleanup uses EVE ownership", async () => {
   });
 
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.cleanupEve.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.cleanupEve.mock.calls[0]?.[0].getTime()).toBeLessThanOrEqual(
     Date.now() - 4 * 60 * 60 * 1000
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -98,6 +105,8 @@ test("cleanup still requires cron authorization", async () => {
   );
   expect(response.status).toBe(401);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -117,6 +126,8 @@ test("storage failure does not prevent expired guest cleanup and reports retry",
     success: false,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -137,6 +148,8 @@ test("pending guest deletion is retryable failure after attachment cleanup runs"
   expect(mocks.cleanupEve).toHaveBeenCalledOnce();
   expect(await response.json()).toMatchObject({ success: false });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("unsupported guest cleanup never reports cron success or an empty backlog", async () => {
@@ -160,7 +173,8 @@ test("unsupported guest cleanup never reports cron success or an empty backlog",
   });
   expect(result).not.toHaveProperty("results.expiredGuests.pendingCount");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a skipped cleanup cannot become successful through a zero pending count", async () => {
   mocks.cleanupGuests.mockResolvedValueOnce({
     deletedCount: 0,
@@ -175,7 +189,8 @@ test("a skipped cleanup cannot become successful through a zero pending count", 
   expect(response.status).toBe(SERVICE_UNAVAILABLE);
   expect(await response.json()).toMatchObject({ success: false });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("guest inventory failure reports retry while attachment cleanup still runs", async () => {
   mocks.cleanupGuests.mockRejectedValueOnce(
     new Error("private database details")
@@ -195,3 +210,4 @@ test("guest inventory failure reports retry while attachment cleanup still runs"
     success: false,
   });
 });
+/* oxlint-enable oxc/no-async-await */
