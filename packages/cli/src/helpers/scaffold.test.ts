@@ -87,7 +87,13 @@ const runGeneratedGatewaySnapshotWarningTest = async (
   packageManager: "bun" | "npm"
 ): Promise<void> => {
   await symlink(
-    pathModule.resolve(getCliPackageRoot(), "../..", "node_modules"),
+    pathModule.resolve(
+      getCliPackageRoot(),
+      "../..",
+      "apps",
+      "chat",
+      "node_modules"
+    ),
     pathModule.join(destination, "node_modules"),
     "dir"
   );
