@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       checks: read
+      actions: read
     steps:
       - name: Wait for required workflows
         uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
@@ -26,27 +27,40 @@ jobs:
           TARGET_SHA: ${{ github.event.pull_request.head.sha }}
         with:
           script: |
-            // The aggregate is created only after its matrix dependencies finish.
-            // A regexp over currently visible checks can miss it entirely.
+            // A newer run or attempt may not have created its aggregate check yet.
             const deadline = Date.now() + 45 * 60 * 1000;
-            while (Date.now() < deadline) {
-              const checks = await github.paginate(github.rest.checks.listForRef, {
+            const latestRun = async () => {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
                 ...context.repo,
-                ref: process.env.TARGET_SHA,
+                workflow_id: "cli-scaffold.yml",
+                head_sha: process.env.TARGET_SHA,
+                event: "pull_request",
                 per_page: 100,
               });
-              const check = checks
-                .filter((item) => item.name === "CLI Scaffold" && item.app?.slug === "github-actions")
-                .sort((left, right) => right.id - left.id)[0];
-              if (check?.status === "completed") {
-                if (check.conclusion !== "success") {
-                  core.setFailed(`CLI Scaffold concluded ${check.conclusion}`);
+              return runs.sort((left, right) => right.id - left.id)[0];
+            };
+            while (Date.now() < deadline) {
+              const run = await latestRun();
+              if (run?.status === "completed") {
+                const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRunAttempt, {
+                  ...context.repo,
+                  run_id: run.id,
+                  attempt_number: run.run_attempt,
+                  per_page: 100,
+                });
+                const aggregate = jobs.find((job) => job.name === "CLI Scaffold");
+                // Re-read after fetching jobs: a rerun can start during either request.
+                const current = await latestRun();
+                if (current?.id === run.id && current.run_attempt === run.run_attempt && current.status === "completed") {
+                  if (current.conclusion !== "success" || aggregate?.conclusion !== "success") {
+                    core.setFailed(`CLI Scaffold run ${run.id} attempt ${run.run_attempt} did not succeed`);
+                  }
+                  return;
                 }
-                return;
               }
               await new Promise((resolve) => setTimeout(resolve, 10_000));
             }
-            core.setFailed("Timed out waiting for CLI Scaffold to succeed");
+            core.setFailed("Timed out waiting for the latest CLI Scaffold run to succeed");
       - name: Require native lifecycle acceptance
         uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
         with:
