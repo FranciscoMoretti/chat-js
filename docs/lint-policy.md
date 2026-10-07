@@ -74,24 +74,18 @@ Pinned Oxlint 1.82 reports `import/unambiguous` and `unicorn/filename-case` at o
 2. Enable every rule in the pinned presets. Give each remaining violation an individually reviewed source exception, allowing a minimal file-specific configuration exception only for a verified directive limitation.
 3. Fix mechanical findings and remove obsolete waiver names without changing runtime/API contracts.
 4. Link genuinely nontrivial deferred work to concrete ownership, affected contracts and verification; do not describe general preservation comments as completed reviews.
-5. Record a baseline of retained exceptions and reject silent additions or widened scopes. A passing lint run alone does not satisfy this criterion.
+5. Track active suppression memberships by rule in [the Oxlint exception review](https://github.com/FranciscoMoretti/chat-js/issues/669). The issue inventory is a review queue, not acceptance of each existing reason or an automated check for new scopes.
 6. Synchronize registry/templates and generated applications, run repository lint, types and relevant tests, and verify the integrated checkout before claiming completion.
 
-## Exception review and baseline
+## Exception review
 
 During adoption, globally disabled rules remain unfinished work and are not source-exception entries. For an enforced rule, a valid contract exception names the exact framework, external API or intentional test behavior and covers the smallest relevant line/declaration. A waiver that merely says “preserve existing behavior,” “keep inference,” or “avoid migration” remains unreviewed. Link deferred refactoring or bug work when that is the real reason.
 
-Count original diagnostics, current unsuppressed diagnostics, suppression directives and reviewed exceptions separately. Multiple rules can report one expression, and one block waiver can cover many findings; none is a bug count. The audit tables are historical evidence, not the current backlog. The inventory's enforced status describes configuration, not exception acceptance or absence of defects.
+Count source suppressions, diagnostics and reviewed exceptions separately. Multiple rules can report one expression, and one block waiver can cover many findings; none is a bug count. The audit tables are historical evidence, not the current backlog. The inventory's enforced status describes configuration, not exception acceptance or absence of defects.
 
-The baseline must identify each retained rule, file, scope and reason. CI must fail on new/widened exceptions unless a reviewed update supplies a contract justification or a deferred issue. Obsolete rule names and empty disable/enable comments should be removed before capturing it. Regenerate registry outputs from canonical sources instead of independently editing generated copies.
+Keep suppression reasons beside their directives. Remove obsolete rule names and empty disable/enable comments. Regenerate registry outputs from canonical sources instead of independently editing generated copies.
 
-## Exception guard usage
-
-`bun lint:exceptions` checks the baseline and runs as part of `bun lint`. Run `bun test scripts/lint-exceptions.test.ts` when changing the guard.
-
-The guard budgets entries by file, rule and directive kind. Every exception also hashes its covered line or block and reason, so relocating a waiver, expanding a block or editing covered code requires baseline review. File-level metrics hash the whole file, including when their directive appears at EOF; function metrics hash the affected declaration. Duplicate source regions use an occurrence ordinal to detect relocation; inserting identical source before a waiver can therefore require a baseline refresh even when its target did not change. Keep reasons attached to actual ESLint/Oxlint directives; prose mentioning a directive is not an exception.
-
-After reviewing a deliberate exception change, use `bun scripts/lint-exceptions.ts --write-baseline` to record it. Adding a new file/rule/directive-kind key or increasing its count additionally requires `--allow-new`. A same-count replacement and an edit to an existing exception both change fingerprints; `--write-baseline` explicitly records either after review. The guard cannot distinguish those intentions, so inspect the source and baseline diff, including replacements, before committing. Do not regenerate the baseline to hide growth or an unexplained scope change. The baseline inventories debt; it does not endorse every retained waiver. Legacy directives without reasons must reach zero before the initial baseline is accepted. The new guard's own scoped exceptions also require explicit review.
+There is no automated suppression-count baseline. Review additions and scope changes in source alongside [the per-rule issue queue](https://github.com/FranciscoMoretti/chat-js/issues/669); a passing `bun lint` checks the active lint configuration but does not certify the reasons or detect every newly added suppression.
 
 ## Ownership and deferred work
 

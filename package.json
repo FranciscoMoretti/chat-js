@@ -20,11 +20,11 @@
     "fetch:models": "dotenv -e .env.local -- turbo run fetch:models --filter=@chatjs/chat",
     "test:e2e": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test:e2e --filter=@chatjs/chat",
     "format": "oxfmt --write .",
-    "lint": "bun lint:exceptions && bun lint:prepare && ultracite check . && bun run --filter=@chatjs/docs docs:doctor && bun demo:check",
+    "lint": "bun lint:prepare && ultracite check . && bun run --filter=@chatjs/docs docs:doctor && bun demo:check",
     "clean:modules": "find . -name node_modules -type d -prune -exec rm -rf {} +",
     "test": "bun test ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts ./scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts && dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- turbo run test",
     "test:hosting": "vitest run scripts/hosted-cleanup.test.ts",
-    "test:unit": "bun run test:hosting && bun test ./scripts/lint-exceptions.test.ts ./scripts/lint-runtime-policy.test.ts ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts ./scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts && turbo run test:unit",
+    "test:unit": "bun run test:hosting && bun test ./scripts/lint-runtime-policy.test.ts ./.agents/skills/worktree-ports/scripts/worktree-runtime.test.ts ./scripts/dev-health.test.ts ./scripts/vercel-preview-environment.test.ts ./scripts/vercel-preview-build.test.ts && turbo run test:unit",
     "test:types": "turbo run test:types",
     "docs:links": "turbo run docs:links --filter=@chatjs/docs",
     "test:visual:docs": "bun --filter=@chatjs/docs run test:visual",
@@ -57,8 +57,7 @@
     "setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat setup",
     "eve:setup": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:setup",
     "eve:check": "dotenv -e .env.worktree.local -e .env.local -- bun run --cwd apps/chat eve:check",
-    "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live",
-    "lint:exceptions": "bun scripts/lint-exceptions.ts"
+    "test:tools:live": "dotenv -e .env.worktree.local -e .env.local -- bun run worktree-env chat -- bun --filter=@chatjs/chat run test:tools:live"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
