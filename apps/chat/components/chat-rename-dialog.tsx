@@ -38,21 +38,37 @@ export const ChatRenameDialog = ({
   const [, startEventAction] = React.useTransition();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submissionLock = useRef(false);
+  const submissionSession = useRef(Symbol("rename dialog session"));
   const [chatTitle, setChatTitle] = useState(currentTitle);
   const [submitError, setSubmitError] = useState("");
 
   const wasOpen = useRef(false);
+  useEffect(
+    (): (() => void) => (): void => {
+      // A conditionally mounted caller can reopen a new instance while this work settles.
+      submissionSession.current = Symbol("rename dialog session");
+    },
+    []
+  );
   useEffect(() => {
     if (open && !wasOpen.current) {
       // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with the latest title.
       setChatTitle(currentTitle);
       setSubmitError("");
     }
+    if (!open && wasOpen.current) {
+      submissionSession.current = Symbol("rename dialog session");
+      submissionLock.current = false;
+      // oxlint-disable-next-line react/set-state-in-effect -- A controlled close invalidates pending UI for the next dialog session.
+      setIsSubmitting(false);
+    }
     wasOpen.current = open;
   }, [open, currentTitle]);
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleSubmit's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line max-statements -- Keep completion, failure and lock release under the same dialog-session ownership check.
   const handleSubmit = async (): Promise<void> => {
+    const session = submissionSession.current;
     setIsSubmitting(true);
     setSubmitError("");
     try {
@@ -60,16 +76,25 @@ export const ChatRenameDialog = ({
       if (trimmedValue && trimmedValue !== currentTitle) {
         await onSubmit(trimmedValue);
       }
-      onOpenChange(false);
+      if (session === submissionSession.current) {
+        onOpenChange(false);
+      }
     } catch {
-      setSubmitError("Could not rename chat. Try again.");
+      if (session === submissionSession.current) {
+        setSubmitError("Could not rename chat. Try again.");
+      }
     }
-    submissionLock.current = false;
-    setIsSubmitting(false);
+    if (session === submissionSession.current) {
+      submissionLock.current = false;
+      setIsSubmitting(false);
+    }
   };
   /* oxlint-enable oxc/no-async-await */
   const handleOpenChange = (newOpen: boolean): void => {
     if (!newOpen) {
+      submissionSession.current = Symbol("rename dialog session");
+      submissionLock.current = false;
+      setIsSubmitting(false);
       setChatTitle(currentTitle);
     }
     onOpenChange(newOpen);

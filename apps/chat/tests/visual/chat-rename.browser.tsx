@@ -152,4 +152,147 @@ test("rename rejection keeps the dialog and input until a successful retry", asy
 });
 /* oxlint-enable max-statements, max-lines-per-function */
 
+/* oxlint-disable max-statements, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals -- This browser lifecycle covers cancellation, a reopened dialog and stale completion for both conditional and persistent mounting. */
+test.each([
+  { externalClose: false, mounting: "conditional", outcome: "success" },
+  { externalClose: false, mounting: "conditional", outcome: "failure" },
+  { externalClose: false, mounting: "persistent", outcome: "success" },
+  { externalClose: false, mounting: "persistent", outcome: "failure" },
+  { externalClose: true, mounting: "conditional", outcome: "success" },
+  { externalClose: true, mounting: "persistent", outcome: "success" },
+])(
+  "$mounting dialog ignores old $outcome after reopening (external close: $externalClose)",
+  async ({
+    mounting,
+    outcome,
+    externalClose,
+  }: {
+    readonly mounting: string;
+    readonly outcome: string;
+    readonly externalClose: boolean;
+  }) => {
+    const oldRequest = Promise.withResolvers<undefined>();
+    const newRequest = Promise.withResolvers<undefined>();
+    const requestsBeforeRetry = 2;
+    const requestsAfterRetry = 3;
+    const submit = vi
+      .fn<(title: string) => Promise<void>>()
+      .mockReturnValueOnce(oldRequest.promise)
+      .mockReturnValueOnce(newRequest.promise)
+      .mockResolvedValue();
+    // oxlint-disable-next-line react/only-export-components -- This local controlled owner exists only inside the browser lifecycle test, not a Fast Refresh application module.
+    const DialogOwner = (): React.JSX.Element => {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button onClick={() => setOpen(true)} type="button">
+            Open rename
+          </button>
+          <button
+            data-external-close
+            onClick={() => setOpen(false)}
+            type="button"
+          >
+            Close externally
+          </button>
+          {(mounting === "persistent" || open) && (
+            <ChatRenameDialog
+              open={open}
+              currentTitle="Original title"
+              onOpenChange={setOpen}
+              onSubmit={submit}
+              isLoading={false}
+            />
+          )}
+        </>
+      );
+    };
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => {
+        await Promise.resolve();
+        root.render(<DialogOwner />);
+      });
+      await page.getByRole("button", { name: "Open rename" }).click();
+      await page.getByPlaceholder("Chat name").fill("Old rename");
+      await page.getByRole("button", { exact: true, name: "Save" }).click();
+      expect(submit).toHaveBeenCalledOnce();
+      if (externalClose) {
+        await act(async () => {
+          await Promise.resolve();
+          const externalCloseButton = container.querySelector(
+            "[data-external-close]"
+          );
+          if (!externalCloseButton) {
+            throw new Error("Missing external dialog controller");
+          }
+          externalCloseButton.dispatchEvent(
+            new MouseEvent("click", { bubbles: true })
+          );
+        });
+      }
+      if (!externalClose) {
+        await page.getByRole("button", { name: "Cancel" }).click();
+      }
+      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+      await page.getByRole("button", { name: "Open rename" }).click();
+      await page.getByPlaceholder("Chat name").fill("New rename");
+      await page.getByRole("button", { exact: true, name: "Save" }).click();
+      expect(submit).toHaveBeenCalledTimes(requestsBeforeRetry);
+      await act(async () => {
+        await Promise.resolve();
+        if (outcome === "success") {
+          // oxlint-disable-next-line no-undefined -- Resolve the deferred callback's explicit undefined completion, matching its typed resolver contract.
+          oldRequest.resolve(undefined);
+        } else {
+          oldRequest.reject(new Error("Old request failed"));
+        }
+      });
+      await expect.element(page.getByRole("dialog")).toBeVisible();
+      await expect
+        .element(page.getByPlaceholder("Chat name"))
+        .toHaveValue("New rename");
+      await expect.element(page.getByRole("alert")).not.toBeInTheDocument();
+      await expect
+        .element(page.getByRole("button", { exact: true, name: "Save" }))
+        .toBeDisabled();
+      page
+        .getByPlaceholder("Chat name")
+        .element()
+        .dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+        );
+      expect(submit).toHaveBeenCalledTimes(requestsBeforeRetry);
+      if (
+        mounting === "conditional" &&
+        outcome === "success" &&
+        !externalClose
+      ) {
+        await takeSnapshot("chat-rename-reopened-pending");
+        await page.getByRole("dialog").screenshot();
+      }
+      await act(async () => {
+        await Promise.resolve();
+        newRequest.reject(new Error("New request failed"));
+      });
+      await expect
+        .element(page.getByRole("alert"))
+        .toHaveTextContent("Could not rename chat. Try again.");
+      await page.getByRole("button", { exact: true, name: "Save" }).click();
+      await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+      expect(submit).toHaveBeenCalledTimes(requestsAfterRetry);
+      expect(submit).toHaveBeenLastCalledWith("New rename");
+    } finally {
+      await act(async () => {
+        await Promise.resolve();
+        root.unmount();
+      });
+      container.remove();
+    }
+  }
+);
+/* oxlint-enable max-statements, max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-no-literals */
+
 /* oxlint-enable oxc/no-async-await */
