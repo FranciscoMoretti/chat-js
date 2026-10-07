@@ -682,20 +682,20 @@ type PromptInputTabLabelProps = HTMLAttributes<HTMLHeadingElement>;
 
 const PromptInputTabLabel = ({
   className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+  children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className and children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: PromptInputTabLabelProps): React.JSX.Element => (
-  <>
-    {/* oxlint-disable-next-line jsx-a11y/heading-has-content -- Shared primitive forwards heading children through props. */}
-    <h3
-      className={cn(
-        "text-muted-foreground mb-2 px-3 text-xs font-medium",
-        className
-      )}
-      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabLabel's native h3 attributes, preserving caller events and accessibility props.
-      {...props}
-    />
-  </>
+  <h3
+    className={cn(
+      "text-muted-foreground mb-2 px-3 text-xs font-medium",
+      className
+    )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputTabLabel's native h3 attributes, preserving caller events and accessibility props.
+    {...props}
+  >
+    {children}
+  </h3>
 );
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
