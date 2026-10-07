@@ -74,6 +74,28 @@ describe("file storage", () => {
     assert.equal(remainingFiles.files.length, 0);
   });
   /* oxlint-enable oxc/no-async-await */
+
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the upload's awaited sequencing and rejected-Promise behavior. */
+  it("removes only ASCII C0 and DEL characters from upload pathnames", async () => {
+    const controlCharacters =
+      Array.from({ length: 32 }, (_value, codePoint) =>
+        String.fromCodePoint(codePoint)
+      ).join("") + String.fromCodePoint(127);
+    const uploaded = await uploadFileAtKey(
+      createFileId(),
+      `../pre${controlCharacters}report🧪.txt`,
+      "hello",
+      "text/plain"
+    );
+
+    try {
+      assert.equal(uploaded.pathname, "prereport🧪.txt");
+    } finally {
+      await deleteFilesByUrls([uploaded.url]);
+    }
+  });
+  /* oxlint-enable oxc/no-async-await */
+
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("lists across page boundaries with one mapping query per page", async () => {
     const uploads = await Promise.all(
