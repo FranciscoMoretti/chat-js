@@ -96,7 +96,7 @@ async function conversation() {
  * typescript/prefer-readonly-parameter-types (#565): test("assignment, filtered history and removal retain native identity") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("assignment, filtered history and removal retain native identity") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Keep the ordered database scenario intact while naming the awaited results.
+// oxlint-disable-next-line max-statements -- Keep assignment, filtered-list checks, and detachment assertions in their existing database order.
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
   expect(await assignEveConversationProject(owner, row.id, ownProject)).toEqual(
@@ -137,7 +137,7 @@ test("assignment, filtered history and removal retain native identity", async ()
  * unicorn/max-nested-calls (#568): test("both application checks and database constraints reject cross-owner assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("both application checks and database constraints reject cross-owner assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Keep the ordered database scenario intact while naming the awaited result.
+// oxlint-disable-next-line max-statements -- Check application-level cross-owner rejection before the database constraint rejects the invalid assignment.
 test("both application checks and database constraints reject cross-owner assignment", async () => {
   const row = await conversation();
   await assignEveConversationProject(owner, row.id, ownProject);
@@ -180,7 +180,7 @@ test("both application checks and database constraints reject cross-owner assign
  * typescript/prefer-readonly-parameter-types (#565): test("deleting a project detaches its Eve conversations without erasing their session accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("deleting a project detaches its Eve conversations without erasing their session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Keep the ordered database scenario intact while naming the awaited results.
+// oxlint-disable-next-line max-statements -- Verify deletion detaches the conversation before checking its unassigned listing and rejected reassignment.
 test("deleting a project detaches its Eve conversations without erasing their sessions", async () => {
   const projectId = crypto.randomUUID();
   await db
@@ -254,7 +254,7 @@ test("conversation deletion fences assignment and removes metadata without touch
  * unicorn/max-nested-calls (#568): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("fork paths share their chat project and retry cannot restore an old assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Keep the ordered database scenario intact while naming the awaited results.
+// oxlint-disable-next-line max-statements -- Preserve the source assignment, fork retry, and deletion sequence that proves retries cannot restore ownership.
 test("fork paths share their chat project and retry cannot restore an old assignment", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
@@ -301,7 +301,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
  * typescript/strict-boolean-expressions (#610): test("an unresolved fork retains its project route for creation recovery") intentionally keeps the existing falsy-value behavior of pending; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): test("an unresolved fork retains its project route for creation recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Keep the ordered database scenario intact while naming the awaited result.
+// oxlint-disable-next-line max-statements -- Preserve the unresolved-fork recovery checks in order so project retention is tested before clearing it.
 test("an unresolved fork retains its project route for creation recovery", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
