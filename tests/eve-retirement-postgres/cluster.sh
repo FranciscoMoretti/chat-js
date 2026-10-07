@@ -12,10 +12,10 @@ case "${1:-start}" in
     "$pg_bin/initdb" -D "$cluster_root/data" -U retirement --auth=trust --no-locale > "$cluster_root/initdb.log"
     port="$(bun -e 'const server=Bun.serve({hostname:"127.0.0.1",port:0,fetch:()=>new Response()}); console.log(server.port); await server.stop(true);')"
     "$pg_bin/pg_ctl" -D "$cluster_root/data" -l "$cluster_root/server.log" -o "-h 127.0.0.1 -p $port -k $cluster_root" -w start
-    for database in lane_a lane_c lane_d; do
+    for database in lane_a lane_b lane_c lane_d; do
       "$pg_bin/createdb" -h 127.0.0.1 -p "$port" -U retirement "$database"
     done
-    bun -e 'const [root,port,bin]=process.argv.slice(1); await Bun.write(`${root}/connection.json`, JSON.stringify({root,port:Number(port),pgBin:bin,postgresVersion:"17.11",databases:Object.fromEntries(["lane_a","lane_c","lane_d"].map(name=>[name,`postgresql://retirement@127.0.0.1:${port}/${name}`]))},null,2));' "$cluster_root" "$port" "$pg_bin"
+    bun -e 'const [root,port,bin]=process.argv.slice(1); await Bun.write(`${root}/connection.json`, JSON.stringify({root,port:Number(port),pgBin:bin,postgresVersion:"17.11",databases:Object.fromEntries(["lane_a","lane_b","lane_c","lane_d"].map(name=>[name,`postgresql://retirement@127.0.0.1:${port}/${name}`]))},null,2));' "$cluster_root" "$port" "$pg_bin"
     printf 'Disposable connection handoff: %s/connection.json\n' "$cluster_root"
     ;;
   stop)

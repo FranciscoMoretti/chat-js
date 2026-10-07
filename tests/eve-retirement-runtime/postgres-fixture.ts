@@ -24,7 +24,7 @@ const preparePostgresFixture = async (input: {
   readonly source: string;
   readonly nodeModules: string;
   readonly handoff: string;
-  readonly lane: "lane_a" | "lane_c" | "lane_d";
+  readonly lane: "lane_a" | "lane_b" | "lane_c" | "lane_d";
 }): Promise<{ source: string; nodeModules: string }> => {
   const handoff = handoffSchema.parse(await Bun.file(input.handoff).json());
   const ownership = await Bun.file(path.join(handoff.root, "ownership")).text();

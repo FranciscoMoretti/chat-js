@@ -2,11 +2,11 @@
 set -euo pipefail
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 handoff="${1:?Supply connection.json from cluster.sh}"
-lane="${2:?Supply lane_a, lane_c or lane_d}"
+lane="${2:?Supply lane_a, lane_b, lane_c or lane_d}"
 database_url="$(bun -e '
 const [file,lane]=process.argv.slice(1);
 const data=await Bun.file(file).json();
-if(!["lane_a","lane_c","lane_d"].includes(lane)) throw new Error("Unknown lane");
+if(!["lane_a","lane_b","lane_c","lane_d"].includes(lane)) throw new Error("Unknown lane");
 if((await Bun.file(`${data.root}/ownership`).text()).trim()!=="chatjs-retirement-disposable-v1") throw new Error("Missing disposable ownership");
 const url=new URL(data.databases[lane]);
 if(url.hostname!=="127.0.0.1" || url.username!=="retirement" || url.pathname!==`/${lane}` || Number(url.port)!==data.port) throw new Error("Invalid disposable URL");

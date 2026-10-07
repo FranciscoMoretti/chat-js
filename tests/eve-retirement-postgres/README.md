@@ -33,10 +33,14 @@ const prepared = await preparePostgresFixture({
   handoff: "/absolute/connection.json",
   lane: "lane_c", // A uses lane_a; D uses lane_d.
 });
-const runtime = await createPersistentRuntime(prepared.source, {
-  nodeModules: prepared.nodeModules,
-  provenance: "Exact experimental patch hash and base release",
-}, { world: "postgres", inlineOwnershipLeaseSeconds: 1 });
+const runtime = await createPersistentRuntime(
+  prepared.source,
+  {
+    nodeModules: prepared.nodeModules,
+    provenance: "Exact experimental patch hash and base release",
+  },
+  { world: "postgres", inlineOwnershipLeaseSeconds: 1 }
+);
 ```
 
 The preparer copies the fixture, creates a dependency overlay pointing to the existing patched adapter, adds explicit Postgres world configuration to its one plain `defineAgent({` declaration, and writes only the validated disposable URL into the copied `.env`. The original fixture/package installation is unchanged. Existing `experimental` configuration is rejected to avoid silently overwriting it. Normal shared marker/release/crash controls apply. PostgreSQL persists outside the worker directory; `remove()` does not drop its database. The launcher omits `--resume` for Postgres because EVE explicitly restricts that CLI switch to the built-in local world. The adapter's startup recovery owns Postgres replay. This development-server boundary is not direct server SIGKILL or deployed multi-replica recovery.
