@@ -77,7 +77,7 @@ const ResearchTasks = ({ updates }: { updates: ResearchUpdate[] }) => (
     {updates.map((update, index) => (
       <StepWrapper
         isLast={index === updates.length - 1}
-        // oxlint-disable-next-line react/no-array-index-key -- #551: A tool emits multiple progress updates; preserve positional identity until updates carry their own IDs.
+        // oxlint-disable-next-line react/no-array-index-key -- executeEveResearch appends progress slots and replaces completion at the captured slot; child search snapshots preserve invocation/event order and only append updates. The slot stays stable while its animated progress row is mounted, while toolCallId alone repeats across root workflow updates.
         key={`${update.toolCallId}-${index}`}
         update={update}
       >

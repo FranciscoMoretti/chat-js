@@ -14,20 +14,31 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 /* oxlint-disable no-magic-numbers -- highlightedExcerpt: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1);  */
 
-const highlightedExcerpt = (excerpt: string): (React.JSX.Element | string)[] =>
-  excerpt.split(/(?<match>⟦[^⟧]*⟧)/u).map((part, index) =>
-    part.startsWith("⟦") && part.endsWith("⟧") ? (
-      <mark
-        className="text-foreground bg-transparent font-medium"
-        // oxlint-disable-next-line react/no-array-index-key -- #551: Repeated matched text needs its offset in this excerpt; marks have no component state.
-        key={`${index}:${part}`}
-      >
-        {part.slice(1, -1)}
-      </mark>
-    ) : (
-      part
-    )
+const highlightedExcerpt = (
+  excerpt: string
+): (React.JSX.Element | string)[] => {
+  let previousEnd = 0;
+  const parts = [...excerpt.matchAll(/⟦[^⟧]*⟧/gu)].flatMap(
+    (match: readonly string[] & Readonly<{ index: number }>) => {
+      const start = match.index;
+      const before = excerpt.slice(previousEnd, start);
+      previousEnd = start + match[0].length;
+      const mark = (
+        <mark
+          className="text-foreground bg-transparent font-medium"
+          key={start}
+        >
+          {match[0].slice(1, -1)}
+        </mark>
+      );
+      return before.length > 0 ? [before, mark] : [mark];
+    }
   );
+  if (previousEnd < excerpt.length) {
+    parts.push(excerpt.slice(previousEnd));
+  }
+  return parts;
+};
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable max-lines-per-function, no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- EveSearchResultsView: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including item). */
 

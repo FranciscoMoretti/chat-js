@@ -314,7 +314,7 @@ const AttachmentList = ({
             url: "",
           }}
           isUploading
-          // oxlint-disable-next-line react/no-array-index-key -- The queue is an immutable batch until it is cleared; positions disambiguate same-named files.
+          // oxlint-disable-next-line react/no-array-index-key -- useUploads sets the selected filename batch once, locks further selections, and clears the whole batch in finally; filenames can repeat, so the batch position disambiguates them without changing during its lifetime.
           key={`${filename}:${index}`}
           variant={variant}
         />

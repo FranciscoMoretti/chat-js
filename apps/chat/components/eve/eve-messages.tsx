@@ -29,6 +29,7 @@ import { config } from "@/lib/config";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
 import { messageFollowupSuggestions } from "@/lib/eve/followup-suggestions";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
+import type { ReadonlyEveMessagePart } from "@/lib/eve/readonly-message-types";
 
 import { EveAttachment } from "./eve-attachment";
 import { EveDocumentTool } from "./eve-document-tool";
@@ -108,6 +109,47 @@ const toolStatus = (
     return "Tool completed.";
   }
   return "Working…";
+};
+
+const filePartKey = (
+  part: Extract<ReadonlyEveMessagePart, { type: "file" }>,
+  partIndex: number
+): string => {
+  const identity =
+    part.url === ""
+      ? `fallback:${part.filename ?? part.mediaType}:${partIndex}`
+      : part.url;
+  return `file:${part.stepIndex ?? "default"}:${identity}`;
+};
+
+const messagePartKey = (
+  part: ReadonlyEveMessagePart,
+  partIndex: number
+): string => {
+  switch (part.type) {
+    case "text": {
+      return `text:${part.stepIndex ?? "default"}`;
+    }
+    case "reasoning": {
+      return `reasoning:${part.stepIndex ?? "default"}`;
+    }
+    case "file": {
+      return filePartKey(part, partIndex);
+    }
+    case "step-start": {
+      return "step-start";
+    }
+    case "authorization": {
+      return `authorization:${part.turnId}:${part.stepIndex}:${part.name}`;
+    }
+    case "dynamic-tool": {
+      return `dynamic-tool:${part.toolCallId}`;
+    }
+    default: {
+      const unreachable: never = part;
+      return unreachable;
+    }
+  }
 };
 
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- Part: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -348,8 +390,8 @@ export const EveMessages = ({
           attachments={message.parts
             .filter((part) => part.type === "file")
             .map((part, index): React.JSX.Element => (
-              // oxlint-disable-next-line react/no-array-index-key -- #551: File parts retain their position in the streamed message.
-              <EveAttachment key={`${message.id}:file:${index}`} part={part} />
+              // oxlint-disable-next-line react/no-array-index-key -- #750: EVE can omit client-resolvable URLs; only those filename-only file parts use their position in the immutable received-message attachment list, while URL-backed parts use the stable file URL.
+              <EveAttachment key={messagePartKey(part, index)} part={part} />
             ))}
           editor={editing?.content}
           editDisabled={!canEdit}
@@ -372,21 +414,23 @@ export const EveMessages = ({
       >
         <MessageContent className="w-full px-0 py-0 text-left">
           <span className="sr-only">Assistant</span>
-          {message.parts.map((part, index): React.JSX.Element => (
-            <Part
-              disabled={disabled}
-              isReadonly={isReadonly}
-              // oxlint-disable-next-line react/no-array-index-key -- #551: EVE message parts are append-only; their index is their stable identity.
-              key={`${message.id}:${index}`}
-              messageId={message.id}
-              part={part}
-              respond={respond}
-              previewDocument={
-                part.type === "dynamic-tool" &&
-                part.toolCallId === latestDocumentCallId
-              }
-            />
-          ))}
+          {message.parts
+            .filter((part) => part.type !== "step-start")
+            .map((part, index): React.JSX.Element => (
+              <Part
+                disabled={disabled}
+                isReadonly={isReadonly}
+              // oxlint-disable-next-line react/no-array-index-key -- #750: EVE can omit client-resolvable URLs; only those filename-only file parts use their position in EVE's append-only part sequence, while text, reasoning, tools and authorization use EVE's stable step or call identity.
+                key={messagePartKey(part, index)}
+                messageId={message.id}
+                part={part}
+                respond={respond}
+                previewDocument={
+                  part.type === "dynamic-tool" &&
+                  part.toolCallId === latestDocumentCallId
+                }
+              />
+            ))}
           {actions}
           {message.id === messages.at(-1)?.id &&
             !isReadonly &&
