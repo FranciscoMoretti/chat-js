@@ -7,12 +7,14 @@ import path from "node:path";
 import { Client } from "eve/client";
 import { z } from "zod";
 
+import { recoverDeadPostgresFixture } from "./operator-recovery";
 import { createPersistentRuntime } from "./persistent-runtime";
 import { preparePostgresFixture } from "./postgres-fixture";
 
 const crashAtCallbacks = process.argv.includes("--callbacks");
 const swapConnector = process.argv.includes("--swap-connector");
 const useDefaultLease = process.argv.includes("--default-lease");
+const operatorRecovery = process.argv.includes("--operator-recovery");
 const abruptServer = process.argv.includes("--abrupt-server");
 const crashTestLeaseSeconds = 1;
 const postgresFlag = process.argv.indexOf("--postgres");
@@ -107,6 +109,10 @@ try {
     );
     // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
     await runtime.crash(abruptServer ? candidate.pid : undefined);
+    if (operatorRecovery) {
+      const candidateGeneration = 1;
+      await recoverDeadPostgresFixture(runtime.directory, candidateGeneration);
+    }
     await runtime.release("candidate");
     await runtime.start();
     const settled = processMarker.parse(await runtime.waitForMarker("settled"));
@@ -129,6 +135,10 @@ try {
     );
     // oxlint-disable-next-line no-undefined -- Omit the PID to retain the CLI shutdown comparison mode.
     await runtime.crash(abruptServer ? settled.pid : undefined);
+    if (operatorRecovery) {
+      const settledGeneration = 2;
+      await recoverDeadPostgresFixture(runtime.directory, settledGeneration);
+    }
     await runtime.release("settled");
     await runtime.start();
   }
@@ -152,7 +162,12 @@ try {
   );
   const singleEffect = 1;
   assert.equal(effects.trim().split("\n").length, singleEffect);
-  await runtime.remove();
+  if (operatorRecovery) {
+    await runtime.crash();
+    await Bun.write(Bun.stdout, `Operator recovery evidence retained: ${runtime.directory}\n`);
+  } else {
+    await runtime.remove();
+  }
 } catch (error) {
   await writeFile(
     path.join(runtime.directory, "failure.txt"),

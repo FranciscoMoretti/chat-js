@@ -62,3 +62,17 @@ Call `await runtime.crash(serverPid)` with a PID read from the fixture callback 
 `restart.ts --callbacks --abrupt-server` passes on the built-in local world: different candidate, settlement and effect PIDs, one observed effect, no approval resend. PostgreSQL reaches a new worker, but Graphile Worker 0.16.6 retains dead workers' job locks until its **four-hour** stale-lock threshold (`dist/sql/resetLockedAt.js`). The 60-second Postgres callback probe therefore cannot establish automatic recovery. The SQL evidence has locked jobs owned by the dead workers; do not clear locks or age timestamps and call that baseline recovery. A separately labeled supported administrator recovery can be tested independently. CLI-only shutdown is different: it can durably mark an interrupted approval candidate failed and return to input waiting.
 
 The controller uses `ps` group membership because macOS/Bun can report `EPERM` for `kill(group, 0)` during reaping. Permission errors are never treated as proof of process death. `crash-N.json` records lifecycle progress; the restart driver saves the primary failure before cleanup and preserves both errors if cleanup also fails.
+
+## Supported operator recovery proof
+
+On a **fresh D-only cluster/database**, append `--operator-recovery` to the abrupt callback command. The proof validates the owned loopback handoff and D lane, rechecks that the verified server group is gone, and refuses intervention while any other client database connection exists. Only then it reads exact orphaned worker IDs and calls Graphile 0.16.6's public `forceUnlockWorkers`. It does not modify run/step/event data, age locks, synthesize receipts or resend approval. This is explicit operator intervention, never automatic application behavior.
+
+Both candidate-authorizer and durable-settlement abrupt boundaries pass with this intervention: new serving PIDs, exact original connector and parsed input, one effect. Successful operator runs retain `operator-recovery-N.json`, `crash-N.json`, snapshots and effect ledger. Automatic recovery remains subject to the four-hour provider lease. The fixture database must remain exclusive during the check/intervention window; this is not a distributed fencing algorithm or a safe automatic production unlock policy.
+
+## Package-cutover preflight
+
+The existing application backend build check now reads active EVE run/step identities before backend registration. It rejects a mismatched compiled step version, and excludes terminal historical-only run rows. Six SQL tests cover pending/running rejection, completed/failed/cancelled exclusion, unchanged records and matching versions. The check is a necessary deployment prerequisite, not a migration or a guarantee about all fork contracts. Both reviewed distributions have explicit step-version mappings; unknown distributions require compatibility review.
+
+```sh
+EVE_RETIREMENT_POSTGRES_FILE=/absolute/connection.json bunx --no-install vitest run tests/eve-retirement-postgres/compatibility.test.ts
+```

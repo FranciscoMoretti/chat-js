@@ -1,10 +1,15 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection"; "../lib/db/workflow-backend"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
  */
+import evePackage from "eve/package.json";
 import postgres from "postgres";
 
 import { databaseConnection } from "../lib/db/connection";
 import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
+import {
+  assertEvePostgresRuntimeCompatibility,
+  resolveEveStepVersion,
+} from "../lib/db/workflow-runtime-compatibility";
 import { resolveWorkflowWorld } from "../lib/eve/world-config";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -22,6 +27,12 @@ const check = async (): Promise<void> => {
   );
   const connection = postgres(settings.url, settings.options);
   try {
+    if (world === "@workflow/world-postgres") {
+      await assertEvePostgresRuntimeCompatibility(
+        connection,
+        resolveEveStepVersion(evePackage.name, evePackage.version)
+      );
+    }
     await ensureWorkflowBackend(connection, world);
   } finally {
     await connection.end();

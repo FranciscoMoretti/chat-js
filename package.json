@@ -68,6 +68,7 @@
     "@uiverify/vitest": "^1.2.1",
     "@vitest/browser-playwright": "^4.1.11",
     "dotenv-cli": "^8.0.0",
+    "graphile-worker": "0.16.6",
     "oxfmt": "0.67.0",
     "oxlint": "1.82.0",
     "oxlint-tsgolint": "7.0.2001",
