@@ -92,6 +92,7 @@ await writeFile(
     inlineOwnershipLeaseSeconds: 1,
   })
 );
+const markerTimeoutMs = postgres && abrupt ? 10_000 : 60_000;
 try {
   await runtime.start();
   const client = new Client({ host: runtime.url });
@@ -115,7 +116,7 @@ try {
   await session.respond([
     { optionId: "approve", requestId: approval.requestId },
   ]);
-  const settled = await runtime.waitForMarker("settled");
+  const settled = await runtime.waitForMarker("settled", markerTimeoutMs);
   assert.notEqual(firstProcess.pid, settled.pid);
   const settledSnapshot = await session.snapshot();
   await writeFile(
@@ -132,7 +133,7 @@ try {
   await runtime.crash(abrupt ? settled.pid : undefined);
   await runtime.release("settled");
   await runtime.start();
-  const effect = await runtime.waitForMarker("effect");
+  const effect = await runtime.waitForMarker("effect", markerTimeoutMs);
   assert.notEqual(effect.pid, settled.pid);
   assert.deepEqual(effect.detail.input, approval.action.input);
   assert.equal(effect.detail.scope.conversationId, session.state.sessionId);
