@@ -208,7 +208,7 @@ const Conversation = ({
   useEffect(() => {
     const element = transcript.current;
     if (!element) {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- Keep React's explicit no-cleanup result; bare return conflicts with typescript/consistent-return when the other branch returns cleanup.
       return undefined;
     }
     const observer = new ResizeObserver((): void => {
@@ -532,7 +532,7 @@ const TreeCanvas = ({ chat }: { chat: PlaygroundChat }): React.JSX.Element => {
   useEffect(() => {
     const viewport = canvas.current;
     if (!viewport) {
-      // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicit absence matches this callback's optional result and consistent-return.
+      // oxlint-disable-next-line unicorn/no-useless-undefined -- Keep React's explicit no-cleanup result; bare return conflicts with typescript/consistent-return when the other branch returns cleanup.
       return undefined;
     }
     const observer = new ResizeObserver((): void =>
