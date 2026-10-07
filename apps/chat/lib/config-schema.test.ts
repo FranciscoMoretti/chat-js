@@ -1,29 +1,32 @@
 import { expect, test } from "vitest";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
+/* oxlint-disable sort-imports -- Preserve module import order; the config schema consumes the generated gateway defaults. */
 import { applyDefaults, defineConfig } from "./config-schema";
 /* oxlint-enable sort-imports */
 
 test("partial tool and workflow overrides retain required sibling defaults", () => {
   const input = defineConfig({
     ai: {
-      gateway: "vercel",
+      gateway: gatewayType,
       tools: { deepResearch: { allowClarification: false } },
-      workflows: { title: "openai/gpt-5-mini" },
+      workflows: { title: gatewayModelDefaults.workflows.chat },
     },
   });
   const config = applyDefaults(input);
   expect(config.ai.tools.deepResearch).toMatchObject({
     allowClarification: false,
-    defaultModel: "google/gemini-2.5-flash-lite",
-    finalReportModel: "google/gemini-3-flash",
+    defaultModel: gatewayModelDefaults.tools.deepResearch.defaultModel,
+    finalReportModel: gatewayModelDefaults.tools.deepResearch.finalReportModel,
   });
-  expect(config.ai.tools.code.edits).toBe("openai/gpt-5-mini");
+  expect(config.ai.tools.code.edits).toBe(
+    gatewayModelDefaults.tools.code.edits
+  );
   expect(config.ai.workflows).toMatchObject({
-    chat: "google/gemini-2.5-flash-lite",
-    title: "openai/gpt-5-mini",
+    chat: gatewayModelDefaults.workflows.chat,
+    title: gatewayModelDefaults.workflows.chat,
   });
-  expect(input.ai.tools).toEqual({
+  expect(input).toHaveProperty("ai.tools", {
     deepResearch: { allowClarification: false },
   });
   expect(defineConfig(input)).toBe(input);
@@ -32,15 +35,17 @@ test("partial tool and workflow overrides retain required sibling defaults", () 
 test("readonly config inputs preserve selections without changing the source", () => {
   const input = {
     ai: {
-      curatedDefaults: ["openai/gpt-5-mini"],
-      gateway: "vercel",
+      curatedDefaults: [gatewayModelDefaults.workflows.title],
+      gateway: gatewayType,
       tools: { followupSuggestions: { enabled: true } },
     },
   } as const;
   const config = applyDefaults(input);
-  expect(config.ai.curatedDefaults).toEqual(["openai/gpt-5-mini"]);
+  expect(config.ai.curatedDefaults).toEqual([
+    gatewayModelDefaults.workflows.title,
+  ]);
   expect(config.ai.tools.followupSuggestions).toEqual({
-    default: "google/gemini-2.5-flash-lite",
+    default: gatewayModelDefaults.tools.followupSuggestions.default,
     enabled: true,
   });
   expect(input.ai.tools.followupSuggestions).toEqual({ enabled: true });

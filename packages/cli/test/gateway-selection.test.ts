@@ -1198,11 +1198,11 @@ ${originalSearch}`
         "WordCountRendererWithAnIntentionallyLongNameForFormattingVerification";
       await writeFile(
         join(longDirectory, "tool.ts"),
-        `/* oxlint-disable import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { wordCount as ${toolExport} } from "../word-count/tool";\n/* oxlint-enable import/no-relative-parent-imports */\n`
+        `// oxlint-disable-next-line import/no-relative-parent-imports, import/no-named-export, import/prefer-default-export -- This fixture intentionally exposes the long named tool export recorded in chatjs.json.\nexport { wordCount as ${toolExport} } from "../word-count/tool";\n`
       );
       await writeFile(
         join(longDirectory, "renderer.tsx"),
-        `/* oxlint-disable import/no-relative-parent-imports -- This fixture reexports the installed word-count implementation under an intentionally long name to verify generated import formatting. */\nexport { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n/* oxlint-enable import/no-relative-parent-imports */\n`
+        `// oxlint-disable-next-line import/no-relative-parent-imports, import/no-named-export, import/prefer-default-export -- This fixture intentionally exposes the long named renderer export recorded in chatjs.json.\nexport { WordCountRenderer as ${rendererExport} } from "../word-count/renderer";\n`
       );
       await writeFile(
         join(longDirectory, "chatjs.json"),

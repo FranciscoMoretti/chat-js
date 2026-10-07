@@ -77,7 +77,9 @@ const readProgressTransforms = (
 
 /* oxlint-disable oxc/no-async-await -- This browser scenario awaits React commits, state assertions and captures before cleanup. */
 test("progress states preserve numeric fallbacks and updates", async () => {
-  const fixture = await mount(<UiPrimitivesVisualFixture progressValue={25} />);
+  const fixture = await mount(
+    <UiPrimitivesVisualFixture includeProgress progressValue={25} />
+  );
   try {
     expect(readProgressTransforms(fixture.container)).toEqual([
       "translateX(-100%)",
@@ -92,7 +94,9 @@ test("progress states preserve numeric fallbacks and updates", async () => {
     await takeSnapshot("primitives-progress-initial");
     // oxlint-disable-next-line eslint/require-await, typescript/require-await -- React act's async overload returns the completion promise for this synchronous render commit.
     await act(async () => {
-      fixture.root.render(<UiPrimitivesVisualFixture progressValue={75} />);
+      fixture.root.render(
+        <UiPrimitivesVisualFixture includeProgress progressValue={75} />
+      );
     });
     expect(readProgressTransforms(fixture.container)).toEqual([
       "translateX(-100%)",
