@@ -42,10 +42,45 @@ test("rename rejection keeps the dialog and input until a successful retry", asy
       });
     };
     await renderDialog("Original title");
+    const titleInput = page.getByPlaceholder("Chat name");
     await page.getByPlaceholder("Chat name").fill("  Renamed chat  ");
-    await page.getByRole("button", { exact: true, name: "Save" }).click();
+    await act(async () => {
+      await Promise.resolve();
+      const save = page
+        .getByRole("button", { exact: true, name: "Save" })
+        .element();
+      save.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      save.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      titleInput
+        .element()
+        .dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+        );
+      titleInput
+        .element()
+        .dispatchEvent(
+          new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+        );
+    });
     expect(submit).toHaveBeenCalledWith("Renamed chat");
     expect(close).not.toHaveBeenCalled();
+    await expect
+      .element(page.getByRole("button", { exact: true, name: "Save" }))
+      .toBeDisabled();
+    titleInput
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      );
+    titleInput
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      );
+    expect(submit).toHaveBeenCalledOnce();
+    expect(close).not.toHaveBeenCalled();
+    await takeSnapshot("chat-rename-pending");
+    await page.getByRole("dialog").screenshot();
     await renderDialog("Renamed chat", true);
     await act(async () => {
       await Promise.resolve();
@@ -78,6 +113,35 @@ test("rename rejection keeps the dialog and input until a successful retry", asy
     await expect
       .element(page.getByPlaceholder("Chat name"))
       .toHaveValue("Latest title");
+    close.mockClear();
+    submit.mockClear();
+    await renderDialog("Latest title", true);
+    await titleInput.fill("Another title");
+    titleInput
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      );
+    expect(submit).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    await renderDialog("Latest title");
+    await titleInput.fill("Latest title");
+    titleInput
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      );
+    expect(submit).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledWith(false);
+    close.mockClear();
+    await titleInput.fill("  ");
+    titleInput
+      .element()
+      .dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, key: "Enter" })
+      );
+    expect(submit).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledWith(false);
   } finally {
     await act(async () => {
       await Promise.resolve();
