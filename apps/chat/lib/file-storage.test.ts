@@ -83,13 +83,13 @@ describe("file storage", () => {
       ).join("") + String.fromCodePoint(127);
     const uploaded = await uploadFileAtKey(
       createFileId(),
-      `../${controlCharacters}report🧪.txt`,
+      `../pre${controlCharacters}report🧪.txt`,
       "hello",
       "text/plain"
     );
 
     try {
-      assert.equal(uploaded.pathname, "report🧪.txt");
+      assert.equal(uploaded.pathname, "prereport🧪.txt");
     } finally {
       await deleteFilesByUrls([uploaded.url]);
     }
