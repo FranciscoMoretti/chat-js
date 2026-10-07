@@ -44,10 +44,7 @@ const PROJECT_COLORS = [
 type ProjectColorName = (typeof PROJECT_COLORS)[number]["name"];
 
 // For zod enum validation
-// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The nonempty project color catalog is mapped into a tuple needed by schema construction; Array.map loses that tuple guarantee.
-const PROJECT_COLOR_NAMES = PROJECT_COLORS.map(
-  (color) => color.name
-) as unknown as readonly [ProjectColorName, ...ProjectColorName[]];
+const PROJECT_COLOR_NAMES = PROJECT_COLORS.map((color) => color.name);
 
 const DEFAULT_PROJECT_ICON: ProjectIconName = "folder";
 
@@ -55,6 +52,13 @@ const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
 
 /* oxlint-disable no-magic-numbers --
 no-magic-numbers (#517): getColorValue uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+// Saved varchar values can outlive the installed icon/color catalog. Keep the
+// same folder/gray fallback used by ProjectIcon when opening the editor.
+const getProjectIconName = (value: string): ProjectIconName =>
+  PROJECT_ICONS.find((icon) => icon === value) ?? DEFAULT_PROJECT_ICON;
+const getProjectColorName = (value: string): ProjectColorName =>
+  PROJECT_COLOR_NAMES.find((color) => color === value) ?? DEFAULT_PROJECT_COLOR;
+
 const getColorValue = (name: ProjectColorName): string =>
   PROJECT_COLORS.find((color) => color.name === name)?.value ??
   PROJECT_COLORS[0].value;
@@ -63,6 +67,8 @@ export {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   getColorValue,
+  getProjectIconName,
+  getProjectColorName,
   PROJECT_COLOR_NAMES,
   PROJECT_COLORS,
   PROJECT_ICONS,

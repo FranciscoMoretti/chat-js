@@ -6,6 +6,9 @@ import type {
 
 const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -229,8 +232,10 @@ const parseExecutionOutput = async (execResult: {
     if (chartLineIdx !== -1) {
       const raw = outLines[chartLineIdx].slice(CHART_JSON_PREFIX.length);
       try {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
-        chartData = JSON.parse(raw) as Record<string, unknown>;
+        const value: unknown = JSON.parse(raw);
+        if (isJsonObject(value)) {
+          chartData = value;
+        }
       } catch {
         // Ignore malformed chart JSON from the sandboxed snippet.
       }

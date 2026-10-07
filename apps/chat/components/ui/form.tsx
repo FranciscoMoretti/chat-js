@@ -37,9 +37,9 @@ interface FormFieldContextValue<
   name: TName;
 }
 
-const FormFieldContext = reactCreateContext<FormFieldContextValue>(
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
-  {} as FormFieldContextValue
+const FormFieldContext = reactCreateContext<FormFieldContextValue | undefined>(
+  // oxlint-disable-next-line no-undefined -- React context needs a real absent-provider sentinel so useFormField can reject a missing provider.
+  undefined
 );
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- FormField: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { ...props }: ControllerProps<TFieldValues, TName>). */
 
@@ -63,9 +63,9 @@ interface FormItemContextValue {
   id: string;
 }
 
-const FormItemContext = reactCreateContext<FormItemContextValue>(
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: These contexts use empty defaults and require matching providers; changing defaults needs a coordinated provider/consumer invariant migration.
-  {} as FormItemContextValue
+const FormItemContext = reactCreateContext<FormItemContextValue | undefined>(
+  // oxlint-disable-next-line no-undefined -- React context needs a real absent-provider sentinel so useFormField can reject a missing provider.
+  undefined
 );
 type FormFieldState = ControllerFieldState & {
   formDescriptionId: string;
@@ -81,13 +81,14 @@ const useFormField = (): FormFieldState => {
   const fieldContext = useReactContext(FormFieldContext);
   const itemContext = useReactContext(FormItemContext);
   const { getFieldState } = useFormContext();
-  const formState = useFormState({ name: fieldContext.name });
-  const fieldState = getFieldState(fieldContext.name, formState);
+  const formState = useFormState({ name: fieldContext?.name });
 
-  if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>");
+  if (!fieldContext || !itemContext) {
+    throw new Error(
+      "useFormField should be used within <FormField> and <FormItem>"
+    );
   }
-
+  const fieldState = getFieldState(fieldContext.name, formState);
   const { id } = itemContext;
 
   return {

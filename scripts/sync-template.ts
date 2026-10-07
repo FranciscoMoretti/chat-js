@@ -3,6 +3,10 @@ import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+// oxlint-disable-next-line import/no-relative-parent-imports -- Template generation reuses the canonical CLI JSON object reader.
+import { parseJsonObject } from "../packages/cli/src/helpers/json";
+// oxlint-disable-next-line import/no-relative-parent-imports -- Template generation reuses the canonical CLI package manifest validator.
+import { parsePackageJson } from "../packages/cli/src/helpers/package-manifest";
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -117,15 +121,11 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These repository-owned package manifests use the packageManager string contract; retain all unrelated JSON fields.
-  const rootPackageJson = JSON.parse(
+  const rootPackageJson = parsePackageJson(
     await readFile(rootPackageJsonPath, "utf-8")
-  ) as { packageManager?: string };
+  );
   const packageJsonPath = join(destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The generated template manifest retains arbitrary package fields while stamping the known packageManager field.
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-    packageManager?: string;
-  };
+  const packageJson = parseJsonObject(await readFile(packageJsonPath, "utf-8"));
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(
     packageJsonPath,

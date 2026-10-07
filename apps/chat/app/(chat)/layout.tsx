@@ -51,9 +51,7 @@ const ChatLayoutDynamic = async ({
   const isAnonymous = !session?.user;
 
   const default_chat_model = config.ai.workflows.chat;
-  let defaultModel: AppModelId =
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The model cookie is checked against available model IDs before use; catalog branding is not preserved by cookie-string and includes APIs.
-    (cookieModel as AppModelId) ?? default_chat_model;
+  let defaultModel: AppModelId = cookieModel ?? default_chat_model;
 
   if (typeof cookieModel === "string" && cookieModel !== "") {
     const modelExists = chatModels.some((model) => model.id === cookieModel);
@@ -62,9 +60,7 @@ const ChatLayoutDynamic = async ({
     } else if (isAnonymous) {
       const isModelAvailable = (
         ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-      )
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The model cookie is checked against available model IDs before use; catalog branding is not preserved by cookie-string and includes APIs.
-        .includes(cookieModel as AppModelId);
+      ).includes(cookieModel);
       if (!isModelAvailable) {
         defaultModel = default_chat_model;
       }

@@ -12,6 +12,7 @@ import type {
 } from "@chat-js/gateways/provider-types";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
+import { z } from "zod";
 
 type OpenaiLanguageModelId = StrictLiterals<
   ExtractModelIdFromProvider<typeof createOpenAI>
@@ -20,12 +21,15 @@ type OpenaiImageModelId = StrictLiterals<
   ExtractImageModelIdFromProvider<typeof createOpenAI>
 >;
 
-interface OpenAIModelResponse {
-  created: number;
-  id: string;
-  object: string;
-  owned_by: string;
-}
+const providerModelSchema = z.object({
+  created: z.number().nullish(),
+  id: z.string(),
+  owned_by: z.string().nullish(),
+});
+type OpenAIModelResponse = z.output<typeof providerModelSchema>;
+const providerModelListSchema = z.object({
+  data: z.array(providerModelSchema).nullish(),
+});
 
 const UNKNOWN_MODEL_LIMIT = 0;
 const UNKNOWN_MODEL_TIMESTAMP = 0;
@@ -62,7 +66,10 @@ class OpenAIGateway
     return createOpenAI({ apiKey });
   }
 
-  public createLanguageModel(modelId: OpenaiLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SDK custom model IDs use string & {}; this is an immutable string. Readonly maps that intersection into a non-string object rejected by the provider factory.
+    modelId: ExtractModelIdFromProvider<typeof createOpenAI>
+  ): LanguageModelV4 {
     const provider = this.getProvider();
     return provider(modelId);
   }
@@ -109,11 +116,8 @@ class OpenAIGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const body = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ??
-        []) as readonly Readonly<OpenAIModelResponse>[];
+      const body = providerModelListSchema.parse(await response.json());
+      const models = body.data ?? [];
       const result = models.map((model) => toAiGatewayModel(model));
 
       this.log.info(

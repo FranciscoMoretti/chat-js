@@ -24,7 +24,11 @@ import { initializeFeatureUi } from "../utils/sync-features";
 import { syncTools } from "../utils/sync-tools";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { normalizeScaffoldedPackageJson } from "./package-manifest";
+import { parseJsonObject } from "./json";
+import {
+  parsePackageJson,
+  normalizeScaffoldedPackageJson,
+} from "./package-manifest";
 /* oxlint-enable import/max-dependencies */
 import { resolvePackageDirectory } from "./resolve-package-directory";
 import {
@@ -174,15 +178,11 @@ const applyChatTemplateSourceTransforms = async (
   ]);
 
   const repoPackageJsonPath = pathModule.join(getRepoRoot(), "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const rootPackageJson = JSON.parse(
+  const rootPackageJson = parsePackageJson(
     await readFile(repoPackageJsonPath, "utf-8")
-  ) as { packageManager?: string };
+  );
   const packageJsonPath = pathModule.join(destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-    packageManager?: string;
-  };
+  const packageJson = parseJsonObject(await readFile(packageJsonPath, "utf-8"));
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
@@ -282,11 +282,7 @@ const normalizeChatAppFiles = async (
   );
 
   const vercelJsonPath = pathModule.join(destination, "vercel.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const vercelJson = JSON.parse(await readFile(vercelJsonPath, "utf-8")) as {
-    installCommand?: string;
-    buildCommand?: string;
-  };
+  const vercelJson = parseJsonObject(await readFile(vercelJsonPath, "utf-8"));
   vercelJson.installCommand = `${packageManager} install`;
   vercelJson.buildCommand = runScript(packageManager, "build");
   await writeFile(vercelJsonPath, `${JSON.stringify(vercelJson, null, 2)}\n`);
@@ -343,12 +339,20 @@ const excludeElectronFromRootTypecheck = async (
   projectDir: string
 ): Promise<void> => {
   const tsconfigPath = pathModule.join(projectDir, "tsconfig.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const tsconfig = JSON.parse(await readFile(tsconfigPath, "utf-8")) as {
-    exclude?: string[];
-  };
+  const tsconfig = parseJsonObject(await readFile(tsconfigPath, "utf-8"));
 
-  tsconfig.exclude = [...new Set([...(tsconfig.exclude ?? []), "electron"])];
+  const { exclude } = tsconfig;
+  /* oxlint-disable no-undefined -- Preserve the existing nullish exclude fallback while validating populated exclusion arrays. */
+  if (
+    exclude !== undefined &&
+    exclude !== null &&
+    (!Array.isArray(exclude) ||
+      !exclude.every((entry: unknown) => typeof entry === "string"))
+  ) {
+    throw new TypeError("tsconfig.json exclude must be an array of strings.");
+  }
+  /* oxlint-enable no-undefined */
+  tsconfig.exclude = [...new Set([...(exclude ?? []), "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 };
 /* oxlint-enable eslint/no-magic-numbers */
@@ -384,11 +388,7 @@ const scaffoldFromTemplate = async (
   );
   const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-    JSON.parse(await readFile(packageJsonPath, "utf-8")) as Record<
-      string,
-      unknown
-    >,
+    parsePackageJson(await readFile(packageJsonPath, "utf-8")),
     {
       packageManager,
       template: "chat-app",
@@ -503,12 +503,9 @@ const scaffoldElectron = async (
 ): Promise<void> => {
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = pathModule.join(projectDir, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const rootPackageJson = JSON.parse(
+  const rootPackageJson = parsePackageJson(
     await readFile(rootPackageJsonPath, "utf-8")
-  ) as {
-    devDependencies?: Record<string, string>;
-  };
+  );
   const destination = pathModule.join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
@@ -523,13 +520,12 @@ const scaffoldElectron = async (
   const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJsonSource = await readFile(packageJsonPath, "utf-8");
   const packageJson = normalizeScaffoldedPackageJson(
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-    JSON.parse(
+    parsePackageJson(
       packageJsonSource
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
         .replace("__GITHUB_OWNER__", "your-github-username")
         .replace("__GITHUB_REPO__", opts.projectName)
-    ) as Record<string, unknown>,
+    ),
     {
       packageManager,
       template: "electron",

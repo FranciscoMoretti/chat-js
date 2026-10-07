@@ -1,9 +1,12 @@
+/* oxlint-disable import/max-dependencies -- This create command composes its installer adapters and their canonical JSON readers explicitly. */
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { intro, outro } from "@clack/prompts";
 import { Command } from "commander";
 import { z } from "zod";
+
+import { parseJsonObject } from "#cli/helpers/json";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { toolDefinitionSchema } from "../../../registry/metadata";
@@ -507,12 +510,9 @@ const writeConfiguration = async (
   const configSpinner = spinner("Writing configuration...").start();
   try {
     const packageJsonPath = path.join(project.targetDir, "package.json");
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Commander supplies an open option object that is immediately checked by the create-options schema.
-    const packageJson = JSON.parse(
+    const packageJson = parseJsonObject(
       await readFile(packageJsonPath, "utf-8")
-    ) as {
-      name?: string;
-    };
+    );
     packageJson.name = project.projectName;
     await writeFile(
       packageJsonPath,

@@ -34,7 +34,7 @@ const frontendToolsSchema = z.enum([
 
 type UiToolName = z.infer<typeof frontendToolsSchema>;
 
-type SelectedModelCounts = Partial<Record<AppModelId, number>>;
+type SelectedModelCounts = Readonly<Partial<Record<AppModelId, number>>>;
 
 type SelectedModelValue = AppModelId | SelectedModelCounts;
 
@@ -81,8 +81,7 @@ const getPrimarySelectedModelId = (
   const [firstSelectedModelId] = Object.entries(selectedModel).find(
     ([, count]) => typeof count === "number" && count > 0
   ) ?? [null];
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Selection keys originate from the supported model catalog; preserving the model-ID union requires a validated-selection API migration.
-  return firstSelectedModelId as AppModelId | null;
+  return firstSelectedModelId;
 };
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
@@ -100,8 +99,7 @@ const expandSelectedModelValue = (
       continue;
     }
     for (let index = 0; index < count; index += 1) {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Selection keys originate from the supported model catalog; preserving the model-ID union requires a validated-selection API migration.
-      expanded.push(modelId as AppModelId);
+      expanded.push(modelId);
     }
   }
   return expanded;

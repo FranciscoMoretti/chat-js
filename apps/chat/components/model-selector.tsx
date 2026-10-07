@@ -114,7 +114,7 @@ const getFeatureIcons = (model: AppModelDefinition) => {
 const buildMultiModelSelection = (
   modelIds: readonly AppModelId[]
 ): SelectedModelCounts => {
-  const selection: SelectedModelCounts = {};
+  const selection: Partial<Record<AppModelId, number>> = {};
   for (const modelId of modelIds) {
     selection[modelId] = 1;
   }

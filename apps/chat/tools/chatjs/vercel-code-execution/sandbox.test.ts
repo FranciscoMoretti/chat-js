@@ -34,8 +34,10 @@ const jwt = (payload: unknown): string =>
  */
 beforeEach(() => {
   vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  for (const key of Object.keys(envMock) as (keyof typeof envMock)[]) {
+  for (const key of Object.keys(envMock).filter(
+    (candidate): candidate is keyof typeof envMock =>
+      Object.hasOwn(envMock, candidate)
+  )) {
     envMock[key] = undefined;
   }
 });
@@ -299,15 +301,32 @@ describe("codeSandboxCleanupCapability", () => {
       VERCEL_TEAM_ID: "team",
       VERCEL_TOKEN: "opaque",
     });
-    const stop = vi.fn(() => Promise.resolve());
+    const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
+      createdAt: 0,
+      cwd: "/tmp",
+      id: "session",
+      memory: 128,
+      region: "test",
+      requestedAt: 0,
+      status: "stopped",
+      timeout: 30_000,
+      updatedAt: 0,
+      vcpus: 1,
+    });
     const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    const sandbox = Object.create(Sandbox.prototype, {
-      delete: { value: remove },
-      name: { value: "owned" },
-      persistent: { value: false },
-      stop: { value: stop },
-    }) as Sandbox;
+    const sandbox = new Sandbox({
+      routes: [],
+      sandbox: {
+        createdAt: 0,
+        currentSessionId: "session",
+        name: "owned",
+        persistent: false,
+        status: "running",
+        updatedAt: 0,
+      },
+    });
+    vi.spyOn(sandbox, "delete").mockImplementation(remove);
+    vi.spyOn(sandbox, "stop").mockImplementation(stop);
     const get = vi
       .spyOn(Sandbox, "get")
       .mockResolvedValueOnce(sandbox)
@@ -341,15 +360,32 @@ describe("codeSandboxCleanupCapability", () => {
       VERCEL_TEAM_ID: "team",
       VERCEL_TOKEN: "opaque",
     });
-    const stop = vi.fn(() => Promise.resolve());
+    const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
+      createdAt: 0,
+      cwd: "/tmp",
+      id: "session",
+      memory: 128,
+      region: "test",
+      requestedAt: 0,
+      status: "stopped",
+      timeout: 30_000,
+      updatedAt: 0,
+      vcpus: 1,
+    });
     const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: This sandbox fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-    const sandbox = Object.create(Sandbox.prototype, {
-      delete: { value: remove },
-      name: { value: identity.name },
-      persistent: { value: identity.persistent },
-      stop: { value: stop },
-    }) as Sandbox;
+    const sandbox = new Sandbox({
+      routes: [],
+      sandbox: {
+        createdAt: 0,
+        currentSessionId: "session",
+        name: identity.name,
+        persistent: identity.persistent,
+        status: "running",
+        updatedAt: 0,
+      },
+    });
+    vi.spyOn(sandbox, "delete").mockImplementation(remove);
+    vi.spyOn(sandbox, "stop").mockImplementation(stop);
     const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
     try {
       const { codeSandboxCleanupCapability } =

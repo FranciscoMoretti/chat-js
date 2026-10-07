@@ -8,6 +8,9 @@ import { customType } from "drizzle-orm/pg-core";
 import { env } from "@/lib/env";
 /* oxlint-enable import/no-nodejs-modules */
 
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const ALGORITHM = "aes-256-gcm";
 
 /* oxlint-disable typescript/strict-boolean-expressions --
@@ -63,21 +66,24 @@ const encryptedText = customType<{ driverData: string; data: string }>({
   toDriver: (value): string => encrypt(value),
 });
 
-/* oxlint-disable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- id-length (#506): encryptedJson uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
-jsdoc/require-returns (#535): encryptedJson's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep encryptedJson's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary. */
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
  * Stores JSON as encrypted text in the database.
  */
-const encryptedJson = <T>() =>
-  customType<{ driverData: string; data: T }>({
-    dataType: (): string => "text",
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
-    fromDriver: (value) => JSON.parse(decrypt(value)) as T,
-    toDriver: (value): string => encrypt(JSON.stringify(value)),
-  });
-/* oxlint-enable id-length, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
+const encryptedJson = customType<{
+  driverData: string;
+  data: Record<string, unknown>;
+}>({
+  dataType: (): string => "text",
+  fromDriver: (value): Record<string, unknown> => {
+    const parsed: unknown = JSON.parse(decrypt(value));
+    if (!isJsonObject(parsed)) {
+      throw new TypeError("Encrypted JSON column must contain an object.");
+    }
+    return parsed;
+  },
+  toDriver: (value: Readonly<Record<string, unknown>>): string =>
+    encrypt(JSON.stringify(value)),
+});
 export { encryptedJson, encryptedText };

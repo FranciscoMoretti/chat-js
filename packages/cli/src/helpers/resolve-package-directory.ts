@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import pathModule from "node:path";
 
+import { isJsonObject } from "./json";
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
@@ -26,9 +28,8 @@ export const resolvePackageDirectory = async (
         pathModule.join(directory, "package.json"),
         "utf-8"
       );
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Package discovery reads only the manifest name and leaves unrelated package metadata untouched.
-      const manifest = JSON.parse(manifestSource) as { name?: string };
-      if (manifest.name === packageName) {
+      const manifest: unknown = JSON.parse(manifestSource);
+      if (isJsonObject(manifest) && manifest.name === packageName) {
         return directory;
       }
     } catch (error) {

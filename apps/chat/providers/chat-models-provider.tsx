@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import React, { createContext, useCallback, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
 
-import type { AppModelId } from "@/lib/ai/app-model-id";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 import type { AppModelDefinition } from "@/lib/ai/app-models";
 import { useSession } from "@/providers/session-provider";
@@ -54,11 +53,9 @@ const ChatModelsProvider = ({
     const enabled = getDefaultEnabledModels(models);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted model preference IDs are reconciled with the installed catalog; stronger branding requires changing the preference and gateway contracts together.
-        enabled.add(pref.modelId as AppModelId);
+        enabled.add(pref.modelId);
       } else {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted model preference IDs are reconciled with the installed catalog; stronger branding requires changing the preference and gateway contracts together.
-        enabled.delete(pref.modelId as AppModelId);
+        enabled.delete(pref.modelId);
       }
     }
     return enabled;

@@ -66,3 +66,40 @@ it.each([0, 1])(
   }
 );
 /* oxlint-enable max-statements, no-magic-numbers */
+
+/* oxlint-disable max-statements, no-magic-numbers -- Keep each sandbox output boundary scenario and its command sequence together. */
+it.each([
+  ['{"type":"line","elements":[],"extension":true}', true],
+  ["null", false],
+  ["[]", false],
+  ['"text"', false],
+  ["false", false],
+  ["42", false],
+  ["{", false],
+] as const)(
+  "chart envelope %s is accepted only when it is an object",
+  async (chart, accepted): Promise<void> => {
+    mocks.runCommand.mockReset();
+    mocks.runCommand
+      .mockResolvedValueOnce({ exitCode: 0 })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stderr: (): string => "",
+        stdout: (): string =>
+          `printed output\n__CHART_JSON__:${chart}\n{"success":true}`,
+      })
+      .mockResolvedValueOnce({ exitCode: 1 });
+    const result = await executePythonInSandbox({
+      code: "print('output')",
+      log: pino({ level: "silent" }),
+      requestId: "chart-envelope",
+      sandbox: await Sandbox.create(),
+    });
+    expect(result.message).toBe("printed output");
+    expect(result.chart).toEqual(
+      accepted ? { elements: [], extension: true, type: "line" } : ""
+    );
+    expect(mocks.runCommand).toHaveBeenCalledTimes(accepted ? 2 : 3);
+  }
+);
+/* oxlint-enable max-statements, no-magic-numbers */

@@ -175,7 +175,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `typescript/no-unsafe-call` | Enforced | [#596](https://github.com/FranciscoMoretti/chat-js/issues/596) |
 | `typescript/no-unsafe-member-access` | Enforced | [#597](https://github.com/FranciscoMoretti/chat-js/issues/597) |
 | `typescript/no-unsafe-return` | Enforced | [#598](https://github.com/FranciscoMoretti/chat-js/issues/598) |
-| `typescript/no-unsafe-type-assertion` | Enforced | [#599](https://github.com/FranciscoMoretti/chat-js/issues/599) |
+| `typescript/no-unsafe-type-assertion` | Enforced; native SDK/route/generic correlations have adjacent reasons | [#599](https://github.com/FranciscoMoretti/chat-js/issues/599), [#781](https://github.com/FranciscoMoretti/chat-js/issues/781) |
 | `typescript/no-var-requires` | Enforced | [#564](https://github.com/FranciscoMoretti/chat-js/issues/564) |
 | `typescript/non-nullable-type-assertion-style` | Enforced | [#600](https://github.com/FranciscoMoretti/chat-js/issues/600) |
 | `typescript/only-throw-error` | Enforced | [#601](https://github.com/FranciscoMoretti/chat-js/issues/601) |

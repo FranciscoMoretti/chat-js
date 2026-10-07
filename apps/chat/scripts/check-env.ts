@@ -111,10 +111,10 @@ const validateStorage = (env: NodeJS.ProcessEnv): ValidationError | null => {
 const validateAuthentication = (env: NodeJS.ProcessEnv): ValidationError[] => {
   const errors: ValidationError[] = [];
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Environment checks enumerate typed configuration keys and report a mismatched snapshot; preserving legacy config diagnostics requires runtime config-schema migration.
-  const authKeys = Object.keys(
-    authEnvRequirements
-  ) as (keyof typeof authEnvRequirements)[];
+  const authKeys = Object.keys(authEnvRequirements).filter(
+    (key): key is keyof typeof authEnvRequirements =>
+      Object.hasOwn(authEnvRequirements, key)
+  );
   for (const provider of authKeys) {
     if (!config.authentication[provider]) {
       continue;

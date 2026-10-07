@@ -498,14 +498,13 @@ jsdoc/require-returns (#535): defineConfig's existing documentation covers its p
 const defineConfig = <const T extends ConfigInput>(config: T): T => config;
 /* oxlint-enable id-length, jsdoc/require-param, jsdoc/require-returns */
 
-/* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
- * id-length (#506): mergeToolsConfig uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/prefer-readonly-parameter-types (#565): mergeToolsConfig accepts user: Record<string, unknown> | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
+ * typescript/prefer-readonly-parameter-types (#565): mergeToolsConfig accepts user: object | undefined; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-const mergeToolsConfig = <T extends Record<string, unknown>>(
-  defaults: T,
-  user: Record<string, unknown> | undefined
-): T => {
+const mergeToolsConfig = (
+  defaults: Readonly<Record<string, unknown>>,
+  user: object | undefined
+): Record<string, unknown> => {
   if (!user) {
     return defaults;
   }
@@ -522,8 +521,7 @@ const mergeToolsConfig = <T extends Record<string, unknown>>(
         ? { ...defVal, ...val }
         : val;
   }
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-  return result as T;
+  return result;
 };
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
@@ -532,21 +530,16 @@ const mergeToolsConfig = <T extends Record<string, unknown>>(
 const applyDefaults = (input: ConfigInput): Config => {
   const gateway = input.ai?.gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;
-  const aiInput = input.ai as Record<string, unknown> | undefined;
+  const aiInput = input.ai;
 
   const mergedAi = {
     gateway,
     ...gatewayDefaults,
     ...aiInput,
-    tools: mergeToolsConfig(
-      gatewayDefaults.tools,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-      aiInput?.tools as Record<string, unknown> | undefined
-    ),
+    tools: mergeToolsConfig(gatewayDefaults.tools, aiInput?.tools),
     workflows: {
       ...gatewayDefaults.workflows,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Configuration merging preserves generic defaults and legacy input shapes; validating the intermediate representation requires a separate config migration.
-      ...(aiInput?.workflows as Record<string, unknown> | undefined),
+      ...aiInput?.workflows,
     },
   };
 

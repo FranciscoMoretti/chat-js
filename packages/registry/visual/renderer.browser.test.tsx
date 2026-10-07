@@ -267,6 +267,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
+/* oxlint-disable eslint/max-statements, eslint/max-lines-per-function, react-perf/jsx-no-new-object-as-prop -- This renderer fixture matrix covers loading, failure, malformed, empty, and successful results in one capture. */
 test("weather and retrieved URL renderer states", async (): Promise<void> => {
   const container = document.createElement("main");
   container.style.cssText = "padding:24px;width:1000px;display:grid;gap:16px";
@@ -298,14 +299,39 @@ test("weather and retrieved URL renderer states", async (): Promise<void> => {
         />
         <RetrieveUrlRenderer
           isReadonly
+          messageId="url-invalid"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [{ content: {}, title: false }] },
+            state: "output-available",
+            toolCallId: "invalid",
+          }}
+        />
+        <RetrieveUrlRenderer
+          isReadonly
+          messageId="url-empty"
+          tool={{
+            input: { url: "https://example.com" },
+            output: { results: [] },
+            state: "output-available",
+            toolCallId: "empty",
+          }}
+        />
+        <RetrieveUrlRenderer
+          isReadonly
           messageId="url-output"
           tool={retrieveUrlOutputTool}
         />
       </>
     );
   });
+  expect(container.textContent).toContain("Retrieved Content");
+  expect(container.textContent).toContain("Unknown");
+  expect(container.textContent).toContain("No content available");
   await takeSnapshot("weather-and-retrieved-url-states");
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act((): void => root.unmount());
   container.remove();
 });
+
+/* oxlint-enable eslint/max-statements, eslint/max-lines-per-function, react-perf/jsx-no-new-object-as-prop */

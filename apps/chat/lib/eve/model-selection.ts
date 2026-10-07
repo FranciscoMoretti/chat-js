@@ -4,18 +4,14 @@ import { z } from "zod";
 
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
-import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import type { ModelData } from "@/lib/ai/model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
 import { config } from "@/lib/config";
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;
-const MODEL_ID_PARAMETER_INDEX = 0;
 type EveModelDefinition = ModelData & {
-  apiModelId: Parameters<
-    InstalledGateway["createLanguageModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX];
+  apiModelId: string;
 };
 
 class EveModelUnavailableError extends Error {
@@ -49,8 +45,7 @@ const getEveModelDefinition = (
   return {
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The selected installed gateway determines valid model IDs at runtime; a generic gateway redesign is needed to encode that relationship.
-    apiModelId: model.id as EveModelDefinition["apiModelId"],
+    apiModelId: model.id,
     reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };

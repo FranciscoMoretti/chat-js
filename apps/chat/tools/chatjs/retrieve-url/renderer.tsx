@@ -73,16 +73,14 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
 
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const getItemProperty = <T,>(
+const getItemProperty = (
   item: unknown,
   property: string,
-  defaultValue: T
-): T => {
+  defaultValue: string
+): string => {
   if (item && typeof item === "object" && property in item) {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    const value = (item as Record<string, unknown>)[property];
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    return (value as T) ?? defaultValue;
+    const value: unknown = Reflect.get(item, property);
+    return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
@@ -208,14 +206,18 @@ const getErrorMessage = (
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    result && typeof result === "object" && "error" in result
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (result.error as string)
+    result &&
+    typeof result === "object" &&
+    "error" in result &&
+    typeof result.error === "string"
+      ? result.error
       : undefined;
   const firstItemError =
-    firstItem && typeof firstItem === "object" && "error" in firstItem
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (firstItem.error as string)
+    firstItem &&
+    typeof firstItem === "object" &&
+    "error" in firstItem &&
+    typeof firstItem.error === "string"
+      ? firstItem.error
       : undefined;
 
   return topLevelError ?? firstItemError ?? null;

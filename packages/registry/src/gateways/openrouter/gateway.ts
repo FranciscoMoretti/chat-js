@@ -7,37 +7,55 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { ImageModel } from "ai";
+import { z } from "zod";
 
 const MODEL_OWNER_SEGMENT_INDEX = 0;
 const EMPTY_TAG_COUNT = 0;
 const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
 
-interface OpenRouterModelResponse {
-  architecture: Readonly<{
-    modality?: string;
-    input_modalities?: readonly string[];
-    output_modalities?: readonly string[];
-  }> | null;
-  context_length: number | null;
-  created: number;
-  description: string;
-  id: string;
-  name: string;
-  pricing: Readonly<{
-    prompt?: string;
-    completion?: string;
-    image?: string;
-    web_search?: string;
-    internal_reasoning?: string;
-    input_cache_read?: string;
-    input_cache_write?: string;
-  }> | null;
+const modalitiesSchema = z.array(z.string()).nullish();
+const providerModelSchema = z.object({
+  architecture: z
+    .object({
+      input_modalities: modalitiesSchema,
+      output_modalities: modalitiesSchema,
+    })
+    .nullish(),
+  context_length: z.number().nullish(),
+  created: z.number().nullish(),
+  description: z.string().nullish(),
+  id: z.string(),
+  name: z.string().nullish(),
+  pricing: z
+    .object({
+      completion: z.string().optional(),
+      image: z.string().optional(),
+      input_cache_read: z.string().optional(),
+      input_cache_write: z.string().optional(),
+      prompt: z.string().optional(),
+      web_search: z.string().optional(),
+    })
+    .nullish(),
+  supported_parameters: z.array(z.string()).nullish(),
+  top_provider: z
+    .object({ max_completion_tokens: z.number().nullish() })
+    .nullish(),
+});
+type OpenRouterModelResponse = Omit<
+  z.output<typeof providerModelSchema>,
+  "architecture" | "pricing" | "top_provider" | "supported_parameters"
+> & {
+  architecture?: {
+    readonly input_modalities?: readonly string[] | null;
+    readonly output_modalities?: readonly string[] | null;
+  } | null;
+  pricing?: Readonly<z.output<typeof providerModelSchema>["pricing"]>;
+  top_provider?: Readonly<z.output<typeof providerModelSchema>["top_provider"]>;
   supported_parameters?: readonly string[] | null;
-  top_provider: Readonly<{
-    context_length?: number | null;
-    max_completion_tokens: number | null;
-  }> | null;
-}
+};
+const providerModelListSchema = z.object({
+  data: z.array(providerModelSchema).nullish(),
+});
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
@@ -174,12 +192,11 @@ class OpenRouterGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const body = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ??
-        []) as readonly Readonly<OpenRouterModelResponse>[];
-      const result = models.map((model) => toAiGatewayModel(model));
+      const body = providerModelListSchema.parse(await response.json());
+      const models = body.data ?? [];
+      const result = models.map((model: Readonly<OpenRouterModelResponse>) =>
+        toAiGatewayModel(model)
+      );
 
       this.log.info(
         { modelCount: result.length },

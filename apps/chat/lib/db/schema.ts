@@ -311,7 +311,7 @@ const mcpOAuthSession = pgTable(
   "McpOAuthSession",
   {
     // OAuthClientInformationFull from MCP SDK.
-    clientInfo: encryptedJson<Record<string, unknown>>()("clientInfo"),
+    clientInfo: encryptedJson("clientInfo"),
     // PKCE verifier.
     codeVerifier: encryptedText("codeVerifier"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
@@ -323,7 +323,7 @@ const mcpOAuthSession = pgTable(
     // OAuth state parameter, unique for security.
     state: text("state").unique(),
     // OAuthTokens from MCP SDK.
-    tokens: encryptedJson<Record<string, unknown>>()("tokens"),
+    tokens: encryptedJson("tokens"),
     updatedAt: timestamp("updatedAt")
       .notNull()
       .defaultNow()

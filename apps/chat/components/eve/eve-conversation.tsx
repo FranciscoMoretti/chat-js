@@ -726,7 +726,7 @@ const useConversationInput = (
       onChange: async (value: SelectedModelValue) => {
         setSelection(value);
         const primary = getPrimarySelectedModelId(value);
-        if (primary) {
+        if (typeof primary === "string" && primary !== "") {
           await changeModel(primary);
         }
       },

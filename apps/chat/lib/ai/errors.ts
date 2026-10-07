@@ -1,11 +1,13 @@
-type ErrorType =
-  | "bad_request"
-  | "unauthorized"
-  | "input_too_long"
-  | "forbidden"
-  | "not_found"
-  | "rate_limit"
-  | "offline";
+const ERROR_TYPES = [
+  "bad_request",
+  "unauthorized",
+  "input_too_long",
+  "forbidden",
+  "not_found",
+  "rate_limit",
+  "offline",
+] as const;
+type ErrorType = (typeof ERROR_TYPES)[number];
 
 type Surface =
   | "chat"
@@ -32,6 +34,22 @@ const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   stream: "response",
   suggestions: "response",
   vote: "response",
+};
+
+const ERROR_CODE_PART_COUNT = 2;
+
+const isErrorCode = (value: unknown): value is ErrorCode => {
+  if (typeof value !== "string") {
+    return false;
+  }
+  const parts = value.split(":");
+  const [type, surface] = parts;
+  return (
+    parts.length === ERROR_CODE_PART_COUNT &&
+    ERROR_TYPES.some((candidate) => candidate === type) &&
+    typeof surface === "string" &&
+    Object.hasOwn(visibilityBySurface, surface)
+  );
 };
 
 /* oxlint-disable max-lines-per-function, max-statements --
@@ -139,10 +157,10 @@ class ChatSDKError extends Error {
 
     const [type, surface] = errorCode.split(":");
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: ErrorCode is exactly `${ErrorType}:${Surface}` and HTTP input is checked by isErrorCode. Native String.split erases this tuple correlation; both segments must exist in their unions for every typed constructor caller.
     this.type = type as ErrorType;
     this.cause = cause;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: ErrorCode is exactly `${ErrorType}:${Surface}` and HTTP input is checked by isErrorCode. Native String.split erases this tuple correlation; both segments must exist in their unions for every typed constructor caller.
     this.surface = surface as Surface;
     this.statusCode = getStatusCodeByType(this.type);
   }
@@ -170,5 +188,5 @@ class ChatSDKError extends Error {
   }
 }
 /* oxlint-enable no-console */
-export { ChatSDKError };
+export { ChatSDKError, isErrorCode };
 export type { ErrorCode, ErrorType, Surface };

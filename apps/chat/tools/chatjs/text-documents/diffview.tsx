@@ -107,7 +107,7 @@ class DiffTextNode extends TextNode {
   }
 
   public updateDOM(
-    prevNode: DiffTextNode,
+    prevNode: this,
     dom: HTMLElement,
     config: EditorConfig
   ): boolean {
@@ -120,8 +120,7 @@ class DiffTextNode extends TextNode {
       return true;
     }
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Lexical dispatches nodes of the registered replacement class; the cast preserves that subclass relationship for the superclass DOM update.
-    return super.updateDOM(prevNode as this, dom, config);
+    return super.updateDOM(prevNode, dom, config);
   }
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

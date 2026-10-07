@@ -2,6 +2,7 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../gateway"; "../gateway-model-defaults"; "../models.generated" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
+import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 
 import type { Gateway } from "../gateway";
 import type { gatewayType } from "../gateway-model-defaults";
@@ -31,10 +32,17 @@ type GatewayProvider = InstalledProviderContract<InstalledGateway, GatewayType>;
 
 /* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
 no-magic-numbers (#517): GatewayModelIdMap uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
-type GatewayModelIdMap = Record<
-  GatewayType,
-  Parameters<InstalledGateway["createLanguageModel"]>[0]
->;
+// Runtime SDK factories accept new provider IDs. Configuration keeps curated
+// literal suggestions where the SDK supplies them; open adapters keep strings.
+type RuntimeLanguageModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[0];
+type ConfigLanguageModelId = [StrictLiterals<RuntimeLanguageModelId>] extends [
+  never,
+]
+  ? RuntimeLanguageModelId
+  : StrictLiterals<RuntimeLanguageModelId>;
+type GatewayModelIdMap = Record<GatewayType, ConfigLanguageModelId>;
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable id-length --

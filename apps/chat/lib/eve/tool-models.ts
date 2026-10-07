@@ -1,5 +1,4 @@
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-import type { AppModelId } from "@/lib/ai/app-model-id";
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 
@@ -13,7 +12,7 @@ export const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createImageModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591, #599: Scaffolding replaces InstalledGateway with provider-specific IDs (or never for unsupported media); preserve that generated contract while the null result below handles unsupported models.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #781: Generated adapters use never for unsupported media and return null without consuming the ID; supported adapters keep SDK model-ID inputs. This dynamic ToolModelProvider bridge must preserve both contracts; the null guard reports unsupported media.
       modelId as Parameters<InstalledGateway["createImageModel"]>[0]
     );
     if (!model) {
@@ -24,14 +23,11 @@ export const eveToolModelProvider: ToolModelProvider = {
     return model;
   },
   createLanguageModel: (modelId) =>
-    getActiveGateway().createLanguageModel(
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The installed gateway owns the model-ID contract; encoding it across the dynamic gateway registry requires a coordinated type migration.
-      modelId as Parameters<InstalledGateway["createLanguageModel"]>[0]
-    ),
+    getActiveGateway().createLanguageModel(modelId),
   createVideoModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createVideoModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #591, #599: Scaffolding replaces InstalledGateway with provider-specific IDs (or never for unsupported media); preserve that generated contract while the null result below handles unsupported models.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #781: Generated adapters use never for unsupported media and return null without consuming the ID; supported adapters keep SDK model-ID inputs. This dynamic ToolModelProvider bridge must preserve both contracts; the null guard reports unsupported media.
       modelId as Parameters<InstalledGateway["createVideoModel"]>[0]
     );
     if (!model) {
@@ -46,8 +42,7 @@ export const eveToolModelProvider: ToolModelProvider = {
     return {
       apiModelId: model.apiModelId,
       // The EVE catalog and active gateway validate the runtime ID at this boundary.
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The installed gateway owns the model-ID contract; encoding it across the dynamic gateway registry requires a coordinated type migration.
-      id: model.id as AppModelId,
+      id: model.id,
       output: model.output,
     };
   },

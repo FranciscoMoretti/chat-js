@@ -62,6 +62,7 @@ export const auditedRestrictionRules = {
   "typescript/consistent-type-definitions": "error",
   "typescript/explicit-function-return-type": "error",
   "typescript/explicit-module-boundary-types": "error",
+  "typescript/no-unsafe-type-assertion": "error",
   "typescript/prefer-readonly-parameter-types": "error",
   "typescript/promise-function-async": "error",
   "typescript/strict-boolean-expressions": "error",

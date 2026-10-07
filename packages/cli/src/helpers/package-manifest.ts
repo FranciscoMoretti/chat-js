@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 
 import type { PackageManager } from "#cli/types";
 
+import { isJsonObject, parseJsonObject } from "./json";
+
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;
 
@@ -10,12 +12,47 @@ type ScriptMap = Record<string, string>;
 type PackageJson = {
   type?: "module" | "commonjs";
   packageManager?: string;
-  scripts?: ScriptMap;
-  dependencies?: DependencyMap;
-  devDependencies?: DependencyMap;
-  overrides?: Record<string, unknown>;
+  scripts?: ScriptMap | null;
+  dependencies?: DependencyMap | null;
+  devDependencies?: DependencyMap | null;
+  overrides?: Record<string, unknown> | null;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
+
+const isStringMap = (value: unknown): value is Record<string, string> =>
+  isJsonObject(value) &&
+  Object.values(value).every((entry) => typeof entry === "string");
+
+/* oxlint-disable no-undefined, unicorn/no-null -- Legacy templates may omit optional maps or store null; preserve both while validating populated maps. */
+const isPackageJson = (
+  value: Readonly<Record<string, unknown>>
+): value is PackageJson & Record<string, unknown> =>
+  ["scripts", "dependencies", "devDependencies"].every(
+    (key) =>
+      value[key] === undefined || value[key] === null || isStringMap(value[key])
+  ) &&
+  (value.overrides === undefined ||
+    value.overrides === null ||
+    isJsonObject(value.overrides)) &&
+  (value.packageManager === undefined ||
+    typeof value.packageManager === "string") &&
+  (value.type === undefined ||
+    value.type === "module" ||
+    value.type === "commonjs");
+
+/* oxlint-enable no-undefined, unicorn/no-null */
+
+const parsePackageJson = (
+  source: string
+): PackageJson & Record<string, unknown> => {
+  const value = parseJsonObject(source);
+  if (!isPackageJson(value)) {
+    throw new TypeError(
+      "Invalid package.json dependency, script, or package metadata fields."
+    );
+  }
+  return value;
+};
 
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [
@@ -28,8 +65,8 @@ const toExactVersion = (range: string): string => range.replace(/^[~^]/u, "");
 
 const resolveBetterAuthVersion = (
   packageJson: Readonly<{
-    dependencies?: Readonly<DependencyMap>;
-    devDependencies?: Readonly<DependencyMap>;
+    dependencies?: Readonly<DependencyMap> | null;
+    devDependencies?: Readonly<DependencyMap> | null;
   }>
 ): string => {
   for (const dependencyGroup of [
@@ -52,7 +89,7 @@ const resolveBetterAuthVersion = (
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const pinBetterAuthVersions = (
-  dependencyGroup: DependencyMap | undefined,
+  dependencyGroup: DependencyMap | null | undefined,
   version: string
 ): void => {
   if (!dependencyGroup) {
@@ -138,7 +175,7 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const normalizeElectronDevDependencies = (
-  devDependencies: DependencyMap | undefined,
+  devDependencies: DependencyMap | null | undefined,
   tsxVersion?: string
 ): void => {
   if (!devDependencies) {
@@ -158,7 +195,7 @@ const normalizeElectronDevDependencies = (
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const normalizeScaffoldedPackageJson = (
+const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: Readonly<{
     packageManager?: PackageManager;
@@ -226,3 +263,5 @@ export const normalizeScaffoldedPackageJson = (
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+export { normalizeScaffoldedPackageJson, parsePackageJson };

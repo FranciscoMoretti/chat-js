@@ -4,14 +4,35 @@ import type { ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 
-import { ChatSDKError } from "./ai/errors";
-import type { ErrorCode } from "./ai/errors";
+import { ChatSDKError, isErrorCode } from "./ai/errors";
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): cn accepts ...inputs: ClassValue[]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const cn = (...inputs: ClassValue[]): string => twMerge(clsx(inputs));
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): fetchWithErrorHandlers accepts ...[input, init]: Parameters<typeof fetch>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+const errorFromResponse = (body: unknown): Error => {
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    "code" in body &&
+    isErrorCode(body.code)
+  ) {
+    return "cause" in body && typeof body.cause === "string"
+      ? new ChatSDKError(body.code, body.cause)
+      : new ChatSDKError(body.code);
+  }
+  // Hidden database errors omit their internal code but keep a public message.
+  const message =
+    typeof body === "object" &&
+    body !== null &&
+    "message" in body &&
+    typeof body.message === "string"
+      ? body.message
+      : "Something went wrong. Please try again later.";
+  return new Error(message);
+};
+
 const fetchWithErrorHandlers = async (
   ...[input, init]: Parameters<typeof fetch>
 ): Promise<Response> => {
@@ -19,10 +40,7 @@ const fetchWithErrorHandlers = async (
     const response = await fetch(input, init);
 
     if (!response.ok) {
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses.
-      const { code, cause } = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-type-assertion -- #594: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses. #599: The fetch wrapper consumes the application error-code envelope; introducing runtime envelope validation requires choosing fallback error behavior for malformed responses.
-      throw new ChatSDKError(code as ErrorCode, cause);
+      throw errorFromResponse(await response.json());
     }
 
     return response;

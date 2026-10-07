@@ -2,7 +2,7 @@ import { unstable_cache as cache } from "next/cache";
 
 import { config } from "@/lib/config";
 
-import type { AppModelId, ModelId } from "./app-model-id";
+import type { AppModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
 import {
@@ -12,27 +12,24 @@ import {
 
 type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
-  apiModelId: ModelId;
+  apiModelId: string;
 };
 
-const DISABLED_MODELS = new Set(config.ai.disabledModels);
+const DISABLED_MODELS = new Set<string>(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): buildAppModels accepts models: ModelData[]; model; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
   models
-    .flatMap((model) => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
-      const modelId = model.id as ModelId;
+    .flatMap((model): (AppModelDefinition & { disabled: boolean })[] => {
+      const modelId = model.id;
       // If the model supports reasoning, return two variants:
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
       if (model.reasoning) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Gateway catalog IDs and derived reasoning variants share the application model union; redesigning generated catalog typing requires a gateway contract migration.
-        const reasoningId = `${modelId}-reasoning` as AppModelId;
+        const reasoningId = `${modelId}-reasoning`;
 
         return [
           {
@@ -59,9 +56,7 @@ const buildAppModels = (models: ModelData[]): AppModelDefinition[] =>
         },
       ];
     })
-    .filter(
-      (model) => model.type === "language" && !model.disabled
-    ) as AppModelDefinition[];
+    .filter((model) => model.type === "language" && !model.disabled);
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
