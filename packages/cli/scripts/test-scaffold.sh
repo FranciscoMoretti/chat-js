@@ -3,6 +3,22 @@ set -euo pipefail
 
 cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# CI selects one matrix case; no arguments retains the full local suite.
+if [ "$#" -ne 0 ]; then
+  if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 [bun|npm|pnpm|yarn true|false]" >&2
+    exit 1
+  fi
+  case "$1" in
+    bun|npm|pnpm|yarn) ;;
+    *) echo "Unsupported package manager: $1" >&2; exit 1 ;;
+  esac
+  case "$2" in
+    true|false) ;;
+    *) echo "Unsupported Electron flag: $2" >&2; exit 1 ;;
+  esac
+fi
+
 # Verify local contracts before publication, including external registry installs.
 bun run --cwd "$cli_root" test:gateways
 gateway_archive_dir="$(mktemp -d /tmp/chat-js-gateway-package-XXXXXX)"
@@ -98,7 +114,11 @@ for (const key of Object.keys(manifest.exports)) {
 
 )
 
-for package_manager in bun npm pnpm yarn; do
-  run_case "$package_manager" false
-  run_case "$package_manager" true
-done
+if [ "$#" -eq 2 ]; then
+  run_case "$1" "$2"
+else
+  for package_manager in bun npm pnpm yarn; do
+    run_case "$package_manager" false
+    run_case "$package_manager" true
+  done
+fi
