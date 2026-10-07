@@ -80,6 +80,14 @@ test("gateway replacement edits only the active root config discriminator", asyn
   expect(await gatewayConfigEdit(root, selection)).toBe(
     bound.replace('gateway: "openai"', 'gateway: "vercel"')
   );
+  const awaitUsing = bound.replace(
+    "const configInput",
+    "await using configInput"
+  );
+  await writeFile(path.join(root, "chat.config.ts"), awaitUsing);
+  expect(await gatewayConfigEdit(root, selection)).toBe(
+    awaitUsing.replace('gateway: "openai"', 'gateway: "vercel"')
+  );
   await writeFile(
     path.join(root, "chat.config.ts"),
     bound.replace("defineConfig(", "transformConfig(")
