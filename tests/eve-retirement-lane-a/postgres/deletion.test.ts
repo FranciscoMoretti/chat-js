@@ -218,7 +218,6 @@ test("abort after DELETE dispatch rolls the actual transaction back", async () =
   database.injection.afterDelete = new AbortController();
   database.injection.enabled = true;
   const before = database.injection.deletes;
-  /* oxlint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
   try {
     await expect(
       removeEveDocumentFromConversation(
@@ -271,6 +270,7 @@ test.each(["abort", "new-head"])(
       () => "unexpected-success",
       (error: unknown) => error
     );
+    /* oxlint-enable promise/prefer-await-to-then, promise/prefer-await-to-callbacks */
     try {
       await expect
         .poll(async () => {

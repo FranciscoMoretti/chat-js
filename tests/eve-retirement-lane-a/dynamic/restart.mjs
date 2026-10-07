@@ -2,16 +2,24 @@
 /* oxlint-disable eslint/no-magic-numbers, no-undefined -- Expected process/effect counts and absent probe values are explicit restart assertions. */
 /* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/no-unsafe-return, typescript/no-unsafe-argument, typescript/restrict-template-expressions, typescript/strict-boolean-expressions -- This controller imports the external pinned runtime helper by CLI path; runtime assertions verify its observable boundary. */
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const [harnessDirectory, sourceDirectory, postgresHandoff] =
-  process.argv.slice(2);
+const [harnessDirectory, sourceDirectory, postgresHandoff] = process.argv
+  .slice(2)
+  .filter((value) => value !== "--abrupt");
+const abrupt = process.argv.includes("--abrupt");
 assert.ok(
   harnessDirectory && sourceDirectory,
   "Pass D's harness directory and an absolute prepared native-candidate fixture."
 );
+const helperHash = createHash("sha256")
+  .update(
+    await readFile(path.resolve(harnessDirectory, "persistent-runtime.ts"))
+  )
+  .digest("hex");
 const { createPersistentRuntime, until } = await import(
   pathToFileURL(path.resolve(harnessDirectory, "persistent-runtime.ts")).href
 );
@@ -77,7 +85,9 @@ await writeFile(
 await writeFile(
   path.join(runtime.directory, "restart-instrumentation.json"),
   JSON.stringify({
+    abrupt,
     effect: "disposable DB boundary marker",
+    helperHash,
     hook: "approval.settled before execution",
     inlineOwnershipLeaseSeconds: 1,
   })
@@ -100,7 +110,7 @@ try {
   const [approval] = requested.data.requests;
   assert.equal(approval.action.toolName, "deleteDocument");
   const firstProcess = await runtime.waitForMarker("request-process");
-  await runtime.crash();
+  await runtime.crash(abrupt ? firstProcess.pid : undefined);
   await runtime.start();
   await session.respond([
     { optionId: "approve", requestId: approval.requestId },
@@ -119,7 +129,7 @@ try {
     await Bun.file(path.join(runtime.directory, "effect.json")).exists(),
     false
   );
-  await runtime.crash();
+  await runtime.crash(abrupt ? settled.pid : undefined);
   await runtime.release("settled");
   await runtime.start();
   const effect = await runtime.waitForMarker("effect");
@@ -146,9 +156,20 @@ try {
   process.stdout.write(
     `PASS actual installed resolver: pending restart, settled-before-effect restart, exact owner/input, one observed effect.\n`
   );
+  process.stdout.write(
+    `${JSON.stringify({ abrupt, effectPid: effect.pid, helperHash, requestPid: firstProcess.pid, settledPid: settled.pid, world: postgres ? "postgres" : "local" })}\n`
+  );
   await runtime.remove();
 } catch (error) {
-  await runtime.crash();
+  try {
+    await runtime.crash();
+  } catch (cleanupError) {
+    throw new AggregateError(
+      [error, cleanupError],
+      `Restart proof and cleanup failed; retained ${runtime.directory}`,
+      { cause: cleanupError }
+    );
+  }
   throw new Error(
     `Installed resolver restart proof failed; retained ${runtime.directory}`,
     { cause: error }
