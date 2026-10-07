@@ -28,8 +28,7 @@ interface Branding {
   orgEmail?: string;
 }
 
-// oxlint-disable-next-line unicorn/prefer-module -- Electron Forge loads this configuration through its CommonJS TypeScript loader.
-const appRoot = __dirname;
+const appRoot = import.meta.dirname;
 const brandingPath = path.join(appRoot, "branding.json");
 let prebuildComplete = false;
 
