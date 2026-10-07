@@ -45,20 +45,19 @@ const tokenCost = (
 };
 /** Cost adapter with replaceable accounting methods and a deferred dollar total. */
 interface EveToolCost {
-  /* oxlint-disable typescript/method-signature-style -- Preserve the adapter's existing method parameter variance; function-property signatures reject narrower caller-provided replacements accepted by the inferred methods. */
-  addAPICost(name: string, costCents: number): void;
-  addImageCost(
+  addAPICost: (name: string, costCents: number) => void;
+  // oxlint-disable-next-line max-params -- Preserve the existing four-argument addImageCost adapter contract: model identity, image count, provider usage and source identity.
+  addImageCost: (
     modelId: string,
     count: number,
     usage: Readonly<UsageInfo>,
     source: string
-  ): void;
-  addLLMCost(
+  ) => void;
+  addLLMCost: (
     modelId: string,
     tokens: Readonly<UsageInfo>,
     source: string
-  ): void;
-  /* oxlint-enable typescript/method-signature-style */
+  ) => void;
   totalUsd: ToolUsage["totalUsd"];
 }
 
