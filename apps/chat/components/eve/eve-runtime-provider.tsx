@@ -306,11 +306,15 @@ const EveRuntimeRoute = ({
   const open = useEveRuntime();
   const [failure, setFailure] = useState<string>();
   useEffect(() => {
-    // oxlint-disable-next-line promise/prefer-await-to-then -- An effect schedules asynchronous route registration.
-    void open({ chatId, id, ownerId, sessionId, title }, false).catch(
-      // oxlint-disable-next-line promise/prefer-await-to-callbacks -- The effect schedules route registration and reports failures asynchronously.
-      (error: unknown) => setFailure(String(error))
-    );
+    // oxlint-disable-next-line oxc/no-async-await -- Await registration so this effect can report rejection through its visible failure state.
+    const registerRoute = async (): Promise<void> => {
+      try {
+        await open({ chatId, id, ownerId, sessionId, title }, false);
+      } catch (error: unknown) {
+        setFailure(String(error));
+      }
+    };
+    void registerRoute();
   }, [open, id, sessionId, ownerId, chatId, title]);
   if (typeof failure === "string" && failure !== "") {
     return <p role="alert">{failure}</p>;
