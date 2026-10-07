@@ -118,7 +118,7 @@ let backoff = INITIAL_RESTART_BACKOFF_MS;
 let failedStartups = NO_READINESS_FAILURES;
 /* oxlint-disable eslint/no-console -- dev-supervisor.ts: This command or desktop boundary reports startup, progress and failures to its operator. */
 /* oxlint-disable node/no-process-env -- dev-supervisor.ts: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
-// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
+// oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Signal handlers set stopping while readiness probes or delays are awaited; the pinned rule ignores writes inside callbacks.
 while (!stopping) {
   console.info("Starting ChatJS and managed Eve runtime");
   child = spawn(process.execPath, ["run", "dev"], {
@@ -138,7 +138,7 @@ while (!stopping) {
   let failures = NO_READINESS_FAILURES;
   let wasReady = false;
   let lastReadyAt = started;
-  // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Process signal and exit callbacks update these flags while the loop awaits.
+  // oxlint-disable-next-line eslint/no-unmodified-loop-condition -- Signal handlers set stopping and child exit/error handlers set exited while this loop awaits; the pinned rule ignores writes inside callbacks.
   while (!stopping && !exited) {
     trackChildren();
     try {
