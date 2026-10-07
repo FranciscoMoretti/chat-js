@@ -15,7 +15,7 @@ export const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createImageModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- OpenAI's generated scaffold requires OpenaiImageModelId, while EVE supplies a runtime string. packages/cli test:gateways fails type-checking here without this cast.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI's generated scaffold requires OpenaiImageModelId, while EVE supplies a runtime string. The cast preserves installed-app type checking, and its unsafe-rule exception is required when the generated gateway narrows the accepted ID (verified by packages/cli test:gateways).
       modelId as Parameters<InstalledGateway["createImageModel"]>[0]
     );
     if (model === null) {
@@ -30,7 +30,7 @@ export const eveToolModelProvider: ToolModelProvider = {
   createVideoModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createVideoModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion -- OpenAI-compatible's generated scaffold types unsupported video IDs as never, while EVE supplies a runtime string. packages/cli test:gateways fails type-checking here without this cast.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI-compatible's generated scaffold types unsupported video IDs as never, while EVE supplies a runtime string. The cast preserves installed-app type checking, and its unsafe-rule exception is required when the generated gateway narrows the accepted ID (verified by packages/cli test:gateways).
       modelId as Parameters<InstalledGateway["createVideoModel"]>[0]
     );
     if (model === null) {
