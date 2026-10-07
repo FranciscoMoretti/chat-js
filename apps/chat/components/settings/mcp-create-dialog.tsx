@@ -192,8 +192,18 @@ export const McpCreateDialog = ({
         <Form {...form}>
           <form
             className="space-y-4"
-            // oxlint-disable-next-line typescript/no-misused-promises -- React Hook Form owns submission validation and completion; the DOM event dispatcher does not consume the returned promise.
-            onSubmit={form.handleSubmit(handleSubmit)}
+            // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores submit returns; this handler awaits RHF validation/submission and reports rethrown errors while retaining input. prefer-await-to-then rejects a catch-only adapter; mutation failure stays with its onError.
+            onSubmit={async (event): Promise<void> => {
+              try {
+                await form.handleSubmit(handleSubmit)(event);
+              } catch (error) {
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to add connector"
+                );
+              }
+            }}
           >
             <FormField
               control={form.control}

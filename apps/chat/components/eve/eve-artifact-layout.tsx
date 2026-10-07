@@ -75,7 +75,7 @@ const DocumentSaveStatus = ({
           <p>{editing.error} Your draft has been kept.</p>
           <div className="flex gap-2">
             <Button
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Draft retry and query refetch expose asynchronous lifecycle state through their owning hooks.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: Button ignores returns; useDocumentDraft.save catches mutation/onSaved failures into editing.error, keeps the draft and releases its save lock. Retry retains that promise lifecycle.
               onClick={handleRetry}
               size="sm"
               variant="outline"

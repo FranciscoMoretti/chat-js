@@ -372,7 +372,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     }
   }
 
-  // oxlint-disable-next-line typescript/no-misused-promises -- The async fixture route handles failures internally and writes an HTTP response; Node intentionally ignores the handler return value.
+  // oxlint-disable-next-line typescript/no-misused-promises -- #770: Node request listeners ignore returns; route catches body/OAuth/RPC failures and ends the response or sends 400. Keep route completion/streaming order; Node does not capture rejections by default.
   const server = createServer(route);
 
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));

@@ -43,7 +43,7 @@ const requestSchema = z.object({
  * typescript/strict-void-return (#611): localMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 async function localMcpServer(invoke: (response: ServerResponse) => unknown) {
-  // oxlint-disable-next-line typescript/no-misused-promises -- The async fixture handler catches request failures and writes an HTTP response; Node does not consume its return value.
+  // oxlint-disable-next-line typescript/no-misused-promises -- #770: Node request listeners ignore returns; this fixture catches body/RPC/tool failures and responds 400. Keep streaming body consumption and the awaited invoke callback; Node does not capture rejections by default.
   const server = createServer(async (request, response) => {
     if (request.method !== "POST") {
       response.writeHead(405).end();

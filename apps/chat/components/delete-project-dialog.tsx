@@ -102,7 +102,7 @@ export const DeleteProjectDialog = ({
           <AlertDialogAction
             disabled={deleteMutation.isPending}
 
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Deletion prevents the native event and delegates pending/error handling to the existing mutation flow.
+            // oxlint-disable-next-line typescript/no-misused-promises -- #770: AlertDialogAction ignores returns; preventDefault runs before handleDelete, which catches mutateAsync failure and keeps the dialog/route for retry; mutation onError reports it.
             onClick={(event) => {
               event.preventDefault();
               return handleDelete();

@@ -340,6 +340,56 @@ describe("useEveFork", () => {
     }
   });
 
+  it("retains a rejected request and releases its lock when storage cleanup throws", async () => {
+    const pendingStorage = storage();
+    const removeItem = vi.spyOn(pendingStorage, "removeItem");
+    removeItem.mockImplementation(() => {
+      throw new Error("Storage is unavailable.");
+    });
+    vi.stubGlobal("sessionStorage", pendingStorage);
+    mocks.resolveCreationRequest.mockRejectedValue(
+      new CreationRejectedError("Source is no longer available.")
+    );
+    let fork: ReturnType<typeof useEveFork> | undefined;
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    let renderer: ReturnType<typeof create> | undefined;
+
+    // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+    act(() => {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      renderer = create(
+        <ForkProbe
+          onValue={(value) => {
+            fork = value;
+          }}
+        />
+      );
+    });
+    await flushEffects();
+
+    try {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      await act(async () => {
+        await required(fork).begin(userMessage());
+      });
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      await act(async () => {
+        await required(fork).submit();
+      });
+
+      expect(required(fork).editingMessageId).toBe("seed_message_0");
+      expect(required(fork).pending).toBeDefined();
+      expect(required(fork).error).toBe(
+        "The rejected version request could not be cleared. Keep this tab for recovery."
+      );
+      expect(removeItem).toHaveBeenCalledOnce();
+      expect(required(fork).busy).toBe(false);
+    } finally {
+      // oxlint-disable-next-line typescript/no-deprecated -- #583: This fixture uses react-test-renderer to exercise hook scheduling; replacing the renderer requires migrating its act and mount lifecycle together.
+      act(() => renderer?.unmount());
+    }
+  });
+
   it("does not replace an open inline edit with another message action", async () => {
     vi.stubGlobal("sessionStorage", storage());
     let fork: ReturnType<typeof useEveFork> | undefined;

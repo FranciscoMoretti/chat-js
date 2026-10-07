@@ -104,7 +104,7 @@ export const EveDocumentAssistantActions = ({
               className="h-auto w-auto rounded-full p-3"
               variant="ghost"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The parent owns document action and cancellation promises; preserve that callback contract and pending-state management.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: Button ignores returns; the supplied cancelExecution callback catches agent.cancel failure into controller.commands.failure and always clears cancelling. Keep the awaitable cancellation API shared with artifact execution.
               onClick={onStop}
             >
               <Square size={16} />

@@ -171,7 +171,7 @@ export const ProjectDetailsDialog = ({
           </Button>
           <Button
             disabled={isDisabled}
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Project submission owns dialog state and failure feedback; the button only triggers that lifecycle.
+            // oxlint-disable-next-line typescript/no-misused-promises -- #770: React Button clicks ignore returns; handleSubmit catches the supplied onSubmit rejection into submitError and keeps input for retry. Keep the same awaited submission and dialog-close ordering.
             onClick={handleSubmit}
           >
             {buttonText}

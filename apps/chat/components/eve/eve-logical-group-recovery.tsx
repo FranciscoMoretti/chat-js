@@ -58,7 +58,7 @@ export const EveLogicalGroupRecovery = ({
       {failure && <p role="alert">{failure}</p>}
       <Button
         disabled={busy}
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Response recovery owns admission/retry state; React Query owns branch invalidation failures.
+        // oxlint-disable-next-line typescript/no-misused-promises -- #770: Button ignores returns; recover catches storage/admission/invalidation failures into the rendered failure and always clears busy. Keep the ordered durable recovery operation.
         onClick={recover}
       >
         Retry response

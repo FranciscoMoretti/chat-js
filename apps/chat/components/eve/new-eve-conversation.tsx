@@ -146,11 +146,18 @@ export const NewEveConversation = ({
       ) {
         setProjectRejected(true);
       } else if (error instanceof CreationRejectedError) {
-        finishCreation(sessionStorage, ownerId, scope);
-        setRetainedModelId(undefined);
-        setRetainedModelIds(undefined);
-        setOptimisticComparison(undefined);
-        setRetainedOperationId(undefined);
+        try {
+          finishCreation(sessionStorage, ownerId, scope);
+          setRetainedModelId(undefined);
+          setRetainedModelIds(undefined);
+          setOptimisticComparison(undefined);
+          setRetainedOperationId(undefined);
+        } catch {
+          setFailure(
+            "The rejected request could not be cleared. Keep this tab for recovery."
+          );
+          return;
+        }
       }
       setFailure(
         error instanceof Error
@@ -203,7 +210,7 @@ export const NewEveConversation = ({
           }
         }}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Submission owns creation admission and retained recovery state; the composer delegates that lifecycle.
+        // oxlint-disable-next-line typescript/no-misused-promises -- #770: Synchronous composer admission ignores completion; submit catches admission/storage/runtime failures into retained recovery/failure state and releases its lock. Async keyboard admission would change its immediate boolean result.
         onSubmit={submit}
         onToolChange={setSelectedTool}
         readOnly={retained}

@@ -10,12 +10,12 @@ import {
 import type { JSX as ReactJSX, ReactNode } from "react";
 import React, {
   memo,
-  startTransition,
   useCallback,
   useMemo,
   useOptimistic,
   useRef,
   useState,
+  useTransition,
 } from "react";
 
 import { InternalLink } from "@/components/internal-link";
@@ -266,13 +266,16 @@ const PureModelSelector = ({
   allowMultiple?: boolean;
   selectedModelId: AppModelId;
   selectedModelSelection: SelectedModelValue;
-  onModelSelectionChangeAction?: (selection: SelectedModelValue) => void;
+  onModelSelectionChangeAction?: (
+    selection: SelectedModelValue
+  ) => void | Promise<void>;
   className?: string;
 }): ReactJSX.Element => {
   const { data: session } = useSession();
   const isAnonymous = !session?.user;
   const { models: chatModels, allModels } = useChatModels();
 
+  const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [optimisticSelection, setOptimisticSelection] = useOptimistic(
@@ -428,17 +431,22 @@ const PureModelSelector = ({
 
   const selectSingleModel = useCallback(
     (id: AppModelId) => {
+      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
       startTransition(() => {
         setOptimisticSelection(id);
-        onModelSelectionChangeAction?.(id);
-        setOpen(false);
+        const completion = onModelSelectionChangeAction?.(id);
+        // React 19 awaits returned Actions and routes rejections to the error
+        // boundary: https://react.dev/reference/react/useTransition#exposing-action-prop-from-components
+        return completion;
       });
+      setOpen(false);
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
   );
 
   const toggleMultiModel = useCallback(
     (id: AppModelId) => {
+      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
       startTransition(() => {
         const { current } = optimisticSelectionRef;
         const currentCounts: SelectedModelCounts =
@@ -463,14 +471,15 @@ const PureModelSelector = ({
         }
 
         setOptimisticSelection(nextSelection);
-        onModelSelectionChangeAction?.(nextSelection);
+        return onModelSelectionChangeAction?.(nextSelection);
       });
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
   );
 
   const handleCountChange = useCallback(
     (id: AppModelId, delta: number) => {
+      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
       startTransition(() => {
         const { current } = optimisticSelectionRef;
         const currentCounts: SelectedModelCounts =
@@ -495,10 +504,10 @@ const PureModelSelector = ({
         }
 
         setOptimisticSelection(nextSelection);
-        onModelSelectionChangeAction?.(nextSelection);
+        return onModelSelectionChangeAction?.(nextSelection);
       });
     },
-    [onModelSelectionChangeAction, setOptimisticSelection]
+    [onModelSelectionChangeAction, setOptimisticSelection, startTransition]
   );
 
   const handleMultipleModelsToggle = useCallback(
@@ -507,19 +516,26 @@ const PureModelSelector = ({
 
       if (checked) {
         const nextSelection = buildMultiModelSelection([optimisticModelId]);
+        // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
         startTransition(() => {
           setOptimisticSelection(nextSelection);
-          onModelSelectionChangeAction?.(nextSelection);
+          return onModelSelectionChangeAction?.(nextSelection);
         });
         return;
       }
 
+      // oxlint-disable-next-line typescript/promise-function-async -- #770: React accepts the original Action promise; keep synchronous callback throws and immediate updates instead of wrapping this sync-or-async producer.
       startTransition(() => {
         setOptimisticSelection(optimisticModelId);
-        onModelSelectionChangeAction?.(optimisticModelId);
+        return onModelSelectionChangeAction?.(optimisticModelId);
       });
     },
-    [onModelSelectionChangeAction, optimisticModelId, setOptimisticSelection]
+    [
+      onModelSelectionChangeAction,
+      optimisticModelId,
+      setOptimisticSelection,
+      startTransition,
+    ]
   );
 
   return (

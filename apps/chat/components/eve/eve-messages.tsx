@@ -291,7 +291,7 @@ export const EveMessages = ({
         role={message.role}
         siblings={renderVersions?.(message, userMessage)}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: Message copy manages clipboard failures and feedback within the async handler.
+        // oxlint-disable-next-line typescript/no-misused-promises -- #770: MessageActionsView forwards a React click without awaiting; this handler catches clipboard rejection into the existing error toast and reports success only after writeText settles.
         onCopy={async () => {
           if (!text.trim()) {
             toast.error("There's no text to copy!");

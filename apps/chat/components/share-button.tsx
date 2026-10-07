@@ -120,7 +120,7 @@ const ShareDialogView = ({
                     className="flex-1"
                     disabled={isPending}
 
-                    // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
+                    // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; handleUnshare catches setVisibility/onClose failure into the error toast and resets the step only after success. Keep the shared async action contract.
                     onClick={handleUnshare}
                     variant="outline"
                   >
@@ -150,7 +150,7 @@ const ShareDialogView = ({
                   className="w-full"
                   disabled={isPending}
 
-                  // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
+                  // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; handleShare catches setVisibility failure into the error toast and advances to the link only after success. Keep the shared async action contract.
                   onClick={handleShare}
                 >
                   {isPending ? (
@@ -194,7 +194,7 @@ const ShareDialogView = ({
             <Button
               className="px-3"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; handleCopyLink catches writeText failure into the error toast and emits success only after clipboard completion.
               onClick={handleCopyLink}
               size="sm"
               type="submit"
@@ -210,7 +210,7 @@ const ShareDialogView = ({
             <Button
               disabled={isPending}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Share, unshare, and clipboard actions catch failures and own their success/error feedback.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; handleUnshare catches setVisibility/onClose failure into the error toast and resets the step only after success. Keep the shared async action contract.
               onClick={handleUnshare}
               size="sm"
               variant="outline"

@@ -45,7 +45,7 @@ export const EveFeedbackActions = ({
       <MessageAction
         disabled={votes.isFetching}
 
-        // oxlint-disable-next-line typescript/no-misused-promises -- #585: React Query owns retry state and error reporting for this refetch interaction.
+        // oxlint-disable-next-line typescript/no-misused-promises -- #770: MessageAction forwards a React click without awaiting; QueryObserver.refetch defaults throwOnError to false and records query failures in votes.isError. This handler keeps the refresh completion promise.
         onClick={async () => {
           await votes.refetch();
         }}

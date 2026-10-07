@@ -377,7 +377,7 @@ const EveConversation = ({
                               files={fork.files}
                               modelSelection={fork.modelSelection}
                               onDraftChange={handleEditDraft}
-                              // oxlint-disable-next-line typescript/no-misused-promises -- #585: The fork hook owns edit submission errors and pending state.
+                              // oxlint-disable-next-line typescript/no-misused-promises -- #770: Synchronous composer admission ignores completion; fork.submit awaits useEveFork.run, which catches creation/storage/restore failures into fork.error and releases the lock. Awaiting keyboard admission would change its immediate boolean result.
                               onSubmit={handleEditSubmit}
                               onToolChange={handleEditToolChange}
                               selectedTool={fork.selectedTool}
@@ -426,7 +426,7 @@ const EveConversation = ({
                   `${sessionId}:${message.id}`
                 }
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
+                // oxlint-disable-next-line typescript/no-misused-promises -- #770: EveMessages invokes edit synchronously; fork.begin returns useEveFork.run, which catches restore failures into fork.error and releases the lock. Keep its awaitable fork API and immediate edit admission.
                 onEdit={(message) => {
                   const following = messages.slice(
                     messages.indexOf(message) + 1
@@ -487,7 +487,7 @@ const EveConversation = ({
                   });
                 }}
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
+                // oxlint-disable-next-line typescript/no-misused-promises -- #770: EveMessages response dispatch is synchronous; run awaits send/agent.respond, catches command failure into the rendered alert and releases the command claim. Keep the same command completion contract.
                 respond={(response) =>
                   run(() => send(() => agent.respond([response])))
                 }
@@ -592,7 +592,7 @@ const EveConversation = ({
               modelSelection={modelSelection}
               onDraftChange={setDraft}
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: Composer stop dispatch is synchronous; cancelExecution catches agent.cancel failure into controller.commands.failure and always clears cancelling. Keep cancellation ordering and its awaitable execution API.
               onStop={cancel}
 
               onSubmit={() => {

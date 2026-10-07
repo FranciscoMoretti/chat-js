@@ -60,7 +60,7 @@ const ElectronAuthOverlay = ({
               <Button
                 className="mt-2"
 
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Electron cancellation catches and reports bridge failures inside the handler.
+                // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; cancellation awaits the Electron bridge inside try/catch and logs failures. Keep the same cancellation completion and diagnostic boundary.
                 onClick={async () => {
                   try {
                     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.

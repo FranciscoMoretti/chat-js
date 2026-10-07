@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import type { JSX as ReactJSX } from "react";
 import React from "react";
+import { toast } from "sonner";
 
 import { InternalLink } from "@/components/internal-link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,7 +33,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetCredits } from "@/hooks/use-credits";
+/* oxlint-disable import/max-dependencies -- This sidebar integration composes navigation, auth, credits and sign-out feedback through their existing modules. */
 import authClient from "@/lib/auth-client";
+/* oxlint-enable import/max-dependencies */
 /* oxlint-disable import/max-dependencies -- @/lib/electron-auth import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { isElectronRenderer } from "@/lib/electron-auth";
 /* oxlint-enable import/max-dependencies */
@@ -175,21 +178,25 @@ export const SidebarUserNav = (): ReactJSX.Element => {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Sign-out coordinates Electron session synchronization and navigation; changing failure handling requires authentication lifecycle review.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; this awaited sign-out catches bridge/auth failure into an error toast and navigates only after success. prefer-await-to-then rejects a catch-only event adapter.
               onClick={async () => {
-                if (
-                  isElectronRenderer() &&
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  typeof window.signOut === "function"
-                ) {
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  await window.signOut();
-                  // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
-                  await window.electronAPI?.syncAuthSession?.();
-                } else {
-                  await authClient.signOut();
+                try {
+                  if (
+                    isElectronRenderer() &&
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+                    typeof window.signOut === "function"
+                  ) {
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+                    await window.signOut();
+                    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: Electron preload exposes this bridge through the augmented Window interface, not a cross-runtime global.
+                    await window.electronAPI?.syncAuthSession?.();
+                  } else {
+                    await authClient.signOut({ fetchOptions: { throw: true } });
+                  }
+                  globalThis.location.href = "/";
+                } catch {
+                  toast.error("Unable to sign out. Try again.");
                 }
-                globalThis.location.href = "/";
               }}
             >
               <LogOut className="mr-2 size-4" />

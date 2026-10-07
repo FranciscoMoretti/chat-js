@@ -29,20 +29,27 @@ export const ChatRenameDialog = ({
   readonly isLoading: boolean;
 }): ReactJSX.Element => {
   const [chatTitle, setChatTitle] = useState(currentTitle);
+  const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
     if (open) {
       // oxlint-disable-next-line react/set-state-in-effect -- Reopen the controlled dialog with the latest title.
       setChatTitle(currentTitle);
+      setSubmitError("");
     }
   }, [open, currentTitle]);
 
   const handleSubmit = async (): Promise<void> => {
-    const trimmedValue = chatTitle.trim();
-    if (trimmedValue && trimmedValue !== currentTitle) {
-      await onSubmit(trimmedValue);
+    setSubmitError("");
+    try {
+      const trimmedValue = chatTitle.trim();
+      if (trimmedValue && trimmedValue !== currentTitle) {
+        await onSubmit(trimmedValue);
+      }
+      onOpenChange(false);
+    } catch {
+      setSubmitError("Could not rename chat. Try again.");
     }
-    onOpenChange(false);
   };
 
   const handleOpenChange = (newOpen: boolean): void => {
@@ -81,13 +88,14 @@ export const ChatRenameDialog = ({
             value={chatTitle}
           />
         </div>
+        {submitError && <p role="alert">{submitError}</p>}
         <DialogFooter>
           <Button onClick={() => handleOpenChange(false)} variant="outline">
             Cancel
           </Button>
           <Button
             disabled={isDisabled}
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Preserve the existing async click handler contract; pending/error UX belongs in a separate behavior change.
+            // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; handleSubmit awaits onSubmit and catches failure into the retained dialog alert. The await-based owner also serves Enter; prefer-await-to-then rejects a catch-only event adapter.
             onClick={handleSubmit}
           >
             Save

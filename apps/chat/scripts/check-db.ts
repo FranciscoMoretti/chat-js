@@ -49,7 +49,7 @@ const checkDatabase = async (): Promise<void> => {
       connect_timeout: CONNECT_TIMEOUT_SECONDS,
       max: 1,
     });
-    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The deadline asynchronously closes the SQL connection before signaling failure; preserving timeout cleanup requires this callback lifecycle.
+    // oxlint-disable-next-line typescript/no-misused-promises -- #770: setTimeout ignores returns; this deadline awaits sql.end inside try/catch to abort the query. The query catch owns failure diagnostics/exitCode; its finally closes the client. Keep the original deadline/close race.
     const deadline = setTimeout(async () => {
       try {
         await sql.end({ timeout: 0 });

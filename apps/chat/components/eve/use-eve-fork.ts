@@ -201,8 +201,15 @@ export const useEveFork = (
       await action();
     } catch (error) {
       if (error instanceof CreationRejectedError) {
-        finishCreation(sessionStorage, ownerId, { conversationId });
-        setPending(undefined);
+        try {
+          finishCreation(sessionStorage, ownerId, { conversationId });
+          setPending(undefined);
+        } catch {
+          setFailure(
+            "The rejected version request could not be cleared. Keep this tab for recovery."
+          );
+          return;
+        }
       }
       setFailure(
         error instanceof Error ? error.message : "Unable to create a version."

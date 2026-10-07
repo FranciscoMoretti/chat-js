@@ -133,7 +133,7 @@ export const EveCreationRecovery = ({
       {!rejected && pending ? (
         <Button
           disabled={busy}
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Creation recovery owns its durable operation and displayed failures; the button triggers that existing lifecycle.
+          // oxlint-disable-next-line typescript/no-misused-promises -- #770: Button ignores returns; retry catches resolveCreationRequest/navigation failures into failure/rejected state and releases the lock, retaining the durable request for retry.
           onClick={retry}
         >
           {busy ? "Recovering…" : "Retry creation"}

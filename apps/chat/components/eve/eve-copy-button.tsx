@@ -120,7 +120,7 @@ const EveCopyButton = ({
           isPending={busy}
           label={label}
 
-          // oxlint-disable-next-line typescript/no-misused-promises -- #585: Copy recovery owns durable request identity, retry state, and failure feedback.
+          // oxlint-disable-next-line typescript/no-misused-promises -- #770: CloneChatButtonView forwards a React click without awaiting; save catches admission/storage failures into showFailure, preserves retry identity and releases the lock. Keep that completion contract.
           onClick={save}
         />
       )}

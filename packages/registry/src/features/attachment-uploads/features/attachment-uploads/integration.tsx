@@ -77,7 +77,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     disabled: uploadQueue.length > 0,
     noClick: true,
     noKeyboard: true,
-    // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
+    // oxlint-disable-next-line typescript/no-misused-promises -- #770: Dropzone ignores returns; compression failures retain the original file for size feedback; upload catches each network/onUploaded failure into a toast and clears queue/lock in finally. Keep sequential upload completion.
     onDrop: upload,
   });
   return {
@@ -90,7 +90,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           multiple
           ref={input}
           type="file"
-          // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
+          // oxlint-disable-next-line typescript/no-misused-promises -- #770: React file change ignores returns; upload handles compression/network failures and queue/lock cleanup before the picker is reset. Keep reset after completion and allow the same file to be selected again.
           onChange={async (event): Promise<void> => {
             if (!disabled) {
               await upload([...(event.target.files ?? [])]);

@@ -103,7 +103,7 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
     if (stopped || running || timer) {
       return;
     }
-    // oxlint-disable-next-line typescript/no-misused-promises -- #585: The scheduled cleanup tick owns rescheduling and its failure boundary; awaiting it from a timer is not possible.
+    // oxlint-disable-next-line typescript/no-misused-promises -- #770: setTimeout ignores returns; tick awaits the sweep, logs failure for retry and reschedules in finally after clearing running. Keep unref, stop cancellation and nonoverlapping sweeps.
     timer = setTimeout(tick, CLEANUP_INTERVAL_MS);
     timer.unref();
   };

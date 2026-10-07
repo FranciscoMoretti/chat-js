@@ -189,7 +189,7 @@ const CodeBlockCopyButton = ({
     <Button
       className={cn("shrink-0", className)}
 
-      // oxlint-disable-next-line typescript/no-misused-promises -- #585: The clipboard handler catches failures and invokes onError; the click does not consume a return value.
+      // oxlint-disable-next-line typescript/no-misused-promises -- #770: React Button clicks ignore returns; copyToClipboard catches clipboard/onCopy failures and delegates them to onError. Keep the clipboard completion contract instead of a discard-only adapter.
       onClick={copyToClipboard}
       size="icon"
       variant="ghost"

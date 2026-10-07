@@ -97,7 +97,7 @@ const PureSidebarChatItem = ({
             className="h-auto border-0 bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
             maxLength={255}
 
-            // oxlint-disable-next-line typescript/no-misused-promises -- #585: Inline rename awaits its parent callback and catches failures before leaving edit mode.
+            // oxlint-disable-next-line typescript/no-misused-promises -- #770: Input blur ignores returns; handleRename awaits onRename and catches failure by restoring the title/exiting edit mode; the mutation reports failure. Keep its shared Enter/blur completion ordering.
             onBlur={handleRename}
             onChange={(event) => setEditTitle(event.target.value)}
             onKeyDown={handleKeyDown}

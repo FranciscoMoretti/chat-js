@@ -223,7 +223,7 @@ const AttachmentItem = ({
             <Button
               className="size-7"
 
-              // oxlint-disable-next-line typescript/no-misused-promises -- #585: Attachment preview owns asynchronous loading and fallback display; preserve its event cancellation and preview lifecycle.
+              // oxlint-disable-next-line typescript/no-misused-promises -- #770: React ignores click returns; this download prevents propagation synchronously, awaits fetch/blob, reports 404 and opens the original URL on failure. Keep that ordered fallback handler.
               onClick={async (event) => {
                 event.stopPropagation();
                 /* oxlint-disable react/todo -- Preserve attachment preview fallback handling. */

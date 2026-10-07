@@ -543,3 +543,31 @@ for (const state of ["off", "enabled", "saving", "shared"] as const) {
     }
   });
 }
+
+// A synchronous onValid failure becomes a rejected RHF handleSubmit promise.
+/* oxlint-disable max-statements -- Keep RHF rejection feedback and retained fields in one submission scenario. */
+test("custom connector submission reports RHF rejection and retains entered fields", async () => {
+  mocks.mutate.mockImplementationOnce(() => {
+    throw new Error("Connector submission failed");
+  });
+  const cleanup = await renderPage(false, true);
+  try {
+    await page.getByLabelText("Name", { exact: true }).fill("Server");
+    await page
+      .getByLabelText("URL", { exact: true })
+      .fill("https://mcp.example.test");
+    await page.getByRole("button", { exact: true, name: "Add" }).click();
+    await expect
+      .element(page.getByText("Connector submission failed", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByLabelText("Name", { exact: true }))
+      .toHaveValue("Server");
+    expect(mocks.handleClose).not.toHaveBeenCalled();
+    await takeSnapshot("mcp-create-submission-failure");
+  } finally {
+    await cleanup();
+  }
+});
+
+/* oxlint-enable max-statements */

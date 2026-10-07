@@ -29,7 +29,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(env.DATABASE_URL).hostname)) {
 test("distinct deliveries wake a pending workflow while exact duplicates remain deduplicated", async () => {
   const release = Promise.withResolvers<undefined>();
   const calls: string[] = [];
-  // oxlint-disable-next-line typescript/no-misused-promises -- This controlled HTTP fixture awaits a resolve-only gate to hold the first delivery open; no rejected task escapes the handler.
+  // oxlint-disable-next-line typescript/no-misused-promises -- #770: Node request listeners ignore returns; the only awaited producer is release.promise, resolved in test/finally and never rejected. Keep the first delivery open until that gate without changing queue scheduling.
   const server = createServer(async (request, response) => {
     const id = request.headers["x-vqs-message-id"];
     calls.push(String(id));

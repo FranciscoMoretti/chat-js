@@ -50,7 +50,7 @@ export const EveForkRecovery = ({
               </p>
               <Button
                 disabled={fork.busy}
-                // oxlint-disable-next-line typescript/no-misused-promises -- #585: Fork recovery and family refetch own retry and error state in the fork hook.
+                // oxlint-disable-next-line typescript/no-misused-promises -- #770: Button ignores returns; fork.retry returns useEveFork.run, which catches resolveCreationRequest/refresh/runtime failures into fork.error and releases the lock. Keep its awaitable recovery API.
                 onClick={handleRetry}
                 size="sm"
               >
