@@ -1,9 +1,22 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { execFile } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { createHash } from "node:crypto";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { mkdir, rm, writeFile } from "node:fs/promises";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { homedir } from "node:os";
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import nodePath from "node:path";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { setTimeout as delay } from "node:timers/promises";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The macOS service installer manages launchctl, host paths and service readiness outside the browser.
 import { promisify } from "node:util";
 
 const SERVICE_ID_LENGTH = 12;
@@ -42,6 +55,7 @@ interface ServiceOperations {
   readonly log: (message: string) => void;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve nativeOperations's awaited sequencing and rejected-Promise behavior. */
 const nativeOperations: ServiceOperations = {
   // oxlint-disable-next-line eslint/no-console -- These are operator-facing CLI status and lifecycle messages.
   log: (message) => console.info(message),
@@ -62,7 +76,7 @@ const nativeOperations: ServiceOperations = {
     await writeFile(path, data, { mode });
   },
 };
-
+/* oxlint-enable oxc/no-async-await */
 const xml = (value: string): string =>
   value
     .replaceAll("&", "&amp;")
@@ -85,6 +99,7 @@ const createContext = (): ServiceContext => {
     .digest("hex")
     .slice(HASH_PREFIX_START, SERVICE_ID_LENGTH);
   const label = `com.chatjs.dev.${id}`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling process.getuid; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
   const target = `gui/${process.getuid?.()}`;
   const plist = nodePath.join(
     homedir(),
@@ -95,11 +110,13 @@ const createContext = (): ServiceContext => {
   return { id, label, logs, plist, root, target };
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve launchctl's awaited sequencing and rejected-Promise behavior. */
 const launchctl = async (
   operations: ServiceOperations,
   ...args: readonly string[]
 ): Promise<string> => await operations.run("launchctl", args);
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopService's awaited sequencing and rejected-Promise behavior. */
 const stopService = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -133,7 +150,7 @@ const stopService = async (
   }
   throw new Error("Service is still stopping; retry shortly.");
 };
-
+/* oxlint-enable oxc/no-async-await */
 const createPlist = (
   context: ServiceContext,
   node: string
@@ -150,11 +167,13 @@ const createPlist = (
 <key>StandardErrorPath</key><string>${xml(nodePath.join(context.logs, "error.log"))}</string>
 </dict></plist>`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkNodeVersion's awaited sequencing and rejected-Promise behavior. */
 const checkNodeVersion = async (
   operations: ServiceOperations
 ): Promise<string> => {
   const output = await operations.run("node", NODE_VERSION_COMMAND);
   const [node, version] = output.trim().split("\n");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading split from version; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const major = Number(version?.split(".")[MAJOR_VERSION_SEGMENT_INDEX]);
   if (!node || !Number.isInteger(major) || major < MIN_NODE_MAJOR_VERSION) {
     throw new Error(
@@ -163,7 +182,8 @@ const checkNodeVersion = async (
   }
   return node;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startService's awaited sequencing and rejected-Promise behavior. */
 const startService = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -181,7 +201,8 @@ const startService = async (
   await launchctl(operations, "bootstrap", context.target, context.plist);
   operations.log(`Started ${context.label}. Logs: ${context.logs}`);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopAction's awaited sequencing and rejected-Promise behavior. */
 const stopAction = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -190,7 +211,8 @@ const stopAction = async (
   await operations.removeFile(context.plist);
   operations.log("Stopped this worktree's managed runtime.");
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve showStatus's awaited sequencing and rejected-Promise behavior. */
 const showStatus = async (
   context: ServiceContext,
   operations: ServiceOperations
@@ -204,7 +226,8 @@ const showStatus = async (
   }
   operations.log(`Logs: ${context.logs}`);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runDevService's awaited sequencing and rejected-Promise behavior. */
 const runDevService = async (
   action: string,
   operations: ServiceOperations = nativeOperations,
@@ -224,10 +247,13 @@ const runDevService = async (
     throw new Error("Use start, stop or status.");
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 if (import.meta.main) {
   const action = process.argv[COMMAND_ARGUMENT_INDEX] ?? "status";
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun command awaits the requested service action; it exposes no CommonJS loading contract.
   await runDevService(action);
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runDevService); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { runDevService };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

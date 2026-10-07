@@ -61,7 +61,9 @@ describe("fork ancestry and recovery", () => {
     expect(readCreation(storage, "owner", { conversationId })).toEqual(edit);
     expect(
       prepareCreation(storage, "owner", "changed", "other", {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...context,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing context.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         fork: { ...context.fork, beforeTurnId: "turn_0" },
       })
     ).toEqual(edit);

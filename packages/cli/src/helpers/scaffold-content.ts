@@ -1,12 +1,17 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  researchAgentFiles,
   researchAgentDirectories,
+  researchAgentFiles,
 } from "../../../registry/src/tools/research";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+import { isJsonObject } from "./json-object";
 
 const researchTestFiles = [
   "lib/eve/research-availability.test.ts",
@@ -140,9 +145,6 @@ interface ScaffoldTsConfig {
   compilerOptions: { paths: Record<string, unknown> };
 }
 
-const isJsonObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
 const isScaffoldPackageManifest = (
   value: unknown
 ): value is ScaffoldPackageManifest =>
@@ -201,6 +203,7 @@ const isRepositoryOnlyDependency = (name: string): boolean =>
     "echarts-for-react",
   ].includes(name);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizePackageManifest's awaited sequencing and rejected-Promise behavior. */
 const normalizePackageManifest = async (packagePath: string): Promise<void> => {
   const manifest = parseScaffoldPackageManifest(
     await readFile(packagePath, "utf-8")
@@ -219,6 +222,7 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "evalite",
     "better-sqlite3",
   ]) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading dependency from manifest.devDependencies; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     delete manifest.devDependencies?.[dependency];
   }
   for (const script of [
@@ -228,19 +232,23 @@ const normalizePackageManifest = async (packagePath: string): Promise<void> => {
     "test:research:native",
     "test:tools:live",
   ]) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading script from manifest.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     delete manifest.scripts?.[script];
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   delete manifest.overrides?.evalite;
   await writeFile(packagePath, formattedScaffoldJson(manifest));
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeTsConfig's awaited sequencing and rejected-Promise behavior. */
 const normalizeTsConfig = async (tsconfigPath: string): Promise<void> => {
   const tsconfig = parseScaffoldTsConfig(await readFile(tsconfigPath, "utf-8"));
   delete tsconfig.compilerOptions.paths["@eve-test/*"];
   delete tsconfig.compilerOptions.paths["@world-postgres-test/*"];
   await writeFile(tsconfigPath, formattedScaffoldJson(tsconfig));
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve removeReferenceVisualProject's awaited sequencing and rejected-Promise behavior. */
 const removeReferenceVisualProject = async (
   destination: string
 ): Promise<void> => {
@@ -251,19 +259,21 @@ const removeReferenceVisualProject = async (
     playwright.replace(REFERENCE_VISUAL_PROJECT, "")
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeStandaloneLintConfig's awaited sequencing and rejected-Promise behavior. */
 const normalizeStandaloneLintConfig = async (
   destination: string
 ): Promise<void> => {
   const lintPath = path.join(destination, "oxlint.config.ts");
   const lint = await readFile(lintPath, "utf-8");
   // The copied app config becomes the project root, where Oxlint permits typeAware.
-  const standaloneLint = lint.includes("options: { typeAware: true }")
-    ? lint
-    : lint.replace(
-        "  overrides: [",
-        "  options: { typeAware: true },\n  overrides: ["
-      );
+  let standaloneLint = lint;
+  if (!lint.includes("options: { typeAware: true }")) {
+    standaloneLint = lint.replace(
+      "  overrides: [",
+      "  options: { typeAware: true },\n  overrides: ["
+    );
+  }
   await writeFile(
     lintPath,
     standaloneLint.replace(
@@ -272,16 +282,20 @@ const normalizeStandaloneLintConfig = async (
     )
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeScaffoldContent's awaited sequencing and rejected-Promise behavior. */
 const normalizeScaffoldContent = async (destination: string): Promise<void> => {
   await normalizePackageManifest(path.join(destination, "package.json"));
   await normalizeTsConfig(path.join(destination, "tsconfig.json"));
   await removeReferenceVisualProject(destination);
   await normalizeStandaloneLintConfig(destination);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (normalizeScaffoldContent, researchTestFiles, shouldCopyChatAppFile, shouldCopyElectronFile); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export {
   normalizeScaffoldContent,
   researchTestFiles,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 };
+/* oxlint-enable import/no-named-export */

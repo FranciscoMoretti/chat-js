@@ -3,6 +3,8 @@ import React from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DevLoginTool); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- DevLoginTool renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable node/no-process-env, unicorn/no-null -- node/no-process-env: this Next.js fixture gate reads the build-time environment flag before exposing its development-only route; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -24,9 +26,14 @@ export const DevLoginTool = (): React.JSX.Element | null => {
         <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-50 motion-reduce:animate-none" />
         <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
       </span>
-      <LogIn className="size-3.5 text-zinc-500 transition-colors group-hover:text-zinc-300" />
+      <LogIn
+        // oxlint-disable-next-line react/forbid-component-props -- LogIn accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="size-3.5 text-zinc-500 transition-colors group-hover:text-zinc-300"
+      />
       <span>Dev login</span>
     </a>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable node/no-process-env, unicorn/no-null */

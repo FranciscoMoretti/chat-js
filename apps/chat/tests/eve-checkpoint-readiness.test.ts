@@ -4,7 +4,9 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const eveRoot = fileURLToPath(

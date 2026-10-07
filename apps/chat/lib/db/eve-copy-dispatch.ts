@@ -2,17 +2,24 @@ import { and, eq, sql } from "drizzle-orm";
 
 import { eveSeedSearchText } from "@/lib/eve/search-text";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { lockEveCopyOwners, readEveCopy } from "./eve-copy-journal";
+/* oxlint-enable sort-imports */
 import { CreationConflictError } from "./eve-queries";
 import { writeEveSearchText } from "./eve-search";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveChat, eveConversation, eveConversationCopy } from "./schema";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveAcceptedEveCopySeed's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 
 /**
  * Used only by the authenticated native seed resolver; accepted copies no longer depend on their source.
- * @param ownerId Owner whose accepted destination copy is authorized.
- * @param operationId Destination reservation identity used by the authenticated seed resolver.
- * @returns The preserved native seed while accepted creation is pending; unavailable or dispatched copies throw.
+ * @param {string} ownerId Owner whose accepted destination copy is authorized.
+ * @param {string} operationId Destination reservation identity used by the authenticated seed resolver.
+ * @returns {Promise<NonNullable<typeof eveConversationCopy.$inferSelect.seed>>} The preserved native seed while accepted creation is pending; unavailable or dispatched copies throw.
  */
 const resolveAcceptedEveCopySeed = async (
   ownerId: string,
@@ -30,7 +37,8 @@ const resolveAcceptedEveCopySeed = async (
   }
   return copy.seed;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve dispatchEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --max-lines-per-function (#510): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): dispatchEveCopy keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): dispatchEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -39,10 +47,10 @@ unicorn/no-null (#570): dispatchEveCopy preserves explicit null in its storage/A
  */
 /**
  * The callback must use the seed operation namespace with this destination reservation ID.
- * @param ownerId Owner whose accepted copy is dispatched under the creation lock.
- * @param conversationId Exact accepted destination reservation, also used for native idempotency.
- * @param create Native seed creation callback returning the accepted session identity.
- * @returns Existing or newly bound destination/session identities after atomic metadata and search updates.
+ * @param {string} ownerId Owner whose accepted copy is dispatched under the creation lock.
+ * @param {string} conversationId Exact accepted destination reservation, also used for native idempotency.
+ * @param {(operationId: string) => Promise<string>} create Native seed creation callback returning the accepted session identity.
+ * @returns {Promise<{ id: string; sessionId: string }>} Existing or newly bound destination/session identities after atomic metadata and search updates.
  */
 const dispatchEveCopy = async (
   ownerId: string,
@@ -56,6 +64,7 @@ const dispatchEveCopy = async (
       }>(
         sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-create:${conversationId}`}, 0)) as locked`
       );
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading locked from lock; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       if (!lock?.locked) {
         throw new CreationConflictError(
           "Copy creation is still in progress. Retry the same operation."
@@ -125,6 +134,8 @@ const dispatchEveCopy = async (
     throw error;
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null --typescript/prefer-readonly-parameter-types (#565): rejectUnacceptedEveCopy accepts tx; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -133,9 +144,9 @@ unicorn/no-null (#570): rejectUnacceptedEveCopy preserves explicit null in its s
  */
 /**
  * Rejected preparations are provably never dispatched; the cleanup coordinator can omit native retirement.
- * @param ownerId Owner whose copy family lock fences rejection.
- * @param conversationId Unaccepted destination preparation whose metadata is cleared.
- * @returns The destination identity and never-dispatched marker after transactional rejection; accepted or native-bound copies throw.
+ * @param {string} ownerId Owner whose copy family lock fences rejection.
+ * @param {string} conversationId Unaccepted destination preparation whose metadata is cleared.
+ * @returns {Promise<{ id: string; neverDispatched: boolean }>} The destination identity and never-dispatched marker after transactional rejection; accepted or native-bound copies throw.
  */
 const rejectUnacceptedEveCopy = async (
   ownerId: string,
@@ -169,5 +180,8 @@ const rejectUnacceptedEveCopy = async (
     }
     return { id: conversationId, neverDispatched: true };
   });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 export { dispatchEveCopy, rejectUnacceptedEveCopy, resolveAcceptedEveCopySeed };
+/* oxlint-enable import/no-named-export */

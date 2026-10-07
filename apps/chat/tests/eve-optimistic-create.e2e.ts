@@ -15,6 +15,8 @@ const projectPath = /\/project\/[a-f\d-]+$/u;
  * typescript/strict-boolean-expressions (#610): for (const project of [false, true]) { test(`first mess intentionally keeps the existing falsy-value behavior of projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 for (const project of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   test(`first message is optimistic and recoverable in ${project ? "a project with an attachment" : "a new chat"}`, async ({
     page,
   }, testInfo) => {
@@ -149,6 +151,7 @@ for (const project of [false, true]) {
       }
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
@@ -166,12 +169,14 @@ const visualStyle =
  * typescript/strict-boolean-expressions (#610): for (const identity of ["registered", "guest"]) { test( intentionally keeps the existing falsy-value behavior of document.querySelector('[role="log"]')?.textContent?.includes(text); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 for (const identity of ["registered", "guest"]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`first send keeps its document and optimistic message through stream attachment (${identity})`, async ({
     page,
   }, testInfo) => {
     await page.route("https://unpkg.com/react-scan/**", (route) =>
       route.abort()
     );
+    // oxlint-disable-next-line no-ternary -- Keep page.goto argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     await page.goto(identity === "registered" ? "/api/dev-login" : "/", {
       waitUntil: "domcontentloaded",
     });
@@ -205,6 +210,7 @@ for (const identity of ["registered", "guest"]) {
         document.documentElement.dataset.missingFirstMessage = "false";
         const observer = new MutationObserver(() => {
           if (
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading includes from document.querySelector(...).textContent; read textContent from document.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
             !document.querySelector('[role="log"]')?.textContent?.includes(text)
           ) {
             document.documentElement.dataset.missingFirstMessage = "true";
@@ -273,5 +279,6 @@ for (const identity of ["registered", "guest"]) {
       stream.resolve(undefined);
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { createConversationInput } from "./contracts";
 import { prepareCreation } from "./pending-create";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "./request-policy";
+/* oxlint-enable sort-imports */
 import { sendCommand } from "./send-command";
 
 /* oxlint-disable max-lines-per-function, unicorn/no-null --
@@ -26,6 +28,7 @@ describe("Eve request policy", () => {
       expect(parseSessionRequest(path, "POST")).toBeNull();
     }
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from parseSessionRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       parseSessionRequest("/eve/v1/session/a/stream", "GET")?.sessionId
     ).toBe("a");
     expect(parseSessionRequest("/eve/v1/session/a/cancel", "GET")).toBeNull();
@@ -48,6 +51,7 @@ describe("Eve request policy", () => {
   it("accepts native active-turn cancellation but rejects malformed or expanded controls", () => {
     const policy = parseSessionRequest("/eve/v1/session/a/cancel", "POST");
     for (const input of [{}, { turnId: "turn-1" }]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(policy?.schema.safeParse(input).success).toBe(true);
     }
     for (const input of [
@@ -57,16 +61,20 @@ describe("Eve request policy", () => {
       { tasks: true },
       { owner: "other" },
     ]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(policy?.schema.safeParse(input).success).toBe(false);
     }
   });
   it("rejects malformed native messages and stream cursors", () => {
     const policy = parseSessionRequest("/eve/v1/session/a", "POST");
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       policy?.schema.safeParse({ message: "hello", owner: "other" }).success
     ).toBe(false);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(policy?.schema.safeParse({ message: "  " }).success).toBe(false);
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading schema from policy; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       policy?.schema.safeParse({
         inputResponses: [{ optionId: "allow", requestId: "req" }],
       }).success
@@ -80,6 +88,7 @@ describe("Eve request policy", () => {
       expect(safeStreamQuery(new URLSearchParams(query))).toBeNull();
     }
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from safeStreamQuery(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       safeStreamQuery(
         new URLSearchParams("startIndex=0&includeTailIndex=1")
       )?.get("startIndex")
@@ -90,6 +99,7 @@ describe("Eve request policy", () => {
       "streamControlVersion=1&includeTailIndex=1",
       "startIndex=12&streamControlVersion=1&includeTailIndex=1",
     ]) {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toString from safeStreamQuery(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       expect(safeStreamQuery(new URLSearchParams(query))?.toString()).toBe(
         query
       );
@@ -138,6 +148,7 @@ describe("Eve command recovery", () => {
     );
     expect(prepareCreation(storage, "bob", "other").message).toBe("other");
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("surfaces callback-only failures and catches up after cancellation", async () => {
     let replayed = 0;
     await expect(
@@ -165,7 +176,9 @@ describe("Eve command recovery", () => {
     );
     expect(replayed).toBe(1);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -193,33 +206,39 @@ it("waits for authoritative acceptance after cancellation without submitting twi
   expect(submissions).toBe(1);
   expect(snapshots).toBe(2);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 it("accepts conversation-based forks and rejects raw native identities or invalid turns", () => {
   const input = { message: "replacement", operationId: crypto.randomUUID() };
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(true);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", sessionId: "native-session" },
     }).success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_-1", conversationId: crypto.randomUUID() },
     }).success
   ).toBe(false);
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     createConversationInput.safeParse({ ...input, forkKind: "edit" }).success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_1", conversationId: crypto.randomUUID() },
       forkKind: "regenerate",
@@ -235,11 +254,13 @@ it("allows a project for new conversations while forks inherit their existing pr
   };
   expect(createConversationInput.safeParse(input).success).toBe(true);
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     createConversationInput.safeParse({ ...input, projectId: "invalid" })
       .success
   ).toBe(false);
   expect(
     createConversationInput.safeParse({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       fork: { beforeTurnId: "turn_0", conversationId: crypto.randomUUID() },
     }).success
@@ -257,12 +278,18 @@ it("accepts exactly one canonical imported fork boundary", () => {
   };
   expect(createConversationInput.parse(input)).toEqual(input);
   for (const fork of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeTurnId: "turn_0" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, checkpointId: crypto.randomUUID() },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "seed_message_02" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "seed_message_10000" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input.fork, beforeMessageId: "message_2" },
   ]) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(createConversationInput.safeParse({ ...input, fork }).success).toBe(
       false
     );

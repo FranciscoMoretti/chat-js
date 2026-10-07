@@ -5,6 +5,7 @@ import React from "react";
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Tag); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const Tag = ({
   children,
   className,
@@ -21,3 +22,4 @@ export const Tag = ({
     {children}
   </span>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -22,6 +22,7 @@ interface FixtureSnapshot {
   readonly baseline: string;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareReplacement's awaited sequencing and rejected-Promise behavior. */
 const prepareReplacement = async (
   createFixture: () => Promise<SyncFixture>,
   failure: string
@@ -41,12 +42,13 @@ const prepareReplacement = async (
   options.expected.set("implementation.ts", "// updated canonical\n");
   options.expected.set("new.ts", "// new canonical\n");
   const target =
+    // oxlint-disable-next-line no-ternary -- Keep target as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     failure === "baseline"
       ? options.baseline
       : path.join(options.root, "new.ts");
   return { options, previous, target };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const replacementFailure = (
   root: string,
   target: string
@@ -57,6 +59,7 @@ const replacementFailure = (
   const originalRename = fs.rename;
   let replacedSource = false;
   let failed = false;
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rename's awaited sequencing and rejected-Promise behavior. */
   const rename = spyOn(fs, "rename").mockImplementation(
     async (...args: ReadonlyNativeSurface<Parameters<typeof fs.rename>>) => {
       const [source, destination] = args;
@@ -74,6 +77,7 @@ const replacementFailure = (
       }
     }
   );
+  /* oxlint-enable oxc/no-async-await */
   return {
     assertTriggered: () => {
       expect(failed).toBe(true);
@@ -85,6 +89,7 @@ const replacementFailure = (
   };
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyRollback's awaited sequencing and rejected-Promise behavior. */
 const verifyRollback = async (
   options: ReadonlyNativeSurface<SyncFixture>,
   previous: FixtureSnapshot
@@ -99,13 +104,14 @@ const verifyRollback = async (
   const entries = await readdir(options.root);
   expect(entries.some((file) => file.startsWith(".demo-sync-"))).toBe(false);
 };
-
+/* oxlint-enable oxc/no-async-await */
 const observeGeneratorFailure = (): {
   readonly cleanedPaths: readonly string[];
   readonly restore: () => void;
 } => {
   const originalRm = fs.rm;
   const cleanedPaths: string[] = [];
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve remove's awaited sequencing and rejected-Promise behavior. */
   const remove = spyOn(fs, "rm").mockImplementation(
     async (...args: ReadonlyNativeSurface<Parameters<typeof fs.rm>>) => {
       const [target, options] = args;
@@ -113,6 +119,7 @@ const observeGeneratorFailure = (): {
       await originalRm(target, options);
     }
   );
+  /* oxlint-enable oxc/no-async-await */
   const serve = spyOn(Bun, "serve").mockImplementation(() => {
     throw new Error("Injected server setup failure");
   });
@@ -125,11 +132,15 @@ const observeGeneratorFailure = (): {
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (observeGeneratorFailure, prepareReplacement, replacementFailure, verifyRollback); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   observeGeneratorFailure,
   prepareReplacement,
   replacementFailure,
   verifyRollback,
 };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ReadonlyNativeSurface); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ReadonlyNativeSurface };
+/* oxlint-enable import/no-named-export */

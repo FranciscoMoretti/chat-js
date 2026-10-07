@@ -46,6 +46,7 @@ export default defineConfig({
       name: "chat",
       testMatch: "chat.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -53,6 +54,7 @@ export default defineConfig({
       name: "reasoning",
       testMatch: "reasoning.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -60,6 +62,7 @@ export default defineConfig({
       name: "artifacts",
       testMatch: "artifacts.e2e.ts",
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -69,6 +72,7 @@ export default defineConfig({
         "{testDir}/{testFilePath}-snapshots/{arg}-{platform}{ext}",
       testMatch: /\.visual\.e2e\.ts$/u,
       use: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
         ...devices["Desktop Chrome"],
       },
     },
@@ -102,6 +106,7 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Retry on CI only */
+  // oxlint-disable-next-line no-ternary -- Keep retries as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   retries: process.env.CI ? 2 : 1,
   testDir: "./tests",
   /* Configure global timeout for each test */
@@ -121,6 +126,7 @@ export default defineConfig({
     url: baseURL,
   },
   /* Opt out of parallel tests on CI. */
+  // oxlint-disable-next-line no-ternary -- Keep workers as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   workers: process.env.CI ? 1 : undefined,
 });
 /* oxlint-enable import/no-default-export, no-magic-numbers, no-undefined, node/no-process-env, typescript/strict-boolean-expressions */

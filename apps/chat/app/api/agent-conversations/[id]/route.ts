@@ -1,9 +1,17 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isUnacceptedEveCopy } from "@/lib/db/eve-copy-journal";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveDeletionState } from "@/lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { deleteLocalEveConversationFamily } from "@/lib/eve/delete-local-conversation";
+/* oxlint-enable sort-imports */
 import { deleteUnacceptedEveCopy } from "@/lib/eve/delete-unaccepted-copy";
 import { localDeletionAvailable } from "@/lib/eve/local-deletion-available";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
@@ -14,6 +22,7 @@ interface Context {
   params: Promise<{ id: string }>;
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authorize's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * typescript/explicit-function-return-type (#560): Keep authorize's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): authorize accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -34,6 +43,7 @@ const authorize = async (request: Request, context: Context) => {
   }
   return { id, ownerId: principal.ownerId, source };
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -48,12 +58,17 @@ const deletionStatus = (state: string) => {
   }
   return "active";
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): GET's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): GET accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Status only; reading never resumes deletion or exposes conversation payloads. */
+/**
+ * Returns deletion status without resuming cleanup or exposing conversation payloads.
+ * @param {Request} request Same-origin status request.
+ * @param {Context} context Route parameters containing the conversation ID.
+ * @returns {Promise<Response>} No-store JSON containing the conversation family root and status.
+ */
 const GET = async (request: Request, context: Context): Promise<Response> => {
   const result = await authorize(request, context);
   if (result instanceof Response) {
@@ -67,15 +82,22 @@ const GET = async (request: Request, context: Context): Promise<Response> => {
     { headers }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DELETE's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null -- jsdoc/require-param (#534): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): DELETE's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null --
 max-lines-per-function (#510): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): DELETE keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): DELETE accepts request: Request; context: Context; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): DELETE preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
-/** Erases the conversation family through the verified local-provider coordinator. */
+/**
+ * Deletes an owned conversation family through the local-provider coordinator.
+ * Unaccepted copies are removed directly; accepted conversations are fenced and erased locally.
+ * @param {Request} request Same-origin deletion request.
+ * @param {Context} context Route parameters containing the conversation or chat ID.
+ * @returns {Promise<Response>} No-store JSON with deletion status, or an error response.
+ */
 const DELETE = async (
   request: Request,
   context: Context
@@ -123,12 +145,14 @@ const DELETE = async (
     );
   } catch {
     const current = await getEveDeletionState(ownerId, id);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "deleted") {
       return Response.json(
         { rootId: current.rootId, status: "deleted" },
         { headers }
       );
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from current; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (current?.state === "deleting") {
       return Response.json(
         {
@@ -149,5 +173,8 @@ const DELETE = async (
     );
   }
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (DELETE, GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { DELETE, GET };
+/* oxlint-enable import/no-named-export */

@@ -33,4 +33,6 @@ const attachmentUploadsItem: RegistryItem = {
   name: "attachment-uploads",
   type: "registry:item",
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (attachmentUploadFiles, attachmentUploadsItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { attachmentUploadFiles, attachmentUploadsItem };
+/* oxlint-enable import/no-named-export */

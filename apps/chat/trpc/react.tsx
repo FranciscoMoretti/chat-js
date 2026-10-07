@@ -3,17 +3,25 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@tanstack/react-query" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
-import { isServer, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, isServer } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
+/* oxlint-enable sort-imports */
 import { createTRPCContext } from "@trpc/tanstack-react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 import superjson from "superjson";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { getBaseUrl } from "@/lib/url";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppRouter } from "@/trpc/routers/_app";
+/* oxlint-enable sort-imports */
 
 import { isAbortedRequest } from "./is-aborted-request";
 import { makeQueryClient } from "./query-client";
@@ -27,10 +35,7 @@ const { TRPCProvider, useTRPC, useTRPCClient } = createTRPCContext<AppRouter>();
 let browserQueryClient: QueryClient | undefined;
 /* oxlint-enable init-declarations */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep getQueryClient's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
-const getQueryClient = () => {
+const getQueryClient = (): QueryClient => {
   // oxlint-disable-next-line typescript/no-deprecated -- #583: Preserve TanStack Query server detection until its SSR and hydration boundary is migrated together.
   if (isServer) {
     // Server: always make a new query client
@@ -46,13 +51,9 @@ const getQueryClient = () => {
   }
   return browserQueryClient;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep getUrl's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- */
 const getUrl = (): string => {
-  const base = (() => {
+  const base = ((): string => {
     // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
     if (typeof window !== "undefined") {
       return "";
@@ -61,7 +62,6 @@ const getUrl = (): string => {
   })();
   return `${base}/api/trpc`;
 };
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null -- node/no-process-env (#537): TRPCReactProvider reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
 typescript/prefer-readonly-parameter-types (#565): TRPCReactProvider accepts props: { children: React.ReactNode }; op; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 unicorn/no-null (#570): TRPCReactProvider preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
@@ -103,14 +103,19 @@ const TRPCReactProvider = (props: {
       <TRPCProvider queryClient={queryClient} trpcClient={trpcClient}>
         {props.children}
       </TRPCProvider>
-      {process.env.NODE_ENV === "development" &&
-      env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
-        <ReactQueryDevtools initialIsOpen={false} />
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        process.env.NODE_ENV === "development" &&
+        env.NEXT_PUBLIC_REACT_QUERY_DEVTOOLS === "1" ? (
+          <ReactQueryDevtools initialIsOpen={false} />
+        ) : null
+      }
     </QueryClientProvider>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable react/only-export-components -- #619: Consumers import TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { TRPCProvider, TRPCReactProvider, useTRPC, useTRPCClient };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

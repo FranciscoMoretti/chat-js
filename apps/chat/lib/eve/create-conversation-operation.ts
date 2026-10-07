@@ -3,28 +3,48 @@
  */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { canSpend } from "@/lib/db/credits";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { readEveGuestOwner } from "@/lib/db/eve-guests";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getEveCreation } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { createConversationInput } from "./contracts";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { EveCreationRecoveryError } from "./creation-recovery-error";
+/* oxlint-enable sort-imports */
 import { executeEveConversationCreation } from "./execute-conversation-creation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/admission");
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createEveConversationOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createEveConversationOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * init-declarations (#507): createEveConversationOperation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): createEveConversationOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -50,6 +70,7 @@ export const createEveConversationOperation = async (
     | undefined;
   try {
     const existing = await getEveCreation(ownerId, input.operationId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading creationKind from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (existing?.creationKind === "copy") {
       return Response.json(
         {
@@ -60,6 +81,7 @@ export const createEveConversationOperation = async (
         { status: 409 }
       );
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from existing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (existing?.state === "deleting" || existing?.state === "deleted") {
       return Response.json(
         {
@@ -100,6 +122,7 @@ export const createEveConversationOperation = async (
     }
     logger.error(
       {
+        // oxlint-disable-next-line no-ternary -- Keep errorType as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorType: error instanceof Error ? error.name : "unknown",
         operationId: input.operationId,
       },
@@ -126,4 +149,6 @@ export const createEveConversationOperation = async (
     preparedMessage
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

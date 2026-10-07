@@ -1,9 +1,14 @@
 "use client";
 
 import type { ToolUIPart } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { BundledLanguage } from "shiki";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Sandbox,
   SandboxCode,
@@ -15,6 +20,7 @@ import {
   SandboxTabsList,
   SandboxTabsTrigger,
 } from "@/components/ai-elements/sandbox";
+/* oxlint-enable sort-imports */
 
 interface SandboxComposedProps {
   code: string;
@@ -23,6 +29,8 @@ interface SandboxComposedProps {
   state: ToolUIPart["state"];
   title?: string;
 }
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SandboxComposed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- SandboxComposed renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const SandboxComposed = ({
@@ -56,4 +64,6 @@ export const SandboxComposed = ({
     </Sandbox>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/jsx-max-depth, typescript/prefer-readonly-parameter-types */

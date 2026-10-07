@@ -2,7 +2,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { createEveConversationOperation } from "./create-conversation-operation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   creation: vi.fn(),
@@ -26,11 +28,13 @@ vi.mock("@/lib/db/eve-queries", () => ({
   getEveConversation: mocks.source,
   getEveCreation: mocks.creation,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's required Promise and rejection contract. readEveGuestOwner mock resolves void to represent non-guest creation and retain the asynchronous mocked function contract. */
 vi.mock("@/lib/db/eve-guests", () => ({
   readEveGuestOwner: async (): Promise<void> => {
     // This test exercises non-guest conversation creation.
   },
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): vi.mock("@/lib/db/credits") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -71,21 +75,24 @@ const input = {
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.source.mockResolvedValue({ sessionId: "source", state: "bound" });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mocks.reserve.mockImplementation's awaited sequencing and rejected-Promise behavior. */
   mocks.reserve.mockImplementation(
     async (_owner, operationId, _title, dispatch) => ({
       // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-call -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
       sessionId: await dispatch(operationId),
     })
   );
+  /* oxlint-enable oxc/no-async-await */
   mocks.request.mockImplementation((_owner, path) =>
     Promise.resolve(
-      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+      // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access, no-ternary -- #596: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.; no-ternary: Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       path.startsWith("/eve/chat/v1/operation/")
         ? Response.json({ code: "eve_operation_not_found" }, { status: 404 })
         : Response.json({ sessionId: "child" })
     )
   );
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-params, typescript/promise-function-async, typescript/strict-boolean-expressions */
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("does not allocate a native child before the initial checkpoint is ready") uses 409, 1, -1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -104,15 +111,17 @@ it("does not allocate a native child before the initial checkpoint is ready", as
   mocks.readiness.mockResolvedValue(undefined);
   const retry = await createEveConversationOperation("owner", input);
   expect(await retry.json()).toEqual({ sessionId: "child" });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     input.operationId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[2].body).toContain(
     '"beforeTurnId":"turn_0"'
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 it("recovers an already allocated native operation without needing its checkpoint again", async () => {
   mocks.creation.mockResolvedValue({ state: "reserved" });
@@ -124,6 +133,8 @@ it("recovers an already allocated native operation without needing its checkpoin
   expect(mocks.readiness).not.toHaveBeenCalled();
   expect(mocks.request).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("refuses a foreign or deleted source before reservation or checkpoint access") uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("refuses a foreign or deleted source before reservation or checkpoint access") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -139,6 +150,8 @@ it("refuses a foreign or deleted source before reservation or checkpoint access"
   expect(mocks.readiness).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -146,6 +159,7 @@ it("refuses a foreign or deleted source before reservation or checkpoint access"
  */
 it("passes the same named checkpoint to readiness and native fork allocation", async () => {
   const checkpointId = crypto.randomUUID();
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing input.fork own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const named = { ...input, fork: { ...input.fork, checkpointId } };
   const resolvedResult3 = await createEveConversationOperation("owner", named);
   expect(resolvedResult3.status).toBe(200);
@@ -155,7 +169,7 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     "turn_0",
     checkpointId
   );
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-argument, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const body = JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body);
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(body.fork).toEqual({
@@ -164,6 +178,8 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
     sessionId: "source",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -171,18 +187,21 @@ it("passes the same named checkpoint to readiness and native fork allocation", a
  */
 it("persists fork intent without forwarding ChatJS metadata to Eve", async () => {
   const regeneration = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     forkKind: "regenerate",
   } satisfies Parameters<typeof createEveConversationOperation>[1];
   const response = await createEveConversationOperation("owner", regeneration);
   expect(response.status).toBe(200);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].forkKind).toBe("regenerate");
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-argument, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body)
   ).not.toHaveProperty("forkKind");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -199,6 +218,8 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
   expect(mocks.reserve).not.toHaveBeenCalled();
   expect(mocks.request).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -207,6 +228,7 @@ it("rejects saved-copy operations before ordinary native lookup or dispatch", as
  */
 it("dispatches imported forks by message identity without requiring an execution checkpoint", async () => {
   const imported = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     fork: { beforeMessageId: "seed_message_2", conversationId: "source-chat" },
   };
@@ -216,7 +238,7 @@ it("dispatches imported forks by message identity without requiring an execution
   );
   expect(resolvedResult4.status).toBe(200);
   expect(mocks.readiness).not.toHaveBeenCalled();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-argument, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #594: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 2 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(JSON.parse(mocks.request.mock.calls.at(-1)?.[2].body).fork).toEqual({
     beforeMessageId: "seed_message_2",
     sessionId: "source",
@@ -233,6 +255,8 @@ it("dispatches imported forks by message identity without requiring an execution
   expect(mocks.request).toHaveBeenCalledOnce();
   expect(mocks.readiness).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -240,22 +264,27 @@ it("dispatches imported forks by message identity without requiring an execution
  */
 it("forwards selected tools on creation and includes them in the reservation identity", async () => {
   await createEveConversationOperation("owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     selectedTool: "webSearch",
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 4 from mocks.request.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.request.mock.calls.at(-1)?.[4]).toBe("webSearch");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const originalHash = mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash;
   expect(originalHash).toBeTypeOf("string");
   await createEveConversationOperation("owner", {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...input,
     selectedTool: "deepResearch",
   });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialContentHash).not.toBe(
     originalHash
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -264,24 +293,29 @@ it("forwards selected tools on creation and includes them in the reservation ide
 it("persists a compact fallback title before native creation", async () => {
   await createEveConversationOperation("owner", input);
 
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialTitle).toBe(
     "Fallback: compare"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("journals the complete creation command before dispatch so another tab can recover uses 1, -1, 4 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 it("journals the complete creation command before dispatch so another tab can recover it", async () => {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   const command = { ...input, selectedTool: "webSearch" } satisfies Parameters<
     typeof createEveConversationOperation
   >[1];
   await createEveConversationOperation("owner", command);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This create-conversation-operation fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 4 from mocks.reserve.mock.calls.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(mocks.reserve.mock.calls.at(-1)?.[4].initialRequest).toEqual(command);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, no-undefined --
@@ -303,6 +337,8 @@ it("recovers an accepted fork after the source was deleted", async () => {
   expect(mocks.source).not.toHaveBeenCalled();
   expect(mocks.request).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -322,4 +358,5 @@ it("preserves creation identity when billing recovery is busy", async () => {
   expect(body).not.toHaveProperty("creationRejected");
   expect(mocks.reserve).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

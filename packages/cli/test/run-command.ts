@@ -1,15 +1,17 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (run); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /** Bound the entire operation, including pipes inherited by descendants. */
 export const run = async (
   cwd: string,
-  command: string[],
+  command: readonly string[],
   timeoutMs = 180_000
 ): Promise<void> => {
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
@@ -59,7 +61,7 @@ export const run = async (
       new Error(`${command.join(" ")} timed out after ${timeoutMs}ms in ${cwd}`)
     );
   }, timeoutMs);
-  child.on("error", (error): void => {
+  child.on("error", (error: Readonly<Error>): void => {
     clearTimeout(timer);
     reject(error);
   });
@@ -80,7 +82,8 @@ export const run = async (
   });
   await promise;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */

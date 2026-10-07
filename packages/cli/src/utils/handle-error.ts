@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { highlighter } from "./highlighter";
+/* oxlint-enable sort-imports */
 import { logger } from "./logger";
 
 const failureExitCode = 1;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (handleError); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const handleError: (error: unknown) => never = (error) => {
   logger.break();
 
@@ -27,3 +30,4 @@ export const handleError: (error: unknown) => never = (error) => {
   // oxlint-disable-next-line unicorn/no-process-exit -- The CLI commands call this never-returning handler after failure; setting exitCode would return and permit subsequent command writes.
   process.exit(failureExitCode);
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

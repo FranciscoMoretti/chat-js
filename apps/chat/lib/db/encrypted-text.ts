@@ -13,17 +13,13 @@ const isJsonObject = (value: unknown): value is Record<string, unknown> =>
 
 const ALGORITHM = "aes-256-gcm";
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): getKey intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const getKey = (): Buffer => {
   const key = env.MCP_ENCRYPTION_KEY;
-  if (!key) {
+  if (typeof key !== "string" || key === "") {
     throw new Error("MCP_ENCRYPTION_KEY is not configured");
   }
   return Buffer.from(key, "base64");
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): encrypt uses 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -69,7 +65,8 @@ const encryptedText = customType<{ driverData: string; data: string }>({
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
- * Stores JSON as encrypted text in the database.
+ * Stores JSON objects as encrypted text in the database.
+ * @returns {ReturnType<typeof customType<{ driverData: string; data: Record<string, unknown> }>>} Native column factory that encrypts serialized objects and validates decrypted JSON as an object.
  */
 const encryptedJson = customType<{
   driverData: string;
@@ -86,4 +83,6 @@ const encryptedJson = customType<{
   toDriver: (value: Readonly<Record<string, unknown>>): string =>
     encrypt(JSON.stringify(value)),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (encryptedJson, encryptedText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { encryptedJson, encryptedText };
+/* oxlint-enable import/no-named-export */

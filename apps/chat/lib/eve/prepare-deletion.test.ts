@@ -37,6 +37,7 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("unsupported lifecycle cannot retire a family", async () => {
   mocks.provider.mockReturnValue({
     reason: "unverified erasure",
@@ -48,7 +49,8 @@ test("unsupported lifecycle cannot retire a family", async () => {
   expect(mocks.family).not.toHaveBeenCalled();
   expect(mocks.prepare).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("failed retirement prevents native preparation", async () => {
   mocks.family.mockRejectedValueOnce(new Error("workflow fences missing"));
   await expect(prepareEveFamilyDeletion("owner", "child")).rejects.toThrow(
@@ -56,7 +58,8 @@ test("failed retirement prevents native preparation", async () => {
   );
   expect(mocks.prepare).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("native preparation waits for family retirement and retains every member's inventory", async () => {
   const gate = Promise.withResolvers<boolean>();
   mocks.family.mockImplementationOnce(async () => {
@@ -88,7 +91,8 @@ test("native preparation waits for family retirement and retains every member's 
   });
   expect(mocks.retire).toHaveBeenCalledWith("owner", "session-root");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("partial preparation never returns a resource inventory and retry revisits the family", async () => {
   mocks.prepare
     .mockResolvedValueOnce({ runIds: ["root-run"], streamIds: ["shared"] })
@@ -117,3 +121,4 @@ test("partial preparation never returns a resource inventory and retry revisits 
     expect.any(Function)
   );
 });
+/* oxlint-enable oxc/no-async-await */

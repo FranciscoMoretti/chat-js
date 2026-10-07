@@ -1,15 +1,21 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { env } from "@/lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cleanupExpiredEveGuests } from "@/lib/eve/cleanup-expired-guests";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cleanupEveOrphanedFiles } from "@/lib/eve/cleanup-orphaned-files";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): ORPHANED_ATTACHMENTS_RETENTION_TIME uses 4, 60, 1000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 // Four hours.
 const ORPHANED_ATTACHMENTS_RETENTION_TIME = 4 * 60 * 60 * 1000;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-console, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -26,6 +32,7 @@ export const GET = async (request: NextRequest) => {
     // Verify this is being called by Vercel cron
     const authHeader = request.headers.get("authorization");
     if (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from env.CRON_SECRET; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       !env.CRON_SECRET?.trim() ||
       authHeader !== `Bearer ${env.CRON_SECRET}`
     ) {
@@ -48,10 +55,12 @@ export const GET = async (request: NextRequest) => {
       {
         results: {
           expiredGuests:
+            // oxlint-disable-next-line no-ternary -- Keep expiredGuests as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             guests.status === "fulfilled"
               ? guests.value
               : { error: "Guest cleanup failed; retry required." },
           orphanedAttachments:
+            // oxlint-disable-next-line no-ternary -- Keep orphanedAttachments as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             attachments.status === "fulfilled"
               ? attachments.value
               : { error: "Attachment cleanup failed; retry required." },
@@ -59,12 +68,14 @@ export const GET = async (request: NextRequest) => {
         success,
         timestamp: new Date().toISOString(),
       },
+      // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       { status: success ? 200 : 503 }
     );
   } catch (error) {
     console.error("Cleanup cron job failed:", error);
     return NextResponse.json(
       {
+        // oxlint-disable-next-line no-ternary -- Keep details as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         details: error instanceof Error ? error.message : "Unknown error",
         error: "Cleanup failed",
       },
@@ -72,4 +83,6 @@ export const GET = async (request: NextRequest) => {
     );
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-console, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

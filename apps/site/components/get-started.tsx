@@ -6,6 +6,8 @@ import React, { useState } from "react";
 import { siteLinks } from "@/lib/site-config";
 
 const command = "npx @chat-js/cli@latest create my-app";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetStarted); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- GetStarted renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- GetStarted: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 /* oxlint-disable eslint/no-magic-numbers -- GetStarted: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
@@ -15,6 +17,7 @@ const command = "npx @chat-js/cli@latest create my-app";
 export const GetStarted = (): React.JSX.Element => {
   const [copied, setCopied] = useState(false);
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handleCopy's awaited sequencing and rejected-Promise behavior. */
   const handleCopy = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(command);
@@ -27,7 +30,7 @@ export const GetStarted = (): React.JSX.Element => {
       // Ignore clipboard permission failures.
     }
   };
-
+  /* oxlint-enable oxc/no-async-await */
   return (
     <section className="relative overflow-hidden py-24 sm:py-32">
       {/* Background atmosphere */}
@@ -72,8 +75,16 @@ export const GetStarted = (): React.JSX.Element => {
                 type="button"
               >
                 <span className="flex items-center gap-1.5">
-                  <Copy className="h-4 w-4" />
-                  <span className="text-xs">{copied ? "Copied" : "Copy"}</span>
+                  <Copy
+                    // oxlint-disable-next-line react/forbid-component-props -- Copy accepts className in its styling contract; preserve this caller's layout and appearance.
+                    className="h-4 w-4"
+                  />
+                  <span className="text-xs">
+                    {
+                      // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                      copied ? "Copied" : "Copy"
+                    }
+                  </span>
                 </span>
               </button>
             </div>
@@ -86,7 +97,10 @@ export const GetStarted = (): React.JSX.Element => {
             className="bg-primary text-primary-foreground shadow-primary/15 hover:shadow-primary/20 inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl"
             href={siteLinks.docs}
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen
+              // oxlint-disable-next-line react/forbid-component-props -- BookOpen accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="h-4 w-4"
+            />
             Read the Docs
           </a>
           <a
@@ -109,6 +123,8 @@ export const GetStarted = (): React.JSX.Element => {
     </section>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

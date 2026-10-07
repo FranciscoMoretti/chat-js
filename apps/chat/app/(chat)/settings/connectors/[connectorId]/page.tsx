@@ -1,15 +1,20 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { HydrationBoundary, dehydrate } from "@tanstack/react-query";
 import { connection } from "next/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { McpDetailsPage } from "@/components/settings/mcp-details-page";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   SettingsPage,
   SettingsPageHeader,
 } from "@/components/settings/settings-page";
+/* oxlint-enable sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
 import { makeQueryClient } from "@/trpc/query-client";
 import { trpc } from "@/trpc/server";
+/* oxlint-disable react/jsx-no-literals -- ConnectorDetailsHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
@@ -21,6 +26,7 @@ const ConnectorDetailsHeader = () => (
     </p>
   </SettingsPageHeader>
 );
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -29,13 +35,26 @@ const ConnectorDetailsHeader = () => (
 
 const ConnectorDetailsBodyFallback = () => (
   <div className="flex flex-col gap-3">
-    <Skeleton className="h-10 w-48" />
-    <Skeleton className="h-24 w-full" />
-    <Skeleton className="h-24 w-full" />
-    <Skeleton className="h-16 w-5/6" />
+    <Skeleton
+      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-10 w-48"
+    />
+    <Skeleton
+      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-24 w-full"
+    />
+    <Skeleton
+      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-24 w-full"
+    />
+    <Skeleton
+      // oxlint-disable-next-line react/forbid-component-props -- Skeleton accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="h-16 w-5/6"
+    />
   </div>
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ConnectorDetailsContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
@@ -66,6 +85,7 @@ const ConnectorDetailsContent = async ({
     </HydrationBoundary>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */

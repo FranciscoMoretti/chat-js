@@ -3,15 +3,23 @@
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import { eq, inArray } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { claimExpiredEveGuestFamilies } from "../lib/db/eve-guest-cleanup";
+/* oxlint-enable sort-imports */
 import { createEveGuest } from "../lib/db/eve-guests";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveGuest, user } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { createEveGuestCredential } from "../lib/eve/guest-credential";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -20,6 +28,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 /* oxlint-enable node/no-process-env */
 const owners: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -31,6 +40,8 @@ afterAll(async () => {
     await db.delete(user).where(inArray(user.id, owners));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
@@ -59,19 +70,21 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     id: registeredOwner,
     name: "Cleanup fixture",
   });
-  const excluded = [
+  const excluded: string[] = [
     crypto.randomUUID(),
     crypto.randomUUID(),
     crypto.randomUUID(),
   ];
   await insertEveConversationFixtures([
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[0],
       operationId: crypto.randomUUID(),
       state: "deleted",
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       forkTurnId: "turn_0",
       id: excluded[1],
@@ -80,6 +93,7 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
       rootConversationId: roots[0].id,
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing roots[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...roots[0],
       id: excluded[2],
       operationId: crypto.randomUUID(),
@@ -87,9 +101,11 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     },
   ]);
   const expiredGuestClaims = await claimExpiredEveGuestFamilies();
-  expect(expiredGuestClaims.some((row) => row.ownerId === guest.ownerId)).toBe(
-    false
-  );
+  expect(
+    expiredGuestClaims.some(
+      (row: { readonly ownerId: string }) => row.ownerId === guest.ownerId
+    )
+  ).toBe(false);
   await db
     .update(eveGuest)
     .set({ expiresAt: new Date(0) })
@@ -103,11 +119,15 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     ]);
     for (const batch of batches) {
       expect(batch.length).toBeLessThanOrEqual(1);
-      expect(batch.some((row) => excluded.includes(row.id))).toBe(false);
+      expect(
+        batch.some((row: { readonly id: string }) => excluded.includes(row.id))
+      ).toBe(false);
       claimed.push(
         ...batch
-          .filter((row) => row.ownerId === guest.ownerId)
-          .map((row) => row.id)
+          .filter(
+            (row: { readonly ownerId: string }) => row.ownerId === guest.ownerId
+          )
+          .map((row: { readonly id: string }) => row.id)
       );
     }
   }
@@ -125,6 +145,9 @@ test("expired root claims are bounded, disjoint, fair and preserve owner identit
     .set({ guestCleanupAttemptedAt: new Date(0) })
     .where(eq(eveConversation.id, first.id));
   const expiredGuestClaimIds = await claimExpiredEveGuestFamilies();
-  expect(expiredGuestClaimIds.map((row) => row.id)).toContain(first.id);
+  expect(
+    expiredGuestClaimIds.map((row: { readonly id: string }) => row.id)
+  ).toContain(first.id);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

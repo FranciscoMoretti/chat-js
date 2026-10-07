@@ -11,15 +11,22 @@ import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createEveConversation, getEveCreation } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveRequest } from "../lib/eve/server";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("a lost native creation reply recovers the same session from the retained compos keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -87,15 +94,18 @@ test("a lost native creation reply recovers the same session from the retained c
     session.user.id,
     operation.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(reservation?.state).toBe("uncertain");
   const lookup = await eveRequest(
     session.user.id,
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(lookup.status).toBe(200);
   expect(await lookup.json()).toEqual({ sessionId: nativeSessionId });
   const otherOwner = await eveRequest(
     crypto.randomUUID(),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     `/eve/chat/v1/operation/${reservation?.id}`
   );
   expect(otherOwner.status).toBe(404);
@@ -118,13 +128,16 @@ test("a lost native creation reply recovers the same session from the retained c
   );
   await page.getByRole("button", { exact: true, name: "Send" }).click();
   await expect(page).toHaveURL(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     new URL(`/chat/${reservation?.id}`, page.url()).href
   );
   await expect(page.getByText("Ready", { exact: true })).toBeVisible({
     timeout: 90_000,
   });
   const bound = await getEveCreation(session.user.id, operation.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.sessionId).toBe(nativeSessionId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.state).toBe("bound");
   const client = new Client(getEveConnectionOptions(session.user.id));
   const snapshot = await client.sessions
@@ -140,6 +153,8 @@ test("a lost native creation reply recovers the same session from the retained c
     )
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
@@ -188,6 +203,7 @@ test("an unresolved project conversation recovers after its project is deleted",
     session.user.id,
     operation.operationId
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(reservation?.state).toBe("uncertain");
   const removed = await page.request.post("/api/trpc/project.remove", {
     data: { json: { id: projectId } },
@@ -198,9 +214,11 @@ test("an unresolved project conversation recovers after its project is deleted",
     ({ key, pending }) => sessionStorage.setItem(key, JSON.stringify(pending)),
     {
       key: storageKey,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing operation own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       pending: { ...operation, operationId: crypto.randomUUID() },
     }
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await page.goto(`/chat/${reservation?.id}`);
   const recovery = page.getByRole("region", { name: "Conversation recovery" });
   await expect(recovery).toContainText("does not have the original request");
@@ -268,7 +286,9 @@ test("an unresolved project conversation recovers after its project is deleted",
     { timeout: 90_000 }
   );
   const bound = await getEveCreation(session.user.id, operation.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.state).toBe("bound");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from bound; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. Keep the existing nullish guard when reading id from reservation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(bound?.id).toBe(reservation?.id);
   expect(
     await page.evaluate((key) => sessionStorage.getItem(key), storageKey)
@@ -279,6 +299,8 @@ test("an unresolved project conversation recovers after its project is deleted",
     "project-recovery-ok"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -385,6 +407,8 @@ test("a missing project preserves an unreserved request until definitive rejecti
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the persisted pending-operation JSON without normalizing it; the assertions verify replacement IDs and removal of stale project state.
   expect(saved.next.projectId).toBeUndefined();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls --
@@ -452,6 +476,7 @@ test("a rejected project composer retains its request across project deletion", 
     retained
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines -- #509: This eve-create-recovery.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

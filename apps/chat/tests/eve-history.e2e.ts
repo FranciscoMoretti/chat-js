@@ -7,20 +7,29 @@
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { mkdir } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, inArray, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
 import { listEveConversations } from "../lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, user } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -54,8 +63,10 @@ test("history pages and searches older conversations without exposing other owne
   await insertEveConversationFixtures(
     ids.map((id, index) => ({
       id,
+      // oxlint-disable-next-line no-ternary -- Keep ownerId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ownerId: index === 55 ? foreignOwner : owner.id,
       operationId: crypto.randomUUID(),
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       firstMessage: `${prefix} ${index === 54 ? "100%_literal" : `${index} end`}`,
       // Exercise precise timestamp ties and the pinned-to-unpinned boundary.
       updatedAt: sql`'2099-01-01 00:00:00.123456'::timestamp`,
@@ -66,6 +77,7 @@ test("history pages and searches older conversations without exposing other owne
     const first = await listEveConversations(owner.id, { search: prefix });
     expect(first.items).toHaveLength(50);
     expect(first.items.slice(0, 2).every((row) => row.isPinned)).toBe(true);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updatedAt from first.nextCursor; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(first.nextCursor?.updatedAt).toBe("2099-01-01T00:00:00.123456Z");
     const second = await listEveConversations(owner.id, {
       cursor: first.nextCursor,
@@ -179,4 +191,5 @@ test("history pages and searches older conversations without exposing other owne
     await db.delete(user).where(eq(user.id, foreignOwner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

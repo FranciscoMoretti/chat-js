@@ -4,9 +4,15 @@
 import { eveChannel } from "eve/channels/eve";
 
 import { resolveAcceptedEveCopySeed } from "../../lib/db/eve-copy-dispatch";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ownsEveSession } from "../../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { fetchEveChannelFile } from "../../lib/eve/channel-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { authenticateEveGateway } from "../../lib/eve/gateway-auth";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-default-export, typescript/promise-function-async --

@@ -1,7 +1,9 @@
 import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 import gatewayPackage from "@chat-js/gateways/package.json";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GATEWAY_MODEL_DEFAULTS } from "./defaults";
+/* oxlint-enable sort-imports */
 import { gatewayMetadata } from "./metadata";
 
 const environment = {
@@ -15,6 +17,7 @@ const environment = {
 const isGatewayType = (id: string): id is keyof typeof environment =>
   Object.hasOwn(environment, id);
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (builtInGateways); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const builtInGateways = Object.entries(gatewayMetadata).map(
   ([id, metadata]: Readonly<
     [string, (typeof gatewayMetadata)[keyof typeof gatewayMetadata]]
@@ -33,6 +36,10 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       dependencies: [
         `${gatewayPackage.name}@${gatewayPackage.version}`,
         `${metadata.dependency}@${metadata.version}`,
+        // oxlint-disable-next-line no-ternary -- Select only the adapters that directly import zod; preserve their explicit installation dependencies.
+        ...(id === "openai" || id === "openai-compatible" || id === "openrouter"
+          ? ["zod"]
+          : []),
       ],
       files: [
         {
@@ -61,3 +68,4 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
     };
   }
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

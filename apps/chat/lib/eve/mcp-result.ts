@@ -22,9 +22,11 @@ const modelOutput = z.discriminatedUnion("type", [
     ),
   }),
 ]);
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveMcpResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable unicorn/max-nested-calls */
 export const eveMcpResult = z.object({
   kind: z.literal("chatjs.mcp-result"),
   output: z.json(),
   modelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

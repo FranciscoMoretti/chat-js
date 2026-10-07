@@ -1,16 +1,22 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { EveToolResult } from "../../../apps/chat/components/eve/eve-tool-result";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createToolError,
   createToolResult,
 } from "../../../apps/chat/lib/eve/tool-result";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { WebSearchRenderer as FirecrawlSearchRenderer } from "../src/tools/firecrawl-search/renderer";
@@ -23,7 +29,10 @@ import { WordCountRenderer } from "../src/tools/word-count/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "../../../apps/chat/app/globals.css";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -33,6 +42,8 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
     await import("../src/tools/word-count/renderer");
   return { getEveInstalledToolRenderer: () => Renderer };
 });
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -41,6 +52,7 @@ vi.mock("@/lib/ai/tool-renderer-registry", async () => {
 vi.mock("@/components/part/message-annotations", () => ({
   ResearchUpdates: () => <span>Search updates</span>,
 }));
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -48,6 +60,7 @@ vi.mock("@/components/part/message-annotations", () => ({
 vi.mock("@/lib/stores/hooks-message-parts", () => ({
   useMessageResearchUpdatePartByToolCallId: () => [{ data: {} }],
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -179,12 +192,15 @@ test("search and word-count renderers preserve their visible states", async (): 
   });
 
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=word-count-error]")?.textContent
   ).toBe("Tool unavailable");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=native-receipt]")?.textContent
   ).toContain("Words");
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     container.querySelector("[data-testid=native-receipt-error]")?.textContent
   ).toBe("The tool did not complete.");
   expect(container.textContent).toContain("Counting words...");
@@ -195,6 +211,7 @@ test("search and word-count renderers preserve their visible states", async (): 
   await act((): void => root.unmount());
   container.remove();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable unicorn/no-null */

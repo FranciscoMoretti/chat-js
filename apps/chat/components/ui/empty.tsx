@@ -1,15 +1,19 @@
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- Empty: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- Empty uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Empty = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -18,14 +22,18 @@ const Empty = ({
       className
     )}
     data-slot="empty"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Empty's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyHeader: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyHeader uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyHeader = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -34,9 +42,11 @@ const EmptyHeader = ({
       className
     )}
     data-slot="empty-header"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyHeader's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const emptyMediaVariants = cva(
@@ -55,9 +65,11 @@ const emptyMediaVariants = cva(
 );
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyMedia: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyMedia uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyMedia = ({
   className,
   variant = "default",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div"> &
   VariantProps<typeof emptyMediaVariants>): ReactJSX.Element => (
@@ -65,29 +77,37 @@ const EmptyMedia = ({
     className={cn(emptyMediaVariants({ className, variant }))}
     data-slot="empty-icon"
     data-variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyMedia's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyTitle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyTitle uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyTitle = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
     className={cn("text-lg font-medium tracking-tight", className)}
     data-slot="empty-title"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyTitle's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyDescription: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"p">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyDescription uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyDescription = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"p">): ReactJSX.Element => (
   <div
@@ -96,15 +116,19 @@ const EmptyDescription = ({
       className
     )}
     data-slot="empty-description"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyDescription's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- EmptyContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- EmptyContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const EmptyContent = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -113,9 +137,12 @@ const EmptyContent = ({
       className
     )}
     data-slot="empty-content"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward EmptyContent's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
@@ -126,3 +153,4 @@ export {
   EmptyMedia,
   EmptyTitle,
 };
+/* oxlint-enable import/no-named-export */

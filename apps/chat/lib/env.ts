@@ -1,14 +1,16 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 
 import { gatewayEnvVariables } from "./ai/gateway-model-defaults";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { clientEnvSchema, serverEnvSchema } from "./env-schema";
+/* oxlint-enable sort-imports */
 import { resolveEveEnvironment } from "./eve/environment";
 
 /* oxlint-disable node/no-process-env -- node/no-process-env (#537): env reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior. */
 const env = createEnv({
   client: clientEnvSchema,
   experimental__runtimeEnv: {
-    // oxlint-disable-next-line unicorn/prefer-global-this -- #572: This tests for a browser window; globalThis also exists during server rendering.
+    // oxlint-disable-next-line unicorn/prefer-global-this, oxc/no-rest-spread-properties, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering. Rest/spread: Conditional spread (typeof window === "undefined"       ? resolveEveEnvironment(process.env)       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     ...(typeof window === "undefined"
       ? resolveEveEnvironment(process.env)
       : {}),
@@ -25,5 +27,7 @@ const env = createEnv({
 const gatewayEnv = Object.fromEntries(
   gatewayEnvVariables.map((name) => [name, process.env[name]])
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (env, gatewayEnv); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env */
 export { env, gatewayEnv };
+/* oxlint-enable import/no-named-export */

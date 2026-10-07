@@ -4,14 +4,18 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 import postgres from "postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
 import { purgeEvePostgresQueue } from "@/lib/eve/lifecycle/postgres/eve-queue-purge";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   fenceEvePostgresResources,
   installEvePostgresResourceFence,
 } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
+/* oxlint-enable sort-imports */
 
 import { env } from "../lib/env";
 /* oxlint-enable import/no-relative-parent-imports */
@@ -23,8 +27,11 @@ const query = postgres(env.DATABASE_URL, { max: 1 });
 const task = `eve-queue-fence-${crypto.randomUUID()}`;
 const ids: string[] = [];
 const runIds: string[] = [];
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs resource fencing before registering queue scenarios.
 await installEvePostgresResourceFence(query);
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite installs queue fencing before registering queue scenarios.
 await installEvePostgresQueueFence(query, task);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): afterAll uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -41,6 +48,7 @@ afterAll(async () => {
   }
   await query.end();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */
 
 function runId(): string {
@@ -60,6 +68,7 @@ function envelope(body: unknown) {
     messageId: `msg_${crypto.randomUUID()}`,
   };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve job's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 async function job(body: unknown): Promise<string> {
   const [row] = await query<
@@ -69,7 +78,8 @@ async function job(body: unknown): Promise<string> {
   ids.push(row.id);
   return row.id;
 }
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("queue fencing rejects retries and resilient child creation for fenced roots", async () => {
   const root = runId();
   await fenceEvePostgresResources(query, { runIds: [root], streamIds: [] });
@@ -87,7 +97,8 @@ test("queue fencing rejects retries and resilient child creation for fenced root
   await job({ runId: runId() });
   await job({ __healthCheck: true, correlationId: "fixture" });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
  * no-magic-numbers (#517): test("workers can release locks after fencing but cannot replace or move a protected  uses 0, -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * unicorn/max-nested-calls (#568): test("workers can release locks after fencing but cannot replace or move a protected  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -114,6 +125,8 @@ test("workers can release locks after fencing but cannot replace or move a prote
     await query`select id from graphile_worker.complete_jobs(${query.array([id])}::bigint[])`
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
 
 test("unsupported queue messages fail closed for registered tasks", async () => {
@@ -121,7 +134,8 @@ test("unsupported queue messages fail closed for registered tasks", async () => 
     code: "22023",
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("queue purge removes queued descendants and retains their IDs across retries") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("queue purge removes queued descendants and retains their IDs across retries") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -164,6 +178,8 @@ test("queue purge removes queued descendants and retains their IDs across retrie
     code: "55000",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -185,4 +201,5 @@ test("queue purge refuses even an old worker lock and succeeds after explicit re
   const purgeResult = await purgeEvePostgresQueue(query, input);
   expect(purgeResult.removedJobIds).toEqual([id]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

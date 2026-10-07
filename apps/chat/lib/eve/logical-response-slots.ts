@@ -1,6 +1,8 @@
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { LogicalBranch, LogicalChatSnapshot } from "./logical-chat";
+/* oxlint-enable sort-imports */
 
 const LAST_ATTEMPT_INDEX = -1;
 interface SlotAttempt {
@@ -63,6 +65,7 @@ const slotReadAccess = (
   answerMatches: (nodeId, branchId, userId) => {
     const value = node(nodeId);
     return (
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from value; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       value?.conversationId === branchId &&
       value.parentId === userId &&
       value.message.role === "assistant"
@@ -111,6 +114,7 @@ const selectedSlotAttempt = (
   };
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (logicalResponseSlots); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-undefined (#519): logicalResponseSlots uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): logicalResponseSlots accepts snapshot: LogicalChatSnapshot; branch; candidate; attempt; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
@@ -118,9 +122,9 @@ const selectedSlotAttempt = (
  */
 /**
  * Retains admitted model-slot order while regeneration appends attempts to existing slots.
- * @param snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
- * @param userId Logical group user-message identity used to locate its admitted response group.
- * @returns Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
+ * @param {LogicalChatSnapshot} snapshot Logical lineage whose branch paths identify original candidates and regenerated answers.
+ * @param {string} userId Logical group user-message identity used to locate its admitted response group.
+ * @returns {{ groupId: string; slots: LogicalResponseSlot[] } | undefined} Group slots with original branches, latest/selected attempts, and rejection metadata, or no result for other messages.
  */
 export const logicalResponseSlots = (
   snapshot: LogicalChatSnapshot,
@@ -131,6 +135,7 @@ export const logicalResponseSlots = (
       branch.responseGroupId &&
       userId === `group:${branch.responseGroupId}:user`
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseGroupId from groupBranch; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!groupBranch?.responseGroupId) {
     return;
   }
@@ -161,6 +166,7 @@ export const logicalResponseSlots = (
       selectedPath
     );
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidate own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...candidate,
       attempt,
       original,
@@ -170,4 +176,5 @@ export const logicalResponseSlots = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: logicalResponseSlots has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId, slots };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

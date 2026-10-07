@@ -14,6 +14,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="Next.js"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -37,6 +38,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="AI SDK"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="rounded-full"
         height={28}
         sizes="28px"
@@ -143,6 +145,7 @@ const TECHS: Tech[] = [
     icon: (
       <Image
         alt="Zustand"
+        // oxlint-disable-next-line react/forbid-component-props -- Image accepts className in its styling contract; preserve this caller's layout and appearance.
         className="brightness-0 dark:brightness-100"
         height={28}
         sizes="28px"
@@ -216,6 +219,8 @@ const TechCard = ({
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (TechStack); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- TechStack renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-enable eslint/no-magic-numbers */
@@ -268,6 +273,8 @@ export const TechStack = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 

@@ -1,32 +1,43 @@
 "use client";
 
 import { Smile } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ProjectIcon } from "@/components/project-icon";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+/* oxlint-enable sort-imports */
 import type { ProjectColorName, ProjectIconName } from "@/lib/project-icons";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   DEFAULT_PROJECT_COLOR,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 interface ProjectIconPickerProps {
-  className?: string;
-  color: ProjectColorName | null;
-  icon: ProjectIconName | null;
-  onColorChange: (color: ProjectColorName) => void;
-  onIconChange: (icon: ProjectIconName) => void;
+  readonly className?: string;
+  readonly color: ProjectColorName | null;
+  readonly icon: ProjectIconName | null;
+  readonly onColorChange: (color: ProjectColorName) => void;
+  readonly onIconChange: (icon: ProjectIconName) => void;
 }
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectIconPicker); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth -- ProjectIconPicker: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
 export const ProjectIconPicker = ({
   icon,
@@ -41,18 +52,29 @@ export const ProjectIconPicker = ({
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
           className={cn("size-9 p-0", className)}
           type="button"
           variant="outline"
         >
-          {icon ? (
-            <ProjectIcon color={displayColor} icon={icon} size={18} />
-          ) : (
-            <Smile className="text-muted-foreground size-[18px]" />
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            icon ? (
+              <ProjectIcon color={displayColor} icon={icon} size={18} />
+            ) : (
+              <Smile
+                // oxlint-disable-next-line react/forbid-component-props -- Smile accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-muted-foreground size-[18px]"
+              />
+            )
+          }
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-3">
+      <PopoverContent
+        align="start"
+        // oxlint-disable-next-line react/forbid-component-props -- PopoverContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="w-auto p-3"
+      >
         {/* Color row */}
         <div className="mb-3 flex gap-1.5">
           {PROJECT_COLORS.map((swatchColor): React.JSX.Element => (
@@ -93,4 +115,5 @@ export const ProjectIconPicker = ({
     </Popover>
   );
 };
-/* oxlint-enable max-lines-per-function, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth */

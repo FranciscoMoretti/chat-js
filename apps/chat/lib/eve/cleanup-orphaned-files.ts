@@ -1,38 +1,51 @@
 import { completeEveFilePurge } from "@/lib/db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+type OrphanedFile = Awaited<
+  ReturnType<typeof prepareEveOrphanedFilePurge>
+>[number];
 
- * max-statements (#512): cleanupEveOrphanedFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): cleanupEveOrphanedFiles uses 0, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): cleanupEveOrphanedFiles accepts cutoff: Date; keys: string[]; { key }; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (cleanupEveOrphanedFiles); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupEveOrphanedFiles's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-statements, no-magic-numbers --
+
+ * max-statements (#512): The sweep shares batch storage, confirmed-deletion counts and accumulated failures; provider removal must finish before each owner's durable completion, while one failed batch must not starve later inventory.
+ * no-magic-numbers (#517): Zero marks empty inventory/error queues and the initial deletion subtotal; batches of 100 match the orphan-fencing query's maximum admitted key count.
   */
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
- * @param cutoff Objects uploaded before this time may enter the fenced orphan purge.
- * @returns The number of deleted stored files and whether the sweep was skipped.
+ * @param {Readonly<Date>} cutoff Objects uploaded before this time may enter the fenced orphan purge.
+ * @returns {Promise<{ deletedCount: number; skipped: boolean }>} The number of deleted stored files and whether the sweep was skipped.
  */
 export const cleanupEveOrphanedFiles = async (
-  cutoff: Date
+  cutoff: Readonly<Date>
 ): Promise<{ deletedCount: number; skipped: boolean }> => {
   let deletedCount = 0;
   let batch: string[] = [];
   const errors: unknown[] = [];
-  const purge = async (keys: string[]): Promise<void> => {
+  const purge = async (keys: readonly string[]): Promise<void> => {
     try {
       const files = await prepareEveOrphanedFilePurge(keys, cutoff);
       if (files.length === 0) {
         return;
       }
-      await deleteFilesByUrls(files.map(({ key }) => createFileUrl(key)));
-      for (const ownerId of new Set(files.map((file) => file.ownerId))) {
+      await deleteFilesByUrls(
+        files.map(({ key }: Readonly<OrphanedFile>) => createFileUrl(key))
+      );
+      for (const ownerId of new Set(
+        files.map((file: Readonly<OrphanedFile>) => file.ownerId)
+      )) {
         // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
         await completeEveFilePurge(
           ownerId,
           files
-            .filter((file) => file.ownerId === ownerId)
-            .map((file) => file.key)
+            .filter((file: Readonly<OrphanedFile>) => file.ownerId === ownerId)
+            .map((file: Readonly<OrphanedFile>) => file.key)
         );
       }
       deletedCount += files.length;
@@ -62,4 +75,6 @@ export const cleanupEveOrphanedFiles = async (
   }
   return { deletedCount, skipped: false };
 };
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-statements, no-magic-numbers */

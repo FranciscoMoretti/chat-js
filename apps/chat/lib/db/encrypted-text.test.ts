@@ -1,7 +1,9 @@
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { pgTable } from "drizzle-orm/pg-core";
 import { expect, test, vi } from "vitest";
 
 import { encryptedJson, encryptedText } from "./encrypted-text";
+/* oxlint-enable sort-imports */
 
 const { encryptionKey } = vi.hoisted(() => {
   const AES_256_KEY_BYTES = 32;

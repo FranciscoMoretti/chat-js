@@ -1,13 +1,21 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Toaster, toast } from "sonner";
+/* oxlint-enable sort-imports */
 import { expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ShareDialog, ShareDialogView } from "@/components/share-button";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./sandbox.css";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- share-dialog.browser route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
@@ -20,6 +28,7 @@ vi.mock("@/providers/session-provider", () => ({
 vi.mock("@/components/upgrade-cta/login-prompt", () => ({
   LoginPrompt: () => null,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve flushReact's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 const flushReact = async (update: () => void): Promise<void> => {
@@ -28,7 +37,8 @@ const flushReact = async (update: () => void): Promise<void> => {
     await Promise.resolve();
   });
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return -- share-dialog.browser route: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
 test("share link confirms a completed copy and reports clipboard rejection", async () => {
@@ -107,4 +117,5 @@ test("share link confirms a completed copy and reports clipboard rejection", asy
     vi.restoreAllMocks();
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/promise-function-async, typescript/strict-void-return */

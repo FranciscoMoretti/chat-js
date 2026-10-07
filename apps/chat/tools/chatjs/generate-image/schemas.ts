@@ -13,4 +13,6 @@ const generateImageResult = z.object({
   imageUrl: z.string(),
   prompt: z.string(),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (generateImageInput, generateImageResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { generateImageInput, generateImageResult };
+/* oxlint-enable import/no-named-export */

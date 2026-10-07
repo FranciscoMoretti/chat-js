@@ -3,7 +3,10 @@
  */
 import { execFileSync } from "node:child_process";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -160,4 +163,5 @@ test("live document completion opens once without replacing an existing panel or
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

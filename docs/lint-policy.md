@@ -1,76 +1,91 @@
 # Practical lint policy
 
-This policy replaces enable-all adoption as the completion criterion for the [Oxlint audit #503](https://github.com/FranciscoMoretti/chat-js/issues/503). Of the 110 audited rules with findings, 11 are deliberately disabled below and 99 remain enforced, with the runtime/UI scopes and options described below. Enabling a rule while suppressing its findings does not establish that the underlying work is complete. Existing retained waivers remain unreviewed until they have a concrete contract justification or linked deferred work.
+The completion target is every rule in the pinned Ultracite core, React and Next presets enabled, with practical violations fixed and remaining exceptions justified beside the affected source. Minimal file-specific configuration exceptions are allowed only when Oxlint cannot honor source directives. Enabling a rule while suppressing its findings does not establish completion: each exception still needs review against the actual contract.
 
-## Deliberately disabled rules
+All 681 rules in the effective repository and standalone-app configurations are enabled. This is a configuration milestone; inherited source exceptions still need individual review. The inherited `jsdoc/require-param-type`, `jsdoc/require-returns-type`, and `no-restricted-properties` rules are enabled explicitly. JSDoc types follow actual declarations. `no-restricted-properties` has no project-specific restriction list, so enabling it does not claim an additional property-access restriction.
 
-| Rule | Rationale and evidence |
-| --- | --- |
-| `import/no-named-export` | Existing registry/package APIs expose named symbols. Requiring defaults conflicts with retained `import/no-default-export`; see the [rule definition](https://oxc.rs/docs/guide/usage/linter/rules/import/no-named-export) and `packages/registry/src/gateways/vercel/gateway.ts`. |
-| `import/prefer-default-export` | A single named export is still an intentional public API. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/import/prefer-default-export) opposes the retained named-export preference. Required framework defaults keep narrow exceptions to `import/no-default-export`. |
-| `oxc/no-async-await` | [Oxlint describes this as a legacy-environment restriction](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-async-await). `package.json` requires Node ≥24 and app code already uses async APIs. Retain Promise safety and `typescript/promise-function-async` checks. |
-| `oxc/no-optional-chaining` | [Oxlint recommends against this restriction for modern codebases](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-optional-chaining). Node ≥24 and `apps/chat/tsconfig.json`'s ESNext target support this syntax. |
-| `oxc/no-rest-spread-properties` | The [rule guards old-engine compatibility](https://oxc.rs/docs/guide/usage/linter/rules/oxc/no-rest-spread-properties). Modern targets support immutable object composition and typed prop forwarding; see `apps/chat/components/ui/button.tsx` and `oxlint.config.ts`. |
-| `no-ternary` | The [rule prohibits all conditional expressions](https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-ternary). Value selection such as button `asChild ? Slot : "button"` is deliberate. Retain `unicorn/no-nested-ternary`. |
-| `node/no-top-level-await` | The [rule bans top-level await](https://oxc.rs/docs/guide/usage/linter/rules/node/no-top-level-await), while both lint configs enforce `unicorn/prefer-top-level-await`. Modern ESM tooling supports the retained convention. |
-| `react/react-in-jsx-scope` | The [rule addresses React-in-scope JSX transforms](https://oxc.rs/docs/guide/usage/linter/rules/react/react-in-jsx-scope). `apps/chat/tsconfig.json` uses the automatic `react-jsx` runtime. |
-| `sort-imports` | [Oxlint sorts declarations by binding syntax/name](https://oxc.rs/docs/guide/usage/linter/rules/eslint/sort-imports.html). `oxfmt.config.ts` imports the Ultracite formatter preset, which owns ordering; `button.tsx` uses its module-path/type import order. One formatter convention avoids rewrite cycles. |
-| `react/forbid-component-props` | Tailwind styling and typed primitive APIs intentionally accept `className` and `style` on custom components. The [default restriction](https://oxc.rs/docs/guide/usage/linter/rules/react/forbid-component-props) forbids those supported props; `button.tsx`, `SidebarInset` and registry chart components demonstrate the contract. |
-| `react/jsx-no-literals` | Chat and registry UI have no translation-layer contract. The [rule](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-no-literals) accepts expression-wrapped copy without providing localization; accessible text such as MessageAttachment's “Remove” remains ordinary UI content. |
+## Conditional value selections
 
-These are policy decisions, not deferred violations. Broader relaxations require their own evidence and decision.
+`no-ternary` is enabled. Practical direct returns and callback guards were fixed before adoption. The remaining 943 canonical expression sites have local comments identifying their actual value-selection context and the pinned `unicorn/prefer-ternary` conflict with equivalent if/else assignment. These are convention exceptions, not claims that every expression is architecturally irreducible. `unicorn/no-nested-ternary` remains enabled.
+
+Comments target the actual line, condition prefix or bounded JSX expression/tag trivia. Exact scope ledgers exclude unreviewed nested conditions, and compiler checks preserve emitted JavaScript, rendered child strings and JSDoc attachment. The native policy regression runs actual root and standalone configurations without forcing the rule on the command line; disabled-policy and overbroad nested-callback controls fail. These proofs do not sign off unrelated existing suppressions.
 
 ## Node runtime boundaries
 
-`import/no-nodejs-modules` remains enforced outside the Node/Bun boundaries reviewed in [#529](https://github.com/FranciscoMoretti/chat-js/issues/529). The root config permits built-in imports only in `packages/cli/src/**`, `packages/cli/test/**`, `packages/cli/scripts/**`, root `scripts/**`, `apps/electron/src/main.ts`, `apps/electron/scripts/**`, and `apps/electron/forge.config.ts`. This scoped decision does not add a globally disabled rule.
+`import/no-nodejs-modules` is enforced in every directory, including CLI code, repository scripts, and Electron main/packaging. The previous directory-wide overrides have been removed from both the repository and standalone-app configurations.
 
-The CLI package publishes the `chat-js` executable, builds it with `--target=node`, and verifies its published entrypoint with `node ./dist/index.js --help`. Its tests and utilities own filesystem, subprocess and package-resolution work. Root scripts run Bun/Node development, deployment and repository tooling. Electron's package entrypoint is `dist/main.js`, built for Node; Forge and packaging scripts also run in Node/Bun. These are supported runtime capabilities rather than import-by-import exceptions.
+Reviewed Node/Bun imports have statement-level comments explaining the filesystem, process, package-resolution or desktop contract they serve. New native imports in those same files remain checked. Browser code, renderer/preload code and generated app payloads receive no directory-wide permission. Scaffolded Electron files carry the reviewed source comments into the generated application.
 
-Electron preload remains protected: it is built with `--target=browser`, exposes a restricted `contextBridge`, and belongs to a BrowserWindow with `nodeIntegration: false`. Renderer files, browser app/template payloads, shared packages and mixed app directories receive no relaxation; only the explicitly named Electron paths below are permitted in copied desktop templates. Scaffolding copies Electron into `electron/` beneath the standalone app. Its Chat config therefore mirrors the Node permissions as `electron/src/main.ts`, `electron/scripts/**`, and `electron/forge.config.ts`, while retaining error severity for preload, renderer and components. New browser exports, template directories or desktop entrypoints require a separate boundary review.
-
-At merged baseline `cf629c56`, this rule has 292 suppression entries: 290 canonical and two generated mirrors. The reviewed boundaries cover 170 canonical entries (CLI 130, Electron 15, root scripts 25); 122 outside entries (120 canonical and two mirrors) retain their existing review requirements. These counts describe rule entries, not unique imports. The isolated positive/negative import probes load the actual root config and pass from root, CLI and Electron working directories: all seven allowed patterns permit Node imports, while preload, renderer, CLI templates, Chat components and registry sources still report the rule. Effective-config checks from those working directories agree; standalone probes from the app root and nested Electron working directory confirm the three permitted paths and protected preload/renderer/components. The non-typed import probes disable type-aware execution only in their temporary harness. Required repository lint/type/test checks verify the implementation batch separately.
+The runtime-policy test loads the actual repository and standalone configurations from multiple working directories. Unannotated imports report errors in every tested path, including formerly exempt CLI and Electron paths. Separate annotated probes verify that local comments suppress their intended imports. The probes disable type-aware execution only for their temporary fixture projects; repository lint and type checks verify the real sources separately.
 
 ## UI scopes and performance options
 
-`react/jsx-props-no-spreading` remains an error in feature components and canonical registry features. It is off only in `apps/chat/components/ui/**` and `apps/chat/components/ai-elements/**`, mirrored as `components/ui/**` and `components/ai-elements/**` in the standalone config. This reusable wrapper layer includes typed compositions of custom renderers, not only native elements: `SandboxCode` forwards `ComponentProps<typeof CodeBlock>`, while `Response` and `MessageResponse` forward `ComponentProps<typeof Streamdown>`. Those supported prop contracts intentionally pass through to custom components. Application orchestration belongs outside these wrapper directories and remains checked. Other wrappers expose native/Radix/React Hook Form prop contracts: `FormField` forwards typed `ControllerProps`, `FormControl` forwards Slot accessibility/event bindings, and `Actions` forwards native attributes. Enumerating a subset would narrow their supported APIs. The registry currently has no equivalent primitive wrapper directory; `src/ui/code-execution/**` and `src/tools/**` remain checked. See [Oxlint options](https://oxc.rs/docs/guide/usage/linter/rules/react/jsx-props-no-spreading).
+`react/jsx-props-no-spreading` is enforced in every directory. The former primitive and AI-element directory exemptions have been removed from both configurations. Each retained forwarding expression explains the typed native, Radix, React Hook Form, Streamdown or other component contract that requires it. A finite TypeScript prop interface does not alone justify dropping unknown runtime keys: structurally assignable callers can still supply event handlers or data attributes. Singleton object spreads that did not forward a prop contract were replaced with explicit attributes.
 
 The three `react-perf/jsx-no-new-{function,object,array}-as-prop` rules remain errors with `nativeAllowList: "all"`. Native DOM props do not establish custom component memoization boundaries. Custom component callbacks, arrays and objects remain checked; this batch adds no memoization and does not relax `jsx-no-jsx-as-prop`. Options are documented for [functions](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-function-as-prop), [objects](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-object-as-prop) and [arrays](https://oxc.rs/docs/guide/usage/linter/rules/react_perf/jsx-no-new-array-as-prop).
 
-The UI batch removes 759 suppression rule entries from canonical source: 291 styling-prop entries, 182 literal-text entries, 271 primitive spread entries and 15 newly unused native performance entries. Generated mirrors account for 56 additional removals, for 815 total. These count one rule per disable directive, not diagnostics or bugs. The 15 native performance removals were checked against the previous default options; pre-existing SDK/Query compatibility directives remain untouched.
+The earlier UI totals recorded removals achieved partly through directory exemptions; those totals are historical and do not describe the current source adoption. Current reviewed counts and validation are recorded in `docs/oxlint-cleanup-progress.md`.
 
-| Retained UI rule | Canonical entries before | Canonical entries after |
-| --- | --: | --: |
-| `react/jsx-props-no-spreading` | 302 | 31 |
-| `react-perf/jsx-no-new-function-as-prop` | 127 | 118 |
-| `react-perf/jsx-no-new-object-as-prop` | 66 | 60 |
-| `react-perf/jsx-no-new-array-as-prop` | 16 | 16 |
+`react/react-in-jsx-scope` is enabled. Components compiled with the automatic JSX runtime retain declaration-level comments where the rule expects a classic-runtime React binding. Each changed module was checked against its actual compiler/bundler settings, and its emitted automatic-runtime JavaScript remains identical. No unused React imports were added.
 
-Component source changes are comments only: all 254 changed code files have identical comment-free ASTs, including regenerated mirrors. The exception baseline requires a separately reviewed update during integration; these counts do not endorse the remaining waivers.
+`react/forbid-component-props` is enabled. Reviewed `className` and `style` attributes explain their recipient's styling or layout contract. Most exceptions cover one attribute; bounded composition scopes preserve JSX text boundaries or existing directive attachment where an inline comment would change them. Compiler prop checks and source review verify the recipient contracts, and the annotation-only changes retain equivalent emitted JavaScript.
+
+`react/jsx-no-literals` is enabled. All 854 findings were reviewed as authored interface/legal/marketing/demo/fixture text or intentional punctuation and glyphs. There is no translation-layer contract in these modules. The 754 canonical findings use 182 declaration/statement scopes; 100 installed findings inherit 27 generated scopes. Nested named render helpers receive their own scopes. Text is neither wrapped in expressions nor moved into constants merely to bypass this rule. Every affected canonical and installed TSX file emits byte-identical JavaScript, preserving JSX child and whitespace semantics.
+
+## Export contracts
+
+`import/no-named-export` and `import/prefer-default-export` are enabled. Declaration-local comments identify actual named bindings and their conflict with the retained `import/no-default-export` convention. Application guidance also requires named exports within `apps/chat`; it is not claimed as a rule for unrelated subtrees. Framework HTTP handlers/metadata and manifest-confirmed package entry bindings retain their named APIs. These convention reviews do not establish that every exported declaration has a caller; independently verified unused code is removed separately.
+
+The CLI registration emitter adds comments to the actual named export statements it generates. Single-value, grouped-value, type-only, mixed, namespace and re-export forms use the native rule's actual export counting; defaults receive no named-export comments. Observability plans pass through this same emitter when written, avoiding duplicate comments in intermediate templates. Native generated-output checks reject both export violations and unused directives. Regeneration updates installed copies rather than patching them by hand.
+
+## Import ordering
+
+`sort-imports` is enabled. Named specifiers are sorted by their local binding without changing the imported symbol or module evaluation order. Erased type declarations move where the pinned formatter and existing directive scopes allow a real reduction in findings. Inline type merges conflict with the separately enforced `import/consistent-type-specifier-style`, so they are not used to trade one exception for another.
+
+Remaining declaration exceptions cover one import and explain either runtime module order or the combined constraints of separate type declarations, formatter grouping and runtime order. They do not disable member ordering elsewhere. Tool generators sort same-module bindings by their already assigned aliases and retain only the required ordered module groups. Multi-export and alias-rollover fixtures verify the generated bindings and registrations.
+
+## Module initialization
+
+`node/no-top-level-await` is enabled. Reviewed Bun/ESM command entrypoints and test initialization statements explain why they await configuration, mocks, fixture data, build output or child completion before continuing. They do not expose a synchronous `require(esm)` contract. The ordered Playwright executable retains one bounded scenario exception, including its `finally` browser disposal; browser launch and output initialization have separate line exceptions. A redundant dynamic test import and unused mock scaffolding were removed instead of annotated.
+
+## Native async contracts
+
+`oxc/no-async-await` is enabled. The pinned rule rejects async functions and generators for legacy-engine compatibility, while the configured Node/Bun/browser targets support them. Statement/method exceptions preserve actual awaited sequencing, rejection behavior and async iteration. All 96 findings without their own await were reviewed separately: Promise-based fixture/hooks, the durable `"use step"` compiler contract and async-generator overloads require their existing async shape. Replacing those with `Promise.resolve` also conflicts with the retained `typescript/promise-function-async` rule. No unrelated Promise safety rules were relaxed.
+
+The 2,728 findings map to 2,054 canonical scopes and 132 generated scopes. Emitted JavaScript tokens, parser diagnostics and JSDoc attachment remain unchanged. These new policy exceptions do not sign off unrelated pre-existing suppressions in the same functions.
+
+## Object composition contracts
+
+`oxc/no-rest-spread-properties` is enabled. Object compositions retain local exceptions for the opposing `eslint/prefer-object-spread` convention, ordered overrides, fresh snapshots and conditional key omission. Object bindings name the keys they exclude before forwarding the remaining properties. Twenty-five redundant sole-rest UI parameter copies were previously removed; three retain verified getter/hook/member-resolution ordering contracts. Exceptions target individual source lines or inline object/binding expressions; existing next-line rules are combined to preserve their targets. Generator templates own the two installed/custom registry composition comments. These syntax-contract reviews do not establish exhaustive dynamic caller analysis or finish unrelated existing suppression reviews.
+
+## Optional access contracts
+
+`oxc/no-optional-chaining` is enabled. Local comments identify the guarded receiver or callback and its short-circuit/fallback behavior. Application guidance preferring optional chaining is cited only in its actual `apps/chat` scope. Proven redundant guards are removed separately; inferred non-nullability alone does not prove runtime presence for database/array results, optional installations or SDK events. This adoption inventory is not a claim that every remaining chain is irreducible.
+
+Most exceptions cover individual source lines. Existing next-line directives retain their targets, and JSX expressions or tag trivia accommodate comments without changing rendered children. Where narrower placement changes compiled children, a bounded rendering expression retains the exception. Compiler checks preserve executable structure; documented raw JSX indentation differences preserve every other TypeScript node and the emitted output. CLI static generator templates contain no optional chains; copied canonical modules carry their comments through regeneration.
+
+## File-level directive limitations
+
+Pinned Oxlint 1.82 reports `import/unambiguous` and `unicorn/filename-case` at offset zero, even when the file starts with a matching disable comment. A native three-file probe confirms this for an ambient declaration, CommonJS entry and underscore-named tool. Keep the existing exact-file configuration exceptions for Electron's ambient/Forge boundaries and EVE's filename-derived public tool names; do not widen them to directories. Source directives remain the default elsewhere.
 
 ## Acceptance criteria
 
 1. Resolve contradictory policies in shared root and standalone-app configuration.
-2. Give every audited rule an explicit disposition: enforced, deliberately disabled with rationale, or an enforced rule with narrow, justified exceptions.
+2. Enable every rule in the pinned presets. Give each remaining violation an individually reviewed source exception, allowing a minimal file-specific configuration exception only for a verified directive limitation.
 3. Fix mechanical findings and remove obsolete waiver names without changing runtime/API contracts.
 4. Link genuinely nontrivial deferred work to concrete ownership, affected contracts and verification; do not describe general preservation comments as completed reviews.
-5. Record a baseline of retained exceptions and reject silent additions or widened scopes. A passing lint run alone does not satisfy this criterion.
-6. Synchronize registry/templates and generated applications, run repository lint, types and relevant tests, and verify the merged result before claiming completion.
+5. Track active suppression memberships by rule in [the Oxlint exception review](https://github.com/FranciscoMoretti/chat-js/issues/669). The issue inventory is a review queue, not acceptance of each existing reason or an automated check for new scopes.
+6. Synchronize registry/templates and generated applications, run repository lint, types and relevant tests, and verify the integrated checkout before claiming completion.
 
-## Exception review and baseline
+## Exception review
 
-Keep policy-off rules out of the exception baseline. For an enforced rule, a valid contract exception names the exact framework, external API or intentional test behavior and covers the smallest relevant line/declaration. A waiver that merely says “preserve existing behavior,” “keep inference,” or “avoid migration” remains unreviewed. Link deferred refactoring or bug work when that is the real reason.
+During adoption, globally disabled rules remain unfinished work and are not source-exception entries. For an enforced rule, a valid contract exception names the exact framework, external API or intentional test behavior and covers the smallest relevant line/declaration. A waiver that merely says “preserve existing behavior,” “keep inference,” or “avoid migration” remains unreviewed. Link deferred refactoring or bug work when that is the real reason.
 
-Count original diagnostics, current unsuppressed diagnostics, suppression directives and reviewed exceptions separately. Multiple rules can report one expression, and one block waiver can cover many findings; none is a bug count. The audit tables are historical evidence, not the current backlog. The inventory's enforced status describes configuration, not exception acceptance or absence of defects.
+Count source suppressions, diagnostics and reviewed exceptions separately. Multiple rules can report one expression, and one block waiver can cover many findings; none is a bug count. The audit tables are historical evidence, not the current backlog. The inventory's enforced status describes configuration, not exception acceptance or absence of defects.
 
-The baseline must identify each retained rule, file, scope and reason. CI must fail on new/widened exceptions unless a reviewed update supplies a contract justification or a deferred issue. Obsolete rule names and empty disable/enable comments should be removed before capturing it. Regenerate registry outputs from canonical sources instead of independently editing generated copies.
+Keep suppression reasons beside their directives. Remove obsolete rule names and empty disable/enable comments. Regenerate registry outputs from canonical sources instead of independently editing generated copies.
 
-## Exception guard usage
-
-`bun lint:exceptions` checks the baseline and runs as part of `bun lint`. Run `bun test scripts/lint-exceptions.test.ts` when changing the guard.
-
-The guard budgets entries by file, rule and directive kind. Every exception also hashes its covered line or block and reason, so relocating a waiver, expanding a block or editing covered code requires baseline review. File-level metrics hash the whole file, including when their directive appears at EOF; function metrics hash the affected declaration. Duplicate source regions use an occurrence ordinal to detect relocation; inserting identical source before a waiver can therefore require a baseline refresh even when its target did not change. Keep reasons attached to actual ESLint/Oxlint directives; prose mentioning a directive is not an exception.
-
-After reviewing a deliberate exception change, use `bun scripts/lint-exceptions.ts --write-baseline` to record it. Adding a new file/rule/directive-kind key or increasing its count additionally requires `--allow-new`. A same-count replacement and an edit to an existing exception both change fingerprints; `--write-baseline` explicitly records either after review. The guard cannot distinguish those intentions, so inspect the source and baseline diff, including replacements, before committing. Do not regenerate the baseline to hide growth or an unexplained scope change. The baseline inventories debt; it does not endorse every retained waiver. Legacy directives without reasons must reach zero before the initial baseline is accepted. The new guard's own scoped exceptions also require explicit review.
+There is no automated suppression-count baseline. Review additions and scope changes in source alongside [the per-rule issue queue](https://github.com/FranciscoMoretti/chat-js/issues/669); a passing `bun lint` checks the active lint configuration but does not certify the reasons or detect every newly added suppression.
 
 ## Ownership and deferred work
 
@@ -90,7 +105,7 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 
 ## Inventory of 110 audited rules
 
-`Enforced` means the rule remains an error in the effective policy, subject to existing options and scoped exceptions. `Off — policy` links to the rationale above. Original issues retain audit provenance even when their original enable-all resolution needs qualification.
+`Enforced` means the rule remains an error in the effective policy, subject to existing options and scoped exceptions. Original issues retain audit provenance even when their original enable-all resolution needs qualification.
 
 | Rule | Status | Original issue |
 | --- | --- | --- |
@@ -101,12 +116,12 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `import/max-dependencies` | Enforced | [#524](https://github.com/FranciscoMoretti/chat-js/issues/524) |
 | `import/no-commonjs` | Enforced | [#525](https://github.com/FranciscoMoretti/chat-js/issues/525) |
 | `import/no-default-export` | Enforced | [#526](https://github.com/FranciscoMoretti/chat-js/issues/526) |
-| `import/no-named-export` | Off — policy | [#527](https://github.com/FranciscoMoretti/chat-js/issues/527) |
+| `import/no-named-export` | Enforced | [#527](https://github.com/FranciscoMoretti/chat-js/issues/527) |
 | `import/no-namespace` | Enforced | [#528](https://github.com/FranciscoMoretti/chat-js/issues/528) |
 | `import/no-nodejs-modules` | Enforced outside reviewed Node/Bun boundaries | [#529](https://github.com/FranciscoMoretti/chat-js/issues/529) |
 | `import/no-relative-parent-imports` | Enforced | [#530](https://github.com/FranciscoMoretti/chat-js/issues/530) |
 | `import/no-unassigned-import` | Enforced | [#531](https://github.com/FranciscoMoretti/chat-js/issues/531) |
-| `import/prefer-default-export` | Off — policy | [#532](https://github.com/FranciscoMoretti/chat-js/issues/532) |
+| `import/prefer-default-export` | Enforced | [#532](https://github.com/FranciscoMoretti/chat-js/issues/532) |
 | `import/unambiguous` | Enforced | [#533](https://github.com/FranciscoMoretti/chat-js/issues/533) |
 | `init-declarations` | Enforced | [#507](https://github.com/FranciscoMoretti/chat-js/issues/507) |
 | `jsdoc/require-param` | Enforced | [#534](https://github.com/FranciscoMoretti/chat-js/issues/534) |
@@ -123,33 +138,31 @@ Each deferred issue should name affected files/rules, the contract at risk, inte
 | `no-empty-function` | Enforced | [#575](https://github.com/FranciscoMoretti/chat-js/issues/575) |
 | `no-implicit-coercion` | Enforced | [#516](https://github.com/FranciscoMoretti/chat-js/issues/516) |
 | `no-magic-numbers` | Enforced | [#517](https://github.com/FranciscoMoretti/chat-js/issues/517) |
-| `no-ternary` | Off — policy | [#518](https://github.com/FranciscoMoretti/chat-js/issues/518) |
+| `no-ternary` | Enforced — local value-selection convention | [#518](https://github.com/FranciscoMoretti/chat-js/issues/518) |
 | `no-undefined` | Enforced | [#519](https://github.com/FranciscoMoretti/chat-js/issues/519) |
 | `no-underscore-dangle` | Enforced | [#520](https://github.com/FranciscoMoretti/chat-js/issues/520) |
 | `node/no-process-env` | Enforced | [#537](https://github.com/FranciscoMoretti/chat-js/issues/537) |
 | `node/no-sync` | Enforced | [#538](https://github.com/FranciscoMoretti/chat-js/issues/538) |
-| `node/no-top-level-await` | Off — policy | [#539](https://github.com/FranciscoMoretti/chat-js/issues/539) |
-| `oxc/no-async-await` | Off — policy | [#540](https://github.com/FranciscoMoretti/chat-js/issues/540) |
+| `node/no-top-level-await` | Enforced; reviewed ESM command/test exceptions | [#539](https://github.com/FranciscoMoretti/chat-js/issues/539) |
 | `oxc/no-map-spread` | Enforced | [#541](https://github.com/FranciscoMoretti/chat-js/issues/541) |
-| `oxc/no-optional-chaining` | Off — policy | [#542](https://github.com/FranciscoMoretti/chat-js/issues/542) |
-| `oxc/no-rest-spread-properties` | Off — policy | [#543](https://github.com/FranciscoMoretti/chat-js/issues/543) |
+| `oxc/no-optional-chaining` | Enforced — local access contracts | [#542](https://github.com/FranciscoMoretti/chat-js/issues/542) |
+| `oxc/no-rest-spread-properties` | Enforced — local composition contracts | [#543](https://github.com/FranciscoMoretti/chat-js/issues/543) |
 | `promise/always-return` | Enforced | [#544](https://github.com/FranciscoMoretti/chat-js/issues/544) |
 | `promise/prefer-await-to-then` | Enforced | [#576](https://github.com/FranciscoMoretti/chat-js/issues/576) |
 | `react-perf/jsx-no-jsx-as-prop` | Enforced | [#555](https://github.com/FranciscoMoretti/chat-js/issues/555) |
 | `react-perf/jsx-no-new-array-as-prop` | Enforced for custom components; native props allowed | [#556](https://github.com/FranciscoMoretti/chat-js/issues/556) |
 | `react-perf/jsx-no-new-function-as-prop` | Enforced for custom components; native props allowed | [#557](https://github.com/FranciscoMoretti/chat-js/issues/557) |
 | `react-perf/jsx-no-new-object-as-prop` | Enforced for custom components; native props allowed | [#558](https://github.com/FranciscoMoretti/chat-js/issues/558) |
-| `react/forbid-component-props` | Off — policy | [#545](https://github.com/FranciscoMoretti/chat-js/issues/545) |
+| `react/forbid-component-props` | Enforced | [#545](https://github.com/FranciscoMoretti/chat-js/issues/545) |
 | `react/jsx-boolean-value` | Enforced | [#546](https://github.com/FranciscoMoretti/chat-js/issues/546) |
 | `react/jsx-filename-extension` | Enforced | [#547](https://github.com/FranciscoMoretti/chat-js/issues/547) |
 | `react/jsx-max-depth` | Enforced | [#548](https://github.com/FranciscoMoretti/chat-js/issues/548) |
-| `react/jsx-no-literals` | Off — policy | [#549](https://github.com/FranciscoMoretti/chat-js/issues/549) |
-| `react/jsx-props-no-spreading` | Enforced in features; off in primitive wrapper scopes | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
+| `react/jsx-props-no-spreading` | Enforced; reviewed forwarding expressions | [#550](https://github.com/FranciscoMoretti/chat-js/issues/550) |
 | `react/no-array-index-key` | Enforced | [#551](https://github.com/FranciscoMoretti/chat-js/issues/551) |
 | `react/no-multi-comp` | Enforced | [#552](https://github.com/FranciscoMoretti/chat-js/issues/552) |
 | `react/only-export-components` | Enforced | [#553](https://github.com/FranciscoMoretti/chat-js/issues/553) |
-| `react/react-in-jsx-scope` | Off — policy | [#554](https://github.com/FranciscoMoretti/chat-js/issues/554) |
-| `sort-imports` | Off — policy | [#521](https://github.com/FranciscoMoretti/chat-js/issues/521) |
+| `react/react-in-jsx-scope` | Enforced; automatic-runtime component exceptions | [#554](https://github.com/FranciscoMoretti/chat-js/issues/554) |
+| `sort-imports` | Enforced | [#521](https://github.com/FranciscoMoretti/chat-js/issues/521) |
 | `typescript/await-thenable` | Enforced | [#579](https://github.com/FranciscoMoretti/chat-js/issues/579) |
 | `typescript/consistent-return` | Enforced | [#580](https://github.com/FranciscoMoretti/chat-js/issues/580) |
 | `typescript/consistent-type-definitions` | Enforced | [#559](https://github.com/FranciscoMoretti/chat-js/issues/559) |

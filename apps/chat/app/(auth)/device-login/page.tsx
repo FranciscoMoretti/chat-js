@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { Suspense } from "react";
+/* oxlint-enable sort-imports */
 
 import { AuthCardSkeleton } from "@/components/auth-card-skeleton";
 import { DeviceLoginPage } from "@/components/device-login-page";
@@ -25,6 +27,7 @@ const DeviceLoginFallback = (): React.JSX.Element => (
   </div>
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DeviceLoginContent's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
@@ -40,11 +43,13 @@ const DeviceLoginContent = async ({
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
   const queryString = new URLSearchParams(query).toString();
+  // oxlint-disable-next-line no-ternary -- Keep currentHref as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const currentHref = queryString
     ? `/device-login?${queryString}`
     : "/device-login";
   const session = await auth.api.getSession({ headers: await headers() });
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (!(session?.user || isCompletedView)) {
     redirect(`/login?returnTo=${encodeURIComponent(currentHref)}`);
   }
@@ -55,6 +60,7 @@ const DeviceLoginContent = async ({
     </Suspense>
   );
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types --
@@ -77,10 +83,12 @@ const DeviceLoginRoute = ({
     </Suspense>
   );
 };
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default DeviceLoginRoute;

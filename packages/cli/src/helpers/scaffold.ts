@@ -1,41 +1,57 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI inspects project files using native filesystem APIs.
 import { existsSync } from "node:fs";
-import { cp, mkdir, readFile, rm, rmdir, writeFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import {
+  access,
+  cp,
+  mkdir,
+  readFile,
+  rm,
+  rmdir,
+  writeFile,
+} from "node:fs/promises";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { registryUrl } from "#cli/registry/shadcn";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { PackageManager } from "#cli/types";
+/* oxlint-enable sort-imports */
+import { runCommand } from "#cli/utils/run-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { initializeFeatureUi } from "#cli/utils/sync-features";
+/* oxlint-enable sort-imports */
+import { syncTools } from "#cli/utils/sync-tools";
+
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { attachmentUploadFiles } from "../../../registry/src/features/attachment-uploads";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { mcpFiles } from "../../../registry/src/features/mcp";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { registryUrl } from "../registry/shadcn";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { PackageManager } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { runCommand } from "../utils/run-command";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { initializeFeatureUi } from "../utils/sync-features";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { syncTools } from "../utils/sync-tools";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-import { parseJsonObject } from "./json";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  parsePackageJson,
+  isJsonObject,
+  isStringArray,
+  parseJsonObject,
+  requireJsonObject,
+  // oxlint-disable-next-line import/max-dependencies -- Scaffold integrates filesystem transforms, registry descriptors, JSON validation, and package installation adapters.
+} from "./json-object";
+/* oxlint-enable sort-imports */
+import {
   normalizeScaffoldedPackageJson,
+  parsePackageJson,
 } from "./package-manifest";
-/* oxlint-enable import/max-dependencies */
 import { resolvePackageDirectory } from "./resolve-package-directory";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
-  normalizeScaffoldContent,
 } from "./scaffold-content";
+/* oxlint-enable sort-imports */
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
 const PNPM_BUILD_SCRIPT_ALLOWLIST = [
@@ -48,13 +64,12 @@ const PNPM_BUILD_SCRIPT_ALLOWLIST = [
   "sharp",
 ] as const;
 
-/* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
+/* oxlint-disable node/no-sync -- Package-root and optional-template lookup expose synchronous path results to scaffold helpers; changing these contracts requires propagating async through both lookup callers. */
 const getCliPackageRoot = (): string => {
-  const __dir = import.meta.dirname;
+  const directory = import.meta.dirname;
 
   for (const relativePath of ["..", "../.."]) {
-    const candidate = pathModule.resolve(__dir, relativePath);
+    const candidate = pathModule.resolve(directory, relativePath);
     if (existsSync(pathModule.join(candidate, "package.json"))) {
       return candidate;
     }
@@ -63,19 +78,20 @@ const getCliPackageRoot = (): string => {
   throw new Error("Could not locate the @chat-js/cli package root.");
 };
 /* oxlint-enable node/no-sync */
-/* oxlint-enable eslint/no-underscore-dangle */
 
 const getRepoRoot = (): string =>
   pathModule.resolve(getCliPackageRoot(), "../..");
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+/* oxlint-disable node/no-sync -- Package-root and optional-template lookup expose synchronous path results to scaffold helpers; changing these contracts requires propagating async through both lookup callers. */
 const findTemplateDir = (name: string): string | null => {
   const cliRoot = getCliPackageRoot();
   const candidate = pathModule.join(cliRoot, "templates", name);
-  return existsSync(candidate) ? candidate : null;
+  if (existsSync(candidate)) {
+    return candidate;
+  }
+  // oxlint-disable-next-line unicorn/no-null -- The existing template lookup result distinguishes a missing packaged directory with null.
+  return null;
 };
-/* oxlint-enable unicorn/no-null */
 /* oxlint-enable node/no-sync */
 
 const shouldCopyChatAppFilePath = (
@@ -86,13 +102,14 @@ const shouldCopyChatAppFilePath = (
 const runScript = (packageManager: PackageManager, script: string): string =>
   `${packageManager} run ${script}`;
 
-/* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve replaceInFile's awaited sequencing and rejected-Promise behavior. */
 const replaceInFile = async (
   filePath: string,
-  replacements: [string, string][]
+  replacements: readonly (readonly [string, string])[]
 ): Promise<void> => {
-  if (!existsSync(filePath)) {
+  try {
+    await access(filePath);
+  } catch {
     return;
   }
   let content = await readFile(filePath, "utf-8");
@@ -101,20 +118,19 @@ const replaceInFile = async (
   }
   await writeFile(filePath, content);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-/* oxlint-enable node/no-sync */
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resetInstallableTools's awaited sequencing and rejected-Promise behavior. */
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");
   await rm(toolsDir, { force: true, recursive: true });
   await mkdir(toolsDir, { recursive: true });
   await syncTools(destination);
 };
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve writePnpmWorkspaceConfig's awaited sequencing and rejected-Promise behavior. */
 const writePnpmWorkspaceConfig = async (
   destination: string,
-  options?: { blockExoticSubdeps?: boolean }
+  options?: { readonly blockExoticSubdeps?: boolean }
 ): Promise<void> => {
   const packageLines = ["packages:", "  - ."];
   const pnpm10Lines = [
@@ -125,10 +141,11 @@ const writePnpmWorkspaceConfig = async (
     "allowBuilds:",
     ...PNPM_BUILD_SCRIPT_ALLOWLIST.map((name) => `  ${name}: true`),
   ];
-  const supplyChainLines =
-    typeof options?.blockExoticSubdeps === "boolean"
-      ? [`blockExoticSubdeps: ${options.blockExoticSubdeps}`]
-      : [];
+  let supplyChainLines: string[] = [];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading blockExoticSubdeps from options; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+  if (typeof options?.blockExoticSubdeps === "boolean") {
+    supplyChainLines = [`blockExoticSubdeps: ${options.blockExoticSubdeps}`];
+  }
 
   await writeFile(
     pathModule.join(destination, "pnpm-workspace.yaml"),
@@ -140,20 +157,20 @@ const writePnpmWorkspaceConfig = async (
     ].join("\n")}\n`
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyChatTemplateSourceTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const applyChatTemplateSourceTransforms = async (
   destination: string
 ): Promise<void> => {
   await Promise.all(
-    ["components/github-link.tsx", "components/docs-link.tsx"].map((file) =>
-      rm(pathModule.join(destination, file), { force: true })
+    ["components/github-link.tsx", "components/docs-link.tsx"].map(
+      async (file): Promise<void> =>
+        await rm(pathModule.join(destination, file), { force: true })
     )
   );
 
@@ -178,11 +195,15 @@ const applyChatTemplateSourceTransforms = async (
   ]);
 
   const repoPackageJsonPath = pathModule.join(getRepoRoot(), "package.json");
-  const rootPackageJson = parsePackageJson(
-    await readFile(repoPackageJsonPath, "utf-8")
+  const rootPackageJson = parseJsonObject(
+    await readFile(repoPackageJsonPath, "utf-8"),
+    "Repository package.json"
   );
   const packageJsonPath = pathModule.join(destination, "package.json");
-  const packageJson = parseJsonObject(await readFile(packageJsonPath, "utf-8"));
+  const packageJson = parseJsonObject(
+    await readFile(packageJsonPath, "utf-8"),
+    "Template package.json"
+  );
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
 
@@ -200,7 +221,8 @@ const applyChatTemplateSourceTransforms = async (
     ),
   });
 };
-/* oxlint-enable typescript/promise-function-async */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve applyElectronTemplateSourceTransforms's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -226,7 +248,8 @@ const applyElectronTemplateSourceTransforms = async (
     ],
   ]);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyChatTemplateFromRepoSource's awaited sequencing and rejected-Promise behavior. */
 const copyChatTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -237,7 +260,8 @@ const copyChatTemplateFromRepoSource = async (
   });
   await applyChatTemplateSourceTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve copyElectronTemplateFromRepoSource's awaited sequencing and rejected-Promise behavior. */
 const copyElectronTemplateFromRepoSource = async (
   destination: string
 ): Promise<void> => {
@@ -249,7 +273,8 @@ const copyElectronTemplateFromRepoSource = async (
   });
   await applyElectronTemplateSourceTransforms(destination);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeChatAppFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
@@ -282,7 +307,10 @@ const normalizeChatAppFiles = async (
   );
 
   const vercelJsonPath = pathModule.join(destination, "vercel.json");
-  const vercelJson = parseJsonObject(await readFile(vercelJsonPath, "utf-8"));
+  const vercelJson = parseJsonObject(
+    await readFile(vercelJsonPath, "utf-8"),
+    "Template vercel.json"
+  );
   vercelJson.installCommand = `${packageManager} install`;
   vercelJson.buildCommand = runScript(packageManager, "build");
   await writeFile(vercelJsonPath, `${JSON.stringify(vercelJson, null, 2)}\n`);
@@ -293,6 +321,8 @@ const normalizeChatAppFiles = async (
 
   await resetInstallableTools(destination);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeElectronFiles's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -332,29 +362,29 @@ const normalizeElectronFiles = async (
     await writePnpmWorkspaceConfig(destination, { blockExoticSubdeps: false });
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve excludeElectronFromRootTypecheck's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const excludeElectronFromRootTypecheck = async (
   projectDir: string
 ): Promise<void> => {
   const tsconfigPath = pathModule.join(projectDir, "tsconfig.json");
-  const tsconfig = parseJsonObject(await readFile(tsconfigPath, "utf-8"));
-
-  const { exclude } = tsconfig;
-  /* oxlint-disable no-undefined -- Preserve the existing nullish exclude fallback while validating populated exclusion arrays. */
-  if (
-    exclude !== undefined &&
-    exclude !== null &&
-    (!Array.isArray(exclude) ||
-      !exclude.every((entry: unknown) => typeof entry === "string"))
-  ) {
-    throw new TypeError("tsconfig.json exclude must be an array of strings.");
+  const tsconfig = parseJsonObject(
+    await readFile(tsconfigPath, "utf-8"),
+    "Project tsconfig.json"
+  );
+  const exclusions = tsconfig.exclude ?? [];
+  if (!isStringArray(exclusions)) {
+    throw new TypeError(
+      "Project tsconfig.json exclude must be an array of strings."
+    );
   }
-  /* oxlint-enable no-undefined */
-  tsconfig.exclude = [...new Set([...(exclude ?? []), "electron"])];
+  tsconfig.exclude = [...new Set([...exclusions, "electron"])];
   await writeFile(tsconfigPath, `${JSON.stringify(tsconfig, null, 2)}\n`);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromTemplate's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -363,17 +393,17 @@ const excludeElectronFromRootTypecheck = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 const scaffoldFromTemplate = async (
   destination: string,
   options?: {
-    packageManager?: PackageManager;
+    readonly packageManager?: PackageManager;
   }
 ): Promise<void> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading packageManager from options; preserve one receiver evaluation, skipped accesses and the existing "bun" fallback.
   const packageManager = options?.packageManager ?? "bun";
   const templateDir = findTemplateDir("chat-app");
 
+  // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) => shouldCopyChatAppFilePath(templateDir, file),
@@ -397,16 +427,18 @@ const scaffoldFromTemplate = async (
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   // This is a new scaffold, so remove the reference app's selection before install.
   await rm(pathModule.join(destination, "lib/ai/gateway.ts"));
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const manifest = JSON.parse(await readFile(packageJsonPath, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["@ai-sdk/gateway"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["@vercel/blob"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["@tavily/core"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["@mendable/firecrawl-js"];
+  const manifest = parseJsonObject(
+    await readFile(packageJsonPath, "utf-8"),
+    "Template package.json"
+  );
+  const dependencies = requireJsonObject(
+    manifest.dependencies,
+    "Template package.json dependencies"
+  );
+  delete dependencies["@ai-sdk/gateway"];
+  delete dependencies["@vercel/blob"];
+  delete dependencies["@tavily/core"];
+  delete dependencies["@mendable/firecrawl-js"];
   await rm(pathModule.join(destination, "tools/chatjs/generate-video"), {
     force: true,
     recursive: true,
@@ -419,12 +451,9 @@ const scaffoldFromTemplate = async (
     force: true,
     recursive: true,
   });
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["@vercel/sandbox"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["browser-image-compression"];
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  delete manifest.dependencies["react-dropzone"];
+  delete dependencies["@vercel/sandbox"];
+  delete dependencies["browser-image-compression"];
+  delete dependencies["react-dropzone"];
   await rm(pathModule.join(destination, "tools/chatjs/tavily-search"), {
     force: true,
     recursive: true,
@@ -435,12 +464,16 @@ const scaffoldFromTemplate = async (
   await rm(pathModule.join(destination, "lib/storage-provider.ts"));
   await writeFile(packageJsonPath, `${JSON.stringify(manifest, null, 2)}\n`);
   const componentsPath = pathModule.join(destination, "components.json");
-  // oxlint-disable-next-line typescript/no-unsafe-assignment -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-  const components = JSON.parse(await readFile(componentsPath, "utf-8"));
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
+  const components = parseJsonObject(
+    await readFile(componentsPath, "utf-8"),
+    "Template components.json"
+  );
   components.registries = {
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Preserve the existing template manifest shape and unrelated user fields; stricter parsing here requires a migration policy for supported template variants.
-    ...components.registries,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requireJsonObject(       components.registries ?? {},       "Template components.json registries"     ) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    ...requireJsonObject(
+      components.registries ?? {},
+      "Template components.json registries"
+    ),
     "@chatjs": process.env.CHATJS_REGISTRY_URL ?? registryUrl,
   };
   await writeFile(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
@@ -451,8 +484,9 @@ const scaffoldFromTemplate = async (
     "features/attachment-uploads/chatjs.json",
   ];
   await Promise.all(
-    optionalFiles.map((file) =>
-      rm(pathModule.join(destination, file), { force: true })
+    optionalFiles.map(
+      async (file): Promise<void> =>
+        await rm(pathModule.join(destination, file), { force: true })
     )
   );
   const directories = new Set<string>();
@@ -485,30 +519,47 @@ const scaffoldFromTemplate = async (
   await initializeFeatureUi(destination);
   await normalizeChatAppFiles(destination, packageManager);
 };
-/* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
+interface ElectronScaffoldOptions {
+  readonly projectName: string;
+  readonly packageManager?: PackageManager;
+}
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldElectron's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const scaffoldElectron = async (
   projectDir: string,
-  opts: { projectName: string; packageManager?: PackageManager }
+  opts: ElectronScaffoldOptions
 ): Promise<void> => {
   const packageManager = opts.packageManager ?? "bun";
   const rootPackageJsonPath = pathModule.join(projectDir, "package.json");
-  const rootPackageJson = parsePackageJson(
-    await readFile(rootPackageJsonPath, "utf-8")
+  const rootPackageJson = parseJsonObject(
+    await readFile(rootPackageJsonPath, "utf-8"),
+    "Project package.json"
   );
+  const electronOptions: {
+    packageManager: PackageManager;
+    template: "electron";
+    tsxVersion?: string;
+  } = { packageManager, template: "electron" };
+  if (
+    isJsonObject(rootPackageJson.devDependencies) &&
+    typeof rootPackageJson.devDependencies.tsx === "string"
+  ) {
+    electronOptions.tsxVersion = rootPackageJson.devDependencies.tsx;
+  }
   const destination = pathModule.join(projectDir, "electron");
   const templateDir = findTemplateDir("electron");
 
+  // oxlint-disable-next-line no-ternary -- Keep awaited branch as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   await (typeof templateDir === "string" && templateDir !== ""
     ? cp(templateDir, destination, {
         filter: (file) =>
@@ -526,17 +577,14 @@ const scaffoldElectron = async (
         .replace("__GITHUB_OWNER__", "your-github-username")
         .replace("__GITHUB_REPO__", opts.projectName)
     ),
-    {
-      packageManager,
-      template: "electron",
-      tsxVersion: rootPackageJson.devDependencies?.tsx,
-    }
+    electronOptions
   );
   await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
   await normalizeElectronFiles(destination, packageManager);
   await excludeElectronFromRootTypecheck(projectDir);
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve scaffoldFromGit's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -555,6 +603,8 @@ const scaffoldFromGit = async (
     recursive: true,
   });
 };
-
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export { scaffoldElectron, scaffoldFromGit, scaffoldFromTemplate };
+/* oxlint-enable import/no-named-export */

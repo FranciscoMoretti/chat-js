@@ -1,4 +1,5 @@
 // Ensure this file cannot be imported from the client.
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import "server-only";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
@@ -7,6 +8,7 @@ import React, { cache } from "react";
 import { createTRPCContext } from "./init";
 import { makeQueryClient } from "./query-client";
 import { appRouter } from "./routers/_app";
+/* oxlint-enable sort-imports */
 
 // IMPORTANT: Create a stable getter for the query client that
 //            will return the same client during the same request.
@@ -32,5 +34,6 @@ const HydrateClient = (props: {
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/only-export-components -- #619: Consumers import getQueryClient, HydrateClient, trpc from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
+// oxlint-disable-next-line import/no-named-export -- Keep the established named server API; no-default-export rejects its default-export alternative.
 export { getQueryClient, HydrateClient, trpc };
 /* oxlint-enable react/only-export-components */

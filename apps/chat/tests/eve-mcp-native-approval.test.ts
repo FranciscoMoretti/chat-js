@@ -3,19 +3,25 @@ import {
   contextStorage,
 } from "@eve-test/dist/src/context/container.js";
 import { SessionKey } from "@eve-test/dist/src/context/keys.js";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getToolApprovalReceipt,
   prepareToolApprovalReceipts,
 } from "@eve-test/dist/src/context/tool-approval-receipts.js";
+/* oxlint-enable sort-imports */
 import { createToolExecuteWithAuth } from "@eve-test/dist/src/execution/tool-auth.js";
 import { settleDirectApprovalResponse } from "@eve-test/dist/src/harness/approval-candidates.js";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ResolvedInputBatch } from "@eve-test/dist/src/harness/input-request-resolution.js";
+/* oxlint-enable sort-imports */
 /* oxlint-disable eslint/no-loop-func -- Each ordered mock iteration intentionally captures its current block-scoped response. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 const actor = {
   authenticator: "test",
@@ -26,6 +32,7 @@ const actor = {
  * unicorn/no-null (#570): session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
 const session = {
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   auth: { current: null, initiator: { ...actor, attributes: {} } },
   sessionId: "session",
   turn: { id: "turn_1", sequence: 1 },
@@ -60,6 +67,7 @@ function fixture() {
   ctx.set(SessionKey, session);
   const { state } = settleDirectApprovalResponse({
     state: undefined,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     actor: { ...actor, attributes: {} },
     outcome: "allowed",
     requestId: "request",
@@ -67,6 +75,7 @@ function fixture() {
   });
   return { ctx, state };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -92,12 +101,14 @@ test("native executor receives only its exact authorized session/call/tool/input
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "changed" })
     ).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ctx.set(SessionKey, { ...session, sessionId: "fork" });
     expect(
       getToolApprovalReceipt("call", "mcp__write", { text: "write" })
     ).toBeUndefined();
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
@@ -119,6 +130,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     prepareToolApprovalReceipts(
       ctx,
       "session",
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing batch own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing batch.inputs[0] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       [{ ...batch, inputs: [{ ...batch.inputs[0], outcome: "denied" }] }],
       state
     );
@@ -139,6 +151,7 @@ test("old audit history, denied responses, and ambiguous calls cannot mint recei
     ).toBeUndefined();
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["owner", "stranger"])'s awaited sequencing and rejected-Promise behavior. resolveModel resolves MockLanguageModelV4 to the native tool-loop harness model resolver. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -170,10 +183,12 @@ test.each(["owner", "stranger"])(
     const tool = {
       approval: {
         request: () => "user-approval" as const,
-        response: ({ responder }: { responder: { principalId: string } }) =>
-          responder.principalId === "owner"
-            ? { status: "allowed" as const }
-            : { status: "rejected" as const, reason: "Owner only" },
+        response: ({ responder }: { responder: { principalId: string } }) => {
+          if (responder.principalId === "owner") {
+            return { status: "allowed" as const };
+          }
+          return { status: "rejected" as const, reason: "Owner only" };
+        },
       },
       description: "write",
       execute,
@@ -235,6 +250,7 @@ test.each(["owner", "stranger"])(
       step(pending, {
         attributedInputResponses: [
           {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actor own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             auth: { ...actor, attributes: {}, principalId },
             response: { optionId: "approve", requestId: "request" },
           },
@@ -250,6 +266,7 @@ test.each(["owner", "stranger"])(
       result = await contextStorage.run(ctx, () => next(result.session));
     }
     expect(receipts, JSON.stringify(result)).toEqual(
+      // oxlint-disable-next-line no-ternary -- Keep expect(receipts, JSON.stringify(result)).toEqual argume as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       principalId === "owner"
         ? [{ requestId: "request", responder: actor }]
         : []
@@ -259,4 +276,5 @@ test.each(["owner", "stranger"])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -85,6 +85,7 @@ const aiGatewayModelsEnvelopeSchema = z.object({
   object: z.literal("list"),
 });
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (supportedAiGatewayModelTypes, aiGatewayModelSchema, isAiGatewayModelType, aiGatewayModelDiscriminatorSchema, aiGatewayModelsEnvelopeSchema); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   supportedAiGatewayModelTypes,
   aiGatewayModelSchema,
@@ -92,5 +93,8 @@ export {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelsEnvelopeSchema,
 };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (AiGatewayModelType, AiGatewayModel); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { AiGatewayModelType, AiGatewayModel };
+/* oxlint-enable import/no-named-export */

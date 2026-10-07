@@ -57,6 +57,17 @@ describe("getStreamErrorToastContent", () => {
     });
   });
 
+  it("falls back when an empty message has no usable cause", () => {
+    // oxlint-disable-next-line unicorn/no-null -- Null is an externally supplied Error.cause fixture; absent text must fall back.
+    for (const cause of [null, "", "   ", false, { message: "" }]) {
+      // oxlint-disable-next-line unicorn/error-message -- Empty streamed SDK messages are the invalid input under test.
+      expect(getStreamErrorToastContent(new Error("", { cause }))).toEqual({
+        message:
+          "An error occurred while generating a response. Please try again.",
+      });
+    }
+  });
+
   it("keeps a specific message and moves the cause to the description", () => {
     const error = new Error(
       "Rate limit exceeded. Please wait a moment and try again.",

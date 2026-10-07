@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React, { createContext, useContext, useMemo } from "react";
 
 import {
@@ -9,7 +9,9 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { useSidebar } from "@/components/ui/sidebar";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { cn } from "@/lib/utils";
+/* oxlint-enable sort-imports */
 
 interface ChatLayoutContextValue {
   isSecondaryPanelVisible: boolean;
@@ -39,6 +41,7 @@ const ChatLayout = ({
   className,
   children,
   isSecondaryPanelVisible = false,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children, isSecondaryPanelVisible from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutProps): ReactJSX.Element => {
   const { state: sidebarState } = useSidebar();
@@ -50,6 +53,7 @@ const ChatLayout = ({
   return (
     <ChatLayoutContext.Provider value={contextValue}>
       <ResizablePanelGroup
+        // oxlint-disable-next-line react/forbid-component-props -- ResizablePanelGroup accepts className in its styling contract; preserve this caller's layout and appearance.
         className={cn(
           "bg-background @container flex h-dvh max-h-dvh w-full max-w-screen min-w-0 flex-col md:max-w-[calc(100vw-var(--sidebar-width))]",
           sidebarState === "collapsed" && "md:max-w-screen",
@@ -72,12 +76,14 @@ const ChatLayoutMain = ({
   className,
   defaultSize = 65,
   minSize = 40,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutMainProps): React.JSX.Element => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
 
   return (
     <ResizablePanel
+      // oxlint-disable-next-line react/forbid-component-props -- ResizablePanel accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(isSecondaryPanelVisible && "hidden md:block", className)}
       defaultSize={defaultSize}
       minSize={minSize}
@@ -93,6 +99,7 @@ type ChatLayoutSecondaryProps = ComponentProps<typeof ResizablePanel>;
 const ChatLayoutSecondary = ({
   defaultSize = 35,
   minSize = 25,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultSize, minSize from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutSecondaryProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -113,6 +120,7 @@ type ChatLayoutHandleProps = ComponentProps<typeof ResizableHandle>;
 const ChatLayoutHandle = ({
   className,
   withHandle = true,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, withHandle from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ChatLayoutHandleProps): React.JSX.Element | null => {
   const { isSecondaryPanelVisible } = useChatLayoutContext();
@@ -123,11 +131,14 @@ const ChatLayoutHandle = ({
 
   return (
     <ResizableHandle
+      // oxlint-disable-next-line react/forbid-component-props -- ResizableHandle accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("hidden md:flex", className)}
       withHandle={withHandle}
       {...props}
     />
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatLayout, ChatLayoutHandle, ChatLayoutMain, ChatLayoutSecondary); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 export { ChatLayout, ChatLayoutHandle, ChatLayoutMain, ChatLayoutSecondary };
+/* oxlint-enable import/no-named-export */

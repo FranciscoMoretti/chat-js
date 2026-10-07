@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   AlertCircle,
   BookText,
@@ -10,15 +11,24 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
+/* oxlint-enable sort-imports */
 import { useRouter, useSearchParams } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+/* oxlint-enable sort-imports */
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ConnectorHeader } from "@/components/settings/connector-header";
+/* oxlint-enable sort-imports */
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Label } from "@/components/ui/label";
 /* oxlint-enable import/max-dependencies */
@@ -57,6 +67,7 @@ const formatMcpError = (message: string): string => {
   }
   return message;
 };
+/* oxlint-disable react/jsx-no-literals -- DetailsSection renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -82,25 +93,33 @@ const DetailsSection = ({
         <span className="text-sm font-medium">{title}</span>
         <span className="text-muted-foreground text-xs">({count})</span>
       </div>
-      <Separator className="my-3" />
-      {count === 0 ? (
-        <p className="text-muted-foreground text-xs italic">None available</p>
-      ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map(({ name, key }) => (
-            <span
-              className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
-              key={key}
-              title={name}
-            >
-              {name}
-            </span>
-          ))}
-        </div>
-      )}
+      <Separator
+        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="my-3"
+      />
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        count === 0 ? (
+          <p className="text-muted-foreground text-xs italic">None available</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {items.map(({ name, key }) => (
+              <span
+                className="bg-muted rounded-md px-2 py-1 font-mono text-xs"
+                key={key}
+                title={name}
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        )
+      }
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- DiscoveryContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -145,7 +164,10 @@ const DiscoveryContent = ({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
+        <Loader2
+          // oxlint-disable-next-line react/forbid-component-props -- Loader2 accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-muted-foreground size-6 animate-spin"
+        />
       </div>
     );
   }
@@ -165,7 +187,10 @@ const DiscoveryContent = ({
   if (isIncompatible) {
     return (
       <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="text-destructive size-6" />
+        <AlertCircle
+          // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-destructive size-6"
+        />
         <p className="text-sm font-medium">Incompatible server</p>
         <p className="text-muted-foreground max-w-xs text-xs">
           {connectionError ??
@@ -178,7 +203,10 @@ const DiscoveryContent = ({
   if (discoveryError && !needsOAuth) {
     return (
       <div className="flex flex-col items-center gap-2 py-12 text-center">
-        <AlertCircle className="text-destructive size-6" />
+        <AlertCircle
+          // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-destructive size-6"
+        />
         <p className="text-muted-foreground text-sm">
           Failed to connect to MCP server
         </p>
@@ -191,10 +219,18 @@ const DiscoveryContent = ({
 
   if (showDiscovery && discovery) {
     return (
-      <ScrollArea className="max-h-[60vh]">
+      <ScrollArea
+        // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="max-h-[60vh]"
+      >
         <div className="space-y-4">
           <DetailsSection
-            icon={<Wrench className="size-4" />}
+            icon={
+              <Wrench
+                // oxlint-disable-next-line react/forbid-component-props -- Wrench accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-4"
+              />
+            }
             items={discovery.tools.map((tool) => ({
               key: tool.name,
               name: tool.name,
@@ -202,7 +238,12 @@ const DiscoveryContent = ({
             title="Tools"
           />
           <DetailsSection
-            icon={<FileText className="size-4" />}
+            icon={
+              <FileText
+                // oxlint-disable-next-line react/forbid-component-props -- FileText accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-4"
+              />
+            }
             items={discovery.resources.map((resource) => ({
               key: resource.uri,
               name: resource.name,
@@ -210,7 +251,12 @@ const DiscoveryContent = ({
             title="Resources"
           />
           <DetailsSection
-            icon={<BookText className="size-4" />}
+            icon={
+              <BookText
+                // oxlint-disable-next-line react/forbid-component-props -- BookText accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="size-4"
+              />
+            }
             items={discovery.prompts.map((prompt) => ({
               key: prompt.name,
               name: prompt.name,
@@ -224,6 +270,9 @@ const DiscoveryContent = ({
 
   return null;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpDetailsPage); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- McpDetailsPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
@@ -238,9 +287,7 @@ const DiscoveryContent = ({
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
@@ -249,7 +296,11 @@ const DiscoveryContent = ({
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
+export const McpDetailsPage = ({
+  connectorId,
+}: {
+  readonly connectorId: string;
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -268,14 +319,17 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   const connector = useMemo(
     () =>
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading find from connectors; preserve one receiver evaluation, skipped accesses and the existing null fallback.
       connectors?.find(
         (candidateConnector): boolean => candidateConnector.id === connectorId
       ) ?? null,
     [connectors, connectorId]
   );
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading userId from connector; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const canEdit = connector?.userId !== null;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: toggleEnabled }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: toggleEnabled } = useMutation(
     trpc.mcp.toggleEnabled.mutationOptions({
       onError: (
@@ -283,6 +337,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         _newData,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to update connector");
       },
@@ -293,11 +348,13 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
           if (!old) {
             return old;
           }
-          return old.map((candidateConnector) =>
-            candidateConnector.id === newData.id
-              ? { ...candidateConnector, enabled: newData.enabled }
-              : candidateConnector
-          );
+          return old.map((candidateConnector) => {
+            if (candidateConnector.id === newData.id) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing candidateConnector own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return { ...candidateConnector, enabled: newData.enabled };
+            }
+            return candidateConnector;
+          });
         });
         return { prev };
       },
@@ -306,7 +363,8 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: updateApproval, isPending: isUpdatingApproval }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: updateApproval, isPending: isUpdatingApproval } = useMutation(
     trpc.mcp.update.mutationOptions({
       onError: (): void => {
@@ -317,7 +375,8 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve { mutate: deleteConnector }'s awaited sequencing and rejected-Promise behavior. */
   const { mutate: deleteConnector } = useMutation(
     trpc.mcp.delete.mutationOptions({
       onError: (
@@ -325,6 +384,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         _data,
         context: { prev: typeof connectors } | undefined
       ): void => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         queryClient.setQueryData(queryKey, context?.prev);
         toast.error("Failed to uninstall connector");
       },
@@ -353,28 +413,32 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
       },
     })
   );
-
+  /* oxlint-enable oxc/no-async-await */
   const {
     data: discovery,
     isLoading: isLoadingDiscovery,
     error: discoveryError,
     refetch: refetchDiscovery,
   } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.discover.queryOptions({ id: connectorId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.discover.queryOptions({ id: connectorId }),
     enabled: connector !== null,
     retry: false,
   });
 
   const { data: connectionStatus } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.mcp.testConnection.queryOptions({ id: connectorId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.mcp.testConnection.queryOptions({ id: connectorId }),
     enabled: connector !== null,
     retry: false,
     staleTime: 30_000,
   });
 
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const isIncompatible = connectionStatus?.status === "incompatible";
 
   const needsOAuth =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading code from discoveryError.data; read data from discoveryError; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     discoveryError?.data?.code === "UNAUTHORIZED" &&
     discoveryError.message.includes("OAuth authorization");
 
@@ -444,7 +508,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   if (isLoadingConnectors) {
     return (
-      <SettingsPageContent className="gap-4">
+      <SettingsPageContent
+        // oxlint-disable-next-line react/forbid-component-props -- SettingsPageContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="gap-4"
+      >
         <div className="animate-pulse space-y-3">
           {[1, 2].map((placeholderIndex) => (
             <div
@@ -459,7 +526,10 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   if (connectorsError && !connectors) {
     return (
-      <SettingsPageContent className="gap-4">
+      <SettingsPageContent
+        // oxlint-disable-next-line react/forbid-component-props -- SettingsPageContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="gap-4"
+      >
         <div
           role="alert"
           className="flex flex-col items-center justify-center py-12 text-center"
@@ -484,15 +554,30 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
   if (!connector) {
     return (
-      <SettingsPageContent className="gap-4">
-        <Button asChild className="w-fit" size="sm" variant="ghost">
+      <SettingsPageContent
+        // oxlint-disable-next-line react/forbid-component-props -- SettingsPageContent accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="gap-4"
+      >
+        <Button
+          asChild
+          // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="w-fit"
+          size="sm"
+          variant="ghost"
+        >
           <InternalLink href="/settings/connectors">
-            <ChevronLeft className="size-4" />
+            <ChevronLeft
+              // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="size-4"
+            />
             Back
           </InternalLink>
         </Button>
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <AlertCircle className="text-destructive size-6" />
+          <AlertCircle
+            // oxlint-disable-next-line react/forbid-component-props -- AlertCircle accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-destructive size-6"
+          />
           <p className="mt-2 text-sm font-medium">Connector not found</p>
           <p className="text-muted-foreground mt-1 text-xs">
             It may have been deleted or you don’t have access.
@@ -506,10 +591,22 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
   const showDiscovery = Boolean(discovery) && !needsOAuth && !isIncompatible;
 
   return (
-    <SettingsPageContent className="gap-4">
-      <Button asChild className="w-fit" size="sm" variant="ghost">
+    <SettingsPageContent
+      // oxlint-disable-next-line react/forbid-component-props -- SettingsPageContent accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="gap-4"
+    >
+      <Button
+        asChild
+        // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="w-fit"
+        size="sm"
+        variant="ghost"
+      >
         <InternalLink href="/settings/connectors">
-          <ChevronLeft className="size-4" />
+          <ChevronLeft
+            // oxlint-disable-next-line react/forbid-component-props -- ChevronLeft accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="size-4"
+          />
           Back
         </InternalLink>
       </Button>
@@ -531,6 +628,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
               onCheckedChange={handleToggleEnabled}
             />
             <Label
+              // oxlint-disable-next-line react/forbid-component-props -- Label accepts className in its styling contract; preserve this caller's layout and appearance.
               className="text-muted-foreground text-xs"
               htmlFor="connector-enabled"
             >
@@ -538,12 +636,18 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
             </Label>
           </div>
 
-          {canEdit ? (
-            <Button onClick={handleUninstall} size="sm" variant="destructive">
-              <Trash2 className="size-4" />
-              Uninstall
-            </Button>
-          ) : null}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            canEdit ? (
+              <Button onClick={handleUninstall} size="sm" variant="destructive">
+                <Trash2
+                  // oxlint-disable-next-line react/forbid-component-props -- Trash2 accepts className in its styling contract; preserve this caller's layout and appearance.
+                  className="size-4"
+                />
+                Uninstall
+              </Button>
+            ) : null
+          }
         </div>
       </div>
 
@@ -566,10 +670,17 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
         />
       </div>
 
-      <Separator className="my-2" />
+      <Separator
+        // oxlint-disable-next-line react/forbid-component-props -- Separator accepts className in its styling contract; preserve this caller's layout and appearance.
+        className="my-2"
+      />
 
       <DiscoveryContent
-        connectionError={connectionStatus?.error}
+        connectionError={
+          /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from connectionStatus; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. */
+          connectionStatus?.error
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         discovery={discovery ?? null}
         discoveryError={discoveryError}
         isIncompatible={isIncompatible}
@@ -588,6 +699,8 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
     </SettingsPageContent>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
@@ -596,9 +709,7 @@ export const McpDetailsPage = ({ connectorId }: { connectorId: string }) => {
 
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
 

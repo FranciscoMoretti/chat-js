@@ -1,7 +1,9 @@
 import type { ChatStatus, UIMessage } from "ai";
 
 import type { ThreadRunChat, ThreadRunSpec } from "./ai-sdk-run-chat";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ThreadConcurrency, ThreadRun } from "./types";
+/* oxlint-enable sort-imports */
 
 const SIBLING_ORDER_STEP = 1;
 
@@ -97,9 +99,11 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public findForApproval(approvalId: string): RunRecord<TMessage> | undefined {
     const runId = this.#runIdByApprovalId.get(approvalId);
-    return typeof runId === "string" && runId !== ""
-      ? this.#runsById.get(runId)
-      : globalThis.undefined;
+
+    if (typeof runId === "string" && runId !== "") {
+      return this.#runsById.get(runId);
+    }
+    return globalThis.undefined;
   }
 
   public getForMessage(messageId: string): RunRecord<TMessage> | undefined {
@@ -123,9 +127,11 @@ class RunRegistry<TMessage extends UIMessage> {
 
   public findForToolCall(toolCallId: string): RunRecord<TMessage> | undefined {
     const runId = this.#runIdByToolCallId.get(toolCallId);
-    return typeof runId === "string" && runId !== ""
-      ? this.#runsById.get(runId)
-      : globalThis.undefined;
+
+    if (typeof runId === "string" && runId !== "") {
+      return this.#runsById.get(runId);
+    }
+    return globalThis.undefined;
   }
 
   public getForResponseMessage(
@@ -387,10 +393,14 @@ class RunRegistry<TMessage extends UIMessage> {
     }
   }
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (RunRegistry); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 
 export { RunRegistry };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (RunRecord); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { RunRecord };
+/* oxlint-enable import/no-named-export */

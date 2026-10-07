@@ -1,11 +1,13 @@
 "use client";
 
-import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +15,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- InputGroup: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"div">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroup = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div">): ReactJSX.Element => (
   <div
@@ -37,9 +41,11 @@ const InputGroup = ({
       className
     )}
     data-slot="input-group"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroup's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 const inputGroupAddonVariants = cva(
@@ -64,9 +70,11 @@ const inputGroupAddonVariants = cva(
 );
 /* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupAddon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupAddon uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupAddon = ({
   className,
   align = "inline-start",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"div"> &
   VariantProps<typeof inputGroupAddonVariants>): ReactJSX.Element => (
@@ -83,15 +91,18 @@ const InputGroupAddon = ({
         return;
       }
       event.preventDefault();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from event.currentTarget.parentElement.querySelector(...); read querySelector from event.currentTarget.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       event.currentTarget.parentElement
         ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
           "input, textarea"
         )
         ?.focus();
     }}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupAddon's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 const inputGroupButtonVariants = cva(
@@ -113,28 +124,35 @@ const inputGroupButtonVariants = cva(
 );
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupButton = ({
   className,
   type = "button",
   variant = "ghost",
   size = "xs",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: Omit<ReactComponentProps<typeof Button>, "size"> &
   VariantProps<typeof inputGroupButtonVariants>): ReactJSX.Element => (
   <Button
+    // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(inputGroupButtonVariants({ size }), className)}
     data-size={size}
     type={type}
     variant={variant}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupButton's Button prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupText: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"span">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupText uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupText = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"span">): ReactJSX.Element => (
   <span
@@ -142,43 +160,56 @@ const InputGroupText = ({
       "text-muted-foreground flex items-center gap-2 text-sm [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4",
       className
     )}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupText's native span attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupInput: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"input">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupInput uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupInput = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"input">): ReactJSX.Element => (
   <Input
+    // oxlint-disable-next-line react/forbid-component-props -- Input accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
       className
     )}
     data-slot="input-group-control"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupInput's Input prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- InputGroupTextarea: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: React.ComponentProps<"textarea">). */
 
+/* oxlint-disable react/react-in-jsx-scope -- InputGroupTextarea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupTextarea = ({
   className,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"textarea">): ReactJSX.Element => (
   <Textarea
+    // oxlint-disable-next-line react/forbid-component-props -- Textarea accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn(
       "flex-1 resize-none rounded-none border-0 bg-transparent py-3 shadow-none focus-visible:ring-0 dark:bg-transparent",
       className
     )}
     data-slot="input-group-control"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupTextarea's Textarea prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupText, InputGroupTextarea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 
 export {
@@ -189,3 +220,4 @@ export {
   InputGroupText,
   InputGroupTextarea,
 };
+/* oxlint-enable import/no-named-export */

@@ -2,15 +2,21 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 import { executeWithResearchProgress } from "@/lib/eve/research-progress";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DEFAULT_MAX_RESULTS,
   executeMultiQuerySearch,
 } from "@/tools/platform/search-presentation";
+/* oxlint-enable sort-imports */
 
 import { webSearchInput } from "./schemas";
 
@@ -31,6 +37,7 @@ type ResearchExecution = Readonly<{
 }>;
 
 const FIRECRAWL_SEARCH_TIMEOUT_MS = 15_000;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve searchFirecrawl's awaited sequencing and rejected-Promise behavior. */
 const searchFirecrawl = async ({
   query,
   maxResults,
@@ -57,7 +64,9 @@ const searchFirecrawl = async ({
     })
   );
 };
-
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (webSearch); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve webSearch's awaited sequencing and rejected-Promise behavior. */
 export const webSearch = defineTool({
   description: `Multi-query web search using Firecrawl for enhanced content extraction. Always cite sources inline.
 
@@ -100,3 +109,5 @@ Avoid:
   inputSchema: webSearchInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

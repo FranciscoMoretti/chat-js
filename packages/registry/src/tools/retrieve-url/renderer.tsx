@@ -3,10 +3,15 @@ import { ChevronDown, ExternalLink, Globe, TextIcon } from "lucide-react";
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; this import erases at runtime. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { retrievedInput, retrievedResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type RetrieveUrlRendererTool = ToolRendererProps<
   typeof retrievedInput,
@@ -22,7 +27,10 @@ const LoadingState = () => (
     <div className="flex items-center gap-4">
       <div className="relative h-10 w-10">
         <div className="bg-primary/10 absolute inset-0 animate-pulse rounded-full" />
-        <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
+        <Globe
+          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
+        />
       </div>
       <div className="flex-1 space-y-2">
         <div className="bg-muted-foreground/20 h-4 w-36 animate-pulse rounded-md" />
@@ -34,6 +42,7 @@ const LoadingState = () => (
     </div>
   </div>
 );
+/* oxlint-disable react/jsx-no-literals -- ErrorState renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -45,12 +54,16 @@ const LoadingState = () => (
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
+const ErrorState = ({
+  errorMessage,
+}: Readonly<{ errorMessage: string | undefined }>) => (
   <div className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50">
     <div className="flex items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
-        <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
+        <Globe
+          // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+          className="h-4 w-4 text-red-600 dark:text-red-300"
+        />
       </div>
       <div>
         <div className="text-sm font-medium text-red-700 dark:text-red-300">
@@ -63,7 +76,7 @@ const ErrorState = ({ errorMessage }: { errorMessage: string | undefined }) => (
     </div>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -80,10 +93,12 @@ const getItemProperty = (
 ): string => {
   if (item && typeof item === "object" && property in item) {
     const value: unknown = Reflect.get(item, property);
+    // oxlint-disable-next-line no-ternary -- Keep the property fallback lazy; prefer-ternary rejects the if/else replacement.
     return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
+/* oxlint-disable react/jsx-no-literals -- RetrievedContentHeader renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/id-length */
 
@@ -93,8 +108,9 @@ const getItemProperty = (
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentHeader = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>) => {
   const url = getItemProperty(firstItem, "url", "");
   const title = getItemProperty(firstItem, "title", "Retrieved Content");
   const description = getItemProperty(
@@ -109,7 +125,10 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
       <div className="flex items-start gap-4">
         <div className="relative h-10 w-10 shrink-0">
           <div className="from-primary/10 absolute inset-0 rounded-lg bg-linear-to-br to-transparent" />
-          <Globe className="text-primary/70 absolute inset-0 m-auto h-5 w-5" />
+          <Globe
+            // oxlint-disable-next-line react/forbid-component-props -- Globe accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="text-primary/70 absolute inset-0 m-auto h-5 w-5"
+          />
         </div>
         <div className="min-w-0 flex-1 space-y-2">
           <h2 className="text-foreground truncate text-lg font-semibold tracking-tight">
@@ -128,7 +147,10 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
               rel="noopener noreferrer"
               target="_blank"
             >
-              <ExternalLink className="h-3 w-3" />
+              <ExternalLink
+                // oxlint-disable-next-line react/forbid-component-props -- ExternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-3 w-3"
+              />
               View source
             </a>
           </div>
@@ -137,7 +159,8 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-disable react/jsx-no-literals -- RetrievedContentDetails renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -151,8 +174,9 @@ const RetrievedContentHeader = ({ firstItem }: { firstItem: unknown }) => {
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
+const RetrievedContentDetails = ({
+  firstItem,
+}: Readonly<{ firstItem: unknown }>) => {
   const content = getItemProperty(firstItem, "content", "No content available");
 
   return (
@@ -160,10 +184,16 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
       <details className="group">
         <summary className="text-muted-foreground hover:bg-muted flex w-full cursor-pointer items-center justify-between px-4 py-2 text-sm transition-colors">
           <div className="flex items-center gap-2">
-            <TextIcon className="text-muted-foreground h-4 w-4" />
+            <TextIcon
+              // oxlint-disable-next-line react/forbid-component-props -- TextIcon accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-muted-foreground h-4 w-4"
+            />
             <span>View content</span>
           </div>
-          <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+          <ChevronDown
+            // oxlint-disable-next-line react/forbid-component-props -- ChevronDown accepts className in its styling contract; preserve this caller's layout and appearance.
+            className="h-4 w-4 transition-transform duration-200 group-open:rotate-180"
+          />
         </summary>
         <div className="bg-muted/50 max-h-[50vh] overflow-y-auto p-4">
           <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
@@ -174,7 +204,7 @@ const RetrievedContentDetails = ({ firstItem }: { firstItem: unknown }) => {
     </div>
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 
@@ -206,6 +236,7 @@ const getErrorMessage = (
   firstItem: unknown
 ): string | null => {
   const topLevelError =
+    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
     result &&
     typeof result === "object" &&
     "error" in result &&
@@ -213,6 +244,7 @@ const getErrorMessage = (
       ? result.error
       : undefined;
   const firstItemError =
+    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
     firstItem &&
     typeof firstItem === "object" &&
     "error" in firstItem &&
@@ -231,15 +263,14 @@ const getErrorMessage = (
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const RetrieveUrlView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: RetrieveUrlRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>) => {
   if (tool.state === "input-available" || tool.state === "input-streaming") {
     return <LoadingState />;
   }
@@ -267,8 +298,8 @@ const RetrieveUrlView = ({
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (RetrieveUrlRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
@@ -280,3 +311,4 @@ export const RetrieveUrlRenderer = defineToolRenderer({
   outputSchema: retrievedResult,
   render: RetrieveUrlView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

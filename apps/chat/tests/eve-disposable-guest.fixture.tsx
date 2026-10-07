@@ -1,15 +1,21 @@
 "use client";
 
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ChatHeaderView } from "@/components/chat-header-view";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DisposableGuestChat,
   GuestConversationView,
 } from "@/components/eve/disposable-guest-chat";
+/* oxlint-enable sort-imports */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
 
@@ -47,6 +53,8 @@ const messages: EveMessage[] = [
     role: "assistant",
   },
 ];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GuestVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- GuestVisualFixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null -- * react-perf/jsx-no-new-array-as-prop (#556): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react-perf/jsx-no-new-function-as-prop (#557): GuestVisualFixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/jsx-max-depth (#548): GuestVisualFixture keeps related fixture render states together; extraction changes component, state, and layout boundaries.
@@ -72,26 +80,31 @@ export const GuestVisualFixture = (): React.JSX.Element => {
           data-testid="guest-visual"
           className="bg-background flex h-[680px] min-h-0 flex-col overflow-hidden"
         >
-          {state === "welcome" ? (
-            <DisposableGuestChat />
-          ) : (
-            <>
-              <ChatHeaderView breadcrumb={null} />
-              <GuestConversationView
-                messages={messages}
-                modelId={modelId}
-                busy={false}
-                expired={state === "expired"}
-                draft={draft}
-                onDraftChange={setDraft}
-                onSend={() => null}
-                onStop={() => null}
-              />
-            </>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            state === "welcome" ? (
+              <DisposableGuestChat />
+            ) : (
+              <>
+                <ChatHeaderView breadcrumb={null} />
+                <GuestConversationView
+                  messages={messages}
+                  modelId={modelId}
+                  busy={false}
+                  expired={state === "expired"}
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  onSend={() => null}
+                  onStop={() => null}
+                />
+              </>
+            )
+          }
         </div>
       </DefaultModelProvider>
     </ChatModelsProvider>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-void-return, unicorn/no-null */

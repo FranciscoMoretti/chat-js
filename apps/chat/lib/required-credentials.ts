@@ -4,8 +4,7 @@ import {
 } from "./config-requirements";
 import type { EnvRequirement } from "./config-requirements";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): MissingCredentialsError accepts requirements: readonly EnvRequirement[]; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- The exported error exposes the original EnvRequirement objects through its requirements property; converting inputs to deeply readonly would change that mutable public contract or require cloning. */
 /** Shared explicit failure for installed integrations; never carries secret values. */
 class MissingCredentialsError extends Error {
   public readonly code = "CHATJS_MISSING_CREDENTIALS";
@@ -26,40 +25,52 @@ class MissingCredentialsError extends Error {
 }
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
- * no-magic-numbers (#517): missingRequirement uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): missingRequirement accepts requirement: EnvRequirement; env: NodeJS.ProcessEnv; group; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/no-null (#570): missingRequirement preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
+/* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- Return the original mutable requirement for an unsatisfied leaf and null for satisfied leaves; callers expose those same objects through MissingCredentialsError. */
 const missingRequirement = (
   requirement: EnvRequirement,
-  env: NodeJS.ProcessEnv
+  env: Readonly<NodeJS.ProcessEnv>
 ): EnvRequirement | null => {
   if (requirement.allOf) {
     const allOf = requirement.allOf.flatMap((group) => {
       const missing = missingRequirement(group, env);
-      return missing ? [missing] : [];
+      if (missing) {
+        return [missing];
+      }
+      return [];
     });
-    return allOf.length > 0 ? { ...requirement, allOf } : null;
+    // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
+    if (allOf.length > 0) {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing requirement own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      return { ...requirement, allOf };
+    }
+    return null;
   }
-  return isRequirementSatisfied(requirement, env) ? null : requirement;
+  if (isRequirementSatisfied(requirement, env)) {
+    return null;
+  }
+  return requirement;
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types -- no-magic-numbers (#517): requireCredentials uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): requireCredentials accepts requirements: readonly EnvRequirement[]; env: NodeJS.ProcessEnv; requirement; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- MissingCredentialsError preserves mutable requirement objects from this input; deep readonly requirements cannot be returned through its existing public property. */
 const requireCredentials = (
   integration: string,
   requirements: readonly EnvRequirement[],
-  env: NodeJS.ProcessEnv
+  env: Readonly<NodeJS.ProcessEnv>
 ): void => {
   const missing = requirements.flatMap((requirement) => {
     const group = missingRequirement(requirement, env);
-    return group ? [group] : [];
+    if (group) {
+      return [group];
+    }
+    return [];
   });
+  // oxlint-disable-next-line no-magic-numbers -- Explicit array emptiness uses zero as required by unicorn/explicit-length-check.
   if (missing.length > 0) {
     throw new MissingCredentialsError(integration, missing);
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (MissingCredentialsError, requireCredentials); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export { MissingCredentialsError, requireCredentials };
+/* oxlint-enable import/no-named-export */

@@ -86,9 +86,10 @@ const editTextAt = (timeSeconds: number, content: LaunchScript): string => {
   }
   const editPrefix = content.porto.prompt.slice(0, prefixLength);
   const editSuffix = content.porto.prompt.slice(prefixLength);
-  return timeSeconds < 42.6
-    ? content.prompt
-    : `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
+  if (timeSeconds < 42.6) {
+    return content.prompt;
+  }
+  return `${editPrefix}${textAt(editSuffix, (timeSeconds - 42.6) / 1.1)}`;
 };
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -129,14 +130,18 @@ const stateAt = (t: number, content: LaunchScript = script) => {
   const following = t >= 24 && t < 41.5;
   const family = t >= 24 && t < 33;
   const budget = t >= 34;
+  // oxlint-disable-next-line no-ternary -- Keep followup as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const followup = family ? content.family : content.budget;
+  // oxlint-disable-next-line no-ternary -- Keep - operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const progress = clamp((t - (family ? 24.6 : 34.6)) / 2.4);
   const texts = {
     city: textAt(content.city.text, (t - 3.5) / 3),
     food: textAt(content.food.text, (t - 12.2) / 10),
   };
   const states: Record<PathId, ReplyState> = {
+    // oxlint-disable-next-line no-ternary -- Keep city as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     city: t < 6.5 ? "streaming" : "complete",
+    // oxlint-disable-next-line no-ternary -- Keep food as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     food: t < 22.2 ? "streaming" : "complete",
   };
   return {
@@ -148,13 +153,16 @@ const stateAt = (t: number, content: LaunchScript = script) => {
     family,
     following: following && (family || budget),
     followup: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing followup own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...followup,
+      // oxlint-disable-next-line no-ternary -- Keep state as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       state: progress < 1 ? ("streaming" as const) : ("complete" as const),
       text: textAt(followup.reply, progress),
     },
     foodVisible: t >= 12.2,
     note: noteAt(t),
     portoAnswer: textAt(content.porto.reply, (t - 45) / 2.5),
+    // oxlint-disable-next-line no-ternary -- Keep portoState as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     portoState: t < 47.5 ? ("streaming" as const) : ("complete" as const),
     reveal: ease((t - 11.5) / 0.3),
     selected,
@@ -188,8 +196,11 @@ const presentationAt = (wallTime: number) => {
   // Cut only completed-reply holds; keep action and streaming speed unchanged.
   const time =
     wallTime +
+    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 8 ? 2 : 0) +
+    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 26.5 ? 2 : 0) +
+    // oxlint-disable-next-line no-ternary -- Keep + operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (wallTime >= 34.5 ? 1.5 : 0);
   const beat = captionBeats.find(
     (captionBeat): boolean =>
@@ -234,6 +245,7 @@ const cursorAt = (t: number) => {
   const k = ease((t - start) / duration);
   return { x: ax + (bx - ax) * k, y: ay + (by - ay) * k };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (beats, captionBeats, clamp, cursorAt, DURATION, ease, FPS, presentationAt, script, stateAt); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -252,4 +264,7 @@ export {
   script,
   stateAt,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LaunchScript, PathId, ReplyState, StoryState); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { LaunchScript, PathId, ReplyState, StoryState };
+/* oxlint-enable import/no-named-export */

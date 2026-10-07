@@ -19,9 +19,11 @@ const resolveAppUrl = (
   ) {
     return configuredUrl;
   }
-  return environment.NODE_ENV === "production"
-    ? config.appUrl
-    : DEFAULT_DEV_APP_URL;
+
+  if (environment.NODE_ENV === "production") {
+    return config.appUrl;
+  }
+  return DEFAULT_DEV_APP_URL;
 };
 
 // Passing the process environment here preserves lazy NODE_ENV access in the fallback.
@@ -34,4 +36,6 @@ const WINDOW_DEFAULTS = {
   minWidth: 800,
   width: 1280,
 } as const;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { APP_NAME, APP_SCHEME, APP_URL, WINDOW_DEFAULTS };
+/* oxlint-enable import/no-named-export */

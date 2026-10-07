@@ -5,15 +5,19 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
 import { prepareEveFamilyFilePurge } from "../lib/db/eve-file-purge";
 import { reserveEveGeneratedFile } from "../lib/db/eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import {
   eveConversation,
   eveFileReference,
@@ -22,12 +26,14 @@ import {
 } from "../lib/db/schema";
 import { env } from "../lib/env";
 import { purgeEveFamilyFiles } from "../lib/eve/purge-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createFileId,
   deleteFilesByUrls,
   getFileMetadata,
   uploadFileAtKey,
 } from "../lib/file-storage";
+/* oxlint-enable sort-imports */
 import { createFileUrl } from "../lib/file-url";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
@@ -35,6 +41,7 @@ if (!["localhost", "127.0.0.1"].includes(new URL(env.DATABASE_URL).hostname)) {
   throw new Error("File removal acceptance requires local Postgres.");
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): test("storage purge removes files and recovers a lost deletion acknowledgement and an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("storage purge removes files and recovers a lost deletion acknowledgement and an keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -98,4 +105,5 @@ test("storage purge removes files and recovers a lost deletion acknowledgement a
     await db.delete(user).where(eq(user.id, owner));
   }
 }, 60_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

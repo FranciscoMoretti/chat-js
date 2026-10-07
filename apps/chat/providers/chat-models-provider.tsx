@@ -1,11 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useMemo } from "react";
+/* oxlint-enable sort-imports */
 import type { ReactNode } from "react";
 
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
+/* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -34,9 +38,11 @@ const ChatModelsProvider = ({
 }): React.JSX.Element => {
   const trpc = useTRPC();
   const { data: session } = useSession();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const isAuthenticated = Boolean(session?.user);
 
   const { data: preferences } = useQuery({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.settings.getModelPreferences.queryOptions() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...trpc.settings.getModelPreferences.queryOptions(),
     enabled: isAuthenticated,
   });
@@ -94,7 +100,9 @@ const useChatModels = () => {
   }
   return context;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatModelsProvider, useChatModels); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable react/only-export-components -- #620: Consumers import ChatModelsProvider, useChatModels from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { ChatModelsProvider, useChatModels };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

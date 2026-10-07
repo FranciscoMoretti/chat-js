@@ -2,18 +2,28 @@
  * import/max-dependencies (#524): import from "react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
 import type { Metadata } from "next";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { Geist, Geist_Mono } from "next/font/google";
+/* oxlint-enable sort-imports */
 import Script from "next/script";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "./globals.css";
+/* oxlint-enable sort-imports */
 import React from "react";
 import { Toaster } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ElectronAuthHandler } from "@/components/electron-auth-handler";
+/* oxlint-enable sort-imports */
 import { ThemeProvider } from "@/components/theme-provider";
 import { installedLayoutComponents } from "@/features/installed-layout";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 /* oxlint-enable import/max-dependencies */
 
@@ -92,14 +102,17 @@ const RootLayout = ({
       <Script id="theme-color-script" strategy="beforeInteractive">
         {THEME_COLOR_SCRIPT}
       </Script>
-      {process.env.NODE_ENV === "development" &&
-      !process.env.PLAYWRIGHT &&
-      env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
-        <Script
-          src="https://unpkg.com/react-scan/dist/auto.global.js"
-          strategy="beforeInteractive"
-        />
-      ) : null}
+      {
+        // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+        process.env.NODE_ENV === "development" &&
+        !process.env.PLAYWRIGHT &&
+        env.NEXT_PUBLIC_REACT_SCAN === "1" ? (
+          <Script
+            src="https://unpkg.com/react-scan/dist/auto.global.js"
+            strategy="beforeInteractive"
+          />
+        ) : null
+      }
     </head>
     <body className="antialiased">
       <ElectronAuthHandler />
@@ -124,10 +137,12 @@ const RootLayout = ({
     </body>
   </html>
 );
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata, viewport); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable node/no-process-env, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata, viewport };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default RootLayout;

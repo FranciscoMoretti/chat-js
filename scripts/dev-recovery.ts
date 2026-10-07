@@ -6,21 +6,27 @@ const READY_FAILURE_GRACE_MS = 120_000;
 const MIN_READINESS_FAILURES = 3;
 const NO_PREVIOUS_START_FAILURES = 0;
 
-/* oxlint-disable eslint/max-params -- shouldRestartAfterReadinessFailures: Existing callers and library callbacks use this positional signature; changing it requires an API migration. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (shouldRestartAfterReadinessFailures); the enabled import/no-default-export convention rejects the default-export alternative. */
 /**
  * Allow cold compilation and brief resource contention before replacing a runtime.
- * @param consecutiveFailures - Number of consecutive failed readiness probes.
- * @param unreadyForMs - Time since readiness was lost or startup began.
- * @param hasBeenReady - Whether this runtime has ever completed startup.
- * @param failedStartups - Earlier failed starts used to increase startup grace.
- * @returns Whether the failure count and applicable grace period require restart.
+ * @param {object} options - Readiness-failure counts and elapsed time used to select the grace period.
+ * @param {number} options.consecutiveFailures - Number of consecutive failed readiness probes.
+ * @param {number} options.unreadyForMs - Time since readiness was lost or startup began.
+ * @param {boolean} options.hasBeenReady - Whether this runtime has ever completed startup.
+ * @param {number} [options.failedStartups] - Earlier failed starts used to increase startup grace; omitted values default to zero.
+ * @returns {boolean} Whether the failure count and applicable grace period require restart.
  */
-export const shouldRestartAfterReadinessFailures = (
-  consecutiveFailures: number,
-  unreadyForMs: number,
-  hasBeenReady: boolean,
-  failedStartups = NO_PREVIOUS_START_FAILURES
-): boolean => {
+export const shouldRestartAfterReadinessFailures = ({
+  consecutiveFailures,
+  unreadyForMs,
+  hasBeenReady,
+  failedStartups = NO_PREVIOUS_START_FAILURES,
+}: {
+  readonly consecutiveFailures: number;
+  readonly unreadyForMs: number;
+  readonly hasBeenReady: boolean;
+  readonly failedStartups?: number | undefined;
+}): boolean => {
   const startupGraceMs = Math.min(
     MAX_STARTUP_GRACE_MS,
     INITIAL_STARTUP_GRACE_MS *
@@ -28,7 +34,8 @@ export const shouldRestartAfterReadinessFailures = (
   );
   return (
     consecutiveFailures >= MIN_READINESS_FAILURES &&
+    // oxlint-disable-next-line no-ternary -- Keep >= operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     unreadyForMs >= (hasBeenReady ? READY_FAILURE_GRACE_MS : startupGraceMs)
   );
 };
-/* oxlint-enable eslint/max-params */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

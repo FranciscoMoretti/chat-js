@@ -4,7 +4,9 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { FollowUpSuggestionsView } from "../components/followup-suggestions-view";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const suggestions = [
@@ -12,6 +14,7 @@ const suggestions = [
   "What are the alternatives?",
   "How would I test this?",
 ];
+/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-array-as-prop, react/only-export-components -- * react-perf/jsx-no-new-array-as-prop (#556): Fixture creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react/only-export-components (#553): Fixture is part of a module that also exposes related helpers or framework data; splitting exports requires an API and Fast Refresh boundary decision. */
 const Fixture = (): React.JSX.Element => {
@@ -41,6 +44,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-array-as-prop, react/only-export-components */
 const root = document.querySelector("#root");
 if (!root) {

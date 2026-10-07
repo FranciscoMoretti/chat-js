@@ -1,13 +1,11 @@
-const ERROR_TYPES = [
-  "bad_request",
-  "unauthorized",
-  "input_too_long",
-  "forbidden",
-  "not_found",
-  "rate_limit",
-  "offline",
-] as const;
-type ErrorType = (typeof ERROR_TYPES)[number];
+type ErrorType =
+  | "bad_request"
+  | "unauthorized"
+  | "input_too_long"
+  | "forbidden"
+  | "not_found"
+  | "rate_limit"
+  | "offline";
 
 type Surface =
   | "chat"
@@ -36,84 +34,48 @@ const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   vote: "response",
 };
 
-const ERROR_CODE_PART_COUNT = 2;
-
-const isErrorCode = (value: unknown): value is ErrorCode => {
-  if (typeof value !== "string") {
-    return false;
-  }
-  const parts = value.split(":");
-  const [type, surface] = parts;
-  return (
-    parts.length === ERROR_CODE_PART_COUNT &&
-    ERROR_TYPES.some((candidate) => candidate === type) &&
-    typeof surface === "string" &&
-    Object.hasOwn(visibilityBySurface, surface)
-  );
+const messageByErrorCode: Partial<Record<ErrorCode, string>> = {
+  "bad_request:api":
+    "The request couldn't be processed. Please check your input and try again.",
+  "bad_request:document":
+    "The request to create or update the document was invalid. Please check your input and try again.",
+  "forbidden:auth": "Your account does not have access to this feature.",
+  "forbidden:chat":
+    "This chat belongs to another user. Please check the chat ID and try again.",
+  "forbidden:document":
+    "This document belongs to another user. Please check the document ID and try again.",
+  "input_too_long:chat":
+    "Your message input is too long. Please shorten your message and try again.",
+  "not_found:chat":
+    "The requested chat was not found. Please check the chat ID and try again.",
+  "not_found:document":
+    "The requested document was not found. Please check the document ID and try again.",
+  "offline:chat":
+    "We're having trouble sending your message. Please check your internet connection and try again.",
+  "rate_limit:chat":
+    "You have exceeded your maximum number of messages for the day. Please try again later.",
+  "unauthorized:auth": "You need to sign in before continuing.",
+  "unauthorized:chat":
+    "You need to sign in to view this chat. Please sign in and try again.",
+  "unauthorized:document":
+    "You need to sign in to view this document. Please sign in and try again.",
 };
 
-/* oxlint-disable max-lines-per-function, max-statements --
- * max-lines-per-function (#510): getMessageByErrorCode keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): getMessageByErrorCode keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 const getMessageByErrorCode = (errorCode: ErrorCode): string => {
   if (errorCode.includes("database")) {
     return "An error occurred while executing a database query.";
   }
-
-  switch (errorCode) {
-    case "bad_request:api": {
-      return "The request couldn't be processed. Please check your input and try again.";
-    }
-
-    case "unauthorized:auth": {
-      return "You need to sign in before continuing.";
-    }
-    case "forbidden:auth": {
-      return "Your account does not have access to this feature.";
-    }
-
-    case "rate_limit:chat": {
-      return "You have exceeded your maximum number of messages for the day. Please try again later.";
-    }
-    case "input_too_long:chat": {
-      return "Your message input is too long. Please shorten your message and try again.";
-    }
-    case "not_found:chat": {
-      return "The requested chat was not found. Please check the chat ID and try again.";
-    }
-    case "forbidden:chat": {
-      return "This chat belongs to another user. Please check the chat ID and try again.";
-    }
-    case "unauthorized:chat": {
-      return "You need to sign in to view this chat. Please sign in and try again.";
-    }
-    case "offline:chat": {
-      return "We're having trouble sending your message. Please check your internet connection and try again.";
-    }
-
-    case "not_found:document": {
-      return "The requested document was not found. Please check the document ID and try again.";
-    }
-    case "forbidden:document": {
-      return "This document belongs to another user. Please check the document ID and try again.";
-    }
-    case "unauthorized:document": {
-      return "You need to sign in to view this document. Please sign in and try again.";
-    }
-    case "bad_request:document": {
-      return "The request to create or update the document was invalid. Please check your input and try again.";
-    }
-
-    default: {
-      return "Something went wrong. Please try again later.";
-    }
+  if (Object.hasOwn(messageByErrorCode, errorCode)) {
+    return (
+      messageByErrorCode[errorCode] ??
+      "Something went wrong. Please try again later."
+    );
   }
+  return "Something went wrong. Please try again later.";
 };
-/* oxlint-enable max-lines-per-function, max-statements */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): getStatusCodeByType uses 400, 401, 403, 404, 429, 503, 500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * Numeric results are HTTP status codes for each public error type; the fallback is an internal server error (500).
  */
 const getStatusCodeByType = (type: ErrorType): number => {
   switch (type) {
@@ -143,9 +105,6 @@ const getStatusCodeByType = (type: ErrorType): number => {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-console --
- * no-console (#514): ChatSDKError emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- */
 class ChatSDKError extends Error {
   public name = "ChatSDKError";
   public type: ErrorType;
@@ -157,10 +116,10 @@ class ChatSDKError extends Error {
 
     const [type, surface] = errorCode.split(":");
 
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: ErrorCode is exactly `${ErrorType}:${Surface}` and HTTP input is checked by isErrorCode. Native String.split erases this tuple correlation; both segments must exist in their unions for every typed constructor caller.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
     this.type = type as ErrorType;
     this.cause = cause;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: ErrorCode is exactly `${ErrorType}:${Surface}` and HTTP input is checked by isErrorCode. Native String.split erases this tuple correlation; both segments must exist in their unions for every typed constructor caller.
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: ErrorCode is a constrained type: splitting its colon-delimited value loses the component unions in TypeScript.
     this.surface = surface as Surface;
     this.statusCode = getStatusCodeByType(this.type);
   }
@@ -172,6 +131,7 @@ class ChatSDKError extends Error {
     const { message, cause, statusCode } = this;
 
     if (visibility === "log") {
+      // oxlint-disable-next-line no-console -- Database errors are redacted from the HTTP body; retain their operational details in the existing server error log.
       console.error({
         cause,
         code,
@@ -187,6 +147,10 @@ class ChatSDKError extends Error {
     return Response.json({ cause, code, message }, { status: statusCode });
   }
 }
-/* oxlint-enable no-console */
-export { ChatSDKError, isErrorCode };
+
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ChatSDKError); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+export { ChatSDKError };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ErrorCode, ErrorType, Surface); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ErrorCode, ErrorType, Surface };
+/* oxlint-enable import/no-named-export */

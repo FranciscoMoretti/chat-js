@@ -43,6 +43,8 @@ const PROJECT_COLORS = [
 
 type ProjectColorName = (typeof PROJECT_COLORS)[number]["name"];
 
+const [fallbackProjectColor] = PROJECT_COLORS;
+
 // For zod enum validation
 const PROJECT_COLOR_NAMES = PROJECT_COLORS.map((color) => color.name);
 
@@ -50,8 +52,6 @@ const DEFAULT_PROJECT_ICON: ProjectIconName = "folder";
 
 const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
 
-/* oxlint-disable no-magic-numbers --
-no-magic-numbers (#517): getColorValue uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
 // Saved varchar values can outlive the installed icon/color catalog. Keep the
 // same folder/gray fallback used by ProjectIcon when opening the editor.
 const getProjectIconName = (value: string): ProjectIconName =>
@@ -60,9 +60,10 @@ const getProjectColorName = (value: string): ProjectColorName =>
   PROJECT_COLOR_NAMES.find((color) => color === value) ?? DEFAULT_PROJECT_COLOR;
 
 const getColorValue = (name: ProjectColorName): string =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing fallbackProjectColor.value fallback. The app guidance prefers optional chaining.
   PROJECT_COLORS.find((color) => color.name === name)?.value ??
-  PROJECT_COLORS[0].value;
-/* oxlint-enable no-magic-numbers */
+  fallbackProjectColor.value;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_PROJECT_COLOR, DEFAULT_PROJECT_ICON, getColorValue, PROJECT_COLOR_NAMES, PROJECT_COLORS, PROJECT_ICONS); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
@@ -73,4 +74,7 @@ export {
   PROJECT_COLORS,
   PROJECT_ICONS,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ProjectColorName, ProjectIconName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ProjectColorName, ProjectIconName };
+/* oxlint-enable import/no-named-export */

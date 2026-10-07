@@ -1,12 +1,15 @@
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { getActiveGateway } from "@/lib/ai/active-gateway";
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 
 import { loadEveModelDefinition } from "./model-selection";
+/* oxlint-enable sort-imports */
 
-/* oxlint-disable no-magic-numbers, typescript/strict-boolean-expressions --
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveToolModelProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveToolModelProvider's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): eveToolModelProvider uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): eveToolModelProvider intentionally keeps the existing falsy-value behavior of model; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 export const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
@@ -15,7 +18,7 @@ export const eveToolModelProvider: ToolModelProvider = {
       // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #781: Generated adapters use never for unsupported media and return null without consuming the ID; supported adapters keep SDK model-ID inputs. This dynamic ToolModelProvider bridge must preserve both contracts; the null guard reports unsupported media.
       modelId as Parameters<InstalledGateway["createImageModel"]>[0]
     );
-    if (!model) {
+    if (model === null) {
       throw new Error(
         `Gateway '${gateway.type}' does not support dedicated image models. Use a multimodal language model instead.`
       );
@@ -30,7 +33,7 @@ export const eveToolModelProvider: ToolModelProvider = {
       // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- #781: Generated adapters use never for unsupported media and return null without consuming the ID; supported adapters keep SDK model-ID inputs. This dynamic ToolModelProvider bridge must preserve both contracts; the null guard reports unsupported media.
       modelId as Parameters<InstalledGateway["createVideoModel"]>[0]
     );
-    if (!model) {
+    if (model === null) {
       throw new Error(
         `Gateway '${gateway.type}' does not support video models.`
       );
@@ -47,4 +50,6 @@ export const eveToolModelProvider: ToolModelProvider = {
     };
   },
 };
-/* oxlint-enable no-magic-numbers, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable no-magic-numbers */

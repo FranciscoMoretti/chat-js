@@ -9,23 +9,29 @@ const canvasTools: UiToolName[] = [
   "editSheetDocument",
 ];
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null --
- * jsdoc/require-param (#534): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): selectedEveTools's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (selectedEveTools); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): selectedEveTools preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Canvas editing needs Eve's read operation to obtain the current revision. */
+/** Canvas editing needs Eve's read operation to obtain the current revision.
+ * @param {UiToolName | null} selectedTool User-selected tool, or null when no explicit tool restriction is requested.
+ * @returns {string[] | null} Selected execution names; canvas tools share their editing family and document operations also include readDocument. Null preserves unrestricted selection.
+ */
 export const selectedEveTools = (
   selectedTool: UiToolName | null
 ): string[] | null => {
   if (!selectedTool) {
     return null;
   }
+  // oxlint-disable-next-line no-ternary -- Keep names as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const names = canvasTools.includes(selectedTool)
     ? canvasTools
     : [selectedTool];
-  return names.some((name) => name.endsWith("Document"))
-    ? [...names, "readDocument"]
-    : names;
+
+  if (names.some((name) => name.endsWith("Document"))) {
+    return [...names, "readDocument"];
+  }
+  return names;
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable unicorn/no-null */

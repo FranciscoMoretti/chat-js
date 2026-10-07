@@ -1,28 +1,35 @@
 import { Client } from "eve/client";
 import type { SessionSnapshot } from "eve/client";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   beginEveConversationDeletion,
   getDeletingEveConversationForSession,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 
 import { getEveConnectionOptions } from "./connection-options";
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { reconcileEveSubagentUsage } from "./reconcile-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-enable sort-imports */
 import { ingestEveUsage } from "./usage";
 
 const SESSION_RETIRE_TIMEOUT_MS = 30_000;
 const RETIRED_SNAPSHOT_TIMEOUT_MS = 15_000;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveSessionForDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --max-statements (#512): retireEveSessionForDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): retireEveSessionForDeletion accepts event; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
 typescript/strict-boolean-expressions (#610): retireEveSessionForDeletion intentionally keeps the existing falsy-value behavior of await getDeletingEveConversationForSession(ownerId, sessionId); distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Retires a deletion-pending session and settles its usage before erasure is allowed.
- * @param ownerId Owner authorized by the conversation's deletion state.
- * @param sessionId Bound native session to reset and inspect for terminal evidence.
- * @returns The terminal snapshot after direct and subagent usage are reconciled; incomplete retirement throws.
+ * @param {string} ownerId Owner authorized by the conversation's deletion state.
+ * @param {string} sessionId Bound native session to reset and inspect for terminal evidence.
+ * @returns {Promise<SessionSnapshot>} The terminal snapshot after direct and subagent usage are reconciled; incomplete retirement throws.
  */
 const retireEveSessionForDeletion = async (
   ownerId: string,
@@ -34,7 +41,9 @@ const retireEveSessionForDeletion = async (
   }
   const connection = getEveConnectionOptions(ownerId);
   const client = new Client({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...connection,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing connection.headers own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     headers: { ...connection.headers, "x-chatjs-deletion": "1" },
   });
   const session = client.sessions.attach(sessionId);
@@ -70,14 +79,16 @@ const retireEveSessionForDeletion = async (
   }
   return snapshot;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retireEveFamilyForDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable typescript/strict-boolean-expressions --typescript/strict-boolean-expressions (#610): retireEveFamilyForDeletion intentionally keeps the existing falsy-value behavior of databaseUrl; conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Revokes family access and settles every bound session before resource erasure starts.
- * @param ownerId Owner whose conversation family is placed into deletion state.
- * @param conversationId Conversation identifying the family whose bound sessions are retired.
- * @returns The deletion family after session retirement, or no result when no family is available.
+ * @param {string} ownerId Owner whose conversation family is placed into deletion state.
+ * @param {string} conversationId Conversation identifying the family whose bound sessions are retired.
+ * @returns {Promise< | NonNullable<Awaited<ReturnType<typeof beginEveConversationDeletion>>> | undefined >} The deletion family after session retirement, or no result when no family is available.
  */
 const retireEveFamilyForDeletion = async (
   ownerId: string,
@@ -105,5 +116,8 @@ const retireEveFamilyForDeletion = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: retireEveFamilyForDeletion has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return family;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (retireEveFamilyForDeletion, retireEveSessionForDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 export { retireEveFamilyForDeletion, retireEveSessionForDeletion };
+/* oxlint-enable import/no-named-export */

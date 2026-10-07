@@ -68,9 +68,12 @@ const config = defineConfig({
   },
   anonymous: {
     availableTools: [],
+    // oxlint-disable-next-line no-ternary -- Keep credits as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     credits: isProd ? 10 : 1000,
     rateLimit: {
+      // oxlint-disable-next-line no-ternary -- Keep requestsPerMinute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       requestsPerMinute: isProd ? 5 : 60,
+      // oxlint-disable-next-line no-ternary -- Keep requestsPerMonth as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       requestsPerMonth: isProd ? 10 : 1000,
     },
   },

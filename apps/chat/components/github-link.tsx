@@ -1,10 +1,15 @@
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { GitIcon } from "@/components/icons";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 
 const GITHUB_URL = "https://github.com/franciscomoretti/chat-js";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GitHubLink); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const GitHubLink = (): React.JSX.Element => (
   <Button asChild size="icon" type="button" variant="ghost">
     <a
@@ -17,3 +22,4 @@ export const GitHubLink = (): React.JSX.Element => (
     </a>
   </Button>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

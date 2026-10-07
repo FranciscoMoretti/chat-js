@@ -1,27 +1,41 @@
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { access, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { confirm, isCancel, log } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import { Command } from "commander";
 
 import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  parseStorageOptions,
   configureStorageProvider,
+  parseStorageOptions,
 } from "#cli/helpers/storage-provider";
+/* oxlint-enable sort-imports */
 import { resolveGateway } from "#cli/registry/gateways";
 import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { inferPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/max-dependencies -- Adding an installation composes provider resolution, source rollback, registration, dependency installation, configuration edits, and prompts directly.
 import { installPlan } from "#cli/utils/install-plan";
 import { planInstallation } from "#cli/utils/installation-plan";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { gatewayConfigEdit } from "#cli/utils/provider-config";
+/* oxlint-enable sort-imports */
 import { runCommand } from "#cli/utils/run-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   assertSupportedFeatureInstallation,
   syncFeatures,
 } from "#cli/utils/sync-features";
+/* oxlint-enable sort-imports */
 import { syncTools } from "#cli/utils/sync-tools";
 
 type ReadonlyNative<Value> = Value extends (
@@ -71,15 +85,12 @@ const hasProviderKind = (
   "kind" in metadata &&
   metadata.kind === kind;
 
-/* oxlint-enable import/max-dependencies */
-
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareAdd's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable eslint/max-statements -- Resolve selections, validate replacement permissions, and calculate configuration edits before the installation can write source. */
+/* oxlint-disable eslint/max-lines-per-function -- Prepare provider selections and replacement edits together; later installation consumes this complete AddSetup snapshot. */
 const prepareAdd = async (
   cwd: string,
   items: readonly string[],
@@ -100,12 +111,16 @@ const prepareAdd = async (
   ) {
     throw new Error("--storage-config requires --storage-provider.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep gateway as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const gateway = hasNonEmptyValue(options.gateway)
     ? await resolveGateway(options.gateway, cwd)
-    : undefined;
+    : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+      undefined;
+  // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const storage = hasNonEmptyValue(options.storageProvider)
     ? await resolveStorage(options.storageProvider, cwd)
-    : undefined;
+    : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+      undefined;
   if (storage && hasNonEmptyValue(options.storageConfig)) {
     storage.options = parseStorageOptions(options.storageConfig);
   }
@@ -113,10 +128,13 @@ const prepareAdd = async (
     cwd,
     {
       features: [],
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading source from gateway; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       gateway: gateway?.source,
+      // oxlint-disable-next-line no-ternary -- Keep storage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       storage: storage
         ? { options: storage.options, source: storage.source }
-        : undefined,
+        : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+          undefined,
       tools: items,
     },
     { replace: options.replace }
@@ -124,24 +142,30 @@ const prepareAdd = async (
   assertSupportedFeatureInstallation(plan.features);
   // Provider registry URLs supplied positionally still receive normal ChatJS configuration.
   const gatewayItem = plan.items.find((item: RegistryItemInput): boolean =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     hasProviderKind(item.meta?.chatjs, "gateway")
   );
   const storageItem = plan.items.find((item: RegistryItemInput): boolean =>
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     hasProviderKind(item.meta?.chatjs, "storage")
   );
   const selectedGateway =
     gateway ??
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (gatewayItem
       ? await resolveGateway(plan.sources[plan.items.indexOf(gatewayItem)], cwd)
-      : undefined);
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined);
   const selectedStorage =
     storage ??
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (storageItem
       ? await resolveStorage(plan.sources[plan.items.indexOf(storageItem)], cwd)
-      : undefined);
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined);
   const gatewayChange = plan.providerChanges.some(
     ({ kind, previous, next }: ProviderChangeInput) =>
-      kind === "gateway" && previous && previous !== next
+      kind === "gateway" && hasNonEmptyValue(previous) && previous !== next
   );
   const keepStorageOptions =
     !hasNonEmptyValue(options.storageConfig) &&
@@ -155,9 +179,11 @@ const prepareAdd = async (
       >): boolean => kind === "storage" && previous === next
     );
   const configEdit =
+    // oxlint-disable-next-line no-ternary -- Keep configEdit as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     gatewayChange && selectedGateway
       ? await gatewayConfigEdit(cwd, selectedGateway)
-      : undefined;
+      : // oxlint-disable-next-line no-undefined -- Unselected providers and absent edits retain their explicit undefined fields in the existing AddSetup or selection contract.
+        undefined;
 
   return {
     configEdit,
@@ -168,8 +194,7 @@ const prepareAdd = async (
     selectedStorage,
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/no-undefined */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -188,7 +213,9 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
     ...plan.features.flatMap(
       (feature: FeatureInput) => feature.envRequirements ?? []
     ),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading definition from selectedGateway; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
     ...(selectedGateway?.definition.envRequirements ?? []),
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading definition from selectedStorage; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
     ...(selectedStorage?.definition.envRequirements ?? []),
   ];
   for (const requirement of requirements) {
@@ -198,8 +225,10 @@ const printSetupRequirements = (setup: ReadonlyNative<AddSetup>): void => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (add); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve add's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable eslint/max-statements -- The command confirms replacement, installs transactionally with rollback, regenerates registrations, and prints requirements only after success. */
+/* oxlint-disable eslint/max-lines-per-function -- Keep confirmation, transactional provider registration, package installation, and success reporting in their existing execution order. */
 export const add = new Command("add")
   .description(
     "install registry tools/features/providers and compose their ChatJS registrations"
@@ -291,15 +320,20 @@ export const add = new Command("add")
               );
             },
             managedTargets: [
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway ? ["lib/ai/gateway-model-defaults.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedStorage && !keepStorageOptions
                 ? ["lib/storage-options.ts"]
                 : []),
             ],
             overwrite: options.overwrite,
             rollbackTargets: [
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway ? ["lib/ai/models.generated.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(hasNonEmptyValue(configEdit) ? ["chat.config.ts"] : []),
+              // oxlint-disable-next-line no-ternary -- Keep iterable spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedGateway || selectedStorage ? [".env.example"] : []),
             ],
           },
@@ -334,5 +368,6 @@ export const add = new Command("add")
       }
     }
   );
-
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable eslint/max-lines -- Keep the add command and its ordered provider-installation transaction together. */

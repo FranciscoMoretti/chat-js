@@ -5,7 +5,9 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const MINUTES_PER_HOUR = 60;
@@ -79,11 +81,16 @@ const readGuestCredential = (
     const claims = claimsSchema.parse(
       JSON.parse(Buffer.from(payload, "base64url").toString())
     );
-    return claims.expiresAt > Date.now() ? claims : null;
+
+    if (claims.expiresAt > Date.now()) {
+      return claims;
+    }
+    return null;
   } catch {
     return null;
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (GUEST_SESSION_DURATION_MS, issueGuestCredential, newGuestClaims, readGuestCredential); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-statements, unicorn/no-null */
 export {
   GUEST_SESSION_DURATION_MS,
@@ -91,3 +98,4 @@ export {
   newGuestClaims,
   readGuestCredential,
 };
+/* oxlint-enable import/no-named-export */

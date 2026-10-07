@@ -5,19 +5,27 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable import/first -- The mocked dependency must be registered before the module under test is loaded. */
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { referenceEveFiles, reserveEveUpload } from "../lib/db/eve-files";
+/* oxlint-enable sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "../lib/file-url";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const storage = vi.hoisted(() => ({
@@ -57,6 +65,7 @@ import { cleanupEveOrphanedFiles } from "../lib/eve/cleanup-orphaned-files";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type --
@@ -139,4 +148,5 @@ test("the complete sweep preserves legacy/referenced files and recovers failed d
     await db.delete(user).where(eq(user.id, owner));
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type */

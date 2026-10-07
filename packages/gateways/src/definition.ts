@@ -103,6 +103,10 @@ const gatewayDefinitionSchema = z
 
 type GatewayDefinition = z.infer<typeof gatewayDefinitionSchema>;
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (gatewayDefinitionSchema); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { gatewayDefinitionSchema };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing package entry bindings (GatewayDefinition); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { GatewayDefinition };
+/* oxlint-enable import/no-named-export */

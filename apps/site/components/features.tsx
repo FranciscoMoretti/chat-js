@@ -1,4 +1,3 @@
-import type { LucideIcon } from "lucide-react";
 import {
   BrainCircuit,
   Code,
@@ -13,6 +12,7 @@ import {
   Search,
   Video,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import React from "react";
 
 interface Feature {
@@ -137,6 +137,8 @@ const SectionLabel = ({
     <div className="bg-border h-px flex-1" />
   </div>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Features); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- Features renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/no-multi-comp */
 
@@ -183,6 +185,8 @@ export const Features = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react/jsx-max-depth */
 

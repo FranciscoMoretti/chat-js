@@ -2,6 +2,7 @@ import { env } from "@/lib/env";
 
 import { resolveWorkflowWorld } from "./world-config";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (localDeletionAvailable); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export const localDeletionAvailable = (): boolean => {
   if (resolveWorkflowWorld(env) === "vercel") {
     return false;
@@ -20,3 +21,4 @@ export const localDeletionAvailable = (): boolean => {
     return false;
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1,7 +1,9 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { readEvePostgresQueueInventory } from "./eve-queue-inventory";
+/* oxlint-enable sort-imports */
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 
 const receiptSchema = z.object({
@@ -9,16 +11,17 @@ const receiptSchema = z.object({
   streamIds: z.array(z.string()),
 });
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPayloadPurgeReady's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): assertPayloadPurgeReady uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): assertPayloadPurgeReady accepts query: TransactionSql; inventory: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const assertPayloadPurgeReady = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve TransactionSql's overloaded callable tag/helper and native query-array capability used to verify fences and configured queue state.
   query: TransactionSql,
   taskIdentifier: string,
   inventory: {
-    runIds: string[];
-    streamIds: string[];
+    readonly runIds: readonly string[];
+    readonly streamIds: readonly string[];
   }
 ): Promise<void> => {
   const resources = [
@@ -43,36 +46,38 @@ const assertPayloadPurgeReady = async (
     throw new Error("Clear queued payloads before purging native runs.");
   }
 };
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (purgeEvePostgresSessionPayloads); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve purgeEvePostgresSessionPayloads's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): purgeEvePostgresSessionPayloads's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): purgeEvePostgresSessionPayloads's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): purgeEvePostgresSessionPayloads keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): purgeEvePostgresSessionPayloads keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): purgeEvePostgresSessionPayloads uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep purgeEvePostgresSessionPayloads's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep purgeEvePostgresSessionPayloads's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): purgeEvePostgresSessionPayloads accepts connection: Sql; input: { sessionId: string; taskIdentifier: string; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): purgeEvePostgresSessionPayloads intentionally keeps the existing falsy-value behavior of saved; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 /**
  * Erase the pinned provider's fenced payload tables for an authorized session.
  * Retains only resource identities as an atomic retry receipt. Accounting and
  * application tables are untouched. This is not sandbox/blob or full app deletion.
+ * @param {Readonly<Pick<Sql, "begin">>} connection Native transaction-opening capability; query callbacks retain native transaction types.
+ * @param {{ readonly sessionId: string; readonly taskIdentifier: string }} input Authorized retired session and configured queue task, validated before opening the purge transaction.
+ * @returns {Promise<{ runIds: string[]; streamIds: string[] }>} Atomic resource-identity retry receipt after fenced native payload deletion, or the validated previously saved receipt. Rejects if ownership, retirement, fences or queue-clearance checks fail.
  */
 export const purgeEvePostgresSessionPayloads = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   input: {
-    sessionId: string;
-    taskIdentifier: string;
+    readonly sessionId: string;
+    readonly taskIdentifier: string;
   }
-) => {
+): Promise<{ runIds: string[]; streamIds: string[] }> => {
   const scope = z
     .object({ sessionId: z.string().min(1), taskIdentifier: z.string().min(1) })
     .parse(input);
   return await connection.begin(
     "isolation level read committed",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native transaction callback must retain callable SQL tag/helper and array encoding methods for the locked payload purge and receipt insert.
     async (query) => {
       // Shared with queue cleanup, which persists additional run associations.
       await query`select pg_advisory_xact_lock(hashtextextended(${`eve-queue-purge:${scope.taskIdentifier}:${scope.sessionId}`}, 0))`;
@@ -90,7 +95,7 @@ export const purgeEvePostgresSessionPayloads = async (
       const inventory = await readEvePostgresRunInventoryInTransaction(
         query,
         scope.sessionId,
-        retained.map((run) => run.id)
+        retained.map((run: { readonly id: string }) => run.id)
       );
       if (
         inventory.activeRunIds.length > 0 ||
@@ -103,8 +108,8 @@ export const purgeEvePostgresSessionPayloads = async (
       }
       const runIds = [
         ...new Set([
-          ...inventory.runs.map((run) => run.id),
-          ...retained.map((run) => run.id),
+          ...inventory.runs.map((run: { readonly id: string }) => run.id),
+          ...retained.map((run: { readonly id: string }) => run.id),
         ]),
       ].toSorted();
       const receipt = { runIds, streamIds: inventory.streamIds };
@@ -122,4 +127,6 @@ export const purgeEvePostgresSessionPayloads = async (
     }
   );
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions */

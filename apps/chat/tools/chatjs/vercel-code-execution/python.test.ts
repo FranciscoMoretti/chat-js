@@ -1,6 +1,8 @@
 import { Sandbox } from "@vercel/sandbox";
 import pino from "pino";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
@@ -11,6 +13,7 @@ const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
 vi.mock("@vercel/sandbox", () => ({
   Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -65,6 +68,7 @@ it.each([0, 1])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers -- Keep each sandbox output boundary scenario and its command sequence together. */
@@ -78,6 +82,7 @@ it.each([
   ["{", false],
 ] as const)(
   "chart envelope %s is accepted only when it is an object",
+  // oxlint-disable-next-line oxc/no-async-await -- Await the mocked sandbox command lifecycle for each wire-envelope fixture.
   async (chart, accepted): Promise<void> => {
     mocks.runCommand.mockReset();
     mocks.runCommand
@@ -97,8 +102,10 @@ it.each([
     });
     expect(result.message).toBe("printed output");
     expect(result.chart).toEqual(
+      // oxlint-disable-next-line no-ternary -- Compare each fixture with its success/error wire result without evaluating the unused branch.
       accepted ? { elements: [], extension: true, type: "line" } : ""
     );
+    // oxlint-disable-next-line no-ternary -- The expected command count follows the fixture success/error branch.
     expect(mocks.runCommand).toHaveBeenCalledTimes(accepted ? 2 : 3);
   }
 );

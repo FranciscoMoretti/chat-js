@@ -1,6 +1,6 @@
 /* oxlint-disable typescript/explicit-function-return-type -- Hoisted SDK mocks retain their inferred spy types for these accounting assertions. */
 /* oxlint-disable import/no-relative-parent-imports -- The contract test exercises the canonical registry adapter without installing Daytona into the Vercel demo. */
-/* oxlint-disable eslint/no-magic-numbers, unicorn/no-null -- Usage amounts and malformed output are concrete public contract assertions. */
+/* oxlint-disable unicorn/no-null -- Null is a malformed output fixture checked at the executor boundary. */
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
@@ -28,6 +28,7 @@ beforeEach(() => {
   mocks.execute.mockReset();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -41,7 +42,8 @@ it("the selected typed executor returns exactly one completed usage receipt", as
     usage: { costUsd: 0.05 },
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -59,3 +61,4 @@ it("failed cleanup or invalid output does not receive a completed execution char
     usage: { costUsd: 0 },
   });
 });
+/* oxlint-enable oxc/no-async-await */

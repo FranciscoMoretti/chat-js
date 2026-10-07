@@ -27,6 +27,7 @@ const deletedGuestCount = (result: unknown): number => {
   return guests.deletedCount;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve drainCleanup's awaited sequencing and rejected-Promise behavior. */
 const drainCleanup = async (
   request: () => Promise<Response>,
   remaining: number
@@ -42,7 +43,8 @@ const drainCleanup = async (
     await drainCleanup(request, remaining - batchStep);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runHostedCleanup's awaited sequencing and rejected-Promise behavior. */
 const runHostedCleanup = async (
   origin: string,
   secret: string
@@ -72,10 +74,11 @@ const runHostedCleanup = async (
     maxBatches
   );
 };
-
+/* oxlint-enable oxc/no-async-await */
 if (import.meta.main) {
   try {
     /* oxlint-disable node/no-process-env -- Scheduler entrypoint validates its two environment inputs here. */
+    // oxlint-disable-next-line node/no-top-level-await -- This scheduler executable awaits cleanup so its existing catch reports network or authorization failures.
     await runHostedCleanup(
       process.env.APP_URL ?? "",
       process.env.CRON_SECRET ?? ""
@@ -90,4 +93,6 @@ if (import.meta.main) {
   }
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (runHostedCleanup); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { runHostedCleanup };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

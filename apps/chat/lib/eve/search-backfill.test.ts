@@ -48,6 +48,7 @@ beforeEach(() => {
     ],
   });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length */
 
 /* oxlint-disable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
@@ -82,4 +83,5 @@ it("recovers every restored entry and the latest message, and can retry after a 
     { key: "event:latest", text: "Newest message" },
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */

@@ -1,7 +1,9 @@
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 const MIN_CONTENT_LENGTH = 1;
 const MIN_MESSAGE_PARTS = 1;
@@ -66,5 +68,9 @@ const eveMessageTitle = (
     .join(", ");
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveMessageInput, eveMessageTitle); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveMessageInput, eveMessageTitle };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveMessageInput); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveMessageInput };
+/* oxlint-enable import/no-named-export */

@@ -1,17 +1,23 @@
 "use client";
 
-import type { JSX as ReactJSX } from "react";
 import React from "react";
+import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+/* oxlint-enable sort-imports */
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import type { UiToolName } from "@/lib/ai/types";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useSession } from "@/providers/session-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComposerControlProps } from "./control";
+/* oxlint-enable sort-imports */
 import { getToolDisplay } from "./tool-display";
 
 const loginPrompt = (
@@ -20,6 +26,7 @@ const loginPrompt = (
     description="Sign in to use this feature in your conversation."
   />
 );
+/* oxlint-disable react/jsx-no-literals -- ToolControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- ToolControl: react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including disabled); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ToolControl = ({
@@ -39,11 +46,13 @@ const ToolControl = ({
   const Icon = definition.icon;
   const checked =
     selectedTool === tool ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading endsWith from selectedTool; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     Boolean(tool.endsWith("Document") && selectedTool?.endsWith("Document"));
   const unsupported = !model || model.toolCall === false;
   return (
     <DropdownMenuCheckboxItem
       checked={checked}
+      // oxlint-disable-next-line react/forbid-component-props -- DropdownMenuCheckboxItem accepts className in its styling contract; preserve this caller's layout and appearance.
       className="pr-8 pl-2 [&>span:first-child]:right-2 [&>span:first-child]:left-auto"
 
       // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: These independent conditions are combined as a boolean disjunction, not a nullish fallback.
@@ -53,6 +62,7 @@ const ToolControl = ({
           onToolChange(null);
           return;
         }
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         if (!session?.user) {
           toast(loginPrompt);
           return;
@@ -72,6 +82,7 @@ const ToolControl = ({
     </DropdownMenuCheckboxItem>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const canvasTools = {
@@ -79,22 +90,27 @@ const canvasTools = {
   sheet: "createSheetDocument",
   text: "createTextDocument",
 } as const;
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type -- getCanvasTool: no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
-
-const getCanvasTool = () => {
+const getCanvasTool = ():
+  | (typeof canvasTools)[keyof typeof canvasTools]
+  | undefined => {
   const kind = (["text", "code", "sheet"] as const).find((entry) =>
     installedToolNames.has(canvasTools[entry])
   );
-  return kind ? canvasTools[kind] : undefined;
+  if (kind) {
+    return canvasTools[kind];
+  }
+  return kind;
 };
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 /* oxlint-disable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- CanvasControl: react/jsx-props-no-spreading: forward the typed primitive or feature props, including events and accessibility attributes; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including props: ComposerControlProps); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const CanvasControl = (
   props: ComposerControlProps
 ): React.JSX.Element | null => {
   const tool = getCanvasTool();
-  return tool ? <ToolControl {...props} tool={tool} /> : null;
+  if (tool) {
+    return <ToolControl {...props} tool={tool} />;
+  }
+  return null;
 };
 /* oxlint-enable react/jsx-props-no-spreading, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -135,6 +151,7 @@ ImageControl.isAvailable = (): boolean =>
 VideoControl.isAvailable = (): boolean =>
   installedToolNames.has("generateVideo");
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CanvasControl, ImageControl, ResearchControl, SearchControl, VideoControl); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   CanvasControl,
   ImageControl,
@@ -142,3 +159,4 @@ export {
   SearchControl,
   VideoControl,
 };
+/* oxlint-enable import/no-named-export */

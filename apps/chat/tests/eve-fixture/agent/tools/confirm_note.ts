@@ -6,7 +6,9 @@ import { defineDynamic, defineTool } from "eve/tools";
 import { always } from "eve/tools/approval";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { filterEveTools } from "../../../../lib/eve/turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -17,10 +19,13 @@ import { filterEveTools } from "../../../../lib/eve/turn-tools";
 const confirmNote = defineTool({
   approval: {
     request: always(),
-    response: ({ responder, session }) =>
-      responder.principalId === session.initiator?.principalId
-        ? { status: "allowed" }
-        : { reason: "Only the owner may respond", status: "rejected" },
+    response: ({ responder, session }) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from session.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      if (responder.principalId === session.initiator?.principalId) {
+        return { status: "allowed" };
+      }
+      return { reason: "Only the owner may respond", status: "rejected" };
+    },
   },
   description:
     "Confirm a short note after explicit human approval. No external side effects.",

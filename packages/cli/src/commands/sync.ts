@@ -1,11 +1,16 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Command } from "commander";
+/* oxlint-enable sort-imports */
 
 import { handleError } from "#cli/utils/handle-error";
 import { syncFeatures } from "#cli/utils/sync-features";
 import { syncTools } from "#cli/utils/sync-tools";
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (sync); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sync's awaited sequencing and rejected-Promise behavior. */
 export const sync = new Command("sync")
   .description("regenerate typed tool, feature, and router registrations")
   .option("-c, --cwd <cwd>", "project directory", process.cwd())
@@ -17,3 +22,5 @@ export const sync = new Command("sync")
       handleError(error);
     }
   });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

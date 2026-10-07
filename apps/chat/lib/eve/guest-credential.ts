@@ -11,8 +11,8 @@ const HASH = /^[0-9a-f]{64}$/u;
 
 /**
  * Stable draft/ownership scope before admission, without exposing the credential hash.
- * @param tokenHash - Validated SHA-256 credential digest that identifies the guest.
- * @returns Deterministic UUID ownership scope for that credential digest.
+ * @param {string} tokenHash - Validated SHA-256 credential digest that identifies the guest.
+ * @returns {string} Deterministic UUID ownership scope for that credential digest.
  */
 const eveGuestOwnerId = (tokenHash: string): string => {
   if (!HASH.test(tokenHash)) {
@@ -28,9 +28,9 @@ const createEveGuestCredential = (): { token: string; tokenHash: string } => {
 
 /**
  * Hash a canonical, trusted client IP. The database never keeps the raw address.
- * @param address - Canonical IP obtained from the trusted forwarding policy.
- * @param secret - Server secret that isolates quota keys across installations.
- * @returns Stable quota key scoped to this server secret and client address.
+ * @param {string} address - Canonical IP obtained from the trusted forwarding policy.
+ * @param {string} secret - Server secret that isolates quota keys across installations.
+ * @returns {string} Stable quota key scoped to this server secret and client address.
  */
 const eveGuestIpHash = (address: string, secret: string): string => {
   if (!(address && secret)) {
@@ -41,4 +41,6 @@ const eveGuestIpHash = (address: string, secret: string): string => {
     .digest("hex");
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveGuestOwnerId, createEveGuestCredential, eveGuestIpHash); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveGuestOwnerId, createEveGuestCredential, eveGuestIpHash };
+/* oxlint-enable import/no-named-export */

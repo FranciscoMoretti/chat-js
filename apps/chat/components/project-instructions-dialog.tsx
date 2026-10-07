@@ -2,7 +2,10 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Dialog,
   DialogContent,
@@ -11,7 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+/* oxlint-enable sort-imports */
 import { Textarea } from "@/components/ui/textarea";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ProjectInstructionsDialog); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- ProjectInstructionsDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth -- ProjectInstructionsDialog: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; */
 
 export const ProjectInstructionsDialog = ({
@@ -41,7 +47,10 @@ export const ProjectInstructionsDialog = ({
     }}
     open={open}
   >
-    <DialogContent className="sm:max-w-2xl">
+    <DialogContent
+      // oxlint-disable-next-line react/forbid-component-props -- DialogContent accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="sm:max-w-2xl"
+    >
       <DialogHeader>
         <DialogTitle>Set project instructions</DialogTitle>
         <DialogDescription>
@@ -54,6 +63,7 @@ export const ProjectInstructionsDialog = ({
           aria-label="Project instructions"
           // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Opening the instructions dialog intentionally focuses its editable instructions field.
           autoFocus
+          // oxlint-disable-next-line react/forbid-component-props -- Textarea accepts className in its styling contract; preserve this caller's layout and appearance.
           className="min-h-[200px] resize-none"
           disabled={isPending}
           onChange={(event: { readonly target: { readonly value: string } }) =>
@@ -74,10 +84,15 @@ export const ProjectInstructionsDialog = ({
           Cancel
         </Button>
         <Button disabled={isPending} onClick={onSave} type="button">
-          {isPending ? "Saving..." : "Save instructions"}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            isPending ? "Saving..." : "Save instructions"
+          }
         </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth */

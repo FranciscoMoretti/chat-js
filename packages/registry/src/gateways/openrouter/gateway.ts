@@ -3,10 +3,14 @@ import type {
   LanguageModelV4,
 } from "@ai-sdk/provider";
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-enable sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel } from "ai";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
 const MODEL_OWNER_SEGMENT_INDEX = 0;
@@ -54,12 +58,14 @@ type OpenRouterModelResponse = Omit<
   supported_parameters?: readonly string[] | null;
 };
 const providerModelListSchema = z.object({
-  data: z.array(providerModelSchema).nullish(),
+  data: z.array(z.unknown()),
 });
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 const deriveTags = (model: Readonly<OpenRouterModelResponse>): string[] => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const inputMods = model.architecture?.input_modalities ?? ["text"];
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const outputMods = model.architecture?.output_modalities ?? ["text"];
   const supportedParams = model.supported_parameters ?? [];
 
@@ -92,6 +98,7 @@ const toAiGatewayModel = (
   model: Readonly<OpenRouterModelResponse>
 ): AiGatewayModel => {
   const tags = deriveTags(model);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading output_modalities from model.architecture; preserve one receiver evaluation, skipped accesses and the existing ["text"] fallback.
   const outputMods = model.architecture?.output_modalities ?? ["text"];
 
   let type: "language" | "embedding" | "image" = "language";
@@ -108,22 +115,47 @@ const toAiGatewayModel = (
     description: model.description ?? "",
     id: model.id,
     max_tokens:
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading max_completion_tokens from model.top_provider; preserve one receiver evaluation, skipped accesses and the existing UNKNOWN_MODEL_LIMIT fallback.
       model.top_provider?.max_completion_tokens ?? UNKNOWN_MODEL_LIMIT,
     name: model.name ?? model.id,
     object: "model",
     owned_by,
     pricing: {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading image from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       image: model.pricing?.image,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prompt from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input: model.pricing?.prompt,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_read from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input_cache_read: model.pricing?.input_cache_read,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading input_cache_write from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       input_cache_write: model.pricing?.input_cache_write,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading completion from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       output: model.pricing?.completion,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading web_search from model.pricing; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       web_search: model.pricing?.web_search,
     },
-    // oxlint-disable-next-line eslint/no-undefined -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.
+    // oxlint-disable-next-line eslint/no-undefined, no-ternary -- Preserve the gateway result's own tags key when no tags apply; omitting the key changes Object.hasOwn and object spread behavior.; no-ternary: Keep tags as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     tags: tags.length > EMPTY_TAG_COUNT ? tags : undefined,
     type,
   };
+};
+
+// Validate the wire envelope separately from each model so valid neighbors survive.
+const parseProviderModels = (value: unknown): AiGatewayModel[] => {
+  const body = providerModelListSchema.parse(value);
+  const result = body.data.flatMap((entry): AiGatewayModel[] => {
+    const model = providerModelSchema.safeParse(entry);
+    if (!model.success) {
+      return [];
+    }
+    return [toAiGatewayModel(model.data)];
+  });
+  // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
+  // oxlint-disable-next-line no-magic-numbers -- Zero is the empty-array cardinality for the catalog validation boundary.
+  if (body.data.length > 0 && result.length === 0) {
+    throw new Error("Provider catalog contains no valid models.");
+  }
+  return result;
 };
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -165,6 +197,7 @@ class OpenRouterGateway
     return this.env.OPENROUTER_API_KEY;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -192,11 +225,7 @@ class OpenRouterGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      const body = providerModelListSchema.parse(await response.json());
-      const models = body.data ?? [];
-      const result = models.map((model: Readonly<OpenRouterModelResponse>) =>
-        toAiGatewayModel(model)
-      );
+      const result = parseProviderModels(await response.json());
 
       this.log.info(
         { modelCount: result.length },
@@ -211,7 +240,10 @@ class OpenRouterGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, OpenRouterGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { OpenRouterGateway as Gateway, OpenRouterGateway };
+/* oxlint-enable import/no-named-export */

@@ -1,10 +1,14 @@
 import { expect, test, vi } from "vitest";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
 import { webSearchInput } from "./schemas";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { webSearch } from "./tool";
+/* oxlint-enable sort-imports */
 
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
 /* oxlint-disable typescript/explicit-function-return-type --
@@ -16,6 +20,7 @@ vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collect's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
  * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
  * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -32,6 +37,8 @@ const collect = async <T>(value: T | Promise<T> | AsyncIterable<T>) => {
   }
   return await Array.fromAsync(result);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable id-length, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -69,6 +76,7 @@ test("native search streams sources and seals a final cost receipt", async () =>
     status: "success",
     usage: { costUsd: 0.05 },
   });
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from results.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(results.at(-1)?.updates).toContainEqual(
     expect.objectContaining({
       results: [expect.objectContaining({ source: "web", title: "Source" })],
@@ -79,6 +87,8 @@ test("native search streams sources and seals a final cost receipt", async () =>
   );
   expect(results.length).toBeGreaterThan(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("strict fields remain required while explicit nulls apply defaults") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -119,4 +129,5 @@ test("strict fields remain required while explicit nulls apply defaults", async 
     })
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */

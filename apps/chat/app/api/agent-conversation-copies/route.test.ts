@@ -33,6 +33,7 @@ beforeEach(() => {
   mocks.session.mockResolvedValue({ user: { id: "owner" } });
   mocks.save.mockResolvedValue({ id: input.operationId, sessionId: "native" });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): it("requires login and same origin before copy work") uses 401, 403 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * unicorn/no-null (#570): it("requires login and same origin before copy work") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -46,15 +47,21 @@ it("requires login and same origin before copy work", async () => {
   expect(resolvedResult3.status).toBe(403);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects browser seeds, execution controls and oversized bodies") uses 3000, 400 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 it("rejects browser seeds, execution controls and oversized bodies", async () => {
   for (const body of [
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, seed: { messages: [] } },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, fork: {} },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, sourceSessionId: "private" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...input, modelId: "x".repeat(3000) },
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop -- Wait for each bounded stream read, readiness attempt, or shared fixture before continuing.
@@ -63,6 +70,8 @@ it("rejects browser seeds, execution controls and oversized bodies", async () =>
   }
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("canonicalizes operation coordinates and returns only the owned binding") uses 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -70,6 +79,7 @@ it("rejects browser seeds, execution controls and oversized bodies", async () =>
 it("canonicalizes operation coordinates and returns only the owned binding", async () => {
   const response = await POST(
     request({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       operationId: input.operationId.toUpperCase(),
       sourceConversationId: input.sourceConversationId.toUpperCase(),
@@ -83,6 +93,8 @@ it("canonicalizes operation coordinates and returns only the owned binding", asy
   );
   expect(response.headers.get("cache-control")).toBe("no-store");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("retains ambiguous operations and exposes only an owned recovery location") uses 503 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -105,6 +117,8 @@ it("retains ambiguous operations and exposes only an owned recovery location", a
   expect(JSON.stringify(body)).not.toContain("sensitive");
   expect(mocks.creation).toHaveBeenCalledWith("owner", input.operationId);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 it("allows discarding the browser request only for a known unavailable operation", async () => {
   mocks.save.mockRejectedValue(new Error("rejected"));
@@ -123,3 +137,4 @@ it("allows discarding the browser request only for a known unavailable operation
     retryable: true,
   });
 });
+/* oxlint-enable oxc/no-async-await */

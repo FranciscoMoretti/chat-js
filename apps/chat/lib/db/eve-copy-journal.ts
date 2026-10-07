@@ -3,16 +3,25 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { and, eq, inArray, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { parseSessionTranscriptSeed } from "eve/transcript";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveCopyPlan } from "@/lib/eve/copy-journal-contract";
+/* oxlint-enable sort-imports */
 import { eveCopyResources } from "@/lib/eve/copy-transcript";
 import { isFileStorageKey } from "@/lib/file-url";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "./client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CreationConflictError } from "./eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveChat,
   eveConversation,
@@ -22,12 +31,26 @@ import {
   eveResponseGroup,
   eveStoredFile,
 } from "./schema";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): CopyTransaction uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type CopyTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type ReserveEveCopyInput = Readonly<{
+  operationId: string;
+  sourceConversationId: string;
+  sourceSessionId: string;
+  sourceOwnerId: string;
+  projectionHash: string;
+  title: string;
+  modelId: string;
+  plan: EveCopyPlan;
+}>;
+type CopyWriteTransaction = Readonly<
+  Pick<CopyTransaction, "execute" | "insert" | "select">
+>;
 /* oxlint-enable no-magic-numbers */
 const hashPattern = /^[a-f0-9]{64}$/u;
 const FIRST_ROW_INDEX = 0;
@@ -38,6 +61,69 @@ interface EveCopyOperation {
   copy: typeof eveConversationCopy.$inferSelect;
 }
 
+type CopyDocumentCheckpointPlan = Readonly<{
+  seed: Readonly<{
+    messages: readonly Readonly<{ role: string }>[];
+  }>;
+  documentCheckpoints: readonly Readonly<{
+    messageIndex: number;
+    heads: readonly Readonly<{
+      documentId: string;
+      revisionId: string;
+    }>[];
+  }>[];
+  documents: readonly Readonly<{
+    documentId: string;
+    revisions: readonly Readonly<{ id: string }>[];
+  }>[];
+}>;
+
+type CopyPlanReader = Readonly<{
+  seed: Readonly<{
+    messages: readonly Readonly<{ role: string }>[];
+    attachments?: EveCopyPlan["seed"]["attachments"];
+  }>;
+  documentCheckpoints: CopyDocumentCheckpointPlan["documentCheckpoints"];
+  sourceHeads: readonly Readonly<{
+    documentId: string;
+    revisionId: string;
+  }>[];
+  files: readonly Readonly<{
+    key: string;
+    source: Readonly<
+      { kind: "stored"; key: string } | { kind: "inline"; base64: string }
+    >;
+    sha256: string;
+    size: number;
+    mediaType: string;
+  }>[];
+  documents: readonly Readonly<{
+    documentId: string;
+    headRevisionId: string;
+    revisions: readonly Readonly<{
+      id: string;
+      parentRevisionId: string | null;
+      title: string;
+      content: string;
+      fileIds: readonly string[];
+      kind: "text" | "code" | "sheet";
+      createdAt: string;
+    }>[];
+  }>[];
+}>;
+
+type CopyPlanFilesReader = Readonly<{
+  files: readonly Readonly<{
+    source: Readonly<
+      { kind: "stored"; key: string } | { kind: "inline"; base64: string }
+    >;
+  }>[];
+}>;
+type CopyPlanFileFields = Readonly<
+  Pick<EveCopyPlan["files"][number], "key" | "mediaType" | "sha256" | "size">
+>;
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve hasEveResponseGroupOperation's awaited sequencing and rejected-Promise behavior. */
 const hasEveResponseGroupOperation = async (
   tx: Readonly<Pick<CopyTransaction, "select">>,
   ownerId: string,
@@ -55,20 +141,17 @@ const hasEveResponseGroupOperation = async (
     .limit(SINGLE_ROW_LIMIT);
   return rows.length === SINGLE_ROW_LIMIT;
 };
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/prefer-readonly-parameter-types (#565): EveCopySourceChangedError accepts options?: ErrorOptions; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-enable oxc/no-async-await */
 class EveCopySourceChangedError extends CreationConflictError {
-  public constructor(message?: string, options?: ErrorOptions) {
+  public constructor(message?: string, options?: Readonly<ErrorOptions>) {
     super(message, options);
     this.name = "EveCopySourceChangedError";
   }
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve lockEveCopyOwners's awaited sequencing and rejected-Promise behavior. */
 
 const lockEveCopyOwners = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- #565: The complete Drizzle transaction preserves transaction-bound locks. Readonly leaves mutable _.session and _.tableNamesMap; method-only views accept plain db handles, while full mapped views erase protected schema/nestedIndex provenance required by the lock API.
-  tx: CopyTransaction,
+  tx: Readonly<Pick<CopyTransaction, "execute">>,
   owners: readonly string[]
 ): Promise<void> => {
   for (const owner of [...new Set(owners)].toSorted()) {
@@ -78,55 +161,61 @@ const lockEveCopyOwners = async (
     );
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve rejectEveCopyPreflight's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements -- moving it below executable initialization can obscure ordering and API ownership.
 max-statements (#512): rejectEveCopyPreflight keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Durable rejection prevents a concurrent request from later reserving the discarded operation.
- * @param ownerId Owner whose operation is being discarded.
- * @param operationId Immutable creation operation to mark as rejected.
+ * @param {string} ownerId Owner whose operation is being discarded.
+ * @param {string} operationId Immutable creation operation to mark as rejected.
  */
 const rejectEveCopyPreflight = async (
   ownerId: string,
   operationId: string
 ): Promise<void> => {
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- #565: The complete Drizzle transaction preserves transaction-bound locks. Readonly leaves mutable _.session and _.tableNamesMap; method-only views accept plain db handles, while full mapped views erase protected schema/nestedIndex provenance required by the lock API.
-  await db.transaction(async (tx) => {
-    await lockEveCopyOwners(tx, [ownerId]);
-    const existingRows = await tx
-      .select({ id: eveConversation.id })
-      .from(eveConversation)
-      .where(
-        and(
-          eq(eveConversation.ownerId, ownerId),
-          eq(eveConversation.operationId, operationId)
-        )
-      );
-    const existing = existingRows.at(FIRST_ROW_INDEX);
-    if (existing) {
-      return;
+  await db.transaction(
+    async (
+      tx: Readonly<Pick<CopyTransaction, "execute" | "insert" | "select">>
+    ) => {
+      await lockEveCopyOwners(tx, [ownerId]);
+      const existingRows = await tx
+        .select({ id: eveConversation.id })
+        .from(eveConversation)
+        .where(
+          and(
+            eq(eveConversation.ownerId, ownerId),
+            eq(eveConversation.operationId, operationId)
+          )
+        );
+      const existing = existingRows.at(FIRST_ROW_INDEX);
+      if (existing) {
+        return;
+      }
+      if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
+        return;
+      }
+      const conversationId = crypto.randomUUID();
+      const chatId = crypto.randomUUID();
+      await tx.insert(eveChat).values({
+        id: chatId,
+        ownerId,
+        title: "",
+        titleStatus: "fallback",
+      });
+      await tx.insert(eveConversation).values({
+        chatId,
+        creationKind: "copy",
+        firstMessage: "",
+        id: conversationId,
+        operationId,
+        ownerId,
+        state: "deleted",
+      });
     }
-    if (await hasEveResponseGroupOperation(tx, ownerId, operationId)) {
-      return;
-    }
-    const conversationId = crypto.randomUUID();
-    const chatId = crypto.randomUUID();
-    await tx.insert(eveChat).values({
-      id: chatId,
-      ownerId,
-      title: "",
-      titleStatus: "fallback",
-    });
-    await tx.insert(eveConversation).values({
-      chatId,
-      creationKind: "copy",
-      firstMessage: "",
-      id: conversationId,
-      operationId,
-      ownerId,
-      state: "deleted",
-    });
-  });
+  );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve isUnacceptedEveCopy's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements */
 
 const isUnacceptedEveCopy = async (
@@ -146,15 +235,15 @@ const isUnacceptedEveCopy = async (
   const copy = copyRows.at(FIRST_ROW_INDEX);
   return Boolean(copy);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertEveCopySourceAvailable's awaited sequencing and rejected-Promise behavior. */
 /** Caller holds source/destination family locks; the shared row lock serializes revocation.
- * @param tx Transaction holding the family locks and source sharing lock.
- * @param source Published conversation and session identities expected by the copy.
+ * @param {CopyTransaction} tx Transaction holding the family locks and source sharing lock.
+ * @param {{ readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; }} source Published conversation and session identities expected by the copy.
  */
 
 const assertEveCopySourceAvailable = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- #565: The complete Drizzle transaction preserves transaction-bound locks. Readonly leaves mutable _.session and _.tableNamesMap; method-only views accept plain db handles, while full mapped views erase protected schema/nestedIndex provenance required by the lock API.
-  tx: CopyTransaction,
+  tx: Readonly<Pick<CopyTransaction, "select">>,
   source: {
     readonly sourceConversationId: string;
     readonly sourceSessionId: string;
@@ -181,7 +270,8 @@ const assertEveCopySourceAvailable = async (
     );
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEveCopy's awaited sequencing and rejected-Promise behavior. */
 const readEveCopy = async (
   tx: Pick<CopyTransaction, "select">,
   ownerId: string,
@@ -210,7 +300,8 @@ const readEveCopy = async (
   }
   return row;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 const getEveCopyOperation = async (
   ownerId: string,
   operationId: string
@@ -236,21 +327,25 @@ const getEveCopyOperation = async (
   // oxlint-disable-next-line typescript/consistent-return -- #580: getEveCopyOperation has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return await readEveCopy(db, ownerId, conversation.id);
 };
-
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types --
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable max-statements --
  * max-statements (#512): validateCopyDocumentCheckpoints keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): validateCopyDocumentCheckpoints accepts plan: EveCopyPlan; checkpoint; message; document; revision; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
-const validateCopyDocumentCheckpoints = (plan: EveCopyPlan): void => {
+const validateCopyDocumentCheckpoints = (
+  plan: CopyDocumentCheckpointPlan
+): void => {
   const checkpoints = new Map(
     plan.documentCheckpoints.map((checkpoint) => [
       checkpoint.messageIndex,
       checkpoint,
     ])
   );
-  const users = plan.seed.messages.flatMap((message, index) =>
-    message.role === "user" ? [index] : []
-  );
+  const users = plan.seed.messages.flatMap((message, index) => {
+    if (message.role === "user") {
+      return [index];
+    }
+    return [];
+  });
   if (
     checkpoints.size !== plan.documentCheckpoints.length ||
     checkpoints.size !== users.length ||
@@ -280,22 +375,32 @@ const validateCopyDocumentCheckpoints = (plan: EveCopyPlan): void => {
     }
   }
 };
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): validateCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): validateCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): validateCopyPlan uses 0, 2_147_483_647 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): validateCopyPlan accepts plan: EveCopyPlan; file; head; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): validateCopyPlan preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 // oxlint-disable-next-line eslint/complexity -- Keep the atomic admission and validation branches together at this transaction boundary.
-const validateCopyPlan = (plan: EveCopyPlan): void => {
+const validateCopyPlan = (plan: CopyPlanReader): void => {
   parseSessionTranscriptSeed(plan.seed);
   const keys = new Set<string>();
   const sourceKeys = new Set(
-    plan.files.flatMap((file) =>
-      file.source.kind === "stored" ? [file.source.key] : []
+    plan.files.flatMap(
+      (
+        file: Readonly<{
+          source: Readonly<
+            { kind: "stored"; key: string } | { kind: "inline"; base64: string }
+          >;
+        }>
+      ) => {
+        if (file.source.kind === "stored") {
+          return [file.source.key];
+        }
+        return [];
+      }
     )
   );
   for (const file of plan.files) {
@@ -330,7 +435,10 @@ const validateCopyPlan = (plan: EveCopyPlan): void => {
   const documentIds = new Set<string>();
   const revisionIds = new Set<string>();
   const sourceDocumentIds = new Set(
-    plan.sourceHeads.map((head) => z.uuid().parse(head.documentId))
+    plan.sourceHeads.map(
+      (head: Readonly<{ documentId: string; revisionId: string }>) =>
+        z.uuid().parse(head.documentId)
+    )
   );
   for (const document of plan.documents) {
     z.uuid().parse(document.documentId);
@@ -364,24 +472,27 @@ const validateCopyPlan = (plan: EveCopyPlan): void => {
   }
   validateCopyDocumentCheckpoints(plan);
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertSourceFiles's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable max-params, no-magic-numbers --
  * max-params (#511): assertSourceFiles keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): assertSourceFiles uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): assertSourceFiles accepts tx: CopyTransaction; plan: EveCopyPlan; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 const assertSourceFiles = async (
-  tx: CopyTransaction,
+  tx: Readonly<Pick<CopyTransaction, "select">>,
   ownerId: string,
   conversationId: string,
-  plan: EveCopyPlan
+  plan: CopyPlanFilesReader
 ): Promise<void> => {
   const keys = [
     ...new Set(
-      plan.files.flatMap((file) =>
-        file.source.kind === "stored" ? [file.source.key] : []
-      )
+      plan.files.flatMap((file) => {
+        if (file.source.kind === "stored") {
+          return [file.source.key];
+        }
+        return [];
+      })
     ),
   ];
   if (keys.length === 0) {
@@ -411,29 +522,22 @@ const assertSourceFiles = async (
     );
   }
 };
-/* oxlint-enable max-params, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve reserveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-params, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- max-lines-per-function (#510): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): reserveEveCopyOperation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): reserveEveCopyOperation uses 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/prefer-readonly-parameter-types (#565): reserveEveCopyOperation accepts input: { operationId: string; sourceConversationId: string; sourceSessionId: string; tx; file; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /** Allocation and source authorization are committed before any destination storage I/O.
- * @param ownerId Owner of the fresh destination conversation.
- * @param input Immutable source identity, projection and prepared resources for the copy.
- * @returns The persisted preparation, including an identical prior reservation on retry.
+ * @param {string} ownerId Owner of the fresh destination conversation.
+ * @param {{ operationId: string; readonly sourceConversationId: string; readonly sourceSessionId: string; readonly sourceOwnerId: string; projectionHash: string; title: string; modelId: string; plan: EveCopyPlan; }} input Immutable source identity, projection and prepared resources for the copy.
+ * @returns {Promise<EveCopyOperation>} The persisted preparation, including an identical prior reservation on retry.
  */
 const reserveEveCopyOperation = async (
   ownerId: string,
-  input: {
-    operationId: string;
-    readonly sourceConversationId: string;
-    readonly sourceSessionId: string;
-    readonly sourceOwnerId: string;
-    projectionHash: string;
-    title: string;
-    modelId: string;
-    plan: EveCopyPlan;
-  }
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The Drizzle JSONB insert requires the existing EveCopyPlan type; a readonly plan fails its native insert overload. Keep the original object and schema contract until the database JSON type can accept a readonly plan.
+  input: ReserveEveCopyInput
 ): Promise<EveCopyOperation> => {
   validateCopyPlan(input.plan);
   if (!hashPattern.test(input.projectionHash)) {
@@ -442,7 +546,7 @@ const reserveEveCopyOperation = async (
   const planHash = createHash("sha256")
     .update(JSON.stringify(input.plan))
     .digest("hex");
-  return await db.transaction(async (tx) => {
+  return await db.transaction(async (tx: CopyWriteTransaction) => {
     await lockEveCopyOwners(tx, [ownerId, input.sourceOwnerId]);
     const existingRows = await tx
       .select()
@@ -536,18 +640,21 @@ const reserveEveCopyOperation = async (
       sourceSessionId: input.sourceSessionId,
     });
     if (input.plan.files.length > 0) {
-      await tx
-        .insert(eveStoredFile)
-        .values(input.plan.files.map((file) => ({ key: file.key, ownerId })));
+      await tx.insert(eveStoredFile).values(
+        input.plan.files.map((file: CopyPlanFileFields) => ({
+          key: file.key,
+          ownerId,
+        }))
+      );
       await tx.insert(eveFileReference).values(
-        input.plan.files.map((file) => ({
+        input.plan.files.map((file: CopyPlanFileFields) => ({
           conversationId: conversation.id,
           key: file.key,
           ownerId,
         }))
       );
       await tx.insert(eveConversationCopyFile).values(
-        input.plan.files.map((file) => ({
+        input.plan.files.map((file: CopyPlanFileFields) => ({
           conversationId: conversation.id,
           key: file.key,
           mediaType: file.mediaType,
@@ -560,7 +667,9 @@ const reserveEveCopyOperation = async (
     return await readEveCopy(tx, ownerId, conversation.id);
   });
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertEveCopySourceAvailable, EveCopySourceChangedError, getEveCopyOperation, isUnacceptedEveCopy, lockEveCopyOwners, readEveCopy, rejectEveCopyPreflight, reserveEveCopyOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
 /* oxlint-disable max-lines -- #509: This eve-copy-journal.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
 export {
@@ -573,3 +682,4 @@ export {
   rejectEveCopyPreflight,
   reserveEveCopyOperation,
 };
+/* oxlint-enable import/no-named-export */

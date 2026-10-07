@@ -48,4 +48,6 @@ const weatherResult = z.object({
   timezone_abbreviation: z.string(),
   utc_offset_seconds: z.number(),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (weatherInput, weatherResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { weatherInput, weatherResult };
+/* oxlint-enable import/no-named-export */

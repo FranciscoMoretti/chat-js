@@ -1,5 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { describe, expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import {
   eveMessageDelivery,
@@ -146,13 +148,17 @@ it("retries a busy saved delivery with its original identity and clears rejectio
   });
   eveMessageDelivery.reject(storage, "session", original, "Busy", true);
   const reloaded = eveMessageDelivery.read(storage, "session");
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading retryable from reloaded; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(reloaded?.retryable).toBe(true);
   if (!reloaded) {
     throw new Error("Missing saved delivery");
   }
   const retry = eveMessageDelivery.retry(storage, "session", reloaded);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from retry; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(retry?.operationId).toBe(original.operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rejection from retry; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(retry?.rejection).toBeUndefined();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading retryable from retry; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(retry?.retryable).toBeUndefined();
   // An ambiguous failed retry must never remain automatically replayable.
   expect(

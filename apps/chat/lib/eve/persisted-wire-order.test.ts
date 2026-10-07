@@ -3,7 +3,9 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { createConversationInput } from "./contracts";
 import { eveMcpResult } from "./mcp-result";

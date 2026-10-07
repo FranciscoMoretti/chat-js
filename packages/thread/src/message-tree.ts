@@ -1,15 +1,19 @@
 import type { UIMessage } from "ai";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
-  ROOT_PARENT_ID,
   ABSENT_MESSAGE,
+  ROOT_PARENT_ID,
   assertLeaf,
-  assertParentUnchanged,
   assertParentExistsAndAcyclic,
+  assertParentUnchanged,
   validateMessagePath,
 } from "./message-tree-guards";
+/* oxlint-enable sort-imports */
 import { readMessageTreeIndexes } from "./message-tree-readers";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SnapshotInput, TreeStorageReader } from "./message-tree-readers";
+/* oxlint-enable sort-imports */
 import type { MessageTreeSnapshot } from "./types";
 
 const EMPTY_CHILD_COUNT = 0;
@@ -47,7 +51,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getMessage(messageId: string): TMessage | undefined {
     const message = this.#messagesById.get(messageId);
-    return message ? clone(message) : ABSENT_MESSAGE;
+
+    if (message) {
+      return clone(message);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getParentId(messageId: string): string | null | undefined {
@@ -56,9 +64,11 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public getParent(messageId: string): TMessage | undefined {
     const parentId = this.#parentById.get(messageId);
-    return typeof parentId === "string" && parentId !== ""
-      ? this.getMessage(parentId)
-      : ABSENT_MESSAGE;
+
+    if (typeof parentId === "string" && parentId !== "") {
+      return this.getMessage(parentId);
+    }
+    return ABSENT_MESSAGE;
   }
 
   public getChildren(messageId: string | null): TMessage[] {
@@ -213,6 +223,7 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public setPath(messages: readonly Readonly<TMessage>[]): void {
     this.updatePath(messages);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the existing ROOT_PARENT_ID fallback.
     this.#cursorId = messages.at(LAST_PATH_INDEX)?.id ?? ROOT_PARENT_ID;
   }
 
@@ -279,4 +290,6 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
   }
 }
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MessageTree); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { MessageTree };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

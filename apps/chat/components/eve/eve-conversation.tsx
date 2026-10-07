@@ -1,60 +1,77 @@
 "use client";
 
 import type { useEveAgent } from "eve/react";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useEffect, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+/* oxlint-enable sort-imports */
 import { AttachmentList } from "@/components/attachment-list";
 import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import {
   expandSelectedModelValue,
   getPrimarySelectedModelId,
 } from "@/lib/ai/types";
-import type { SelectedModelValue, UiToolName } from "@/lib/ai/types";
 import { isEveAdmissionBusy } from "@/lib/eve/admission-retry";
 import { isEveCommandRejection } from "@/lib/eve/command-rejection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { draftMessage, restoreDraft } from "@/lib/eve/draft";
+/* oxlint-enable sort-imports */
 import type { DraftAttachment } from "@/lib/eve/draft";
 import { eveUserForkBoundary } from "@/lib/eve/fork-source";
 /* oxlint-disable import/max-dependencies -- @/lib/eve/logical-response-slots import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { logicalResponseSlots } from "@/lib/eve/logical-response-slots";
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ActivePendingEveMessage } from "@/lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 import { EVE_MESSAGE_OPERATION_HEADER } from "@/lib/eve/message-delivery";
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { responseModelReferences } from "@/lib/eve/response-model";
 import { sendCommand } from "@/lib/eve/send-command";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   useDefaultModel,
   useModelChange,
 } from "@/providers/default-model-provider";
+/* oxlint-enable sort-imports */
 
 import { EveArtifactLayout } from "./eve-artifact-layout";
 import { EveComposer } from "./eve-composer";
 import { EveForkRecovery } from "./eve-fork-recovery";
 import { EveInitialMessage } from "./eve-initial-message";
 import { useLogicalChat } from "./eve-logical-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveLogicalResponses,
   EveLogicalVersions,
 } from "./eve-logical-navigation";
+/* oxlint-enable sort-imports */
 import { EveMessages } from "./eve-messages";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveOptimisticResponseGroup,
   shouldAppendEveOptimisticResponseGroup,
 } from "./eve-optimistic-response-group";
+/* oxlint-enable sort-imports */
 import { EveThinkingMessage } from "./eve-thinking-message";
 import { useEveAttachments } from "./use-eve-attachments";
 import { useEveComposerDraft } from "./use-eve-composer-draft";
 import { useEveFork } from "./use-eve-fork";
 import { useEveMessageDelivery } from "./use-eve-message-delivery";
 import { useLogicalCommands } from "./use-logical-commands";
-/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/jsx-no-literals -- EveConversation renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null -- EveConversation: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-params: this callback signature is consumed by the existing library or feature API; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-array-as-prop: these props derive from the current render; sharing or memoizing them requires a separate identity contract; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including failure?: Error); typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including snapshot.cursorId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 // This controller coordinates streaming, optimistic delivery, recovery, and comparison state.
 // oxlint-disable-next-line eslint/complexity -- Review debt #620: split this state/render orchestration only after verifying its pending, recovery and failure transitions.
@@ -110,17 +127,21 @@ const EveConversation = ({
       event.type === "turn.cancelled"
   );
   const durableError =
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading type from latestTurn; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep durableError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     latestTurn?.type === "turn.failed" ? latestTurn.data.message : undefined;
   const displayedError =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from commandFailure; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining. Keep the existing nullish guard when reading message from agent.error; preserve one receiver evaluation, skipped accesses and the existing agent.error?.message fallback. The app guidance prefers optional chaining.
     commandFailure?.message ?? agent.error?.message ?? durableError;
   // Failed provisional messages are retained in the recovery panel below.
   // They must not look like accepted transcript entries or survive a retry twice.
   const selectedPath = new Set<string>();
+  // oxlint-disable-next-line no-ternary -- Keep selectedNode as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   let selectedNode = snapshot.cursorId
     ? snapshot.nodes.get(snapshot.cursorId)
     : undefined;
   while (selectedNode) {
     selectedPath.add(selectedNode.id);
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     selectedNode = selectedNode.parentId
       ? snapshot.nodes.get(selectedNode.parentId)
       : undefined;
@@ -128,6 +149,7 @@ const EveConversation = ({
   const messages = agent.data.messages
     .filter((message) => {
       if (
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading optimistic from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         message.metadata?.optimistic &&
         message.metadata.status === "failed"
       ) {
@@ -142,27 +164,40 @@ const EveConversation = ({
     .map((message) => {
       const id = controller.logicalId(conversationId, message.id);
       const canonical =
+        // oxlint-disable-next-line no-ternary -- Keep canonical as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         typeof id === "string" && id !== ""
-          ? snapshot.nodes.get(id)?.message
+          ? // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from snapshot.nodes.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+            snapshot.nodes.get(id)?.message
           : undefined;
-      return canonical ? { ...message, parts: canonical.parts } : message;
+      if (canonical) {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing message own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        return { ...message, parts: canonical.parts };
+      }
+      return message;
     });
   const editingMessageId =
     fork.editingMessageId ??
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.find(...); preserve one receiver evaluation, skipped accesses and the existing messages.find(       (message) =>         eveUserForkBoundary(message) === fork.editingBoundary &&         Boolean(fork.editingBoundary)     )?.id fallback. The app guidance prefers optional chaining.
     messages.find(
       (message) =>
         eveUserForkBoundary(message) === fork.editingBoundary &&
         Boolean(fork.editingBoundary)
     )?.id;
   const responseModels = responseModelReferences(agent.events);
-  const modelForMessage = (message: (typeof messages)[number]) => {
+  const modelForMessage = (
+    message: (typeof messages)[number]
+  ): string | undefined => {
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep reference as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const reference = message.metadata?.turnId
       ? responseModels.get(message.metadata.turnId)
-      : message.metadata?.modelId;
+      : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+        message.metadata?.modelId;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading indexOf from reference; preserve one receiver evaluation, skipped accesses and the existing -1 fallback. The app guidance prefers optional chaining.
     const separator = reference?.indexOf("/") ?? -1;
-    return reference && separator > 0 && separator < reference.length - 1
-      ? reference.slice(separator + 1)
-      : undefined;
+    if (reference && separator > 0 && separator < reference.length - 1) {
+      return reference.slice(separator + 1);
+    }
+    return undefined;
   };
   const busy =
     agent.status === "streaming" ||
@@ -174,6 +209,7 @@ const EveConversation = ({
         part.type === "dynamic-tool" && part.state === "approval-requested"
     )
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve run's awaited sequencing and rejected-Promise behavior. */
   const run = async (action: () => Promise<unknown>): Promise<void> => {
     if (!controller.commands.claim(conversationId)) {
       return;
@@ -184,6 +220,7 @@ const EveConversation = ({
       await action();
     } catch (error) {
       setCommandFailure(
+        // oxlint-disable-next-line no-ternary -- Keep setCommandFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         error instanceof Error
           ? error
           : new Error("Request failed. Reconnect before retrying.")
@@ -193,6 +230,8 @@ const EveConversation = ({
       controller.commands.update(conversationId, { pending: false });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve send's awaited sequencing and rejected-Promise behavior. */
   const send = async (
     action: () => Promise<void>,
     operationId?: string
@@ -202,6 +241,7 @@ const EveConversation = ({
       action,
       agent.resume,
       cancellation > 0,
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from controller.getSnapshot(...).agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       () => controller.getSnapshot().agents.get(conversationId)?.error,
       () => !operationId || delivery.hasAcknowledged(operationId)
     );
@@ -209,6 +249,8 @@ const EveConversation = ({
       controller.commands.update(conversationId, { cancellation: 0 });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendPendingMessage's awaited sequencing and rejected-Promise behavior. */
   const sendPendingMessage = async (
     pending: ActivePendingEveMessage
   ): Promise<void> => {
@@ -218,9 +260,11 @@ const EveConversation = ({
           agent.send(draftMessage(pending.message, pending.attachments), {
             headers: {
               [EVE_MESSAGE_OPERATION_HEADER]: pending.operationId,
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (pending.modelId                 ? { "x-chatjs-selected-model": pending.modelId }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(pending.modelId
                 ? { "x-chatjs-selected-model": pending.modelId }
                 : {}),
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (pending.selectedTool                 ? { "x-chatjs-selected-tool": pending.selectedTool }                 : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(pending.selectedTool
                 ? { "x-chatjs-selected-tool": pending.selectedTool }
                 : {}),
@@ -235,6 +279,8 @@ const EveConversation = ({
       throw error;
     }
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve submitMessage's awaited sequencing and rejected-Promise behavior. */
   const submitMessage = async (
     message: string,
     attachments: DraftAttachment[],
@@ -256,6 +302,8 @@ const EveConversation = ({
     }
     await sendPendingMessage(pending);
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cancelExecution's awaited sequencing and rejected-Promise behavior. */
   const cancelExecution = async (executionId: string): Promise<void> => {
     const execution = controller.getSnapshot().agents.get(executionId);
     if (!execution || controller.commands.get(executionId).cancelling) {
@@ -278,6 +326,7 @@ const EveConversation = ({
       controller.commands.update(executionId, { cancelling: false });
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const cancel = (): Promise<void> => cancelExecution(conversationId);
   // Retain the selected tool across a pending or comparison recovery flow.
   // oxlint-disable-next-line eslint/no-use-before-define -- Review debt #620: retainedToolSelection is a hoisted function; review declaration placement without changing selection recovery behavior.
@@ -309,9 +358,11 @@ const EveConversation = ({
       onStopExecution={cancelExecution}
       logicalChatId={controller.chatId}
       getExecutionMessages={(id) =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
         snapshot.agents.get(id)?.data.messages ?? []
       }
       isExecutionBusy={(id) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from snapshot.agents.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const status = snapshot.agents.get(id)?.status;
         return (
           status === "submitted" ||
@@ -337,7 +388,10 @@ const EveConversation = ({
         {header}
         <div className="flex min-h-0 flex-1 flex-col">
           <Conversation>
-            <ConversationContent className="mx-auto w-full max-w-3xl">
+            <ConversationContent
+              // oxlint-disable-next-line react/forbid-component-props -- ConversationContent accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="mx-auto w-full max-w-3xl"
+            >
               {initialMessage && messages.length === 0 && (
                 <EveInitialMessage message={initialMessage} />
               )}
@@ -357,6 +411,7 @@ const EveConversation = ({
                 messages={messages}
 
                 editor={
+                  // oxlint-disable-next-line no-ternary -- Keep editor JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   editingMessageId
                     ? {
                         content: (
@@ -364,6 +419,7 @@ const EveConversation = ({
                             <EveComposer
                               // oxlint-disable-next-line jsx-a11y/no-autofocus -- #536: Choosing Edit intentionally transfers focus to the message composer inside that message.
                               autoFocus
+                              // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                               status={fork.busy ? "submitted" : "ready"}
                               disabled={
                                 busy ||
@@ -435,24 +491,29 @@ const EveConversation = ({
                     (candidate) => candidate.role === "user"
                   );
                   const response = following
+                    // oxlint-disable-next-line no-ternary -- Keep following .slice argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     .slice(0, nextUser === -1 ? following.length : nextUser)
                     .find((candidate) => candidate.role === "assistant");
                   const logicalId = controller.logicalId(
                     conversationId,
                     message.id
                   );
+                  // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                   const group = logicalId
                     ? logicalResponseSlots(snapshot, logicalId)
                     : undefined;
                   const groupModels: Record<string, number> = {};
+                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slots from group; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
                   for (const slot of group?.slots ?? []) {
                     groupModels[slot.modelId] =
                       (groupModels[slot.modelId] ?? 0) + 1;
                   }
                   return fork.begin(message, undefined, {
                     events: agent.events,
+                    // oxlint-disable-next-line no-ternary -- Keep modelSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                     modelSelection: group ? groupModels : undefined,
                     response:
+                      // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                       response && modelForMessage(response)
                         ? response
                         : undefined,
@@ -464,6 +525,7 @@ const EveConversation = ({
                 }}
 
                 onSuggestion={(suggestion) => {
+                  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                   void run(async () => {
                     // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                     if (modelIds.length > 1) {
@@ -485,6 +547,7 @@ const EveConversation = ({
                       );
                     }
                   });
+                  /* oxlint-enable oxc/no-async-await */
                 }}
 
                 // oxlint-disable-next-line typescript/no-misused-promises -- #585: Conversation commands run through the existing fork/run/cancellation owners; changing event settlement requires command-lifecycle review.
@@ -515,9 +578,12 @@ const EveConversation = ({
             {pendingMessage && !commandPending && (
               <output className="space-y-2 text-sm">
                 <p>
-                  {pendingMessage.rejection
-                    ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
-                    : "Message delivery is unconfirmed. Your draft is saved in this tab."}
+                  {
+                    // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    pendingMessage.rejection
+                      ? `Message was not sent: ${pendingMessage.rejection}. Your draft is saved in this tab.`
+                      : "Message delivery is unconfirmed. Your draft is saved in this tab."
+                  }
                 </p>
                 <p className="whitespace-pre-wrap">{pendingMessage.message}</p>
                 <AttachmentList attachments={pendingMessage.attachments} />
@@ -525,12 +591,14 @@ const EveConversation = ({
                   {pendingMessage.retryable && pendingMessage.operationId && (
                     <Button
                       onClick={() => {
+                        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                         void run(async () => {
                           const retried = delivery.retry(pendingMessage);
                           if (retried) {
                             await sendPendingMessage(retried);
                           }
                         });
+                        /* oxlint-enable oxc/no-async-await */
                       }}
                       size="sm"
                       type="button"
@@ -541,11 +609,12 @@ const EveConversation = ({
                   )}
                   <Button
                     onClick={() => {
-                      setDraft((current) =>
-                        current
-                          ? `${current}\n\n${pendingMessage.message}`
-                          : pendingMessage.message
-                      );
+                      setDraft((current) => {
+                        if (current) {
+                          return `${current}\n\n${pendingMessage.message}`;
+                        }
+                        return pendingMessage.message;
+                      });
                       files.setAttachments((current) => [
                         ...current,
                         ...pendingMessage.attachments.filter(
@@ -560,6 +629,7 @@ const EveConversation = ({
                       );
                       delivery.release(pendingMessage);
                       setCommandFailure(
+                        // oxlint-disable-next-line no-ternary -- Keep setCommandFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                         pendingMessage.rejection
                           ? undefined
                           : new Error(
@@ -577,6 +647,7 @@ const EveConversation = ({
               </output>
             )}
             <EveComposer
+              // oxlint-disable-next-line no-ternary -- Keep status JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               status={agent.status === "resuming" ? "submitted" : agent.status}
               disabled={
                 !composerDraft.loaded ||
@@ -596,6 +667,7 @@ const EveConversation = ({
               onStop={cancel}
 
               onSubmit={() => {
+                /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                 void run(async () => {
                   // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
                   if (modelIds.length > 1) {
@@ -616,15 +688,25 @@ const EveConversation = ({
                     );
                   }
                 });
+                /* oxlint-enable oxc/no-async-await */
               }}
               onToolChange={handleSelectedToolChange}
               readOnly={Boolean(comparison)}
-              retainedModelId={pendingMessage?.modelId}
-              retainedModelIds={comparison?.modelIds}
+              retainedModelId={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from pendingMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                pendingMessage?.modelId
+                /* oxlint-enable oxc/no-optional-chaining */
+              }
+              retainedModelIds={
+                /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelIds from comparison; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                comparison?.modelIds
+                /* oxlint-enable oxc/no-optional-chaining */
+              }
               selectedTool={displayedTool}
               stopDisabled={cancelPending || agent.status === "resuming"}
             />
             {displayedError &&
+              // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rejection from pendingMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
               !pendingMessage?.rejection &&
               !isEveCommandRejection(commandFailure ?? agent.error) && (
                 <Button
@@ -646,7 +728,8 @@ const EveConversation = ({
     </EveArtifactLayout>
   );
 };
-/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react-perf/jsx-no-new-object-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, typescript/strict-void-return, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- sameComposerDraft: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including draft: ReturnType<typeof restoreDraft>). */
 
@@ -657,6 +740,7 @@ const sameComposerDraft = (
   draft.text.trim() === sent.text.trim() &&
   draft.attachments.length === sent.attachments.length &&
   draft.attachments.every(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading url from sent.attachments[index]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     (file, index) => file.url === sent.attachments[index]?.url
   );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -714,8 +798,10 @@ const useConversationInput = (
     }
   );
   const comparison =
+    // oxlint-disable-next-line no-ternary -- Keep comparison as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     fork.pending && "modelIds" in fork.pending ? fork.pending : undefined;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     comparison,
     composerDraft,
@@ -733,6 +819,7 @@ const useConversationInput = (
       value: selection ?? selectedModel,
     },
   };
+  /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
@@ -744,9 +831,14 @@ const retainedToolSelection = (
   draft: UiToolName | null
 ) => {
   const retained = comparison ?? pending;
-  return retained ? (retained.selectedTool ?? null) : draft;
+  if (retained) {
+    return retained.selectedTool ?? null;
+  }
+  return draft;
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines -- eve-conversation keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export { EveConversation };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -5,19 +5,27 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeEach, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   advanceEveUsageCursor,
   getEveUsageCursor,
   recordEveUsage,
 } from "../lib/db/eve-billing";
+/* oxlint-enable sort-imports */
 import { createEveConversation } from "../lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, user, userCredit } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
@@ -43,18 +51,22 @@ vi.mock("eve/client", () => ({
 /* oxlint-enable typescript/explicit-function-return-type */
 assertEveTestDatabase(env.DATABASE_URL);
 const owner = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite inserts the usage owner before registering cursor scenarios.
 await db
   .insert(user)
   .values({ email: `${owner}@test.invalid`, id: owner, name: "Cursor test" });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db.delete(eveUsage).where(eq(eveUsage.ownerId, owner));
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
   await db.delete(userCredit).where(eq(userCredit.userId, owner));
   await db.delete(user).where(eq(user.id, owner));
 });
+/* oxlint-enable oxc/no-async-await */
 beforeEach(() => {
   transport.stream.mockReset();
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve session's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 async function session(): Promise<string> {
   const row = await createEveConversation(
     owner,
@@ -67,6 +79,7 @@ async function session(): Promise<string> {
   }
   return row.sessionId;
 }
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep step's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -77,6 +90,7 @@ function step(costUsd: number | undefined) {
     type: "step.completed",
   };
 }
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -110,6 +124,8 @@ test("settled prefixes are not downloaded again and appended charges are ingeste
     .where(eq(eveUsage.sessionId, id));
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(7);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -143,6 +159,8 @@ test("a transport failure after a debit retains the cursor and retry does not ch
   expect(rows).toHaveLength(1);
   expect(rows[0].chargedCents).toBe(5);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["step.completed", "compaction.usage"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
@@ -154,6 +172,7 @@ test.each(["step.completed", "compaction.usage"])(
   "missing %s cost blocks cursor advancement until durable provider reconciliation",
   async (type) => {
     const id = await session();
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(undefined) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     const event = { ...step(undefined), type };
     transport.stream.mockImplementation(function* ({ startIndex }) {
       if (startIndex === 0) {
@@ -175,6 +194,8 @@ test.each(["step.completed", "compaction.usage"])(
     expect(await getEveUsageCursor(owner, id)).toBe(1);
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -185,7 +206,9 @@ test("compaction attempts share per-turn rounding and replay does not double-cha
   const id = await session();
   const events = [
     step(0.004),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(0.003) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...step(0.003), type: "compaction.usage" },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step(0.004) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...step(0.004), type: "compaction.usage" },
   ];
   transport.stream.mockImplementation(function* ({ startIndex }) {
@@ -201,6 +224,8 @@ test("compaction attempts share per-turn rounding and replay does not double-cha
   expect(rows.reduce((sum, row) => sum + row.chargedCents, 0)).toBe(2);
   expect(await getEveUsageCursor(owner, id)).toBe(3);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers --
@@ -229,6 +254,8 @@ test("cursor writes are monotonic, owner scoped, and fenced after retirement", a
     "Conversation not found"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
@@ -265,4 +292,5 @@ test("unpriced auxiliary usage retains the unread cursor until its exact attempt
   await reconcileEveUsage(owner, id);
   expect(await getEveUsageCursor(owner, id)).toBe(1);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

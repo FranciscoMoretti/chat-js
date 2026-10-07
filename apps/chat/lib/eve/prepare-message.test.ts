@@ -25,16 +25,19 @@ test("only accepts supported ChatJS attachment references", () => {
     "data:image/png;base64,eA==",
     "/api/files/../../secret",
   ]) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing attachment own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     expect(eveMessageInput.safeParse([{ ...attachment, data }]).success).toBe(
       false
     );
   }
   expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing attachment own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     eveMessageInput.safeParse([{ ...attachment, mediaType: "text/html" }])
       .success
   ).toBe(false);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): test("reads verified bytes from storage and rejects mismatched types and unsupported  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("reads verified bytes from storage and rejects mismatched types and unsupported  uses 1025 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -69,4 +72,5 @@ test("reads verified bytes from storage and rejects mismatched types and unsuppo
     "does not support"
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

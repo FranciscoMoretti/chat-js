@@ -1,12 +1,18 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseEnvOptions } from "./db/connection";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   isWorkflowTransactionPooler,
   resolveEveEnvironment,
 } from "./eve/environment";
+/* oxlint-enable sort-imports */
 import { resolveWorkflowWorld } from "./eve/world-config";
 
 /* oxlint-disable node/no-process-env --
@@ -40,13 +46,13 @@ const postgresUrl = z.url().refine(
   { message: "Must use a postgres:// or postgresql:// URL" }
 );
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- moving it below executable initialization can obscure ordering and API ownership.
+/* oxlint-disable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- moving it below executable initialization can obscure ordering and API ownership.
 max-lines-per-function (#510): getEveRuntimeEnvOptions keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): getEveRuntimeEnvOptions uses 0, 32 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 node/no-process-env (#537): getEveRuntimeEnvOptions reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
 typescript/explicit-function-return-type (#560): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
 typescript/explicit-module-boundary-types (#562): Keep getEveRuntimeEnvOptions's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): getEveRuntimeEnvOptions accepts environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+ */
 const getEveRuntimeEnvOptions = (
   environment: Parameters<typeof resolveWorkflowWorld>[0] = process.env
 ) => ({
@@ -98,6 +104,7 @@ const getEveRuntimeEnvOptions = (
       "Optional application gateway origin serving /eve/chat/v1; defaults to the current deployment or local app"
     ),
   WORKFLOW_POSTGRES_URL:
+    // oxlint-disable-next-line no-ternary -- Keep WORKFLOW_POSTGRES_URL as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     resolveWorkflowWorld(environment) === "vercel"
       ? z
           .string()
@@ -121,7 +128,7 @@ const getEveRuntimeEnvOptions = (
             "Local/self-hosted workflow database override; defaults to DATABASE_URL. Unused on Vercel"
           ),
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, node/no-process-env, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 const eveRuntimeEnvOptions = getEveRuntimeEnvOptions();
 
@@ -130,16 +137,19 @@ const clientEnvSchema = {
   NEXT_PUBLIC_REACT_SCAN: z.enum(["0", "1"]).optional(),
 };
 
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
+/* oxlint-disable no-undefined --
  * no-undefined (#519): playwrightDefault uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep playwrightDefault's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
-const playwrightDefault = (value: unknown, fallback: string) =>
-  isPlaywrightTestEnvironmentEnabled &&
-  (value === null || value === undefined || value === "")
-    ? fallback
-    : value;
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
+const playwrightDefault = (value: unknown, fallback: string): unknown => {
+  if (
+    isPlaywrightTestEnvironmentEnabled &&
+    (value === null || value === undefined || value === "")
+  ) {
+    return fallback;
+  }
+  return value;
+};
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers, no-undefined, node/no-process-env -- no-magic-numbers (#517): serverEnvSchema uses 1, 44 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 no-undefined (#519): serverEnvSchema uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -180,31 +190,34 @@ const serverEnvSchema = {
     .optional()
     .describe("Google OAuth client secret"),
   AUTH_SECRET: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "playwright-test-auth-secret"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "playwright-test-auth-secret";
+      }
+      return value;
+    }, z.string().min(1))
     .describe("NextAuth.js secret for signing session tokens"),
   // Optional cleanup cron job secret
   CRON_SECRET: z
     .string()
     .optional()
     .describe("Secret for cleanup cron job endpoint"),
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing databaseEnvOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...databaseEnvOptions,
   // Required core
   DATABASE_URL: z
-    .preprocess(
-      (value) =>
+    .preprocess((value) => {
+      if (
         isPlaywrightTestEnvironmentEnabled &&
         (value === null || value === undefined || value === "")
-          ? "postgres://postgres:postgres@127.0.0.1:5432/playwright"
-          : value,
-      z.string().min(1)
-    )
+      ) {
+        return "postgres://postgres:postgres@127.0.0.1:5432/playwright";
+      }
+      return value;
+    }, z.string().min(1))
     .describe("Postgres connection string"),
   DAYTONA_API_KEY: z.string().optional(),
   DAYTONA_ORGANIZATION_ID: z.string().optional(),
@@ -324,5 +337,7 @@ const serverEnvSchema = {
     eveRuntimeEnvOptions.WORKFLOW_POSTGRES_URL
   ),
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable no-magic-numbers, no-undefined, node/no-process-env */
 export { clientEnvSchema, getEveRuntimeEnvOptions, serverEnvSchema };
+/* oxlint-enable import/no-named-export */

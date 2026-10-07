@@ -1,23 +1,25 @@
 import { completeEveConversationDeletion } from "@/lib/db/eve-deletion";
 
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { purgeLocalEveFamilyResources } from "./purge-local-resources";
+/* oxlint-enable sort-imports */
 import { retireEveSessionForDeletion } from "./retire-session";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions --
- * jsdoc/require-param (#534): deleteLocalEveConversationFamily's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): deleteLocalEveConversationFamily's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * max-statements (#512): deleteLocalEveConversationFamily keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep deleteLocalEveConversationFamily's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep deleteLocalEveConversationFamily's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): deleteLocalEveConversationFamily intentionally keeps the existing falsy-value behavior of conversation.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (deleteLocalEveConversationFamily); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteLocalEveConversationFamily's awaited sequencing and rejected-Promise behavior. */
+/** Purge an owner-authorized local conversation family and complete its deletion.
+ * @param {string} ownerId Owner whose conversation family and sessions may be retired.
+ * @param {string} conversationId Conversation used to resolve the deletion family.
+ * @param {string} appRoot Trusted worker root for local resources, never user input.
+ * @returns {Promise<{ rootId: string } | undefined>} Root identity after native session purges and deletion completion, or no result when the resource purge finds no family. Rejects on missing session bindings or cleanup failure.
  */
-/** Internal local-provider entry point. appRoot is the trusted worker root, never user input. */
+// oxlint-disable-next-line max-statements -- These 11 statements validate lifecycle availability before resource cleanup, preserve the session binding across the awaited purge/retirement callback, and complete the tombstone only after every purge succeeds.
 export const deleteLocalEveConversationFamily = async (
   ownerId: string,
   conversationId: string,
   appRoot: string
-) => {
+): Promise<{ rootId: string } | undefined> => {
   const lifecycle = requireEveDeletionLifecycle();
   // Retirement receipts make this replayable even after some native payloads were erased.
   const family = await purgeLocalEveFamilyResources(
@@ -29,6 +31,7 @@ export const deleteLocalEveConversationFamily = async (
     return;
   }
   for (const conversation of family.conversations) {
+    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Reject a missing or empty native session binding before purge; preserve this getter read followed by the separate validated sessionId read.
     if (!conversation.sessionId) {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
@@ -39,7 +42,8 @@ export const deleteLocalEveConversationFamily = async (
     });
   }
   await completeEveConversationDeletion(ownerId, family.rootId);
-  // oxlint-disable-next-line typescript/consistent-return -- #580: deleteLocalEveConversationFamily has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+  // oxlint-disable-next-line typescript/consistent-return -- A missing resource family returns without a value; a completed family returns its root identity. Preserve this optional result instead of fabricating a root or changing the absence sentinel.
   return { rootId: family.rootId };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-statements, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

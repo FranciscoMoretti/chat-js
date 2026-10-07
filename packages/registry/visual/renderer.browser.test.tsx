@@ -1,30 +1,44 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getInstanceByDom } from "echarts";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import type { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { GetWeatherRenderer } from "../src/tools/get-weather/renderer";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   weatherInput,
   weatherResult,
 } from "../src/tools/get-weather/schemas";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { RetrieveUrlRenderer } from "../src/tools/retrieve-url/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   retrievedInput,
   retrievedResult,
 } from "../src/tools/retrieve-url/schemas";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-enable import/max-dependencies */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
@@ -32,7 +46,9 @@ import { CodeExecution } from "../src/tools/vercel-code-execution/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "../../../apps/chat/app/globals.css";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
@@ -145,6 +161,7 @@ const retrieveUrlOutputTool: RetrieveUrlRendererTool = {
   toolCallId: "url-output",
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -202,7 +219,10 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
           <section
             key={JSON.stringify(chart)}
             data-testid={`output-${index}`}
-            style={index < malformed.length ? { display: "none" } : undefined}
+            style={
+              // oxlint-disable-next-line no-ternary -- Keep style JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              index < malformed.length ? { display: "none" } : undefined
+            }
           >
             <CodeExecution
               isReadonly
@@ -221,6 +241,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   });
   for (let index = 0; index < malformed.length; index += 1) {
     expect(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading textContent from container.querySelector(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       container.querySelector(`[data-testid="output-${index}"]`)?.textContent
     ).toBe("");
     expect(
@@ -233,6 +254,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await expect
     .poll((): boolean =>
       [...container.querySelectorAll("h3")].every((heading) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parentElement from heading.parentElement.parentElement; read parentElement from heading.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         const panel = heading.parentElement?.parentElement?.parentElement;
         return panel && getComputedStyle(panel).opacity === "1";
       })
@@ -243,6 +265,7 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
       [
         ...container.querySelectorAll<HTMLElement>("[_echarts_instance_]"),
       ].every((element) =>
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading getZr from getInstanceByDom(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         getInstanceByDom(element)?.getZr().animation.isFinished()
       )
     )
@@ -259,6 +282,8 @@ test("chart output validates shapes and fits PNG output", async (): Promise<void
   await act((): void => root.unmount());
   container.remove();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
@@ -335,3 +360,4 @@ test("weather and retrieved URL renderer states", async (): Promise<void> => {
 });
 
 /* oxlint-enable eslint/max-statements, eslint/max-lines-per-function, react-perf/jsx-no-new-object-as-prop */
+/* oxlint-enable oxc/no-async-await */

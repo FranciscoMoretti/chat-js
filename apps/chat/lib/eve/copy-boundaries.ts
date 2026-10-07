@@ -1,5 +1,5 @@
-import { defaultMessageReducer } from "eve/client";
 import type { MessageStreamEvent } from "eve/client";
+import { defaultMessageReducer } from "eve/client";
 import { z } from "zod";
 
 const MIN_CHECKPOINT_INDEX = 0;
@@ -17,19 +17,22 @@ const importedMessage = z
   .string()
   .regex(/^seed_message_(?<messageIndex>0|[1-9][0-9]{0,3})$/u);
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveCopyBoundary); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export interface EveCopyBoundary {
   messageIndex: number;
   sourceKind: "turn" | "imported";
   sourceIndex: number;
 }
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyBoundaries); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): eveCopyBoundaries accepts events: readonly MessageStreamEvent[]; state; event; message; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
  * Private provenance used only to snapshot application resources, never copied into native history.
- * @param events Native EVE events reduced in their original order to locate user-message checkpoints.
- * @returns One source turn or imported-message boundary for each user message; malformed provenance throws.
+ * @param {readonly MessageStreamEvent[]} events Native EVE events reduced in their original order to locate user-message checkpoints.
+ * @returns {EveCopyBoundary[]} One source turn or imported-message boundary for each user message; malformed provenance throws.
  */
 export const eveCopyBoundaries = (
   events: readonly MessageStreamEvent[]
@@ -44,6 +47,7 @@ export const eveCopyBoundaries = (
         if (message.role !== "user") {
           return [];
         }
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading turnId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         const turn = nativeTurn.safeParse(message.metadata?.turnId);
         if (turn.success) {
           return [
@@ -72,4 +76,5 @@ export const eveCopyBoundaries = (
       })
   );
 };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

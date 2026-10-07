@@ -1,5 +1,7 @@
 import type { EveMessagePart } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
 
@@ -117,22 +119,28 @@ it("removes owner approval and execution fields while preserving every tool stat
   };
   const cases: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       approval: { ...base.approval, approved: true },
       output: { answer: "Published result" },
       state: "output-available",
       type: "dynamic-tool",
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       approval: { ...base.approval, approved: true },
       errorText: "Published failure",
       state: "output-error",
       type: "dynamic-tool",
     },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       approval: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base.approval,
         approved: false,
         reason: "Published reason",
@@ -140,9 +148,12 @@ it("removes owner approval and execution fields while preserving every tool stat
       state: "output-denied",
       type: "dynamic-tool",
     },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...base, state: "approval-requested", type: "dynamic-tool" },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base.approval own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       approval: { ...base.approval, approved: true },
       state: "approval-responded",
       type: "dynamic-tool",
@@ -224,13 +235,16 @@ it("preserves streaming and partial published tool content without runtime field
   };
   const parts: Extract<EveMessagePart, { type: "dynamic-tool" }>[] = [
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       inputText: "partial input",
       state: "input-streaming",
       type: "dynamic-tool",
     },
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     { ...base, state: "input-available", type: "dynamic-tool" },
     {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       output: "partial result",
       partial: true,
@@ -239,6 +253,7 @@ it("preserves streaming and partial published tool content without runtime field
     },
   ];
   for (const part of parts) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding expected excludes stepIndex from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     const { stepIndex: _stepIndex, ...expected } = part;
     expect(sharedEvePart(part)).toEqual([expected]);
   }
@@ -266,6 +281,7 @@ it("projects the original native model without private turn identities", () => {
     },
   ]);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading metadata from messages.find(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     messages.find((message) => message.role === "assistant")?.metadata
   ).toEqual({ modelId: "gateway/google/gemini-2.5-flash-lite" });
   expect(JSON.stringify(messages)).not.toContain('"turnId"');

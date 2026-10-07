@@ -5,13 +5,19 @@ import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
 import { eveConversation } from "../lib/db/schema";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "../lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   conversationBinding,
   createConversationInput,
 } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -20,6 +26,7 @@ const originalModel = "google/gemini-2.5-flash-lite";
 const selectedModel = "google/gemini-2.5-flash";
 const answer = /^provenance-ready\.?$/iu;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * init-declarations (#507): test("copied responses regenerate with their original model after reload") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("copied responses regenerate with their original model after reload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -126,7 +133,9 @@ test("copied responses regenerate with their original model after reload", async
     { times: 1 }
   );
   await regenerate.click();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from regenerated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await expect.poll(() => regenerated?.id, { timeout: 95_000 }).toBeTruthy();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from regenerated; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await expect(page).toHaveURL(`${origin}/chat/${regenerated?.id}`);
   await expect(page.getByRole("log").getByText(answer)).toBeVisible({
     timeout: 45_000,
@@ -139,4 +148,5 @@ test("copied responses regenerate with their original model after reload", async
     timeout: 30_000,
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

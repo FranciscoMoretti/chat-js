@@ -5,6 +5,7 @@ import ultracite from "ultracite/oxfmt";
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
  */
 export default defineConfig({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ultracite own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...ultracite,
   // These generated indexes have content hashes checked by chat-js sync.
   // Reformatting their bodies invalidates the guard against overwriting user edits.

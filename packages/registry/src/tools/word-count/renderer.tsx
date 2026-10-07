@@ -1,10 +1,15 @@
 "use client";
 import React from "react";
 
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+/* oxlint-disable sort-imports -- Oxfmt groups type imports by source path, while the native rule orders their bindings differently; the helper import erases at runtime. */
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { wordCountInput, wordCountResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 type WordCountRendererTool = ToolRendererProps<
   typeof wordCountInput,
@@ -13,14 +18,13 @@ type WordCountRendererTool = ToolRendererProps<
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const Stat = ({ label, value }: { label: string; value: number }) => (
+const Stat = ({ label, value }: Readonly<{ label: string; value: number }>) => (
   <div className="flex flex-col items-center gap-1">
     <span className="text-lg font-semibold">{value}</span>
     <span className="text-muted-foreground text-xs">{label}</span>
   </div>
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable react/jsx-no-literals -- WordCountView renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 
@@ -29,15 +33,14 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const WordCountView = ({
   tool,
-}: {
+}: ReadonlyNativeSurface<{
   tool: WordCountRendererTool;
   messageId: string;
   isReadonly: boolean;
-}) => {
+}>) => {
   if (tool.state === "input-available") {
     return (
       <div className="text-muted-foreground rounded-lg border p-3 text-sm">
@@ -65,8 +68,9 @@ const WordCountView = ({
     </div>
   );
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (WordCountRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-enable typescript/explicit-function-return-type */
@@ -78,3 +82,4 @@ export const WordCountRenderer = defineToolRenderer({
   outputSchema: wordCountResult,
   render: WordCountView,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

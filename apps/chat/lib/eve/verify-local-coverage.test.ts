@@ -2,11 +2,17 @@
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { createHash } from "node:crypto";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import nodePath from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { verifyLocalEveFamilyCoverage } from "./verify-local-coverage";
 /* oxlint-enable import/no-nodejs-modules */
@@ -57,6 +63,7 @@ const identity = () => ({
   sessionId,
   version: 1,
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-disable import/no-nodejs-modules, typescript/promise-function-async --
  * import/no-nodejs-modules (#529): This test harness requires import("node:fs/promises"); its Node runtime boundary deliberately permits these built-ins.
@@ -88,11 +95,15 @@ beforeEach(async () => {
     )
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules, typescript/promise-function-async */
 afterEach(async () => {
   vi.unstubAllGlobals();
   await rm(root, { force: true, recursive: true });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("matches native evidence to a local identity and carries owner/root authorization", async () => {
   await verifyLocalEveFamilyCoverage("owner", root, inventories);
   const [[url, init]] = mocks.fetch.mock.calls;
@@ -109,6 +120,8 @@ it("matches native evidence to a local identity and carries owner/root authoriza
   expect(init.redirect).toBe("error");
   expect(mocks.end).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["appRoot", "sessionId", "backendName"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): it.each(["appRoot", "sessionId", "backendName"])("rejects native %s mismatch") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
@@ -118,6 +131,7 @@ it.each(["appRoot", "sessionId", "backendName"])(
     mocks.fetch.mockImplementation(() =>
       Promise.resolve(
         Response.json({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           local: { ...identity(), [field]: "different" },
           sessionId,
           snapshotVersion: 2,
@@ -131,6 +145,8 @@ it.each(["appRoot", "sessionId", "backendName"])(
     expect(mocks.end).toHaveBeenCalledOnce();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("rejects missing native evidence and mismatched local evidence") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
@@ -142,12 +158,15 @@ it("rejects missing native evidence and mismatched local evidence", async () => 
   ).rejects.toThrow("unavailable");
   await writeFile(
     identityPath(),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing identity() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     JSON.stringify({ ...identity(), sessionId: "other" })
   );
   await expect(
     verifyLocalEveFamilyCoverage("owner", root, inventories)
   ).rejects.toThrow("Local sandbox ownership");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 it("does not follow a linked identity file", async () => {
   const actual = nodePath.join(root, "actual.json");
@@ -158,3 +177,4 @@ it("does not follow a linked identity file", async () => {
     verifyLocalEveFamilyCoverage("owner", root, inventories)
   ).rejects.toThrow();
 });
+/* oxlint-enable oxc/no-async-await */

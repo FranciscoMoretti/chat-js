@@ -4,24 +4,33 @@
  */
 
 import { expect, test } from "@playwright/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { Client } from "eve/client";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
 import { listEveSubagents } from "../lib/db/eve-subagents";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage, userCredit } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ResearchUpdateSchema } from "../tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 const createdReport = /^Created /u;
 const researchSummary = /^Researched for /u;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): test.afterEach uses -1, 15_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test.afterEach accepts { page }; testInfo; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -39,12 +48,15 @@ test.afterEach(async ({ page }, testInfo) => {
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.id, id.data));
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (conversation?.sessionId) {
     await new Client(getEveConnectionOptions(conversation.ownerId)).sessions
       .attach(conversation.sessionId)
       .cancel({ signal: AbortSignal.timeout(15_000), tasks: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native deep research saves a reloadable report in ChatJS with a usage receipt") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -158,6 +170,7 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
   });
   expect(receipt.usage.costUsd).toBe(0);
   expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading some from receipt.updates; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     receipt.updates?.some(
       (update) => ResearchUpdateSchema.parse(update).type === "writing"
     )
@@ -207,4 +220,5 @@ test("native deep research saves a reloadable report in ChatJS with a usage rece
     )
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

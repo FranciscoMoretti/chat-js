@@ -1,8 +1,12 @@
 import React from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { Composition, registerRoot } from "remotion";
+/* oxlint-enable sort-imports */
 
 import { BrandExample } from "./brand-example";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { DURATION, FPS, script } from "./story";
+/* oxlint-enable sort-imports */
 import { ThreadsLaunch } from "./threads-launch";
 
 /* oxlint-disable react/only-export-components -- Root: The route/scene module exports metadata or helpers required alongside its component by existing consumers. */

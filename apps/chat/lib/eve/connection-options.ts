@@ -1,13 +1,11 @@
 import { env } from "@/lib/env";
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): getEveConnectionOptions intentionally keeps the existing falsy-value behavior of [env.VERCEL_URL, env.VERCEL_BRANCH_URL].some( (hostname) => hostname && new URL(host); hostname; sameDeployment; env.VERCEL_AUTOMATION_BYPASS_SECRET; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (getEveConnectionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Credentials for the app-to-EVE boundary, shared by HTTP and SDK clients.
- * @param ownerId Owner identity sent to the trusted EVE gateway.
- * @param host Gateway URL whose origin determines eligibility for deployment protection bypass.
- * @returns Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
+ * @param {string} ownerId Owner identity sent to the trusted EVE gateway.
+ * @param {string} host Gateway URL whose origin determines eligibility for deployment protection bypass.
+ * @returns {{ auth: { bearer: string }; headers: Record<string, string>; host: string; redirect: "error"; }} Gateway credentials and owner headers, with deployment bypass restricted to this deployment.
  */
 export const getEveConnectionOptions = (
   ownerId: string,
@@ -21,10 +19,14 @@ export const getEveConnectionOptions = (
   const headers: Record<string, string> = { "x-chatjs-owner": ownerId };
   // A separate worker must never receive this Vercel project's credential.
   const sameDeployment =
-    host &&
+    host !== "" &&
     [env.VERCEL_URL, env.VERCEL_BRANCH_URL].some(
-      (hostname) => hostname && new URL(host).origin === `https://${hostname}`
+      (hostname) =>
+        typeof hostname === "string" &&
+        hostname !== "" &&
+        new URL(host).origin === `https://${hostname}`
     );
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Test the optional secret once for nonempty truthiness, preserving getter order and narrowing the subsequent header assignment.
   if (sameDeployment && env.VERCEL_AUTOMATION_BYPASS_SECRET) {
     headers["x-vercel-protection-bypass"] = env.VERCEL_AUTOMATION_BYPASS_SECRET;
   }
@@ -32,7 +34,7 @@ export const getEveConnectionOptions = (
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },
     headers,
     host,
-    redirect: "error" as const,
+    redirect: "error",
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

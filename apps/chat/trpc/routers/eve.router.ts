@@ -5,42 +5,57 @@ import { TRPCError } from "@trpc/server";
 import { headers } from "next/headers";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getAccessibleEveDocument } from "@/lib/db/eve-documents";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   getEveChatIdentity,
   listEveConversationBranches,
   listEveConversations,
   updateEveConversationMetadata,
 } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { searchEveConversations } from "@/lib/db/eve-search";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   assignEveConversationProject,
   getEveMessageVotes,
 } from "@/lib/db/queries";
+/* oxlint-enable sort-imports */
 import { eveManualDocumentInput } from "@/lib/eve/document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveHistoryInput } from "@/lib/eve/history-input";
+/* oxlint-enable sort-imports */
 import { resolveEvePrincipal } from "@/lib/eve/principal";
 import { restoreMessageAttachments } from "@/lib/eve/restore-message-attachments";
 import { saveManualEveDocument } from "@/lib/eve/save-document";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MAX_SEARCH_QUERY_LENGTH } from "@/lib/eve/search-text";
+/* oxlint-enable sort-imports */
 import { voteEveMessage } from "@/lib/eve/vote-message";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/trpc/init";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 const eveProcedure = protectedProcedure;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveOwnedProcedure's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * typescript/prefer-readonly-parameter-types (#565): eveOwnedProcedure accepts { ctx, next }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): eveOwnedProcedure intentionally keeps the existing falsy-value behavior of ownerId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   let ownerId = ctx.user?.id;
   if (!ownerId) {
     const principal = await resolveEvePrincipal(await headers());
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     ownerId = principal?.ownerId;
   }
   if (!ownerId) {
@@ -48,6 +63,9 @@ const eveOwnedProcedure = publicProcedure.use(async ({ ctx, next }) => {
   }
   return await next({ ctx: { eveOwnerId: ownerId } });
 });
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -97,9 +115,11 @@ export const eveRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ctx.user; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
       let ownerId = ctx.user?.id;
       if (!ownerId) {
         const principal = await resolveEvePrincipal(await headers());
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading ownerId from principal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         ownerId = principal?.ownerId;
       }
       const document = await getAccessibleEveDocument(
@@ -176,6 +196,7 @@ export const eveRouter = createTRPCRouter({
           cause: error,
           code: "CONFLICT",
           message:
+            // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             error instanceof Error
               ? error.message
               : "Document could not be saved.",
@@ -240,4 +261,6 @@ export const eveRouter = createTRPCRouter({
         await getEveMessageVotes(ctx.eveOwnerId, input.conversationId)
     ),
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

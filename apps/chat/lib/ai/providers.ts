@@ -1,17 +1,24 @@
 import { devToolsMiddleware } from "@ai-sdk/devtools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  Experimental_VideoModelV4,
   LanguageModelV4,
   SharedV4ProviderOptions,
 } from "@ai-sdk/provider";
+/* oxlint-enable sort-imports */
 import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ImageModel, LanguageModelMiddleware } from "ai";
+/* oxlint-enable sort-imports */
+import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
 
 import { getActiveGateway } from "./active-gateway";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "./app-models";
+/* oxlint-enable sort-imports */
 import { getAppModelDefinition } from "./app-models";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { InstalledGateway } from "./gateways/registry";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): ActiveGatewayImageModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -20,13 +27,7 @@ type ActiveGatewayImageModelId = Parameters<
   InstalledGateway["createImageModel"]
 >[0];
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): ActiveGatewayVideoModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type ActiveGatewayVideoModelId = Parameters<
-  InstalledGateway["createVideoModel"]
->[0];
-/* oxlint-enable no-magic-numbers */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getLanguageModel's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers, node/no-process-env --
  no-magic-numbers (#517): getLanguageModel uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -60,52 +61,36 @@ const getLanguageModel = async (
     model: languageProvider,
   });
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, node/no-process-env */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
-typescript/prefer-readonly-parameter-types (#565): getImageModel accepts modelId: ActiveGatewayImageModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): getImageModel intentionally keeps the existing falsy-value behavior of imageModel; distinguishing empty, zero, and absent states requires a domain behavior decision.  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The installed adapter preserves its SDK string-literal suggestions and open string intersection; model IDs are primitive strings with no mutable fields.
 const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
   const imageModel = getActiveGateway().createImageModel(modelId);
-  if (!imageModel) {
+  if (imageModel === null) {
     throw new Error(
       `Gateway '${getActiveGateway().type}' does not support dedicated image models. Use a multimodal language model instead.`
     );
   }
   return imageModel;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
-typescript/prefer-readonly-parameter-types (#565): getVideoModel accepts modelId: ActiveGatewayVideoModelId; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
-const getVideoModel = (
-  modelId: ActiveGatewayVideoModelId
-): Experimental_VideoModelV4 => {
-  const videoModel = getActiveGateway().createVideoModel(modelId);
-  if (!videoModel) {
-    throw new Error(
-      `Gateway '${getActiveGateway().type}' does not support video models.`
-    );
-  }
-  return videoModel;
-};
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
 // Get a multimodal language model that can generate images via generateText
 const getMultimodalImageModel = (modelId: string): LanguageModelV4 =>
   getActiveGateway().createLanguageModel(modelId);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getModelProviderOptions's awaited sequencing and rejected-Promise behavior. */
 // Model aliases removed - use getLanguageModel directly with specific model IDs
 
 const getModelProviderOptions = async (
   providerModelId: AppModelId
 ): Promise<SharedV4ProviderOptions> =>
   modelProviderOptions(await getAppModelDefinition(providerModelId));
-
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getImageModel, getLanguageModel, getModelProviderOptions, getMultimodalImageModel); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 export {
   getImageModel,
   getLanguageModel,
   getModelProviderOptions,
   getMultimodalImageModel,
-  getVideoModel,
 };
+/* oxlint-enable import/no-named-export */

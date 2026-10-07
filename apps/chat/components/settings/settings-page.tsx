@@ -2,7 +2,9 @@
 import React from "react";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 const SettingsPage = ({
@@ -61,8 +63,14 @@ const SettingsPageScrollArea = ({
   readonly children: ReadonlyReactNode;
   readonly className?: string;
 }): React.JSX.Element => (
-  <ScrollArea className={className}>{children}</ScrollArea>
+  <ScrollArea
+    // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
+    className={className}
+  >
+    {children}
+  </ScrollArea>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (SettingsPage, SettingsPageContent, SettingsPageHeader, SettingsPageScrollArea); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp */
 export {
   SettingsPage,
@@ -70,3 +78,4 @@ export {
   SettingsPageHeader,
   SettingsPageScrollArea,
 };
+/* oxlint-enable import/no-named-export */

@@ -1,14 +1,24 @@
 import { afterEach, expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { builtInGateways } from "../../../registry/src/gateways/catalog";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { gatewayConfigEdit, readProviderId } from "./provider-config";
+/* oxlint-enable sort-imports */
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 afterEach(async () => {
   await Promise.all(
@@ -17,6 +27,8 @@ afterEach(async () => {
       .map(async (root) => await rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 test("provider replacement recognizes literal wrappers and refuses unknown installed IDs", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-"));
@@ -33,9 +45,10 @@ test("provider replacement recognizes literal wrappers and refuses unknown insta
   await writeFile(file, "export const gatewayType = process.env.GATEWAY;");
   expect(readProviderId(root, "gateway")).rejects.toThrow("Cannot determine");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("gateway replacement edits only the active root config discriminator", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "chatjs-provider-config-"));
   roots.push(root);
@@ -43,7 +56,9 @@ test("gateway replacement edits only the active root config discriminator", asyn
     'const unrelated = { ai: { gateway: "other" } };\nconst config = defineConfig({ ai: { gateway: "openai", models: { chat: "chosen" } }, extra: { ai: { gateway: "nested" } } });\nexport default config;\n';
   await writeFile(path.join(root, "chat.config.ts"), original);
   const item = builtInGateways.find(
-    (gateway) => gateway.meta.chatjs.id === "vercel"
+    (gateway: {
+      readonly meta: { readonly chatjs: { readonly id: string } };
+    }) => gateway.meta.chatjs.id === "vercel"
   );
   if (!item) {
     throw new Error("Missing Vercel fixture");
@@ -94,12 +109,12 @@ test("gateway replacement edits only the active root config discriminator", asyn
     "literal ai.gateway"
   );
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],   ['{ ai: { gateway: "o's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each([
   ['{ ai: { gateway: "openai", ...loadAiSettings() } }', false],
   ['{ ai: { gateway: "openai" }, ...loadConfig() }', false],
@@ -116,7 +131,9 @@ test.each([
     roots.push(root);
     const file = path.join(root, "chat.config.ts");
     const item = builtInGateways.find(
-      (gateway) => gateway.meta.chatjs.id === "vercel"
+      (gateway: {
+        readonly meta: { readonly chatjs: { readonly id: string } };
+      }) => gateway.meta.chatjs.id === "vercel"
     );
     if (!item) {
       throw new Error("Missing Vercel fixture");
@@ -136,5 +153,5 @@ test.each([
     expect(await readFile(file, "utf-8")).toBe(original);
   }
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/max-statements */

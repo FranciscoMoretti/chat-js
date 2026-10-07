@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { parseJsonObject } from "./json";
+import { parseJsonObject } from "./json-object";
 import { parsePackageJson } from "./package-manifest";
 
 test("manifest parsing preserves extension fields and checks consumed maps", (): void => {
@@ -25,5 +25,5 @@ test("manifest parsing preserves extension fields and checks consumed maps", ():
   ]) {
     expect(() => parsePackageJson(invalid)).toThrow(TypeError);
   }
-  expect(() => parseJsonObject("{")).toThrow(SyntaxError);
+  expect(() => parseJsonObject("{", "JSON fixture")).toThrow(SyntaxError);
 });

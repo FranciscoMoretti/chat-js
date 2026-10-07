@@ -1,7 +1,9 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
 import { generateUUID } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { deduplicateByDomainAndUrl } from "./search-utils";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
 type SearchQuery = {
@@ -26,6 +28,7 @@ type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
 };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/consistent-type-definitions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types --
@@ -50,6 +53,7 @@ const multiQueryWebSearchStep = async ({
   const updateId = generateUUID();
   try {
     // Send initial annotation showing all queries being executed
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),
@@ -82,11 +86,13 @@ const multiQueryWebSearchStep = async ({
     const allResults = deduplicateByDomainAndUrl(
       searchResults.flatMap((searchResult) => searchResult.results)
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),
         // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
         results: allResults.map((result) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...result,
           source: "web",
         })),
@@ -104,9 +110,11 @@ const multiQueryWebSearchStep = async ({
     };
   } catch (error: unknown) {
     const errorMessage =
+      // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       error instanceof Error ? error.message : "Unknown error occurred";
 
     // Send error annotation
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     dataStream?.write({
       data: {
         queries: queries.map((query) => query.query),
@@ -125,6 +133,11 @@ const multiQueryWebSearchStep = async ({
     };
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (multiQueryWebSearchStep); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 export { multiQueryWebSearchStep };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { MultiQuerySearchResponse, MultiQuerySearchResult, SearchQuery };
+/* oxlint-enable import/no-named-export */

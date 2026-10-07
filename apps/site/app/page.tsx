@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Faq } from "@/components/faq";
+/* oxlint-enable sort-imports */
 import { Features } from "@/components/features";
 import { Footer } from "@/components/footer";
 import { GetStarted } from "@/components/get-started";
@@ -13,7 +15,9 @@ import { Platforms } from "@/components/platforms";
 import { TechStack } from "@/components/tech-stack";
 /* oxlint-enable import/max-dependencies */
 import { UseCases } from "@/components/use-cases";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { siteConfig, siteLinks } from "@/lib/site-config";
+/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   alternates: {
@@ -84,8 +88,10 @@ const HomePage = (): React.JSX.Element => (
   </div>
 );
 
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default HomePage;

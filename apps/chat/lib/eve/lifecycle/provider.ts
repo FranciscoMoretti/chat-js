@@ -88,7 +88,10 @@ const createEveLifecycleProvider = (options: {
   return createPostgresLifecycle(databaseUrl);
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createEveLifecycleProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { createEveLifecycleProvider };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LifecycleResources, LifecycleInventory, SupportedLifecycleProvider, UnsupportedLifecycleProvider, LifecycleProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type {
   LifecycleResources,
   LifecycleInventory,
@@ -96,3 +99,4 @@ export type {
   UnsupportedLifecycleProvider,
   LifecycleProvider,
 };
+/* oxlint-enable import/no-named-export */

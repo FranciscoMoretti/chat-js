@@ -6,7 +6,9 @@ import type { EveMessagePart } from "eve/client";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDocumentRun } from "../tools/chatjs/saved-code-execution/document";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const input = {
@@ -29,11 +31,13 @@ const states: {
   { disabled: true, title: "Unsaved changes" },
   {
     disabled: true,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     part: { ...base, state: "input-available" },
     title: "Running",
   },
   {
     part: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       errorText: "Code document not found.",
       state: "output-error",
@@ -42,6 +46,7 @@ const states: {
   },
   {
     part: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...base,
       approval: { approved: false, id: "declined" },
       state: "output-denied",
@@ -49,6 +54,7 @@ const states: {
     title: "Declined",
   },
   {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     part: { ...base, output: {}, state: "output-available" },
     readOnly: true,
     title: "Malformed result",
@@ -75,12 +81,15 @@ process.stdout.write(
           { className: "rounded border p-3", key: title },
           createElement("h2", null, title),
           createElement(EveDocumentRun, {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...input,
             disabled: disabled ?? false,
             kind: "code",
+            // oxlint-disable-next-line no-ternary -- Keep messages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             messages: part
               ? [{ id: title, role: "assistant", parts: [part] }]
               : [],
+            // oxlint-disable-next-line no-ternary -- Keep onAction as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             onAction: readOnly ? undefined : () => Promise.resolve(),
             title: "saved.js",
           })

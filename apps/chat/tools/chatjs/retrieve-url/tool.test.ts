@@ -1,7 +1,9 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { toolResultSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
+/* oxlint-enable sort-imports */
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },
@@ -28,6 +30,7 @@ beforeEach(() => {
   mocks.env.FIRECRAWL_API_KEY = "test-key";
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -41,6 +44,7 @@ test.each(["missing configuration", "invalid URL"])(
     const result = await retrieveUrl.execute(
       {
         url:
+          // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           reason === "invalid URL" ? "file:///private" : "https://example.com",
       },
       testToolContext()
@@ -49,6 +53,8 @@ test.each(["missing configuration", "invalid URL"])(
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test.each([false, true])(
@@ -72,3 +78,4 @@ test.each([false, true])(
     expect(mocks.scrape).toHaveBeenCalledOnce();
   }
 );
+/* oxlint-enable oxc/no-async-await */

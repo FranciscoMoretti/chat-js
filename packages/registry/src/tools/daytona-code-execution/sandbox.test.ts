@@ -1,16 +1,19 @@
 /* oxlint-disable eslint/max-lines-per-function -- The suite groups independent provider boundary tests sharing one typed fixture. */
 /* oxlint-disable eslint/require-await, typescript/require-await -- Asynchronous provider stubs intentionally settle immediately unless a scenario injects a lifecycle race. */
 /* oxlint-disable typescript/await-thenable, typescript/no-confusing-void-expression -- Bun asynchronous rejection matchers are awaited even though their declaration exposes void. */
-/* oxlint-disable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types -- Test fixture factories preserve inferred mutable state so each case can inject failures at the provider boundary. */
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- Fixture callbacks retain mutable SDK state so each case can inject lifecycle races or provider failures. */
 /* oxlint-disable eslint/no-magic-numbers -- Concrete SDK deadlines, status codes and expected counts are protocol assertions. */
 import { describe, expect, test } from "bun:test";
 
 import { DaytonaNotFoundError } from "@daytona/sdk";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { commandSandbox, createDaytonaProvider } from "./sandbox";
+/* oxlint-enable sort-imports */
 import type { DaytonaResource } from "./sandbox";
 
 const credentials = { apiKey: "test-only", organizationId: "org-a" };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resource's required Promise and rejection contract. DaytonaResource.delete resolves void without external resource deletion. DaytonaResource.process.executeCommand resolves an SDK command receipt. */
 const resource = (
   overrides: Partial<DaytonaResource> = {}
 ): DaytonaResource => ({
@@ -21,10 +24,12 @@ const resource = (
   organizationId: "org-a",
   process: { executeCommand: async () => ({ exitCode: 0, result: "ok" }) },
   state: "started",
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing overrides own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...overrides,
 });
-
+/* oxlint-enable oxc/no-async-await */
 describe("Daytona durable resource boundary", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaClient.create records parameters then resolves a resource. DaytonaClient.get resolves a resource. DaytonaClient create/get callbacks resolve a resource for credential rotation. */
   test("creates a private ephemeral named resource with a wall-clock TTL", async () => {
     const calls: unknown[] = [];
     const adapter = createDaytonaProvider(credentials, {
@@ -52,12 +57,14 @@ describe("Daytona durable resource boundary", () => {
       /^https:\/\/app.daytona.io\/api#[a-f0-9]{64}$/u
     );
     const rotated = createDaytonaProvider(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...credentials, apiKey: "rotated-key" },
       { create: async () => resource(), get: async () => resource() }
     );
     expect(rotated.cleanup.provider).not.toEqual(adapter.cleanup.provider);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaResource.delete resolves after setting the foreign-resource deleted flag. DaytonaClient.create resolves the foreign organization resource. DaytonaClient.get resolves the foreign organization resource. */
   test("refuses cross-organization cleanup and identity mismatches", async () => {
     let deleted = false;
     const foreign = resource({
@@ -78,7 +85,8 @@ describe("Daytona durable resource boundary", () => {
     );
     expect(deleted).toBe(false);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaResource.delete records arguments then resolves after setting deleted. DaytonaClient.create resolves the resource being deleted. DaytonaClient.get resolves the resource before deletion and rejects with DaytonaNotFoundError afterwards. */
   test("waits for deletion and then confirms provider absence", async () => {
     const calls: unknown[] = [];
     let deleted = false;
@@ -102,7 +110,8 @@ describe("Daytona durable resource boundary", () => {
     expect(calls).toEqual(["get", [60, true], "get"]);
     await adapter.cleanup.deleteAndConfirmAbsent("allocation-a");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaClient.create resolves the retained resource. DaytonaClient.get resolves a retained resource to prove cleanup refusal. DaytonaClient.create resolves a resource before network failure. DaytonaClient.get rejects with network failure. */
   test("does not mistake network errors or incomplete deletion for absence", async () => {
     const adapter = createDaytonaProvider(credentials, {
       create: async () => resource(),
@@ -121,7 +130,8 @@ describe("Daytona durable resource boundary", () => {
       unavailable.cleanup.deleteAndConfirmAbsent("allocation-a")
     ).rejects.toThrow("network");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaResource.process.executeCommand records arguments then resolves the failing command receipt. */
   test("quotes source as one shell argument, enforces timeout and preserves output once", async () => {
     const calls: unknown[] = [];
     const sandbox = commandSandbox(
@@ -151,7 +161,8 @@ describe("Daytona durable resource boundary", () => {
     expect(await result.stderr()).toBe("");
     expect(result.exitCode).toBe(1);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaResource.process.executeCommand resolves after setting executed. */
   test("aborted calls cannot start a command", async () => {
     let executed = false;
     const controller = new AbortController();
@@ -172,8 +183,10 @@ describe("Daytona durable resource boundary", () => {
     ).rejects.toThrow();
     expect(executed).toBe(false);
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. DaytonaResource.delete rejects on first attempt and resolves after later deletion. DaytonaClient.create rejects to prove cleanup never allocates. DaytonaClient.get resolves before deletion and rejects with DaytonaNotFoundError after deletion. */
 test("a new provider session retries cleanup after restart without allocating", async () => {
   let deleted = false;
   let attempts = 0;
@@ -209,10 +222,12 @@ test("a new provider session retries cleanup after restart without allocating", 
   expect(attempts).toBe(2);
   expect(deleted).toBe(true);
 });
-
+/* oxlint-enable oxc/no-async-await */
 test("empty required credentials fail before provider allocation", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expect(() =>     createDaytonaProvider(       { ...credentials, organizationId: " " },       {      's required Promise and rejection contract. DaytonaClient.create resolves a resource for request cancellation. DaytonaClient.get resolves a resource for request cancellation. */
   expect(() =>
     createDaytonaProvider(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing credentials own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...credentials, organizationId: " " },
       {
         create: async () => resource(),
@@ -220,4 +235,5 @@ test("empty required credentials fail before provider allocation", () => {
       }
     )
   ).toThrow("DAYTONA_API_KEY and DAYTONA_ORGANIZATION_ID");
+  /* oxlint-enable oxc/no-async-await */
 });

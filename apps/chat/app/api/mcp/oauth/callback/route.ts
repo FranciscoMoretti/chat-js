@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 import { requireMcpCredentials } from "@/features/mcp/setup";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   createMcpClientForCallback,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
+/* oxlint-enable sort-imports */
 import {
   deletePendingSessionByState,
   getMcpConnectorById,
@@ -14,18 +18,21 @@ import {
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
+/* oxlint-enable sort-imports */
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
 
 const log = createModuleLogger("mcp-oauth-callback");
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const GET = async (request: NextRequest): Promise<NextResponse> => {
   const {
     code,
@@ -44,6 +51,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     connected?: boolean;
     errorMessage?: string;
   }): NextResponse => {
+    // oxlint-disable-next-line no-ternary -- Keep path as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const path = hasNonEmptyValue(connectorId)
       ? `/settings/connectors/${connectorId}`
       : "/settings/connectors";
@@ -73,6 +81,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
 
   if (hasNonEmptyValue(error)) {
     log.error({ error, errorDesc }, "OAuth error from provider");
+    // oxlint-disable-next-line no-ternary -- Keep pending as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const pending = hasNonEmptyValue(state)
       ? await getSessionByState({ state })
       : undefined;
@@ -84,6 +93,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
       }
     }
     return redirectToConnector({
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading mcpConnectorId from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       connectorId: pending?.mcpConnectorId,
       errorMessage:
         "Authorization was not completed. Please try connecting again.",
@@ -148,6 +158,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     });
   } catch (oauthError) {
     const errorMessage =
+      // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       oauthError instanceof Error
         ? oauthError.message
         : "Token exchange failed";
@@ -156,6 +167,7 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
         connectorId: connector.id,
         error: oauthError,
         errorMessage,
+        // oxlint-disable-next-line no-ternary -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         errorStack: oauthError instanceof Error ? oauthError.stack : undefined,
       },
       "OAuth token exchange failed"
@@ -168,5 +180,6 @@ export const GET = async (request: NextRequest): Promise<NextResponse> => {
     });
   }
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

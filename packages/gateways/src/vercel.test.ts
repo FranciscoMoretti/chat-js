@@ -45,6 +45,7 @@ const modelCatalogResponse = {
 };
 
 describe("VercelGateway", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("skips unsupported models before validating supported model metadata", async () => {
     vi.stubEnv("AI_GATEWAY_API_KEY", "test-key");
     vi.stubGlobal(
@@ -70,4 +71,5 @@ describe("VercelGateway", () => {
       type: "language",
     });
   });
+  /* oxlint-enable oxc/no-async-await */
 });

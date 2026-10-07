@@ -4,19 +4,25 @@
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveChannelInput } from "eve/channels/eve";
+/* oxlint-enable sort-imports */
 import type { MessageStreamEvent } from "eve/client";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  createFileUrl,
   FILES_PATH,
+  createFileUrl,
   isFileStorageKey,
   keyFromFileUrl,
 } from "@/lib/file-url";
+/* oxlint-enable sort-imports */
 
 import { eveDocumentOperations } from "./document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveMessageTool, eveToolMetadata } from "./message-tool-selection";
+/* oxlint-enable sort-imports */
 import type { ReadonlyEveMessagePart } from "./readonly-message-types";
 import { sharedEveMessages } from "./shared-messages";
 /* oxlint-enable import/no-nodejs-modules */
@@ -99,16 +105,20 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
         throw new EveCopyNotReadyError();
       }
       return {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...base,
         state: part.state,
         output: z.json().parse(part.output),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (part.outputType ? { outputType: part.outputType } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(part.outputType ? { outputType: part.outputType } : {}),
       };
     }
     case "output-error": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state, errorText: part.errorText };
     }
     case "output-denied": {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing base own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       return { ...base, state: part.state, reason: part.approval.reason };
     }
     default: {
@@ -117,11 +127,10 @@ const completedPart = (part: ReadonlyEveMessagePart): SeedPart => {
   }
 };
 /* oxlint-enable max-statements, no-magic-numbers */
-/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-params, max-statements, typescript/prefer-readonly-parameter-types --
  * max-params (#511): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): visitStrings keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/prefer-readonly-parameter-types (#565): visitStrings accepts seen = new WeakSet<object>(); deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): visitStrings intentionally keeps the existing falsy-value behavior of value; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const visitStrings = (
   value: unknown,
@@ -130,7 +139,7 @@ const visitStrings = (
   parentField?: string,
   seen = new WeakSet<object>()
 ): void => {
-  if (!value || typeof value !== "object") {
+  if (typeof value !== "object" || value === null) {
     return;
   }
   if (seen.has(value)) {
@@ -142,6 +151,7 @@ const visitStrings = (
     if (typeof item === "string") {
       const replacement = rewrite(
         item,
+        // oxlint-disable-next-line no-ternary -- Keep rewrite argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         Array.isArray(value) ? parentField : key
       );
       if (mutate) {
@@ -152,11 +162,10 @@ const visitStrings = (
     }
   }
 };
-/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable init-declarations, max-statements, typescript/strict-boolean-expressions --
+/* oxlint-enable max-params, max-statements, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable init-declarations, max-statements --
  * init-declarations (#507): transformFileReferences assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-statements (#512): transformFileReferences keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/strict-boolean-expressions (#610): transformFileReferences intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const transformFileReferences = (
   text: string,
@@ -177,16 +186,18 @@ const transformFileReferences = (
       return token;
     }
     const key = keyFromFileUrl(url.href);
-    return key ? replace(key) + token.slice(candidate.length) : token;
+
+    if (key !== null) {
+      return replace(key) + token.slice(candidate.length);
+    }
+    return token;
   });
-/* oxlint-enable init-declarations, max-statements, typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/strict-boolean-expressions -- moving it below executable initialization can obscure ordering and API ownership.
-typescript/strict-boolean-expressions (#610): eveCopyResources intentionally keeps the existing falsy-value behavior of field; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-enable init-declarations, max-statements */
 /**
  * Scans copy content before destination keys are reserved.
- * @param value Transcript or authorized document revision content to inspect.
- * @param documentReferences Whether explicit document and revision fields are collected.
- * @returns Sorted unique file keys, document IDs, and revision IDs found in supported references.
+ * @param {unknown} value Transcript or authorized document revision content to inspect.
+ * @param {boolean} documentReferences Whether explicit document and revision fields are collected.
+ * @returns {{ fileKeys: string[]; documentIds: string[]; revisionIds: string[] }} Sorted unique file keys, document IDs, and revision IDs found in supported references.
  */
 const eveCopyResources = (
   value: unknown,
@@ -203,10 +214,20 @@ const eveCopyResources = (
       files.add(key);
       return key;
     });
-    if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
+    if (
+      documentReferences &&
+      typeof field === "string" &&
+      field !== "" &&
+      DOCUMENT_FIELDS.has(field)
+    ) {
       documents.add(z.uuid().parse(text).toLowerCase());
     }
-    if (documentReferences && field && REVISION_FIELDS.has(field)) {
+    if (
+      documentReferences &&
+      typeof field === "string" &&
+      field !== "" &&
+      REVISION_FIELDS.has(field)
+    ) {
       revisions.add(z.uuid().parse(text).toLowerCase());
     }
     return text;
@@ -217,7 +238,6 @@ const eveCopyResources = (
     revisionIds: [...revisions].toSorted(),
   };
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-disable max-statements, no-continue, typescript/prefer-readonly-parameter-types --
  * max-statements (#512): transcriptResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-continue (#515): transcriptResources skips inapplicable loop entries explicitly; moving the remaining work into nested branches changes the control-flow boundary.
@@ -248,6 +268,7 @@ const transcriptResources = (
     }
   }
   return {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resources own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...resources,
     documentIds: [...documents].toSorted(),
     revisionIds: [...revisions].toSorted(),
@@ -261,8 +282,8 @@ typescript/prefer-readonly-parameter-types (#565): prepareEveCopyTranscript acce
 typescript/strict-boolean-expressions (#610): prepareEveCopyTranscript intentionally keeps the existing falsy-value behavior of message.metadata?.modelId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Prepares a sanitized completed transcript without model calls or storage access.
- * @param events Ordered native events whose latest copy boundary must be waiting or completed.
- * @returns The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
+ * @param {readonly MessageStreamEvent[]} events Ordered native events whose latest copy boundary must be waiting or completed.
+ * @returns {{ seed: Seed; projectionHash: string; resources: ReturnType<typeof transcriptResources>; }} The seed, its sanitized projection hash, and application resources to allocate; incomplete content throws.
  */
 const prepareEveCopyTranscript = (
   events: readonly MessageStreamEvent[]
@@ -273,7 +294,9 @@ const prepareEveCopyTranscript = (
 } => {
   const boundary = events.findLast((event) => COPY_BOUNDARIES.has(event.type));
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from boundary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     boundary?.type !== "session.waiting" &&
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from boundary; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     boundary?.type !== "session.completed"
   ) {
     throw new EveCopyNotReadyError();
@@ -285,6 +308,7 @@ const prepareEveCopyTranscript = (
         const selectedTool = eveMessageTool(message);
         return {
           role: "user",
+          // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           ...(selectedTool ? { metadata: eveToolMetadata(selectedTool) } : {}),
           parts: message.parts.map((part) => {
             if (part.type === "text") {
@@ -305,6 +329,7 @@ const prepareEveCopyTranscript = (
       }
       return {
         role: "assistant",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, oxc/no-optional-chaining, no-ternary -- Conditional spread (message.metadata?.modelId           ? { modelId: message.metadata.modelId }           : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign. Optional chain: Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(message.metadata?.modelId
           ? { modelId: message.metadata.modelId }
           : {}),
@@ -339,19 +364,19 @@ type CopyAllocations = {
   inlineFiles?: ReadonlyMap<string, string>;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
-/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types -- id-length (#506): rewriteEveCopyResources uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
 moving it below executable initialization can obscure ordering and API ownership.
 init-declarations (#507): rewriteEveCopyResources assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): rewriteEveCopyResources keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 typescript/prefer-readonly-parameter-types (#565): rewriteEveCopyResources accepts allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
-typescript/strict-boolean-expressions (#610): rewriteEveCopyResources intentionally keeps the existing falsy-value behavior of fileId; key; field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+ */
 /**
  * Rewrites a cloned value using durable, ownership-checked destination allocations.
- * @param value Transcript or document content whose source references are replaced in a clone.
- * @param allocations Reserved destination files, documents, revisions, and inline attachment keys.
- * @param documentReferences Whether explicit document/revision fields must be rewritten.
- * @returns A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
+ * @param {T} value Transcript or document content whose source references are replaced in a clone.
+ * @param {CopyAllocations} allocations Reserved destination files, documents, revisions, and inline attachment keys.
+ * @param {boolean} documentReferences Whether explicit document/revision fields must be rewritten.
+ * @returns {T} A clone of the same value shape with validated destination references; missing or conflicting allocations throw.
  */
 const rewriteEveCopyResources = <T>(
   value: T,
@@ -412,28 +437,38 @@ const rewriteEveCopyResources = <T>(
         isFileStorageKey(text)
       ) {
         const fileId = allocations.files.get(text);
-        if (!fileId) {
+        if (typeof fileId !== "string" || fileId === "") {
           throw new Error("Missing copied file allocation.");
         }
         return fileId;
       }
       let result = transformFileReferences(text, (source) => {
         const key = allocations.files.get(source);
-        if (!key) {
+        if (typeof key !== "string" || key === "") {
           throw new Error("Missing copied file allocation.");
         }
         return createFileUrl(key);
       });
       let map: ReadonlyMap<string, string> | undefined;
-      if (documentReferences && field && DOCUMENT_FIELDS.has(field)) {
+      if (
+        documentReferences &&
+        typeof field === "string" &&
+        field !== "" &&
+        DOCUMENT_FIELDS.has(field)
+      ) {
         map = documents;
       }
-      if (documentReferences && field && REVISION_FIELDS.has(field)) {
+      if (
+        documentReferences &&
+        typeof field === "string" &&
+        field !== "" &&
+        REVISION_FIELDS.has(field)
+      ) {
         map = revisions;
       }
       if (map) {
         const replacement = map.get(text.toLowerCase());
-        if (!replacement) {
+        if (typeof replacement !== "string" || replacement === "") {
           throw new Error("Missing copied document allocation.");
         }
         return replacement;
@@ -452,7 +487,7 @@ const rewriteEveCopyResources = <T>(
   );
   return root.value;
 };
-/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable id-length, init-declarations, max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): decodeInlineAttachment uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
@@ -489,8 +524,8 @@ no-continue (#515): eveCopyInlineAttachments skips inapplicable loop entries exp
 typescript/prefer-readonly-parameter-types (#565): eveCopyInlineAttachments accepts seed: Seed; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Decodes published inline attachments, binding identity to MIME type and exact bytes.
- * @param seed Prepared seed whose file parts may contain base64 data URLs.
- * @returns Unique inline attachments with validated media types, byte buffers, and content-bound IDs.
+ * @param {Seed} seed Prepared seed whose file parts may contain base64 data URLs.
+ * @returns {{ id: string; mediaType: string; bytes: Buffer }[]} Unique inline attachments with validated media types, byte buffers, and content-bound IDs.
  */
 const eveCopyInlineAttachments = (
   seed: Seed
@@ -515,13 +550,12 @@ const eveCopyInlineAttachments = (
   return [...files.values()];
 };
 /* oxlint-enable no-continue, typescript/prefer-readonly-parameter-types */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types --
  * max-lines-per-function (#510): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): copyAttachmentResolver keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): copyAttachmentResolver uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): copyAttachmentResolver uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/prefer-readonly-parameter-types (#565): copyAttachmentResolver accepts allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): copyAttachmentResolver intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const copyAttachmentResolver = (
   allocations: CopyAllocations,
@@ -540,6 +574,7 @@ const copyAttachmentResolver = (
     destinationKeys.add(key);
   }
   const metadata = new Map<string, Promise<Pick<Blob, "type" | "size">>>();
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return async (
     part: Extract<
       SeedPart,
@@ -548,17 +583,21 @@ const copyAttachmentResolver = (
       }
     >
   ): Promise<void> => {
+    // oxlint-disable-next-line no-ternary -- Keep inline as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const inline = part.url.startsWith("data:")
       ? decodeInlineAttachment(part)
       : undefined;
-    const key = inline
-      ? allocations.inlineFiles?.get(inline.id)
-      : keyFromFileUrl(part.url);
-    if (!(key && destinationKeys.has(key))) {
+    const key =
+      // oxlint-disable-next-line no-ternary -- Keep key selection lazy; pinned unicorn/prefer-ternary flags the equivalent assignment branches.
+      inline === undefined
+        ? keyFromFileUrl(part.url)
+        : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading get from allocations.inlineFiles; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+          allocations.inlineFiles?.get(inline.id);
+    if (typeof key !== "string" || key === "" || !destinationKeys.has(key)) {
       throw new Error("Missing copied attachment allocation.");
     }
     let file = metadata.get(key);
-    if (!file) {
+    if (file === undefined) {
       file = loadDestinationFile(key);
       metadata.set(key, file);
     }
@@ -575,11 +614,11 @@ const copyAttachmentResolver = (
     part.url = new URL(createFileUrl(key), origin).href;
     part.size = stored.size;
   };
+  /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): rewriteDocumentPart accepts part: SeedPart; allocations: CopyAllocations; [from, to]; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/strict-boolean-expressions (#610): rewriteDocumentPart intentionally keeps the existing falsy-value behavior of field; replacement; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const rewriteDocumentPart = (
   part: SeedPart,
@@ -596,9 +635,16 @@ const rewriteDocumentPart = (
   visitStrings(
     part,
     (text, field) => {
-      if (field && (DOCUMENT_FIELDS.has(field) || REVISION_FIELDS.has(field))) {
+      if (
+        typeof field === "string" &&
+        field !== "" &&
+        (DOCUMENT_FIELDS.has(field) || REVISION_FIELDS.has(field))
+      ) {
         const replacement = identities.get(text.toLowerCase());
-        if (!replacement && requireAllocation) {
+        if (
+          (typeof replacement !== "string" || replacement === "") &&
+          requireAllocation
+        ) {
           throw new Error("Missing copied document allocation.");
         }
         return replacement ?? text;
@@ -611,18 +657,19 @@ const rewriteDocumentPart = (
     true
   );
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve materializeEveCopyTranscript's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-disable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --max-params (#511): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): materializeEveCopyTranscript keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): materializeEveCopyTranscript uses 8, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): materializeEveCopyTranscript accepts seed: Seed; allocations: CopyAllocations; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Materializes reserved destination attachments and document references in a copied seed.
- * @param seed Prepared transcript cloned before destination URLs and metadata are written.
- * @param allocations Durable destination allocations validated against source resource identities.
- * @param loadDestinationFile Reads committed destination MIME type and size for receipt checks.
- * @param origin HTTP(S) origin used to construct copied file URLs without credentials.
- * @returns A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
+ * @param {Seed} seed Prepared transcript cloned before destination URLs and metadata are written.
+ * @param {CopyAllocations} allocations Durable destination allocations validated against source resource identities.
+ * @param {(key: string) => Promise<Pick<Blob, "type" | "size">>} loadDestinationFile Reads committed destination MIME type and size for receipt checks.
+ * @param {string} origin HTTP(S) origin used to construct copied file URLs without credentials.
+ * @returns {Promise<Seed>} A channel-attachment seed whose metadata matches committed files and fits the copy-size limit.
  */
 const materializeEveCopyTranscript = async (
   seed: Seed,
@@ -666,6 +713,8 @@ const materializeEveCopyTranscript = async (
   }
   return copied;
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveCopyInlineAttachments, EveCopyNotReadyError, eveCopyResources, materializeEveCopyTranscript, prepareEveCopyTranscript, rewriteEveCopyResources); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines -- #509: This copy-transcript.ts module keeps its existing API and workflow boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
@@ -677,3 +726,4 @@ export {
   prepareEveCopyTranscript,
   rewriteEveCopyResources,
 };
+/* oxlint-enable import/no-named-export */

@@ -21,6 +21,7 @@ vi.mock("@/lib/config", () => ({
 vi.mock("@/lib/env", () => ({
   env: { WORKFLOW_POSTGRES_URL: "postgresql://localhost/fixture" },
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
 
 vi.mock("@/lib/db/eve-files", () => ({
@@ -31,6 +32,7 @@ vi.mock("@/lib/db/eve-files", () => ({
     write: () => Promise<unknown>
   ) => await write(),
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/explicit-function-return-type -- route.test route: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result. */
@@ -63,6 +65,7 @@ const request = (): Request => {
   });
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
 test("records the authenticated owner of a server-created storage key before returning it", async () => {
   const response = await POST(request());
@@ -72,6 +75,8 @@ test("records the authenticated owner of a server-created storage key before ret
     url: `/api/files/${key}`,
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500);  */
@@ -82,6 +87,8 @@ test("does not return a usable upload when ownership registration fails", async 
   expect(await response.json()).toEqual({ error: "Upload failed" });
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, no-undefined, typescript/promise-function-async -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/promise-function-async: return the existing promise directly; adding async changes synchronous throw behavior and promise identity. */
@@ -104,6 +111,8 @@ test("waits for durable ownership before starting storage I/O", async () => {
     "image/png"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 500);  */
@@ -120,6 +129,8 @@ test("retains the reserved identity after an uncertain storage failure", async (
     "image/png"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400);  */
@@ -143,6 +154,8 @@ test("enforces retained upload type and byte limits before reserving storage", a
   expect(mocks.register).not.toHaveBeenCalled();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "not multipart"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, no-undefined -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 400); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value;  */
@@ -157,6 +170,8 @@ test.each([undefined, "not multipart"])(
     expect(mocks.register).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 64);  */
@@ -169,6 +184,8 @@ test("rejects a declared oversized request without reading its body", async () =
   expect(uploadRequest.bodyUsed).toBe(false);
   expect(mocks.register).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([undefined, "1"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- route.test route: max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including controller); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including contentLength). */
 
@@ -183,6 +200,7 @@ test.each([undefined, "1"])(
         pull(controller): void {
           chunksRead += 1;
           controller.enqueue(
+            // oxlint-disable-next-line no-ternary -- Keep controller.enqueue argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             chunksRead === 1
               ? new TextEncoder().encode(
                   '--upload\r\nContent-Disposition: form-data; name="file"; filename="large.png"\r\nContent-Type: image/png\r\n\r\n'
@@ -215,6 +233,8 @@ test.each([undefined, "1"])(
     expect(mocks.upload).not.toHaveBeenCalled();
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers -- route.test route: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 200);  */
@@ -233,4 +253,5 @@ test("accepts a file at the configured byte limit with multipart overhead", asyn
   );
   expect(response.status).toBe(200);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

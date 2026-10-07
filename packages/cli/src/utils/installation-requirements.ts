@@ -1,7 +1,11 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { preflight } from "./preflight";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { readProviderId, readProviderLiteral } from "./provider-config";
+/* oxlint-enable sort-imports */
 
 type MediaKind = "image" | "video";
 interface MediaGateway {
@@ -32,13 +36,17 @@ const requiredMedia = (tool: MediaConsumer): readonly MediaKind[] => {
   if (tool.id === "generate-image") {
     return ["image"];
   }
-  return tool.id === "generate-video" ? ["video"] : [];
+  if (tool.id === "generate-video") {
+    return ["video"];
+  }
+  return [];
 };
 
 const requiresStorage = (item: StorageConsumer): boolean =>
   item.requiresStorage === true ||
   ["generate-image", "generate-video", "attachment-uploads"].includes(item.id);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateStorage's awaited sequencing and rejected-Promise behavior. */
 const validateStorage = async (
   cwd: string,
   consumers: readonly StorageConsumer[],
@@ -57,7 +65,8 @@ const validateStorage = async (
     );
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installedMediaGateway's awaited sequencing and rejected-Promise behavior. */
 const installedMediaGateway = async (cwd: string): Promise<MediaGateway> => {
   const file = "lib/ai/gateway-model-defaults.ts";
   await preflight(cwd, [file]);
@@ -72,7 +81,7 @@ const installedMediaGateway = async (cwd: string): Promise<MediaGateway> => {
     defaults: mediaDefaultsSchema.parse(defaults),
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
 const validateMedia = (
   tools: readonly MediaConsumer[],
   gateway: MediaGateway
@@ -93,6 +102,7 @@ const validateMedia = (
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateProviderRequirements's awaited sequencing and rejected-Promise behavior. */
 const validateProviderRequirements = async (
   cwd: string,
   target: {
@@ -114,7 +124,7 @@ const validateProviderRequirements = async (
     validateMedia(mediaConsumers, gateway);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
 const validateCodeExecutionRequirements = (
   definition: Readonly<{
     slot?: string;
@@ -152,9 +162,11 @@ const validateRequestedKind = (
   }
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (registryMetadataKind, validateRequestedKind, validateProviderRequirements, validateCodeExecutionRequirements); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   registryMetadataKind,
   validateRequestedKind,
   validateProviderRequirements,
   validateCodeExecutionRequirements,
 };
+/* oxlint-enable import/no-named-export */

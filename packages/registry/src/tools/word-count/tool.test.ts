@@ -12,6 +12,7 @@ const unexpected = (): never => {
   throw new Error("Word count must not acquire external resources");
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("word count source handles empty text and whitespace without phantom words", async () => {
   const options = {
     abortSignal: new AbortController().signal,
@@ -48,3 +49,4 @@ test("word count source handles empty text and whitespace without phantom words"
     words: 3,
   });
 });
+/* oxlint-enable oxc/no-async-await */

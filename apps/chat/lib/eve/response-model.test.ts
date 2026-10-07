@@ -1,5 +1,7 @@
 import type { MessageStreamEvent } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, it } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { responseModel } from "./response-model";
 
@@ -31,8 +33,10 @@ it("preserves the response selection across reload and restored ancestor history
           type: "history.restored",
         },
         {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...step,
           data: {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing step.data own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...step.data,
             modelId: "gateway/openai/gpt-4.1",
             turnId: "turn_1",

@@ -8,6 +8,7 @@ import { test as setup } from "@playwright/test";
 
 const reasoningFile = path.resolve("playwright/.reasoning/session.json");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setup's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): setup("authenticate for reasoning") accepts { page }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
@@ -16,4 +17,5 @@ setup("authenticate for reasoning", async ({ page }) => {
   await page.waitForURL("/");
   await page.context().storageState({ path: reasoningFile });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

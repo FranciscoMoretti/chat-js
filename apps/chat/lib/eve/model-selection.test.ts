@@ -1,5 +1,7 @@
 import { MockLanguageModelV3 } from "ai/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import {
   getEveModelDefinition,
@@ -7,6 +9,7 @@ import {
   resolveEveModel,
 } from "./model-selection";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async --
  * import/no-relative-parent-imports (#530): Keep the explicit "../ai/gateways/fallback-models" dependency within this package instead of introducing an alias or barrel API.
  * typescript/explicit-function-return-type (#560): Keep vi.mock("../ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
@@ -30,6 +33,7 @@ vi.mock("../ai/active-gateway", () => ({
     },
   }),
 }));
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable import/no-relative-parent-imports, typescript/explicit-function-return-type, typescript/promise-function-async */
 vi.mock("../config", () => ({
   config: {
@@ -65,6 +69,7 @@ vi.mock("../ai/gateways/fallback-models", () => ({
     { id: "image", pricing: {}, tags: [], type: "image" },
   ],
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 test("keeps the provider model and reasoning variant distinct", async () => {
@@ -85,13 +90,15 @@ test("keeps the provider model and reasoning variant distinct", async () => {
     },
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("the logical reasoning identity still dispatches to the original provider model", async () => {
   const resolved = await resolveEveModel("thinking-reasoning");
   await expect(resolved.model.doGenerate({ prompt: [] })).rejects.toThrow(
     "provider model: thinking"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
 test.each(["unknown", "disabled", "image", "plain-reasoning"])(
   "rejects unavailable selection %s",
   (id) => {
@@ -99,9 +106,11 @@ test.each(["unknown", "disabled", "image", "plain-reasoning"])(
   }
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("accepts live catalog models absent from the snapshot", async () => {
   expect(() => getEveModelDefinition("live-only")).toThrow();
   expect(await loadEveModelDefinition("live-only")).toMatchObject({
     id: "live-only",
   });
 });
+/* oxlint-enable oxc/no-async-await */

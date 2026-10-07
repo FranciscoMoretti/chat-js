@@ -1,7 +1,9 @@
 import type { Sql, TransactionSql } from "postgres";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { classifyEveSandboxRuns } from "@/lib/db/eve-sandbox-run-coverage";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): runRow uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -17,20 +19,29 @@ const runRow = z.object({
 /* oxlint-enable no-magic-numbers */
 const inventoryLimit = 10_000;
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): readEvePostgresRunInventoryInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readEvePostgresRunInventoryInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-max-lines-per-function (#510): readEvePostgresRunInventoryInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventoryInTransaction's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- max-lines-per-function (#510): readEvePostgresRunInventoryInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readEvePostgresRunInventoryInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): readEvePostgresRunInventoryInTransaction uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-typescript/explicit-function-return-type (#560): Keep readEvePostgresRunInventoryInTransaction's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readEvePostgresRunInventoryInTransaction's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readEvePostgresRunInventoryInTransaction accepts query: TransactionSql; additionalRunIds: string[] = []; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Caller controls isolation and holds any write fences needed by this read. */
+no-magic-numbers (#517): readEvePostgresRunInventoryInTransaction uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+/** Caller controls isolation and holds any write fences needed by this read.
+ * @param {TransactionSql} query Native transaction used for the recursive run graph and associated stream reads.
+ * @param {string} sessionId Authorized native session identity that must exist in the returned run graph.
+ * @param {readonly string[]} additionalRunIds Retained run identities added as graph seeds, without mutating the supplied list.
+ * @returns {Promise<{ activeRunIds: string[]; ambiguousStreamIds: string[]; missingRunIds: string[]; runs: z.output<typeof runRow>[]; sandboxCoverage: ReturnType<typeof classifyEveSandboxRuns>; streamIds: string[] }>} Validated runs and associated streams, active run identities, unresolved declared run references, streams shared with unrelated or unassigned chunks, and ancestry-only sandbox classification. Rejects on missing session rows, invalid provider rows or oversized run/stream lists; this snapshot does not authorize deletion.
+ */
 const readEvePostgresRunInventoryInTransaction = async (
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- TransactionSql is an overloaded callable tag/helper with native typed members; a mapped readonly object removes its callable signatures. Preserve the native query capability.
   query: TransactionSql,
   sessionId: string,
-  additionalRunIds: string[] = []
-) => {
+  additionalRunIds: readonly string[] = []
+): Promise<{
+  activeRunIds: string[];
+  ambiguousStreamIds: string[];
+  missingRunIds: string[];
+  runs: z.output<typeof runRow>[];
+  sandboxCoverage: ReturnType<typeof classifyEveSandboxRuns>;
+  streamIds: string[];
+}> => {
   const seeds = [...new Set([sessionId, ...additionalRunIds])];
   const runs = z.array(runRow).parse(
     await query`
@@ -112,30 +123,33 @@ const readEvePostgresRunInventoryInTransaction = async (
     streamIds: streams.map((stream) => stream.id),
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresRunInventory's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): readEvePostgresRunInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): readEvePostgresRunInventory's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-typescript/explicit-function-return-type (#560): Keep readEvePostgresRunInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/explicit-module-boundary-types (#562): Keep readEvePostgresRunInventory's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
-typescript/prefer-readonly-parameter-types (#565): readEvePostgresRunInventory accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
  * Read-only adapter for @workflow/world-postgres 5.0.0-beta.40.
  * The caller must authorize the session before using this internal primitive.
  * This snapshot inventories known run/stream relationships, not queue, sandbox,
  * or blob coverage. It is not a retirement barrier or a purge receipt.
+ * @param {Readonly<Pick<Sql, "begin">>} connection Native transaction-opening capability used to establish a repeatable-read read-only snapshot.
+ * @param {string} sessionId Caller-authorized native session identity whose graph is requested.
+ * @returns {ReturnType<typeof readEvePostgresRunInventoryInTransaction>} The same validated run/stream inventory as the transaction reader, under the opened snapshot; rejects when inventory validation or the native transaction fails.
  */
 const readEvePostgresRunInventory = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   sessionId: string
-) =>
+): ReturnType<typeof readEvePostgresRunInventoryInTransaction> =>
   await connection.begin(
     "isolation level repeatable read read only",
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the native callable TransactionSql supplied by begin for the isolated run/stream inventory read.
     async (query) =>
       await readEvePostgresRunInventoryInTransaction(query, sessionId)
   );
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (readEvePostgresRunInventory, readEvePostgresRunInventoryInTransaction); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 export {
   readEvePostgresRunInventory,
   readEvePostgresRunInventoryInTransaction,
 };
+/* oxlint-enable import/no-named-export */

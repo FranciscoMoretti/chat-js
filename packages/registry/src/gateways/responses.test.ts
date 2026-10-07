@@ -1,3 +1,4 @@
+/* oxlint-disable oxc/no-async-await -- These provider wire tests await each real adapter response/fallback and preserve rejected-Promise test behavior. */
 /* oxlint-disable unicorn/no-null -- Provider wire fixtures must exercise explicit JSON nulls as well as missing fields. */
 import { expect, mock, test } from "bun:test";
 
@@ -57,6 +58,8 @@ test("provider models keep nullable defaults, unknown fields, and live IDs", asy
 test("malformed provider envelopes use the existing catalog fallback", async (): Promise<void> => {
   for (const Adapter of adapters) {
     for (const body of [
+      {},
+      { data: null },
       { data: "invalid" },
       { data: [null] },
       { data: [{ id: false }] },
@@ -88,4 +91,50 @@ test("OpenRouter rejects malformed modality fields", async (): Promise<void> => 
     getFallbackModels: (): AiGatewayModel[] => [fallback],
   });
   expect(await gateway.fetchModels()).toEqual([fallback]);
+});
+
+test("valid catalog entries survive malformed neighbors in original order", async (): Promise<void> => {
+  for (const Adapter of adapters) {
+    const gateway = new Adapter({
+      env: {
+        OPENAI_API_KEY: "test",
+        OPENAI_COMPATIBLE_BASE_URL: "https://example.com",
+        OPENROUTER_API_KEY: "test",
+      },
+      fetch: mock().mockResolvedValue(
+        Response.json({
+          data: [
+            { id: "first" },
+            null,
+            { id: false },
+            { created: "invalid", id: "bad" },
+            { id: "second" },
+          ],
+        })
+      ),
+      getFallbackModels: (): AiGatewayModel[] => [fallback],
+    });
+    // oxlint-disable-next-line no-await-in-loop -- Each independent adapter must preserve the same valid entry order.
+    const models = await gateway.fetchModels();
+    expect(models.map((model: { readonly id: string }) => model.id)).toEqual([
+      "first",
+      "second",
+    ]);
+  }
+});
+
+test("an explicit empty catalog stays empty instead of using fallback", async (): Promise<void> => {
+  for (const Adapter of adapters) {
+    const gateway = new Adapter({
+      env: {
+        OPENAI_API_KEY: "test",
+        OPENAI_COMPATIBLE_BASE_URL: "https://example.com",
+        OPENROUTER_API_KEY: "test",
+      },
+      fetch: mock().mockResolvedValue(Response.json({ data: [] })),
+      getFallbackModels: (): AiGatewayModel[] => [fallback],
+    });
+    // oxlint-disable-next-line no-await-in-loop -- Check the empty wire contract on every adapter.
+    expect(await gateway.fetchModels()).toEqual([]);
+  }
 });

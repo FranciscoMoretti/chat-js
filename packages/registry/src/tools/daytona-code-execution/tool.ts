@@ -1,18 +1,33 @@
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- The CodeExecutor implements native mutable EVE context and usage accounting interfaces. */
 /* oxlint-disable import/max-dependencies -- The installed tool explicitly composes native execution, usage, authorization and provider cleanup contracts. */
 import { defineTool } from "eve/tools";
 
 import { withCodeSandboxCleanup } from "@/lib/ai/installed-tool-capabilities";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
-import type { CodeExecutor } from "@/lib/eve/code-executor";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type {
+  CodeExecutionContext,
+  CodeExecutor,
+} from "@/lib/eve/code-executor";
+/* oxlint-enable sort-imports */
 import { eveCodeSandboxOwnership } from "@/lib/eve/code-sandbox-ownership";
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 import { executeInDaytona } from "./execution";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createDaytonaProvider } from "./sandbox";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { codeExecutionInput, codeExecutionResult } from "./schemas";
+/* oxlint-enable sort-imports */
 
 const EXECUTION_TIMEOUT_MS = 300_000;
 const EXECUTION_COST_USD = 0.05;
@@ -29,7 +44,11 @@ const provider = (): ReturnType<typeof createDaytonaProvider> => {
   return providerCache.current;
 };
 
-const executeCode: CodeExecutor = async (input, context) =>
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeCode's awaited sequencing and rejected-Promise behavior. */
+const executeCode: CodeExecutor = async (
+  input,
+  context: ReadonlyNativeSurface<CodeExecutionContext>
+) =>
   await executeWithToolUsage(context, async (usage) => {
     usage.addCostUsd(NO_COST_USD);
     const signal = AbortSignal.any([
@@ -51,6 +70,7 @@ const executeCode: CodeExecutor = async (input, context) =>
         {
           callId: context.callId,
           language: input.language,
+          // oxlint-disable-next-line no-ternary -- Keep reason as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           reason: error instanceof Error ? error.message : "Unknown error",
           sessionId: context.session.id,
         },
@@ -59,7 +79,7 @@ const executeCode: CodeExecutor = async (input, context) =>
       return usage.fail();
     }
   });
-
+/* oxlint-enable oxc/no-async-await */
 const codeExecution = withCodeSandboxCleanup(
   defineTool({
     description:
@@ -71,4 +91,6 @@ const codeExecution = withCodeSandboxCleanup(
   { createCleanupSession: () => provider().cleanup }
 );
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (codeExecution, executeCode); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { codeExecution, executeCode };
+/* oxlint-enable import/no-named-export */

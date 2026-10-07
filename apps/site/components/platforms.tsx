@@ -99,6 +99,8 @@ const BrowserFrame = ({
     />
   </svg>
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Platforms); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- Platforms renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- Platforms: The private render helpers share this screen/scene's layout and interaction state; extraction needs a component ownership decision. */
@@ -177,9 +179,15 @@ export const Platforms = (): React.JSX.Element => (
           <div className="relative z-10 mt-8 flex items-end justify-between">
             <span className="text-foreground/70 group-hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors duration-300">
               Launch web app
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight
+                // oxlint-disable-next-line react/forbid-component-props -- ArrowUpRight accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
             </span>
-            <BrowserFrame className="text-foreground/60 hidden h-20 w-auto transition-transform duration-500 group-hover:scale-105 sm:block" />
+            <BrowserFrame
+              // oxlint-disable-next-line react/forbid-component-props -- BrowserFrame accepts className in its styling contract; preserve this caller's layout and appearance.
+              className="text-foreground/60 hidden h-20 w-auto transition-transform duration-500 group-hover:scale-105 sm:block"
+            />
           </div>
         </a>
 
@@ -211,7 +219,10 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopMac}
             >
-              <AppleLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+              <AppleLogo
+                // oxlint-disable-next-line react/forbid-component-props -- AppleLogo accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
+              />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 macOS
               </span>
@@ -220,7 +231,10 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopWindows}
             >
-              <WindowsLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+              <WindowsLogo
+                // oxlint-disable-next-line react/forbid-component-props -- WindowsLogo accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
+              />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 Windows
               </span>
@@ -229,7 +243,10 @@ export const Platforms = (): React.JSX.Element => (
               className="group border-border/50 bg-foreground/[0.03] hover:border-foreground/20 hover:bg-foreground/[0.07] inline-flex items-center gap-3 rounded-xl border px-5 py-3.5 transition-all duration-300"
               href={siteLinks.docsDesktopLinux}
             >
-              <LinuxLogo className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors" />
+              <LinuxLogo
+                // oxlint-disable-next-line react/forbid-component-props -- LinuxLogo accepts className in its styling contract; preserve this caller's layout and appearance.
+                className="text-foreground/70 group-hover:text-foreground h-5 w-5 transition-colors"
+              />
               <span className="text-foreground/75 group-hover:text-foreground text-sm font-medium transition-colors">
                 Linux
               </span>
@@ -240,6 +257,8 @@ export const Platforms = (): React.JSX.Element => (
     </div>
   </section>
 );
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 
 /* oxlint-enable react/jsx-max-depth */
 

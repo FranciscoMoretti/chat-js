@@ -1,5 +1,7 @@
 import { installedRouters } from "@/features/installed-routers";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createCallerFactory, createTRPCRouter } from "@/trpc/init";
+/* oxlint-enable sort-imports */
 
 import { creditsRouter } from "./credits.router";
 import { eveRouter } from "./eve.router";
@@ -15,6 +17,7 @@ import { settingsRouter } from "./settings.router";
 const appRouter = createTRPCRouter({
   credits: creditsRouter,
   eve: eveRouter,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing installedRouters own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...installedRouters,
   project: projectRouter,
   settings: settingsRouter,
@@ -31,5 +34,9 @@ type AppRouter = typeof appRouter;
  *       ^? Post[]
  */
 const createCaller = createCallerFactory(appRouter);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (appRouter, createCaller); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { appRouter, createCaller };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppRouter); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { AppRouter };
+/* oxlint-enable import/no-named-export */

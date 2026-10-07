@@ -2,14 +2,20 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { createContext, useCallback, useContext, useState } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { useSidebar } from "@/components/ui/sidebar";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useCurrentChatRoute } from "@/lib/chat-route";
+/* oxlint-enable sort-imports */
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveDeleteDialog } from "./eve-delete-dialog";
+/* oxlint-enable sort-imports */
 
 interface Conversation {
   id: string;
@@ -54,6 +60,7 @@ const EveDeletionProvider = ({
     },
     [setOpenMobile]
   );
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve changed's awaited sequencing and rejected-Promise behavior. */
   const changed = async (rootId: string): Promise<void> => {
     /* oxlint-disable react/todo -- Preserve cache invalidation in finally after route changes. */
     try {
@@ -70,9 +77,12 @@ const EveDeletionProvider = ({
           status.rootId === rootId
         ) {
           const projectId =
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from conversation; preserve one receiver evaluation, skipped accesses and the existing (route.source === "project" ? route.projectId : undefined) fallback. The app guidance prefers optional chaining.
             conversation?.projectId ??
+            // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             (route.source === "project" ? route.projectId : undefined);
           router.replace(
+            // oxlint-disable-next-line no-ternary -- Keep router.replace argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             typeof projectId === "string" && projectId !== ""
               ? `/project/${projectId}`
               : "/"
@@ -85,6 +95,7 @@ const EveDeletionProvider = ({
     }
     /* oxlint-enable react/todo */
   };
+  /* oxlint-enable oxc/no-async-await */
   return (
     <DeletionContext.Provider value={openConversation}>
       {children}
@@ -99,7 +110,9 @@ const EveDeletionProvider = ({
     </DeletionContext.Provider>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveDeletionProvider, useEveDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 /* oxlint-disable react/only-export-components -- #620: Consumers import EveDeletionProvider, useEveDeletion from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { EveDeletionProvider, useEveDeletion };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

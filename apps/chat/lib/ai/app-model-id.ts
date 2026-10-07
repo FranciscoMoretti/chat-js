@@ -1,19 +1,19 @@
 import type chatConfig from "@/chat.config";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
 } from "./gateways/registry";
+/* oxlint-enable sort-imports */
 
-/* oxlint-disable id-length -- id-length (#506): ActiveGatewayType uses G as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 /** The gateway type actively selected in chat.config.ts */
 type ActiveGatewayType = typeof chatConfig extends {
-  ai: { gateway: infer G extends GatewayType };
+  ai: { gateway: infer ConfiguredGateway extends GatewayType };
 }
-  ? G
+  ? ConfiguredGateway
   : GatewayType;
-/* oxlint-enable id-length */
 
 /** Curated configuration ID for the active gateway. */
 type ModelId = GatewayModelIdMap[ActiveGatewayType];
@@ -23,4 +23,6 @@ type ModelId = GatewayModelIdMap[ActiveGatewayType];
 type AppModelId = string;
 
 type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType];
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ActiveGatewayType, AppModelId, ImageModelId, ModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { ActiveGatewayType, AppModelId, ImageModelId, ModelId };
+/* oxlint-enable import/no-named-export */

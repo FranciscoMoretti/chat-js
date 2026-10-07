@@ -1,6 +1,8 @@
 /* oxlint-disable import/max-dependencies -- This integration test/command composes its existing installer adapters and their canonical JSON readers explicitly. */
 import { afterEach, describe, expect, it } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync, readFileSync } from "node:fs";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import {
   mkdir,
   readFile,
@@ -9,24 +11,31 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
 import { runInNewContext } from "node:vm";
 
 import ts from "typescript";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { buildConfigTs } from "./config-builder";
-import { parseJsonObject } from "./json";
+import { parseJsonObject } from "./json-object";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
 } from "./scaffold";
-
-// oxlint-disable-next-line typescript/unbound-method -- The fixture passes a receiver-independent mock or arrow callback so invocation identity remains observable.
-const { join } = pathModule;
+/* oxlint-enable sort-imports */
 
 const tempDirs: string[] = [];
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
@@ -45,6 +54,7 @@ const makeTempDir = (name: string): string => {
 const getCliPackageRoot = (): string =>
   pathModule.resolve(import.meta.dirname, "../..");
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
@@ -61,6 +71,7 @@ afterEach(async (): Promise<void> => {
       .map((dir): Promise<void> => rm(dir, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
@@ -161,11 +172,12 @@ describe("buildConfigTs", (): void => {
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 describe("scaffoldFromTemplate", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("ships remaining patches as archives and preserves the eve package dependency", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-patched-runtimes");
     await scaffoldFromTemplate(destination);
     const manifestSource = await readFile(
-      join(destination, "package.json"),
+      pathModule.join(destination, "package.json"),
       "utf-8"
     );
     const manifestValue: unknown = JSON.parse(manifestSource);
@@ -183,11 +195,14 @@ describe("scaffoldFromTemplate", (): void => {
       );
       expect(
         // oxlint-disable-next-line eslint/no-await-in-loop -- Check each generated archive against the same staged scaffold.
-        await Bun.file(join(destination, "vendor", archiveName)).exists()
+        await Bun.file(
+          pathModule.join(destination, "vendor", archiveName)
+        ).exists()
       ).toBe(true);
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("omits maintainer harnesses while preserving application source and starter tests", async (): Promise<void> => {
     const destination = makeTempDir("maintainer-boundary");
     await scaffoldFromTemplate(destination);
@@ -223,7 +238,7 @@ describe("scaffoldFromTemplate", (): void => {
       "vitest.eve.config.ts",
       "vitest.eve-provider.config.ts",
     ]) {
-      expect(existsSync(join(destination, file))).toBe(false);
+      expect(existsSync(pathModule.join(destination, file))).toBe(false);
     }
     for (const file of [
       "tests/chat.e2e.ts",
@@ -237,10 +252,10 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/eve/world-config.ts",
       "vitest.config.ts",
     ]) {
-      expect(existsSync(join(destination, file))).toBe(true);
+      expect(existsSync(pathModule.join(destination, file))).toBe(true);
     }
     const playwright = await readFile(
-      join(destination, "playwright.config.ts"),
+      pathModule.join(destination, "playwright.config.ts"),
       "utf-8"
     );
     expect(playwright).not.toContain('name: "visual"');
@@ -248,16 +263,19 @@ describe("scaffoldFromTemplate", (): void => {
     expect(playwright).toContain('name: "reasoning"');
     expect(playwright).toContain('name: "artifacts"');
     const tsconfig = await readFile(
-      join(destination, "tsconfig.json"),
+      pathModule.join(destination, "tsconfig.json"),
       "utf-8"
     );
     expect(tsconfig).not.toContain("@eve-test");
     expect(tsconfig).not.toContain("@world-postgres-test");
-    const lint = await readFile(join(destination, "oxlint.config.ts"), "utf-8");
+    const lint = await readFile(
+      pathModule.join(destination, "oxlint.config.ts"),
+      "utf-8"
+    );
     expect(lint).not.toContain("tests/eve-fixture");
     expect(lint.match(/options: \{ typeAware: true \}/gu)).toHaveLength(1);
     const lintManifest: unknown = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     expect(lintManifest).toMatchObject({
       devDependencies: { "oxlint-tsgolint": "7.0.2001" },
@@ -267,7 +285,7 @@ describe("scaffoldFromTemplate", (): void => {
     });
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     for (const dependency of [
       "@electric-sql/pglite",
@@ -279,7 +297,7 @@ describe("scaffoldFromTemplate", (): void => {
       // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
       expect(manifest.devDependencies[dependency]).toBeUndefined();
     }
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
+    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary. Optional chain: Keep the existing nullish guard when reading evalite from manifest.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(manifest.overrides?.evalite).toBeUndefined();
     for (const script of [
       "eval:dev",
@@ -292,13 +310,14 @@ describe("scaffoldFromTemplate", (): void => {
       expect(manifest.scripts[script]).toBeUndefined();
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("leaves the storage slot and provider peers to registry installation", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-storage");
     await scaffoldFromTemplate(destination);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const manifest = JSON.parse(
-      await readFile(join(destination, "package.json"), "utf-8")
+      await readFile(pathModule.join(destination, "package.json"), "utf-8")
     );
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["files-sdk"]).toBe("2.5.0");
@@ -307,17 +326,20 @@ describe("scaffoldFromTemplate", (): void => {
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(manifest.dependencies["@aws-sdk/client-s3"]).toBeUndefined();
     expect(
-      await Bun.file(join(destination, "lib/storage-provider.ts")).exists()
+      await Bun.file(
+        pathModule.join(destination, "lib/storage-provider.ts")
+      ).exists()
     ).toBe(false);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("writes a standalone-safe root package.json", async (): Promise<void> => {
     const destination = makeTempDir("chat-app");
 
     await scaffoldFromTemplate(destination);
 
     const packageJsonSource = await readFile(
-      join(destination, "package.json"),
+      pathModule.join(destination, "package.json"),
       "utf-8"
     );
     const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -335,17 +357,28 @@ describe("scaffoldFromTemplate", (): void => {
     expect(packageJson.dependencies["@better-auth/electron"]).toBe("1.6.2");
     expect(packageJson.dependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.dependencies["@chat-js/thread"]).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading build from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.build).toBe(
       "tsx lib/db/migrate.ts --deployment && eve build && next build"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prebuild from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.prebuild).not.toContain("@chat-js/thread");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "redis:connect" from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.["redis:connect"]).toBeUndefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading format from packageJson.scripts; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.scripts?.format).toBe("oxfmt --write .");
-    expect(existsSync(join(destination, "biome.jsonc"))).toBe(false);
-    expect(existsSync(join(destination, "oxlint.config.ts"))).toBe(true);
-    expect(existsSync(join(destination, "oxfmt.config.ts"))).toBe(true);
-    expect(existsSync(join(destination, "oxlint-baseline.json"))).toBe(false);
+    expect(existsSync(pathModule.join(destination, "biome.jsonc"))).toBe(false);
+    expect(existsSync(pathModule.join(destination, "oxlint.config.ts"))).toBe(
+      true
+    );
+    expect(existsSync(pathModule.join(destination, "oxfmt.config.ts"))).toBe(
+      true
+    );
+    expect(
+      existsSync(pathModule.join(destination, "oxlint-baseline.json"))
+    ).toBe(false);
 
     for (const path of [
       "app/(chat)/api/chat",
@@ -364,24 +397,29 @@ describe("scaffoldFromTemplate", (): void => {
       "lib/thread",
       "providers/chat-input-provider.tsx",
     ]) {
-      expect(existsSync(join(destination, path))).toBe(false);
+      expect(existsSync(pathModule.join(destination, path))).toBe(false);
     }
 
     expect(
-      existsSync(join(destination, "components/chat-header-view.tsx"))
+      existsSync(
+        pathModule.join(destination, "components/chat-header-view.tsx")
+      )
     ).toBe(true);
     expect(
-      existsSync(join(destination, "components/chat/chat-layout.tsx"))
+      existsSync(
+        pathModule.join(destination, "components/chat/chat-layout.tsx")
+      )
     ).toBe(true);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("rewrites the generated web app to be npm-friendly", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-npm");
 
     await scaffoldFromTemplate(destination, { packageManager: "npm" });
 
     const packageJsonSource = await readFile(
-      join(destination, "package.json"),
+      pathModule.join(destination, "package.json"),
       "utf-8"
     );
     const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -399,14 +437,26 @@ describe("scaffoldFromTemplate", (): void => {
     }
 
     expect(
-      await readFile(join(destination, "playwright.config.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "playwright.config.ts"),
+        "utf-8"
+      )
     ).toContain('command: "npm run dev"');
     expect(
-      await readFile(join(destination, "scripts", "check-env.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "scripts", "check-env.ts"),
+        "utf-8"
+      )
     ).toContain("npm run fetch:models");
     expect(
       await readFile(
-        join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
+        pathModule.join(
+          destination,
+          "lib",
+          "ai",
+          "gateways",
+          "fallback-models.ts"
+        ),
         "utf-8"
       )
     ).toContain("npm run fetch:models");
@@ -419,7 +469,7 @@ describe("scaffoldFromTemplate", (): void => {
     expect(
       await Promise.all(
         neonFiles.map((file): Promise<boolean> =>
-          Bun.file(join(destination, "scripts", file)).exists()
+          Bun.file(pathModule.join(destination, "scripts", file)).exists()
         )
       )
     ).toEqual(neonFiles.map((): boolean => false));
@@ -433,7 +483,8 @@ describe("scaffoldFromTemplate", (): void => {
     ).toEqual([]);
     expect(packageJson.scripts["db:migrate"]).toBe("tsx lib/db/migrate.ts");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("allows known native package build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const destination = makeTempDir("chat-app-pnpm");
@@ -441,7 +492,7 @@ describe("scaffoldFromTemplate", (): void => {
     await scaffoldFromTemplate(destination, { packageManager: "pnpm" });
 
     const packageJsonSource = await readFile(
-      join(destination, "package.json"),
+      pathModule.join(destination, "package.json"),
       "utf-8"
     );
     const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -449,7 +500,7 @@ describe("scaffoldFromTemplate", (): void => {
       .object({ packageManager: z.string().optional() })
       .parse(packageJsonValue);
     const workspaceConfig = await readFile(
-      join(destination, "pnpm-workspace.yaml"),
+      pathModule.join(destination, "pnpm-workspace.yaml"),
       "utf-8"
     );
 
@@ -465,40 +516,48 @@ describe("scaffoldFromTemplate", (): void => {
     expect(workspaceConfig).toContain("macos-alias: true");
     expect(workspaceConfig).toContain("sharp: true");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("starts generated apps with an empty installable tool registry", async (): Promise<void> => {
     const destination = makeTempDir("chat-app-tools");
 
     await scaffoldFromTemplate(destination);
 
-    expect(existsSync(join(destination, "agent/tools/deepResearch.ts"))).toBe(
-      false
-    );
+    expect(
+      existsSync(pathModule.join(destination, "agent/tools/deepResearch.ts"))
+    ).toBe(false);
     for (const name of [
       "researchPlanner",
       "researcher",
       "researchCompressor",
       "researchWriter",
     ]) {
-      expect(existsSync(join(destination, "agent/subagents", name))).toBe(
-        false
-      );
+      expect(
+        existsSync(pathModule.join(destination, "agent/subagents", name))
+      ).toBe(false);
     }
     expect(
-      existsSync(join(destination, "tools", "chatjs", "get-weather"))
+      existsSync(pathModule.join(destination, "tools", "chatjs", "get-weather"))
     ).toBe(false);
     expect(
-      await readFile(join(destination, "tools", "chatjs", "tools.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "tools", "chatjs", "tools.ts"),
+        "utf-8"
+      )
     ).not.toContain("getWeather");
     expect(
-      await readFile(join(destination, "tools", "chatjs", "ui.ts"), "utf-8")
+      await readFile(
+        pathModule.join(destination, "tools", "chatjs", "ui.ts"),
+        "utf-8"
+      )
     ).not.toContain("GetWeatherRenderer");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("falls back to repo source apps when synced templates are missing", async (): Promise<void> => {
     const projectDir = makeTempDir("chat-app-fallback");
-    const templatesDir = join(getCliPackageRoot(), "templates");
-    const backupDir = join(
+    const templatesDir = pathModule.join(getCliPackageRoot(), "templates");
+    const backupDir = pathModule.join(
       tmpdir(),
       `chat-js-cli-templates-${crypto.randomUUID()}`
     );
@@ -514,22 +573,24 @@ describe("scaffoldFromTemplate", (): void => {
         projectName: "my-chat-app",
       });
       const electronTsconfig = await readFile(
-        join(projectDir, "electron", "tsconfig.json"),
+        pathModule.join(projectDir, "electron", "tsconfig.json"),
         "utf-8"
       );
       expect(electronTsconfig).toContain('"../next-env.d.ts"');
       expect(electronTsconfig).toContain('"../electron.d.ts"');
       expect(electronTsconfig).not.toContain("../chat/");
-      expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+      expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(
+        true
+      );
       const lintConfig = await readFile(
-        join(projectDir, "oxlint.config.ts"),
+        pathModule.join(projectDir, "oxlint.config.ts"),
         "utf-8"
       );
       expect(lintConfig.match(/options: \{ typeAware: true \}/gu)).toHaveLength(
         1
       );
       const lintManifest: unknown = JSON.parse(
-        await readFile(join(projectDir, "package.json"), "utf-8")
+        await readFile(pathModule.join(projectDir, "package.json"), "utf-8")
       );
       expect(lintManifest).toMatchObject({
         devDependencies: { "oxlint-tsgolint": "7.0.2001" },
@@ -539,7 +600,7 @@ describe("scaffoldFromTemplate", (): void => {
       });
 
       const packageJsonSource = await readFile(
-        join(projectDir, "package.json"),
+        pathModule.join(projectDir, "package.json"),
         "utf-8"
       );
       const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -547,7 +608,7 @@ describe("scaffoldFromTemplate", (): void => {
         .object({ dependencies: z.record(z.string(), z.string()) })
         .parse(packageJsonValue);
       const electronPackageJsonSource = await readFile(
-        join(projectDir, "electron", "package.json"),
+        pathModule.join(projectDir, "electron", "package.json"),
         "utf-8"
       );
       const electronPackageJsonValue: unknown = JSON.parse(
@@ -557,12 +618,15 @@ describe("scaffoldFromTemplate", (): void => {
         .object({ devDependencies: z.record(z.string(), z.string()) })
         .parse(electronPackageJsonValue);
 
-      expect(existsSync(join(projectDir, "tests/eve-browser.e2e.ts"))).toBe(
-        false
-      );
+      expect(
+        existsSync(pathModule.join(projectDir, "tests/eve-browser.e2e.ts"))
+      ).toBe(false);
       expect(
         existsSync(
-          join(projectDir, "lib/db/migrations/eve-runtime-migration.test.ts")
+          pathModule.join(
+            projectDir,
+            "lib/db/migrations/eve-runtime-migration.test.ts"
+          )
         )
       ).toBe(false);
       expect(packageJson.dependencies["@better-auth/core"]).toBe("1.6.2");
@@ -582,6 +646,7 @@ describe("scaffoldFromTemplate", (): void => {
       }
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
@@ -593,13 +658,14 @@ describe("scaffoldFromTemplate", (): void => {
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 describe("scaffoldFromGit", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   // oxlint-disable-next-line max-statements -- Keep the Git fixture setup, scaffold operation, and JSON output assertions in the same integration scenario.
   it("leaves repositories without the ChatJS storage seam untouched", async (): Promise<void> => {
     const source = makeTempDir("plain-git-source");
     const destination = makeTempDir("plain-git-destination");
     await mkdir(source, { recursive: true });
     await writeFile(
-      join(source, "package.json"),
+      pathModule.join(source, "package.json"),
       JSON.stringify({ dependencies: {}, name: "plain-template" })
     );
     for (const args of [
@@ -622,7 +688,7 @@ describe("scaffoldFromGit", (): void => {
     await scaffoldFromGit(source, destination);
 
     const packageJsonSource = await readFile(
-      join(destination, "package.json"),
+      pathModule.join(destination, "package.json"),
       "utf-8"
     );
     const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -631,6 +697,7 @@ describe("scaffoldFromGit", (): void => {
       .parse(packageJsonValue);
     expect(packageJson.dependencies).toEqual({});
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-sync */
@@ -644,8 +711,8 @@ describe("scaffoldFromGit", (): void => {
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 describe("scaffoldElectron", (): void => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Electron prebuild under Node and tsx", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-node-prebuild");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -653,21 +720,24 @@ describe("scaffoldElectron", (): void => {
       packageManager: "npm",
       projectName: "my-chat-app",
     });
-    const electronDir = join(projectDir, "electron");
-    const nodeModules = join(electronDir, "node_modules");
+    const electronDir = pathModule.join(projectDir, "electron");
+    const nodeModules = pathModule.join(electronDir, "node_modules");
     const resolveDependency = createRequire(import.meta.url).resolve;
-    await mkdir(join(nodeModules, ".bin"), { recursive: true });
+    await mkdir(pathModule.join(nodeModules, ".bin"), { recursive: true });
     await Promise.all([
-      symlink(resolveDependency("tsx/cli"), join(nodeModules, ".bin/tsx")),
+      symlink(
+        resolveDependency("tsx/cli"),
+        pathModule.join(nodeModules, ".bin/tsx")
+      ),
       symlink(
         pathModule.dirname(resolveDependency("png2icons/package.json")),
-        join(nodeModules, "png2icons"),
+        pathModule.join(nodeModules, "png2icons"),
         "dir"
       ),
     ]);
     // Isolate app configuration so prebuild needs no environment credentials.
     await writeFile(
-      join(projectDir, "lib/config.ts"),
+      pathModule.join(projectDir, "lib/config.ts"),
       `export const config = {
         appName: "Node Prebuild",
         appPrefix: "node-prebuild",
@@ -686,7 +756,7 @@ describe("scaffoldElectron", (): void => {
     }).toEqual({ exitCode: 0, stderr: "" });
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     const branding = JSON.parse(
-      await readFile(join(electronDir, "branding.json"), "utf-8")
+      await readFile(pathModule.join(electronDir, "branding.json"), "utf-8")
     );
     expect(branding).toEqual({
       appName: "Node Prebuild",
@@ -697,14 +767,15 @@ describe("scaffoldElectron", (): void => {
     });
     const icons = await Promise.all(
       ["png", "icns", "ico"].map((extension) =>
-        readFile(join(electronDir, "build", `icon.${extension}`))
+        readFile(pathModule.join(electronDir, "build", `icon.${extension}`))
       )
     );
     for (const icon of icons) {
       expect(icon.length).toBeGreaterThan(0);
     }
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("runs generated Forge prebuild and build hooks with the selected package manager", async (): Promise<void> => {
     const projectDir = makeTempDir("electron-forge");
     await scaffoldFromTemplate(projectDir, { packageManager: "npm" });
@@ -712,9 +783,9 @@ describe("scaffoldElectron", (): void => {
       packageManager: "npm",
       projectName: "my-chat-app",
     });
-    const electronDir = join(projectDir, "electron");
+    const electronDir = pathModule.join(projectDir, "electron");
     await writeFile(
-      join(electronDir, "branding.json"),
+      pathModule.join(electronDir, "branding.json"),
       JSON.stringify({
         appName: "My Chat App",
         appPrefix: "my-chat-app",
@@ -722,7 +793,7 @@ describe("scaffoldElectron", (): void => {
       })
     );
     const source = await readFile(
-      join(electronDir, "forge.config.ts"),
+      pathModule.join(electronDir, "forge.config.ts"),
       "utf-8"
     );
     const { outputText } = ts.transpileModule(source, {
@@ -732,8 +803,11 @@ describe("scaffoldElectron", (): void => {
         target: ts.ScriptTarget.ES2022,
       },
     });
-    const commands: { args: string[]; command: string; nodeEnv?: string }[] =
-      [];
+    const commands: {
+      args: readonly string[];
+      command: string;
+      nodeEnv?: string;
+    }[] = [];
     const configModule: {
       default?: { hooks: Record<string, () => Promise<void>> };
     } = {};
@@ -746,8 +820,8 @@ describe("scaffoldElectron", (): void => {
           return {
             spawnSync: (
               command: string,
-              args: string[],
-              options: { env: NodeJS.ProcessEnv }
+              args: readonly string[],
+              options: { readonly env: Readonly<NodeJS.ProcessEnv> }
             ) => {
               commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
               return { status: 0 };
@@ -773,8 +847,11 @@ describe("scaffoldElectron", (): void => {
       },
     });
     expect(configModule.default).toBeDefined();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.generateAssets; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.generateAssets?.();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.preStart; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.preStart?.();
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.prePackage; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
     await configModule.default?.hooks.prePackage?.();
     expect(commands).toEqual([
       { args: ["run", "prebuild"], command: "npm", nodeEnv: undefined },
@@ -782,7 +859,8 @@ describe("scaffoldElectron", (): void => {
       { args: ["run", "build"], command: "npm", nodeEnv: "production" },
     ]);
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("pins Better Auth versions in the generated electron app", async (): Promise<void> => {
     const projectDir = makeTempDir("electron");
 
@@ -793,7 +871,7 @@ describe("scaffoldElectron", (): void => {
     });
 
     const packageJsonSource = await readFile(
-      join(projectDir, "electron", "package.json"),
+      pathModule.join(projectDir, "electron", "package.json"),
       "utf-8"
     );
     const packageJsonValue: unknown = JSON.parse(packageJsonSource);
@@ -807,12 +885,14 @@ describe("scaffoldElectron", (): void => {
       .parse(packageJsonValue);
 
     expect(packageJson.packageManager).toMatch(/^npm@\d+\.\d+\.\d+/u);
-    expect(parseJsonObject(packageJsonSource).pnpm).toBeUndefined();
+    expect(
+      parseJsonObject(packageJsonSource, "Electron package.json").pnpm
+    ).toBeUndefined();
     expect(packageJson.devDependencies["@better-auth/electron"]).toBe("1.6.2");
     expect(packageJson.devDependencies["better-auth"]).toBe("1.6.2");
     expect(packageJson.devDependencies.esbuild).toBeDefined();
     const rootPackageJsonSource = await readFile(
-      join(projectDir, "package.json"),
+      pathModule.join(projectDir, "package.json"),
       "utf-8"
     );
     const rootPackageJsonValue: unknown = JSON.parse(rootPackageJsonSource);
@@ -820,7 +900,7 @@ describe("scaffoldElectron", (): void => {
       .object({ devDependencies: z.record(z.string(), z.string()) })
       .parse(rootPackageJsonValue);
     const rootTsconfigSource = await readFile(
-      join(projectDir, "tsconfig.json"),
+      pathModule.join(projectDir, "tsconfig.json"),
       "utf-8"
     );
     const rootTsconfigValue: unknown = JSON.parse(rootTsconfigSource);
@@ -828,13 +908,13 @@ describe("scaffoldElectron", (): void => {
       .object({ exclude: z.array(z.string()).optional() })
       .parse(rootTsconfigValue);
     const electronTsconfig = await readFile(
-      join(projectDir, "electron", "tsconfig.json"),
+      pathModule.join(projectDir, "electron", "tsconfig.json"),
       "utf-8"
     );
     expect(electronTsconfig).toContain('"../next-env.d.ts"');
     expect(electronTsconfig).toContain('"../electron.d.ts"');
     expect(electronTsconfig).not.toContain("../chat/");
-    expect(existsSync(join(projectDir, "electron.d.ts"))).toBe(true);
+    expect(existsSync(pathModule.join(projectDir, "electron.d.ts"))).toBe(true);
 
     expect(packageJson.devDependencies.tsx).toBe(
       rootPackageJson.devDependencies.tsx
@@ -844,12 +924,17 @@ describe("scaffoldElectron", (): void => {
       expect(script).not.toContain("bun ");
       expect(script).not.toContain("bunx");
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "@better-auth/core" from packageJson.overrides; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     expect(packageJson.overrides?.["@better-auth/core"]).toBe("1.6.2");
     expect(
-      await readFile(join(projectDir, "electron", "README.md"), "utf-8")
+      await readFile(
+        pathModule.join(projectDir, "electron", "README.md"),
+        "utf-8"
+      )
     ).not.toContain("bun ");
   });
-
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("allows Electron install/build scripts for pnpm scaffolds", async (): Promise<void> => {
     process.env.npm_config_user_agent = "pnpm/10.33.1";
     const projectDir = makeTempDir("electron-pnpm");
@@ -861,10 +946,14 @@ describe("scaffoldElectron", (): void => {
     });
 
     const packageJson = parseJsonObject(
-      await readFile(join(projectDir, "electron", "package.json"), "utf-8")
+      await readFile(
+        pathModule.join(projectDir, "electron", "package.json"),
+        "utf-8"
+      ),
+      "Electron package.json"
     );
     const workspaceConfig = await readFile(
-      join(projectDir, "electron", "pnpm-workspace.yaml"),
+      pathModule.join(projectDir, "electron", "pnpm-workspace.yaml"),
       "utf-8"
     );
 
@@ -880,8 +969,8 @@ describe("scaffoldElectron", (): void => {
     expect(workspaceConfig).toContain("macos-alias: true");
     expect(workspaceConfig).toContain("sharp: true");
   });
+  /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/no-undefined */

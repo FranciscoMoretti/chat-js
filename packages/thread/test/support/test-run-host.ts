@@ -12,6 +12,7 @@ const registerToolCall: ThreadRunHost<UIMessage>["registerToolCall"] =
     /* This host fixture does not persist tool-call registrations. */
   };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (TestRunHost); the enabled import/no-default-export convention rejects the default-export alternative. */
 export class TestRunHost implements ThreadRunHost<UIMessage> {
   public readonly dataPartSchemas: undefined;
   public readonly id = "thread";
@@ -83,3 +84,4 @@ export class TestRunHost implements ThreadRunHost<UIMessage> {
     this.tree.upsertMessage(message, this.spec.parentMessageId);
   };
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

@@ -1,15 +1,45 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves installed packages from their declaring workspace using native module resolution.
 import { createRequire } from "node:module";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import pathModule from "node:path";
 
-import { isJsonObject } from "./json";
+/* oxlint-disable oxc/no-async-await -- Probe one native manifest asynchronously; treat missing files as nonmatches while preserving other read and parse failures. */
+const hasMatchingPackageManifest = async (
+  directory: string,
+  packageName: string
+): Promise<boolean> => {
+  try {
+    const manifestSource = await readFile(
+      pathModule.join(directory, "package.json"),
+      "utf-8"
+    );
+    const manifest: unknown = JSON.parse(manifestSource);
+    return (
+      typeof manifest === "object" &&
+      manifest !== null &&
+      "name" in manifest &&
+      manifest.name === packageName
+    );
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+};
+/* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolvePackageDirectory); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolvePackageDirectory's awaited sequencing and rejected-Promise behavior. */
 /**
  * Resolve an installed package from the workspace that declares the dependency.
- * @param packageName Package identifier to resolve through workspace dependencies.
- * @param resolveFrom Workspace directory whose package.json anchors module resolution.
- * @returns The ancestor directory with that package's matching manifest name.
+ * @param {string} packageName Package identifier to resolve through workspace dependencies.
+ * @param {string} resolveFrom Workspace directory whose package.json anchors module resolution.
+ * @returns {Promise<string>} The ancestor directory with that package's matching manifest name.
  */
 export const resolvePackageDirectory = async (
   packageName: string,
@@ -22,28 +52,14 @@ export const resolvePackageDirectory = async (
   const filesystemRoot = pathModule.parse(directory).root;
 
   while (directory !== filesystemRoot) {
-    try {
-      // oxlint-disable-next-line eslint/no-await-in-loop -- Each parent depends on the resolved entry's preceding directory.
-      const manifestSource = await readFile(
-        pathModule.join(directory, "package.json"),
-        "utf-8"
-      );
-      const manifest: unknown = JSON.parse(manifestSource);
-      if (isJsonObject(manifest) && manifest.name === packageName) {
-        return directory;
-      }
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        !("code" in error) ||
-        error.code !== "ENOENT"
-      ) {
-        throw error;
-      }
+    // oxlint-disable-next-line eslint/no-await-in-loop -- Inspect the current manifest before advancing to its parent; matches and non-missing errors stop traversal.
+    if (await hasMatchingPackageManifest(directory, packageName)) {
+      return directory;
     }
     directory = pathModule.dirname(directory);
   }
 
   throw new Error(`Could not locate the installed ${packageName} package.`);
 };
-/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

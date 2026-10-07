@@ -1,10 +1,10 @@
-import { readdir, lstat } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { lstat, readdir } from "node:fs/promises";
 
 import { highlighter } from "#cli/utils/highlighter";
 import { logger } from "#cli/utils/logger";
 
 const FAILURE_EXIT_CODE = 1;
-const EMPTY_DIRECTORY_SIZE = 0;
 
 const rejectTarget = (messages: readonly string[]): never => {
   for (const message of messages) {
@@ -14,6 +14,8 @@ const rejectTarget = (messages: readonly string[]): never => {
   process.exit(FAILURE_EXIT_CODE);
 };
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ensureTargetEmpty); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ensureTargetEmpty's awaited sequencing and rejected-Promise behavior. */
 export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   const targetStats = await lstat(targetDir).catch((error: unknown) => {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
@@ -35,10 +37,13 @@ export const ensureTargetEmpty = async (targetDir: string): Promise<void> => {
   }
 
   const files = await readdir(targetDir);
-  if (files.length > EMPTY_DIRECTORY_SIZE) {
+  // oxlint-disable-next-line no-magic-numbers -- A directory is empty only when its entry count is zero.
+  if (files.length > 0) {
     rejectTarget([
       `Target directory is not empty: ${highlighter.info(targetDir)}`,
       "Please choose an empty directory or remove existing files.",
     ]);
   }
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

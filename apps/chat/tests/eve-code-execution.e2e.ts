@@ -5,20 +5,29 @@
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Client } from "eve/client";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveUsage } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
 import { reconcileEveUsage } from "../lib/eve/reconcile-usage";
 import { toolResultSchema } from "../lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native code execution renders real output and reconciles its fixed charge once" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native code execution renders real output and reconciles its fixed charge once" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -75,6 +84,7 @@ test("native code execution renders real output and reconciles its fixed charge 
       event.data.result.toolName === "codeExecution"
   );
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading type from result; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     result?.type !== "action.result" ||
     result.data.result.kind !== "tool-result"
   ) {
@@ -103,6 +113,8 @@ test("native code execution renders real output and reconciles its fixed charge 
     path: "tests/eve-results/screenshots/eve-code-output.png",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -150,9 +162,11 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading width from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     .poll(async () => (await page.locator("canvas").boundingBox())?.width)
     .toBeLessThan(390);
   await expect
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading x from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     .poll(async () => (await page.locator("canvas").boundingBox())?.x)
     .toBeGreaterThanOrEqual(0);
   await page.locator("canvas").screenshot({
@@ -160,4 +174,5 @@ test("Python results render an interactive chart and survive reload", async ({
     path: "tests/eve-results/screenshots/eve-python-chart-mobile.png",
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
