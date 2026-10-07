@@ -1,12 +1,12 @@
 // Apps/electron/package.json starts this launcher with Node before Electron Forge.
-/* oxlint-disable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires -- Node's .cjs wrapper supplies require and __dirname to resolve and spawn the installed Forge entrypoint. */
-// oxlint-disable-next-line import/no-nodejs-modules -- This Node launcher resolves the installed Forge executable and forwards its process exit status.
+/* oxlint-disable import/no-commonjs, typescript/no-var-requires -- Node's .cjs wrapper supplies require and __dirname to resolve and spawn the installed Forge entrypoint. */
+// oxlint-disable-next-line import/no-nodejs-modules, typescript/no-require-imports -- This .cjs launcher needs synchronous built-in loading before Forge starts; static imports cannot run in CommonJS and dynamic imports would make the launcher asynchronous.
 const { spawnSync } = require("node:child_process");
-// oxlint-disable-next-line import/no-nodejs-modules -- This Node launcher resolves the installed Forge executable and forwards its process exit status.
+// oxlint-disable-next-line import/no-nodejs-modules, typescript/no-require-imports -- This .cjs launcher needs synchronous built-in loading before Forge starts; static imports cannot run in CommonJS and dynamic imports would make the launcher asynchronous.
 const fs = require("node:fs");
-// oxlint-disable-next-line import/no-nodejs-modules -- This Node launcher resolves the installed Forge executable and forwards its process exit status.
+// oxlint-disable-next-line import/no-nodejs-modules, typescript/no-require-imports -- This .cjs launcher needs synchronous built-in loading before Forge starts; static imports cannot run in CommonJS and dynamic imports would make the launcher asynchronous.
 const path = require("node:path");
-/* oxlint-enable import/no-commonjs, typescript/no-require-imports, typescript/no-var-requires */
+/* oxlint-enable import/no-commonjs, typescript/no-var-requires */
 
 const FAILURE_EXIT_STATUS = 1;
 const COMMAND_ARGUMENT_OFFSET = 2;
