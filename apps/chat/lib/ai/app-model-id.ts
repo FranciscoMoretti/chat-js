@@ -15,11 +15,12 @@ type ActiveGatewayType = typeof chatConfig extends {
   ? ConfiguredGateway
   : GatewayType;
 
-/** Runtime model ID — narrowed to the active gateway */
+/** Curated configuration ID for the active gateway. */
 type ModelId = GatewayModelIdMap[ActiveGatewayType];
 
-/** App-level model ID (same as ModelId; autocomplete comes from ConfigInput) */
-type AppModelId = ModelId;
+// UI IDs come from a live gateway catalog and persisted selections, including
+// reasoning variants and newly published models absent from SDK literal lists.
+type AppModelId = string;
 
 type ImageModelId = GatewayImageModelIdMap[ActiveGatewayType];
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (ActiveGatewayType, AppModelId, ImageModelId, ModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

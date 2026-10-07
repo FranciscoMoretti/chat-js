@@ -8,6 +8,9 @@ import { customType } from "drizzle-orm/pg-core";
 import { env } from "@/lib/env";
 /* oxlint-enable import/no-nodejs-modules */
 
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const ALGORITHM = "aes-256-gcm";
 
 const getKey = (): Buffer => {
@@ -62,18 +65,24 @@ const encryptedText = customType<{ driverData: string; data: string }>({
 /**
  * Custom Drizzle type for encrypted JSON fields.
  * Automatically encrypts on write and decrypts on read using AES-256-GCM.
- * Stores JSON as encrypted text in the database.
- * @returns {ReturnType<typeof customType<{ driverData: string; data: JsonValue }>>} Native column factory whose driver conversion encrypts serialized JSON and decrypts/parses it without runtime schema validation.
+ * Stores JSON objects as encrypted text in the database.
+ * @returns {ReturnType<typeof customType<{ driverData: string; data: Record<string, unknown> }>>} Native column factory that encrypts serialized objects and validates decrypted JSON as an object.
  */
-const encryptedJson = <JsonValue>(): ReturnType<
-  typeof customType<{ driverData: string; data: JsonValue }>
-> =>
-  customType<{ driverData: string; data: JsonValue }>({
-    dataType: (): string => "text",
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Encrypted JSON columns are typed by their Drizzle declaration; adding per-column runtime schemas requires a database serialization contract migration.
-    fromDriver: (value): JsonValue => JSON.parse(decrypt(value)) as JsonValue,
-    toDriver: (value): string => encrypt(JSON.stringify(value)),
-  });
+const encryptedJson = customType<{
+  driverData: string;
+  data: Record<string, unknown>;
+}>({
+  dataType: (): string => "text",
+  fromDriver: (value): Record<string, unknown> => {
+    const parsed: unknown = JSON.parse(decrypt(value));
+    if (!isJsonObject(parsed)) {
+      throw new TypeError("Encrypted JSON column must contain an object.");
+    }
+    return parsed;
+  },
+  toDriver: (value: Readonly<Record<string, unknown>>): string =>
+    encrypt(JSON.stringify(value)),
+});
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (encryptedJson, encryptedText); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { encryptedJson, encryptedText };
 /* oxlint-enable import/no-named-export */

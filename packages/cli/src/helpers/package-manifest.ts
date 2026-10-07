@@ -1,10 +1,13 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The CLI normalizer determines the selected package-manager version through its native subprocess API.
 import { execFileSync } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { PackageManager } from "#cli/types";
+
+import { isJsonObject, parseJsonObject } from "./json-object";
 /* oxlint-enable sort-imports */
 
 type DependencyMap = Record<string, string>;
@@ -13,11 +16,46 @@ type ScriptMap = Record<string, string>;
 interface PackageJson {
   type?: "module" | "commonjs";
   packageManager?: string;
-  scripts?: ScriptMap;
-  dependencies?: DependencyMap;
-  devDependencies?: DependencyMap;
-  overrides?: Record<string, unknown>;
+  scripts?: ScriptMap | null;
+  dependencies?: DependencyMap | null;
+  devDependencies?: DependencyMap | null;
+  overrides?: Record<string, unknown> | null;
 }
+
+const isStringMap = (value: unknown): value is Record<string, string> =>
+  isJsonObject(value) &&
+  Object.values(value).every((entry) => typeof entry === "string");
+
+/* oxlint-disable no-undefined -- Legacy templates may omit optional maps or store null; preserve both while validating populated maps. */
+const isPackageJson = (
+  value: Readonly<Record<string, unknown>>
+): value is PackageJson & Record<string, unknown> =>
+  ["scripts", "dependencies", "devDependencies"].every(
+    (key) =>
+      value[key] === undefined || value[key] === null || isStringMap(value[key])
+  ) &&
+  (value.overrides === undefined ||
+    value.overrides === null ||
+    isJsonObject(value.overrides)) &&
+  (value.packageManager === undefined ||
+    typeof value.packageManager === "string") &&
+  (value.type === undefined ||
+    value.type === "module" ||
+    value.type === "commonjs");
+
+/* oxlint-enable no-undefined */
+
+const parsePackageJson = (
+  source: string
+): PackageJson & Record<string, unknown> => {
+  const value = parseJsonObject(source, "package.json");
+  if (!isPackageJson(value)) {
+    throw new TypeError(
+      "Invalid package.json dependency, script, or package metadata fields."
+    );
+  }
+  return value;
+};
 
 const ESBUILD_VERSION = "^0.28.0";
 const BETTER_AUTH_PACKAGES = [
@@ -30,8 +68,8 @@ const toExactVersion = (range: string): string => range.replace(/^[~^]/u, "");
 
 const resolveBetterAuthVersion = (
   packageJson: Readonly<{
-    dependencies?: Readonly<DependencyMap>;
-    devDependencies?: Readonly<DependencyMap>;
+    dependencies?: Readonly<DependencyMap> | null;
+    devDependencies?: Readonly<DependencyMap> | null;
   }>
 ): string => {
   for (const dependencyGroup of [
@@ -54,7 +92,7 @@ const resolveBetterAuthVersion = (
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper writes matching dependency versions into the caller-owned dependency map; readonly entries would prohibit those updates. */
 const pinBetterAuthVersions = (
-  dependencyGroup: DependencyMap | undefined,
+  dependencyGroup: DependencyMap | null | undefined,
   version: string
 ): void => {
   if (!dependencyGroup) {
@@ -140,7 +178,7 @@ const normalizeElectronScripts = (scripts: ScriptMap): void => {
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- This helper assigns esbuild and optional tsx versions into the supplied development dependency map. */
 const normalizeElectronDevDependencies = (
-  devDependencies: DependencyMap | undefined,
+  devDependencies: DependencyMap | null | undefined,
   tsxVersion?: string
 ): void => {
   if (!devDependencies) {
@@ -152,7 +190,6 @@ const normalizeElectronDevDependencies = (
     devDependencies.tsx = tsxVersion;
   }
 };
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (normalizeScaffoldedPackageJson); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -160,8 +197,8 @@ const normalizeElectronDevDependencies = (
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable node/no-sync -- This bounded synchronous operation is required during initialization or deterministic test/installer setup. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This exported normalizer returns the original manifest after updating its dependency, script, override, type, and packageManager fields; callers rely on in-place normalization. */
-export const normalizeScaffoldedPackageJson = (
+/* oxlint-disable typescript/prefer-readonly-parameter-types -- This normalizer returns the original manifest after updating its dependency, script, override, type and packageManager fields; callers rely on in-place normalization. */
+const normalizeScaffoldedPackageJson = (
   packageJson: PackageJson,
   options?: Readonly<{
     packageManager?: PackageManager;
@@ -229,10 +266,12 @@ export const normalizeScaffoldedPackageJson = (
 
   return packageJson;
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable node/no-sync */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+// oxlint-disable-next-line import/no-named-export -- Keep the established normalizer and canonical validator named API; no-default-export rejects its default-export alternative.
+export { normalizeScaffoldedPackageJson, parsePackageJson };

@@ -1,4 +1,5 @@
 import type { GatewayProvider as GatewayProviderBase } from "@chat-js/gateways/gateway-provider";
+import type { StrictLiterals } from "@chat-js/gateways/provider-types";
 
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Gateway } from "@/lib/ai/gateway";
@@ -29,12 +30,17 @@ type InstalledProviderContract<
 
 type GatewayProvider = InstalledProviderContract<InstalledGateway, GatewayType>;
 
-type GatewayModelIdMap = Record<
-  GatewayType,
-  Parameters<
-    InstalledGateway["createLanguageModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX]
->;
+// Runtime SDK factories accept new provider IDs. Configuration keeps curated
+// literal suggestions where the SDK supplies them; open adapters keep strings.
+type RuntimeLanguageModelId = Parameters<
+  InstalledGateway["createLanguageModel"]
+>[typeof MODEL_ID_PARAMETER_INDEX];
+type ConfigLanguageModelId = [StrictLiterals<RuntimeLanguageModelId>] extends [
+  never,
+]
+  ? RuntimeLanguageModelId
+  : StrictLiterals<RuntimeLanguageModelId>;
+type GatewayModelIdMap = Record<GatewayType, ConfigLanguageModelId>;
 
 // Helper: check whether a model tag tuple contains the requested tag.
 type TupleIncludes<

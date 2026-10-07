@@ -1,13 +1,11 @@
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { unstable_cache as cache } from "next/cache";
 
 import { config } from "@/lib/config";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { AppModelId, ModelId } from "./app-model-id";
-/* oxlint-enable sort-imports */
+import type { AppModelId } from "./app-model-id";
 import type { ModelData } from "./model-data";
 import { fetchModels } from "./models";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   generatedForGateway,
   models as generatedModels,
@@ -16,25 +14,21 @@ import {
 
 type AppModelDefinition = Omit<ModelData, "id"> & {
   id: AppModelId;
-  apiModelId: ModelId;
+  apiModelId: string;
 };
 
-const DISABLED_MODELS = new Set(config.ai.disabledModels);
+const DISABLED_MODELS = new Set<string>(config.ai.disabledModels);
 const PROVIDER_ORDER = config.ai.providerOrder;
 
-// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Returned definitions retain mutable tags/pricing references from catalog records; deep-readonly inputs would require cloning or a public ModelData return-type change.
 const buildAppModels = (models: readonly ModelData[]): AppModelDefinition[] =>
   models
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Shallow model copies preserve mutable nested catalog references in the returned public definitions.
-    .flatMap((model) => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Runtime gateway catalogs may contain new string IDs beyond the SDK literal union; keep their existing ModelId contract without rejecting newly available models.
-      const modelId = model.id as ModelId;
+    .flatMap((model): (AppModelDefinition & { disabled: boolean })[] => {
+      const modelId = model.id;
       // If the model supports reasoning, return two variants:
       // - Non-reasoning (original id, reasoning=false)
       // - Reasoning (id with -reasoning suffix, reasoning=true)
       if (model.reasoning) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The existing app API exposes synthetic -reasoning variants using AppModelId even though the provider literal union does not include that suffix.
-        const reasoningId = `${modelId}-reasoning` as AppModelId;
+        const reasoningId = `${modelId}-reasoning`;
 
         return [
           {
@@ -156,13 +150,13 @@ const KNOWN_MODEL_IDS = new Set<string>(
 /**
  * Returns the default enabled models for a given list of app models.
  * Includes curated defaults + any new models from the API not in models.generated.ts
- * @param {readonly { readonly id: AppModelId; readonly apiModelId: ModelId }[]} appModels - Available application variants and their provider IDs.
+ * @param {readonly { readonly id: AppModelId; readonly apiModelId: string }[]} appModels - Available application variants and their provider IDs.
  * @returns {Set<AppModelId>} Curated IDs, their available reasoning variants, and IDs absent from the matching generated catalog.
  */
 const getDefaultEnabledModels = (
   appModels: readonly {
     readonly id: AppModelId;
-    readonly apiModelId: ModelId;
+    readonly apiModelId: string;
   }[]
 ): Set<AppModelId> => {
   const enabled = new Set<AppModelId>(config.ai.curatedDefaults);
@@ -189,6 +183,6 @@ export { fetchChatModels, getAppModelDefinition, getDefaultEnabledModels };
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (AppModelDefinition); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { AppModelDefinition };
 /* oxlint-enable import/no-named-export */
-/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppModelId, ModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-export type { AppModelId, ModelId } from "./app-model-id";
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AppModelId); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+export type { AppModelId } from "./app-model-id";
 /* oxlint-enable import/no-named-export */

@@ -1,28 +1,20 @@
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { getModelProviderOptions } from "@chat-js/gateways/provider-options";
 import { wrapLanguageModel } from "ai";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-/* oxlint-enable sort-imports */
 import { getFallbackModels } from "@/lib/ai/gateways/fallback-models";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { InstalledGateway } from "@/lib/ai/gateways/registry";
-/* oxlint-enable sort-imports */
 import type { ModelData } from "@/lib/ai/model-data";
 import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;
-const MODEL_ID_PARAMETER_INDEX = 0;
 type EveModelDefinition = ModelData & {
-  apiModelId: Parameters<
-    InstalledGateway["createLanguageModel"]
-  >[typeof MODEL_ID_PARAMETER_INDEX];
+  apiModelId: string;
 };
 
 class EveModelUnavailableError extends Error {
@@ -55,8 +47,7 @@ const getEveModelDefinition = (
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...model,
     // The active gateway catalog above validates this ID at the runtime boundary.
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The selected installed gateway determines valid model IDs at runtime; a generic gateway redesign is needed to encode that relationship.
-    apiModelId: model.id as EveModelDefinition["apiModelId"],
+    apiModelId: model.id,
     reasoning: model.reasoning && id.endsWith("-reasoning"),
   };
 };

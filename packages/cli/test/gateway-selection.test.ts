@@ -785,8 +785,14 @@ for (const gateway of [...GATEWAYS, "acme"]) {
       // oxlint-disable-next-line no-ternary -- Keep selectedSdk as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       gateway === "acme"
         ? "@ai-sdk/openai-compatible"
-        : // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
-          gatewayMetadata[gateway as keyof typeof gatewayMetadata].dependency;
+        : // oxlint-disable-next-line oxc/no-optional-chaining -- Optional metadata lookup keeps an absent installed gateway observable by the following assertion.
+          Object.entries(gatewayMetadata).find(
+            ([id]: readonly [
+              string,
+              (typeof gatewayMetadata)[keyof typeof gatewayMetadata],
+            ]) => id === gateway
+          )?.[1].dependency;
+    expect(selectedSdk).toBeDefined();
     for (const { dependency } of Object.values(gatewayMetadata)) {
       if (dependency !== selectedSdk) {
         // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
@@ -922,6 +928,9 @@ assert.equal(await files.exists("test.txt"), false);
     await writeFile(
       join(cwd, "gateway-type-check.ts"),
       `import { defineConfig } from "./lib/config-schema";
+import { getActiveGateway } from "./lib/ai/active-gateway";
+// Live provider catalogs may expose IDs newer than the SDK literal suggestions.
+getActiveGateway().createLanguageModel("new/model-from-live-catalog");
 // @ts-expect-error An uninstalled gateway must not typecheck.
 defineConfig({ ai: { gateway: "${other}" } });
 ${

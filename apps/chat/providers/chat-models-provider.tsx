@@ -6,9 +6,6 @@ import React, { createContext, useCallback, useContext, useMemo } from "react";
 /* oxlint-enable sort-imports */
 import type { ReactNode } from "react";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { AppModelId } from "@/lib/ai/app-model-id";
-/* oxlint-enable sort-imports */
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelDefinition } from "@/lib/ai/app-models";
@@ -62,11 +59,9 @@ const ChatModelsProvider = ({
     const enabled = getDefaultEnabledModels(models);
     for (const pref of preferences ?? []) {
       if (pref.enabled) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted model preference IDs are reconciled with the installed catalog; stronger branding requires changing the preference and gateway contracts together.
-        enabled.add(pref.modelId as AppModelId);
+        enabled.add(pref.modelId);
       } else {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Persisted model preference IDs are reconciled with the installed catalog; stronger branding requires changing the preference and gateway contracts together.
-        enabled.delete(pref.modelId as AppModelId);
+        enabled.delete(pref.modelId);
       }
     }
     return enabled;
