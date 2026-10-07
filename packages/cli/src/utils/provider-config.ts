@@ -226,7 +226,7 @@ const gatewayConfigEdit = async (
     // Mutable bindings may no longer refer to their initializer at runtime.
     .filter(
       (statement: ReadonlyNative<ts.VariableStatement>): number =>
-        // oxlint-disable-next-line eslint/no-bitwise -- TypeScript represents declaration modifiers as a bitmask.
+        // oxlint-disable-next-line eslint/no-bitwise -- NodeFlags.AwaitUsing includes Const, so equality misses this immutable declaration; TypeScript exposes no typed public predicate for the combined flag.
         statement.declarationList.flags & ts.NodeFlags.Const
     )
     .flatMap(
