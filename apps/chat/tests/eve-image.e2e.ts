@@ -165,9 +165,16 @@ test("native image generation, editing and sharing preserve stored results", asy
     .from(eveFileReference)
     .innerJoin(eveStoredFile, eq(eveStoredFile.key, eveFileReference.key))
     .where(eq(eveFileReference.conversationId, binding.id));
-  expect(registered.map((file) => file.key).toSorted()).toEqual(
-    // oxlint-disable-next-line typescript/require-array-sort-compare -- Optional storage keys are compared in default UTF-16 order on both sides; locale collation would change this assertion.
-    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].toSorted()
+  expect(
+    registered
+      .map((file) => file.key)
+      .toSorted((left, right) => Number(left > right) - Number(left < right))
+  ).toEqual(
+    [keyFromFileUrl(src ?? ""), keyFromFileUrl(editedSrc ?? "")].toSorted(
+      (left, right) =>
+        Number(String(left) > String(right)) -
+        Number(String(left) < String(right))
+    )
   );
   expect(
     registered.every((file) => file.ownerId === conversation.ownerId)

@@ -391,14 +391,21 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
           .select({ key: eveFileReference.key })
           .from(eveFileReference)
           .where(eq(eveFileReference.conversationId, conversationId));
-        return rows.map((row) => row.key).toSorted();
+        return rows
+          .map((row) => row.key)
+          .toSorted(
+            (left, right) => Number(left > right) - Number(left < right)
+          );
       })
       .toEqual(
-        // oxlint-disable-next-line typescript/require-array-sort-compare -- Optional storage keys are compared in default UTF-16 order on both sides; locale collation would change this assertion.
         urls
           .slice(1)
           .map((url) => keyFromFileUrl(url))
-          .toSorted()
+          .toSorted(
+            (left, right) =>
+              Number(String(left) > String(right)) -
+              Number(String(left) < String(right))
+          )
       );
     // Reload after durable acceptance, while the response is still in progress.
     await expect(
