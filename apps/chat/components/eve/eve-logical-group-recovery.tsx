@@ -72,7 +72,11 @@ export const EveLogicalGroupRecovery = ({
         disabled={busy}
 
         onClick={() => {
-          startEventAction(recover);
+          const completion = recover();
+          // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+          startEventAction(async () => {
+            await completion;
+          });
         }}
       >
         Retry response

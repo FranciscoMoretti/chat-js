@@ -22,7 +22,7 @@
     "components/settings/mcp-details-page.tsx": "0cb427f8565d322daa4ad06f7bf329c7894263416acdb7a971ed8b458eef20bf",
     "features/attachment-uploads/chatjs.json": "ba275902b1739d1b28e693ba50e5086bbaeac775e1da9b6ba51806710664148c",
     "features/attachment-uploads/controls.tsx": "11621b5a91326ee6a88330a92c48c954f4c5a1059793a8d0aebb10d13d3345d7",
-    "features/attachment-uploads/integration.tsx": "a1434d9e6bed1c32f532e8717f937388a9d8fe223bcd59b839e050ac7b44a89d",
+    "features/attachment-uploads/integration.tsx": "dbc770aa7d3323d7965cce36d2411ee204d09a1c10396608b5401430ea60172f",
     "features/attachment-uploads/upload-prep.ts": "0513d9100de836244e4325156bf64f0f6632dca65734625bdbee0c6c059805a3",
     "features/attachment-uploads/upload.ts": "4c497fe92532d5ef2005d4fcbd2f33df7c05bf5cae393cb2fe79fd0bb823fd39",
     "features/installed-instrumentation.ts": "9621213ee85fce0a730ac7a7c5355904ea29c5f85f5fc9bdee78eb70b7655957",

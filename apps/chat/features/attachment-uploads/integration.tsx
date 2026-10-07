@@ -100,9 +100,11 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
     noKeyboard: true,
 
     onDrop: (files: ReadonlyNativeSurface<File[]>) => {
+      // Start outside the transition so the upload queue locks Send immediately.
+      const completion = upload(files);
       // oxlint-disable-next-line oxc/no-async-await -- Await upload completion inside the React Action failure owner.
       startEventAction(async () => {
-        await upload(files);
+        await completion;
       });
     },
   });
@@ -122,10 +124,13 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
             // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Reset the original input element's value after reading its FileList so the same file can be selected again.
             event: React.ChangeEvent<HTMLInputElement>
           ) => {
+            if (disabled) {
+              event.target.value = "";
+              return;
+            }
+            const completion = upload([...(event.target.files ?? [])]);
             startEventAction(async () => {
-              if (!disabled) {
-                await upload([...(event.target.files ?? [])]);
-              }
+              await completion;
               event.target.value = "";
             });
           }}
@@ -163,7 +168,10 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
-                void upload([...event.clipboardData.files]);
+                const completion = upload([...event.clipboardData.files]);
+                startEventAction(async () => {
+                  await completion;
+                });
               }
             },
           },

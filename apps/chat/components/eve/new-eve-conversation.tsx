@@ -261,7 +261,11 @@ export const NewEveConversation = ({
         }}
 
         onSubmit={() => {
-          startEventAction(submit);
+          const completion = submit();
+          // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+          startEventAction(async () => {
+            await completion;
+          });
         }}
         onToolChange={setSelectedTool}
         readOnly={retained}

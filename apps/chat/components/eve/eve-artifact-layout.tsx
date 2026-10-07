@@ -97,7 +97,11 @@ const DocumentSaveStatus = ({
             <Button
               // oxlint-disable-next-line react-perf/jsx-no-new-function-as-prop -- This error-only retry binds the current draft save action to its React rejection owner.
               onClick={() => {
-                startEventAction(handleRetry);
+                const completion = handleRetry();
+                // oxlint-disable-next-line oxc/no-async-await -- Start urgent draft updates before React owns the completion promise.
+                startEventAction(async () => {
+                  await completion;
+                });
               }}
               size="sm"
               variant="outline"

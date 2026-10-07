@@ -436,7 +436,11 @@ const EveConversation = ({
                               onDraftChange={handleEditDraft}
 
                               onSubmit={() => {
-                                startEventAction(handleEditSubmit);
+                                const completion = handleEditSubmit();
+                                // oxlint-disable-next-line oxc/no-async-await -- Start urgent fork updates before React owns the completion promise.
+                                startEventAction(async () => {
+                                  await completion;
+                                });
                               }}
                               onToolChange={handleEditToolChange}
                               selectedTool={fork.selectedTool}
@@ -486,42 +490,43 @@ const EveConversation = ({
                 }
 
                 onEdit={(message) => {
-                  // oxlint-disable-next-line oxc/no-async-await -- Await the fork Action so React owns any unexpected rejection.
+                  const following = messages.slice(
+                    messages.indexOf(message) + 1
+                  );
+                  const nextUser = following.findIndex(
+                    (candidate) => candidate.role === "user"
+                  );
+                  const response = following
+                    // oxlint-disable-next-line no-ternary -- Keep following .slice argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    .slice(0, nextUser === -1 ? following.length : nextUser)
+                    .find((candidate) => candidate.role === "assistant");
+                  const logicalId = controller.logicalId(
+                    conversationId,
+                    message.id
+                  );
+                  // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  const group = logicalId
+                    ? logicalResponseSlots(snapshot, logicalId)
+                    : undefined;
+                  const groupModels: Record<string, number> = {};
+                  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slots from group; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
+                  for (const slot of group?.slots ?? []) {
+                    groupModels[slot.modelId] =
+                      (groupModels[slot.modelId] ?? 0) + 1;
+                  }
+                  const completion = fork.begin(message, undefined, {
+                    events: agent.events,
+                    // oxlint-disable-next-line no-ternary -- Keep modelSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                    modelSelection: group ? groupModels : undefined,
+                    response:
+                      // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                      response && modelForMessage(response)
+                        ? response
+                        : undefined,
+                  });
+                  // oxlint-disable-next-line oxc/no-async-await -- Begin editing urgently, then let React own unexpected promise rejection.
                   startEventAction(async () => {
-                    const following = messages.slice(
-                      messages.indexOf(message) + 1
-                    );
-                    const nextUser = following.findIndex(
-                      (candidate) => candidate.role === "user"
-                    );
-                    const response = following
-                      // oxlint-disable-next-line no-ternary -- Keep following .slice argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                      .slice(0, nextUser === -1 ? following.length : nextUser)
-                      .find((candidate) => candidate.role === "assistant");
-                    const logicalId = controller.logicalId(
-                      conversationId,
-                      message.id
-                    );
-                    // oxlint-disable-next-line no-ternary -- Keep group as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                    const group = logicalId
-                      ? logicalResponseSlots(snapshot, logicalId)
-                      : undefined;
-                    const groupModels: Record<string, number> = {};
-                    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slots from group; preserve one receiver evaluation, skipped accesses and the existing [] fallback. The app guidance prefers optional chaining.
-                    for (const slot of group?.slots ?? []) {
-                      groupModels[slot.modelId] =
-                        (groupModels[slot.modelId] ?? 0) + 1;
-                    }
-                    await fork.begin(message, undefined, {
-                      events: agent.events,
-                      // oxlint-disable-next-line no-ternary -- Keep modelSelection as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                      modelSelection: group ? groupModels : undefined,
-                      response:
-                        // oxlint-disable-next-line no-ternary -- Keep response as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-                        response && modelForMessage(response)
-                          ? response
-                          : undefined,
-                    });
+                    await completion;
                   });
                 }}
 

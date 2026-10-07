@@ -67,7 +67,11 @@ export const EveForkRecovery = ({
                 disabled={fork.busy}
 
                 onClick={() => {
-                  startEventAction(handleRetry);
+                  const completion = handleRetry();
+                  // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+                  startEventAction(async () => {
+                    await completion;
+                  });
                 }}
                 size="sm"
               >

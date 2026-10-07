@@ -178,7 +178,11 @@ export const EveCreationRecovery = ({
             disabled={busy}
 
             onClick={() => {
-              startEventAction(retry);
+              const completion = retry();
+              // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+              startEventAction(async () => {
+                await completion;
+              });
             }}
           >
             {

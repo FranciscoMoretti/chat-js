@@ -138,7 +138,11 @@ const EveCopyButton = ({
           label={label}
 
           onClick={() => {
-            startEventAction(save);
+            const completion = save();
+            // oxlint-disable-next-line oxc/no-async-await -- Start urgent busy updates before React owns the completion promise.
+            startEventAction(async () => {
+              await completion;
+            });
           }}
         />
       )}

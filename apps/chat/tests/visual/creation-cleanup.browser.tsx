@@ -3,9 +3,9 @@
 /* oxlint-disable oxc/no-async-await -- Await native browser interactions, React commits, snapshot completion and cleanup in their original order. */
 /* oxlint-disable sort-imports -- Oxfmt groups runtime, type and CSS imports by module; this grouping conflicts with sort-imports binding-syntax order. */
 import { takeSnapshot } from "@uiverify/vitest";
-import React from "react";
+import React, { act } from "react";
 import type { ComponentProps } from "react";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import { page } from "vitest/browser";
 
 import type { EveComposer } from "@/components/eve/eve-composer";
@@ -21,6 +21,7 @@ const runtime = vi.hoisted(() => ({
   resolve: vi.fn(),
   setAttachments: vi.fn(),
 }));
+afterEach(() => vi.clearAllMocks());
 vi.mock("@/lib/eve/resolve-creation-request", () => ({
   resolveCreationRequest: runtime.resolve,
 }));
@@ -48,6 +49,7 @@ vi.mock("@/components/eve/eve-initial-message", () => ({
 vi.mock("@/components/eve/eve-composer", () => ({
   // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The native composer props contain React dispatchers and mutable upload collections; this fixture invokes their callbacks without mutation.
   EveComposer: ({
+    disabled,
     draft,
     onDraftChange,
     onSubmit,
@@ -61,6 +63,7 @@ vi.mock("@/components/eve/eve-composer", () => ({
         }) => onDraftChange(event.currentTarget.value)}
       />
       <button
+        disabled={disabled}
         type="button"
         onClick={() => {
           onSubmit();
@@ -71,6 +74,42 @@ vi.mock("@/components/eve/eve-composer", () => ({
     </section>
   ),
 }));
+
+test("creation shows progress before a deferred request completes", async () => {
+  sessionStorage.clear();
+  const pending = Promise.withResolvers<never>();
+  runtime.resolve.mockReturnValue(pending.promise);
+  const fixture = await mount(<NewEveConversation ownerId="test-owner" />);
+  try {
+    await page
+      .getByRole("textbox", { name: "Message" })
+      .fill("Keep this draft");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect
+      .element(page.getByText("Creating conversation…"))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Send" }))
+      .toBeDisabled();
+    expect(runtime.resolve).toHaveBeenCalledOnce();
+    await takeSnapshot("creation-pending-request");
+    await page.getByRole("main").screenshot();
+    await act(async () => {
+      await Promise.resolve();
+      pending.reject(new CreationRejectedError("Creation rejected"));
+    });
+    await expect
+      .element(page.getByRole("textbox", { name: "Message" }))
+      .toHaveValue("Keep this draft");
+    await expect
+      .element(page.getByRole("button", { name: "Send" }))
+      .toBeEnabled();
+  } finally {
+    pending.reject(new CreationRejectedError("Test cleanup"));
+    sessionStorage.clear();
+    await unmount(fixture);
+  }
+});
 
 test("creation cleanup warning survives the recovery handoff without resending a rejected request", async () => {
   sessionStorage.clear();
