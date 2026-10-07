@@ -112,8 +112,7 @@ test("rejects conflicting provider selections and permits reinstalling the selec
     });
     expect(reinstall.expected).toEqual([definition("first")]);
   } finally {
-    // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-    server.stop(true);
+    await server.stop(true);
   }
 });
 /* oxlint-enable oxc/no-async-await */
