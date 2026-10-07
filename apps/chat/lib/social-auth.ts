@@ -1,14 +1,10 @@
 import type { AuthenticationConfig } from "./config-schema";
 
-/* oxlint-disable typescript/consistent-type-definitions --
- * typescript/consistent-type-definitions (#559): SocialAuthSignInOptions preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms.
- */
-type SocialAuthSignInOptions = {
+interface SocialAuthSignInOptions {
   disableRedirect?: boolean;
   errorCallbackURL?: string;
   newUserCallbackURL?: string;
-};
-/* oxlint-enable typescript/consistent-type-definitions */
+}
 
 type SocialAuthProvider = keyof AuthenticationConfig;
 
@@ -53,9 +49,13 @@ const sortSocialAuthProvidersByLastUsed = <
   ];
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (isSocialAuthProvider, getEnabledSocialAuthProviders, sortSocialAuthProvidersByLastUsed); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export {
   isSocialAuthProvider,
   getEnabledSocialAuthProviders,
   sortSocialAuthProvidersByLastUsed,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SocialAuthSignInOptions, SocialAuthProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { SocialAuthSignInOptions, SocialAuthProvider };
+/* oxlint-enable import/no-named-export */

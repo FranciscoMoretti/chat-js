@@ -93,6 +93,7 @@ do $$ declare table_name text; begin
 end $$;
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve installEvePostgresResourceFence's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- typescript/prefer-readonly-parameter-types (#565): installEvePostgresResourceFence accepts connection: Sql; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 const installEvePostgresResourceFence = async (
   connection: Sql
@@ -101,13 +102,21 @@ const installEvePostgresResourceFence = async (
     await query.unsafe(installSql);
   });
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResourcesInTransaction's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResourcesInTransaction's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types --
 max-statements (#512): fenceEvePostgresResourcesInTransaction keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): fenceEvePostgresResourcesInTransaction uses 1, 10_000, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResourcesInTransaction accepts query: TransactionSql; input: { runIds: string[]; streamIds: string[]; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
-/** Shares the caller's READ COMMITTED transaction with inventory coordination. */
+/**
+ * Shares the caller's READ COMMITTED transaction with inventory coordination.
+ *
+ * @param {TransactionSql} query Caller transaction used to acquire sorted resource fences and inspect run and stream ownership.
+ * @param {{ runIds: string[]; streamIds: string[]; }} input Run and stream identities to fence; at least one run is required and each list is bounded to 10,000 entries.
+ * @returns {Promise<void>} Resolves after acquiring fences and verifying retired runs and unambiguous stream ownership; invalid inventories or active resources reject.
+ */
 const fenceEvePostgresResourcesInTransaction = async (
   query: TransactionSql,
   input: {
@@ -156,14 +165,18 @@ const fenceEvePostgresResourcesInTransaction = async (
     }
   }
 };
-/* oxlint-enable jsdoc/require-param, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresResources's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-param, typescript/prefer-readonly-parameter-types -- jsdoc/require-param (#534): fenceEvePostgresResources's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable typescript/prefer-readonly-parameter-types --
 typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresResources accepts connection: Sql; input: { runIds: string[]; streamIds: string[]; }; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
 /**
- * Internal provider primitive: caller authorizes and inventories these resources.
- * Blocks future payload writes, including run recreation and linked descendants.
- * Does not fence queues or erase data, and is not a complete deletion receipt.
+ * Internal provider primitive: caller authorizes and inventories these resources. Blocks future payload writes, including run recreation and linked descendants; does not fence queues, erase data or produce a deletion receipt.
+ *
+ * @param {Sql} connection Postgres connection used to open and commit the READ COMMITTED fencing transaction.
+ * @param {{ runIds: string[]; streamIds: string[]; }} input Authorized run and stream inventory passed to the transaction-level fence.
+ * @returns {Promise<void>} Resolves after the fencing transaction commits; invalid inventories, active resources and database failures reject.
  */
 const fenceEvePostgresResources = async (
   connection: Sql,
@@ -176,9 +189,12 @@ const fenceEvePostgresResources = async (
     await fenceEvePostgresResourcesInTransaction(query, input);
   });
 };
-/* oxlint-enable jsdoc/require-param, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (fenceEvePostgresResources, fenceEvePostgresResourcesInTransaction, installEvePostgresResourceFence); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable typescript/prefer-readonly-parameter-types */
 export {
   fenceEvePostgresResources,
   fenceEvePostgresResourcesInTransaction,
   installEvePostgresResourceFence,
 };
+/* oxlint-enable import/no-named-export */

@@ -131,8 +131,8 @@ const readConnectionConfiguration = (
 
 /**
  * Validate the ChatJS demo preview infrastructure configuration.
- * @param source - Environment values supplied to the maintainer preview build.
- * @returns Isolated pooled/direct database URLs, or undefined outside preview deployments.
+ * @param {Environment} source - Environment values supplied to the maintainer preview build.
+ * @returns {{ DATABASE_MIGRATION_URL: string; DATABASE_URL: string } | undefined} Isolated pooled/direct database URLs, or undefined outside preview deployments.
  */
 const resolveMaintainerPreviewDatabase = (
   source: Environment
@@ -149,4 +149,6 @@ const resolveMaintainerPreviewDatabase = (
 
   return { DATABASE_MIGRATION_URL: direct, DATABASE_URL: pooled };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (PreviewConfigurationError, resolveMaintainerPreviewDatabase); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { PreviewConfigurationError, resolveMaintainerPreviewDatabase };
+/* oxlint-enable import/no-named-export */

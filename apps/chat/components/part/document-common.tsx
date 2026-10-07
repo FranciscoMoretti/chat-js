@@ -1,10 +1,14 @@
 import { File, Loader2, Pencil } from "lucide-react";
-import type { JSX as ReactJSX } from "react";
 import React, { memo } from "react";
+import type { JSX as ReactJSX } from "react";
 
 import { useDocumentConversation } from "@/components/eve/eve-document-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useArtifact } from "@/hooks/use-artifact";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
 /* oxlint-disable id-length -- hasProp: id-length: retain conventional event, index, and generic identifiers in this existing callback contract */
 
 const hasProp = <T extends string>(
@@ -24,28 +28,37 @@ const isArtifactToolResult = (
   hasProp(value, "kind") &&
   typeof value.kind === "string";
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null -- getActionText: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+type DocumentActionText =
+  | "Reading"
+  | "Read"
+  | "Creating"
+  | "Created"
+  | "Updating"
+  | "Updated";
 
+const actionTextByType: ReadonlyMap<
+  "create" | "update" | "read",
+  { readonly past: DocumentActionText; readonly present: DocumentActionText }
+> = new Map([
+  ["read", { past: "Read", present: "Reading" }],
+  ["create", { past: "Created", present: "Creating" }],
+  ["update", { past: "Updated", present: "Updating" }],
+]);
+/* oxlint-disable unicorn/no-null -- Unknown document action kinds retain the existing empty-label sentinel. */
 const getActionText = (
   type: "create" | "update" | "read",
   tense: "present" | "past"
-) => {
-  switch (type) {
-    case "read": {
-      return tense === "present" ? "Reading" : "Read";
-    }
-    case "create": {
-      return tense === "present" ? "Creating" : "Created";
-    }
-    case "update": {
-      return tense === "present" ? "Updating" : "Updated";
-    }
-    default: {
-      return null;
-    }
+): DocumentActionText | null => {
+  const labels = actionTextByType.get(type);
+  if (!labels) {
+    return null;
   }
+  if (tense === "present") {
+    return labels.present;
+  }
+  return labels.past;
 };
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
 interface DocumentToolResultProps {
   followLive?: boolean;
@@ -86,6 +99,7 @@ const PureDocumentToolResult = ({
           isVisible: true,
           kind: result.kind,
           messageId,
+          // oxlint-disable-next-line no-ternary -- Keep revisionId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           revisionId: followLive ? undefined : result.revisionId,
           status: "idle",
           title: result.title,
@@ -133,6 +147,7 @@ const PureDocumentToolCall = ({
       className="cursor pointer flex w-fit flex-row items-start justify-between gap-3 rounded-xl border px-3 py-2"
       onClick={() => {
         setArtifact((currentArtifact) => ({
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing currentArtifact own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           ...currentArtifact,
           isVisible: true,
         }));
@@ -153,7 +168,7 @@ const PureDocumentToolCall = ({
         </div>
 
         <div className="text-left">
-          {`${getActionText(type, "present")} ${args.title ? `"${args.title}"` : ""}`}
+          {`${getActionText(type, "present")} ${/* oxlint-disable no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ args /* oxlint-enable no-ternary */.title ? `"${args.title}"` : ""}`}
         </div>
       </div>
 
@@ -166,6 +181,8 @@ const PureDocumentToolCall = ({
 /* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
 
 const DocumentToolCall = memo(PureDocumentToolCall, () => true);
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/only-export-components -- #620: Consumers import DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { DocumentToolCall, DocumentToolResult, hasProp, isArtifactToolResult };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

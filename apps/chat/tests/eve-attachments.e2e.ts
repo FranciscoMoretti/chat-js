@@ -9,21 +9,31 @@
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveFilePurge } from "../lib/db/eve-file-purge";
+/* oxlint-enable sort-imports */
 import { prepareEveOrphanedFilePurge } from "../lib/db/eve-orphaned-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveConversation,
   eveFileReference,
   eveStoredFile,
   user,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "../lib/file-url";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules, import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -39,6 +49,7 @@ const redPng = Buffer.from(
   "base64"
 );
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
  * max-lines-per-function (#510): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("ChatJS upload remains durable through creation retries and message editing") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -136,19 +147,24 @@ test("ChatJS upload remains durable through creation retries and message editing
     const retry = await page.request.post("/api/agent-conversations", options);
     expect(await retry.json()).toEqual(binding);
     const changed = await page.request.post("/api/agent-conversations", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...options,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         message: [
           input.message[0],
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input.message[1] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           { ...input.message[1], filename: "different.png" },
         ],
       },
     });
     expect(changed.status()).toBe(409);
     const external = await page.request.post("/api/agent-conversations", {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing options own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...options,
       data: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         message: [
           {
@@ -229,6 +245,7 @@ test("ChatJS upload remains durable through creation retries and message editing
       filename: "eve-square.png",
       mediaType: "image/png",
     });
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from retained; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!retained?.data) {
       throw new Error("Edited message lost its image");
     }
@@ -260,6 +277,8 @@ test("ChatJS upload remains durable through creation retries and message editing
     ]);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -410,6 +429,8 @@ test("composer uploads and clears attachments, then reload confirms an in-flight
     ]);
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -496,6 +517,8 @@ test("an uncertain creation retains the same visible attachment and immutable re
       path: "tests/eve-results/screenshots/eve-composer-retained.png",
     });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -592,6 +615,8 @@ test("uploaded attachment has durable authenticated ownership", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -646,6 +671,7 @@ test("a fenced orphan URL stops serving bytes before physical removal", async ({
     await db.delete(eveStoredFile).where(eq(eveStoredFile.key, key));
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines -- #509: This eve-attachments.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

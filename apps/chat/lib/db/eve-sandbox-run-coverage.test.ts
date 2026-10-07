@@ -63,6 +63,7 @@ it.each(["0.52.2", "0.61.0"])(
   "only covers reviewed sleep workflow identities (%s)",
   (version) => {
     const sleep = {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing run("sleep", "executeSleepTool", "root") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...run("sleep", "executeSleepTool", "root"),
       workflowName: `workflow//eve@${version}//executeSleepTool`,
     };
@@ -73,6 +74,7 @@ it.each(["0.52.2", "0.61.0"])(
     expect(
       classifyEveSandboxRuns([
         run("root", "workflowEntry"),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing sleep own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         { ...sleep, workflowName: "workflow//eve@0.53.0//executeSleepTool" },
       ]).unresolvedRunIds
     ).toEqual(["sleep"]);

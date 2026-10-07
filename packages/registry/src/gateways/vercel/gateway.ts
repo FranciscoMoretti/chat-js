@@ -1,19 +1,25 @@
 import { createGateway } from "@ai-sdk/gateway";
 import type { gateway } from "@ai-sdk/gateway";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+/* oxlint-enable sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   aiGatewayModelDiscriminatorSchema,
   aiGatewayModelSchema,
   aiGatewayModelsEnvelopeSchema,
   isAiGatewayModelType,
 } from "@chat-js/gateways/models";
+/* oxlint-enable sort-imports */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
 import type { StrictLiterals } from "@chat-js/gateways/provider-types";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
+/* oxlint-enable sort-imports */
 import type { ImageModel } from "ai";
 
 const MODEL_ID_PARAMETER_INDEX = 0;
@@ -68,11 +74,14 @@ class VercelGateway
 
   private getApiKey(): string | undefined {
     const apiKey = this.env.AI_GATEWAY_API_KEY;
-    return typeof apiKey === "string" && apiKey !== ""
-      ? apiKey
-      : this.env.VERCEL_OIDC_TOKEN;
+
+    if (typeof apiKey === "string" && apiKey !== "") {
+      return apiKey;
+    }
+    return this.env.VERCEL_OIDC_TOKEN;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -109,6 +118,7 @@ class VercelGateway
         const { type } = aiGatewayModelDiscriminatorSchema.parse(candidate);
         if (isAiGatewayModelType(type)) {
           const model = aiGatewayModelSchema.parse(candidate);
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing model own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           models.push({ ...model, type });
         } else {
           unsupportedTypes.add(type);
@@ -139,7 +149,10 @@ class VercelGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, VercelGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 export { VercelGateway as Gateway, VercelGateway };
+/* oxlint-enable import/no-named-export */

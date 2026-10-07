@@ -7,7 +7,9 @@ import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { mcpOAuthSession } from "@/lib/db/schema";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpOAuthSession } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 
 const AUTHENTICATED_SESSION_LIMIT = 1;
@@ -29,6 +31,7 @@ type ReadonlyClientInformation = {
   ]: ReadonlyMetadataValue<OAuthClientInformationFull[Property]>;
 } & { readonly jwks?: unknown };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getAuthenticatedSession's awaited sequencing and rejected-Promise behavior. */
 // MCP OAuth Session queries
 
 const getAuthenticatedSession = async ({
@@ -49,11 +52,13 @@ const getAuthenticatedSession = async ({
     .limit(AUTHENTICATED_SESSION_LIMIT);
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getSessionByState's awaited sequencing and rejected-Promise behavior. */
 const getSessionByState = async ({
   state,
 }: Readonly<{ state: string }>): Promise<McpOAuthSession | undefined> => {
   const rows =
+    // oxlint-disable-next-line no-ternary -- Keep rows as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     state === ""
       ? []
       : await db
@@ -62,7 +67,8 @@ const getSessionByState = async ({
           .where(eq(mcpOAuthSession.state, state));
   return rows.at(FIRST_QUERY_ROW_INDEX);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createOAuthSession's awaited sequencing and rejected-Promise behavior. */
 const createOAuthSession = async ({
   mcpConnectorId,
   serverUrl,
@@ -105,7 +111,8 @@ const createOAuthSession = async ({
     .returning();
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requireSessionByState's awaited sequencing and rejected-Promise behavior. */
 const requireSessionByState = async (
   state: string
 ): Promise<McpOAuthSession> => {
@@ -119,7 +126,8 @@ const requireSessionByState = async (
   }
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setOAuthCodeVerifierOnceByState's awaited sequencing and rejected-Promise behavior. */
 const setOAuthCodeVerifierOnceByState = async ({
   state,
   codeVerifier,
@@ -145,7 +153,8 @@ const setOAuthCodeVerifierOnceByState = async ({
 
   return await requireSessionByState(state);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve setOAuthClientInfoOnceByState's awaited sequencing and rejected-Promise behavior. */
 const setOAuthClientInfoOnceByState = async ({
   state,
   clientInfo,
@@ -168,7 +177,8 @@ const setOAuthClientInfoOnceByState = async ({
 
   return await requireSessionByState(state);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve updateSessionByState's awaited sequencing and rejected-Promise behavior. */
 const updateSessionByState = async ({
   state,
   updates,
@@ -203,7 +213,8 @@ const updateSessionByState = async ({
   }
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveTokensAndCleanup's awaited sequencing and rejected-Promise behavior. */
 const saveTokensAndCleanup = async ({
   state,
   mcpConnectorId,
@@ -244,10 +255,11 @@ const saveTokensAndCleanup = async ({
 
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletePendingSessionByState's awaited sequencing and rejected-Promise behavior. */
 /** Remove only an unfinished OAuth attempt, atomically preserving any token winner.
- * @param options - State identifying the unfinished authorization attempt.
- * @returns The removed row when no token winner was present.
+ * @param {Readonly<{ state: string }>} options - State identifying the unfinished authorization attempt.
+ * @returns {Promise<McpOAuthSession | undefined>} The removed row when no token winner was present.
  */
 const deletePendingSessionByState = async (
   options: Readonly<{ state: string }>
@@ -261,7 +273,8 @@ const deletePendingSessionByState = async (
     .returning();
   return session;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteSessionByState's awaited sequencing and rejected-Promise behavior. */
 const deleteSessionByState = async ({
   state,
 }: Readonly<{
@@ -269,7 +282,8 @@ const deleteSessionByState = async ({
 }>): Promise<void> => {
   await db.delete(mcpOAuthSession).where(eq(mcpOAuthSession.state, state));
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deleteSessionsByConnectorId's awaited sequencing and rejected-Promise behavior. */
 const deleteSessionsByConnectorId = async ({
   mcpConnectorId,
 }: Readonly<{
@@ -279,7 +293,8 @@ const deleteSessionsByConnectorId = async ({
     .delete(mcpOAuthSession)
     .where(eq(mcpOAuthSession.mcpConnectorId, mcpConnectorId));
 };
-
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (createOAuthSession, deletePendingSessionByState, deleteSessionByState, deleteSessionsByConnectorId, getAuthenticatedSession, getSessionByState, saveTokensAndCleanup, setOAuthClientInfoOnceByState, setOAuthCodeVerifierOnceByState, updateSessionByState); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export {
   createOAuthSession,
   deletePendingSessionByState,
@@ -292,4 +307,7 @@ export {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (OAuthClientInformationFull); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { OAuthClientInformationFull };
+/* oxlint-enable import/no-named-export */

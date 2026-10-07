@@ -3,15 +3,23 @@
  */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { Client } from "eve/client";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, userCredit } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
 import { getEveConnectionOptions } from "../lib/eve/connection-options";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -22,6 +30,7 @@ const conversationUrl = /\/chat\/[0-9a-f-]+$/u;
 const modelId = "openai/gpt-5-nano";
 const modelName = "GPT-5 nano";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
  * init-declarations (#507): test("the single-model picker dispatches and retains the selected native model") assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test("the single-model picker dispatches and retains the selected native model") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -92,7 +101,9 @@ test("the single-model picker dispatches and retains the selected native model",
       })
       .from(eveConversation)
       .where(eq(eveConversation.id, conversationId));
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading initialModelId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(conversation?.initialModelId).toBe(modelId);
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from conversation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (!conversation?.sessionId) {
       throw new Error("Missing native session binding.");
     }
@@ -109,6 +120,7 @@ test("the single-model picker dispatches and retains the selected native model",
     const modelStep = snapshot.events.find(
       (event) => event.type === "step.started"
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading data from modelStep; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     expect(modelStep?.data.modelId).toBe(`gateway/${modelId}`);
     await page.reload();
     await expect(picker).toContainText(modelName);
@@ -137,4 +149,5 @@ test("the single-model picker dispatches and retains the selected native model",
     }
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */

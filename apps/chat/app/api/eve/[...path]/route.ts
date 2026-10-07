@@ -3,38 +3,58 @@
  */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 import { canSpend } from "@/lib/db/credits";
 import { referenceEveFiles } from "@/lib/db/eve-files";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getBoundEveConversationForSession } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { rejectEveCommand } from "@/lib/eve/command-rejection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveMessageFileKeys } from "@/lib/eve/file-references";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "@/lib/eve/guest-message-admission";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   EVE_MESSAGE_OPERATION_HEADER,
   eveMessageDeliveryMetadata,
 } from "@/lib/eve/message-delivery";
+/* oxlint-enable sort-imports */
 import type { EveMessageInput } from "@/lib/eve/message-input";
 import { loadEveModelDefinition } from "@/lib/eve/model-selection";
 import { prepareEveMessage } from "@/lib/eve/prepare-message";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "@/lib/eve/principal";
+/* oxlint-enable sort-imports */
 import { reconcileEveOwnerUsage } from "@/lib/eve/reconcile-usage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   parseSessionRequest,
   safeStreamQuery,
   sameOrigin,
 } from "@/lib/eve/request-policy";
+/* oxlint-enable sort-imports */
 import { eveRequest } from "@/lib/eve/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveUsageReconciliationBusyError,
   eveUsageBusyResponse,
 } from "@/lib/eve/usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
@@ -46,9 +66,13 @@ const rejectRequest = (
   status: number
 ): Response =>
   // A failed stream read cannot prove that an earlier POST was rejected.
-  request.method === "POST"
-    ? rejectEveCommand(message, status)
-    : Response.json({ error: message }, { status });
+  {
+    if (request.method === "POST") {
+      return rejectEveCommand(message, status);
+    }
+    return Response.json({ error: message }, { status });
+  };
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types --
@@ -81,6 +105,7 @@ const checkTurnAdmission = async (
     return rejectEveCommand("Insufficient credits", 402);
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-undefined --
@@ -104,6 +129,7 @@ const parseToolSelection = (
     .optional()
     .refine(() => header === null || body === undefined || header === body)
     .safeParse(header ?? body);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -169,6 +195,7 @@ const readCommand = async (
         });
       } catch (error) {
         return rejectEveCommand(
+          // oxlint-disable-next-line no-ternary -- Keep rejectEveCommand argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           error instanceof Error ? error.message : "Unable to read attachment.",
           400
         );
@@ -180,6 +207,8 @@ const readCommand = async (
   }
   return { body, isNewMessage, message, modelId, selectedTool };
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handle's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
@@ -208,6 +237,7 @@ const handle = async (
   const { path } = await context.params;
   const upstreamPath = `/eve/${path.join("/")}`;
   const policy = parseSessionRequest(upstreamPath, request.method);
+  // oxlint-disable-next-line no-ternary -- Keep conversation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const conversation = policy
     ? await getBoundEveConversationForSession(
         principal.ownerId,
@@ -243,6 +273,7 @@ const handle = async (
     }
     const result = await eveRequest(
       principal.ownerId,
+      // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       `/eve/chat/${path.join("/")}${query.size > 0 ? `?${query}` : ""}`,
       {
         body,
@@ -250,6 +281,7 @@ const handle = async (
         // Closing the reader must not cancel a validated command before Eve
         // can durably accept it. Streaming reads still follow browser lifetime.
         signal:
+          // oxlint-disable-next-line no-ternary -- Keep signal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           request.method === "GET"
             ? request.signal
             : AbortSignal.timeout(30_000),
@@ -287,9 +319,12 @@ const handle = async (
     );
   }
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
 const GET = handle;
 
 const POST = handle;
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (GET, POST); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { GET, POST };
+/* oxlint-enable import/no-named-export */

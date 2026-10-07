@@ -269,6 +269,7 @@ Here are the findings from the research that you conducted:
 <Findings>
 ${findings}
 </Findings>${FINAL_REPORT_INSTRUCTIONS}`;
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (clarifyWithUserInstructions, compressResearchSimpleHumanMessage, compressResearchSystemPrompt, finalReportGenerationPrompt, leadResearcherPrompt, researchSystemPrompt, transformMessagesIntoResearchTopicPrompt); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   clarifyWithUserInstructions,
   compressResearchSimpleHumanMessage,
@@ -278,3 +279,4 @@ export {
   researchSystemPrompt,
   transformMessagesIntoResearchTopicPrompt,
 };
+/* oxlint-enable import/no-named-export */

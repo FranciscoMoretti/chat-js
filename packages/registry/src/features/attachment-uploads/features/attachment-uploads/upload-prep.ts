@@ -4,22 +4,22 @@ import imageCompression from "browser-image-compression";
 
 const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve compressImageIfNeeded's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const compressImageIfNeeded = async (
-  file: File,
+  file: Readonly<File>,
   {
     maxBytes,
     maxDimension,
     minQuality = 0.5,
-  }: {
+  }: Readonly<{
     maxBytes: number;
     maxDimension: number;
     minQuality?: number;
-  }
+  }>
 ): Promise<File> => {
   if (!file.type.startsWith("image/")) {
     return file;
@@ -46,6 +46,7 @@ const compressImageIfNeeded = async (
   try {
     const maybeResult = await imageCompression(file, options);
     const resultBlob =
+      // oxlint-disable-next-line no-ternary -- Keep resultBlob as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       maybeResult instanceof File
         ? maybeResult
         : new File([maybeResult], file.name, {
@@ -73,7 +74,9 @@ const compressImageIfNeeded = async (
     return file;
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (processFilesForUpload); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve processFilesForUpload's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -81,14 +84,13 @@ const compressImageIfNeeded = async (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const processFilesForUpload = async (
-  files: File[],
-  options: {
+  files: readonly Readonly<File>[],
+  options: Readonly<{
     maxBytes: number;
     maxDimension: number;
-    acceptedTypes: Record<string, string[]>;
-  }
+    acceptedTypes: Readonly<Record<string, readonly string[]>>;
+  }>
 ): Promise<{
   files: File[];
   stillOversized: File[];
@@ -123,6 +125,7 @@ export const processFilesForUpload = async (
 
   return { files: prepared, stillOversized, unsupportedFiles };
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-statements */

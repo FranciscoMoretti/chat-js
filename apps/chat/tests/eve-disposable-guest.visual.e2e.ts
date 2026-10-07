@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("disposable guest presentation uses stable desktop and mobile baselines") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -65,4 +66,5 @@ test("disposable guest presentation uses stable desktop and mobile baselines", a
   await expect(fixture.getByRole("heading")).toBeVisible();
   await expect(fixture).toHaveScreenshot("guest-welcome-mobile.png");
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

@@ -1,16 +1,28 @@
 import { afterEach, expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { scaffoldFromTemplate } from "#cli/helpers/scaffold";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installItems } from "#cli/registry/shadcn";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { installPlan, recordInstalledSource } from "./install-plan";
+/* oxlint-enable sort-imports */
 import { planInstallation } from "./installation-plan";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { syncTools, toolRegistrationTargets } from "./sync-tools";
+/* oxlint-enable sort-imports */
 
 const roots: string[] = [];
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 afterEach(async (): Promise<void> => {
@@ -20,19 +32,20 @@ afterEach(async (): Promise<void> => {
       .map((root): Promise<void> => rm(root, { force: true, recursive: true }))
   );
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const server = () =>
   Bun.serve({
-    fetch(request) {
+    fetch(request: Readonly<Pick<Request, "url">>) {
       const id = new URL(request.url).pathname.slice(1).replace(".json", "");
       const definition = {
         contractVersion: 1,
         id,
         kind: "tool",
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (id === "extra"           ? {}           : {               codeExecutionCapabilities: {                 cancellation: "terminate",                 cleanup: "durable-allocation",                 files: "ephemeral",                 languages: ["python", "javascript"],                 timeout: "bounded",                 usage: "single-receipt",               },               codeExecutorExport: "executeCode",               slot: "codeExecution",             }) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(id === "extra"
           ? {}
           : {
@@ -47,6 +60,7 @@ const server = () =>
               codeExecutorExport: "executeCode",
               slot: "codeExecution",
             }),
+        // oxlint-disable-next-line no-ternary -- Keep toolExport as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         tools: [{ toolExport: id === "extra" ? "extra" : "executeCode" }],
       };
       return Response.json({
@@ -58,6 +72,7 @@ const server = () =>
             type: "registry:file",
           },
           {
+            // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             content: `export const ${id === "extra" ? "extra" : "executeCode"} = {};\n`,
             path: "tool.ts",
             target: `~/tools/chatjs/${id}/tool.ts`,
@@ -72,7 +87,7 @@ const server = () =>
     hostname: "127.0.0.1",
     port: 0,
   });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fixture's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 const fixture = async (): Promise<string> => {
@@ -81,11 +96,12 @@ const fixture = async (): Promise<string> => {
   await scaffoldFromTemplate(root);
   return root;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("explicit provider replacement preserves unrelated installations and refuses modified old source before any write", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -132,7 +148,9 @@ test("explicit provider replacement preserves unrelated installations and refuse
       }
     );
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["extra", "second"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["extra", "second"]);
     expect(await Bun.file(old).exists()).toBe(false);
     expect(
       await readFile(path.join(root, "tools/chatjs/extra/tool.ts"), "utf-8")
@@ -141,8 +159,9 @@ test("explicit provider replacement preserves unrelated installations and refuse
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["registration", "finalization"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -152,7 +171,6 @@ test("explicit provider replacement preserves unrelated installations and refuse
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test.each(["registration", "finalization"] as const)(
   "failed %s restores previous provider source, manifest, receipts and lockfiles",
   async (phase): Promise<void> => {
@@ -189,7 +207,12 @@ test.each(["registration", "finalization"] as const)(
       await rm(path.join(root, "tools/chatjs/workflow-types.ts"));
       const registrationContents = (target: string) => {
         const file = Bun.file(path.join(root, target));
-        return file.exists().then((exists) => (exists ? file.text() : null));
+        return file.exists().then((exists) => {
+          if (exists) {
+            return file.text();
+          }
+          return null;
+        });
       };
       const oldRegistrations = await Promise.all(
         toolRegistrationTargets.map((target) => registrationContents(target))
@@ -252,7 +275,9 @@ test.each(["registration", "finalization"] as const)(
         }
       );
       const tools = await syncTools(root, { checkOnly: true });
-      expect(tools.map((tool): string => tool.id)).toEqual(["second"]);
+      expect(
+        tools.map((tool: { readonly id: string }): string => tool.id)
+      ).toEqual(["second"]);
     } finally {
       // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
       registry.stop(true);
@@ -260,7 +285,8 @@ test.each(["registration", "finalization"] as const)(
   },
   30_000
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -270,7 +296,6 @@ test.each(["registration", "finalization"] as const)(
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 test("native shadcn source can be composed without overwriting or blessing user edits", async (): Promise<void> => {
   const root = await fixture();
   const registry = server();
@@ -297,12 +322,15 @@ test("native shadcn source can be composed without overwriting or blessing user 
     // oxlint-disable-next-line typescript/no-unsafe-member-access -- Inspect the generated fixture output directly so shape or value regressions fail the runtime assertions below; parsing it into a new contract would change this test boundary.
     expect(receipt["tools/chatjs/first/tool.ts"]).toBeUndefined();
     const tools = await syncTools(root, { checkOnly: true });
-    expect(tools.map((tool): string => tool.id)).toEqual(["first"]);
+    expect(
+      tools.map((tool: { readonly id: string }): string => tool.id)
+    ).toEqual(["first"]);
   } finally {
     await registry.stop(true);
   }
 }, 30_000);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -403,6 +431,8 @@ test("registration refreshes untouched rollback baselines without blessing user 
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -410,7 +440,6 @@ test("registration refreshes untouched rollback baselines without blessing user 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 test("provider installation refuses inferred native dependency destinations before any overwrite", async (): Promise<void> => {
   const root = await fixture();
@@ -418,44 +447,41 @@ test("provider installation refuses inferred native dependency destinations befo
   await mkdir(path.dirname(ui), { recursive: true });
   await writeFile(ui, "// user UI customization\n");
   const registry = Bun.serve({
-    fetch(request): Response {
+    fetch(request: Readonly<Pick<Request, "url">>): Response {
       const inferred = new URL(request.url).pathname.endsWith("ui.json");
-      return Response.json(
-        inferred
-          ? {
-              files: [
-                {
-                  content: "// replacement UI\n",
-                  path: "fixture.tsx",
-                  type: "registry:ui",
-                },
-              ],
-              name: "fixture-ui",
+      if (inferred) {
+        return Response.json({
+          files: [
+            {
+              content: "// replacement UI\n",
+              path: "fixture.tsx",
               type: "registry:ui",
-            }
-          : {
-              files: [
-                {
-                  content: "export const createStorageAdapter = () => ({});\n",
-                  path: "storage-provider.ts",
-                  target: "~/lib/storage-provider.ts",
-                  type: "registry:file",
-                },
-              ],
-              meta: {
-                chatjs: {
-                  contractVersion: 1,
-                  id: "fixture-storage",
-                  kind: "storage",
-                },
-              },
-              name: "fixture-storage",
-              registryDependencies: [
-                `http://127.0.0.1:${registry.port}/ui.json`,
-              ],
-              type: "registry:item",
-            }
-      );
+            },
+          ],
+          name: "fixture-ui",
+          type: "registry:ui",
+        });
+      }
+      return Response.json({
+        files: [
+          {
+            content: "export const createStorageAdapter = () => ({});\n",
+            path: "storage-provider.ts",
+            target: "~/lib/storage-provider.ts",
+            type: "registry:file",
+          },
+        ],
+        meta: {
+          chatjs: {
+            contractVersion: 1,
+            id: "fixture-storage",
+            kind: "storage",
+          },
+        },
+        name: "fixture-storage",
+        registryDependencies: [`http://127.0.0.1:${registry.port}/ui.json`],
+        type: "registry:item",
+      });
     },
     hostname: "127.0.0.1",
     port: 0,
@@ -507,8 +533,8 @@ test("provider installation refuses inferred native dependency destinations befo
     await registry.stop(true);
   }
 }, 30_000);
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/promise-function-async */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */

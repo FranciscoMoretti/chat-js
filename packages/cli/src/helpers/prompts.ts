@@ -1,4 +1,5 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   cancel,
   confirm,
@@ -7,64 +8,58 @@ import {
   select,
   text,
 } from "@clack/prompts";
+/* oxlint-enable sort-imports */
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import {
-  AUTHENTICATION_DEFAULTS,
-  FEATURES_DEFAULTS,
-} from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { RegistryIndexItem } from "../registry/schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { resolveStorage } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { StorageSelection } from "../registry/storage";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import type { RegistryIndexItem } from "#cli/registry/schema";
+import type { StorageSelection } from "#cli/registry/storage";
+import { resolveStorage } from "#cli/registry/storage";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
   CORE_FEATURE_KEYS,
   DOCUMENT_TYPE_KEYS,
   GATEWAYS,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+} from "#cli/types";
+/* oxlint-enable sort-imports */
 import type {
   AuthProvider,
   BuiltInToolKey,
   CoreFeatureKey,
   DocumentTypeKey,
   Gateway,
-} from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { highlighter } from "../utils/highlighter";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { logger } from "../utils/logger";
-/* oxlint-enable import/no-relative-parent-imports */
+} from "#cli/types";
+import { highlighter } from "#cli/utils/highlighter";
+import { logger } from "#cli/utils/logger";
+
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import {
+  AUTHENTICATION_DEFAULTS,
+  FEATURES_DEFAULTS,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+} from "../../../../apps/chat/lib/config-schema";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,
   coreFeatureEnvRequirements,
   gatewayEnvRequirements,
 } from "./config-requirements";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import type { ReadonlyInput } from "./readonly-input";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 } from "./storage-provider";
+/* oxlint-enable sort-imports */
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 
@@ -151,6 +146,7 @@ const toSelectionRecord = <T extends string>(
   Object.fromEntries(
     keys.map((key) => [key, selected.includes(key)])
   ) as Record<T, boolean>;
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptProjectName's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/id-length */
 
 const promptProjectName = async (
@@ -176,7 +172,8 @@ const promptProjectName = async (
 
   return toKebabCase(name) || "my-chat-app";
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptGateway's awaited sequencing and rejected-Promise behavior. */
 const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (skipPrompt) {
     return "vercel";
@@ -207,17 +204,21 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
   if (gateway === "__external__") {
     const source = await text({
       message: "Gateway registry item URL or local JSON path:",
-      validate: (value) =>
-        (value?.trim() ?? "") === ""
-          ? "Enter a registry item address"
-          : globalThis.undefined,
+      validate: (value): "Enter a registry item address" | undefined => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+        if ((value?.trim() ?? "") === "") {
+          return "Enter a registry item address";
+        }
+        // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+        return undefined;
+      },
     });
     handleCancel(source);
     return source.trim();
   }
   return gateway;
 };
-
+/* oxlint-enable oxc/no-async-await */
 const APPEND_DELETE_COUNT = 0;
 const EMPTY_CONFIG_KEY_COUNT = 0;
 
@@ -242,6 +243,7 @@ const registryStorageRequirement = (
   }),
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptStorage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
@@ -280,10 +282,14 @@ const promptStorage = async (
     if (source === "__external__") {
       const address = await text({
         message: "Storage registry item address:",
-        validate: (value) =>
-          (value?.trim() ?? "") === ""
-            ? "Enter an item address"
-            : globalThis.undefined,
+        validate: (value): "Enter an item address" | undefined => {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+          if ((value?.trim() ?? "") === "") {
+            return "Enter an item address";
+          }
+          // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+          return undefined;
+        },
       });
       handleCancel(address);
       source = address.trim();
@@ -316,6 +322,7 @@ const promptStorage = async (
     options = input;
   }
   selection.options =
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     options === globalThis.undefined ? {} : parseStorageOptions(options);
   // Only the actual built-in address uses SDK-derived option/credential rules.
   // An external item may use the same id with its own contract.
@@ -324,6 +331,7 @@ const promptStorage = async (
       selection.source === `@chatjs/${item.name}`
   );
   const providerId = PROVIDER_NAMES.find(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading meta from builtin; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     (id) => id === builtin?.meta.chatjs.id
   );
   if (providerId !== globalThis.undefined) {
@@ -336,6 +344,8 @@ const promptStorage = async (
   }
   return selection;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCoreFeatures's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -355,6 +365,7 @@ const promptCoreFeatures = async (
   };
 
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of CORE_FEATURE_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...CORE_FEATURE_DEFAULTS };
   }
 
@@ -368,9 +379,11 @@ const promptCoreFeatures = async (
     message: `Which ${highlighter.info("core features")} would you like to enable? ${highlighter.dim("(space to toggle, enter to submit)")}`,
     options: availableFeatures.map((key) => ({
       hint:
+        // oxlint-disable-next-line no-ternary -- Keep hint as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         key === "documents"
           ? "Create, edit, and review documents in chat"
-          : coreFeatureEnvRequirements[
+          : // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from coreFeatureEnvRequirements[key as keyof typeof coreFeatureEnvRequirements]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+            coreFeatureEnvRequirements[
               key as keyof typeof coreFeatureEnvRequirements
             ]
               ?.map(
@@ -389,7 +402,8 @@ const promptCoreFeatures = async (
   result.mcp = mcp ?? result.mcp;
   return result;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptDocumentTypes's awaited sequencing and rejected-Promise behavior. */
 const promptDocumentTypes = async (
   skipPrompt: boolean,
   documentsEnabled: boolean
@@ -405,6 +419,7 @@ const promptDocumentTypes = async (
   }
 
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of DOCUMENT_TYPE_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...DOCUMENT_TYPE_DEFAULTS };
   }
 
@@ -424,15 +439,17 @@ const promptDocumentTypes = async (
 
   return toSelectionRecord(DOCUMENT_TYPE_KEYS, selected);
 };
-
+/* oxlint-enable oxc/no-async-await */
 const isInstallableTool = (item: ReadonlyInput<RegistryIndexItem>): boolean => {
   if (item.hidden === true) {
     return false;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading slot from item.meta.chatjs; read chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const hasSlot = Boolean(item.meta?.chatjs?.slot);
   if (hasSlot) {
     return false;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documentRunExport from item.meta.chatjs; read chatjs from item.meta; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const hasDocumentRun = Boolean(item.meta?.chatjs?.documentRunExport);
   return !hasDocumentRun && item.name !== "deep-research";
 };
@@ -443,6 +460,7 @@ const assistantToolOptions = (
 ): Option<string>[] => [
   ...supportedBuiltInTools.map((key) => ({
     hint:
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading description from builtInToolEnvRequirements[key]; preserve one receiver evaluation, skipped accesses and the existing BUILT_IN_TOOL_HINTS[key] fallback.
       builtInToolEnvRequirements[key]?.description ?? BUILT_IN_TOOL_HINTS[key],
     label: BUILT_IN_TOOL_LABELS[key],
     value: key,
@@ -473,6 +491,7 @@ const supportedAssistantTools = (
     return true;
   });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptAssistantTools's awaited sequencing and rejected-Promise behavior. */
 const promptAssistantTools = async (
   registryItems: readonly ReadonlyInput<RegistryIndexItem>[],
   skipPrompt: boolean,
@@ -488,6 +507,7 @@ const promptAssistantTools = async (
 
   if (skipPrompt) {
     return {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of BUILT_IN_TOOL_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
       builtInTools: { ...BUILT_IN_TOOL_DEFAULTS },
       installableTools: [],
     };
@@ -520,13 +540,15 @@ const promptAssistantTools = async (
     ),
   };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptAuth's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const promptAuth = async (
   skipPrompt: boolean
 ): Promise<Record<AuthProvider, boolean>> => {
   if (skipPrompt) {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of AUTH_DEFAULTS rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     return { ...AUTH_DEFAULTS };
   }
 
@@ -558,6 +580,8 @@ const promptAuth = async (
 
   return toSelectionRecord(AUTH_PROVIDERS, selectedProviders);
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptElectron's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
@@ -581,7 +605,8 @@ const promptElectron = async (
 
   return wantsElectron;
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptSearchTool's awaited sequencing and rejected-Promise behavior. */
 const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "tavily-search";
@@ -608,13 +633,20 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "Search tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptCodeExecutionTool's awaited sequencing and rejected-Promise behavior. */
 const promptCodeExecutionTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -643,13 +675,20 @@ const promptCodeExecutionTool = async (
   }
   const address = await text({
     message: "Code-execution tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptUrlRetrievalTool's awaited sequencing and rejected-Promise behavior. */
 const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   if (skipPrompt) {
     return "retrieve-url";
@@ -671,13 +710,20 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
   }
   const address = await text({
     message: "URL retrieval tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptImageGenerationTool's awaited sequencing and rejected-Promise behavior. */
 const promptImageGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -701,13 +747,20 @@ const promptImageGenerationTool = async (
   }
   const address = await text({
     message: "image generation tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptVideoGenerationTool's awaited sequencing and rejected-Promise behavior. */
 const promptVideoGenerationTool = async (
   skipPrompt: boolean
 ): Promise<string> => {
@@ -731,13 +784,20 @@ const promptVideoGenerationTool = async (
   }
   const address = await text({
     message: "video generation tool registry address:",
-    validate: (value) =>
-      (value?.trim() ?? "") === "" ? "Enter an address" : globalThis.undefined,
+    validate: (value): "Enter an address" | undefined => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading trim from value; preserve one receiver evaluation, skipped accesses and the existing "" fallback.
+      if ((value?.trim() ?? "") === "") {
+        return "Enter an address";
+      }
+      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      return undefined;
+    },
   });
   handleCancel(address);
   return address.trim();
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve promptObservability's awaited sequencing and rejected-Promise behavior. */
 // One optional group; new applications never enable telemetry by default.
 const promptObservability = async (yes: boolean): Promise<string[]> => {
   if (yes) {
@@ -760,7 +820,8 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   }
   return result;
 };
-
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (promptAssistantTools, promptAuth, promptCodeExecutionTool, promptCoreFeatures, promptDocumentTypes, promptElectron, promptGateway, promptImageGenerationTool, promptObservability, promptProjectName, promptSearchTool, promptStorage, promptUrlRetrievalTool, promptVideoGenerationTool); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
 export {
   promptAssistantTools,
@@ -778,3 +839,4 @@ export {
   promptUrlRetrievalTool,
   promptVideoGenerationTool,
 };
+/* oxlint-enable import/no-named-export */

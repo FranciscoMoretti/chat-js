@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   CheckpointRejectedError,
   checkpointRejectionReason,
 } from "./checkpoint-rejection";
+/* oxlint-enable sort-imports */
 import {
   CreationRejectedError,
   requestConversation,
@@ -12,31 +14,46 @@ import {
   requestResponseGroup,
   retainResponseGroupDraft,
 } from "./create-response-group";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { finishCreation, readCreationRequest } from "./pending-create";
+/* oxlint-enable sort-imports */
 import type { CreationScope } from "./pending-create";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
-
- * jsdoc/require-param (#534): resolveCreationRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): resolveCreationRequest's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (resolveCreationRequest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveCreationRequest's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): resolveCreationRequest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): resolveCreationRequest uses 35_000, 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): resolveCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep resolveCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep resolveCreationRequest's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/prefer-readonly-parameter-types (#565): resolveCreationRequest accepts operation: NonNullable<ReturnType<typeof readCreationRequest>>; scope?: CreationScope; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): resolveCreationRequest intentionally keeps the existing falsy-value behavior of operation.fork?.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
-  */
-/** Resolve one saved operation; ambiguous outcomes never release its draft. */
+ */
+/**
+ * Resolve one saved operation; ambiguous outcomes never release its draft.
+ *
+ * @param {Pick<Storage, "getItem" | "setItem" | "removeItem">} storage Storage containing the pending creation request and retained comparison draft.
+ * @param {string} ownerId Owner used to locate and finish the saved request.
+ * @param {NonNullable<ReturnType<typeof readCreationRequest>>} operation Saved conversation or comparison operation whose identities are reused on retry.
+ * @param {CreationScope} scope Optional creation scope used to locate the pending request and retain its draft.
+ * @returns {Promise<Awaited<ReturnType<typeof requestConversation>> & { group: undefined } | { group: Awaited<ReturnType<typeof requestResponseGroup>>; id: string; sessionId: string }>} The confirmed conversation binding and comparison result when applicable; unconfirmed creation or checkpoint state rejects.
+ */
 export const resolveCreationRequest = async (
   storage: Pick<Storage, "getItem" | "setItem" | "removeItem">,
   ownerId: string,
   operation: NonNullable<ReturnType<typeof readCreationRequest>>,
   scope?: CreationScope
-) => {
+): Promise<
+  | {
+      group: Awaited<ReturnType<typeof requestResponseGroup>>;
+      id: string;
+      sessionId: string;
+    }
+  | (Awaited<ReturnType<typeof requestConversation>> & { group: undefined })
+> => {
   if ("modelIds" in operation) {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading checkpointId from operation.fork; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (operation.fork?.checkpointId) {
       const { conversationId, checkpointId, beforeTurnId } = operation.fork;
       const response = await fetch(
@@ -96,11 +113,15 @@ export const resolveCreationRequest = async (
   }
   const binding = await requestConversation(operation);
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading operationId from readCreationRequest(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     readCreationRequest(storage, ownerId, scope)?.operationId ===
     operation.operationId
   ) {
     finishCreation(storage, ownerId, scope);
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing binding own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...binding, group: undefined };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */

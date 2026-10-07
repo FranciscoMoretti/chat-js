@@ -2,7 +2,9 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { WorkflowToolContext } from "eve/tools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import {
   prepareResearch,
@@ -84,6 +86,7 @@ const owner = {
   principalType: "user",
 };
 const context = (): WorkflowToolContext => ({
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing testToolContext({     callId: "research-call",     session: {       auth: { current: owner, initiator: owner },       id: "root",       turn: { id: "turn_1", sequence: 1 },     },   }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...testToolContext({
     callId: "research-call",
     session: {
@@ -107,6 +110,7 @@ beforeEach(() => {
   mocks.tools.webSearch = {};
   mocks.snapshot.mockResolvedValue({ events: [] });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -118,6 +122,8 @@ it("uses the owned native transcript without feeding the live research invocatio
   expect(prepared.messages).not.toContain("research-call");
   expect(prepared.timestamp).toBeGreaterThan(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("rejects absent research and text documents before reading the transcript", async () => {
@@ -133,7 +139,8 @@ it("rejects absent research and text documents before reading the transcript", a
 
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects research without an installed search provider", async () => {
   Reflect.deleteProperty(mocks.tools, "webSearch");
   await expect(prepareResearch(context())).rejects.toThrow(
@@ -141,16 +148,20 @@ it("rejects research without an installed search provider", async () => {
   );
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("rejects guest and incompatible selected-tool invocations", async () => {
   const ctx = context();
   await expect(
     prepareResearch({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx,
       session: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...ctx.session,
         auth: {
           current: owner,
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           initiator: { ...owner, attributes: { chatjsGuest: "true" } },
         },
       },
@@ -159,10 +170,13 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   mocks.selected.mockReturnValue("webSearch");
   await expect(
     prepareResearch({
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...ctx,
       session: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx.session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...ctx.session,
         auth: {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing owner own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
           current: { ...owner, attributes: {} },
           initiator: owner,
         },
@@ -171,13 +185,15 @@ it("rejects guest and incompatible selected-tool invocations", async () => {
   ).rejects.toThrow("authenticated owner");
   expect(mocks.snapshot).not.toHaveBeenCalled();
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 it("does not save after cancellation and retains the root operation identity on success", async () => {
   const ctx = context();
   const abort = new AbortController();
   abort.abort(new Error("Cancelled"));
   await expect(
     saveResearchReport(
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing ctx own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       { ...ctx, abortSignal: abort.signal },
       { content: "Content", title: "Report" }
     )
@@ -199,3 +215,4 @@ it("does not save after cancellation and retains the root operation identity on 
     ctx
   );
 });
+/* oxlint-enable oxc/no-async-await */

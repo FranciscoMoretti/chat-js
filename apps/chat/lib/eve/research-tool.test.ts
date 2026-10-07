@@ -2,7 +2,9 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../../tests/helpers/eve-tool-context" dependency within this package instead of introducing an alias or barrel API.
  */
 import type { WorkflowToolContext } from "eve/tools";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { executeEveResearch } from "@/tools/chatjs/deep-research/workflow";
 
@@ -51,6 +53,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   controller = new AbortController();
   context = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing testToolContext({ abortSignal: controller.signal }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...testToolContext({ abortSignal: controller.signal }),
     agent,
     agents: {},
@@ -71,6 +74,7 @@ beforeEach(() => {
   mocks.searches.mockResolvedValue([]);
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("lets the supervisor request follow-up after receiving findings and synthesizes al uses 4, 1, 7, 8, -1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("lets the supervisor request follow-up after receiving findings and synthesizes al accepts [name]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -111,12 +115,14 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     "First findings\nFollow-up findings"
   );
   expect(outputs.at(-1)).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing document own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...document, format: "report" },
     usage: { costUsd: 0 },
   });
   expect(outputs[0].updates).toContainEqual(
     expect.objectContaining({ type: "started" })
   );
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from outputs.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(outputs.at(-1)?.updates).toContainEqual(
     expect.objectContaining({ type: "completed" })
   );
@@ -125,6 +131,8 @@ it("lets the supervisor request follow-up after receiving findings and synthesiz
     title: "Report",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -136,12 +144,14 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   agent.mockImplementation((name: string) => {
     if (name === "researchPlanner") {
       return Promise.resolve(
+        // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         agent.mock.calls.length === 1
           ? { research_brief: "Brief", title: "Report" }
           : { complete: false, topics: ["Topic"] }
       );
     }
     return Promise.resolve(
+      // oxlint-disable-next-line no-ternary -- Keep Promise.resolve argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       name === "researchWriter"
         ? { content: "Content", title: "Report" }
         : { findings: "Evidence" }
@@ -156,6 +166,8 @@ it("bounds adaptive decisions even when the supervisor never finishes", async ()
   ).toHaveLength(3);
   expect(mocks.save).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -165,8 +177,9 @@ it("returns clarification without starting research or saving a document", async
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   const prepared = await mocks.prepare();
   mocks.prepare.mockResolvedValue({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing prepared own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...prepared,
-    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+    // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-rest-spread-properties -- #595: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This research-tool fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Rest/spread: Keep the existing prepared.config own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     config: { ...prepared.config, allow_clarification: true },
   });
   agent.mockResolvedValue({
@@ -183,6 +196,8 @@ it("returns clarification without starting research or saving a document", async
   expect(agent).toHaveBeenCalledOnce();
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
@@ -204,6 +219,8 @@ it("runs topics sequentially and stops before new work or saving after cancellat
   expect(agent).toHaveBeenCalledTimes(3);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 it("validates native outputs and propagates failures without a successful report receipt", async () => {
@@ -222,7 +239,8 @@ it("validates native outputs and propagates failures without a successful report
     Array.fromAsync(executeEveResearch({}, context))
   ).rejects.toThrow("Storage unavailable");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("rejects oversized topic batches before starting researchers") uses 2, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -243,6 +261,8 @@ it("rejects oversized topic batches before starting researchers", async () => {
   );
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -262,14 +282,16 @@ it("publishes completed searches when a researcher fails without masking the fai
     .mockResolvedValueOnce({ complete: false, topics: ["Topic"] })
     .mockRejectedValueOnce(error);
   mocks.searches.mockResolvedValue([search]);
-  const outputs: { updates?: unknown[] }[] = [];
+  const outputs: { updates?: readonly unknown[] }[] = [];
   const consume = async (): Promise<void> => {
     for await (const output of executeEveResearch({}, context)) {
       outputs.push(output);
     }
   };
   await expect(consume()).rejects.toBe(error);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from outputs.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(outputs.at(-1)?.updates).toContainEqual(search);
   expect(mocks.save).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

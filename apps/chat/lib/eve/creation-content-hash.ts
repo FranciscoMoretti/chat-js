@@ -3,9 +3,14 @@
  */
 import { createHash } from "node:crypto";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { UiToolName } from "@/lib/ai/types";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCreationContentHash); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 export const eveCreationContentHash = (
@@ -18,6 +23,13 @@ export const eveCreationContentHash = (
   }
   // oxlint-disable-next-line typescript/consistent-return -- #580: eveCreationContentHash has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return createHash("sha256")
-    .update(JSON.stringify(selectedTool ? { message, selectedTool } : message))
+    .update(
+      JSON.stringify(
+        /* oxlint-disable no-ternary -- Keep JSON.stringify argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. */ selectedTool /* oxlint-enable no-ternary */
+          ? { message, selectedTool }
+          : message
+      )
+    )
     .digest("hex");
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

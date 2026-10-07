@@ -1,4 +1,6 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
 
 import { run } from "./run-command";
@@ -63,6 +65,7 @@ export const PaidCounterRenderer = defineToolRenderer({
   type: "registry:item",
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyNativeToolRuntime's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
@@ -162,9 +165,12 @@ export default ["words", "success", "failure", "exception"].map((scenario) => de
     180_000
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (nativeToolFixture, verifyNativeToolRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 export { nativeToolFixture, verifyNativeToolRuntime };
+/* oxlint-enable import/no-named-export */

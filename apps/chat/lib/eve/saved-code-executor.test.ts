@@ -4,8 +4,12 @@
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeEveCodeDocument } from "../../tools/chatjs/saved-code-execution/execute";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CodeExecutor } from "./code-executor";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({
@@ -19,16 +23,15 @@ const mocks = vi.hoisted(() => ({
     toolInstalled: true,
   },
 }));
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): vi.mock("../../tools/chatjs/code-executor") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep vi.mock("../../tools/chatjs/code-executor")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("../../tools/chatjs/code-executor", () => ({
-  get codeExecutor() {
-    return mocks.settings.installed ? mocks.execute : undefined;
+  get codeExecutor(): typeof mocks.execute | undefined {
+    if (mocks.settings.installed) {
+      return mocks.execute;
+    }
+    // oxlint-disable-next-line no-undefined -- The simulated unavailable installed service must return the original absent result.
+    return undefined;
   },
 }));
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {
@@ -78,12 +81,14 @@ beforeEach(() => {
   });
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("executes owned saved source once, exposing only execution context and preservin uses 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 test("executes owned saved source once, exposing only execution context and preserving the cost receipt", async () => {
   const context = testToolContext();
   const results = await Array.fromAsync(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     executeEveCodeDocument({ ...input, code: "model replacement" }, context)
   );
   expect(mocks.read).toHaveBeenCalledWith(
@@ -102,10 +107,13 @@ test("executes owned saved source once, exposing only execution context and pres
   );
   expect(results).toHaveLength(1);
   expect(results[0]).toMatchObject({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     output: { ...input, code: "print(42)", message: "42" },
     usage: { costUsd: 0.05 },
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "allowed",   "documentInstalled",   "installed",   "toolInstalled", ] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable unicorn/max-nested-calls --
@@ -123,6 +131,8 @@ test.each([
   ).rejects.toThrow();
   expect(mocks.execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls */
 
 /* oxlint-disable no-undefined, unicorn/max-nested-calls --
@@ -136,6 +146,8 @@ test("never executes a revision outside the resolved conversation", async () => 
   ).rejects.toThrow("Code document not found");
   expect(mocks.execute).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined, unicorn/max-nested-calls */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
@@ -167,4 +179,5 @@ test("cancellation prevents execution and an error receipt is forwarded once", a
     await Array.fromAsync(executeEveCodeDocument(input, testToolContext()))
   ).toEqual([receipt]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */

@@ -1,22 +1,28 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { writeFile } from "node:fs/promises";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { StorageSelection } from "#cli/registry/storage";
+/* oxlint-enable sort-imports */
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
+/* oxlint-enable sort-imports */
+import { preflight } from "#cli/utils/preflight";
+
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { builtInStorage } from "../../../registry/src/storage/catalog";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { StorageSelection } from "../registry/storage";
-import { updateEnvironmentExample } from "../utils/environment-example";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- The provider generator shares the package-local registration emitter in formatter order. */
-import { generatedRegistrationSource } from "../utils/generated-registration-source";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { preflight } from "../utils/preflight";
-/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyInput } from "./readonly-input";
+/* oxlint-enable sort-imports */
 
 const CONFIG_JSON_INDENTATION_SPACES = 2;
 
@@ -39,10 +45,11 @@ const parseStorageOptions = (value: string): Record<string, unknown> => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve configureStorageProvider's awaited sequencing and rejected-Promise behavior. */
 /**
  * Configure the installed source without evaluating it or editing dependencies.
- * @param destination Project root receiving storage-options.ts and its env block.
- * @param selection Resolved descriptor and non-secret native storage options.
+ * @param {string} destination Project root receiving storage-options.ts and its env block.
+ * @param {ReadonlyInput<StorageSelection>} selection Resolved descriptor and non-secret native storage options.
  */
 const configureStorageProvider = async (
   destination: string,
@@ -69,8 +76,11 @@ export const storageEnvRequirements: EnvRequirement[] = ${serializedConfigValue(
     ...definition.optionalEnv,
   ]);
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (configureStorageProvider, INSTALLABLE_STORAGE_PROVIDERS, parseStorageOptions); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
 export {
   configureStorageProvider,
   INSTALLABLE_STORAGE_PROVIDERS,
   parseStorageOptions,
 };
+/* oxlint-enable import/no-named-export */

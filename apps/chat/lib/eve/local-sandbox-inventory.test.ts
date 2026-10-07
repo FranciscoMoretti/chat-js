@@ -10,11 +10,16 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import nodePath from "node:path";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable max-lines-per-function, max-statements --
@@ -101,6 +106,8 @@ test("local inventory selects exact native owners across versions and reports un
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -150,6 +157,8 @@ test("unowned directories remain unattributed regardless of their names", async 
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
 /* oxlint-disable max-statements --
@@ -180,4 +189,5 @@ test("other backend caches and linked provider roots prevent a complete local in
     await rm(appRoot, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements */

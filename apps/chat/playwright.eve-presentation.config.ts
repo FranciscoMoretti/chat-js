@@ -12,6 +12,7 @@ export default defineConfig({
   testMatch: ["eve-message-presentation.e2e.ts", "eve-composer-states.e2e.ts"],
   timeout: 60_000,
   use: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of devices["Desktop Chrome"] rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
     ...devices["Desktop Chrome"],
   },
   workers: 1,

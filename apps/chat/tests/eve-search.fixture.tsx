@@ -4,7 +4,9 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveSearchResultsView } from "../components/eve/eve-search-results-view";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const item = {
@@ -17,6 +19,7 @@ const item = {
 const states = [
   {
     isSearch: false,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     items: [{ ...item, excerpt: "" }],
     label: "Recent chats",
     query: "",
@@ -25,6 +28,7 @@ const states = [
   {
     items: [
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...item,
         excerpt: "Hello ⟦Worl⟧d! How can I help you today?",
         title: "Hello World",
@@ -36,6 +40,7 @@ const states = [
   {
     items: [
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing item own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...item,
         excerpt: "⟦Hello⟧! How can I help you today?",
         title: "Friendly Hello Chat",
@@ -69,38 +74,44 @@ if (!root) {
  */
 createRoot(root).render(
   <main className="grid grid-cols-2 gap-6 p-6">
-    {states.map(({ label, ...state }) => (
-      <section key={label}>
-        <h2 className="mb-2 text-sm font-medium">{label}</h2>
-        <div className="bg-popover overflow-hidden rounded-xl border shadow-sm">
-          <EveSearchResultsView
-            pending={false}
-            searching={false}
-            error={false}
-            isSearch
-            hasMore={false}
-            loadingMore={false}
-            disableLoadMore={false}
-            onClose={() => {
-              /* Static gallery: closing is tested in the real dialog. */
-            }}
-            onQueryChange={() => {
-              /* Static gallery: interactions are tested in the real dialog. */
-            }}
-            onSelect={() => {
-              /* Static gallery: interactions are tested in the real dialog. */
-            }}
-            onRetry={() => {
-              /* Static gallery: interactions are tested in the real dialog. */
-            }}
-            onLoadMore={() => {
-              /* Static gallery: interactions are tested in the real dialog. */
-            }}
-            {...state}
-          />
-        </div>
-      </section>
-    ))}
+    {states.map(
+      (
+        /* oxlint-disable oxc/no-rest-spread-properties -- Rest binding state excludes label from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract. */
+        { label, ...state }
+        /* oxlint-enable oxc/no-rest-spread-properties */
+      ) => (
+        <section key={label}>
+          <h2 className="mb-2 text-sm font-medium">{label}</h2>
+          <div className="bg-popover overflow-hidden rounded-xl border shadow-sm">
+            <EveSearchResultsView
+              pending={false}
+              searching={false}
+              error={false}
+              isSearch
+              hasMore={false}
+              loadingMore={false}
+              disableLoadMore={false}
+              onClose={() => {
+                /* Static gallery: closing is tested in the real dialog. */
+              }}
+              onQueryChange={() => {
+                /* Static gallery: interactions are tested in the real dialog. */
+              }}
+              onSelect={() => {
+                /* Static gallery: interactions are tested in the real dialog. */
+              }}
+              onRetry={() => {
+                /* Static gallery: interactions are tested in the real dialog. */
+              }}
+              onLoadMore={() => {
+                /* Static gallery: interactions are tested in the real dialog. */
+              }}
+              {...state}
+            />
+          </div>
+        </section>
+      )
+    )}
   </main>
 );
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/jsx-props-no-spreading, typescript/prefer-readonly-parameter-types */

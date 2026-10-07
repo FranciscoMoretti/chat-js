@@ -12,33 +12,45 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type * as InstalledFeatures from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 
 import selectionHook from "../../agent/hooks/tool-selection";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { frontendToolsSchema } from "../ai/types";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveCreationContentHash } from "./creation-content-hash";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   moveRejectedProjectCreation,
   prepareSelectedCreation,
   readCreationRequest,
 } from "./pending-create";
+/* oxlint-enable sort-imports */
 import { selectedEveTools } from "./selected-tools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveInstalledToolEnabled,
   eveTurnTool,
   filterEveTools,
 } from "./turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-namespace, import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => ({ kinds: new Set<string>() }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 vi.mock("@/tools/chatjs/installed-features", async (importOriginal) => {
   const actual = await importOriginal<typeof InstalledFeatures>();
   for (const kind of actual.installedDocumentKinds) {
     mocks.kinds.add(kind);
   }
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing actual own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   return { ...actual, installedDocumentKinds: mocks.kinds };
 });
-
+/* oxlint-enable oxc/no-async-await */
 vi.mock("../types/anonymous", () => ({
   ANONYMOUS_LIMITS: { AVAILABLE_TOOLS: ["webSearch"] },
 }));
@@ -49,6 +61,7 @@ vi.mock("../types/anonymous", () => ({
  * typescript/strict-boolean-expressions (#610): startTurn intentionally keeps the existing falsy-value behavior of selectedTool; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 const startTurn = (selectedTool?: string, principalType = "user") =>
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling selectionHook.events["turn.started"]; read "turn.started" from selectionHook.events; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   selectionHook.events?.["turn.started"]?.(
     {
       data: { sequence: 1, turnId: "turn_1" },
@@ -68,7 +81,9 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
         auth: {
           current: {
             attributes: {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (selectedTool ? { selectedTool } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(selectedTool ? { selectedTool } : {}),
+              // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (principalType === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               ...(principalType === "guest" ? { chatjsGuest: "true" } : {}),
             },
             authenticator: "gateway",
@@ -87,6 +102,7 @@ const startTurn = (selectedTool?: string, principalType = "user") =>
       },
     }
   );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/promise-function-async, typescript/strict-boolean-expressions */
 
 it("limits every toolbox and resets a later automatic turn instead of inheriting the initiator's choice", async () => {
@@ -105,7 +121,7 @@ it("limits every toolbox and resets a later automatic turn instead of inheriting
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 it("includes document revision reads without leaking unrelated tools", () => {
   expect(selectedEveTools("createTextDocument")).toEqual([
     "createTextDocument",
@@ -196,6 +212,7 @@ it.each([["model-a"], ["model-a", "model-b"]])(
     expect(moved.operationId).not.toBe(original.operationId);
   }
 );
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 it("restores the selected capability from Eve serialized context before a resumed step", async () => {
@@ -221,7 +238,8 @@ it("restores the selected capability from Eve serialized context before a resume
     expect(eveTurnTool.get()).toBeNull();
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("guest automatic and explicit turns retain only configured anonymous tools") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -241,6 +259,7 @@ it("guest automatic and explicit turns retain only configured anonymous tools", 
     expect(filterEveTools(tools)).toEqual(tools);
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable max-statements --

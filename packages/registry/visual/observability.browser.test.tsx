@@ -1,11 +1,17 @@
 import { takeSnapshot } from "@uiverify/vitest";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { act } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { page } from "vitest/browser";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Component as Analytics } from "../src/features/vercel-analytics/component";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { Component as SpeedInsights } from "../src/features/vercel-speed-insights/component";
@@ -17,6 +23,8 @@ vi.mock("next/navigation", () => ({
   usePathname: (): string => "/chat",
   useSearchParams: () => new URLSearchParams(),
 }));
+/* oxlint-disable react/jsx-no-literals -- render fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
@@ -42,8 +50,14 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
           {[0, 1, 2, 3].map((mask) => (
             <section key={mask} data-testid={`combination-${mask}`}>
               <p>Chat content</p>
-              {mask % 2 ? <Analytics /> : null}
-              {Math.floor(mask / 2) ? <SpeedInsights /> : null}
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                mask % 2 ? <Analytics /> : null
+              }
+              {
+                // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                Math.floor(mask / 2) ? <SpeedInsights /> : null
+              }
             </section>
           ))}
         </>
@@ -68,6 +82,8 @@ test("layout telemetry leaves every installed/omitted combination visually uncha
     container.remove();
   }
 });
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 

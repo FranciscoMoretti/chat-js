@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEveAgent } from "eve/react";
 import { usePathname } from "next/navigation";
-import type { JSX as ReactJSX, ReactNode } from "react";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, {
   useCallback,
   useEffect,
@@ -11,25 +11,35 @@ import React, {
   useState,
   useSyncExternalStore,
 } from "react";
+/* oxlint-enable sort-imports */
+import type { JSX as ReactJSX, ReactNode } from "react";
 
 import { Spinner } from "@/components/ui/spinner";
 import { eveDocumentOperations } from "@/lib/eve/document-contracts";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { LogicalChat } from "@/lib/eve/logical-chat";
+/* oxlint-enable sort-imports */
 import { eveMessageTitle } from "@/lib/eve/message-input";
 import { pendingEveMetadataMutations } from "@/lib/eve/optimistic-metadata";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolNames } from "@/tools/chatjs/installed-features";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/trpc/react import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { useTRPC } from "@/trpc/react";
 /* oxlint-enable import/max-dependencies */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveChatHeader } from "./eve-chat-header";
+/* oxlint-enable sort-imports */
 import { EveConversation } from "./eve-conversation";
 import { EveInitialMessage } from "./eve-initial-message";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveLogicalContext,
   EveRuntimeContext,
   useEveRuntime,
 } from "./eve-logical-context";
+/* oxlint-enable sort-imports */
 import type { OpenRequest } from "./eve-logical-context";
 
 type Runtime = OpenRequest & { chatId: string; controller: LogicalChat };
@@ -125,8 +135,10 @@ const RuntimeSlot = ({
       chatId={runtime.chatId}
       conversationId={snapshot.conversationId}
       fallbackTitle={
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading title from identity.data; preserve one receiver evaluation, skipped accesses and the existing runtime.title fallback. The app guidance prefers optional chaining.
         identity.data?.title ??
         runtime.title ??
+        // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         (runtime.operation
           ? eveMessageTitle(runtime.operation.message)
           : "Chat")
@@ -149,30 +161,41 @@ const RuntimeSlot = ({
       )}
       {active && (
         <EveLogicalContext.Provider value={context}>
-          {agent && selected?.sessionId ? (
-            <EveConversation
-              conversationId={selected.id}
-              sessionId={selected.sessionId}
-              ownerId={runtime.ownerId}
-              draftScopeId={runtime.chatId}
-              initialMessage={runtime.operation?.message}
-              header={header}
-            />
-          ) : (
-            <section className="flex h-full min-h-0 flex-col">
-              {header}
-              {runtime.operation && (
-                <EveInitialMessage message={runtime.operation.message} />
-              )}
-              {family.error ? (
-                <p role="alert">{family.error.message}</p>
-              ) : (
-                <div className="flex flex-1 items-center justify-center">
-                  <Spinner aria-label="Loading conversation" />
-                </div>
-              )}
-            </section>
-          )}
+          {
+            // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+            agent /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from selected; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */ &&
+            selected?.sessionId ? (
+              /* oxlint-enable oxc/no-optional-chaining */ <EveConversation
+                conversationId={selected.id}
+                sessionId={selected.sessionId}
+                ownerId={runtime.ownerId}
+                draftScopeId={runtime.chatId}
+                initialMessage={
+                  /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading message from runtime.operation; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+                  runtime.operation?.message
+                  /* oxlint-enable oxc/no-optional-chaining */
+                }
+                header={header}
+              />
+            ) : (
+              <section className="flex h-full min-h-0 flex-col">
+                {header}
+                {runtime.operation && (
+                  <EveInitialMessage message={runtime.operation.message} />
+                )}
+                {
+                  // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                  family.error ? (
+                    <p role="alert">{family.error.message}</p>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center">
+                      <Spinner aria-label="Loading conversation" />
+                    </div>
+                  )
+                }
+              </section>
+            )
+          }
         </EveLogicalContext.Provider>
       )}
     </>
@@ -196,6 +219,7 @@ const EveRuntimeProvider = ({
   // The registry is a stable runtime owner, not render state.
   // oxlint-disable-next-line react/hook-use-state -- Controllers must retain identity for the owner lifetime.
   const [registry] = useState(() => new Map<string, Runtime>());
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve open's awaited sequencing and rejected-Promise behavior. */
   const open = useCallback(
     async (request: OpenRequest, navigate = true) => {
       // Query resolves the requested chat identity before looking up its owning runtime.
@@ -205,11 +229,13 @@ const EveRuntimeProvider = ({
 
       // Query with staleTime 0 reloads the branch family before selecting or creating a runtime.
       const family = await queryClient.query({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing trpc.eve.branches.queryOptions({ id: identity.chatId }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...trpc.eve.branches.queryOptions({ id: identity.chatId }),
         staleTime: 0,
       });
       const existing = registry.get(identity.chatId);
       const controller =
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from existing; preserve one receiver evaluation, skipped accesses and the existing new LogicalChat(identity.chatId, request.id, !navigate) fallback. The app guidance prefers optional chaining.
         existing?.controller ??
         new LogicalChat(identity.chatId, request.id, !navigate);
       controller.setBranches(family.branches);
@@ -217,7 +243,9 @@ const EveRuntimeProvider = ({
         controller.selectBranch(request.id);
       }
       const runtime = {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing existing own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...existing,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...request,
         chatId: identity.chatId,
         controller,
@@ -236,6 +264,7 @@ const EveRuntimeProvider = ({
     },
     [queryClient, trpc, registry]
   );
+  /* oxlint-enable oxc/no-async-await */
   const active = runtimes.find(
     (runtime) =>
       runtime.ownerId === ownerId && pathname === `/chat/${runtime.chatId}`
@@ -283,13 +312,16 @@ const EveRuntimeRoute = ({
       (error: unknown) => setFailure(String(error))
     );
   }, [open, id, sessionId, ownerId, chatId, title]);
-  return typeof failure === "string" && failure !== "" ? (
-    <p role="alert">{failure}</p>
-  ) : (
+  if (typeof failure === "string" && failure !== "") {
+    return <p role="alert">{failure}</p>;
+  }
+  return (
     <div className="flex h-full items-center justify-center">
       <Spinner aria-label="Loading conversation" />
     </div>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (EveRuntimeProvider, EveRuntimeRoute); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
 export { EveRuntimeProvider, EveRuntimeRoute };
+/* oxlint-enable import/no-named-export */

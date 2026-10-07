@@ -1,12 +1,21 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
 import { spawn } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI observes native process or stream lifecycle events.
 import { once } from "node:events";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Command } from "commander";
+/* oxlint-enable sort-imports */
 
 import type { PackageManager } from "#cli/types";
 import { inferPackageManager } from "#cli/utils/get-package-manager";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { handleError } from "#cli/utils/handle-error";
+/* oxlint-enable sort-imports */
 
 const EVAL_SCRIPT = `
 import userConfig from "./chat.config.ts";
@@ -31,9 +40,8 @@ const getTsEvalCommand = (pm: PackageManager): [string, string[]] => {
   }
 };
 
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (config); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve config's awaited sequencing and rejected-Promise behavior. */
 export const config = new Command()
   .name("config")
   .description(
@@ -44,6 +52,7 @@ export const config = new Command()
     "the working directory (defaults to current directory)",
     process.cwd()
   )
+  // oxlint-disable-next-line max-statements -- Configuration evaluation must spawn, collect stderr, await close, and translate startup versus command failures in order.
   .action(async (opts: { readonly cwd: string }) => {
     try {
       const cwd = path.resolve(opts.cwd);
@@ -57,16 +66,18 @@ export const config = new Command()
       });
 
       const stderr: string[] = [];
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading on from child.stderr; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       child.stderr?.on("data", (data): void => {
         stderr.push(String(data));
       });
 
-      let code: number | null;
+      // oxlint-disable-next-line init-declarations -- The close event is assigned only after awaiting the child; startup failures throw before any exit status is inspected.
+      let closeEvent: readonly unknown[];
       try {
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- Node child-process close emits the exit code followed by a signal; the event library exposes an untyped tuple.
-        [code] = await once(child, "close");
+        closeEvent = await once(child, "close");
       } catch (error) {
         throw new Error(
+          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
           `Could not spawn ${cmd}. Make sure ${pm} is installed. ${error instanceof Error ? error.message : String(error)}`,
           {
             cause: error,
@@ -74,6 +85,8 @@ export const config = new Command()
         );
       }
 
+      const [code] = closeEvent;
+      // oxlint-disable-next-line no-magic-numbers -- Native subprocess exit status zero denotes successful configuration evaluation.
       if (code !== 0) {
         throw new Error(`Failed to resolve config:\n${stderr.join("").trim()}`);
       }
@@ -81,6 +94,5 @@ export const config = new Command()
       handleError(error);
     }
   });
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable eslint/init-declarations */
-/* oxlint-enable eslint/max-statements */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

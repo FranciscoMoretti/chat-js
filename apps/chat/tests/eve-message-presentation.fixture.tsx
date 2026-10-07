@@ -1,13 +1,19 @@
 /* oxlint-disable import/no-relative-parent-imports -- * import/no-relative-parent-imports (#530): Keep the explicit "../components/controlled-chat-composer"; "../components/eve/eve-messages"; "../components/message-siblings-view"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API. */
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useMemo, useState } from "react";
+/* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledChatComposer } from "../components/controlled-chat-composer";
+/* oxlint-enable sort-imports */
 import { EveMessages } from "../components/eve/eve-messages";
 import { MessageSiblingsView } from "../components/message-siblings-view";
 import { ResponseChoiceCards } from "../components/response-choice-cards";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { LegacyUserMessageReference } from "./eve-message-presentation.legacy";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const messages: readonly EveMessage[] = [
@@ -64,6 +70,7 @@ const inlineResponseCards = (
     <ResponseChoiceCards slots={comparisonSlots} />
   </div>
 );
+/* oxlint-disable react/jsx-no-literals -- Editor renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types -- * react-perf/jsx-no-jsx-as-prop (#555): Editor creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
  * react-perf/jsx-no-new-function-as-prop (#557): Editor creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
@@ -93,6 +100,7 @@ const Editor = ({
     </div>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable no-magic-numbers, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, unicorn/no-null -- * no-magic-numbers (#517): VersionControls uses 3, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -115,6 +123,7 @@ const VersionControls = ({
   const isFirst = message.id === "user-1";
   return (
     <MessageSiblingsView
+      // oxlint-disable-next-line no-ternary -- Keep count JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       count={isFirst ? 3 : 2}
       index={1}
       onNext={() => onLog(`next:${message.id}`)}
@@ -144,21 +153,28 @@ const Transcript = ({
   title: string;
 }): React.JSX.Element => {
   const [editingId, setEditingId] = useState<string>();
-  const edit = useMemo(
-    () =>
-      editingId
-        ? {
-            content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
-            disabled: false,
-            messageId: editingId,
-            onCancel: (): void => setEditingId(undefined),
-          }
-        : undefined,
-    [editingId, onLog]
-  );
+  const edit = useMemo(():
+    | {
+        content: React.JSX.Element;
+        disabled: boolean;
+        messageId: string;
+        onCancel: () => void;
+      }
+    | undefined => {
+    if (editingId) {
+      return {
+        content: <Editor onSubmit={(value) => onLog(`submit:${value}`)} />,
+        disabled: false,
+        messageId: editingId,
+        onCancel: (): void => setEditingId(undefined),
+      };
+    }
+    return undefined;
+  }, [editingId, onLog]);
   return (
     <section
       aria-label={title}
+      // oxlint-disable-next-line no-ternary -- Keep data-testid JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       data-testid={isReadonly ? "readonly-transcript" : "editable-transcript"}
     >
       <h2 className="mb-2 text-lg font-medium">{title}</h2>
@@ -168,7 +184,12 @@ const Transcript = ({
         editor={edit}
         isReadonly={isReadonly}
         messages={messages}
-        modelForMessage={(message) => message.metadata?.modelId}
+        modelForMessage={
+          (message) =>
+            /* oxlint-disable oxc/no-optional-chaining -- Keep the existing nullish guard when reading modelId from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining. */
+            message.metadata?.modelId
+          /* oxlint-enable oxc/no-optional-chaining */
+        }
         onEdit={(message) => {
           setEditingId(message.id);
           onLog(`edit:${message.id}`);
@@ -176,9 +197,12 @@ const Transcript = ({
         onRegenerate={(user, response) =>
           onLog(`retry:${user.id}->${response.id}`)
         }
-        renderResponses={(message) =>
-          message.id === "user-1" ? inlineResponseCards : null
-        }
+        renderResponses={(message) => {
+          if (message.id === "user-1") {
+            return inlineResponseCards;
+          }
+          return null;
+        }}
         renderVersions={(message) => (
           <VersionControls message={message} onLog={onLog} />
         )}
@@ -235,6 +259,7 @@ const LegacyReference = ({
     </section>
   );
 };
+/* oxlint-disable react/jsx-no-literals -- Fixture renders authored static fixture captions and expected interface copy; no translation-layer contract is defined here. */
 /* oxlint-enable no-magic-numbers, react-perf/jsx-no-jsx-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types -- * max-lines-per-function (#510): Fixture keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -284,6 +309,7 @@ const Fixture = (): React.JSX.Element => {
         <ResponseChoiceCards
           // oxlint-disable-next-line oxc/no-map-spread -- #541: Attach this fixture instance's handlers without mutating shared comparison slots.
           slots={comparisonSlots.map((slot) => ({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing slot own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...slot,
             handleSelect: (): void => setSelected(slot.id),
             selected: selected === slot.id,
@@ -296,6 +322,7 @@ const Fixture = (): React.JSX.Element => {
     </main>
   );
 };
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-array-as-prop, react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, react/only-export-components, typescript/prefer-readonly-parameter-types */
 
 const root = document.querySelector("#root");

@@ -3,7 +3,9 @@ import type { WorkflowToolContext } from "eve/tools";
 
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 import type { WebSearchUpdate } from "@/tools/platform/research-updates-schema";
 
 type Context = Readonly<
@@ -46,6 +48,7 @@ type ActionEventView =
   | Readonly<{ type: Exclude<StreamEvent["type"], "action.result"> }>;
 type SnapshotView = Readonly<{ events: readonly ActionEventView[] }>;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readResearchSnapshots's awaited sequencing and rejected-Promise behavior. */
 const readResearchSnapshots = async (
   client: Readonly<{ sessions: Readonly<Pick<Client["sessions"], "attach">> }>,
   sessionIds: readonly string[],
@@ -57,7 +60,9 @@ const readResearchSnapshots = async (
   }
   return await Promise.all(requests);
 };
-
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (researchSearchUpdates); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve researchSearchUpdates's awaited sequencing and rejected-Promise behavior. */
 // oxlint-disable-next-line eslint/func-style -- EVE's directive compiler requires this durable researchSearchUpdates step to be a top-level named async function declaration.
 export async function researchSearchUpdates(
   context: Context
@@ -72,16 +77,19 @@ export async function researchSearchUpdates(
   const root = await client.sessions
     .attach(context.session.id)
     .snapshot(options);
-  const children = root.events.flatMap((event: InvocationEventView) =>
-    event.type === "subagent.called" &&
-    !event.data.remote &&
-    event.data.name === "researcher" &&
-    event.data.turnId === context.session.turn.id &&
-    // EVE prefixes workflow agent invocation IDs with their owning tool call ID.
-    event.data.callId.startsWith(`${context.callId}:`)
-      ? [event.data.childSessionId]
-      : []
-  );
+  const children = root.events.flatMap((event: InvocationEventView) => {
+    if (
+      event.type === "subagent.called" &&
+      !event.data.remote &&
+      event.data.name === "researcher" &&
+      event.data.turnId === context.session.turn.id &&
+      // EVE prefixes workflow agent invocation IDs with their owning tool call ID.
+      event.data.callId.startsWith(`${context.callId}:`)
+    ) {
+      return [event.data.childSessionId];
+    }
+    return [];
+  });
   const snapshots = await readResearchSnapshots(client, children, options);
   return snapshots.flatMap((snapshot: SnapshotView) =>
     snapshot.events.flatMap((event) => {
@@ -97,10 +105,14 @@ export async function researchSearchUpdates(
       }
       return (receipt.data.updates ?? []).flatMap((value: unknown) => {
         const update = ResearchUpdateSchema.safeParse(value);
-        return update.success && update.data.type === "web"
-          ? [update.data]
-          : [];
+
+        if (update.success && update.data.type === "web") {
+          return [update.data];
+        }
+        return [];
       });
     })
   );
 }
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

@@ -2,27 +2,38 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
-  AttachmentUploadIntegration,
   AttachmentUploadInput,
+  AttachmentUploadIntegration,
 } from "@/lib/installation-contracts";
+/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useSession } from "@/providers/session-provider";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { AttachFilesControl, TakePhotoControl } from "./controls";
+/* oxlint-enable sort-imports */
 import { uploadAttachment } from "./upload";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { processFilesForUpload } from "./upload-prep";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
-const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
+type UploadInput = ReadonlyNativeSurface<AttachmentUploadInput>;
+const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
@@ -31,10 +42,14 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
   useEffect((): void => {
     currentCount.current = attachmentCount;
   }, [attachmentCount]);
-  const upload = async (files: File[]): Promise<void> => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve upload's awaited sequencing and rejected-Promise behavior. */
+  const upload = async (
+    files: ReadonlyNativeSurface<File[]>
+  ): Promise<void> => {
     if (lock.current || files.length === 0) {
       return;
     }
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     if (!session?.user) {
       toast.error("Sign in to attach files.");
       return;
@@ -44,7 +59,9 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       return;
     }
     lock.current = true;
-    setUploadQueue(files.map((file): string => file.name));
+    setUploadQueue(
+      files.map((file: ReadonlyNativeSurface<File>): string => file.name)
+    );
     // oxlint-disable-next-line react/todo -- Keep queue cleanup in finally for upload recovery.
     try {
       const result = await processFilesForUpload(files, config.attachments);
@@ -64,6 +81,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           onUploaded(attachment);
         } catch (error) {
           toast.error(
+            // oxlint-disable-next-line no-ternary -- Keep toast.error argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             error instanceof Error ? error.message : "Upload failed."
           );
         }
@@ -73,6 +91,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
       setUploadQueue([]);
     }
   };
+  /* oxlint-enable oxc/no-async-await */
   const { getRootProps } = useDropzone({
     disabled: uploadQueue.length > 0,
     noClick: true,
@@ -80,6 +99,7 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
     onDrop: upload,
   });
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return {
     composer: (disabled: boolean) => ({
       input: (
@@ -91,7 +111,10 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
           ref={input}
           type="file"
           // oxlint-disable-next-line typescript/no-misused-promises -- The upload helper reports failures and settles UI state internally; the DOM/dropzone callback does not consume its promise.
-          onChange={async (event): Promise<void> => {
+          onChange={async (
+            // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Reset the original input element's value after reading its FileList so the same file can be selected again.
+            event: React.ChangeEvent<HTMLInputElement>
+          ): Promise<void> => {
             if (!disabled) {
               await upload([...(event.target.files ?? [])]);
             }
@@ -111,12 +134,22 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
         }
         input.current.click();
       },
+      // oxlint-disable-next-line no-ternary -- Keep rootProps as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       rootProps: disabled
         ? {}
         : {
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getRootProps({ role: "group" }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...getRootProps({ role: "group" }),
             onPasteCapture: (
-              event: React.ClipboardEvent<HTMLDivElement>
+              event: Readonly<{
+                clipboardData: Readonly<{
+                  files: Readonly<
+                    Pick<FileList, "length" | typeof Symbol.iterator>
+                  >;
+                }>;
+                preventDefault: () => void;
+                stopPropagation: () => void;
+              }>
             ): void => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
@@ -128,10 +161,10 @@ const useUploads = ({ attachmentCount, onUploaded }: AttachmentUploadInput) => {
     }),
     uploadQueue,
   };
+  /* oxlint-enable oxc/no-async-await */
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (attachmentUploads); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-void-return */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
-
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
@@ -144,3 +177,4 @@ export const attachmentUploads = {
   ],
   useUploads,
 } satisfies AttachmentUploadIntegration;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

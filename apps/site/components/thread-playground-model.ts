@@ -1,7 +1,11 @@
 import { getMessageText } from "@chat-js/thread";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { MessageTreeSnapshot } from "@chat-js/thread";
+/* oxlint-enable sort-imports */
 import type { UseThreadHelpers } from "@chat-js/thread/react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ChatTransport, UIMessage, UIMessageChunk } from "ai";
+/* oxlint-enable sort-imports */
 
 interface PlaygroundMetadata {
   activeStreamId: string | null;
@@ -123,9 +127,11 @@ const initialTree: MessageTreeSnapshot<PlaygroundMessage> = {
   version: 1,
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve delay's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- delay: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- delay: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading throwIfAborted from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   signal?.throwIfAborted();
   const { promise, resolve, reject } = Promise.withResolvers<undefined>();
   const abort = new AbortController();
@@ -137,12 +143,14 @@ const delay = async (ms: number, signal?: AbortSignal): Promise<void> => {
     clearTimeout(timeout);
     reject(new DOMException("Aborted", "AbortError"));
   };
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   signal?.addEventListener("abort", onAbort, {
     once: true,
     signal: abort.signal,
   });
   await promise;
 };
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-undefined */
 
@@ -163,20 +171,24 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
     messages,
   }: Parameters<ChatTransport<PlaygroundMessage>["sendMessages"]>[0]) => {
     const requestBody: StreamBody | undefined = body;
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading responseLabel from requestBody; preserve one receiver evaluation, skipped accesses and the existing "Assistant" fallback.
     const responseLabel = requestBody?.responseLabel ?? "Assistant";
     const streamId = crypto.randomUUID();
     const userMessage = messages.at(-1);
+    // oxlint-disable-next-line no-ternary -- Keep prompt as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const prompt = userMessage ? getMessageText(userMessage) : "this branch";
     const response = `${responseLabel}: Let’s explore "${prompt}". Start with a small release that people can try immediately. Show one clear workflow, collect feedback from real integrations, and use it to decide what to improve next. This response has its own stream: you can explore another branch, stop a sibling, or return here without losing any of this progress.`;
     const words = response.split(" ");
     // Different cadences make independent streams easy to follow in the demo.
     const responseNumber = Number(
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 0 from RESPONSE_NUMBER_PATTERN.exec(...); preserve one receiver evaluation, skipped accesses and the existing 1 fallback.
       RESPONSE_NUMBER_PATTERN.exec(responseLabel)?.[0] ?? 1
     );
     const tokenDelay = 140 + (responseNumber % 3) * 35;
 
     return Promise.resolve(
       new ReadableStream<UIMessageChunk<PlaygroundMetadata>>({
+        /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve start's awaited sequencing and rejected-Promise behavior. */
         async start(controller): Promise<void> {
           try {
             controller.enqueue({
@@ -193,6 +205,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
               // oxlint-disable-next-line no-await-in-loop -- Stream words in order with a separate cancellable delay for each token.
               await delay(tokenDelay, abortSignal);
               controller.enqueue({
+                // oxlint-disable-next-line no-ternary -- Keep delta as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
                 delta: index === 0 ? word : ` ${word}`,
                 id: "text",
                 type: "text-delta",
@@ -211,6 +224,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             });
             controller.close();
           } catch (error) {
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading aborted from abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
             if (abortSignal?.aborted) {
               controller.enqueue({
                 finishReason: "stop",
@@ -227,6 +241,7 @@ const createPlaygroundTransport = (): ChatTransport<PlaygroundMessage> => ({
             controller.error(error);
           }
         },
+        /* oxlint-enable oxc/no-async-await */
       })
     );
   },
@@ -291,6 +306,7 @@ const buildTreeLayout = ({
     width: Math.max(430, Math.max(0, nextLeaf - 2) * 164 + 184),
   };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (buildTreeLayout, createPlaygroundTransport, initialTree); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
@@ -298,9 +314,12 @@ const buildTreeLayout = ({
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable typescript/explicit-module-boundary-types */
 export { buildTreeLayout, createPlaygroundTransport, initialTree };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (LayoutNode, PlaygroundChat, PlaygroundMessage, PlaygroundMetadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   LayoutNode,
   PlaygroundChat,
   PlaygroundMessage,
   PlaygroundMetadata,
 };
+/* oxlint-enable import/no-named-export */

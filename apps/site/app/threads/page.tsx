@@ -14,12 +14,16 @@ import {
 import type { Metadata } from "next";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Footer } from "@/components/footer";
+/* oxlint-enable sort-imports */
 import { Navbar } from "@/components/navbar";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   ThreadInstallCommand,
   ThreadPlayground,
 } from "@/components/thread-showcase";
+/* oxlint-enable sort-imports */
 import { siteConfig, siteLinks } from "@/lib/site-config";
 
 const THREADS_TITLE = "useThread — Branching Chats for AI SDK";
@@ -105,6 +109,7 @@ const architectureRows = [
     label: "Transport",
   },
 ] as const;
+/* oxlint-disable react/jsx-no-literals -- ThreadsPage renders authored authored landing-page copy, demo labels and navigation text; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-lines-per-function -- ThreadsPage: This component owns related hooks, rendering and interaction closures; extraction needs state-ownership review. */
 
@@ -112,6 +117,7 @@ const architectureRows = [
 
 /* oxlint-disable eslint/no-magic-numbers -- ThreadsPage: Layout distances, demo IDs and timing/count values define this component's existing presentation. */
 /* oxlint-disable typescript/prefer-readonly-parameter-types -- ThreadsPage: React/library props and refs retain their declared mutability contract; deep-readonly wrapping would change assignability. */
+/* oxlint-disable react/forbid-component-props -- GitBranch, ArrowRight, Check, Braces, RefreshCw, CircleStop, Workflow accept the supplied styling props; preserve this composition's layout and appearance. */
 const ThreadsPage = (): React.JSX.Element => (
   <div className="flex min-h-screen flex-col">
     <Navbar />
@@ -355,6 +361,9 @@ const ThreadsPage = (): React.JSX.Element => (
     <Footer />
   </div>
 );
+/* oxlint-disable import/no-named-export -- Framework discovery uses these named bindings (metadata); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable react/jsx-no-literals */
+/* oxlint-enable react/forbid-component-props */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -365,6 +374,7 @@ const ThreadsPage = (): React.JSX.Element => (
 /* oxlint-disable max-lines -- page.tsx: This demonstration component and its private render helpers share interaction/state ownership; splitting requires design review. */
 /* oxlint-disable react/only-export-components -- Next.js reads metadata/viewport from this page/layout module alongside its default component; these are framework metadata exports, not reusable component exports. */
 export { metadata };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */
 /* oxlint-disable import/no-default-export -- Next.js discovers this page/layout through its default component entrypoint. */
 export default ThreadsPage;

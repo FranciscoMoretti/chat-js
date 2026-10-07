@@ -5,10 +5,12 @@ import type {
 
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable react/react-in-jsx-scope -- Input uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the standard React input props, including native object refs. Deep readonly ref.current fails the input JSX receiver; preserving scalar string & {} aliases in type/autoComplete/role/style still triggers this rule.
 const Input = ({
   className,
   type,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, type from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: ReactComponentProps<"input">): ReactJSX.Element => (
   <input
@@ -20,8 +22,12 @@ const Input = ({
     )}
     data-slot="input"
     type={type}
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Input's native input attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Input); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable react/react-in-jsx-scope */
 
 export { Input };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

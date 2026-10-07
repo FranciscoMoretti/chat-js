@@ -1,15 +1,21 @@
 import { createOpenAI } from "@ai-sdk/openai";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
+/* oxlint-enable sort-imports */
 import type { GatewayProvider } from "@chat-js/gateways/gateway-provider";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "@chat-js/gateways/models";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ExtractImageModelIdFromProvider,
   ExtractModelIdFromProvider,
   StrictLiterals,
 } from "@chat-js/gateways/provider-types";
+/* oxlint-enable sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
 
@@ -40,6 +46,7 @@ const toAiGatewayModel = (
   name: model.id,
   object: "model",
   owned_by:
+    // oxlint-disable-next-line no-ternary -- Keep ?? operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     (model.owned_by === "system" ? "openai" : model.owned_by) ?? "openai",
   pricing: {},
   type: "language",
@@ -82,6 +89,7 @@ class OpenAIGateway
     return this.env.OPENAI_API_KEY;
   }
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchModels's awaited sequencing and rejected-Promise behavior. */
   public async fetchModels(): Promise<AiGatewayModel[]> {
     const apiKey = this.getApiKey();
 
@@ -129,7 +137,10 @@ class OpenAIGateway
       return [...this.getFallbackModels(this.type)];
     }
   }
+  /* oxlint-enable oxc/no-async-await */
 }
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, OpenAIGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { OpenAIGateway as Gateway, OpenAIGateway };
+/* oxlint-enable import/no-named-export */

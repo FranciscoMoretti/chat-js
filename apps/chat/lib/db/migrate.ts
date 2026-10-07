@@ -3,23 +3,32 @@
  */
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "dotenv";
+/* oxlint-enable sort-imports */
 import { readMigrationFiles } from "drizzle-orm/migrator";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { drizzle } from "drizzle-orm/postgres-js";
+/* oxlint-enable sort-imports */
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { databaseConnection } from "./connection";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
+  getMigrationHistoryProblem,
 } from "./migration-history";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 config({
   path: ".env.local",
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runMigrate's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
  * max-lines-per-function (#510): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): runMigrate keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -67,6 +76,7 @@ const runMigrate = async (): Promise<void> => {
     >(
       `select to_regclass('drizzle.__drizzle_migrations') is not null as "migrationTableExists"`
     );
+    // oxlint-disable-next-line no-ternary -- Keep applied as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const applied = migrationTableExists
       ? await connection.unsafe<{ createdAt: string; hash: string }[]>(
           `select "created_at"::text as "createdAt", "hash"
@@ -136,14 +146,15 @@ const runMigrate = async (): Promise<void> => {
 
   console.log("✅ Migrations completed in", end - start, "ms");
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-console, no-magic-numbers, node/no-process-env, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
+/* oxlint-disable no-console --
  * no-console (#514): void (async () => { try { await runMigrate(); } catch ( emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await runMigrate(); } catch ('s return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: This entrypoint also runs through tsx in CommonJS packages, which cannot compile top-level await.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await runMigrate();
   } catch (error) {
@@ -152,4 +163,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable no-console */

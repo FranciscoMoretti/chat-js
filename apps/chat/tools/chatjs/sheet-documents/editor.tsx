@@ -1,13 +1,23 @@
 "use client";
 
 import { useTheme } from "next-themes";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { parse, unparse } from "papaparse";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React, { memo, useMemo, useState } from "react";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep React Data Grid's type-only contracts separate from its runtime component binding as required by consistent-type-specifier-style. */
+import type { CellClickArgs, CellMouseEvent } from "react-data-grid";
 import DataGrid, { textEditor } from "react-data-grid";
+/* oxlint-enable sort-imports */
 
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { cn } from "@/lib/utils";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "react-data-grid/lib/styles.css";
+/* oxlint-enable sort-imports */
 
 interface SheetEditorProps {
   content: string;
@@ -20,9 +30,6 @@ interface SheetEditorProps {
 
 const MIN_ROWS = 50;
 const MIN_COLS = 26;
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const generateCsv = (data: (string | number)[][]): string => unparse(data);
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
@@ -33,7 +40,6 @@ const generateCsv = (data: (string | number)[][]): string => unparse(data);
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureSpreadsheetEditor = ({
   content,
@@ -41,7 +47,7 @@ const PureSpreadsheetEditor = ({
   status: _status,
   isCurrentVersion: _isCurrentVersion,
   isReadonly,
-}: SheetEditorProps) => {
+}: ReadonlyNativeSurface<SheetEditorProps>) => {
   const { resolvedTheme } = useTheme();
 
   const parseData = useMemo(() => {
@@ -53,13 +59,15 @@ const PureSpreadsheetEditor = ({
     const result = parse<string[]>(content, { skipEmptyLines: true });
 
     // oxlint-disable-next-line oxc/no-map-spread -- #541: Pad an independent row so the parsed CSV data remains unchanged.
-    const paddedData = result.data.map((row) => {
-      const paddedRow = [...row];
-      while (paddedRow.length < MIN_COLS) {
-        paddedRow.push("");
+    const paddedData = result.data.map(
+      (row: ReadonlyNativeSurface<string[]>): string[] => {
+        const paddedRow = [...row];
+        while (paddedRow.length < MIN_COLS) {
+          paddedRow.push("");
+        }
+        return paddedRow;
       }
-      return paddedRow;
-    });
+    );
 
     while (paddedData.length < MIN_ROWS) {
       paddedData.push(Array.from({ length: MIN_COLS }, (): string => ""));
@@ -75,7 +83,8 @@ const PureSpreadsheetEditor = ({
       headerCellClass: "border-t border-r bg-muted text-foreground",
       key: "rowNumber",
       name: "",
-      renderCell: ({ rowIdx }: { rowIdx: number }): number => rowIdx + 1,
+      renderCell: ({ rowIdx }: Readonly<{ rowIdx: number }>): number =>
+        rowIdx + 1,
       width: 50,
     };
 
@@ -88,6 +97,7 @@ const PureSpreadsheetEditor = ({
       }),
       key: i.toString(),
       name: String.fromCodePoint(65 + i),
+      // oxlint-disable-next-line no-ternary -- Keep renderEditCell as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       renderEditCell: isReadonly === true ? undefined : textEditor,
       width: 120,
     }));
@@ -97,22 +107,27 @@ const PureSpreadsheetEditor = ({
 
   const initialRows = useMemo(
     () =>
-      parseData.map((row, rowIndex) => {
-        const rowData: Record<string, string | number> = {
-          id: rowIndex,
-          rowNumber: rowIndex + 1,
-        };
+      parseData.map(
+        (row: ReadonlyNativeSurface<string[]>, rowIndex: number) => {
+          const rowData: Record<string, string | number> = {
+            id: rowIndex,
+            rowNumber: rowIndex + 1,
+          };
 
-        for (const [colIndex, col] of columns.slice(1).entries()) {
-          rowData[col.key] = row[colIndex] || "";
+          for (const [colIndex, col] of columns.slice(1).entries()) {
+            rowData[col.key] = row[colIndex] || "";
+          }
+
+          return rowData;
         }
-
-        return rowData;
-      }),
+      ),
     [parseData, columns]
   );
 
-  const [localRows, setLocalRows] = useState(initialRows);
+  const [localRows, setLocalRows] =
+    useState<ReadonlyNativeSurface<Record<string, string | number>[]>>(
+      initialRows
+    );
 
   const [previousRows, setPreviousRows] = useState(initialRows);
   if (previousRows !== initialRows) {
@@ -121,7 +136,7 @@ const PureSpreadsheetEditor = ({
   }
 
   const handleRowsChange = (
-    newRows: Record<string, string | number>[]
+    newRows: ReadonlyNativeSurface<Record<string, string | number>[]>
   ): void => {
     if (isReadonly === true) {
       return;
@@ -129,16 +144,23 @@ const PureSpreadsheetEditor = ({
 
     setLocalRows(newRows);
 
-    const updatedData = newRows.map((row) =>
-      columns.slice(1).map((col) => row[col.key] || "")
+    const updatedData = newRows.map(
+      (row: ReadonlyNativeSurface<Record<string, string | number>>) =>
+        columns
+          .slice(1)
+          .map(
+            (col: ReadonlyNativeSurface<(typeof columns)[number]>) =>
+              row[col.key] || ""
+          )
     );
 
-    const newCsvContent = generateCsv(updatedData);
+    const newCsvContent = unparse(updatedData);
     saveContent(newCsvContent, true);
   };
 
   return (
     <DataGrid
+      // oxlint-disable-next-line react/forbid-component-props, no-ternary -- DataGrid accepts className in its styling contract; preserve this caller's layout and appearance.; no-ternary: Keep className JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       className={resolvedTheme === "dark" ? "rdg-dark" : "rdg-light"}
       columns={columns}
       defaultColumnOptions={{
@@ -146,20 +168,26 @@ const PureSpreadsheetEditor = ({
         sortable: true,
       }}
       enableVirtualization
-      onCellClick={(args, event): void => {
+      onCellClick={(
+        args: ReadonlyNativeSurface<
+          CellClickArgs<Record<string, string | number>>
+        >,
+        event: Readonly<Pick<CellMouseEvent, "preventGridDefault">>
+      ): void => {
         if (args.column.key !== "rowNumber" && !(isReadonly === true)) {
           event.preventGridDefault();
           args.selectCell(true);
         }
       }}
+      // oxlint-disable-next-line no-ternary -- Keep onRowsChange JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       onRowsChange={isReadonly === true ? undefined : handleRowsChange}
       rows={localRows}
+      // oxlint-disable-next-line react/forbid-component-props -- DataGrid accepts style in its styling contract; preserve this caller's layout and appearance.
       style={{ height: "100%" }}
     />
   );
 };
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
@@ -170,10 +198,9 @@ const PureSpreadsheetEditor = ({
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 const areEqual = (
-  prevProps: SheetEditorProps,
-  nextProps: SheetEditorProps
+  prevProps: ReadonlyNativeSurface<SheetEditorProps>,
+  nextProps: ReadonlyNativeSurface<SheetEditorProps>
 ): boolean =>
   prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
   prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
@@ -181,6 +208,7 @@ const areEqual = (
   prevProps.content === nextProps.content &&
   prevProps.saveContent === nextProps.saveContent &&
   prevProps.isReadonly === nextProps.isReadonly;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (SpreadsheetEditor); the enabled import/no-default-export convention rejects the default-export alternative. */
 
 export const SpreadsheetEditor = memo(PureSpreadsheetEditor, areEqual);
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

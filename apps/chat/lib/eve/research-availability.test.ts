@@ -11,14 +11,22 @@ import {
 } from "@eve-test/dist/src/context/serialize.js";
 import { generateText, tool, wrapLanguageModel } from "ai";
 import { MockLanguageModelV3 } from "ai/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { beforeEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { researchAvailable } from "@/tools/chatjs/deep-research/availability";
+/* oxlint-enable sort-imports */
 
 import { testToolContext } from "../../tests/helpers/eve-tool-context";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedToolAvailabilityMiddleware } from "./tool-availability";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveTurnGuest, eveTurnTool } from "./turn-tools";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 const mocks = vi.hoisted(() => {
@@ -40,7 +48,10 @@ vi.mock("@/tools/chatjs/installed-features", () => ({
   installedDocumentKinds: {
     has: (kind: string): boolean => kind === "text" && mocks.text,
     get size() {
-      return mocks.text ? 1 : 0;
+      if (mocks.text) {
+        return 1;
+      }
+      return 0;
     },
   },
   installedToolNames: { has: (): boolean => mocks.research },
@@ -52,6 +63,7 @@ beforeEach(() => {
   mocks.research = true;
   mocks.text = true;
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "automatic",   "selected",   "other-tool",   "disabled",   "no-documents",   "no-text", 's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
  * max-lines-per-function (#510): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): it.each([ "automatic", "selected", "other-tool", "disabled", "no-documents", "no-text keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -89,8 +101,11 @@ it.each([
     eveTurnGuest.update(() => scenario === "guest");
     const principal = {
       attributes: {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "guest" ? { chatjsGuest: "true" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "guest" ? { chatjsGuest: "true" } : {}),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "selected" ? { selectedTool: "deepResearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "selected" ? { selectedTool: "deepResearch" } : {}),
+        // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (scenario === "other-tool" ? { selectedTool: "webSearch" } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         ...(scenario === "other-tool" ? { selectedTool: "webSearch" } : {}),
       },
       authenticator: "test",
@@ -107,9 +122,11 @@ it.each([
         maxRetries: 0,
         model: wrapLanguageModel({
           middleware: installedToolAvailabilityMiddleware({
+            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing session own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...session,
             auth: {
               current: principal,
+              // oxlint-disable-next-line no-ternary -- Keep initiator as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               initiator: scenario === "anonymous" ? null : principal,
             },
           }),
@@ -119,14 +136,18 @@ it.each([
         tools: { deepResearch: definition, webSearch: definition },
       })
     ).rejects.toThrow("provider reached");
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from provider.doGenerateCalls[0].tools; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     const names = provider.doGenerateCalls[0].tools?.map((entry) => entry.name);
     expect(names).toEqual(
+      // oxlint-disable-next-line no-ternary -- Keep expect(names).toEqual argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       ["automatic", "selected"].includes(scenario)
         ? ["deepResearch", "webSearch"]
         : ["webSearch"]
     );
   })
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 it("preserves the turn restriction when approval/reconnect auth omits selectedTool", async () => {
@@ -160,3 +181,4 @@ it("preserves the turn restriction when approval/reconnect auth omits selectedTo
     expect(researchAvailable(session)).toBe(false);
   });
 });
+/* oxlint-enable oxc/no-async-await */

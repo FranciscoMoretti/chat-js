@@ -44,6 +44,7 @@ const BUILT_IN_TOOL_KEYS = [
 ] as const;
 
 type BuiltInToolKey = (typeof BUILT_IN_TOOL_KEYS)[number];
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (AUTH_PROVIDERS, BUILT_IN_TOOL_KEYS, CORE_FEATURE_KEYS, DOCUMENT_TYPE_KEYS, GATEWAYS); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   AUTH_PROVIDERS,
   BUILT_IN_TOOL_KEYS,
@@ -51,6 +52,8 @@ export {
   DOCUMENT_TYPE_KEYS,
   GATEWAYS,
 };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (AuthProvider, BuiltInToolKey, CoreFeatureKey, DocumentTypeKey, Gateway, PackageManager); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type {
   AuthProvider,
   BuiltInToolKey,
@@ -59,3 +62,4 @@ export type {
   Gateway,
   PackageManager,
 };
+/* oxlint-enable import/no-named-export */

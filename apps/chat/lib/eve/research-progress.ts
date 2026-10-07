@@ -1,29 +1,34 @@
 import type { ToolContext } from "eve/tools";
 
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolOutput, ToolResult } from "./tool-result";
-import { executeWithToolProgress } from "./tool-usage";
+/* oxlint-enable sort-imports */
 import type { ToolUsage } from "./tool-usage";
+import { executeWithToolProgress } from "./tool-usage";
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeWithResearchProgress); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
- * typescript/prefer-readonly-parameter-types (#565): executeWithResearchProgress accepts context: Pick<ToolContext, "abortSignal">; options: { abortSignal: AbortSignal; usage: ToolUsage; dataStream: ToolProgressWriter; { abortSignal, usage, publish }; part; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * typescript/promise-function-async (#606): executeWithResearchProgress preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
-  */
 export const executeWithResearchProgress = <Output extends ToolOutput>(
-  context: Pick<ToolContext, "abortSignal">,
-  execute: (options: {
-    abortSignal: AbortSignal;
-    usage: ToolUsage;
-    dataStream: ToolProgressWriter;
-  }) => Promise<Output>
+  context: ReadonlyNativeSurface<Pick<ToolContext, "abortSignal">>,
+  execute: (
+    options: ReadonlyNativeSurface<{
+      abortSignal: AbortSignal;
+      usage: ToolUsage;
+      dataStream: ToolProgressWriter;
+    }>
+  ) => Promise<Output>
 ): AsyncGenerator<ToolResult<Output | { searches: [] }>> =>
   executeWithToolProgress<Output | { searches: [] }>(
     context,
+    // oxlint-disable-next-line typescript/promise-function-async -- Forward the executor promise and synchronous throw without an async wrapper.
     ({ abortSignal, usage, publish }) => {
-      const updates = new Map<string, ResearchUpdate>();
+      const updates = new Map<string, ReadonlyNativeSurface<ResearchUpdate>>();
       return execute({
         abortSignal,
         dataStream: {
@@ -36,4 +41,4 @@ export const executeWithResearchProgress = <Output extends ToolOutput>(
       });
     }
   );
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

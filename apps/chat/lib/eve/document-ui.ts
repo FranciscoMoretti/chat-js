@@ -1,5 +1,7 @@
 import type { EveMessage } from "eve/client";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComponentType } from "react";
+/* oxlint-enable sort-imports */
 
 import type { DocumentAssistantRequest } from "./document-contracts";
 
@@ -49,6 +51,7 @@ type DocumentRunProps = {
   disabled: boolean;
   onAction?: (request: DocumentAssistantRequest) => Promise<void>;
 };
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (DocumentBodyProps, DocumentRunProps, DocumentUi, DocumentUiRegistry); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/consistent-type-definitions, typescript/prefer-readonly-parameter-types */
 export type {
   DocumentBodyProps,
@@ -56,3 +59,4 @@ export type {
   DocumentUi,
   DocumentUiRegistry,
 };
+/* oxlint-enable import/no-named-export */

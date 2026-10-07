@@ -1,3 +1,4 @@
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (codeGuidelines); the enabled import/no-default-export convention rejects the default-export alternative. */
 export const codeGuidelines = `
 Guidelines for Python code:
 - Each snippet should be complete and runnable on its own
@@ -13,3 +14,4 @@ Guidelines for Python code:
 
 The title MUST include the file extension (e.g., "script.py", "App.tsx", "utils.js").
 This extension determines syntax highlighting.`;
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

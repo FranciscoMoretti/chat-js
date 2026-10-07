@@ -1,10 +1,14 @@
 "use client";
 
-import type { JSX as ReactJSX, ComponentProps } from "react";
+import type { ComponentProps, JSX as ReactJSX } from "react";
 import React from "react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+/* oxlint-enable sort-imports */
 import { cn } from "@/lib/utils";
 
 type SuggestionsProps = ComponentProps<typeof ScrollArea>;
@@ -14,13 +18,23 @@ type SuggestionsProps = ComponentProps<typeof ScrollArea>;
 const Suggestions = ({
   className,
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SuggestionsProps): React.JSX.Element => (
-  <ScrollArea className="w-full overflow-x-auto whitespace-nowrap" {...props}>
+  <ScrollArea
+    // oxlint-disable-next-line react/forbid-component-props -- ScrollArea accepts className in its styling contract; preserve this caller's layout and appearance.
+    className="w-full overflow-x-auto whitespace-nowrap"
+    // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestions's ScrollArea prop contract, preserving caller options, children and callbacks.
+    {...props}
+  >
     <div className={cn("flex w-max flex-nowrap items-center gap-2", className)}>
       {children}
     </div>
-    <ScrollBar className="hidden" orientation="horizontal" />
+    <ScrollBar
+      // oxlint-disable-next-line react/forbid-component-props -- ScrollBar accepts className in its styling contract; preserve this caller's layout and appearance.
+      className="hidden"
+      orientation="horizontal"
+    />
   </ScrollArea>
 );
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
@@ -39,19 +53,23 @@ const Suggestion = ({
   variant = "outline",
   size = "sm",
   children,
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes suggestion, onClick, className, variant, size, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: SuggestionProps): ReactJSX.Element => {
   const handleClick = (): void => {
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     onClick?.(suggestion);
   };
 
   return (
     <Button
+      // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn("cursor-pointer rounded-full px-4", className)}
       onClick={handleClick}
       size={size}
       type="button"
       variant={variant}
+      // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward Suggestion's Button prop contract, preserving caller options, children and callbacks.
       {...props}
     >
       {/* oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value. */}
@@ -59,6 +77,10 @@ const Suggestion = ({
     </Button>
   );
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Suggestion, Suggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
 export { Suggestion, Suggestions };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (SuggestionProps, SuggestionsProps); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { SuggestionProps, SuggestionsProps };
+/* oxlint-enable import/no-named-export */

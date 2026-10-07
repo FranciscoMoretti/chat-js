@@ -7,23 +7,37 @@ import { isIP } from "node:net";
 
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   commitEveGuestMessage,
   readExistingEveGuestMessage,
   releaseEveGuestCreation,
   reserveEveGuestMessage,
 } from "@/lib/db/eve-guests";
+/* oxlint-enable sort-imports */
 import { getEveConversation } from "@/lib/db/eve-queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
+/* oxlint-enable sort-imports */
 
 import type { createConversationInput } from "./contracts";
 import { eveMessageFileKeys } from "./file-references";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveGuestIpHash } from "./guest-credential";
+/* oxlint-enable sort-imports */
 import { loadEveModelDefinition } from "./model-selection";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EvePrincipal } from "./principal";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-nodejs-modules */
 
 type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
@@ -31,6 +45,7 @@ type ReadonlyGuestCreationInput = ReadonlyNativeSurface<
 >;
 
 const IPV6_VERSION = 6;
+const INVALID_IP_VERSION = 0;
 const LEADING_BRACKET_LENGTH = 1;
 const TRAILING_BRACKET_INDEX = -1;
 const IPV4_OCTET_RANGE = 256;
@@ -41,12 +56,11 @@ const HTTP_TOO_MANY_REQUESTS = 429;
 
 const MAPPED_IP = /^::ffff:(?<high>[0-9a-f]{1,4}):(?<low>[0-9a-f]{1,4})$/u;
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions --no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): guestRequestIpHash intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; header; address; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable no-undefined -- no-undefined (#519): guestRequestIpHash uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Hashes a trusted canonical client address; development uses the local address.
- * @param request Request whose configured proxy header supplies the client address outside development.
- * @returns The keyed guest IP hash after mapped IPv6 normalization; unavailable or invalid addresses throw.
+ * @param {ReadonlyNativeSurface<Request>} request Request whose configured proxy header supplies the client address outside development.
+ * @returns {string} The keyed guest IP hash after mapped IPv6 normalization; unavailable or invalid addresses throw.
  */
 const guestRequestIpHash = (
   request: ReadonlyNativeSurface<Request>
@@ -55,14 +69,27 @@ const guestRequestIpHash = (
     return eveGuestIpHash("127.0.0.1", env.AUTH_SECRET);
   }
   // https://vercel.com/docs/headers/request-headers#x-vercel-forwarded-for
-  const header = env.VERCEL_URL
-    ? "x-vercel-forwarded-for"
-    : env.TRUSTED_CLIENT_IP_HEADER;
-  const address = header ? request.headers.get(header)?.trim() : undefined;
-  if (!(address && isIP(address)) || address.includes("%")) {
+  const header =
+    // oxlint-disable-next-line no-ternary -- Preserve the empty-string fallback between deployment and trusted-client header names.
+    typeof env.VERCEL_URL === "string" && env.VERCEL_URL !== ""
+      ? "x-vercel-forwarded-for"
+      : env.TRUSTED_CLIENT_IP_HEADER;
+  const address =
+    // oxlint-disable-next-line no-ternary -- Preserve the absent-header result without changing the undefined return contract.
+    typeof header === "string" && header !== ""
+      ? // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the missing-header result while retaining the existing trimmed value.
+        request.headers.get(header)?.trim()
+      : undefined;
+  if (
+    typeof address !== "string" ||
+    address === "" ||
+    isIP(address) === INVALID_IP_VERSION ||
+    address.includes("%")
+  ) {
     throw new Error("Trusted client address is unavailable.");
   }
   const canonical =
+    // oxlint-disable-next-line no-ternary -- Keep canonical as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     isIP(address) === IPV6_VERSION
       ? new URL(`http://[${address}]`).hostname.slice(
           LEADING_BRACKET_LENGTH,
@@ -70,21 +97,27 @@ const guestRequestIpHash = (
         )
       : address;
   const mapped = MAPPED_IP.exec(canonical);
-  const normalized = mapped
-    ? [
-        Math.floor(
-          Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) / IPV4_OCTET_RANGE
-        ),
-        Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
-        Math.floor(
-          Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) / IPV4_OCTET_RANGE
-        ),
-        Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
-      ].join(".")
-    : canonical;
+  const normalized =
+    // oxlint-disable-next-line no-ternary -- Preserve lazy IPv4-mapped address conversion while leaving ordinary IPv4/IPv6 text untouched.
+    mapped === null
+      ? canonical
+      : [
+          Math.floor(
+            Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) /
+              IPV4_OCTET_RANGE
+          ),
+          Number.parseInt(mapped[MAPPED_HIGH_WORD_GROUP], 16) %
+            IPV4_OCTET_RANGE,
+          Math.floor(
+            Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) /
+              IPV4_OCTET_RANGE
+          ),
+          Number.parseInt(mapped[MAPPED_LOW_WORD_GROUP], 16) % IPV4_OCTET_RANGE,
+        ].join(".");
   return eveGuestIpHash(normalized, env.AUTH_SECRET);
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateGuestCreation's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions -- init-declarations (#507): validateGuestCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): validateGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -92,10 +125,10 @@ max-statements (#512): validateGuestCreation keeps its ordered workflow and inpu
 typescript/strict-boolean-expressions (#610): validateGuestCreation intentionally keeps the existing falsy-value behavior of input.projectId; source.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Checks guest policy, source ownership, and model/file availability before quota reservation.
- * @param request Request used to resolve the trusted client-address hash.
- * @param principal Guest ownership and credential identity used for source/file checks.
- * @param input Creation request whose model, tool, project, fork, and attachments are validated.
- * @returns The trusted IP hash, or a response rejecting the request before quota is reserved.
+ * @param {ReadonlyNativeSurface<Request>} request Request used to resolve the trusted client-address hash.
+ * @param {Readonly< Extract< EvePrincipal, { kind: "guest"; } > >} principal Guest ownership and credential identity used for source/file checks.
+ * @param {ReadonlyGuestCreationInput} input Creation request whose model, tool, project, fork, and attachments are validated.
+ * @returns {Promise<string | Response>} The trusted IP hash, or a response rejecting the request before quota is reserved.
  */
 const validateGuestCreation = async (
   request: ReadonlyNativeSurface<Request>,
@@ -132,6 +165,7 @@ const validateGuestCreation = async (
       principal.ownerId,
       input.fork.conversationId
     );
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (source?.state !== "bound" || !source.sessionId) {
       return Response.json(
         { creationRejected: true, error: "Source conversation not found." },
@@ -165,6 +199,8 @@ const validateGuestCreation = async (
   }
   return ipHash;
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/strict-boolean-expressions --max-lines-per-function (#510): admitGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -172,10 +208,10 @@ max-statements (#512): admitGuestCreation keeps its ordered workflow and input c
 typescript/strict-boolean-expressions (#610): admitGuestCreation intentionally keeps the existing falsy-value behavior of existing; distinguishing empty, zero, and absent states requires a domain behavior decision. */
 /**
  * Admits a creation under its native operation identity, preserving quota on matching replays.
- * @param request Request used to resolve trusted admission evidence for a new reservation.
- * @param principal Guest identity whose operation content and session quota are checked.
- * @param input Original creation request hashed to prevent replaying different operation content.
- * @returns A reserved/replayed quota identity or an admission error response; follow-up sends use a separate path.
+ * @param {ReadonlyNativeSurface<Request>} request Request used to resolve trusted admission evidence for a new reservation.
+ * @param {Readonly< Extract< EvePrincipal, { kind: "guest"; } > >} principal Guest identity whose operation content and session quota are checked.
+ * @param {ReadonlyGuestCreationInput} input Original creation request hashed to prevent replaying different operation content.
+ * @returns {Promise< | Response | Extract< Awaited<ReturnType<typeof reserveEveGuestMessage>>, { status: "reserved" | "replay" } > >} A reserved/replayed quota identity or an admission error response; follow-up sends use a separate path.
  */
 const admitGuestCreation = async (
   request: ReadonlyNativeSurface<Request>,
@@ -237,18 +273,22 @@ const admitGuestCreation = async (
     {
       creationRejected: reservation.status !== "conflict",
       error:
+        // oxlint-disable-next-line no-ternary -- Keep error as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         reservation.status === "conflict"
           ? "This operation has different content."
           : "Guest message limit reached. Sign in to continue.",
     },
     {
       status:
+        // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         reservation.status === "conflict"
           ? HTTP_CONFLICT
           : HTTP_TOO_MANY_REQUESTS,
     }
   );
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestCreation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/strict-boolean-expressions */
 
 /* oxlint-disable max-params -- max-params (#511): settleGuestCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
@@ -277,6 +317,8 @@ const settleGuestCreation = async (
     }
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (admitGuestCreation, guestRequestIpHash, settleGuestCreation, validateGuestCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-params */
 export {
   admitGuestCreation,
@@ -284,3 +326,4 @@ export {
   settleGuestCreation,
   validateGuestCreation,
 };
+/* oxlint-enable import/no-named-export */

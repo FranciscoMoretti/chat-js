@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { useEffect } from "react";
+/* oxlint-enable sort-imports */
 
 import { useSidebar } from "@/components/ui/sidebar";
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null -- KeyboardShortcuts: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event: KeyboardEvent); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
@@ -44,9 +46,14 @@ const getNewChatShortcutText = () => {
   }
 
   const isMac = navigator.platform.toUpperCase().includes("MAC");
-  return isMac ? "Cmd+Shift+O" : "Ctrl+Shift+O";
+  if (isMac) {
+    return "Cmd+Shift+O";
+  }
+  return "Ctrl+Shift+O";
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (getNewChatShortcutText, KeyboardShortcuts); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 /* oxlint-disable react/only-export-components -- #620: Consumers import getNewChatShortcutText, KeyboardShortcuts from this existing mixed component, context, or helper API; separating the Fast Refresh boundary remains tracked review debt. */
 export { getNewChatShortcutText, KeyboardShortcuts };
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable react/only-export-components */

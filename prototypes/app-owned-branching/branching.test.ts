@@ -2,19 +2,26 @@
 import { execFileSync } from "node:child_process";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:fs/promises import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdtemp, readFile, rm } from "node:fs/promises";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:os import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
 import { tmpdir } from "node:os";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: The fixture uses this Node API to isolate and inspect its temporary files/processes. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import path from "node:path";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 import postgres from "postgres";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { mockProvider } from "./mock-provider";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   append,
   beginWriter,
@@ -24,11 +31,12 @@ import {
   fork,
   history,
   modelHistory,
-  reserve,
   removeBranch,
+  reserve,
   validatePrefix,
   writeFile,
 } from "./model";
+/* oxlint-enable sort-imports */
 import type { Message } from "./model";
 
 /* oxlint-disable eslint/init-declarations -- directory: Assignment occurs only after branch-specific validation; eager initialization would hide definite-assignment guarantees. */
@@ -50,6 +58,7 @@ const text = (value: string): Message => ({
   role: "user",
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable node/no-sync -- branching.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 beforeAll(async () => {
   // No env files, URLs, shared services or remote DB acceptance path.
@@ -93,9 +102,12 @@ beforeAll(async () => {
     await readFile(new URL("schema.sql", import.meta.url), "utf-8")
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-sync */
 /* oxlint-disable node/no-sync -- branching.test.ts: Synchronous fixture setup/readback keeps each assertion tied to a completed filesystem/process boundary. */
 afterAll(async () => {
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading end from sql; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   await sql?.end();
   if (started) {
     execFileSync(
@@ -108,6 +120,8 @@ afterAll(async () => {
     await rm(directory, { force: true, recursive: true });
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-sync */
 beforeEach(async () => {
   await sql`truncate child_request,checkpoint,writer,branch,node,provider_snapshot,provider_vm,resource,annotation cascade`;
@@ -119,7 +133,7 @@ beforeEach(async () => {
   await sql`insert into provider_vm (id,files) values ('original','{"work.txt":"v1"}')`;
   await sql`insert into branch (id,owner,sandbox,documents) values ('root','alice','original','{"doc":"revision-1"}')`;
 });
-
+/* oxlint-enable oxc/no-async-await */
 type AppendInput =
   Parameters<typeof append> extends [unknown, infer Input] ? Input : never;
 
@@ -132,13 +146,15 @@ const add = (
   value: AppendInput["message"] = text(id)
 ): Promise<void> =>
   append(sql, { branch, expectedHead, id, message: value, owner });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkpoint's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/max-params */
 const checkpoint = async (): Promise<void> => {
   await reserve(sql, capture);
   await complete(sql, mockProvider(sql), owner, capture.id);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve write's awaited sequencing and rejected-Promise behavior. */
 const write = async (branch: string, bytes: string): Promise<void> => {
   await beginWriter(sql, owner, branch, "file-writer", "sandbox-process");
   await writeFile(sql, {
@@ -150,7 +166,8 @@ const write = async (branch: string, bytes: string): Promise<void> => {
   });
   await endWriter(sql, owner, branch, "file-writer");
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- shared immutable prefix, attachment references and annotations survive nested branches ...: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
 /* oxlint-disable unicorn/no-null -- shared immutable prefix, attachment references and annotations survive nested branches ...: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- shared immutable prefix, attachment references and annotations survive nested branches ...: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -202,6 +219,8 @@ test("shared immutable prefix, attachment references and annotations survive nes
     "immutable message"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -220,18 +239,24 @@ test("stopping snapshot restores parent and independent child; later document an
     owner,
   });
   const rows2 = await sql`select stopped from provider_vm where id='original'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading stopped from rows2[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows2[0]?.stopped).toBe(true);
   const rows3 = await sql`select documents from branch where id='child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading documents from rows3[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows3[0]?.documents).toEqual({ doc: "revision-1" });
   const rows4 = await sql`select files from provider_vm where id='child:child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows4[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows4[0]?.files).toEqual({ "work.txt": "v1" });
   await write("child", "child-v3");
   const rows5 =
     await sql`select files from provider_vm where id='parent:boundary'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows5[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows5[0]?.files).toEqual({ "work.txt": "parent-v2" });
   await add("parent-next", "m1");
   await add("child-next", "m1", "child");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([   "turn",   "completion-hook",   "background-task",   "approval",   "external-edit", ])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -259,6 +284,8 @@ test.each([
     await expect(add("late-message", null)).rejects.toThrow("capture barrier");
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable eslint/no-magic-numbers -- concurrent writer admission and capture serialize: exactly one is admitted: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -272,6 +299,8 @@ test("concurrent writer admission and capture serialize: exactly one is admitted
     results.filter((result) => result.status === "fulfilled")
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -284,6 +313,7 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     complete(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async capture(key, vm) {
           await provider.capture(key, vm);
@@ -295,13 +325,17 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     )
   ).rejects.toThrow("lost provider reply");
   const rows6 = await sql`select status from checkpoint`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from rows6[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows6[0]?.status).toBe("failed");
   await expect(add("late", null)).rejects.toThrow("capture barrier");
   await complete(sql, mockProvider(sql), owner, capture.id);
   const rows7 = await sql`select status from checkpoint`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from rows7[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows7[0]?.status).toBe("ready");
   expect(await sql`select id from provider_snapshot`).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/no-magic-numbers */
 
@@ -321,9 +355,12 @@ test("crash after restore before publication retries without resnapshotting or o
   ]);
   const rows8 =
     await sql`select files from provider_vm where id='parent:boundary'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading files from rows8[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows8[0]?.files).toEqual({ "work.txt": "continued" });
   expect(await sql`select id from provider_vm`).toHaveLength(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 test("pending checkpoint after process death is recoverable; changed intent and foreign ownership fail", async () => {
@@ -336,6 +373,7 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("checkpoint not ready");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     reserve(sql, { ...capture, intent: "different-boundary" })
   ).rejects.toThrow("conflicting operation");
   await expect(
@@ -351,7 +389,8 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("not owned");
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- child creation is idempotent through lost replies, including after child continuation: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
 /* oxlint-disable unicorn/no-null -- child creation is idempotent through lost replies, including after child continuation: The fixture explicitly exercises the null state required by the API. */
 /* oxlint-disable eslint/no-magic-numbers -- child creation is idempotent through lost replies, including after child continuation: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
@@ -363,6 +402,7 @@ test("child creation is idempotent through lost replies, including after child c
     fork(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async restore(key, vm) {
           await provider.restore(key, vm);
@@ -376,13 +416,18 @@ test("child creation is idempotent through lost replies, including after child c
   await add("child-1", null, "child");
   await fork(sql, provider, request);
   const rows9 = await sql`select head from branch where id='child'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading head from rows9[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows9[0]?.head).toBe("child-1");
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await reserve(sql, { ...capture, id: "other" });
   await complete(sql, provider, owner, "other");
   await expect(
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     fork(sql, provider, { ...request, checkpoint: "other" })
   ).rejects.toThrow("conflicting child");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -408,10 +453,13 @@ test("historical edit/regenerate uses the prior boundary, excludes suffix, retai
   await add("replacement-question", "answer-1", "edit");
   const selected = await history(sql, owner, "replacement-question");
   expect(selected).toHaveLength(3);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading model from selected[1].annotation; read annotation from selected[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(selected[1]?.annotation?.model).toBe("original-model");
   expect(selected.at(-1)).toEqual(text("replacement-question"));
   expect(await history(sql, owner, "answer-2")).toHaveLength(4);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
@@ -439,6 +487,8 @@ test("tool pairs and bounded input fail closed; incomplete cancelled/failed turn
     "prefix too large"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -452,6 +502,8 @@ test("optimistic branch head compare prevents concurrent appends from losing mes
   ).toHaveLength(1);
   expect(await sql`select id from node`).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
@@ -490,6 +542,8 @@ test("resource grants are owner checked and retained after source branch removal
   expect(resources).toHaveLength(3);
   await add("after-deletion", "attachment", "child");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
 
@@ -497,6 +551,7 @@ test("resource grants are owner checked and retained after source branch removal
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
   await editDocument(sql, owner, "root", { doc: "revision-2" });
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   await reserve(sql, { ...capture, id: "later", intent: "before-next-turn" });
   await complete(sql, mockProvider(sql), owner, "later");
   await fork(sql, mockProvider(sql), {
@@ -517,6 +572,8 @@ test("separate idle captures retain manual edits even when transcript head is un
     { doc: "revision-2" },
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 test("fork cannot reuse an unrelated branch or resurrect a deleted child", async () => {
@@ -535,7 +592,8 @@ test("fork cannot reuse an unrelated branch or resurrect a deleted child", async
     "conflicting child"
   );
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-magic-numbers -- deletion during child restore fences publication: Literal IDs, expected counts and timing bounds belong to this fixed scenario and its assertions. */
 test("deletion during child restore fences publication", async () => {
   await checkpoint();
@@ -546,6 +604,7 @@ test("deletion during child restore fences publication", async () => {
     fork(
       sql,
       {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...provider,
         async restore(key, vm) {
           await provider.restore(key, vm);
@@ -558,6 +617,8 @@ test("deletion during child restore fences publication", async () => {
   const rows = await sql`select id from branch where id='child'`;
   expect(rows).toHaveLength(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable unicorn/no-null -- app annotations are separate records and excluded from model history: The fixture explicitly exercises the null state required by the API. */
@@ -569,9 +630,11 @@ test("app annotations are separate records and excluded from model history", asy
     role: "assistant",
   });
   const rows = await sql`select payload from node where id='annotated'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading payload from rows[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows[0]?.payload).not.toHaveProperty("annotation");
   const annotations =
     await sql`select payload from annotation where node='annotated'`;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading payload from annotations[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(annotations[0]?.payload).toEqual({
     model: "original",
     selectedTool: null,
@@ -580,7 +643,7 @@ test("app annotations are separate records and excluded from model history", asy
     { parts: [{ text: "answer", type: "text" }], role: "assistant" },
   ]);
 });
-
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-disable max-lines -- app annotations are separate records and excluded from model history: The file is one cohesive fixture suite whose setup and cleanup are shared; splitting it needs test ownership boundaries. */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */

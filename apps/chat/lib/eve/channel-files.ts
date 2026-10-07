@@ -8,27 +8,33 @@ import { keyFromFileUrl } from "@/lib/file-url";
  * no-magic-numbers (#517): FileContext uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fetchEveChannelFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchEveChannelFile's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null --
- * jsdoc/require-param (#534): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): fetchEveChannelFile's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * typescript/explicit-function-return-type (#560): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep fetchEveChannelFile's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/strict-boolean-expressions (#610): fetchEveChannelFile intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): fetchEveChannelFile preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
-/** Interpret owned storage keys locally; never fetch the URL's hostname. */
+/** Interpret owned storage keys locally; never fetch the URL's hostname.
+ * @param {string} url Attachment URL used only to extract a recognized stored-file identity.
+ * @param {FileContext} [context] Native file-fetch context supplying the session's current authenticated owner.
+ * @returns {Promise<{ bytes: Buffer; mediaType: string } | null>} Authorized stored bytes and MIME type, or null for an unrecognized storage-key URL. Recognized keys require an authenticated owner and pass the ownership check before storage is read.
+ */
 export const fetchEveChannelFile = async (
   url: string,
   context?: FileContext
-) => {
+): Promise<{ bytes: Buffer; mediaType: string } | null> => {
   const key = keyFromFileUrl(url);
-  if (!key) {
+  if (key === null) {
     return null;
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading auth from context.session; read session from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const auth = context?.session?.auth.current;
-  if (!auth || auth.principalType === "anonymous") {
+  if (
+    auth === null ||
+    typeof auth !== "object" ||
+    auth.principalType === "anonymous"
+  ) {
     throw new Error("Attachment resolution requires an authenticated owner.");
   }
   await assertEveFilesOwned(auth.principalId, [key]);
@@ -38,4 +44,6 @@ export const fetchEveChannelFile = async (
     mediaType: file.type,
   };
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable unicorn/no-null */

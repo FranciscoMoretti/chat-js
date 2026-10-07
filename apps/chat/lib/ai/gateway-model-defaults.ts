@@ -1,5 +1,6 @@
 import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
 
+// oxlint-disable-next-line sort-imports -- Oxfmt groups the external defaults type before the local Gateway type; both are erased and retain the generated declaration contracts.
 import type { Gateway } from "./gateway";
 
 const gatewayType = "vercel" satisfies InstanceType<typeof Gateway>["type"];
@@ -59,6 +60,7 @@ const gatewayEnvRequirements = [
   { options: [["AI_GATEWAY_API_KEY"], ["VERCEL_OIDC_TOKEN"]] },
 ];
 const gatewayEnvVariables = ["AI_GATEWAY_API_KEY", "VERCEL_OIDC_TOKEN"];
+// oxlint-disable-next-line import/no-named-export -- Generated registrations expose separate named contracts and optional capabilities selected by the installer.
 export {
   gatewayType,
   gatewayModelDefaults,

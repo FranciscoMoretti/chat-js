@@ -50,11 +50,15 @@ type GatewayMetadataEntries = typeof gatewayMetadataEntries;
 const GATEWAY_NAME_ENTRY_INDEX = 0;
 const GATEWAY_METADATA_ENTRY_INDEX = 1;
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (gatewayMetadata); the enabled import/no-default-export convention rejects the default-export alternative. */
 // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Typed registry entries establish key/value correspondence that Object.fromEntries does not retain in its return type.
 export const gatewayMetadata = Object.fromEntries(gatewayMetadataEntries) as {
   [
     Entry in GatewayMetadataEntries[number] as Entry[typeof GATEWAY_NAME_ENTRY_INDEX]
   ]: Entry[typeof GATEWAY_METADATA_ENTRY_INDEX];
 };
+/* oxlint-enable import/no-named-export */
 
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (GatewayType); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type GatewayType = keyof typeof gatewayMetadata;
+/* oxlint-enable import/no-named-export */

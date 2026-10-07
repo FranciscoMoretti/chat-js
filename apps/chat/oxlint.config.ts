@@ -1,9 +1,13 @@
 import { defineConfig } from "oxlint";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import core from "ultracite/oxlint/core";
+/* oxlint-enable sort-imports */
 import next from "ultracite/oxlint/next";
 import react from "ultracite/oxlint/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { auditedRestrictionRules } from "./oxlint-policy.ts";
+/* oxlint-enable sort-imports */
 
 // oxlint-disable-next-line import/no-default-export -- Oxlint loads its configuration through this required default export.
 export default defineConfig({
@@ -15,21 +19,6 @@ export default defineConfig({
     "tests/eve-results/**",
   ],
   overrides: [
-    // #529: Scaffolded Electron main and packaging run with Node/Bun capabilities.
-    // Preload and renderer files keep the browser restriction.
-    {
-      files: [
-        "electron/src/main.ts",
-        "electron/scripts/**",
-        "electron/forge.config.ts",
-      ],
-      rules: { "import/no-nodejs-modules": "off" },
-    },
-    // Typed primitive wrappers forward the supported events, refs and accessibility props.
-    {
-      files: ["components/ui/**", "components/ai-elements/**"],
-      rules: { "react/jsx-props-no-spreading": "off" },
-    },
     // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
     // This zero-offset rule does not honor source disable directives.
     {
@@ -47,6 +36,7 @@ export default defineConfig({
       },
     },
     // EVE derives the public tool name from this filename.
+    // Oxlint reports this rule at offset zero and cannot honor source directives.
     {
       files: [
         "agent/tools/deepResearch.ts",
@@ -57,6 +47,7 @@ export default defineConfig({
     },
   ],
   rules: {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing auditedRestrictionRules own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...auditedRestrictionRules,
     "capitalized-comments": [
       "error",

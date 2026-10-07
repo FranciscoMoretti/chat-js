@@ -79,12 +79,14 @@ const isNeonBranchPage = (value) =>
   value.branches.every((branch) => isNeonBranch(branch)) &&
   hasValidPagination(value);
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetchBranchPage's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{base: string, cursor: string, headers: Readonly<Record<string, string>>, request: NeonRequest}>} options - Inputs for one Neon page request.
  * @returns {Promise<NeonBranchPage>} A validated Neon branch page.
  */
 const fetchBranchPage = async ({ base, cursor, headers, request }) => {
   const url =
+    // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     cursor === EMPTY_CURSOR
       ? base
       : `${base}?cursor=${encodeURIComponent(cursor)}`;
@@ -102,7 +104,7 @@ const fetchBranchPage = async ({ base, cursor, headers, request }) => {
   }
   return pageValue;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /**
  * @param {Readonly<NeonBranchPage>} page - Validated page whose cursor advances the scan.
  * @param {Readonly<Set<string>>} seenCursors - Previously followed opaque cursors.
@@ -110,10 +112,12 @@ const fetchBranchPage = async ({ base, cursor, headers, request }) => {
  */
 const readNextCursor = (page, seenCursors) => {
   const hasCursor = isRecord(page.pagination) && "next" in page.pagination;
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading next from page.pagination; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   const rawCursor = page.pagination?.next;
   if (hasCursor && !isFalsyCursor(rawCursor) && typeof rawCursor !== "string") {
     throw new Error("Invalid or repeated Neon pagination cursor.");
   }
+  // oxlint-disable-next-line no-ternary -- Keep nextCursor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const nextCursor = typeof rawCursor === "string" ? rawCursor : EMPTY_CURSOR;
   if (nextCursor !== EMPTY_CURSOR && seenCursors.has(nextCursor)) {
     throw new Error("Invalid or repeated Neon pagination cursor.");
@@ -121,6 +125,7 @@ const readNextCursor = (page, seenCursors) => {
   return nextCursor;
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listBranches's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{base: string, headers: Readonly<Record<string, string>>, request: NeonRequest}>} options - Inputs for the paginated Neon request.
  * @returns {Promise<readonly NeonBranch[]>} All branch pages after validating pagination.
@@ -158,7 +163,7 @@ const listBranches = async ({ base, headers, request }) => {
   } while (cursor !== EMPTY_CURSOR);
   return branches;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /**
  * @param {NeonBranch} branch - Candidate preview branch returned by Neon.
  * @param {string} parentId - Parent branch that must never be deleted.
@@ -172,6 +177,7 @@ const isDeletablePreview = (branch, parentId) =>
   branch.primary !== true &&
   branch.protected !== true;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve hasOpenPullRequest's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {GitHubClient} github - GitHub API client.
  * @param {Readonly<{owner: string, repo: string}>} repository - Repository identity.
@@ -180,6 +186,7 @@ const isDeletablePreview = (branch, parentId) =>
  */
 const hasOpenPullRequest = async (github, repository, headRef) => {
   const open = await github.paginate(github.rest.pulls.list, {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     head: `${repository.owner}:${headRef}`,
     per_page: OPEN_PULL_REQUEST_PAGE_SIZE,
@@ -187,7 +194,7 @@ const hasOpenPullRequest = async (github, repository, headRef) => {
   });
   return open.length > NO_BRANCH_MATCHES;
 };
-
+/* oxlint-enable oxc/no-async-await */
 /**
  * @param {readonly NeonBranch[]} branches - All validated Neon branches.
  * @param {string} name - Expected preview branch name.
@@ -221,9 +228,12 @@ const hasUnchangedPullRequest = (current, original, repository) =>
   current.state === "closed" &&
   current.closed_at === original.closed_at &&
   current.head.ref === original.head.ref &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from current.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. Keep the existing nullish guard when reading full_name from original.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   current.head.repo?.full_name === original.head.repo?.full_name &&
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from current.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   current.head.repo?.full_name === `${repository.owner}/${repository.repo}`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkPullRequestGate's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {GitHubClient} github - GitHub API client.
  * @param {Readonly<{owner: string, repo: string}>} repository - Repository identity.
@@ -232,11 +242,13 @@ const hasUnchangedPullRequest = (current, original, repository) =>
  */
 const checkPullRequestGate = async (github, repository, number) => {
   const { data: pull } = await github.rest.pulls.get({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     pull_number: number,
   });
   if (
     pull.state !== "closed" ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading full_name from pull.head.repo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
     pull.head.repo?.full_name !== `${repository.owner}/${repository.repo}`
   ) {
     return { kind: "skip", result: "Skipped open or fork pull request." };
@@ -249,7 +261,8 @@ const checkPullRequestGate = async (github, repository, number) => {
   }
   return { kind: "ready", pull };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolvePreviewCandidate's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{pull: PullRequest, apiKey: string | undefined, request: NeonRequest}>} options - Validated closed pull request and Neon request configuration.
  * @returns {Promise<PreviewCandidate>} The candidate branch, if safe to remove.
@@ -274,7 +287,8 @@ const resolvePreviewCandidate = async ({ pull, apiKey, request }) => {
   }
   return { base: NEON_BRANCHES_URL, branch, headers, kind: "ready" };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve preparePreviewDeletion's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{github: GitHubClient, repository: Readonly<{owner: string, repo: string}>, number: number, apiKey: string | undefined, request: NeonRequest}>} options - GitHub ownership and Neon request state needed to identify a candidate.
  * @returns {Promise<DeletionPreparation>} The initial safety result and exact candidate branch.
@@ -303,7 +317,8 @@ const preparePreviewDeletion = async ({
   }
   return { candidate, kind: "ready", pull };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletePreviewBranch's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{request: NeonRequest, base: string, headers: Readonly<Record<string, string>>, branchId: string}>} options - Inputs for deleting one selected Neon branch.
  * @returns {Promise<void>} Resolves after successful or already-completed deletion.
@@ -318,7 +333,8 @@ const deletePreviewBranch = async ({ request, base, headers, branchId }) => {
     throw new Error(`Neon branch deletion failed (${response.status}).`);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve deletePreviewIfStillSafe's awaited sequencing and rejected-Promise behavior. */
 /**
  * @param {Readonly<{github: GitHubClient, repository: Readonly<{owner: string, repo: string}>, number: number, pull: PullRequest, candidate: Extract<PreviewCandidate, {kind: "ready"}>, request: NeonRequest}>} options - Revalidated deletion candidate and API clients.
  * @returns {Promise<DeletionOutcome>} Whether deletion was skipped or completed.
@@ -333,6 +349,7 @@ const deletePreviewIfStillSafe = async ({
 }) => {
   // Refresh ownership after Neon lookup, immediately before the destructive call.
   const { data: current } = await github.rest.pulls.get({
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing repository own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...repository,
     pull_number: number,
   });
@@ -353,7 +370,9 @@ const deletePreviewIfStillSafe = async ({
   });
   return { kind: "deleted" };
 };
-
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (cleanupPreviewDatabase); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve cleanupPreviewDatabase's awaited sequencing and rejected-Promise behavior. */
 // Maintainer infrastructure only: never copied into generated applications.
 /**
  * @returns {Promise<string>} Cleanup outcome after validating current pull-request and branch ownership.
@@ -383,7 +402,10 @@ export const cleanupPreviewDatabase = async ({
     repository,
     request,
   });
-  return outcome.kind === "deleted"
-    ? `Deleted preview database for PR #${number}.`
-    : outcome.result;
+  if (outcome.kind === "deleted") {
+    return `Deleted preview database for PR #${number}.`;
+  }
+  return outcome.result;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */

@@ -2,22 +2,29 @@ import { TRPCError } from "@trpc/server";
 import { assertUrlIsSafeToFetch } from "guarded-fetch";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedFeatures } from "@/features/installed";
+/* oxlint-enable sort-imports */
 import { requireMcpCredentials } from "@/features/mcp/setup";
-import { generateMcpNameId, MCP_NAME_MAX_LENGTH } from "@/lib/ai/mcp-name-id";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { MCP_NAME_MAX_LENGTH, generateMcpNameId } from "@/lib/ai/mcp-name-id";
+/* oxlint-enable sort-imports */
 import {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
 } from "@/lib/ai/mcp/cache";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ConnectionStatusResult,
   DiscoveryResult,
 } from "@/lib/ai/mcp/cache";
+/* oxlint-enable sort-imports */
 import {
   getOrCreateMcpClient,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   createMcpConnector,
   deleteMcpConnector,
@@ -28,11 +35,45 @@ import {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
+/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
+/* oxlint-enable sort-imports */
+
+// Procedure callbacks read only the authenticated user identity from tRPC context.
+type McpProcedureContext = Readonly<{ user: Readonly<{ id: string }> }>;
+
+type McpConnectorReader = Readonly<
+  PublicConnectorInput &
+    Pick<McpConnectorRow, "oauthClientId" | "oauthClientSecret">
+>;
+type McpConnectionResultReader = Readonly<{
+  connector: McpConnectorReader;
+  status: Readonly<ConnectionStatusResult> | null;
+}>;
+
+type McpResourceReader = Readonly<{
+  description?: string;
+  mimeType?: string;
+  name: string;
+  uri: string;
+}>;
+type McpPromptArgumentReader = Readonly<{
+  description?: string;
+  name: string;
+  required?: boolean;
+}>;
+type McpPromptReader = Readonly<{
+  arguments?: readonly McpPromptArgumentReader[];
+  description?: string;
+  name: string;
+}>;
 
 const log = createModuleLogger("mcp.router");
 
@@ -57,9 +98,9 @@ const assertMcpReady = (): void => {
   }
 };
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAndGenerateNameId's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Validates and generates a nameId from a connector name.
  * Throws TRPCError if the name is invalid or the namespace already exists.
@@ -69,9 +110,9 @@ const validateAndGenerateNameId = async ({
   userId,
   excludeId,
 }: {
-  name: string;
-  userId: string | null;
-  excludeId?: string;
+  readonly name: string;
+  readonly userId: string | null;
+  readonly excludeId?: string;
 }): Promise<string> => {
   assertMcpReady();
   const result = generateMcpNameId(name);
@@ -79,6 +120,7 @@ const validateAndGenerateNameId = async ({
     throw new TRPCError({
       code: "BAD_REQUEST",
       message:
+        // oxlint-disable-next-line no-ternary -- Keep message as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         result.error === "empty"
           ? "Connector name must contain at least one alphanumeric character"
           : 'Connector name cannot be "global" (reserved)',
@@ -100,16 +142,16 @@ const validateAndGenerateNameId = async ({
 
   return result.nameId;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable jsdoc/require-returns */
 
 type Permission = "own" | "own-or-global";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getConnectorWithPermission's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /**
  * Fetches connector and validates user permission.
  * - "own": user must own the connector (userId === ctx.user.id)
@@ -120,9 +162,9 @@ const getConnectorWithPermission = async ({
   userId,
   permission,
 }: {
-  id: string;
-  userId: string;
-  permission: Permission;
+  readonly id: string;
+  readonly userId: string;
+  readonly permission: Permission;
 }) => {
   const connector = await getMcpConnectorById({ id });
   if (!connector) {
@@ -132,6 +174,7 @@ const getConnectorWithPermission = async ({
   const isOwner = connector.userId === userId;
   const isGlobal = connector.userId === null;
 
+  // oxlint-disable-next-line no-ternary -- Keep hasPermission as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const hasPermission = permission === "own" ? isOwner : isOwner || isGlobal;
 
   if (!hasPermission) {
@@ -143,7 +186,7 @@ const getConnectorWithPermission = async ({
 
   return connector;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable jsdoc/require-returns */
@@ -157,12 +200,29 @@ const displayConnectorUrl = (value: string): string => {
   return url.href;
 };
 
+type McpConnectorRow = NonNullable<
+  Awaited<ReturnType<typeof getMcpConnectorById>>
+>;
+type PublicConnectorInput = Readonly<
+  Pick<
+    McpConnectorRow,
+    | "enabled"
+    | "id"
+    | "name"
+    | "nameId"
+    | "requireApproval"
+    | "type"
+    | "url"
+    | "userId"
+  > & {
+    createdAt: Readonly<McpConnectorRow["createdAt"]>;
+    updatedAt: Readonly<McpConnectorRow["updatedAt"]>;
+  }
+>;
+
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const publicConnector = (
-  connector: NonNullable<Awaited<ReturnType<typeof getMcpConnectorById>>>
-) => ({
+const publicConnector = (connector: PublicConnectorInput) => ({
   createdAt: connector.createdAt,
   enabled: connector.enabled,
   id: connector.id,
@@ -176,7 +236,8 @@ const publicConnector = (
   url: displayConnectorUrl(connector.url),
   userId: connector.userId,
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mcpRouter); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable typescript/explicit-function-return-type */
 
@@ -187,15 +248,19 @@ const publicConnector = (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 export const mcpRouter = createTRPCRouter({
   /**
    * Initiate OAuth authorization for an MCP connector.
    * Returns the authorization URL that the client should open in a popup.
    */
-  authorize: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .mutation(async ({ ctx, input }) => {
+  authorize: protectedProcedure.input(z.object({ id: z.uuid() })).mutation(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
         id: input.id,
@@ -246,16 +311,24 @@ export const mcpRouter = createTRPCRouter({
         "OAuth authorization URL generated"
       );
 
-      await assertUrlIsSafeToFetch(authUrl.toString(), { opaqueErrors: true });
+      await assertUrlIsSafeToFetch(authUrl.toString(), {
+        opaqueErrors: true,
+      });
       return { authorizationUrl: authUrl.toString() };
-    }),
+    }
+  ),
 
   /**
    * Check if a connector has valid OAuth tokens.
    */
-  checkAuth: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
+  checkAuth: protectedProcedure.input(z.object({ id: z.uuid() })).query(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
         id: input.id,
@@ -269,9 +342,11 @@ export const mcpRouter = createTRPCRouter({
 
       return {
         hasSession: Boolean(session),
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading tokens from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
         isAuthenticated: Boolean(session?.tokens),
       };
-    }),
+    }
+  ),
 
   create: protectedProcedure
     .input(
@@ -283,30 +358,49 @@ export const mcpRouter = createTRPCRouter({
         url: z.url(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      assertMcpReady();
-      await assertUrlIsSafeToFetch(input.url, { opaqueErrors: true });
-      const nameId = await validateAndGenerateNameId({
-        name: input.name,
-        userId: ctx.user.id,
-      });
-
-      return publicConnector(
-        await createMcpConnector({
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: Readonly<{
+        ctx: McpProcedureContext;
+        input: Readonly<{
+          name: string;
+          type: "http" | "sse";
+          url: string;
+          oauthClientId?: string | undefined;
+          oauthClientSecret?: string | undefined;
+        }>;
+      }>) => {
+        assertMcpReady();
+        await assertUrlIsSafeToFetch(input.url, { opaqueErrors: true });
+        const nameId = await validateAndGenerateNameId({
           name: input.name,
-          nameId,
-          oauthClientId: input.oauthClientId,
-          oauthClientSecret: input.oauthClientSecret,
-          type: input.type,
-          url: input.url,
           userId: ctx.user.id,
-        })
-      );
-    }),
+        });
 
-  delete: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .mutation(async ({ ctx, input }) => {
+        return publicConnector(
+          await createMcpConnector({
+            name: input.name,
+            nameId,
+            oauthClientId: input.oauthClientId,
+            oauthClientSecret: input.oauthClientSecret,
+            type: input.type,
+            url: input.url,
+            userId: ctx.user.id,
+          })
+        );
+      }
+    ),
+
+  delete: protectedProcedure.input(z.object({ id: z.uuid() })).mutation(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       await getConnectorWithPermission({
         id: input.id,
@@ -316,14 +410,20 @@ export const mcpRouter = createTRPCRouter({
       await deleteMcpConnector({ id: input.id });
       await removeMcpClient(input.id);
       return { success: true };
-    }),
+    }
+  ),
 
   /**
    * Disconnect an MCP connector by removing OAuth session data only.
    */
-  disconnect: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .mutation(async ({ ctx, input }) => {
+  disconnect: protectedProcedure.input(z.object({ id: z.uuid() })).mutation(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       await getConnectorWithPermission({
         id: input.id,
@@ -334,15 +434,21 @@ export const mcpRouter = createTRPCRouter({
       await removeMcpClient(input.id);
       invalidateAllMcpCaches(input.id);
       return { success: true };
-    }),
+    }
+  ),
 
   /**
    * Discover tools, resources, and prompts from an MCP server.
    * Cached for 5 minutes.
    */
-  discover: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
+  discover: protectedProcedure.input(z.object({ id: z.uuid() })).query(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
         id: input.id,
@@ -393,14 +499,25 @@ export const mcpRouter = createTRPCRouter({
             await Promise.all([
               mcpClient
                 .tools()
-                .then((tools) =>
-                  Object.entries(tools).map(([name, tool]) => ({
-                    description:
-                      typeof tool.description === "string"
-                        ? tool.description
-                        : null,
-                    name,
-                  }))
+                .then(
+                  (
+                    tools: Readonly<
+                      Record<string, Readonly<{ description?: unknown }>>
+                    >
+                  ) =>
+                    Object.entries(tools).map(
+                      ([name, tool]: readonly [
+                        string,
+                        Readonly<{ description?: unknown }>,
+                      ]) => ({
+                        description:
+                          // oxlint-disable-next-line no-ternary -- Keep description as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+                          typeof tool.description === "string"
+                            ? tool.description
+                            : null,
+                        name,
+                      })
+                    )
                 )
                 .catch((error: unknown) => {
                   log.warn(
@@ -411,13 +528,18 @@ export const mcpRouter = createTRPCRouter({
                 }),
               mcpClient
                 .listResources()
-                .then((resourceResult) =>
-                  resourceResult.resources.map((res) => ({
-                    description: res.description ?? null,
-                    mimeType: res.mimeType ?? null,
-                    name: res.name,
-                    uri: res.uri,
-                  }))
+                .then(
+                  (
+                    resourceResult: Readonly<{
+                      resources: readonly McpResourceReader[];
+                    }>
+                  ) =>
+                    resourceResult.resources.map((res: McpResourceReader) => ({
+                      description: res.description ?? null,
+                      mimeType: res.mimeType ?? null,
+                      name: res.name,
+                      uri: res.uri,
+                    }))
                 )
                 .catch((error: unknown) => {
                   log.warn(
@@ -428,17 +550,25 @@ export const mcpRouter = createTRPCRouter({
                 }),
               mcpClient
                 .listPrompts()
-                .then((promptResult) =>
-                  promptResult.prompts.map((prompt) => ({
-                    arguments:
-                      prompt.arguments?.map((arg) => ({
-                        description: arg.description ?? null,
-                        name: arg.name,
-                        required: arg.required ?? false,
-                      })) ?? [],
-                    description: prompt.description ?? null,
-                    name: prompt.name,
-                  }))
+                .then(
+                  (
+                    promptResult: Readonly<{
+                      prompts: readonly McpPromptReader[];
+                    }>
+                  ) =>
+                    promptResult.prompts.map((prompt: McpPromptReader) => ({
+                      arguments:
+                        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading map from prompt.arguments; preserve one receiver evaluation, skipped accesses and the existing [] fallback.
+                        prompt.arguments?.map(
+                          (arg: McpPromptArgumentReader) => ({
+                            description: arg.description ?? null,
+                            name: arg.name,
+                            required: arg.required ?? false,
+                          })
+                        ) ?? [],
+                      description: prompt.description ?? null,
+                      name: prompt.name,
+                    }))
                 )
                 .catch((error: unknown) => {
                   log.warn(
@@ -473,71 +603,94 @@ export const mcpRouter = createTRPCRouter({
       const cachedFetch = createCachedDiscovery(connector.id, fetchDiscovery);
 
       return await cachedFetch();
-    }),
+    }
+  ),
 
-  list: protectedProcedure.query(async ({ ctx }) => {
-    assertMcpReady();
-    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
-    return connectors.map((connector) => publicConnector(connector));
-  }),
+  list: protectedProcedure.query(
+    async ({
+      ctx,
+    }: Readonly<{ ctx: McpProcedureContext; input: undefined }>) => {
+      assertMcpReady();
+      const connectors = await getMcpConnectorsByUserId({
+        userId: ctx.user.id,
+      });
+      return connectors.map((connector: PublicConnectorInput) =>
+        publicConnector(connector)
+      );
+    }
+  ),
 
   /**
    * List connectors with their connection status.
    * Returns only connectors that have a valid connection (for use in dropdowns, etc.)
    * Still includes enabled/disabled state so UI can show toggles.
    */
-  listConnected: protectedProcedure.query(async ({ ctx }) => {
-    assertMcpReady();
-    const connectors = await getMcpConnectorsByUserId({ userId: ctx.user.id });
+  listConnected: protectedProcedure.query(
+    async ({
+      ctx,
+    }: Readonly<{ ctx: McpProcedureContext; input: undefined }>) => {
+      assertMcpReady();
+      const connectors = await getMcpConnectorsByUserId({
+        userId: ctx.user.id,
+      });
 
-    const results = await Promise.all(
-      connectors.map(async (connector) => {
-        const fetchConnectionStatus =
-          async (): Promise<ConnectionStatusResult> => {
-            const mcpClient = getOrCreateMcpClient({
-              id: connector.id,
-              name: connector.name,
-              oauthClientId: connector.oauthClientId,
-              oauthClientSecret: connector.oauthClientSecret,
-              type: connector.type,
-              url: connector.url,
-            });
-            const result = await mcpClient.attemptConnection();
-            return {
-              error: result.error,
-              needsAuth: result.needsAuth,
-              status: result.status,
+      const results = await Promise.all(
+        connectors.map(async (connector: McpConnectorReader) => {
+          const fetchConnectionStatus =
+            async (): Promise<ConnectionStatusResult> => {
+              const mcpClient = getOrCreateMcpClient({
+                id: connector.id,
+                name: connector.name,
+                oauthClientId: connector.oauthClientId,
+                oauthClientSecret: connector.oauthClientSecret,
+                type: connector.type,
+                url: connector.url,
+              });
+              const result = await mcpClient.attemptConnection();
+              return {
+                error: result.error,
+                needsAuth: result.needsAuth,
+                status: result.status,
+              };
             };
-          };
 
-        const cachedFetch = createCachedConnectionStatus(
-          connector.id,
-          fetchConnectionStatus
+          const cachedFetch = createCachedConnectionStatus(
+            connector.id,
+            fetchConnectionStatus
+          );
+
+          try {
+            const status = await cachedFetch();
+            return { connector, status };
+          } catch {
+            return { connector, status: null };
+          }
+        })
+      );
+
+      return results
+        .filter(
+          (connectionResult: McpConnectionResultReader): boolean =>
+            // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from connectionResult.status; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+            connectionResult.status?.status === "connected"
+        )
+        .map((connectionResult: McpConnectionResultReader) =>
+          publicConnector(connectionResult.connector)
         );
-
-        try {
-          const status = await cachedFetch();
-          return { connector, status };
-        } catch {
-          return { connector, status: null };
-        }
-      })
-    );
-
-    return results
-      .filter(
-        (connectionResult): boolean =>
-          connectionResult.status?.status === "connected"
-      )
-      .map((connectionResult) => publicConnector(connectionResult.connector));
-  }),
+    }
+  ),
 
   /**
    * Refresh/reconnect an MCP client after OAuth completion.
    */
-  refreshClient: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .mutation(async ({ ctx, input }) => {
+  refreshClient: protectedProcedure.input(z.object({ id: z.uuid() })).mutation(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
         id: input.id,
@@ -563,16 +716,22 @@ export const mcpRouter = createTRPCRouter({
         needsAuth: mcpClient.status === "authorizing",
         status: mcpClient.status,
       };
-    }),
+    }
+  ),
 
   /**
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Much faster than discover since it doesn't fetch tools/resources/prompts.
    * Cached for 60 seconds.
    */
-  testConnection: protectedProcedure
-    .input(z.object({ id: z.uuid() }))
-    .query(async ({ ctx, input }) => {
+  testConnection: protectedProcedure.input(z.object({ id: z.uuid() })).query(
+    async ({
+      ctx,
+      input,
+    }: Readonly<{
+      ctx: McpProcedureContext;
+      input: Readonly<{ id: string }>;
+    }>) => {
       assertMcpReady();
       const connector = await getConnectorWithPermission({
         id: input.id,
@@ -621,7 +780,8 @@ export const mcpRouter = createTRPCRouter({
       );
 
       return await cachedFetch();
-    }),
+    }
+  ),
 
   toggleEnabled: protectedProcedure
     .input(
@@ -630,19 +790,27 @@ export const mcpRouter = createTRPCRouter({
         id: z.uuid(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      assertMcpReady();
-      await getConnectorWithPermission({
-        id: input.id,
-        permission: "own",
-        userId: ctx.user.id,
-      });
-      await updateMcpConnector({
-        id: input.id,
-        updates: { enabled: input.enabled },
-      });
-      return { success: true };
-    }),
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: Readonly<{
+        ctx: McpProcedureContext;
+        input: Readonly<{ enabled: boolean; id: string }>;
+      }>) => {
+        assertMcpReady();
+        await getConnectorWithPermission({
+          id: input.id,
+          permission: "own",
+          userId: ctx.user.id,
+        });
+        await updateMcpConnector({
+          id: input.id,
+          updates: { enabled: input.enabled },
+        });
+        return { success: true };
+      }
+    ),
 
   update: protectedProcedure
     .input(
@@ -659,46 +827,67 @@ export const mcpRouter = createTRPCRouter({
         }),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      assertMcpReady();
-      const connector = await getConnectorWithPermission({
-        id: input.id,
-        permission: "own",
-        userId: ctx.user.id,
-      });
-
-      const updates: typeof input.updates & { nameId?: string } = {
-        ...input.updates,
-      };
-      if (typeof updates.url === "string" && updates.url !== "") {
-        await assertUrlIsSafeToFetch(updates.url, { opaqueErrors: true });
-      }
-      if (typeof updates.name === "string" && updates.name !== "") {
-        const nameId = await validateAndGenerateNameId({
-          excludeId: input.id,
-          name: updates.name,
-          userId: connector.userId,
+    .mutation(
+      async ({
+        ctx,
+        input,
+      }: Readonly<{
+        ctx: McpProcedureContext;
+        input: Readonly<{
+          id: string;
+          updates: Readonly<{
+            enabled?: boolean | undefined;
+            name?: string | undefined;
+            oauthClientId?: string | null | undefined;
+            oauthClientSecret?: string | null | undefined;
+            requireApproval?: boolean | undefined;
+            type?: "http" | "sse" | undefined;
+            url?: string | undefined;
+          }>;
+        }>;
+      }>) => {
+        assertMcpReady();
+        const connector = await getConnectorWithPermission({
+          id: input.id,
+          permission: "own",
+          userId: ctx.user.id,
         });
-        updates.nameId = nameId;
-      }
 
-      await updateMcpConnector({ id: input.id, updates });
-      if (
-        (updates.url !== undefined && updates.url !== connector.url) ||
-        (updates.type !== undefined && updates.type !== connector.type) ||
-        (updates.oauthClientId !== undefined &&
-          updates.oauthClientId !== connector.oauthClientId) ||
-        (updates.oauthClientSecret !== undefined &&
-          updates.oauthClientSecret !== connector.oauthClientSecret)
-      ) {
-        await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
+        const updates: typeof input.updates & { nameId?: string } = {
+          // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of input.updates rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
+          ...input.updates,
+        };
+        if (typeof updates.url === "string" && updates.url !== "") {
+          await assertUrlIsSafeToFetch(updates.url, { opaqueErrors: true });
+        }
+        if (typeof updates.name === "string" && updates.name !== "") {
+          const nameId = await validateAndGenerateNameId({
+            excludeId: input.id,
+            name: updates.name,
+            userId: connector.userId,
+          });
+          updates.nameId = nameId;
+        }
+
+        await updateMcpConnector({ id: input.id, updates });
+        if (
+          (updates.url !== undefined && updates.url !== connector.url) ||
+          (updates.type !== undefined && updates.type !== connector.type) ||
+          (updates.oauthClientId !== undefined &&
+            updates.oauthClientId !== connector.oauthClientId) ||
+          (updates.oauthClientSecret !== undefined &&
+            updates.oauthClientSecret !== connector.oauthClientSecret)
+        ) {
+          await deleteSessionsByConnectorId({ mcpConnectorId: input.id });
+        }
+        await removeMcpClient(input.id);
+        invalidateAllMcpCaches(input.id);
+        return { success: true };
       }
-      await removeMcpClient(input.id);
-      invalidateAllMcpCaches(input.id);
-      return { success: true };
-    }),
+    ),
 });
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable eslint/no-undefined */
 
 /* oxlint-enable unicorn/no-null */

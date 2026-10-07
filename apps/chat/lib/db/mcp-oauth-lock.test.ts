@@ -21,6 +21,7 @@ vi.mock("@/lib/db/connection", () => ({
 
 beforeEach(() => vi.clearAllMocks());
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): it("cancellation after lock acquisition waits for the active refresh to finish and re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/promise-function-async (#606): it("cancellation after lock acquisition waits for the active refresh to finish and re preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -63,6 +64,8 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
   await rejected;
   expect(mocks.released).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers --
@@ -101,4 +104,5 @@ it("cancellation while acquiring the lock cancels the query and never starts ref
   expect(cancel).toHaveBeenCalledOnce();
   expect(refresh).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */

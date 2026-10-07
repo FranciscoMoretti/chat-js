@@ -39,4 +39,6 @@ const siteLinks = {
 } as const;
 
 const siteLastModified = new Date("2025-03-28T16:14:00.000Z");
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (siteConfig, siteLastModified, siteLinks); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { siteConfig, siteLastModified, siteLinks };
+/* oxlint-enable import/no-named-export */

@@ -9,12 +9,18 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "@playwright/test";
+/* oxlint-enable sort-imports */
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { eveConversation, eveVote } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable import/no-nodejs-modules, import/no-relative-parent-imports */
 
@@ -22,6 +28,7 @@ import { assertEveTestDatabase } from "./eve-test-database";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
@@ -207,6 +214,8 @@ test("assistant feedback survives reload, recovers from errors and stays out of 
       .where(eq(eveConversation.id, binding.id));
   }
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
 
 /* oxlint-disable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -259,4 +268,5 @@ test("shared feedback controls render unrated, selected and pending states", asy
     });
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers, node/no-sync, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

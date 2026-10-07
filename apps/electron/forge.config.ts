@@ -1,13 +1,24 @@
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { spawnSync } from "node:child_process";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import { existsSync, readFileSync } from "node:fs";
+/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- Forge packaging runs in Node and needs host process and filesystem APIs before packaging starts.
 import path from "node:path";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MakerDeb } from "@electron-forge/maker-deb";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MakerDMG } from "@electron-forge/maker-dmg";
+/* oxlint-enable sort-imports */
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ForgeConfig } from "@electron-forge/shared-types";
+/* oxlint-enable sort-imports */
 
 interface Branding {
   appName: string;
@@ -25,12 +36,12 @@ let prebuildComplete = false;
 /* oxlint-disable node/no-sync -- runBunScript: Forge/startup uses synchronous configuration and filesystem contracts before the desktop process is ready. */
 /* oxlint-disable node/no-process-env -- runBunScript: This process boundary owns environment loading/forwarding; consumers receive the resulting validated configuration. */
 /* oxlint-disable eslint/no-magic-numbers -- runBunScript: Exit/status codes, timeouts and OS/protocol bounds retain this command's operational contract. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- runBunScript: The database/OS/SDK object retains its declared mutable API; deep-readonly conversion requires an ownership migration. */
 const runBunScript = (
   script: string,
-  env: Partial<NodeJS.ProcessEnv> = {}
+  env: Readonly<Partial<NodeJS.ProcessEnv>> = {}
 ): void => {
   const result = spawnSync("bun", ["run", script], {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing process.env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing env own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     env: { ...process.env, ...env },
     stdio: "inherit",
   });
@@ -41,7 +52,6 @@ const runBunScript = (
     );
   }
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable node/no-process-env */
 /* oxlint-enable node/no-sync */
@@ -92,10 +102,12 @@ const loadBranding = (): Branding => {
     appPrefix: branding.appPrefix,
     appUrl: branding.appUrl,
     orgEmail:
+      // oxlint-disable-next-line no-ternary -- Keep orgEmail as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgEmail" in branding && typeof branding.orgEmail === "string"
         ? branding.orgEmail
         : undefined,
     orgName:
+      // oxlint-disable-next-line no-ternary -- Keep orgName as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
       "orgName" in branding && typeof branding.orgName === "string"
         ? branding.orgName
         : undefined,
@@ -105,11 +117,11 @@ const loadBranding = (): Branding => {
 /* oxlint-enable node/no-sync */
 
 /* oxlint-disable eslint/max-lines-per-function -- createForgeConfig: The operation keeps its validation, ordered side effects and cleanup in one scope. */
-/* oxlint-disable typescript/strict-boolean-expressions -- createForgeConfig: The existing predicate intentionally treats absent/empty/false values together; separating them requires a domain-state decision. */
 const createForgeConfig = (): ForgeConfig => {
   const branding = loadBranding();
   const { appName, appPrefix, orgName, orgEmail } = branding;
 
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's required Promise and rejection contract. generateAssets adapts synchronous ensurePrebuild failures into the Forge hook promise. prePackage adapts synchronous production build failures into the Forge hook promise. preStart adapts synchronous development build failures into the Forge hook promise. */
   return {
     hooks: {
       // oxlint-disable-next-line eslint/require-await, typescript/require-await -- ForgeSimpleHookFn requires a Promise-returning hook; async adapts this synchronous build preparation to that declared contract.
@@ -150,7 +162,11 @@ const createForgeConfig = (): ForgeConfig => {
             homepage: branding.appUrl,
             icon: "./build/icon.png",
             maintainer:
-              orgName && orgEmail
+              // oxlint-disable-next-line no-ternary -- Keep maintainer as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+              typeof orgName === "string" &&
+              orgName !== "" &&
+              typeof orgEmail === "string" &&
+              orgEmail !== ""
                 ? `${orgName} <${orgEmail}>`
                 : (orgName ?? orgEmail ?? appName),
           },
@@ -193,8 +209,8 @@ const createForgeConfig = (): ForgeConfig => {
       ],
     },
   };
+  /* oxlint-enable oxc/no-async-await */
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/max-lines-per-function */
 
 const config = createForgeConfig();

@@ -1,15 +1,14 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/connection"; "../lib/db/workflow-backend"; "../lib/eve/world-config" dependency within this package instead of introducing an alias or barrel API.
- */
 import postgres from "postgres";
 
-import { databaseConnection } from "../lib/db/connection";
-import { ensureWorkflowBackend } from "../lib/db/workflow-backend";
-import { resolveWorkflowWorld } from "../lib/eve/world-config";
-/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable sort-imports -- Pinned Oxfmt keeps the external postgres import before this local helper, while sort-imports requires alphabetic ordering by the different local binding names. */
+import { databaseConnection } from "@/lib/db/connection";
+/* oxlint-enable sort-imports */
+import { ensureWorkflowBackend } from "@/lib/db/workflow-backend";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve check's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable node/no-process-env --
- * node/no-process-env (#537): check reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
+ * node/no-process-env (#537): check captures DATABASE_MIGRATION_URL and DATABASE_URL from process.env at the process/configuration boundary before constructing the migration connection.
  */
 const check = async (): Promise<void> => {
   const world = resolveWorkflowWorld();
@@ -27,13 +26,14 @@ const check = async (): Promise<void> => {
     await connection.end();
   }
 };
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable no-console, typescript/explicit-function-return-type --
- * no-console (#514): void (async () => { try { await check(); } catch (error emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
- * typescript/explicit-function-return-type (#560): Keep void (async () => { try { await check(); } catch (error's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable no-console --
+ * no-console (#514): the build-eve caller relies on this CLI's stderr error and nonzero exit status to stop subsequent builds when the compatibility check fails.
  */
 // oxlint-disable-next-line unicorn/prefer-top-level-await -- #574: build-eve invokes this entrypoint through tsx in a CommonJS package; top-level await cannot compile there.
-void (async () => {
+void (async (): Promise<void> => {
   try {
     await check();
   } catch (error) {
@@ -41,4 +41,5 @@ void (async () => {
     process.exitCode = 1;
   }
 })();
-/* oxlint-enable no-console, typescript/explicit-function-return-type */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable no-console */

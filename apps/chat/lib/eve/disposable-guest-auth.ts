@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-enable sort-imports */
 
 import { readGuestCredential } from "./disposable-guest";
 import { safeStreamQuery } from "./request-policy";
@@ -18,6 +20,8 @@ const message = z
 const cancel = z
   .object({ turnId: z.string().min(1).max(200).optional() })
   .strict();
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authenticateDisposableGuest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateDisposableGuest's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null -- * init-declarations (#507): authenticateDisposableGuest assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -28,8 +32,8 @@ const cancel = z
  * unicorn/no-null (#570): authenticateDisposableGuest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** EVE's stream route delegates ownership checks to channel auth. Bind every
  * permitted operation to the exact server-issued session credential.
- * @param request - Native operation request whose credential, path and body are checked.
- * @returns Session-bound channel identity, or no identity for an invalid credential or operation.
+ * @param {ReadonlyNativeSurface<Request>} request - Native operation request whose credential, path and body are checked.
+ * @returns {Promise<{ attributes: { modelId: string }; authenticator: string; issuer: string; principalId: string; principalType: "user"; subject: string; } | null>} Session-bound channel identity, or no identity for an invalid credential or operation.
  */
 export const authenticateDisposableGuest = async (
   request: ReadonlyNativeSurface<Request>
@@ -43,6 +47,7 @@ export const authenticateDisposableGuest = async (
 } | null> => {
   const authorization = request.headers.get("authorization");
   const claims = readGuestCredential(
+    // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep readGuestCredential argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     authorization?.startsWith("Bearer ") ? authorization.slice(7) : null
   );
   if (!claims) {
@@ -92,4 +97,6 @@ export const authenticateDisposableGuest = async (
     subject: claims.ownerId,
   };
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */

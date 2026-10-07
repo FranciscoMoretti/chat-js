@@ -3,15 +3,19 @@
  */
 import assert from "node:assert/strict";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { fileIdsForStorageKeys } from "./db/file-storage-keys";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
+  createFileId,
   deleteFilesByUrls,
   listFiles,
-  createFileId,
   uploadFileAtKey,
 } from "./file-storage";
+/* oxlint-enable sort-imports */
 import { keyFromFileUrl } from "./file-url";
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -19,6 +23,7 @@ vi.mock("@/lib/config", () => ({
   config: { appPrefix: "storage-test" },
 }));
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep vi.mock("./storage-provider")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -28,6 +33,7 @@ vi.mock("./storage-provider", async () => {
     createStorageAdapter: () => memory(),
   };
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions --
@@ -39,6 +45,7 @@ vi.mock("./storage-provider", async () => {
  * typescript/strict-boolean-expressions (#610): describe("file storage") intentionally keeps the existing falsy-value behavior of key; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("file storage", () => {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("uploads, lists, and deletes through Files SDK", async () => {
     const uploaded = await uploadFileAtKey(
       createFileId(),
@@ -66,6 +73,8 @@ describe("file storage", () => {
     const remainingFiles = await listFiles();
     assert.equal(remainingFiles.files.length, 0);
   });
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
   it("lists across page boundaries with one mapping query per page", async () => {
     const uploads = await Promise.all(
       Array.from({ length: 101 }, () =>
@@ -89,6 +98,7 @@ describe("file storage", () => {
       await deleteFilesByUrls(uploads.map((file) => file.url));
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 });
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions */
 

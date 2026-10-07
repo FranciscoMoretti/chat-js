@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eveDocumentWriteResult } from "@/lib/eve/document-contracts";
+/* oxlint-enable sort-imports */
 
 const MINIMUM_RESEARCH_TEXT_LENGTH = 1;
 
@@ -36,6 +38,7 @@ const researchReport = z.object({
   content: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
   title: z.string().min(MINIMUM_RESEARCH_TEXT_LENGTH),
 });
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (researchBrief, researchClarification, researchDecision, researchFindings, researchInput, researchOutput, researchReport); the enabled import/no-default-export convention rejects the default-export alternative. */
 export {
   researchBrief,
   researchClarification,
@@ -45,3 +48,4 @@ export {
   researchOutput,
   researchReport,
 };
+/* oxlint-enable import/no-named-export */

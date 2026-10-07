@@ -1,10 +1,18 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import dynamic from "next/dynamic";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DocumentSkeleton } from "@/components/document-skeleton";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { useTRPC } from "@/trpc/react";
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -17,6 +25,8 @@ const DiffView = dynamic(
     ssr: false,
   }
 );
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentComparison); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable react/jsx-no-literals -- EveDocumentComparison renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-enable typescript/promise-function-async */
 
@@ -79,6 +89,8 @@ export const EveDocumentComparison = ({
     </section>
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */

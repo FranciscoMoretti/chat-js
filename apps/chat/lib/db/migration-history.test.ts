@@ -3,12 +3,16 @@
  */
 import { readFileSync } from "node:fs";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { describe, expect, test } from "vitest";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
-  getMigrationHistoryProblem,
   KNOWN_CHATJS_TABLE_NAMES,
+  getMigrationHistoryProblem,
 } from "./migration-history";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const baseline = { createdAt: 2, hash: "eve" };
@@ -28,7 +32,13 @@ describe("getMigrationHistoryProblem", () => {
     );
     const baselineTables = [
       ...baselineSql.matchAll(/^CREATE TABLE "(?<table>[^"]+)"/gmu),
-    ].flatMap((match) => (match.groups?.table ? [match.groups.table] : []));
+    ].flatMap((match) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading table from match.groups; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      if (match.groups?.table) {
+        return [match.groups.table];
+      }
+      return [];
+    });
     expect(KNOWN_CHATJS_TABLE_NAMES).toEqual(
       expect.arrayContaining(baselineTables)
     );
@@ -82,6 +92,7 @@ describe("getMigrationHistoryProblem", () => {
   test("rejects an altered baseline record", () => {
     expect(
       getMigrationHistoryProblem({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing baseline own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         applied: [{ ...baseline, hash: "modified" }],
         available: [baseline],
         hasChatJsTables: true,

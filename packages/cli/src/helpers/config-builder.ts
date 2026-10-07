@@ -1,18 +1,18 @@
 import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import { z } from "zod";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { builtInGateways } from "#cli/registry/gateways";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { AuthProvider, CoreFeatureKey, Gateway } from "#cli/types";
+/* oxlint-enable sort-imports */
+
 import {
   applyDefaults,
   configDescriptionSchema,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 } from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import { builtInGateways } from "../registry/gateways";
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-import type { AuthProvider, CoreFeatureKey, Gateway } from "../types";
-/* oxlint-enable import/no-relative-parent-imports */
 import type { ReadonlyInput } from "./readonly-input";
 
 const defaultsFor = (
@@ -23,6 +23,7 @@ const defaultsFor = (
 ): ReadonlyInput<GatewayDefinition["defaults"]> => {
   const defaults =
     input.gatewayDefaults ??
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading meta from builtInGateways.find(...); preserve one receiver evaluation, skipped accesses and the existing builtInGateways.find(       (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>         item.meta.chatjs.id === input.gateway     )?.meta.chatjs.defaults fallback.
     builtInGateways.find(
       (item: ReadonlyInput<(typeof builtInGateways)[number]>): boolean =>
         item.meta.chatjs.id === input.gateway
@@ -31,6 +32,13 @@ const defaultsFor = (
     throw new Error(`Missing registry defaults for gateway ${input.gateway}`);
   }
   return defaults;
+};
+
+const configPropertyPath = (prefix: string, key: string): string => {
+  if (prefix === "") {
+    return key;
+  }
+  return `${prefix}.${key}`;
 };
 
 const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
@@ -49,7 +57,7 @@ const extractDescriptions = (schema: unknown): ReadonlyMap<string, string> => {
 
     if (node instanceof z.ZodObject) {
       for (const [key, property] of Object.entries(node.shape)) {
-        visit(property, prefix === "" ? key : `${prefix}.${key}`);
+        visit(property, configPropertyPath(prefix, key));
       }
     }
     if (node instanceof z.ZodDiscriminatedUnion) {
@@ -66,8 +74,12 @@ const descriptions = extractDescriptions(configDescriptionSchema);
 
 const VALID_KEY_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/u;
 
-const formatKey = (key: string): string =>
-  VALID_KEY_REGEX.test(key) ? key : JSON.stringify(key);
+const formatKey = (key: string): string => {
+  if (VALID_KEY_REGEX.test(key)) {
+    return key;
+  }
+  return JSON.stringify(key);
+};
 
 const compareEntryKeys = (
   [left]: readonly [string, unknown],
@@ -76,11 +88,11 @@ const compareEntryKeys = (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const formatValue = (value: unknown, indent: number): string => {
   const spaces = "  ".repeat(indent);
   const inner = "  ".repeat(indent + 1);
 
+  // oxlint-disable-next-line eslint/no-undefined -- Missing config values serialize as the TypeScript undefined token; unicorn/no-typeof-undefined requires the direct comparison.
   if (value === null || value === undefined) {
     return "undefined";
   }
@@ -124,14 +136,12 @@ const formatValue = (value: unknown, indent: number): string => {
       .join(",\n")},\n${spaces}}`;
   }
 
-  // oxlint-disable-next-line typescript/no-base-to-string -- Diagnostic formatting intentionally accepts arbitrary third-party values; changing their representation requires an error-output contract decision.
+  // oxlint-disable-next-line typescript/no-base-to-string -- Objects and arrays are handled above; remaining symbols or callable config values preserve the existing source serializer fallback.
   return String(value);
 };
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const generateConfig = (
   obj: object,
   indent: number,
@@ -142,16 +152,19 @@ const generateConfig = (
   return Object.entries(obj)
     .toSorted(compareEntryKeys)
     .map(([key, value]: readonly [string, unknown]): string => {
-      const path = pathPrefix ? `${pathPrefix}.${key}` : key;
+      const path = configPropertyPath(pathPrefix, key);
       const desc = descriptions.get(path);
-      const comment =
-        typeof desc === "string" && desc !== "" ? `${spaces}// ${desc}\n` : "";
+      let comment = "";
+      if (typeof desc === "string" && desc !== "") {
+        comment = `${spaces}// ${desc}\n`;
+      }
 
       if (
         typeof value === "object" &&
         value !== null &&
         !Array.isArray(value)
       ) {
+        // oxlint-disable-next-line eslint/no-magic-numbers -- Each nested configuration object advances indentation by exactly one level.
         const nested = generateConfig(value, indent + 1, path);
         return `${comment}${spaces}${formatKey(key)}: {\n${nested}\n${spaces}},`;
       }
@@ -160,7 +173,6 @@ const generateConfig = (
     })
     .join("\n");
 };
-/* oxlint-enable eslint/no-magic-numbers */
 
 const toConfigInput = (
   input: ReadonlyInput<{
@@ -205,30 +217,38 @@ const toConfigInput = (
   },
 });
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (buildConfigTs); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-export const buildConfigTs = (input: {
-  appName: string;
-  appPrefix: string;
-  appUrl: string;
-  withElectron: boolean;
-  gateway: Gateway;
-  gatewayDefaults?: GatewayDefinition["defaults"];
-  coreFeatures: Record<CoreFeatureKey, boolean>;
-  auth: Record<AuthProvider, boolean>;
-}): string => {
+export const buildConfigTs = (
+  input: ReadonlyInput<{
+    appName: string;
+    appPrefix: string;
+    appUrl: string;
+    withElectron: boolean;
+    gateway: Gateway;
+    gatewayDefaults?: GatewayDefinition["defaults"];
+    coreFeatures: Record<CoreFeatureKey, boolean>;
+    auth: Record<AuthProvider, boolean>;
+  }>
+): string => {
   const partial = toConfigInput(input);
+  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding appConfig excludes ai from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   const { ai, ...appConfig } = partial;
   const defaults = defaultsFor(input);
   const toolOverrides: Record<string, object> = ai.tools;
   const tools = Object.fromEntries(
-    Object.entries(defaults.tools).map(([name, value]) => [
-      name,
-      { ...value, ...toolOverrides[name] },
-    ])
+    Object.entries(defaults.tools).map(
+      ([name, value]: readonly [
+        string,
+        ReadonlyInput<(typeof defaults.tools)[keyof typeof defaults.tools]>,
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing value own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing toolOverrides[name] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+      ]) => [name, { ...value, ...toolOverrides[name] }]
+    )
   );
   const fullConfig = {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing applyDefaults(appConfig) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...applyDefaults(appConfig),
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing defaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing ai own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ai: { ...defaults, ...ai, tools },
   };
 
@@ -248,5 +268,5 @@ ${generateConfig(fullConfig, 1, "")}
 export default config;
 `;
 };
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable eslint/no-magic-numbers */

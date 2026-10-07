@@ -7,16 +7,17 @@ import { createHash } from "node:crypto";
 const DIGEST_PREFIX_START = 0;
 const SANDBOX_DIGEST_LENGTH = 48;
 
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveCodeSandboxName); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /**
  * Stable provider identity without exposing account IDs in resource names.
- * @param options Native tool call and provider identity used to isolate a code-execution sandbox.
- * @param options.ownerId Authenticated account identity; absent or blank values are rejected.
- * @param options.sessionId Native session identity; absent or blank values are rejected.
- * @param options.callId Native tool-call identity for this execution.
- * @param options.provider Provider deployment coordinates included in the sandbox digest.
- * @param options.provider.teamId Provider team identity; blank values are rejected.
- * @param options.provider.projectId Provider project identity; blank values are rejected.
- * @returns A stable sandbox name with a truncated SHA-256 digest of the original identity values.
+ * @param {{ readonly ownerId: string | undefined; readonly sessionId: string | undefined; readonly callId: string; readonly provider: { readonly teamId: string; readonly projectId: string; }; }} options Native tool call and provider identity used to isolate a code-execution sandbox.
+ * @param {string | undefined} options.ownerId Authenticated account identity; absent or blank values are rejected.
+ * @param {string | undefined} options.sessionId Native session identity; absent or blank values are rejected.
+ * @param {string} options.callId Native tool-call identity for this execution.
+ * @param {{ readonly teamId: string; readonly projectId: string; }} options.provider Provider deployment coordinates included in the sandbox digest.
+ * @param {string} options.provider.teamId Provider team identity; blank values are rejected.
+ * @param {string} options.provider.projectId Provider project identity; blank values are rejected.
+ * @returns {string} A stable sandbox name with a truncated SHA-256 digest of the original identity values.
  */
 export const eveCodeSandboxName = ({
   ownerId,
@@ -33,7 +34,9 @@ export const eveCodeSandboxName = ({
   };
 }): string => {
   if (
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public ownerId is explicitly string | undefined; missing authenticated owner must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
     (ownerId?.trim() ?? "") === "" ||
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Public sessionId is explicitly string | undefined; absent session must reach the existing rejection rather than throw while trimming. The app guidance prefers optional chaining.
     (sessionId?.trim() ?? "") === "" ||
     callId.trim() === "" ||
     provider.teamId.trim() === "" ||
@@ -57,3 +60,4 @@ export const eveCodeSandboxName = ({
     .digest("hex");
   return `chatjs-code-${digest.slice(DIGEST_PREFIX_START, SANDBOX_DIGEST_LENGTH)}`;
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */

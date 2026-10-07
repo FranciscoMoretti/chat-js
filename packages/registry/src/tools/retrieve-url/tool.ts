@@ -2,12 +2,27 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
+/* oxlint-enable sort-imports */
 import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
 import { retrievedInput } from "./schemas";
+
+type RetrieveUrlInput = Readonly<z.infer<typeof retrievedInput>>;
+type RetrieveUrlContext = Readonly<{
+  abortSignal: Readonly<AbortSignal>;
+}>;
+type RetrieveUrlUsage = Readonly<{
+  addCostUsd: (cost: number) => void;
+  markUnknown: () => void;
+}>;
 
 const hasNonEmptyValue = (value: string | null | undefined): value is string =>
   typeof value === "string" && value !== "";
@@ -15,6 +30,7 @@ const hasNonEmptyValue = (value: string | null | undefined): value is string =>
 const log = createModuleLogger("tools/retrieve-url");
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
+// oxlint-disable-next-line no-ternary -- Keep app as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
 const app = hasNonEmptyValue(env.FIRECRAWL_API_KEY)
   ? new FirecrawlApp({ apiKey: env.FIRECRAWL_API_KEY })
   : null;
@@ -34,14 +50,14 @@ const parseUrl = (url: string): URL | null => {
 };
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
-const redactUrl = (url: URL): string => `${url.origin}${url.pathname}`;
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+const redactUrl = (url: Readonly<Pick<URL, "origin" | "pathname">>): string =>
+  `${url.origin}${url.pathname}`;
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (retrieveUrl); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve retrieveUrl's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 export const retrieveUrl = defineTool({
@@ -52,8 +68,8 @@ Use for:
 
 Avoid:
 - General-purpose web searches`,
-  execute: ({ url }, context) =>
-    executeWithToolUsage(context, async (usage) => {
+  execute: ({ url }: RetrieveUrlInput, context: RetrieveUrlContext) =>
+    executeWithToolUsage(context, async (usage: RetrieveUrlUsage) => {
       usage.addCostUsd(0);
       try {
         if (!app) {
@@ -136,6 +152,7 @@ Avoid:
         log.error(
           {
             err: error,
+            // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             url: parsedUrl ? redactUrl(parsedUrl) : "<invalid-url>",
           },
           "Firecrawl API error in retrieveUrl tool"
@@ -146,6 +163,8 @@ Avoid:
   inputSchema: retrievedInput,
   toModelOutput: toolResultToModelOutput,
 });
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable typescript/prefer-readonly-parameter-types */

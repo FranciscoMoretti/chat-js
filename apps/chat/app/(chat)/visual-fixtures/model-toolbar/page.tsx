@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import React from "react";
+/* oxlint-enable sort-imports */
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ModelToolbarVisualFixture } from "@/components/model-toolbar-visual-fixture";
+/* oxlint-enable sort-imports */
 import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 
 const ModelToolbarVisualFixturePage = (): React.JSX.Element => {

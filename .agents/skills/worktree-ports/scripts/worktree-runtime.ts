@@ -186,6 +186,7 @@ const resolveAppEnvironments = (
         url: endpoint.url,
       });
     }
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing endpoint own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     resolvedApps[appName] = { ...endpoint, env };
   }
   return resolvedApps;
@@ -233,7 +234,15 @@ const resolveWorktreeRuntime = (
   };
 };
 
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (loadWorktreeConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { loadWorktreeConfig } from "./worktree-config";
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveWorktreeRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { resolveWorktreeRuntime };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (ResolvedWorktreeApp, WorktreeRuntime); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { ResolvedWorktreeApp, WorktreeRuntime };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (WorktreeAppConfig, WorktreeEnvConfig); the enabled import/no-default-export convention rejects the default-export alternative. */
 export type { WorktreeAppConfig, WorktreeEnvConfig } from "./worktree-config";
+/* oxlint-enable import/no-named-export */

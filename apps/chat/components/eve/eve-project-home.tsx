@@ -7,29 +7,43 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type { JSX as ReactJSX } from "react";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { useState } from "react";
+/* oxlint-enable sort-imports */
 
 import { ChatHeaderView } from "@/components/chat-header-view";
 import { ProjectConfig } from "@/components/project-config";
 import { ProjectDetailsDialog } from "@/components/project-details-dialog";
 import { ProjectInstructionsDialog } from "@/components/project-instructions-dialog";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
+/* oxlint-enable sort-imports */
 import { useRenameProject } from "@/hooks/use-projects";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { listEveConversations } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { Project } from "@/lib/db/schema";
+/* oxlint-enable sort-imports */
 /* oxlint-disable import/max-dependencies -- @/lib/project-icons import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   PROJECT_COLORS,
   PROJECT_ICONS,
 } from "@/lib/project-icons";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/react";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { EveHistoryList } from "./eve-history-list";
+/* oxlint-enable sort-imports */
 import { NewEveConversation } from "./new-eve-conversation";
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveProjectHome); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable react/jsx-no-literals -- EveProjectHome renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null -- EveProjectHome: ; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including page); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 export const EveProjectHome = ({
@@ -65,9 +79,12 @@ export const EveProjectHome = ({
   const [instructionsOpen, setInstructionsOpen] = useState(false);
   const [instructions, setInstructions] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve refresh's awaited sequencing and rejected-Promise behavior. */
   const refresh = async (): Promise<void> => {
     await cache.invalidateQueries({ queryKey: trpc.project.pathKey() });
   };
+  /* oxlint-enable oxc/no-async-await */
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = useMutation(
     trpc.project.setInstructions.mutationOptions({
       onSuccess: async () => {
@@ -76,15 +93,19 @@ export const EveProjectHome = ({
       },
     })
   );
+  /* oxlint-enable oxc/no-async-await */
   const rename = useRenameProject();
+  // oxlint-disable-next-line no-ternary -- Keep contentPosition as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const contentPosition = shouldCenter ? "row-start-2" : "mt-4";
   const current = project.data;
   const icon =
     PROJECT_ICONS.find((value) => value === current.icon) ??
     DEFAULT_PROJECT_ICON;
   const color =
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing DEFAULT_PROJECT_COLOR fallback. The app guidance prefers optional chaining.
     PROJECT_COLORS.find((value) => value.name === current.iconColor)?.name ??
     DEFAULT_PROJECT_COLOR;
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this return statement's awaited sequencing and rejected-Promise behavior. */
   return (
     <section className="@container flex h-full min-h-0 flex-col">
       <ChatHeaderView breadcrumb={null} />
@@ -98,6 +119,7 @@ export const EveProjectHome = ({
           <div
             className={cn(
               "space-y-4",
+              // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               sending ? "flex min-h-0 flex-1 flex-col" : contentPosition
             )}
           >
@@ -141,6 +163,7 @@ export const EveProjectHome = ({
           <div
             className={cn(
               sending && "hidden",
+              // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               shouldCenter ? "row-start-3 mt-6" : "mt-4 min-h-0 flex-1"
             )}
           >
@@ -152,6 +175,7 @@ export const EveProjectHome = ({
           </div>
           <ProjectInstructionsDialog
             error={
+              // oxlint-disable-next-line no-ternary -- Keep error JSX attribute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
               save.error ? "Could not save instructions. Try again." : undefined
             }
             isPending={save.isPending}
@@ -185,5 +209,8 @@ export const EveProjectHome = ({
       </div>
     </section>
   );
+  /* oxlint-enable oxc/no-async-await */
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, typescript/prefer-readonly-parameter-types, unicorn/no-null */

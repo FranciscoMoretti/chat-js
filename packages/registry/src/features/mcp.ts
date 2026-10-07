@@ -55,4 +55,6 @@ const mcpItem: RegistryItem = {
   name: "mcp",
   type: "registry:item",
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (mcpDefinition, mcpFiles, mcpItem); the enabled import/no-default-export convention rejects the default-export alternative. */
 export { mcpDefinition, mcpFiles, mcpItem };
+/* oxlint-enable import/no-named-export */

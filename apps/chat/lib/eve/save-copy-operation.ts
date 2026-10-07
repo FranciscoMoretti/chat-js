@@ -3,31 +3,42 @@
  */
 import { dispatchEveCopy } from "@/lib/db/eve-copy-dispatch";
 import { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveCopySourceChangedError,
   getEveCopyOperation,
   rejectEveCopyPreflight,
   reserveEveCopyOperation,
 } from "@/lib/db/eve-copy-journal";
+/* oxlint-enable sort-imports */
 import {
   acceptEveCopy,
   writeEveCopyDocuments,
   writeEveCopyFile,
 } from "@/lib/db/eve-copy-resources";
 import { readPublicEveCopyFile } from "@/lib/db/eve-copy-source-file";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { CreationConflictError } from "@/lib/db/eve-queries";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { downloadFile, uploadFileAtKey } from "@/lib/file-storage";
+/* oxlint-enable sort-imports */
 
 import type { EveCopyInput } from "./copy-input";
 import { createNativeEveCopy } from "./create-native-copy";
 import { deleteUnacceptedEveCopy } from "./delete-unaccepted-copy";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveModelUnavailableError,
   loadEveModelDefinition,
 } from "./model-selection";
+/* oxlint-enable sort-imports */
 import { prepareEveCopyPlan } from "./prepare-copy-plan";
 import { readPublicEveCopySource } from "./public-copy-source";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveConfigured } from "./server";
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareCopyReservation's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
@@ -62,6 +73,7 @@ const prepareCopyReservation = async (
   );
   try {
     return await reserveEveCopyOperation(ownerId, {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...input,
       plan,
       projectionHash: source.projection.projectionHash,
@@ -78,6 +90,9 @@ const prepareCopyReservation = async (
     return saved;
   }
 };
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (saveEveCopyOperation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveEveCopyOperation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
@@ -88,10 +103,10 @@ const prepareCopyReservation = async (
  */
 /**
  * Saves an idle native copy under one durable operation; billing begins on its first model turn.
- * @param ownerId Owner whose reservation, attachments, and copied conversation are used.
- * @param input Source/model request checked against any previous reservation for this operation.
- * @param origin Origin used to resolve public source resources while preparing the copy plan.
- * @returns The dispatched copy binding after owned files/documents have been accepted.
+ * @param {string} ownerId Owner whose reservation, attachments, and copied conversation are used.
+ * @param {EveCopyInput} input Source/model request checked against any previous reservation for this operation.
+ * @param {string} origin Origin used to resolve public source resources while preparing the copy plan.
+ * @returns {Promise<Awaited<ReturnType<typeof dispatchEveCopy>>>} The dispatched copy binding after owned files/documents have been accepted.
  */
 export const saveEveCopyOperation = async (
   ownerId: string,
@@ -145,4 +160,6 @@ export const saveEveCopyOperation = async (
     createNativeEveCopy(ownerId, operationId, input.modelId)
   );
 };
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

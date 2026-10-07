@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
 import { mkdtemp, rm } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The release fallback tests construct isolated package-manager fixtures on the host filesystem.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 const SUCCESS_EXIT_CODE = 0;
 const NON_SUCCESS_EXIT_CODE = 1;
@@ -21,6 +26,7 @@ type ReleaseAssertion = (directory: string) => Promise<void>;
 // Exercise the actual workflow function with fake external services. No credentials,
 // npm publication, GitHub writes, or changes to the checkout are involved.
 const parsedWorkflow: unknown = Bun.YAML.parse(
+  // oxlint-disable-next-line node/no-top-level-await -- This Bun suite reads the release workflow before registering publication-fallback contract assertions.
   await Bun.file(
     new URL("../.github/workflows/release.yml", import.meta.url)
   ).text()
@@ -117,6 +123,7 @@ gh() {
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve runFallback's awaited sequencing and rejected-Promise behavior. */
 const runFallback = async (cwd: string): Promise<number> => {
   const child = Bun.spawn(
     ["bash", "-euo", "pipefail", "-c", services + fallback],
@@ -125,9 +132,14 @@ const runFallback = async (cwd: string): Promise<number> => {
   const exitCode = await child.exited;
   // These assertions only distinguish success from failure. Preserve the
   // spawnSync behavior where a signal-terminated child does not count as zero.
-  return child.signalCode ? NON_SUCCESS_EXIT_CODE : exitCode;
-};
 
+  if (child.signalCode) {
+    return NON_SUCCESS_EXIT_CODE;
+  }
+  return exitCode;
+};
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve withReleaseDirectory's awaited sequencing and rejected-Promise behavior. */
 const withReleaseDirectory = async (
   assertRelease: ReleaseAssertion
 ): Promise<void> => {
@@ -138,7 +150,8 @@ const withReleaseDirectory = async (
     await rm(directory, { force: true, recursive: true });
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectReleaseFiles's awaited sequencing and rejected-Promise behavior. */
 const expectReleaseFiles = async (
   directory: string,
   expected: ReleaseFileState
@@ -150,7 +163,8 @@ const expectReleaseFiles = async (
   };
   expect(actual).toEqual(expected);
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve expectCallCounts's awaited sequencing and rejected-Promise behavior. */
 const expectCallCounts = async (
   directory: string,
   expected: readonly Readonly<{ count: number; pattern: string }>[]
@@ -160,7 +174,8 @@ const expectCallCounts = async (
     expect(calls.match(new RegExp(pattern, "gmu"))).toHaveLength(count);
   }
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retry repairs release metadata without republishing after verification fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "fail-verification"), "");
@@ -185,7 +200,8 @@ test("retry repairs release metadata without republishing after verification fai
     ]);
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retry pushes an existing local tag after the first push fails", async (): Promise<void> => {
   await withReleaseDirectory(async (directory) => {
     await Bun.write(path.join(directory, "published"), "");
@@ -210,9 +226,11 @@ test("retry pushes an existing local tag after the first push fails", async (): 
     expect(calls).not.toContain("npm publish");
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const lookupFails of [false, true]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(
+    // oxlint-disable-next-line no-ternary -- Keep test argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     lookupFails
       ? "registry authentication failure never triggers publication"
       : "missing version publishes and creates release metadata",
@@ -237,4 +255,5 @@ for (const lookupFails of [false, true]) {
       }
     }
   );
+  /* oxlint-enable oxc/no-async-await */
 }

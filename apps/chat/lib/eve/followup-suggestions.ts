@@ -7,16 +7,23 @@ const eveFollowupSuggestions = z.object({
 });
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns -- jsdoc/require-param (#534): messageFollowupSuggestions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
-jsdoc/require-returns (#535): messageFollowupSuggestions's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags. */
-/** Invalid or unavailable suggestions never hide the completed answer. */
+/** Invalid or unavailable suggestions never hide the completed answer.
+ * @param {Pick<EveMessage, "metadata">} message Completed message metadata whose followup-suggestions annotation is validated.
+ * @returns {string[]} Trimmed distinct suggestions in their original order, or an empty list when the annotation is unavailable or fails the schema.
+ */
 const messageFollowupSuggestions = (
   message: Pick<EveMessage, "metadata">
 ): string[] => {
   const parsed = eveFollowupSuggestions.safeParse(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading "followup-suggestions" from message.metadata.annotations; read annotations from message.metadata; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     message.metadata?.annotations?.["followup-suggestions"]
   );
-  return parsed.success ? [...new Set(parsed.data.suggestions)] : [];
+
+  if (parsed.success) {
+    return [...new Set(parsed.data.suggestions)];
+  }
+  return [];
 };
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (eveFollowupSuggestions, messageFollowupSuggestions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { eveFollowupSuggestions, messageFollowupSuggestions };
+/* oxlint-enable import/no-named-export */

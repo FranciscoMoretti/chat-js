@@ -3,11 +3,17 @@
  */
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { EveToolResult } from "@/components/eve/eve-tool-result";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type * as ChatjsUI from "@/tools/chatjs/ui";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-namespace */
 
 /* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
@@ -17,6 +23,7 @@ import type * as ChatjsUI from "@/tools/chatjs/ui";
 vi.mock("@/components/eve/eve-document-tool", () => ({
   EveDocumentTool: () => null,
 }));
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
 
 /* oxlint-disable id-length, typescript/prefer-readonly-parameter-types --
@@ -30,6 +37,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   const original = await importOriginal<typeof ChatjsUI>();
   return {
     ui: {
+      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original.ui own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...original.ui,
       "tool-customEcho": defineToolRenderer({
         inputSchema: z.object({ text: z.string() }),
@@ -38,6 +46,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
           reactCreateElement(
             "p",
             { "data-message": messageId, "data-readonly": isReadonly },
+            // oxlint-disable-next-line no-ternary -- Keep reactCreateElement argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
             tool.state === "output-available" ? tool.output.echoed : "Loading"
           ),
         renderProgress: ({ updates }) =>
@@ -51,6 +60,7 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
     },
   };
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable id-length, typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable max-params --

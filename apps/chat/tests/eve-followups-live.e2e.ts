@@ -4,10 +4,16 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { db } from "../lib/db/client";
+/* oxlint-enable sort-imports */
 import { eveUsage } from "../lib/db/schema";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "../lib/eve/contracts";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable node/no-process-env --
@@ -18,6 +24,7 @@ assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
 const RAINBOW_EXPLANATION =
   /light.*(?:refract|reflect|bend|color)|(?:refract|reflect|bend|color).*light/isu;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * max-lines-per-function (#510): test("native follow-ups survive reload, submit normally and preserve unsent composer  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("native follow-ups survive reload, submit normally and preserve unsent composer  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -125,4 +132,5 @@ test("native follow-ups survive reload, submit normally and preserve unsent comp
     path: testInfo.outputPath("followups-integrated.png"),
   });
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */

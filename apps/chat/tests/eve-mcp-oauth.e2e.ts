@@ -3,15 +3,23 @@
  */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
+/* oxlint-enable sort-imports */
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MCPClient } from "../lib/ai/mcp/mcp-client";
+/* oxlint-enable sort-imports */
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mcpConnector, mcpOAuthSession, userCredit } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { conversationBinding } from "../lib/eve/contracts";
 import { discoverEveMcpTools } from "../lib/eve/mcp-tools";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -19,6 +27,7 @@ import { startEveOAuthMcpServer } from "./fixtures/eve-oauth-mcp-server";
  * node/no-process-env (#537): assertEveTestDatabase reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
  */
 assertEveTestDatabase(process.env.DATABASE_URL ?? "http://invalid");
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable node/no-process-env */
 
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls --
@@ -199,4 +208,5 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     }
   }
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/max-nested-calls */

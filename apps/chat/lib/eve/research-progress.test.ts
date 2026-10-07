@@ -2,6 +2,7 @@ import { expect, test, vi } from "vitest";
 
 import { executeWithResearchProgress } from "./research-progress";
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * no-magic-numbers (#517): test("progress is durable and an explicitly reported failure preserves known costs") uses 0.05, 0, -1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): test("progress is durable and an explicitly reported failure preserves known costs") accepts { usage, dataStream }; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -39,6 +40,8 @@ test("progress is durable and an explicitly reported failure preserves known cos
     usage: { costUsd: 0.05 },
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/no-null */
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): test("closing the native iterator cancels provider work") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -75,4 +78,5 @@ test("closing the native iterator cancels provider work", async () => {
   await iterator.return(undefined);
   expect(cancelled).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-undefined, typescript/prefer-readonly-parameter-types */

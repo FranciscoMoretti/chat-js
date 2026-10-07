@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { checkDatabase } from "@/lib/db/health";
+/* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 
 /* oxlint-disable no-magic-numbers --
@@ -11,14 +13,13 @@ const eveHealth = z.object({
   status: z.literal("ready"),
   workflowId: z.string().min(1),
 });
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Framework discovery uses these named bindings (GET); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve GET's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null --
+/* oxlint-disable init-declarations, no-magic-numbers --
  * init-declarations (#507): GET assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * no-magic-numbers (#517): GET uses 4000, 4500 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/prefer-readonly-parameter-types (#565): GET accepts response; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
- * unicorn/max-nested-calls (#568): GET keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * unicorn/no-null (#570): GET preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 export const GET = async (): Promise<Response> => {
   // Public readiness reveals no database, agent or credential details.
@@ -64,4 +65,6 @@ export const GET = async (): Promise<Response> => {
     clearTimeout(timeout);
   }
 };
-/* oxlint-enable init-declarations, no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls, unicorn/no-null */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable init-declarations, no-magic-numbers */

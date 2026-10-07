@@ -1,5 +1,7 @@
 import { ClientError } from "eve/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, it, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { sendCommand } from "./send-command";
 
@@ -13,6 +15,7 @@ const busy = new ClientError(
 /* oxlint-enable no-magic-numbers */
 afterEach(() => vi.useRealTimers());
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): it("retries an undispatched message through the same send closure") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): it("retries an undispatched message through the same send closure") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -26,6 +29,8 @@ it("retries an undispatched message through the same send closure", async () => 
   await result;
   expect(send).toHaveBeenCalledTimes(2);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -46,4 +51,5 @@ it("bounds busy retries and never retries ambiguous connection errors", async ()
   );
   expect(ambiguous).toHaveBeenCalledOnce();
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers */

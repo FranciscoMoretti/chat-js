@@ -1,9 +1,11 @@
 import { afterEach, expect, it, vi } from "vitest";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   CreationRejectedError,
   requestConversation,
 } from "./create-conversation";
+/* oxlint-enable sort-imports */
 
 const operation = {
   message: "yo",
@@ -15,6 +17,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
  * no-magic-numbers (#517): it("aborts a stalled creation without resending or changing its operation") uses 30_000, 1, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("aborts a stalled creation without resending or changing its operation") accepts init: RequestInit; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -26,9 +29,10 @@ it("aborts a stalled creation without resending or changing its operation", asyn
     (_url: string, init: RequestInit) =>
       // oxlint-disable-next-line promise/avoid-new -- Bridge the timer or abort callback to the awaited operation.
       new Promise<Response>((_resolve, reject) => {
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         init.signal?.addEventListener(
           "abort",
-          // oxlint-disable-next-line typescript/prefer-promise-reject-errors -- #603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error.
+          // oxlint-disable-next-line typescript/prefer-promise-reject-errors, oxc/no-optional-chaining -- #603: The fetch mock rejects with the signal reason unchanged so the timeout test exercises requestConversation’s cancellation error. Optional chain: Keep the existing nullish guard when reading reason from init.signal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           () => reject(init.signal?.reason),
           { once: true }
         );
@@ -41,8 +45,11 @@ it("aborts a stalled creation without resending or changing its operation", asyn
   await vi.advanceTimersByTimeAsync(30_000);
   await result;
   expect(fetchMock).toHaveBeenCalledTimes(1);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading 1 from fetchMock.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(fetchMock.mock.calls[0]?.[1].body).toBe(JSON.stringify(operation));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
@@ -55,6 +62,8 @@ it("returns the existing binding on retry and clears its deadline", async () => 
   await expect(requestConversation(operation)).resolves.toEqual(binding);
   expect(vi.getTimerCount()).toBe(0);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([400, 404])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-magic-numbers --
@@ -90,6 +99,8 @@ it.each([400, 404])(
     );
   }
 );
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 it("identifies a missing project only on a definitive rejection", async () => {
@@ -124,7 +135,8 @@ it("identifies a missing project only on a definitive rejection", async () => {
     projectUnavailable: false,
   });
 });
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-magic-numbers (#517): it("automatically retries busy creation with the same operation identity") uses 2000, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/prefer-readonly-parameter-types (#565): it("automatically retries busy creation with the same operation identity") accepts [, init]; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
@@ -153,4 +165,5 @@ it("automatically retries busy creation with the same operation identity", async
     JSON.stringify(operation),
   ]);
 });
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */

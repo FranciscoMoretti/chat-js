@@ -6,10 +6,15 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
+/* oxlint-enable sort-imports */
 
 import { db } from "../lib/db/client";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -18,15 +23,20 @@ import {
   getEveCreation,
   listEveConversations,
 } from "../lib/db/eve-queries";
+/* oxlint-enable sort-imports */
 import { assignEveConversationProject } from "../lib/db/queries";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
-  eveConversation,
   eveChatProject,
+  eveConversation,
   project,
   user,
 } from "../lib/db/schema";
+/* oxlint-enable sort-imports */
 import { env } from "../lib/env";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
+/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 
 vi.mock("server-only", () => ({}));
@@ -35,6 +45,7 @@ const owner = crypto.randomUUID();
 const stranger = crypto.randomUUID();
 const ownProject = crypto.randomUUID();
 const foreignProject = crypto.randomUUID();
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates the owner and stranger before their project fixtures.
 await db.insert(user).values(
   [owner, stranger].map((id) => ({
     email: `${id}@test.invalid`,
@@ -42,6 +53,7 @@ await db.insert(user).values(
     name: "Project test",
   }))
 );
+// oxlint-disable-next-line node/no-top-level-await -- This Bun database suite creates owned and foreign projects before registering authorization scenarios.
 await db.insert(project).values([
   {
     id: ownProject,
@@ -56,6 +68,7 @@ await db.insert(project).values([
     userId: stranger,
   },
 ]);
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
 afterAll(async () => {
   await db
     .delete(eveConversation)
@@ -63,6 +76,8 @@ afterAll(async () => {
   await db.delete(project).where(inArray(project.userId, [owner, stranger]));
   await db.delete(user).where(inArray(user.id, [owner, stranger]));
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve conversation's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-disable typescript/explicit-function-return-type --
  * typescript/explicit-function-return-type (#560): Keep conversation's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
  */
@@ -74,6 +89,8 @@ async function conversation() {
     async () => crypto.randomUUID()
   );
 }
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -101,10 +118,13 @@ test("assignment, filtered history and removal retain native identity", async ()
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
     row.sessionId
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable unicorn/max-nested-calls, unicorn/no-null --
@@ -144,8 +164,11 @@ test("both application checks and database constraints reject cross-owner assign
         )
       )
   ).rejects.toThrow();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable typescript/prefer-readonly-parameter-types, unicorn/no-null --
@@ -161,6 +184,7 @@ test("deleting a project detaches its Eve conversations without erasing their se
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
     row.sessionId
   );
@@ -173,6 +197,8 @@ test("deleting a project detaches its Eve conversations without erasing their se
     await assignEveConversationProject(owner, row.id, projectId)
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/prefer-readonly-parameter-types, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null --
@@ -208,6 +234,8 @@ test("conversation deletion fences assignment and removes metadata without touch
     await db.select().from(project).where(eq(project.id, ownProject))
   ).toHaveLength(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable no-magic-numbers, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null --
@@ -230,6 +258,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, fork.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
     ownProject
   );
@@ -253,6 +282,8 @@ test("fork paths share their chat project and retry cannot restore an old assign
       )
   ).toEqual([]);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/explicit-function-return-type, typescript/promise-function-async, unicorn/max-nested-calls, unicorn/no-null */
 
 /* oxlint-disable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -274,10 +305,12 @@ test("an unresolved fork retains its project route for creation recovery", async
     )
   ).rejects.toThrow("Lost creation reply");
   const pending = await getEveCreation(owner, operationId);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading state from pending; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(pending?.state).toBe("uncertain");
   if (!pending) {
     throw new Error("Missing unresolved fork");
   }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, pending.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect((await getEveConversationProject(owner, pending.id))?.id).toBe(
     ownProject
   );
@@ -285,6 +318,8 @@ test("an unresolved fork retains its project route for creation recovery", async
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async, typescript/strict-boolean-expressions, unicorn/no-null */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async --
@@ -327,6 +362,8 @@ test("project creation binds before dispatch and preserves its initial intent th
   expect(await create(projectId)).toEqual(binding);
   expect(dispatch).toHaveBeenCalledTimes(1);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture mock resolves crypto.randomUUID() for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/promise-function-async */
 
 test("missing and foreign projects reject creation without leaving a reservation or dispatching", async () => {
@@ -346,3 +383,4 @@ test("missing and foreign projects reject creation without leaving a reservation
   }
   expect(dispatch).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

@@ -1,7 +1,12 @@
 import { expect, test } from "bun:test";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture reads, writes, and validates real project files with native filesystem APIs.
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import path from "node:path";
+/* oxlint-enable sort-imports */
 
 import { vendorPatchedPackage } from "./vendor-patched-package";
 
@@ -25,6 +30,7 @@ const pinnedManifest = `{
 }
 `;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve createFixture's awaited sequencing and rejected-Promise behavior. */
 const createFixture = async (
   installed = installedSource
 ): Promise<{
@@ -49,10 +55,12 @@ const createFixture = async (
   ]);
   return { destination, packageDir, patchPath, root };
 };
-
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("retains template and published package metadata while pinning the maintained archive", async () => {
   const fixture = await createFixture();
   try {
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fixture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await vendorPatchedPackage({ ...fixture, packageName: "maintained" });
     expect(
       await readFile(path.join(fixture.destination, "package.json"), "utf-8")
@@ -78,16 +86,18 @@ test("retains template and published package metadata while pinning the maintain
     await rm(fixture.root, { force: true, recursive: true });
   }
 });
-
+/* oxlint-enable oxc/no-async-await */
 for (const installed of [
   "[]",
   '{"name":"maintained","version":"different"}',
   '{"name":"maintained","version":true}',
 ]) {
+  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`retains the version guard before publishing malformed or mismatched metadata ${installed}`, async () => {
     const fixture = await createFixture(installed);
     try {
       try {
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fixture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         await vendorPatchedPackage({ ...fixture, packageName: "maintained" });
         throw new Error("Expected a metadata mismatch.");
       } catch (error) {
@@ -108,4 +118,5 @@ for (const installed of [
       await rm(fixture.root, { force: true, recursive: true });
     }
   });
+  /* oxlint-enable oxc/no-async-await */
 }

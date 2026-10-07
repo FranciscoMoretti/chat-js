@@ -16,6 +16,7 @@ vi.mock("../db/eve-file-purge", () => ({
 vi.mock("../file-storage", () => ({ deleteFilesByUrls: mocks.remove }));
 
 beforeEach(() => vi.resetAllMocks());
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("failed storage removal leaves the durable deletion pending for retry", async () => {
   const keys = ["abcdefghijklmnopqrstuvwx.png"];
   mocks.prepare.mockResolvedValue(keys);
@@ -32,6 +33,8 @@ test("failed storage removal leaves the durable deletion pending for retry", asy
   expect(mocks.complete).toHaveBeenCalledWith("owner", keys);
   expect(mocks.release).toHaveBeenCalledWith("owner", "root");
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 test("a completed or fully shared file set does not access storage", async () => {
   mocks.prepare.mockResolvedValue([]);
   await purgeEveFamilyFiles("owner", "root");
@@ -39,3 +42,4 @@ test("a completed or fully shared file set does not access storage", async () =>
   expect(mocks.remove).not.toHaveBeenCalled();
   expect(mocks.complete).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

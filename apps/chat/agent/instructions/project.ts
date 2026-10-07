@@ -15,9 +15,13 @@ export default defineDynamic({
   events: {
     "turn.started": () => {
       const { content } = projectInstructions.get();
-      return content
-        ? defineInstructions({ content: `Project instructions:\n${content}` })
-        : null;
+
+      if (content) {
+        return defineInstructions({
+          content: `Project instructions:\n${content}`,
+        });
+      }
+      return null;
     },
   },
 });

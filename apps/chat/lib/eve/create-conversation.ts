@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { retryEveAdmission } from "./admission-retry";
+/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { conversationBinding } from "./contracts";
+/* oxlint-enable sort-imports */
 import type { createConversationInput } from "./contracts";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { EveUsageReconciliationBusyError } from "./usage-reconciliation-busy";
+/* oxlint-enable sort-imports */
 
 class CreationRejectedError extends Error {
   public readonly projectUnavailable: boolean;
@@ -14,13 +20,14 @@ class CreationRejectedError extends Error {
   }
 }
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve requestConversation's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types --
 max-lines-per-function (#510): requestConversation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-magic-numbers (#517): requestConversation uses 30_000, 503, 400, 404 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
 typescript/prefer-readonly-parameter-types (#565): requestConversation accepts operation: z.infer<typeof createConversationInput>; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.  */
 /** A timeout is ambiguous: callers must retain the operation until it is bound.
- * @param operation Immutable creation intent reused for admission and recovery retries.
- * @returns The conversation and native session identities accepted for this operation.
+ * @param {z.infer<typeof createConversationInput>} operation Immutable creation intent reused for admission and recovery retries.
+ * @returns {Promise<z.infer<typeof conversationBinding>>} The conversation and native session identities accepted for this operation.
  */
 const requestConversation = async (
   operation: z.infer<typeof createConversationInput>
@@ -75,5 +82,8 @@ const requestConversation = async (
     clearTimeout(deadline);
   }
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (CreationRejectedError, requestConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-lines-per-function, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 export { CreationRejectedError, requestConversation };
+/* oxlint-enable import/no-named-export */

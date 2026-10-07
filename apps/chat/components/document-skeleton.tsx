@@ -2,7 +2,9 @@
 
 import React from "react";
 
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ArtifactKind } from "@/lib/artifacts/artifact-kind";
+/* oxlint-enable sort-imports */
 
 const DocumentSkeleton = ({
   artifactKind: _artifactKind,
@@ -33,5 +35,7 @@ const InlineDocumentSkeleton = (): React.JSX.Element => (
     <div className="bg-muted-foreground/20 h-4 w-64 animate-pulse rounded-lg" />
   </div>
 );
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DocumentSkeleton, InlineDocumentSkeleton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/no-multi-comp */
 export { DocumentSkeleton, InlineDocumentSkeleton };
+/* oxlint-enable import/no-named-export */

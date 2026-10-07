@@ -3,26 +3,28 @@ import type { Sql } from "postgres";
 import { fenceEvePostgresResourcesInTransaction } from "./eve-resource-fence";
 import { readEvePostgresRunInventoryInTransaction } from "./eve-run-inventory";
 
-/* oxlint-disable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types --
- * jsdoc/require-param (#534): fenceEvePostgresSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
- * jsdoc/require-returns (#535): fenceEvePostgresSession's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fenceEvePostgresSession); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceEvePostgresSession's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
  * max-lines-per-function (#510): fenceEvePostgresSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): fenceEvePostgresSession keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): fenceEvePostgresSession uses 100, 1, 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/explicit-function-return-type (#560): Keep fenceEvePostgresSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/explicit-module-boundary-types (#562): Keep fenceEvePostgresSession's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): fenceEvePostgresSession accepts connection: Sql; additionalRunIds: string[] = []; query; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
  * Fence the reachable native run/stream graph for an authorized, retired session.
  * Unknown/unlinked resources, queues, sandboxes, and blobs remain outside this
  * provider boundary. No payloads are erased and this is not a deletion receipt.
+ * @param {Readonly<Pick<Sql, "begin">>} connection Native transaction-opening capability; the returned transaction remains the SDK's exact native type.
+ * @param {string} sessionId Authorized, retired native session whose reachable resource graph is fenced.
+ * @param {readonly string[]} additionalRunIds Retained run identities used as extra inventory seeds.
+ * @returns {Promise<{ runIds: string[]; streamIds: string[] }>} Reachable identities once repeated fenced inventory stabilizes; rejects for active/missing runs, ambiguous ownership or exhausted retries.
  */
 export const fenceEvePostgresSession = async (
-  connection: Sql,
+  connection: Readonly<Pick<Sql, "begin">>,
   sessionId: string,
-  additionalRunIds: string[] = []
-) =>
+  additionalRunIds: readonly string[] = []
+): Promise<{ runIds: string[]; streamIds: string[] }> =>
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Native TransactionSql callback retains overloaded callable tag/helper signatures required by the run inventory and fencing operations.
   await connection.begin("isolation level read committed", async (query) => {
     await fenceEvePostgresResourcesInTransaction(query, {
       runIds: [sessionId],
@@ -52,7 +54,9 @@ export const fenceEvePostgresSession = async (
           "Resolve missing runs and stream ownership before fencing this session."
         );
       }
-      const runIds = inventory.runs.map((run) => run.id);
+      const runIds = inventory.runs.map(
+        (run: { readonly id: string }) => run.id
+      );
       if (
         runIds.every((id) => fencedRuns.has(id)) &&
         inventory.streamIds.every((id) => fencedStreams.has(id))
@@ -73,4 +77,6 @@ export const fenceEvePostgresSession = async (
     }
     throw new Error("Session inventory did not stabilize; retry fencing.");
   });
-/* oxlint-enable jsdoc/require-param, jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */

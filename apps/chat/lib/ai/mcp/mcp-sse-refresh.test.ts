@@ -1,5 +1,7 @@
 import { createMCPClient } from "@ai-sdk/mcp";
+/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
+/* oxlint-enable sort-imports */
 import { expect, test } from "vitest";
 
 const serverUrl = "https://mcp.test/";
@@ -7,6 +9,7 @@ const endpointUrl = `${serverUrl}messages`;
 const authorizationServerUrl = "https://auth.test/";
 const tokenEndpoint = `${authorizationServerUrl}token`;
 
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([{ timing: "simultaneous" }, { timing: "after-save" }])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null --
  * init-declarations (#507): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -129,6 +132,7 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
           "id" in message &&
           (typeof message.id === "string" || typeof message.id === "number")
         ) {
+          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from streamController; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
           streamController?.enqueue(
             encoder.encode(
               `data: ${JSON.stringify({
@@ -172,4 +176,5 @@ test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
     }
   }
 );
+/* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types, unicorn/no-null */

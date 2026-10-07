@@ -49,6 +49,7 @@ beforeEach(() => {
   mocks.principal.mockResolvedValue({ kind: "registered", ownerId: "owner" });
   mocks.create.mockResolvedValue({ candidates: [], id: input.operationId });
 });
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("authenticates and checks origin before dispatching with server-owned identity") uses 403, 200 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("authenticates and checks origin before dispatching with server-owned identity") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -65,6 +66,8 @@ test("authenticates and checks origin before dispatching with server-owned ident
     undefined
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined */
 /* oxlint-disable no-magic-numbers, unicorn/no-null --
  * no-magic-numbers (#517): test("unauthenticated requests cannot create groups") uses 401 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -75,6 +78,8 @@ test("unauthenticated requests cannot create groups", async () => {
   const resolvedResult3 = await POST(request());
   expect(resolvedResult3.status).toBe(401);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, unicorn/no-null */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reads only through the authenticated owner's scope and does not cache bindings" uses 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -90,6 +95,8 @@ test("reads only through the authenticated owner's scope and does not cache bind
     "private, no-store"
   );
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, unicorn/no-null --
@@ -121,6 +128,8 @@ test("guest comparisons cannot dispatch without successful batch admission", asy
   await GET(request(), { params: Promise.resolve({ id: input.operationId }) });
   expect(mocks.get).toHaveBeenCalledWith("guest", input.operationId);
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, unicorn/no-null */
 
 /* oxlint-disable no-magic-numbers --
@@ -151,7 +160,7 @@ test("schedules one title generation for an initial comparison chat", async () =
 
   expect(response.status).toBe(200);
   expect(mocks.after).toHaveBeenCalledOnce();
-  // oxlint-disable-next-line typescript/no-unsafe-call -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+  // oxlint-disable-next-line typescript/no-unsafe-call, oxc/no-optional-chaining -- #596: This route fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.after.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   await mocks.after.mock.calls[0]?.[0]();
   expect(mocks.persistTitle).toHaveBeenCalledWith({
     conversationId: "00000000-0000-4000-8000-000000000002",
@@ -159,6 +168,8 @@ test("schedules one title generation for an initial comparison chat", async () =
     ownerId: "owner",
   });
 });
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
 test("does not retitle a forked comparison chat", async () => {
@@ -178,6 +189,7 @@ test("does not retitle a forked comparison chat", async () => {
     "http://localhost:3790/api/agent-response-groups",
     {
       body: JSON.stringify({
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
         ...input,
         fork: {
           beforeTurnId: "turn_0",
@@ -194,3 +206,4 @@ test("does not retitle a forked comparison chat", async () => {
 
   expect(mocks.after).not.toHaveBeenCalled();
 });
+/* oxlint-enable oxc/no-async-await */

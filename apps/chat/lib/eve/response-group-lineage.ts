@@ -23,18 +23,19 @@ interface EveResponseGroupLineage {
   >;
 }
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): localTurnBoundary intentionally keeps the existing falsy-value behavior of conversation.forkMessageId; conversation.parentConversationId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const localTurnBoundary = (
   conversation: LineageConversation
 ): string | null => {
-  if (!conversation.parentConversationId || conversation.forkMessageId) {
+  const { parentConversationId } = conversation;
+  if (parentConversationId === null || parentConversationId === "") {
+    return "turn_0";
+  }
+  const { forkMessageId } = conversation;
+  if (forkMessageId !== null && forkMessageId !== "") {
     return "turn_0";
   }
   return conversation.forkTurnId;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): laterConversation uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
@@ -42,10 +43,12 @@ const localTurnBoundary = (
 const laterConversation = (
   left: LineageConversation,
   right: LineageConversation
-): boolean =>
-  left.createdAt.getTime() === right.createdAt.getTime()
-    ? left.id.localeCompare(right.id) > 0
-    : left.createdAt > right.createdAt;
+): boolean => {
+  if (left.createdAt.getTime() === right.createdAt.getTime()) {
+    return left.id.localeCompare(right.id) > 0;
+  }
+  return left.createdAt > right.createdAt;
+};
 /* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null --
@@ -59,10 +62,10 @@ const laterConversation = (
  */
 /**
  * Resolve comparison ownership without treating edits or later turns as cards.
- * @param selectedConversationId Selected conversation whose ancestry determines comparison ownership.
- * @param conversations Family ancestry and retry conversations available to validate regeneration lineage.
- * @param groups Comparison groups with their original candidate operation identities.
- * @returns The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
+ * @param {string} selectedConversationId Selected conversation whose ancestry determines comparison ownership.
+ * @param {readonly LineageConversation[]} conversations Family ancestry and retry conversations available to validate regeneration lineage.
+ * @param {readonly { readonly candidateOperationIds: readonly string[]; readonly id: string; }[]} groups Comparison groups with their original candidate operation identities.
+ * @returns {EveResponseGroupLineage | undefined} The owning group and valid latest retry replacements, or absence for missing, cyclic, or inapplicable lineage.
  */
 // oxlint-disable-next-line eslint/complexity -- Candidate discovery, lineage validation, and retry selection form one fail-closed projection.
 const resolveEveResponseGroupLineage = (
@@ -82,6 +85,7 @@ const resolveEveResponseGroupLineage = (
   while (current && !visited.has(current.id)) {
     reversedLineage.push(current);
     visited.add(current.id);
+    // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     current = current.parentConversationId
       ? conversationsById.get(current.parentConversationId)
       : undefined;
@@ -138,6 +142,7 @@ const resolveEveResponseGroupLineage = (
     const original = conversations.find(
       (conversation) => conversation.operationId === operationId
     );
+    // oxlint-disable-next-line no-ternary -- Keep originalBoundary as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const originalBoundary = original ? localTurnBoundary(original) : null;
     if (!(original && originalBoundary)) {
       continue;
@@ -162,6 +167,7 @@ const resolveEveResponseGroupLineage = (
         }
       }
     }
+    // oxlint-disable-next-line no-ternary -- Keep replacement as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
     const replacement = valid.has(selectedConversationId)
       ? conversationsById.get(selectedConversationId)
       : latest;
@@ -175,6 +181,10 @@ const resolveEveResponseGroupLineage = (
   // oxlint-disable-next-line typescript/consistent-return -- #580: resolveEveResponseGroupLineage has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return { groupId: group.id, replacements };
 };
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (resolveEveResponseGroupLineage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable max-lines-per-function, max-statements, no-continue, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions, unicorn/no-null */
 export { resolveEveResponseGroupLineage };
+/* oxlint-enable import/no-named-export */
+/* oxlint-disable import/no-named-export -- Keep the named type bindings (EveResponseGroupLineage, EveResponseGroupLineageConversation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export type { EveResponseGroupLineage, EveResponseGroupLineageConversation };
+/* oxlint-enable import/no-named-export */
