@@ -70,6 +70,18 @@ vi.mock("eve/client", () => ({
 }));
 /* oxlint-enable typescript/explicit-function-return-type */
 const input = { conversationId: "conversation", messageId: "message" };
+const replayEvents = [
+  {
+    data: { messages: [] },
+    meta: { at: "2026-10-07T00:00:00Z", id: "first" },
+    type: "history.seeded",
+  },
+  {
+    data: { messages: [] },
+    meta: { at: "2026-10-07T00:00:01Z", id: "second" },
+    type: "history.seeded",
+  },
+];
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): beforeEach uses 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -130,30 +142,65 @@ it("restores exact trusted inline history without an installed upload feature", 
 });
 
 it("replays ordered snapshot events through the reducer before restoring", async () => {
-  const first = {
-    data: { messages: [] },
-    meta: { at: "2026-10-07T00:00:00Z", id: "first" },
-    type: "history.seeded",
+  const [first, second] = replayEvents;
+  mocks.snapshot.mockResolvedValue({ events: replayEvents });
+  const firstState = {
+    messages: [
+      ...mocks.messages,
+      { id: "replayed-first", parts: [], role: "user" },
+    ],
   };
-  const second = {
-    data: { messages: [] },
-    meta: { at: "2026-10-07T00:00:01Z", id: "second" },
-    type: "history.seeded",
+  const finalState = {
+    messages: [
+      ...firstState.messages,
+      { id: "replayed-second", parts: [], role: "assistant" },
+    ],
   };
-  mocks.snapshot.mockResolvedValue({ events: [first, second] });
+  mocks.reduce
+    .mockImplementationOnce(() => firstState)
+    .mockImplementationOnce(() => finalState);
 
   await restoreMessageAttachments("owner", input);
 
-  expect(mocks.reduce).toHaveBeenNthCalledWith(
-    1,
-    { messages: mocks.messages },
-    first
-  );
-  expect(mocks.reduce).toHaveBeenNthCalledWith(
-    2,
-    { messages: mocks.messages },
-    second
-  );
+  expect(mocks.reduce.mock.calls).toEqual([
+    [{ messages: mocks.messages }, first],
+    [firstState, second],
+  ]);
+  expect(mocks.reduce.mock.contexts[0]).toBe(mocks.reduce.mock.contexts[1]);
+  expect(mocks.reduce.mock.contexts[0]).toHaveProperty("initial");
+  expect(mocks.reduce.mock.contexts[0]).toHaveProperty("reduce", mocks.reduce);
+});
+
+it("propagates reducer failures and stops replay", async () => {
+  const [first, second] = replayEvents;
+  const failure = new Error("Reducer failed");
+  mocks.snapshot.mockResolvedValue({ events: replayEvents });
+  mocks.reduce
+    .mockImplementationOnce(() => ({
+      messages: [
+        ...mocks.messages,
+        { id: "replayed-first", parts: [], role: "user" },
+      ],
+    }))
+    .mockImplementationOnce(() => {
+      throw failure;
+    });
+
+  await expect(restoreMessageAttachments("owner", input)).rejects.toBe(failure);
+
+  expect(mocks.reduce.mock.calls).toEqual([
+    [{ messages: mocks.messages }, first],
+    [
+      {
+        messages: [
+          ...mocks.messages,
+          { id: "replayed-first", parts: [], role: "user" },
+        ],
+      },
+      second,
+    ],
+  ]);
+  expect(mocks.reserve).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
