@@ -10,7 +10,6 @@ import type { ReadonlyAiGatewayModel } from "@/lib/ai/to-model-data";
 import { toModelData } from "@/lib/ai/to-model-data";
 import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
-/* oxlint-enable sort-imports */
 
 const serializedOptions = z.record(z.string(), z.record(z.string(), z.json()));
 const MODEL_CATALOG_TTL_MS = 3_600_000;

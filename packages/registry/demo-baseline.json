@@ -117,7 +117,7 @@
     "tools/chatjs/read-document/chatjs.json": "f941cdbf961e25c69f2b147d7a276fb4c62705af40d170a61d382f21c3e43851",
     "tools/chatjs/read-document/tool.ts": "c3ff3f73ac4c053a2f49b70ecb308f0ed0a2000a06737481b5ac6a1462663595",
     "tools/chatjs/retrieve-url/chatjs.json": "2c266227662c489eb0725651d4400433716e6b308ee9534ae3be2c839a0ec151",
-    "tools/chatjs/retrieve-url/renderer.tsx": "bbec00343ff32f339f5305e5e3ae7f7fe104620a0ccb977997e411c4320a495b",
+    "tools/chatjs/retrieve-url/renderer.tsx": "8773820325a1371eeb85234201d1c46a15dbcc206df6e64700f0f5d316b29b13",
     "tools/chatjs/retrieve-url/schemas.ts": "59e6ceb8c0879651e18603696ab1468dfe4251804d7752f9b6eefdc50d4685a8",
     "tools/chatjs/retrieve-url/tool.ts": "3506b6b6bbe422fb80184d897e7927b34b27f76e1ad58e79a7b9c46643b19412",
     "tools/chatjs/saved-code-execution/chatjs.json": "75f2003a21ba0597883c259a240da4d3882bfc8d03a36e108fc2711211631420",

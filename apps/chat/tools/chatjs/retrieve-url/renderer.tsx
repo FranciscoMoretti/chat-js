@@ -84,7 +84,6 @@ const ErrorState = ({
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const getItemProperty = (
   item: unknown,
@@ -100,7 +99,6 @@ const getItemProperty = (
 };
 /* oxlint-disable react/jsx-no-literals -- RetrievedContentHeader renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */

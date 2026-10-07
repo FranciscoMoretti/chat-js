@@ -71,7 +71,7 @@ it.each([0, 1])(
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-statements, no-magic-numbers -- Keep each sandbox output boundary scenario and its command sequence together. */
+/* oxlint-disable no-magic-numbers -- These sandbox output boundary fixtures use fixed command-count expectations. */
 it.each([
   ['{"type":"line","elements":[],"extension":true}', true],
   ["null", false],
@@ -109,4 +109,4 @@ it.each([
     expect(mocks.runCommand).toHaveBeenCalledTimes(accepted ? 2 : 3);
   }
 );
-/* oxlint-enable max-statements, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
