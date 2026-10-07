@@ -254,7 +254,6 @@ test("conversation deletion fences assignment and removes metadata without touch
  * unicorn/max-nested-calls (#568): test("fork paths share their chat project and retry cannot restore an old assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("fork paths share their chat project and retry cannot restore an old assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-// oxlint-disable-next-line max-statements -- Preserve the source assignment, fork retry, and deletion sequence that proves retries cannot restore ownership.
 test("fork paths share their chat project and retry cannot restore an old assignment", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
