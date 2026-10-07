@@ -5,8 +5,8 @@ cli_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # CI selects one matrix case; no arguments retains the full local suite.
 if [ "$#" -ne 0 ]; then
-  if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 [bun|npm|pnpm|yarn true|false]" >&2
+  if [ "$#" -ne 2 ] && [ "$#" -ne 3 ]; then
+    echo "Usage: $0 [bun|npm|pnpm|yarn true|false [prepared-gateway-archive]]" >&2
     exit 1
   fi
   case "$1" in
@@ -19,13 +19,25 @@ if [ "$#" -ne 0 ]; then
   esac
 fi
 
-# Verify local contracts before publication, including external registry installs.
-bun run --cwd "$cli_root" test:gateways
+# CI consumes inputs only after the shared preparation job has verified them.
+if [ "$#" -eq 3 ]; then
+  if [ ! -f "$3" ] || [ ! -f "$cli_root/dist/index.js" ] || [ ! -d "$cli_root/templates/chat-app" ] || [ ! -d "$cli_root/../registry/dist/r" ]; then
+    echo "Prepared scaffold inputs are missing." >&2
+    exit 1
+  fi
+else
+  # Local runs retain the shared contract verification and build.
+  bun run --cwd "$cli_root" test:gateways
+  bun run --cwd "$cli_root/../gateways" build
+fi
 gateway_archive_dir="$(mktemp -d /tmp/chat-js-gateway-package-XXXXXX)"
 trap 'kill "${registry_pid:-}" 2>/dev/null || true; rm -rf "$gateway_archive_dir"' EXIT
-gateway_archive="$gateway_archive_dir/gateways.tgz"
-bun run --cwd "$cli_root/../gateways" build
-bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
+if [ "$#" -eq 3 ]; then
+  gateway_archive="$3"
+else
+  gateway_archive="$gateway_archive_dir/gateways.tgz"
+  bun pm --cwd "$cli_root/../gateways" pack --filename "$gateway_archive"
+fi
 bun "$cli_root/test/serve-registry.ts" "$gateway_archive" "$gateway_archive_dir/address" &
 registry_pid=$!
 for attempt in {1..100}; do
@@ -114,7 +126,7 @@ for (const key of Object.keys(manifest.exports)) {
 
 )
 
-if [ "$#" -eq 2 ]; then
+if [ "$#" -ge 2 ]; then
   run_case "$1" "$2"
 else
   for package_manager in bun npm pnpm yarn; do

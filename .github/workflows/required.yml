@@ -20,6 +20,33 @@ jobs:
           check-regexp: ^(Docs|Lint|Typecheck|Unit|Playwright|CLI Scaffold|Native Lifecycle)$
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10
+      - name: Require scaffold aggregate acceptance
+        uses: actions/github-script@v7
+        env:
+          TARGET_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            // The aggregate is created only after its matrix dependencies finish.
+            // A regexp over currently visible checks can miss it entirely.
+            const deadline = Date.now() + 45 * 60 * 1000;
+            while (Date.now() < deadline) {
+              const checks = await github.paginate(github.rest.checks.listForRef, {
+                ...context.repo,
+                ref: process.env.TARGET_SHA,
+                per_page: 100,
+              });
+              const check = checks
+                .filter((item) => item.name === "CLI Scaffold" && item.app?.slug === "github-actions")
+                .sort((left, right) => right.id - left.id)[0];
+              if (check?.status === "completed") {
+                if (check.conclusion !== "success") {
+                  core.setFailed(`CLI Scaffold concluded ${check.conclusion}`);
+                }
+                return;
+              }
+              await new Promise((resolve) => setTimeout(resolve, 10_000));
+            }
+            core.setFailed("Timed out waiting for CLI Scaffold to succeed");
       - name: Require native lifecycle acceptance
         uses: lewagon/wait-on-check-action@ccfb013c15c8afb7bf2b7c028fb74dc5a068cccc # v1.3.4
         with:
