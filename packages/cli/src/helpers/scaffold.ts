@@ -120,13 +120,17 @@ const replaceInFile = async (
 };
 /* oxlint-enable oxc/no-async-await */
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeGatewayModelCommands' awaited sequencing and rejected-Promise behavior. */
-const normalizeGatewayModelCommands = async (
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeGatewaySnapshotCommands' awaited sequencing and rejected-Promise behavior. */
+const normalizeGatewaySnapshotCommands = async (
   destination: string,
   packageManager: PackageManager
 ): Promise<void> => {
   await replaceInFile(
     pathModule.join(destination, "scripts", "environment-validation-report.ts"),
+    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
+  );
+  await replaceInFile(
+    pathModule.join(destination, "scripts", "gateway-snapshot-warning.test.ts"),
     [["bun fetch:models", runScript(packageManager, "fetch:models")]]
   );
   await replaceInFile(
@@ -313,7 +317,7 @@ const normalizeChatAppFiles = async (
     ["bun fetch:models", runScript(packageManager, "fetch:models")],
   ]);
 
-  await normalizeGatewayModelCommands(destination, packageManager);
+  await normalizeGatewaySnapshotCommands(destination, packageManager);
 
   await replaceInFile(
     pathModule.join(destination, "scripts", "worktree-setup.sh"),
