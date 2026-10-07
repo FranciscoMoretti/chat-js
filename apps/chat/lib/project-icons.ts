@@ -43,17 +43,21 @@ const PROJECT_COLORS = [
 
 type ProjectColorName = (typeof PROJECT_COLORS)[number]["name"];
 
-const [fallbackProjectColor, ...additionalProjectColors] = PROJECT_COLORS;
+const [fallbackProjectColor] = PROJECT_COLORS;
 
 // For zod enum validation
-const PROJECT_COLOR_NAMES = [
-  fallbackProjectColor.name,
-  ...additionalProjectColors.map((color) => color.name),
-] as const;
+const PROJECT_COLOR_NAMES = PROJECT_COLORS.map((color) => color.name);
 
 const DEFAULT_PROJECT_ICON: ProjectIconName = "folder";
 
 const DEFAULT_PROJECT_COLOR: ProjectColorName = "gray";
+
+// Saved varchar values can outlive the installed icon/color catalog. Keep the
+// same folder/gray fallback used by ProjectIcon when opening the editor.
+const getProjectIconName = (value: string): ProjectIconName =>
+  PROJECT_ICONS.find((icon) => icon === value) ?? DEFAULT_PROJECT_ICON;
+const getProjectColorName = (value: string): ProjectColorName =>
+  PROJECT_COLOR_NAMES.find((color) => color === value) ?? DEFAULT_PROJECT_COLOR;
 
 const getColorValue = (name: ProjectColorName): string =>
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from PROJECT_COLORS.find(...); preserve one receiver evaluation, skipped accesses and the existing fallbackProjectColor.value fallback. The app guidance prefers optional chaining.
@@ -64,6 +68,8 @@ export {
   DEFAULT_PROJECT_COLOR,
   DEFAULT_PROJECT_ICON,
   getColorValue,
+  getProjectIconName,
+  getProjectColorName,
   PROJECT_COLOR_NAMES,
   PROJECT_COLORS,
   PROJECT_ICONS,

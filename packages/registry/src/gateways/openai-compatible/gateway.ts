@@ -11,13 +11,17 @@ import type { AiGatewayModel } from "@chat-js/gateways/models";
 /* oxlint-enable sort-imports */
 import { GatewayRuntime } from "@chat-js/gateways/runtime";
 import type { ImageModel } from "ai";
+import { z } from "zod";
 
-interface OpenAICompatibleModelResponse {
-  created: number;
-  id: string;
-  object: string;
-  owned_by: string;
-}
+const providerModelSchema = z.object({
+  created: z.number().nullish(),
+  id: z.string(),
+  owned_by: z.string().nullish(),
+});
+type OpenAICompatibleModelResponse = z.output<typeof providerModelSchema>;
+const providerModelListSchema = z.object({
+  data: z.array(z.unknown()),
+});
 
 const UNKNOWN_MODEL_LIMIT = 0;
 const UNKNOWN_MODEL_TIMESTAMP = 0;
@@ -36,9 +40,26 @@ const toAiGatewayModel = (
   type: "language",
 });
 
+// Validate the wire envelope separately from each model so valid neighbors survive.
+const parseProviderModels = (value: unknown): AiGatewayModel[] => {
+  const body = providerModelListSchema.parse(value);
+  const result = body.data.flatMap((entry): AiGatewayModel[] => {
+    const model = providerModelSchema.safeParse(entry);
+    if (!model.success) {
+      return [];
+    }
+    return [toAiGatewayModel(model.data)];
+  });
+  // A genuinely empty catalog is valid; a nonempty unparseable catalog is not.
+  // oxlint-disable-next-line no-magic-numbers -- Zero is the empty-array cardinality for the catalog validation boundary.
+  if (body.data.length > 0 && result.length === 0) {
+    throw new Error("Provider catalog contains no valid models.");
+  }
+  return result;
+};
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 class OpenAICompatibleGateway
   extends GatewayRuntime
   implements GatewayProvider<"openai-compatible", string, string, never>
@@ -117,12 +138,7 @@ class OpenAICompatibleGateway
         throw new Error(`Failed to fetch models: ${response.statusText}`);
       }
 
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const body = await response.json();
-      // oxlint-disable-next-line typescript/no-unsafe-member-access, typescript/no-unsafe-type-assertion -- Retain the current provider-response compatibility contract; adding strict provider schemas would require deciding how unknown model fields and provider variants are handled.
-      const models = (body.data ??
-        []) as readonly Readonly<OpenAICompatibleModelResponse>[];
-      const result = models.map((model) => toAiGatewayModel(model));
+      const result = parseProviderModels(await response.json());
 
       this.log.info(
         { modelCount: result.length },
@@ -140,7 +156,6 @@ class OpenAICompatibleGateway
   /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Gateway, OpenAICompatibleGateway); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable eslint/max-statements */
 export { OpenAICompatibleGateway as Gateway, OpenAICompatibleGateway };

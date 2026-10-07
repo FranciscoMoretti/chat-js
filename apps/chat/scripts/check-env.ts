@@ -134,10 +134,10 @@ const validateStorage = (
 const validateAuthentication = (
   env: Readonly<NodeJS.ProcessEnv>
 ): ValidationError[] => {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Object.keys widens the keys of the owned authentication requirement record to string; this assertion retains its AuthenticationConfig provider keys without duplicating the provider list.
-  const authKeys = Object.keys(
-    authEnvRequirements
-  ) as (keyof typeof authEnvRequirements)[];
+  const authKeys = Object.keys(authEnvRequirements).filter(
+    (key): key is keyof typeof authEnvRequirements =>
+      Object.hasOwn(authEnvRequirements, key)
+  );
   const errors = authKeys.flatMap((provider): ValidationError[] => {
     if (!config.authentication[provider]) {
       return [];

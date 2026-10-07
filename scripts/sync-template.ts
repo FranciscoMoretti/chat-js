@@ -1,29 +1,29 @@
 #!/usr/bin/env bun
-// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer reads and copies repository files through native filesystem APIs.
 import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 // oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- The template synchronizer creates temporary directories and copies canonical repository files.
 import path from "node:path";
-/* oxlint-enable sort-imports */
 
+// oxlint-disable-next-line import/no-relative-parent-imports -- Template generation reuses the canonical CLI JSON object reader.
+import { parseJsonObject } from "../packages/cli/src/helpers/json-object";
+// oxlint-disable-next-line import/no-relative-parent-imports -- Template generation reuses the canonical CLI package manifest validator.
+import { parsePackageJson } from "../packages/cli/src/helpers/package-manifest";
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/resolve-package-directory import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { resolvePackageDirectory } from "../packages/cli/src/helpers/resolve-package-directory";
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/scaffold-content import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   normalizeScaffoldContent,
   shouldCopyChatAppFile,
   shouldCopyElectronFile,
 } from "../packages/cli/src/helpers/scaffold-content";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
 /* oxlint-disable import/no-relative-parent-imports -- the ../packages/cli/src/helpers/vendor-patched-package import: The source and its build/scaffold consumers share this relative module layout; replacing it needs an alias contract in every consumer. */
 import { vendorPatchedPackage } from "../packages/cli/src/helpers/vendor-patched-package";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectSnapshot } from "./sync-template-snapshot";
 /* oxlint-enable sort-imports */
 
@@ -127,15 +127,14 @@ const applyTemplateTransforms = async (destination: string): Promise<void> => {
   });
 
   // Stamp the template with the monorepo-controlled Bun version at build time.
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- These repository-owned package manifests use the packageManager string contract; retain all unrelated JSON fields.
-  const rootPackageJson = JSON.parse(
+  const rootPackageJson = parsePackageJson(
     await readFile(rootPackageJsonPath, "utf-8")
-  ) as { packageManager?: string };
+  );
   const packageJsonPath = join(destination, "package.json");
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- The generated template manifest retains arbitrary package fields while stamping the known packageManager field.
-  const packageJson = JSON.parse(await readFile(packageJsonPath, "utf-8")) as {
-    packageManager?: string;
-  };
+  const packageJson = parseJsonObject(
+    await readFile(packageJsonPath, "utf-8"),
+    "Template package.json"
+  );
   packageJson.packageManager = rootPackageJson.packageManager;
   await writeFile(
     packageJsonPath,

@@ -40,7 +40,10 @@ import {
   // oxlint-disable-next-line import/max-dependencies -- Scaffold integrates filesystem transforms, registry descriptors, JSON validation, and package installation adapters.
 } from "./json-object";
 /* oxlint-enable sort-imports */
-import { normalizeScaffoldedPackageJson } from "./package-manifest";
+import {
+  normalizeScaffoldedPackageJson,
+  parsePackageJson,
+} from "./package-manifest";
 import { resolvePackageDirectory } from "./resolve-package-directory";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
@@ -415,10 +418,7 @@ const scaffoldFromTemplate = async (
   );
   const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJson = normalizeScaffoldedPackageJson(
-    parseJsonObject(
-      await readFile(packageJsonPath, "utf-8"),
-      "Template package.json"
-    ),
+    parsePackageJson(await readFile(packageJsonPath, "utf-8")),
     {
       packageManager,
       template: "chat-app",
@@ -571,12 +571,11 @@ const scaffoldElectron = async (
   const packageJsonPath = pathModule.join(destination, "package.json");
   const packageJsonSource = await readFile(packageJsonPath, "utf-8");
   const packageJson = normalizeScaffoldedPackageJson(
-    parseJsonObject(
+    parsePackageJson(
       packageJsonSource
         .replace("__PROJECT_NAME__-electron", `${opts.projectName}-electron`)
         .replace("__GITHUB_OWNER__", "your-github-username")
-        .replace("__GITHUB_REPO__", opts.projectName),
-      "Electron template package.json"
+        .replace("__GITHUB_REPO__", opts.projectName)
     ),
     electronOptions
   );

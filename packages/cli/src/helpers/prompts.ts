@@ -142,7 +142,7 @@ const toSelectionRecord = <T extends string>(
   keys: readonly T[],
   selected: readonly string[]
 ): Record<T, boolean> =>
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Prompt entries are constructed from the validated option catalog; Object.fromEntries loses the known key/value relationship.
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #781: Every input key is emitted exactly once with a boolean value. Native Object.fromEntries types erase finite generic keys; Record<T, boolean> cannot be initialized incrementally without another assertion. Callers pass the closed auth, core, document, and built-in tool catalogs.
   Object.fromEntries(
     keys.map((key) => [key, selected.includes(key)])
   ) as Record<T, boolean>;

@@ -183,8 +183,10 @@ const ToolOutput = ({
     return null;
   }
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: Tool output accepts caller-provided renderable content; replacing the rendering assertion requires defining the supported output-value contract.
-  let Output = <div>{output as ReactNode}</div>;
+  const initialOutput =
+    // oxlint-disable-next-line no-ternary -- Preserve the native React element/bigint rendering branch and null empty-render sentinel.
+    isValidElement(output) || typeof output === "bigint" ? output : null;
+  let Output = <div>{initialOutput}</div>;
 
   if (
     (typeof output === "object" && !isValidElement(output)) ||

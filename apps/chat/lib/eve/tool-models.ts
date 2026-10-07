@@ -1,11 +1,10 @@
+/* oxlint-disable sort-imports -- Preserve runtime import evaluation order and pinned Oxfmt type/binding grouping; native alphabetical ordering conflicts with that grouping. */
 import { getActiveGateway } from "@/lib/ai/active-gateway";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { AppModelId } from "@/lib/ai/app-model-id";
-/* oxlint-enable sort-imports */
 import type { InstalledGateway } from "@/lib/ai/gateways/registry";
 import type { ToolModelProvider } from "@/lib/ai/tool-context";
 
 import { loadEveModelDefinition } from "./model-selection";
+/* oxlint-enable sort-imports */
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveToolModelProvider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveToolModelProvider's awaited sequencing and rejected-Promise behavior. */
@@ -16,7 +15,7 @@ export const eveToolModelProvider: ToolModelProvider = {
   createImageModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createImageModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI's generated scaffold requires OpenaiImageModelId, while EVE supplies a runtime string. packages/cli test:gateways fails type-checking here without this cast.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI's generated scaffold requires OpenaiImageModelId, while EVE supplies a runtime string. The cast preserves installed-app type checking, and its unsafe-rule exception is required when the generated gateway narrows the accepted ID (verified by packages/cli test:gateways).
       modelId as Parameters<InstalledGateway["createImageModel"]>[0]
     );
     if (model === null) {
@@ -27,14 +26,11 @@ export const eveToolModelProvider: ToolModelProvider = {
     return model;
   },
   createLanguageModel: (modelId) =>
-    getActiveGateway().createLanguageModel(
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The installed gateway owns the model-ID contract; encoding it across the dynamic gateway registry requires a coordinated type migration.
-      modelId as Parameters<InstalledGateway["createLanguageModel"]>[0]
-    ),
+    getActiveGateway().createLanguageModel(modelId),
   createVideoModel: (modelId) => {
     const gateway = getActiveGateway();
     const model = gateway.createVideoModel(
-      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI-compatible's generated scaffold types unsupported video IDs as never, while EVE supplies a runtime string. packages/cli test:gateways fails type-checking here without this cast.
+      // oxlint-disable-next-line typescript/no-unnecessary-type-assertion, typescript/no-unsafe-type-assertion -- OpenAI-compatible's generated scaffold types unsupported video IDs as never, while EVE supplies a runtime string. The cast preserves installed-app type checking, and its unsafe-rule exception is required when the generated gateway narrows the accepted ID (verified by packages/cli test:gateways).
       modelId as Parameters<InstalledGateway["createVideoModel"]>[0]
     );
     if (model === null) {
@@ -49,8 +45,7 @@ export const eveToolModelProvider: ToolModelProvider = {
     return {
       apiModelId: model.apiModelId,
       // The EVE catalog and active gateway validate the runtime ID at this boundary.
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- #599: The installed gateway owns the model-ID contract; encoding it across the dynamic gateway registry requires a coordinated type migration.
-      id: model.id as AppModelId,
+      id: model.id,
       output: model.output,
     };
   },

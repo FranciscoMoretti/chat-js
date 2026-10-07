@@ -70,3 +70,43 @@ it.each([0, 1])(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable max-statements, no-magic-numbers */
+
+/* oxlint-disable no-magic-numbers -- These sandbox output boundary fixtures use fixed command-count expectations. */
+it.each([
+  ['{"type":"line","elements":[],"extension":true}', true],
+  ["null", false],
+  ["[]", false],
+  ['"text"', false],
+  ["false", false],
+  ["42", false],
+  ["{", false],
+] as const)(
+  "chart envelope %s is accepted only when it is an object",
+  // oxlint-disable-next-line oxc/no-async-await -- Await the mocked sandbox command lifecycle for each wire-envelope fixture.
+  async (chart, accepted): Promise<void> => {
+    mocks.runCommand.mockReset();
+    mocks.runCommand
+      .mockResolvedValueOnce({ exitCode: 0 })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stderr: (): string => "",
+        stdout: (): string =>
+          `printed output\n__CHART_JSON__:${chart}\n{"success":true}`,
+      })
+      .mockResolvedValueOnce({ exitCode: 1 });
+    const result = await executePythonInSandbox({
+      code: "print('output')",
+      log: pino({ level: "silent" }),
+      requestId: "chart-envelope",
+      sandbox: await Sandbox.create(),
+    });
+    expect(result.message).toBe("printed output");
+    expect(result.chart).toEqual(
+      // oxlint-disable-next-line no-ternary -- Compare each fixture with its success/error wire result without evaluating the unused branch.
+      accepted ? { elements: [], extension: true, type: "line" } : ""
+    );
+    // oxlint-disable-next-line no-ternary -- The expected command count follows the fixture success/error branch.
+    expect(mocks.runCommand).toHaveBeenCalledTimes(accepted ? 2 : 3);
+  }
+);
+/* oxlint-enable no-magic-numbers */

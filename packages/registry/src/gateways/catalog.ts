@@ -36,6 +36,10 @@ export const builtInGateways = Object.entries(gatewayMetadata).map(
       dependencies: [
         `${gatewayPackage.name}@${gatewayPackage.version}`,
         `${metadata.dependency}@${metadata.version}`,
+        // oxlint-disable-next-line no-ternary -- Select only the adapters that directly import zod; preserve their explicit installation dependencies.
+        ...(id === "openai" || id === "openai-compatible" || id === "openrouter"
+          ? ["zod"]
+          : []),
       ],
       files: [
         {

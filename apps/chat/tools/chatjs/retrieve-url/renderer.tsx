@@ -84,24 +84,21 @@ const ErrorState = ({
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const getItemProperty = <T,>(
+const getItemProperty = (
   item: unknown,
   property: string,
-  defaultValue: T
-): T => {
+  defaultValue: string
+): string => {
   if (item && typeof item === "object" && property in item) {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    const value = (item as Record<string, unknown>)[property];
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-    return (value as T) ?? defaultValue;
+    const value: unknown = Reflect.get(item, property);
+    // oxlint-disable-next-line no-ternary -- Keep the property fallback lazy; prefer-ternary rejects the if/else replacement.
+    return typeof value === "string" ? value : defaultValue;
   }
   return defaultValue;
 };
 /* oxlint-disable react/jsx-no-literals -- RetrievedContentHeader renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable eslint/id-length */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
@@ -237,16 +234,20 @@ const getErrorMessage = (
   firstItem: unknown
 ): string | null => {
   const topLevelError =
-    // oxlint-disable-next-line no-ternary -- Keep topLevelError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    result && typeof result === "object" && "error" in result
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (result.error as string)
+    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
+    result &&
+    typeof result === "object" &&
+    "error" in result &&
+    typeof result.error === "string"
+      ? result.error
       : undefined;
   const firstItemError =
-    // oxlint-disable-next-line no-ternary -- Keep firstItemError as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    firstItem && typeof firstItem === "object" && "error" in firstItem
-      ? // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Retrieved provider and saved document payloads may follow older shapes; preserve the existing fallback extraction until a versioned payload migration is defined.
-        (firstItem.error as string)
+    // oxlint-disable-next-line no-ternary -- Keep error extraction lazy; the pinned unicorn/prefer-ternary rule rejects if/else replacement.
+    firstItem &&
+    typeof firstItem === "object" &&
+    "error" in firstItem &&
+    typeof firstItem.error === "string"
+      ? firstItem.error
       : undefined;
 
   return topLevelError ?? firstItemError ?? null;

@@ -21,13 +21,6 @@ import type { InstalledGateway } from "./gateways/registry";
 /* oxlint-enable sort-imports */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): ActiveGatewayModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-type ActiveGatewayModelId = Parameters<
-  InstalledGateway["createLanguageModel"]
->[0];
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): ActiveGatewayImageModelId uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  */
 type ActiveGatewayImageModelId = Parameters<
@@ -82,9 +75,8 @@ const getImageModel = (modelId: ActiveGatewayImageModelId): ImageModel => {
   return imageModel;
 };
 // Get a multimodal language model that can generate images via generateText
-const getMultimodalImageModel = (
-  modelId: ActiveGatewayModelId
-): LanguageModelV4 => getActiveGateway().createLanguageModel(modelId);
+const getMultimodalImageModel = (modelId: string): LanguageModelV4 =>
+  getActiveGateway().createLanguageModel(modelId);
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getModelProviderOptions's awaited sequencing and rejected-Promise behavior. */
 // Model aliases removed - use getLanguageModel directly with specific model IDs

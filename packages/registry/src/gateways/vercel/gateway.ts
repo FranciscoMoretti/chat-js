@@ -49,7 +49,12 @@ class VercelGateway
 {
   public readonly type = "vercel" as const;
 
-  public createLanguageModel(modelId: VercelLanguageModelId): LanguageModelV4 {
+  public createLanguageModel(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- SDK custom model IDs use string & {}; this is an immutable string. Readonly maps that intersection into a non-string object rejected by the provider factory.
+    modelId: Parameters<
+      (typeof gateway)["languageModel"]
+    >[typeof MODEL_ID_PARAMETER_INDEX]
+  ): LanguageModelV4 {
     return this.getProvider()(modelId);
   }
 
