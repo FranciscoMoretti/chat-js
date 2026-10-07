@@ -199,7 +199,7 @@ export class MCPClient {
         initializationOptions: { signal },
         transport: {
           authProvider: oauthProvider,
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- SDK FetchFunction requires unused Bun.preconnect, making this cast necessary; Node considers the same callable cast redundant. Transport invokes only guarded fetch; exposing native preconnect would bypass network policy.
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
           fetch: oauthProvider.fetch as typeof globalThis.fetch,
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
@@ -314,7 +314,7 @@ export class MCPClient {
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(oauthProvider, {
       authorizationCode: code,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- SDK FetchFunction requires unused Bun.preconnect, making this cast necessary; Node considers the same callable cast redundant. OAuth invokes only guarded fetch; exposing native preconnect would bypass network policy.
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
       fetchFn: oauthProvider.fetch as typeof globalThis.fetch,
       serverUrl: this.serverConfig.url,
     });
