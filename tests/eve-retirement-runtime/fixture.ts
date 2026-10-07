@@ -10,6 +10,7 @@ import { z } from "zod";
 export const createRuntimeFixture = async (
   fixtureSourceDirectory: string,
   experimentalInstallation?: {
+    readonly distribution?: "production-fork";
     readonly nodeModules: string;
     readonly provenance: string;
   }
@@ -44,9 +45,14 @@ export const createRuntimeFixture = async (
   const installedPackage: unknown = await Bun.file(
     path.join(nodeModules, "eve/package.json")
   ).json();
-  z.object({ name: z.literal("eve"), version: z.literal("0.71.3") }).parse(
-    installedPackage
-  );
+  const distribution =
+    experimentalInstallation?.distribution === "production-fork"
+      ? { name: "@chat-js/eve", version: "0.61.0-chatjs.0" }
+      : { name: "eve", version: "0.71.3" };
+  z.object({
+    name: z.literal(distribution.name),
+    version: z.literal(distribution.version),
+  }).parse(installedPackage);
   const installedAi: unknown = await Bun.file(
     path.join(nodeModules, "ai/package.json")
   ).json();
@@ -59,13 +65,24 @@ export const createRuntimeFixture = async (
   await symlink(nodeModules, path.join(fixture, "node_modules"));
   await writeFile(
     path.join(fixture, "package.json"),
-    '{"name":"retirement-fixture","type":"module","private":true,"dependencies":{"eve":"0.71.3","ai":"7.0.106"}}\n'
+    JSON.stringify({
+      dependencies: {
+        ai: "7.0.106",
+        eve:
+          distribution.name === "eve"
+            ? distribution.version
+            : `npm:${distribution.name}@${distribution.version}`,
+      },
+      name: "retirement-fixture",
+      private: true,
+      type: "module",
+    })
   );
   await writeFile(
     path.join(fixture, "runtime-provenance.json"),
     JSON.stringify({
       ai: "7.0.106",
-      eve: "0.71.3",
+      eve: distribution.version,
       mode: experimentalInstallation ? "experimental" : "published",
       node: versionText.trim(),
       nodeModules,

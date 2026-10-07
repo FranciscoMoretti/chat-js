@@ -41,10 +41,14 @@ const until = async <TValue>(
 const createPersistentRuntime = async (
   source: string,
   experimentalInstallation?: {
+    readonly distribution?: "production-fork";
     readonly nodeModules: string;
     readonly provenance: string;
   },
-  recovery: { readonly inlineOwnershipLeaseSeconds?: number } = {}
+  recovery: {
+    readonly inlineOwnershipLeaseSeconds?: number;
+    readonly world?: "local" | "postgres";
+  } = {}
 ) => {
   const fixture = await createRuntimeFixture(source, experimentalInstallation);
   const maximumLeaseSeconds = 900;
@@ -70,6 +74,7 @@ const createPersistentRuntime = async (
     JSON.stringify({
       inlineOwnershipLeaseSeconds:
         inlineOwnershipLeaseSeconds ?? "runtime-default-860",
+      world: recovery.world ?? "local",
     })
   );
   const reservation = Bun.serve({
@@ -128,7 +133,7 @@ const createPersistentRuntime = async (
         "127.0.0.1",
         "--port",
         String(port),
-        "--resume",
+        ...(recovery.world === "postgres" ? [] : ["--resume"]),
       ],
       {
         cwd: fixture.directory,

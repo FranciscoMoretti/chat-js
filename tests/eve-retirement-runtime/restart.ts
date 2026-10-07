@@ -8,19 +8,42 @@ import { Client } from "eve/client";
 import { z } from "zod";
 
 import { createPersistentRuntime } from "./persistent-runtime";
+import { preparePostgresFixture } from "./postgres-fixture";
 
 const crashAtCallbacks = process.argv.includes("--callbacks");
 const swapConnector = process.argv.includes("--swap-connector");
 const useDefaultLease = process.argv.includes("--default-lease");
 const crashTestLeaseSeconds = 1;
+const postgresFlag = process.argv.indexOf("--postgres");
+const absentFlag = -1;
+const argumentOffset = 1;
+/* oxlint-disable no-undefined -- Absent Postgres preparation retains the published local-world launcher defaults. */
+const postgres =
+  postgresFlag === absentFlag
+    ? undefined
+    : await preparePostgresFixture({
+        handoff: z.string().parse(process.argv[postgresFlag + argumentOffset]),
+        lane: "lane_d",
+        nodeModules: path.join(import.meta.dir, "node_modules"),
+        source: path.join(import.meta.dir, "restart-fixture"),
+      });
 const runtime = await createPersistentRuntime(
-  "restart-fixture",
-  // oxlint-disable-next-line no-undefined -- The optional experimental installation is absent: this probe always uses the published package.
-  undefined,
-  crashAtCallbacks && !useDefaultLease
-    ? { inlineOwnershipLeaseSeconds: crashTestLeaseSeconds }
-    : {}
+  postgres?.source ?? "restart-fixture",
+  postgres === undefined
+    ? undefined
+    : {
+        nodeModules: postgres.nodeModules,
+        provenance:
+          "Published eve@0.71.3 with ChatJS patched PostgreSQL beta.40",
+      },
+  {
+    ...(crashAtCallbacks && !useDefaultLease
+      ? { inlineOwnershipLeaseSeconds: crashTestLeaseSeconds }
+      : {}),
+    world: postgres === undefined ? "local" : "postgres",
+  }
 );
+/* oxlint-enable no-undefined */
 const processMarker = z.object({ pid: z.number().int().positive() });
 const noSettledProcess = 0;
 let settledPid = noSettledProcess;
