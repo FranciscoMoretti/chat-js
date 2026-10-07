@@ -119,6 +119,27 @@ const replaceInFile = async (
   await writeFile(filePath, content);
 };
 /* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve normalizeGatewaySnapshotCommands' awaited sequencing and rejected-Promise behavior. */
+const normalizeGatewaySnapshotCommands = async (
+  destination: string,
+  packageManager: PackageManager
+): Promise<void> => {
+  await replaceInFile(
+    pathModule.join(destination, "scripts", "environment-validation-report.ts"),
+    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
+  );
+  await replaceInFile(
+    pathModule.join(destination, "scripts", "gateway-snapshot-warning.test.ts"),
+    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
+  );
+  await replaceInFile(
+    pathModule.join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
+    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
+  );
+};
+/* oxlint-enable oxc/no-async-await */
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resetInstallableTools's awaited sequencing and rejected-Promise behavior. */
 const resetInstallableTools = async (destination: string): Promise<void> => {
   const toolsDir = pathModule.join(destination, "tools", "chatjs");
@@ -296,10 +317,7 @@ const normalizeChatAppFiles = async (
     ["bun fetch:models", runScript(packageManager, "fetch:models")],
   ]);
 
-  await replaceInFile(
-    pathModule.join(destination, "lib", "ai", "gateways", "fallback-models.ts"),
-    [["bun fetch:models", runScript(packageManager, "fetch:models")]]
-  );
+  await normalizeGatewaySnapshotCommands(destination, packageManager);
 
   await replaceInFile(
     pathModule.join(destination, "scripts", "worktree-setup.sh"),

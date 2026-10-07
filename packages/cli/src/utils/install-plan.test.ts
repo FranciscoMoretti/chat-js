@@ -279,8 +279,7 @@ test.each(["registration", "finalization"] as const)(
         tools.map((tool: { readonly id: string }): string => tool.id)
       ).toEqual(["second"]);
     } finally {
-      // oxlint-disable-next-line typescript/no-floating-promises -- The test intentionally starts this operation before inspecting intermediate state; its completion is controlled by the surrounding fixture.
-      registry.stop(true);
+      await registry.stop(true);
     }
   },
   30_000

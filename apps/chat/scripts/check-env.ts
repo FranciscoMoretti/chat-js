@@ -46,6 +46,7 @@ import { installedToolNames } from "@/tools/chatjs/installed-features";
 
 /* oxlint-disable sort-imports -- Pinned Oxfmt places this relative import after alias imports, while sort-imports requires multiple named bindings before single-binding imports. */
 import {
+  formatGatewaySnapshotWarning,
   reportEnvironmentFailure,
   reportEnvironmentSuccess,
 } from "./environment-validation-report";
@@ -254,11 +255,11 @@ const validateBaseUrl = (
  * unicorn/no-null (#570): checkGatewaySnapshot preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
  */
 const checkGatewaySnapshot = (): string | null => {
-  if (config.ai.gateway === generatedForGateway) {
+  const configuredGateway: string = config.ai.gateway;
+  if (configuredGateway === generatedForGateway) {
     return null;
   }
-  // oxlint-disable-next-line typescript/restrict-template-expressions -- #608: Matching configured/generated gateway literals narrow this mismatch branch to never; keep its diagnostic for scaffolded configurations with a stale model snapshot.
-  return `models.generated.ts was built for "${generatedForGateway}" but config uses "${config.ai.gateway}". Run \`bun fetch:models\` to update the fallback snapshot.`;
+  return formatGatewaySnapshotWarning(generatedForGateway, configuredGateway);
 };
 /* oxlint-enable unicorn/no-null */
 

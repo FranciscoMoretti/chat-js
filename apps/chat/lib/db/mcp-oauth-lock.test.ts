@@ -45,16 +45,15 @@ it("cancellation after lock acquisition waits for the active refresh to finish a
     controller.signal
   );
   let settled = false;
+  const markSettled = (): void => {
+    settled = true;
+  };
   const rejected = expect(pending).rejects.toThrow("cancelled");
   pending
-    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- Observe settlement without awaiting or adding a value; the test must inspect the still-pending refresh.
-    .then(() => {
-      settled = true;
-    })
+    // oxlint-disable-next-line promise/prefer-await-to-then -- Observe settlement without awaiting; the test must inspect the still-pending refresh.
+    .then(markSettled)
     // oxlint-disable-next-line promise/prefer-await-to-then -- Observe rejection without awaiting the refresh; intermediate settlement is the behavior under test.
-    .catch(() => {
-      settled = true;
-    });
+    .catch(markSettled);
   await vi.waitFor(() => expect(refresh).toHaveBeenCalledOnce());
   controller.abort(new Error("cancelled"));
   await Promise.resolve();

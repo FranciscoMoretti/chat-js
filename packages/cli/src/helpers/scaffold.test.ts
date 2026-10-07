@@ -38,6 +38,7 @@ import {
 /* oxlint-enable sort-imports */
 
 const tempDirs: string[] = [];
+const SUCCESS_EXIT_CODE = 0;
 /* oxlint-disable node/no-process-env -- Read configuration at this server or installer boundary so callers retain the documented environment-variable behavior. */
 const originalUserAgent = process.env.npm_config_user_agent;
 /* oxlint-enable node/no-process-env */
@@ -53,6 +54,80 @@ const makeTempDir = (name: string): string => {
 
 const getCliPackageRoot = (): string =>
   pathModule.resolve(import.meta.dirname, "../..");
+
+/* oxlint-disable oxc/no-async-await -- Await the generated package manager process and collect its output before checking the exit status. */
+const runGeneratedPackageManagerCommand = async (
+  command: readonly string[],
+  destination: string,
+  packageManager: "bun" | "npm"
+): Promise<void> => {
+  const process = Bun.spawn([...command], {
+    cwd: destination,
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    process.exited,
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
+  ]);
+  if (exitCode !== SUCCESS_EXIT_CODE) {
+    throw new Error(
+      `Generated ${packageManager} gateway warning test failed:\n${stdout}\n${stderr}`
+    );
+  }
+};
+/* oxlint-enable oxc/no-async-await */
+
+/* oxlint-disable oxc/no-async-await -- The generated app must finish scaffolding and dependency-link setup before its native package-manager test command runs. */
+const runGeneratedGatewaySnapshotWarningTest = async (
+  destination: string,
+  packageManager: "bun" | "npm"
+): Promise<void> => {
+  await symlink(
+    pathModule.resolve(
+      getCliPackageRoot(),
+      "../..",
+      "apps",
+      "chat",
+      "node_modules"
+    ),
+    pathModule.join(destination, "node_modules"),
+    "dir"
+  );
+
+  const generatedTestPath = pathModule.join(
+    destination,
+    "scripts",
+    "gateway-snapshot-warning.test.ts"
+  );
+  const generatedTest = await readFile(generatedTestPath, "utf-8");
+  const packageManagerConfig = {
+    bun: {
+      command: [
+        "bun",
+        "run",
+        "test:unit",
+        "scripts/gateway-snapshot-warning.test.ts",
+      ],
+      expectedCommand: "bun run fetch:models",
+    },
+    npm: {
+      command: [
+        "npm",
+        "run",
+        "test:unit",
+        "--",
+        "scripts/gateway-snapshot-warning.test.ts",
+      ],
+      expectedCommand: "npm run fetch:models",
+    },
+  }[packageManager];
+  const { command, expectedCommand } = packageManagerConfig;
+  expect(generatedTest).toContain(expectedCommand);
+  await runGeneratedPackageManagerCommand(command, destination, packageManager);
+};
+/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterEach's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
@@ -444,10 +519,15 @@ describe("scaffoldFromTemplate", (): void => {
     ).toContain('command: "npm run dev"');
     expect(
       await readFile(
-        pathModule.join(destination, "scripts", "check-env.ts"),
+        pathModule.join(
+          destination,
+          "scripts",
+          "environment-validation-report.ts"
+        ),
         "utf-8"
       )
     ).toContain("npm run fetch:models");
+    await runGeneratedGatewaySnapshotWarningTest(destination, "npm");
     expect(
       await readFile(
         pathModule.join(
@@ -482,6 +562,23 @@ describe("scaffoldFromTemplate", (): void => {
       )
     ).toEqual([]);
     expect(packageJson.scripts["db:migrate"]).toBe("tsx lib/db/migrate.ts");
+  });
+  it("keeps Bun commands in the generated gateway snapshot warning", async (): Promise<void> => {
+    const destination = makeTempDir("chat-app-bun-gateway-warning");
+
+    await scaffoldFromTemplate(destination);
+
+    const report = await readFile(
+      pathModule.join(
+        destination,
+        "scripts",
+        "environment-validation-report.ts"
+      ),
+      "utf-8"
+    );
+    expect(report).toContain("bun run fetch:models");
+    expect(report).not.toContain("npm run fetch:models");
+    await runGeneratedGatewaySnapshotWarningTest(destination, "bun");
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
