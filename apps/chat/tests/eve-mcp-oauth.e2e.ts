@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/ai/mcp/mcp-client"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts"; "../lib/eve/mcp-tools" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
@@ -57,9 +56,10 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
     );
     await page.goto("/api/dev-login");
     ({ origin } = new URL(page.url()));
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const { user: owner } = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
       .values({ credits: 1000, userId: owner.id })
@@ -186,15 +186,13 @@ test("MCP OAuth callback persists credentials for fresh Eve clients and native e
         const url = `/api/agent-conversations/${conversationId}`;
         await expect
           .poll(
-            async () =>
-              [200, 404].includes(
-                (
-                  await page.request.delete(url, {
-                    headers: { origin: requestOrigin },
-                    timeout: 15_000,
-                  })
-                ).status()
-              ),
+            async () => {
+              const deletionResponse = await page.request.delete(url, {
+                headers: { origin: requestOrigin },
+                timeout: 15_000,
+              });
+              return [200, 404].includes(deletionResponse.status());
+            },
             { intervals: [1000, 2000, 5000], timeout: 60_000 }
           )
           .toBe(true);

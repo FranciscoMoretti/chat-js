@@ -8,7 +8,6 @@
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
@@ -544,7 +543,8 @@ test.each(["deleting", "deleted"] as const)(
       await getDeletingEveConversationForSession("other", bound.sessionId)
     ).toBeUndefined();
 
-    const recoveryRow = (await listEveConversations(owner)).items.find(
+    const recoveryConversations = await listEveConversations(owner);
+    const recoveryRow = recoveryConversations.items.find(
       (row) => row.conversationId === bound.id
     );
     // Pending deletion remains discoverable so its owner can resume cleanup.

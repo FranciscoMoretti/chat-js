@@ -6,7 +6,6 @@
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import type { ServerResponse } from "node:http";
 import { createServer } from "node:http";
 
@@ -178,9 +177,10 @@ test("composer connector controls persist and fence native tool execution", asyn
       route.abort()
     );
     await page.goto("/api/dev-login");
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const { user: owner } = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db.insert(mcpConnector).values({
       enabled: true,
       id,
@@ -332,9 +332,10 @@ test("native MCP executes and its saved result survives connector removal and re
       route.abort()
     );
     await page.goto("/api/dev-login");
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
       .values({ credits: 1000, userId: session.user.id })
@@ -483,9 +484,10 @@ test("stopping a pending MCP call closes its transport and permits another messa
       route.abort()
     );
     await page.goto("/api/dev-login");
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     await db
       .insert(userCredit)
       .values({ credits: 1000, userId: session.user.id })

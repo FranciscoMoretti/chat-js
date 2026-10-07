@@ -2,7 +2,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "@/lib/eve/lifecycle/postgres/eve-queue-inventory"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import postgres from "postgres";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterAll, expect, test } from "vitest";
@@ -60,6 +59,7 @@ async function job(body: unknown): Promise<string> {
 /* oxlint-disable typescript/prefer-readonly-parameter-types --
  * typescript/prefer-readonly-parameter-types (#565): test("finds retries and queued child creation without returning input payloads") accepts leftJob; rightJob; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
+// oxlint-disable-next-line eslint/max-statements -- Keep retry, queued-child, and unrelated-inventory checks in the same database fixture scenario.
 test("finds retries and queued child creation without returning input payloads", async () => {
   const root = crypto.randomUUID();
   const retry = await job({
@@ -88,14 +88,11 @@ test("finds retries and queued child creation without returning input payloads",
   );
   expect(result.unsupportedJobIds).toEqual([]);
   expect(JSON.stringify(result)).not.toContain("private-marker");
-  expect(
-    (
-      await readEvePostgresQueueInventory(query, {
-        runIds: [root],
-        taskIdentifier: "other-fixture",
-      })
-    ).jobs
-  ).toEqual([]);
+  const unrelatedInventory = await readEvePostgresQueueInventory(query, {
+    runIds: [root],
+    taskIdentifier: "other-fixture",
+  });
+  expect(unrelatedInventory.jobs).toEqual([]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

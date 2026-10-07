@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { eq, sql } from "drizzle-orm";
@@ -54,9 +53,10 @@ test("fork API preserves native history in ChatJS and rejects changed retries an
     await page.request.post("/api/chat-model", {
       data: { model: modelId },
     });
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const session = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json());
+      .parse(await authSessionResponse.json());
     // The guarded test database uses virtual application credits for paid-tool tests.
     await db
       .insert(userCredit)

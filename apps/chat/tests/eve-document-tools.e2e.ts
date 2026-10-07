@@ -3,7 +3,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/config"; "../lib/db/client"; "../lib/db/schema"; "../lib/eve/contracts" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFileSync } from "node:child_process";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -118,9 +117,10 @@ test("native documents open in ChatJS, retain versions after reload, and honor s
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
     origin: new URL(page.url()).origin,
   });
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   await db
     .insert(userCredit)
     .values({ credits: 1000, userId: session.user.id })

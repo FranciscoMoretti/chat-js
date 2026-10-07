@@ -4,7 +4,6 @@
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-documents"; "@/lib/eve/lifecycle/postgres/eve-native-purge"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
@@ -66,10 +65,10 @@ test("internal retirement settles usage after access revocation and is retryable
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json())
-    .user.id;
+    .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
     .values({ credits: 1000, userId: owner })
@@ -210,17 +209,15 @@ test("internal retirement settles usage after access revocation and is retryable
       rootId: identity.chatId,
       status: "deleted",
     });
-    expect(await (await page.request.get(deletionUrl)).json()).toEqual({
+    const deletionResponse = await page.request.get(deletionUrl);
+    expect(await deletionResponse.json()).toEqual({
       rootId: identity.chatId,
       status: "deleted",
     });
-    expect(
-      (
-        await page.request.delete(deletionUrl, {
-          headers: { origin: new URL(page.url()).origin },
-        })
-      ).status()
-    ).toBe(200);
+    const secondDeleteResponse = await page.request.delete(deletionUrl, {
+      headers: { origin: new URL(page.url()).origin },
+    });
+    expect(secondDeleteResponse.status()).toBe(200);
     const [settled] = await db
       .select()
       .from(userCredit)
@@ -258,10 +255,10 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const owner = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json())
-    .user.id;
+    .parse(await authSessionResponse.json()).user.id;
   await db
     .insert(userCredit)
     .values({ credits: 1000, userId: owner })
@@ -296,7 +293,8 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
   });
   await expect(page.getByText("Ready", { exact: true })).toBeVisible();
   const url = `/api/agent-conversations/${identity.chatId}`;
-  expect(await (await page.request.get(url)).json()).toEqual({
+  const activeResponse = await page.request.get(url);
+  expect(await activeResponse.json()).toEqual({
     rootId: identity.chatId,
     status: "active",
   });
@@ -334,13 +332,13 @@ test("sidebar deletion retires a fresh conversation and reports its durable tomb
     rootId: identity.chatId,
     status: "deleted",
   });
-  expect(await (await page.request.get(url)).json()).toEqual({
+  const retiredResponse = await page.request.get(url);
+  expect(await retiredResponse.json()).toEqual({
     rootId: identity.chatId,
     status: "deleted",
   });
-  expect(
-    (await page.request.delete(url, { headers: { origin } })).status()
-  ).toBe(200);
+  const repeated = await page.request.delete(url, { headers: { origin } });
+  expect(repeated.status()).toBe(200);
   const native = postgres(env.DATABASE_URL, { max: 1 });
   try {
     expect(

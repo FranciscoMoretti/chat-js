@@ -5,7 +5,6 @@
  */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 
@@ -542,9 +541,10 @@ test("uploaded attachment has durable authenticated ownership", async ({
 }) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const uploaded = await page.request.post("/api/files/upload", {
     multipart: {
       file: {

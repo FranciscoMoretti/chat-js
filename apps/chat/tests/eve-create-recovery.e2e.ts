@@ -6,7 +6,6 @@
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { Client } from "eve/client";
 import { z } from "zod";
@@ -40,9 +39,10 @@ test("a lost native creation reply recovers the same session from the retained c
   test.setTimeout(120_000);
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const operation = {
     message: "Reply only with creation-recovered-73.",
     modelId: "openai/gpt-4.1-mini-fast",
@@ -170,9 +170,10 @@ test("an unresolved project conversation recovers after its project is deleted",
 }, testInfo) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const response = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Recovery project fixture" } },
   });
@@ -315,9 +316,10 @@ test("a missing project preserves an unreserved request until definitive rejecti
 }, testInfo) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const projectId = crypto.randomUUID();
   const operation = {
     message: "Preserve my missing project draft",
@@ -423,9 +425,10 @@ test("a rejected project composer retains its request across project deletion", 
 }, testInfo) => {
   await page.route("https://unpkg.com/react-scan/**", (route) => route.abort());
   await page.goto("/api/dev-login");
+  const authSessionResponse = await page.request.get("/api/auth/get-session");
   const session = z
     .object({ user: z.object({ id: z.string() }) })
-    .parse(await (await page.request.get("/api/auth/get-session")).json());
+    .parse(await authSessionResponse.json());
   const created = await page.request.post("/api/trpc/project.create", {
     data: { json: { name: "Rejected creation fixture" } },
   });

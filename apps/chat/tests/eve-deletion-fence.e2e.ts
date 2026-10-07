@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -37,10 +36,10 @@ for (const state of ["deleting", "deleted"] as const) {
       route.abort()
     );
     await page.goto("/api/dev-login");
+    const authSessionResponse = await page.request.get("/api/auth/get-session");
     const owner = z
       .object({ user: z.object({ id: z.string() }) })
-      .parse(await (await page.request.get("/api/auth/get-session")).json())
-      .user.id;
+      .parse(await authSessionResponse.json()).user.id;
     const id = crypto.randomUUID();
     const operationId = crypto.randomUUID();
     const sessionId = `wrun_deleted_${id}`;
