@@ -1,0 +1,11 @@
+{
+  "extends": "../../../apps/chat/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["../../../apps/chat/*"]
+    },
+    "incremental": false
+  },
+  "include": ["./*.ts", "../../../apps/chat/next-env.d.ts"],
+  "exclude": ["node_modules"]
+}

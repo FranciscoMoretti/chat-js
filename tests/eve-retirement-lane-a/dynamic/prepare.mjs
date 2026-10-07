@@ -21,7 +21,6 @@ const sources = [
   "tools/chatjs/custom-tools.ts",
   "tools/chatjs/installed-features.ts",
   "tools/chatjs/delete-document/tool.ts",
-  "tools/chatjs/delete-document/execute.ts",
   "tools/chatjs/delete-document/availability.ts",
   "tools/chatjs/delete-document/schemas.ts",
   "lib/eve/tool-types.ts",
@@ -47,7 +46,7 @@ for (const relative of sources) {
     );
   }
   if (
-    relative.endsWith("delete-document/execute.ts") &&
+    relative.endsWith("delete-document/tool.ts") &&
     mode === "native-candidate"
   ) {
     const expected = `  if (context.approval?.responder.principalId !== scope.ownerId) {\n    throw new Error("Document deletion requires the owner's approval.");\n  }\n`;
