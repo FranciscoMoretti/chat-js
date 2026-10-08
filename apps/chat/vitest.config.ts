@@ -1,7 +1,5 @@
-import tsconfigPaths from "vite-tsconfig-paths";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { defineConfig } from "vitest/config";
-/* oxlint-enable sort-imports */
+import tsconfigPaths from "vite-tsconfig-paths";
 
 /* oxlint-disable import/no-default-export --
  * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.

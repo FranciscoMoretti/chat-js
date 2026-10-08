@@ -1,26 +1,33 @@
 /* oxlint-disable import/no-nodejs-modules -- the node:fs import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import { existsSync, statSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
+import type { Plugin } from "vitest/config";
+import { defineConfig } from "vitest/config";
+
 /* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
-import { uiverifyPlugin } from "@uiverify/vitest/plugin";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { playwright } from "@vitest/browser-playwright";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { Plugin } from "vitest/config";
-/* oxlint-enable sort-imports */
-import { defineConfig } from "vitest/config";
+import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
 /* oxlint-disable node/no-sync -- serveBuiltDocs: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
 const serveBuiltDocs = (): Plugin => ({
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Vite's native server owns the middleware registry; this plugin registers the Connect callback through its mutable use() API.
-  configureServer(server) {
+  configureServer(
+    server: Readonly<{
+      middlewares: Readonly<{
+        use: Parameters<
+          Extract<
+            NonNullable<Plugin["configureServer"]>,
+            (...args: readonly never[]) => unknown
+          >
+        >["0"]["middlewares"]["use"];
+      }>;
+    }>
+  ) {
     server.middlewares.use(
       // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The callback rewrites request.url to serve built documentation paths; Connect requires a writable incoming request.
       (request, _response: unknown, next) => {

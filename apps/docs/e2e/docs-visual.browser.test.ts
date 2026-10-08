@@ -1,7 +1,5 @@
-import { takeSnapshot } from "@uiverify/vitest";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+import { takeSnapshot } from "@uiverify/vitest";
 
 const pages = [
   { name: "threads", path: "/docs/threads" },
@@ -26,8 +24,7 @@ const pages = [
 ] as const;
 
 /* oxlint-disable eslint/max-statements -- docs-visual.browser.test.ts: Keep setup, action and assertions together so this scenario's ordering and cleanup remain reviewable. */
-/* oxlint-disable eslint/no-undefined -- docs-visual.browser.test.ts: The API distinguishes omitted/undefined values from null or a concrete result; preserve that sentinel. */
-/* oxlint-disable typescript/promise-function-async -- docs-visual.browser.test.ts: Keep synchronous validation/throws and the original promise identity; adding async changes those observable boundaries. */
+/* oxlint-disable eslint/no-undefined -- docs-visual.browser.test.ts: Promise.withResolvers needs the undefined fulfillment sentinel to represent the load event's empty result. */
 for (const page of pages) {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test(`docs ${page.name}`, async () => {
@@ -62,6 +59,7 @@ for (const page of pages) {
     document.body.innerHTML = source.body.innerHTML;
 
     await Promise.all(
+      // oxlint-disable-next-line typescript/promise-function-async -- Preserve the original catch-promise identity and synchronous decode() throw behavior; async would turn synchronous throws into rejected promises.
       [...document.images].map((image: Pick<HTMLImageElement, "decode">) =>
         image.decode().catch(() => {
           // Keep capturing the page when an image fails to decode.
@@ -73,6 +71,5 @@ for (const page of pages) {
   });
   /* oxlint-enable oxc/no-async-await */
 }
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */

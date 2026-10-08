@@ -5,9 +5,13 @@ import { defineConfig } from "@/lib/config-schema";
  */
 const isProd = process.env.NODE_ENV === "production";
 /* oxlint-enable node/no-process-env */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): config uses 10, 1000, 5, 60, 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const PRODUCTION_ANONYMOUS_CREDITS = 10;
+const DEVELOPMENT_ANONYMOUS_CREDITS = 1000;
+const PRODUCTION_REQUESTS_PER_MINUTE = 5;
+const DEVELOPMENT_REQUESTS_PER_MINUTE = 60;
+const PRODUCTION_REQUESTS_PER_MONTH = 10;
+const DEVELOPMENT_REQUESTS_PER_MONTH = 1000;
+const MAX_ATTACHMENT_BYTES = 1_048_576;
 /**
  * ChatJS Configuration
  *
@@ -69,12 +73,18 @@ const config = defineConfig({
   anonymous: {
     availableTools: [],
     // oxlint-disable-next-line no-ternary -- Keep credits as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    credits: isProd ? 10 : 1000,
+    credits: isProd
+      ? PRODUCTION_ANONYMOUS_CREDITS
+      : DEVELOPMENT_ANONYMOUS_CREDITS,
     rateLimit: {
       // oxlint-disable-next-line no-ternary -- Keep requestsPerMinute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      requestsPerMinute: isProd ? 5 : 60,
+      requestsPerMinute: isProd
+        ? PRODUCTION_REQUESTS_PER_MINUTE
+        : DEVELOPMENT_REQUESTS_PER_MINUTE,
       // oxlint-disable-next-line no-ternary -- Keep requestsPerMonth as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      requestsPerMonth: isProd ? 10 : 1000,
+      requestsPerMonth: isProd
+        ? PRODUCTION_REQUESTS_PER_MONTH
+        : DEVELOPMENT_REQUESTS_PER_MONTH,
     },
   },
   appDescription:
@@ -90,7 +100,7 @@ const config = defineConfig({
       "image/png": [".png"],
     },
     // 1MB
-    maxBytes: 1024 * 1024,
+    maxBytes: MAX_ATTACHMENT_BYTES,
     maxDimension: 2048,
   },
   authentication: {
@@ -152,9 +162,8 @@ const config = defineConfig({
     paymentProcessors: [],
   },
 });
-/* oxlint-enable no-magic-numbers */
 /* oxlint-disable import/no-default-export --
- * import/no-default-export (#526): The Next.js or tool loader consumes this default export by its default-export contract.
+ * import/no-default-export (#526): lib/config.ts imports this user-editable configuration by its existing default export; changing that module contract requires a public template migration.
  */
 export default config;
 /* oxlint-enable import/no-default-export */

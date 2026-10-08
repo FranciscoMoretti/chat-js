@@ -1,24 +1,20 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): The setup command isolates the provider CLI in a Node child process because that CLI may exit its process; this is a Node tooling boundary.
  */
-import { execFileSync } from "node:child_process";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
 import { config } from "dotenv";
-/* oxlint-enable sort-imports */
-import postgres from "postgres";
-
-import { resolveWorkflowDatabaseUrl } from "@/lib/eve/environment";
-/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
+import { execFileSync } from "node:child_process";
 import { installEvePostgresQueueFence } from "@/lib/eve/lifecycle/postgres/eve-queue-fence";
-/* oxlint-enable sort-imports */
 import { installEvePostgresResourceFence } from "@/lib/eve/lifecycle/postgres/eve-resource-fence";
-import { resolveWorkflowWorld } from "@/lib/eve/world-config";
-
-/* oxlint-disable sort-imports -- Pinned Oxfmt orders imports by module specifier, while sort-imports requires a different position by binding syntax/name; formatting the lint-sorted order restores this diagnostic. */
+import postgres from "postgres";
 import { resolveEveSetup } from "./eve-setup-config";
-/* oxlint-enable sort-imports */
+import { resolveWorkflowDatabaseUrl } from "@/lib/eve/environment";
+import { resolveWorkflowWorld } from "@/lib/eve/world-config";
 /* oxlint-enable import/no-nodejs-modules */
+
+const SETUP_MODE_ARGUMENT_INDEX = 2;
+const MAXIMUM_SETUP_ARGUMENT_COUNT = 3;
+const READINESS_CONNECTION_TIMEOUT_MILLISECONDS = 30_000;
+const NO_MISSING_TABLES = 0;
 
 config({ path: [".env.worktree.local", ".env.local"], quiet: true });
 
@@ -26,18 +22,16 @@ config({ path: [".env.worktree.local", ".env.local"], quiet: true });
  * Validate the optional setup mode before resolving configuration.
  * @returns {string | undefined} Supplied mode; absent or empty values retain the default setup path.
  */
-/* oxlint-disable no-magic-numbers -- CLI argument positions 2 and 3 distinguish the optional mode from extra arguments. */
 const readSetupMode = (): string | undefined => {
-  const [mode] = process.argv.slice(2);
+  const [mode] = process.argv.slice(SETUP_MODE_ARGUMENT_INDEX);
   if (
-    process.argv.length > 3 ||
+    process.argv.length > MAXIMUM_SETUP_ARGUMENT_COUNT ||
     (mode && !["--check", "--validate"].includes(mode))
   ) {
     throw new Error("Usage: eve-setup.ts [--check | --validate]");
   }
   return mode;
 };
-/* oxlint-enable no-magic-numbers */
 
 /**
  * Run provider migrations in a child because the provider CLI exits its process.
@@ -97,7 +91,6 @@ const prepareEveSetupContext = (): {
  * @param {string} databaseUrl Validated PostgreSQL world URL.
  * @returns {{ connection: postgres.Sql; deadline: ReturnType<typeof setTimeout> }} Client and timer owned by the caller's finally block.
  */
-/* oxlint-disable no-magic-numbers -- The readiness deadline is 30_000 milliseconds; its callback requests immediate client shutdown. */
 const openReadinessConnection = (
   databaseUrl: string
 ): {
@@ -107,10 +100,9 @@ const openReadinessConnection = (
   const connection = postgres(databaseUrl, { connect_timeout: 10, max: 1 });
   const deadline = setTimeout(() => {
     void connection.end({ timeout: 0 });
-  }, 30_000);
+  }, READINESS_CONNECTION_TIMEOUT_MILLISECONDS);
   return { connection, deadline };
 };
-/* oxlint-enable no-magic-numbers */
 
 /**
  * Build the provider and optional local lifecycle table manifest in query order.
@@ -149,8 +141,7 @@ const reportSchemaReadiness = (
   missing: readonly unknown[],
   local: boolean
 ): void => {
-  // oxlint-disable-next-line no-magic-numbers -- Any nonempty missing-table result makes the requested schema incomplete.
-  if (missing.length > 0) {
+  if (missing.length > NO_MISSING_TABLES) {
     throw new Error(
       "EVE schema is incomplete. Run eve:setup with a database role allowed to apply migrations."
     );

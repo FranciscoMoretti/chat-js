@@ -1,13 +1,12 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This executable uses node:child_process to run Bun/EVE commands and node:path to resolve the application and guest working directories.
  */
-import { spawnSync } from "node:child_process";
-/* oxlint-disable sort-imports -- Pinned Oxfmt keeps node:child_process before node:path by module specifier, while sort-imports orders the local bindings path before spawnSync. */
 import path from "node:path";
-/* oxlint-enable sort-imports */
-
 import { resolveWorkflowWorld } from "@/lib/eve/world-config";
+import { spawnSync } from "node:child_process";
 /* oxlint-enable import/no-nodejs-modules */
+
+const PROCESS_SUCCESS_STATUS = 0;
 
 /* oxlint-disable no-console --
  * no-console (#514): write the selected backend to CLI stdout before starting the compatibility check and EVE builds.
@@ -29,18 +28,13 @@ const backendCheck = spawnSync(
   }
 );
 /* oxlint-enable node/no-sync */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): spawnSync status 0 is the Node child-process success value; treat every other status, including null after a signal, as failure.
- */
-if (backendCheck.status !== 0) {
+if (backendCheck.status !== PROCESS_SUCCESS_STATUS) {
   throw new Error(
     "Workflow backend compatibility check failed. Run application migrations and verify the database backend before deploying."
   );
 }
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers, node/no-sync --
- * no-magic-numbers (#517): spawnSync status 0 is the Node child-process success value; treat every other status, including null after a signal, as failure.
+/* oxlint-disable node/no-sync --
  * node/no-sync (#538): Build the application and guest roots sequentially, inheriting each child's stdio and checking its status before advancing.
  */
 for (const root of [".", "guest"]) {
@@ -48,8 +42,8 @@ for (const root of [".", "guest"]) {
     cwd: path.resolve(process.cwd(), root),
     stdio: "inherit",
   });
-  if (result.status !== 0) {
+  if (result.status !== PROCESS_SUCCESS_STATUS) {
     throw new Error(`EVE build failed for ${root}`, { cause: result.error });
   }
 }
-/* oxlint-enable no-magic-numbers, node/no-sync */
+/* oxlint-enable node/no-sync */
