@@ -120,6 +120,16 @@ const crossRowCases = [
   },
 ];
 /* oxlint-disable oxc/no-async-await -- Await real count menu, row selection, and controlled React commits. */
+const setModelCountToTwo = async (modelName: string): Promise<void> => {
+  await page
+    .getByRole("option", { name: modelName })
+    .getByRole("button", { exact: true, name: "1×" })
+    .click();
+  await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+  await expect
+    .element(page.getByRole("menuitem", { exact: true, name: "2x" }))
+    .not.toBeInTheDocument();
+};
 /* oxlint-disable max-statements -- Keep the first model update and dependent second-row action in one native regression sequence. */
 test.each(crossRowCases)(
   "$operation on another row preserves the first model's committed count",
@@ -155,23 +165,14 @@ test.each(crossRowCases)(
     const fixture = await mount(<Fixture />);
     try {
       await page.getByTestId("model-selector").click();
-      await page
-        .getByRole("option", { name: /Primary model/u })
-        .getByRole("button", { exact: true, name: "1×" })
-        .click();
-      await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
+      await setModelCountToTwo("Primary model");
       expect(action).toHaveBeenLastCalledWith(primaryUpdate);
       const row = page.getByRole("option", { name: /Secondary model/u });
-      if (operation === "select") {
-        await row.click();
-      } else {
-        await row.getByRole("button", { exact: true, name: "1×" }).click();
-        await page.getByRole("menuitem", { exact: true, name: "2x" }).click();
-      }
+      await // oxlint-disable-next-line no-ternary -- Lazily select the tested row action; pinned unicorn/prefer-ternary rejects the two single-statement if/else branches.
+      (operation === "select"
+        ? row.click()
+        : setModelCountToTwo("Secondary model"));
       expect(action).toHaveBeenLastCalledWith(result);
-      await expect
-        .element(page.getByRole("menuitem", { exact: true, name: "2x" }))
-        .not.toBeInTheDocument();
       await takeSnapshot(`model-selector-cross-row-${operation}`);
     } finally {
       await unmount(fixture);
