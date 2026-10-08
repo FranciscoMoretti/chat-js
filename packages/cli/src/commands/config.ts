@@ -1,21 +1,13 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
-import { spawn } from "node:child_process";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { Command } from "commander";
+import type { PackageManager } from "#cli/types";
+import { handleError } from "#cli/utils/handle-error";
+import { inferPackageManager } from "#cli/utils/get-package-manager";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI observes native process or stream lifecycle events.
 import { once } from "node:events";
-/* oxlint-enable sort-imports */
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Command } from "commander";
-/* oxlint-enable sort-imports */
-
-import type { PackageManager } from "#cli/types";
-import { inferPackageManager } from "#cli/utils/get-package-manager";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { handleError } from "#cli/utils/handle-error";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI launches package-manager, Git, or command subprocesses through native process APIs.
+import { spawn } from "node:child_process";
 
 const EXIT_SUCCESS = 0;
 
@@ -68,8 +60,7 @@ export const config = new Command()
       });
 
       const stderr: string[] = [];
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading on from child.stderr; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      child.stderr?.on("data", (data): void => {
+      child.stderr.on("data", (data): void => {
         stderr.push(String(data));
       });
 

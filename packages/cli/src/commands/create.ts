@@ -1,25 +1,10 @@
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
-import { readFile, writeFile } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
-import path from "node:path";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import {
+  installPlan,
+  plannedSourceTargets,
+  recordInstalledSource,
+} from "#cli/utils/install-plan";
 import { intro, outro } from "@clack/prompts";
-/* oxlint-enable sort-imports */
-import { Command } from "commander";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { buildConfigTs } from "#cli/helpers/config-builder";
-/* oxlint-enable sort-imports */
-import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EnvVarEntry } from "#cli/helpers/env-checklist";
-/* oxlint-enable sort-imports */
-import { collectEnvChecklist } from "#cli/helpers/env-checklist";
-import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
-import { parseJsonObject } from "#cli/helpers/json-object";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
 import {
   promptAssistantTools,
   promptAuth,
@@ -35,53 +20,43 @@ import {
   promptStorage,
   promptUrlRetrievalTool,
   promptVideoGenerationTool,
-  // oxlint-disable-next-line import/max-dependencies -- The creation command composes validation, prompts, source scaffolding, registry planning, configuration writing, and process installation directly.
 } from "#cli/helpers/prompts";
-/* oxlint-enable sort-imports */
-import type { ReadonlyInput } from "#cli/helpers/readonly-input";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
+import { readFile, writeFile } from "node:fs/promises";
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
 } from "#cli/helpers/scaffold";
-/* oxlint-enable sort-imports */
-import { configureStorageProvider } from "#cli/helpers/storage-provider";
-import { resolveGateway } from "#cli/registry/gateways";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { itemAddress, listTools, readItem } from "#cli/registry/shadcn";
-/* oxlint-enable sort-imports */
-import { resolveStorage } from "#cli/registry/storage";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { Command } from "commander";
+import type { EnvVarEntry } from "#cli/helpers/env-checklist";
 import type { PackageManager } from "#cli/types";
-/* oxlint-enable sort-imports */
-import { launcherPackageManager } from "#cli/utils/get-package-manager";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ReadonlyInput } from "#cli/helpers/readonly-input";
+// oxlint-disable-next-line import/max-dependencies -- The creation command composes validation, prompts, source scaffolding, registry planning, configuration writing, and process installation directly.
+import { buildConfigTs } from "#cli/helpers/config-builder";
+import { collectEnvChecklist } from "#cli/helpers/env-checklist";
+import { configureGatewayProvider } from "#cli/helpers/gateway-provider";
+import { configureStorageProvider } from "#cli/helpers/storage-provider";
+import { ensureTargetEmpty } from "#cli/helpers/ensure-target";
 import { handleError } from "#cli/utils/handle-error";
-/* oxlint-enable sort-imports */
 import { highlighter } from "#cli/utils/highlighter";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  installPlan,
-  plannedSourceTargets,
-  recordInstalledSource,
-} from "#cli/utils/install-plan";
-/* oxlint-enable sort-imports */
-import { planInstallation } from "#cli/utils/installation-plan";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { launcherPackageManager } from "#cli/utils/get-package-manager";
 import { logger } from "#cli/utils/logger";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+import { observabilityItems } from "../../../registry/src/features/observability";
+import { parseJsonObject } from "#cli/helpers/json-object";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
+import path from "node:path";
+import { planInstallation } from "#cli/utils/installation-plan";
+import { resolveGateway } from "#cli/registry/gateways";
+import { resolveStorage } from "#cli/registry/storage";
 import { runCommand } from "#cli/utils/run-command";
 import { spinner } from "#cli/utils/spinner";
 import { syncFeatures } from "#cli/utils/sync-features";
 import { syncTools } from "#cli/utils/sync-tools";
-
 // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
 import { toolDefinitionSchema } from "../../../registry/metadata";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { observabilityItems } from "../../../registry/src/features/observability";
-/* oxlint-enable sort-imports */
+import { z } from "zod";
 
 const resolveCreateTarget = (
   targetArg: string | undefined

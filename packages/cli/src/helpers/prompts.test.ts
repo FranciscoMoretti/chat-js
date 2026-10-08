@@ -1,24 +1,17 @@
 import { expect, it } from "bun:test";
 
-import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
-
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { externalGatewayFixture } from "../../test/external-gateway";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { collectEnvChecklist } from "./env-checklist";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   promptAssistantTools,
   promptCoreFeatures,
   promptDocumentTypes,
   promptObservability,
 } from "./prompts";
+import { collectEnvChecklist } from "./env-checklist";
+/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+import { externalGatewayFixture } from "../../test/external-gateway";
+/* oxlint-enable import/no-relative-parent-imports */
+import { gatewayDefinitionSchema } from "@chat-js/gateways/definition";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve the test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 it("uses external defaults and every environment group with --yes", async () => {

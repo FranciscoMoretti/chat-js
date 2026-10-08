@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-
+import { add } from "./commands/add";
+import { config } from "./commands/config";
+import { create } from "./commands/create";
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import packageJson from "../package.json";
 /* oxlint-enable import/no-relative-parent-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { add } from "./commands/add";
-/* oxlint-enable sort-imports */
-import { config } from "./commands/config";
-import { create } from "./commands/create";
 import { sync } from "./commands/sync";
 
 const SUCCESS_EXIT_CODE = 0;

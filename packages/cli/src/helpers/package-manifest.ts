@@ -1,13 +1,9 @@
+import { isJsonObject, parseJsonObject } from "./json-object";
+import type { PackageManager } from "#cli/types";
 // oxlint-disable-next-line import/no-nodejs-modules -- The CLI normalizer determines the selected package-manager version through its native subprocess API.
 import { execFileSync } from "node:child_process";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun runtime provides temporary-directory and platform information for this filesystem operation.
 import { tmpdir } from "node:os";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { PackageManager } from "#cli/types";
-
-import { isJsonObject, parseJsonObject } from "./json-object";
-/* oxlint-enable sort-imports */
 
 type DependencyMap = Record<string, string>;
 type ScriptMap = Record<string, string>;

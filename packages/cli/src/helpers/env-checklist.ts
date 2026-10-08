@@ -9,7 +9,6 @@ import type {
   CoreFeatureKey,
   Gateway,
 } from "#cli/types";
-
 import {
   authEnvRequirements,
   builtInToolEnvRequirements,

@@ -1,4 +1,6 @@
 /* oxlint-disable import/max-dependencies -- This integration test/command composes its existing installer adapters and their canonical JSON readers explicitly. */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
+import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
 import { afterEach, describe, expect, it } from "bun:test";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture inspects project files using native filesystem APIs.
 import { existsSync, readFileSync } from "node:fs";
@@ -11,33 +13,23 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves installed packages from their declaring workspace using native module resolution.
-import { createRequire } from "node:module";
-// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
-import pathModule from "node:path";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration test supplies the same file URL exposed by Node's native ESM import.meta.
-import { pathToFileURL } from "node:url";
-// oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
-import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
-/* oxlint-enable sort-imports */
-
-import ts from "typescript";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { buildConfigTs } from "./config-builder";
-import { parseJsonObject } from "./json-object";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   scaffoldElectron,
   scaffoldFromGit,
   scaffoldFromTemplate,
 } from "./scaffold";
-/* oxlint-enable sort-imports */
+import { buildConfigTs } from "./config-builder";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves installed packages from their declaring workspace using native module resolution.
+import { createRequire } from "node:module";
+import { parseJsonObject } from "./json-object";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
+import pathModule from "node:path";
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration test supplies the same file URL exposed by Node's native ESM import.meta.
+import { pathToFileURL } from "node:url";
+// oxlint-disable-next-line import/no-nodejs-modules -- The Bun test runtime provides temporary-directory and platform information for this filesystem operation.
+import { tmpdir } from "node:os";
+import ts from "typescript";
+import { z } from "zod";
 
 const tempDirs: string[] = [];
 const SUCCESS_EXIT_CODE = 0;

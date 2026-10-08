@@ -1,6 +1,5 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { lstat, readdir } from "node:fs/promises";
-
 import { highlighter } from "#cli/utils/highlighter";
 import { logger } from "#cli/utils/logger";
 

@@ -1,5 +1,32 @@
-import type { GatewayDefinition } from "@chat-js/gateways/definition";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import {
+  AUTHENTICATION_DEFAULTS,
+  FEATURES_DEFAULTS,
+  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
+} from "../../../../apps/chat/lib/config-schema";
+import {
+  AUTH_PROVIDERS,
+  BUILT_IN_TOOL_KEYS,
+  CORE_FEATURE_KEYS,
+  DOCUMENT_TYPE_KEYS,
+  GATEWAYS,
+} from "#cli/types";
+import type {
+  AuthProvider,
+  BuiltInToolKey,
+  CoreFeatureKey,
+  DocumentTypeKey,
+  Gateway,
+} from "#cli/types";
+import {
+  INSTALLABLE_STORAGE_PROVIDERS,
+  parseStorageOptions,
+} from "./storage-provider";
+import {
+  authEnvRequirements,
+  builtInToolEnvRequirements,
+  coreFeatureEnvRequirements,
+  gatewayEnvRequirements,
+} from "./config-requirements";
 import {
   cancel,
   confirm,
@@ -8,58 +35,17 @@ import {
   select,
   text,
 } from "@clack/prompts";
-/* oxlint-enable sort-imports */
+import type { GatewayDefinition } from "@chat-js/gateways/definition";
 import type { Option } from "@clack/prompts";
 import { PROVIDER_NAMES } from "files-sdk/providers";
-
+import type { ReadonlyInput } from "./readonly-input";
 import type { RegistryIndexItem } from "#cli/registry/schema";
 import type { StorageSelection } from "#cli/registry/storage";
-import { resolveStorage } from "#cli/registry/storage";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  AUTH_PROVIDERS,
-  BUILT_IN_TOOL_KEYS,
-  CORE_FEATURE_KEYS,
-  DOCUMENT_TYPE_KEYS,
-  GATEWAYS,
-} from "#cli/types";
-/* oxlint-enable sort-imports */
-import type {
-  AuthProvider,
-  BuiltInToolKey,
-  CoreFeatureKey,
-  DocumentTypeKey,
-  Gateway,
-} from "#cli/types";
+// oxlint-disable-next-line import/no-relative-parent-imports, import/max-dependencies -- This prompt integration reads the shared registry environment schema outside the CLI package, alongside its explicit registry, UI and SDK adapters.
+import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
 import { highlighter } from "#cli/utils/highlighter";
 import { logger } from "#cli/utils/logger";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  AUTHENTICATION_DEFAULTS,
-  FEATURES_DEFAULTS,
-  // oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-} from "../../../../apps/chat/lib/config-schema";
-/* oxlint-enable sort-imports */
-// oxlint-disable-next-line import/no-relative-parent-imports -- This shared registry or app schema is outside the CLI package and is bundled into its published executable.
-import { getStorageEnvironmentRequirements } from "../../../registry/src/storage/environment";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  authEnvRequirements,
-  builtInToolEnvRequirements,
-  coreFeatureEnvRequirements,
-  gatewayEnvRequirements,
-} from "./config-requirements";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies */
-import type { ReadonlyInput } from "./readonly-input";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import {
-  INSTALLABLE_STORAGE_PROVIDERS,
-  parseStorageOptions,
-} from "./storage-provider";
-/* oxlint-enable sort-imports */
+import { resolveStorage } from "#cli/registry/storage";
 
 const AUTH_DEFAULTS: Record<AuthProvider, boolean> = AUTHENTICATION_DEFAULTS;
 
@@ -208,7 +194,7 @@ const promptGateway = async (skipPrompt: boolean): Promise<Gateway> => {
         if (typeof value !== "string" || value.trim() === "") {
           return "Enter a registry item address";
         }
-        // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+        // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
         return undefined;
       },
     });
@@ -285,7 +271,7 @@ const promptStorage = async (
           if (typeof value !== "string" || value.trim() === "") {
             return "Enter an item address";
           }
-          // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+          // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
           return undefined;
         },
       });
@@ -634,7 +620,7 @@ const promptSearchTool = async (skipPrompt: boolean): Promise<string> => {
       if (typeof value !== "string" || value.trim() === "") {
         return "Enter an address";
       }
-      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
       return undefined;
     },
   });
@@ -675,7 +661,7 @@ const promptCodeExecutionTool = async (
       if (typeof value !== "string" || value.trim() === "") {
         return "Enter an address";
       }
-      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
       return undefined;
     },
   });
@@ -709,7 +695,7 @@ const promptUrlRetrievalTool = async (skipPrompt: boolean): Promise<string> => {
       if (typeof value !== "string" || value.trim() === "") {
         return "Enter an address";
       }
-      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
       return undefined;
     },
   });
@@ -745,7 +731,7 @@ const promptImageGenerationTool = async (
       if (typeof value !== "string" || value.trim() === "") {
         return "Enter an address";
       }
-      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
       return undefined;
     },
   });
@@ -781,7 +767,7 @@ const promptVideoGenerationTool = async (
       if (typeof value !== "string" || value.trim() === "") {
         return "Enter an address";
       }
-      // oxlint-disable-next-line no-undefined -- Clack validators return undefined to accept a nonempty value.
+      // oxlint-disable-next-line no-undefined -- Clack validators return an explicit undefined acceptance value; native consistent-return rejects a bare or omitted return.
       return undefined;
     },
   });

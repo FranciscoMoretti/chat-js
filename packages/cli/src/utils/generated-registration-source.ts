@@ -1,5 +1,5 @@
 // These directives are emitted only into CLI-owned registration modules.
-// Oxfmt owns generated import ordering; only retained restrictions need exceptions.
+// The registration generator preserves its declared import order.
 const registrationRules = (line: string): string[] => {
   const rules: string[] = [];
   if (/[=]\s*undefined;\s*$/u.test(line)) {

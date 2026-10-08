@@ -1,9 +1,7 @@
 import { describe, expect, it } from "bun:test";
 
-import { coreFeatureEnvRequirements } from "./config-requirements";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { collectEnvChecklist } from "./env-checklist";
-/* oxlint-enable sort-imports */
+import { coreFeatureEnvRequirements } from "./config-requirements";
 
 const requiredMcpEncryptionKeyCount = 1;
 const mcpRequirementGroupCount = 2;

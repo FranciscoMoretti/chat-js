@@ -1,20 +1,12 @@
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI reads, writes, and validates real project files with native filesystem APIs.
 import { readFile, writeFile } from "node:fs/promises";
+import type { GatewaySelection } from "#cli/registry/gateways";
+import type { ReadonlyInput } from "./readonly-input";
+import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
 // oxlint-disable-next-line import/no-nodejs-modules -- The Node/Bun CLI resolves platform-specific project and installation paths.
 import path from "node:path";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { GatewaySelection } from "#cli/registry/gateways";
-/* oxlint-enable sort-imports */
-import { updateEnvironmentExample } from "#cli/utils/environment-example";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { generatedRegistrationSource } from "#cli/utils/generated-registration-source";
-/* oxlint-enable sort-imports */
 import { preflight } from "#cli/utils/preflight";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyInput } from "./readonly-input";
-/* oxlint-enable sort-imports */
+import { updateEnvironmentExample } from "#cli/utils/environment-example";
 
 const JSON_INDENTATION_SPACES = 2;
 const KEYS_EQUAL = 0;
