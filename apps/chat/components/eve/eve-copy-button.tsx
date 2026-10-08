@@ -24,6 +24,15 @@ import {
 /* oxlint-enable sort-imports */
 import { useDefaultModel } from "@/providers/default-model-provider";
 import { useSession } from "@/providers/session-provider";
+
+const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
+  try {
+    finishPendingEveCopy(sessionStorage, ownerId, input);
+  } catch {
+    // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
+  }
+};
+
 /* oxlint-disable react/jsx-no-literals -- EveCopyButton renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return -- EveCopyButton: init-declarations: branches initialize this value before use; an eager undefined initializer adds a second missing-value state; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including ownerId); typescript/strict-void-return: this library event API ignores the return value while the existing handler owns its async pending and error lifecycle. */
 
@@ -44,6 +53,27 @@ const EveCopyButton = ({
   const [destination, setDestination] = useState<string>();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session.data; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const ownerId = session.data?.user.id;
+
+  const showFailure = (
+    cause: unknown,
+    input: EveCopyInput | undefined,
+    accountOwnerId: string
+  ): void => {
+    if (cause instanceof EveCopyRequestError) {
+      if (!cause.retryable && input) {
+        forgetConfirmedRequest(accountOwnerId, input);
+      }
+      setRejected(!cause.retryable);
+      // oxlint-disable-next-line no-ternary -- Keep setDestination argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      setDestination(cause.retryable ? cause.conversationId : undefined);
+    }
+    setFailure(
+      // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+      cause instanceof Error
+        ? cause.message
+        : "Saving is unconfirmed. Retry the same copy."
+    );
+  };
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve save's awaited sequencing and rejected-Promise behavior. */
   const save = async (): Promise<void> => {
@@ -66,11 +96,9 @@ const EveCopyButton = ({
         );
       }
       const result = await requestEveCopy(input);
-      // oxlint-disable-next-line eslint/no-use-before-define -- Storage cleanup is kept with the successful copy transition.
       forgetConfirmedRequest(ownerId, input);
       globalThis.location.assign(`/chat/${result.id}`);
     } catch (error) {
-      // oxlint-disable-next-line eslint/no-use-before-define -- Failure handling is shared by retry and initial copy.
       showFailure(error, input, ownerId);
       // oxlint-disable-next-line react/todo -- Preserve lock cleanup while React Compiler lacks finally support.
     } finally {
@@ -79,27 +107,6 @@ const EveCopyButton = ({
     }
   };
   /* oxlint-enable oxc/no-async-await */
-  const showFailure = (
-    cause: unknown,
-    input: EveCopyInput | undefined,
-    accountOwnerId: string
-  ): void => {
-    if (cause instanceof EveCopyRequestError) {
-      if (!cause.retryable && input) {
-        // oxlint-disable-next-line eslint/no-use-before-define -- Failed copies must clear their durable request.
-        forgetConfirmedRequest(accountOwnerId, input);
-      }
-      setRejected(!cause.retryable);
-      // oxlint-disable-next-line no-ternary -- Keep setDestination argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      setDestination(cause.retryable ? cause.conversationId : undefined);
-    }
-    setFailure(
-      // oxlint-disable-next-line no-ternary -- Keep setFailure argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      cause instanceof Error
-        ? cause.message
-        : "Saving is unconfirmed. Retry the same copy."
-    );
-  };
 
   if (!(session.isPending || ownerId)) {
     return (
@@ -167,14 +174,6 @@ const EveCopyButton = ({
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-undefined, react-perf/jsx-no-new-function-as-prop, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
-
-const forgetConfirmedRequest = (ownerId: string, input: EveCopyInput): void => {
-  try {
-    finishPendingEveCopy(sessionStorage, ownerId, input);
-  } catch {
-    // A confirmed binding or rejection remains authoritative when browser storage is unavailable.
-  }
-};
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveCopyButton); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 export { EveCopyButton };

@@ -78,44 +78,42 @@ export const startLocalEveGuestCleanup = (): (() => void) | undefined => {
   let stopped = true;
   let running = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const scheduler: CleanupScheduler = {
+  const scheduler = {
     run,
+    schedule(): void {
+      if (stopped || running || timer) {
+        return;
+      }
+      timer = setTimeout(() => {
+        void scheduler.tick();
+      }, CLEANUP_INTERVAL_MS);
+      timer.unref();
+    },
     start(): void {
       stopped = false;
-      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
-      schedule();
+      scheduler.schedule();
     },
-    stop(): void {
+    stop: (): void => {
       stopped = true;
       clearTimeout(timer);
       timer = undefined;
     },
-  };
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
-  const tick = async (): Promise<void> => {
-    timer = undefined;
-    running = true;
-    try {
-      await scheduler.run();
-    } catch {
-      console.error(
-        "Local EVE guest cleanup failed; the next sweep will retry."
-      );
-    } finally {
-      running = false;
-      // oxlint-disable-next-line eslint/no-use-before-define -- The scheduler and timer callbacks are mutually recursive and invoked only after initialization.
-      schedule();
-    }
-  };
-  /* oxlint-enable oxc/no-async-await */
-  const schedule = (): void => {
-    if (stopped || running || timer) {
-      return;
-    }
-    timer = setTimeout(() => {
-      void tick();
-    }, CLEANUP_INTERVAL_MS);
-    timer.unref();
+    /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tick's awaited sequencing and rejected-Promise behavior. */
+    async tick(): Promise<void> {
+      timer = undefined;
+      running = true;
+      try {
+        await scheduler.run();
+      } catch {
+        console.error(
+          "Local EVE guest cleanup failed; the next sweep will retry."
+        );
+      } finally {
+        running = false;
+        scheduler.schedule();
+      }
+    },
+    /* oxlint-enable oxc/no-async-await */
   };
   schedulerGlobal.chatjsEveGuestCleanup = scheduler;
   scheduler.start();

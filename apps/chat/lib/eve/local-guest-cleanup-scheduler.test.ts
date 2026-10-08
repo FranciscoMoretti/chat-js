@@ -70,12 +70,17 @@ test("startup is singleton and sweeps never overlap", async () => {
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
+  const workingDirectory = vi
+    .spyOn(process, "cwd")
+    .mockReturnValue("/refreshed-worktree");
   expect(startLocalEveGuestCleanup()).toBe(stop);
+  workingDirectory.mockRestore();
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(1);
   gate.resolve(undefined);
   await vi.advanceTimersByTimeAsync(60_000);
   expect(mocks.cleanup).toHaveBeenCalledTimes(2);
+  expect(mocks.cleanup).toHaveBeenLastCalledWith("/refreshed-worktree");
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling stop; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   stop?.();
   await vi.advanceTimersByTimeAsync(120_000);
