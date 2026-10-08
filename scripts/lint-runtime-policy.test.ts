@@ -42,14 +42,16 @@ const standaloneProtected = [
 const writeFixture = async (temporary: string, file: string): Promise<void> => {
   const destination = path.join(temporary, file);
   await mkdir(path.dirname(destination), { recursive: true });
-  // oxlint-disable-next-line no-ternary -- Keep annotation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const annotation = file.endsWith("annotated-probe.ts")
-    ? "// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n"
-    : "";
-  await writeFile(
-    destination,
-    `${annotation}import fs from "node:fs";\nexport const exists = fs.existsSync;\n`
-  );
+  const source =
+    'import fs from "node:fs";\nexport const exists = fs.existsSync;\n';
+  if (file.endsWith("annotated-probe.ts")) {
+    await writeFile(
+      destination,
+      `// oxlint-disable-next-line import/no-nodejs-modules -- This runtime fixture explicitly needs the host filesystem.\n${source}`
+    );
+    return;
+  }
+  await writeFile(destination, source);
 };
 /* oxlint-enable oxc/no-async-await */
 
@@ -99,12 +101,17 @@ const assertDiagnostics = (
 ): void => {
   for (const file of files) {
     const diagnostics = output.split("\n").filter((line): boolean => {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading filename from diagnosticLocation.exec(...).groups; read groups from diagnosticLocation.exec(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      const filename = diagnosticLocation.exec(line)?.groups?.filename;
+      const match = diagnosticLocation.exec(line);
+      if (match === null) {
+        return false;
+      }
+      const { groups } = match;
+      if (!groups) {
+        return false;
+      }
+      const { filename } = groups;
       return (
-        filename === path.relative(cwd, file) ||
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading endsWith from filename; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        filename?.endsWith(`/${file}`) === true
+        filename === path.relative(cwd, file) || filename.endsWith(`/${file}`)
       );
     });
     expect(
