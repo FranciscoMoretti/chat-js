@@ -185,18 +185,20 @@ const ImageModal = ({
                 <span>Image unavailable</span>
               </output>
             ) : (
-              <Image
-                alt={imageName ?? "Expanded image"}
-                loading="eager"
-                unoptimized
-                // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
-                className="h-auto max-h-[90vh] w-auto max-w-[90vw] object-contain"
-                // Auto CSS sizing keeps unknown attachment dimensions intrinsic; zero hints reserve no artificial aspect ratio.
-                height={0}
-                width={0}
-                onError={handleImageError}
-                src={imageUrl}
-              />
+              imageUrl !== "" && (
+                <Image
+                  alt={imageName ?? "Expanded image"}
+                  loading="eager"
+                  unoptimized
+                  // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
+                  className="h-auto max-h-[90vh] w-auto max-w-[90vw] object-contain"
+                  // Auto CSS sizing keeps unknown attachment dimensions intrinsic; zero hints reserve no artificial aspect ratio.
+                  height={0}
+                  width={0}
+                  onError={handleImageError}
+                  src={imageUrl}
+                />
+              )
             )
           }
         </button>

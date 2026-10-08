@@ -4,14 +4,16 @@ import React, { act } from "react";
 /* oxlint-enable sort-imports */
 import { createRoot } from "react-dom/client";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 /* oxlint-enable sort-imports */
 
 import { MessageAttachment } from "@/components/ai-elements/message";
 // oxlint-disable-next-line sort-imports -- The formatter orders the component source paths while the rule orders Favicon before MessageAttachment.
 import { Favicon } from "@/components/favicon";
+import { ImageModal } from "@/components/image-modal";
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+// oxlint-disable-next-line sort-imports -- The formatter places the package-local GenerateImageRenderer import after app component imports.
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
@@ -171,3 +173,84 @@ test("image tool loading, success, and unavailable states", async () => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+
+/* oxlint-disable oxc/no-async-await -- Await native image loading and Radix exit cleanup before checking the console and final DOM. */
+/* oxlint-disable max-statements, max-lines-per-function -- Exercise the exported modal's ordered empty/open/close/reopen transitions together to preserve one console-error observation window. */
+const waitForAnimations = async (): Promise<void> => {
+  await act(async () => {
+    const completions: Promise<Animation>[] = [];
+    for (const animation of document.getAnimations()) {
+      completions.push(animation.finished);
+    }
+    await Promise.all(completions);
+  });
+};
+const modalImageWidth = (): number => {
+  const modalImage = document.querySelector<HTMLImageElement>(
+    '[role="dialog"] img'
+  );
+  const unloadedWidth = 0;
+  if (!modalImage) {
+    return unloadedWidth;
+  }
+  return modalImage.naturalWidth;
+};
+test("image modal empty source and close transition stay console-error free", async () => {
+  const container = document.createElement("main");
+  document.body.append(container);
+  const root = createRoot(container);
+  const consoleError = vi.spyOn(console, "error");
+  const imageUrl =
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Crect width='32' height='24' fill='blue'/%3E%3C/svg%3E";
+  const intrinsicWidth = 32;
+  const handleClose = vi.fn<() => void>();
+  const renderModal = async (isOpen: boolean, url: string): Promise<void> => {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush this controlled React prop transition before inspecting Radix presence.
+    await act(() =>
+      root.render(
+        <ImageModal
+          imageName="Empty URL fixture"
+          imageUrl={url}
+          isOpen={isOpen}
+          onClose={handleClose}
+          showActions={false}
+        />
+      )
+    );
+  };
+  try {
+    await renderModal(true, imageUrl);
+    await waitForAnimations();
+    await expect.poll(modalImageWidth).toBe(intrinsicWidth);
+    await waitForAnimations();
+    await renderModal(false, "");
+    expect(
+      document.querySelector(
+        '[data-slot="dialog-content"][data-state="closed"]'
+      )
+    ).not.toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+    await waitForAnimations();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    await renderModal(true, "");
+    await waitForAnimations();
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(document.querySelector('[role="dialog"] img')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+    await takeSnapshot("image-modal-empty-source");
+    await renderModal(true, imageUrl);
+    await waitForAnimations();
+    await expect.poll(modalImageWidth).toBe(intrinsicWidth);
+    await renderModal(false, "");
+    await waitForAnimations();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+  } finally {
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush Radix portal unmount before restoring the native console spy.
+    await act(() => root.unmount());
+    consoleError.mockRestore();
+    container.remove();
+  }
+});
+/* oxlint-enable max-statements, max-lines-per-function */
+/* oxlint-enable oxc/no-async-await */
