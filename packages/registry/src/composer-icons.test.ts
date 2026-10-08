@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-/* oxlint-disable import/no-namespace -- Inspect every named Lucide export, including aliases outside lucide.icons, to verify the complete generated catalog. */
+/* oxlint-disable import/no-namespace -- Compare the generated catalog with Lucide runtime component exports, including documented alias names outside lucide.icons. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import * as lucide from "lucide-react";
 /* oxlint-enable sort-imports */

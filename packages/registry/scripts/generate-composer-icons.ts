@@ -2,7 +2,7 @@
 import { writeFile } from "node:fs/promises";
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable import/no-namespace -- This namespace exposes a generated or compiler API whose members are selected at the call site. */
+/* oxlint-disable import/no-namespace -- Enumerate Lucide runtime component exports, including documented aliases outside lucide.icons, to generate the complete composer catalog verified by the parity test. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import * as lucide from "lucide-react";
 /* oxlint-enable sort-imports */
