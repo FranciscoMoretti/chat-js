@@ -13,15 +13,14 @@ const isAsyncIterable = <Output>(
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve describeMcpTool's awaited sequencing and rejected-Promise behavior. */
 /** Describe discovered MCP tools; approval and output policies are handled by the MCP integration.
- * @param {Readonly<Pick<Tool<TInput, TOutput>, "description" | "inputSchema" | "toModelOutput" | "type">>} definition - Native schema and policy metadata needed to describe the tool.
+ * @param {Readonly<Pick<Tool<TInput, TOutput>, "description" | "inputSchema" | "type"> & { toModelOutput?: unknown }>} definition - Native input schema and description metadata; output policies are detected and rejected without invoking or inspecting their signatures.
  * @returns {Promise<{ description: string; inputSchema: Record<string, z.infer<ReturnType<typeof z.json>>>; }>} A serializable description and validated JSON input schema.
  */
 const describeMcpTool = async <TInput, TOutput>(
   definition: Readonly<
-    Pick<
-      Tool<TInput, TOutput>,
-      "description" | "inputSchema" | "toModelOutput" | "type"
-    >
+    Pick<Tool<TInput, TOutput>, "description" | "inputSchema" | "type"> & {
+      toModelOutput?: unknown;
+    }
   >
 ): Promise<{
   description: string;
