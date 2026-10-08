@@ -12,6 +12,8 @@ import { Table, TableBody } from "@/components/ui/table";
 /* oxlint-enable sort-imports */
 import type { AppModelId } from "@/lib/ai/app-model-id";
 import { getDefaultEnabledModels } from "@/lib/ai/app-models";
+// oxlint-disable-next-line sort-imports -- Oxfmt groups this type reader import by module; sort-imports requires a different binding-name or syntax order.
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useChatModels } from "@/providers/chat-models-provider";
 import { useTRPC } from "@/trpc/react";
 
@@ -20,7 +22,7 @@ import { ModelRow } from "./model-row";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ModelsTable); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- ModelsTable renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable sort-imports */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including _err). */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth -- ModelsTable: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
 export const ModelsTable = ({
   search,
@@ -42,9 +44,11 @@ export const ModelsTable = ({
   const { mutate: setModelEnabled } = useMutation(
     trpc.settings.setModelEnabled.mutationOptions({
       onError: (
-        _err,
-        _newData,
-        context: { prev: typeof preferences } | undefined
+        _err: unknown,
+        _newData: unknown,
+        /* oxlint-disable typescript/prefer-readonly-parameter-types -- Rollback passes the original cached array to the typed React Query updater; readonly nested arrays are rejected by that native cache receiving contract. */
+        context: { readonly prev: typeof preferences } | undefined
+        /* oxlint-enable typescript/prefer-readonly-parameter-types */
       ) => {
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading prev from context; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         queryClient.setQueryData(queryKey, context?.prev);
@@ -52,28 +56,32 @@ export const ModelsTable = ({
       },
       onMutate: (newData) => {
         const prev = queryClient.getQueryData(queryKey);
-        queryClient.setQueryData(queryKey, (old: typeof preferences) => {
-          if (!old) {
-            return old;
+        queryClient.setQueryData(
+          queryKey,
+          (old: ReadonlyNativeSurface<typeof preferences>) => {
+            if (!old) {
+              return old;
+            }
+            const idx = old.findIndex(
+              (preference: { readonly modelId: string }) =>
+                preference.modelId === newData.modelId
+            );
+            if (idx !== -1) {
+              // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old[idx] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+              return old.with(idx, { ...old[idx], enabled: newData.enabled });
+            }
+            return [
+              ...old,
+              {
+                createdAt: new Date(),
+                enabled: newData.enabled,
+                modelId: newData.modelId,
+                updatedAt: new Date(),
+                userId: "",
+              },
+            ];
           }
-          const idx = old.findIndex(
-            (preference) => preference.modelId === newData.modelId
-          );
-          if (idx !== -1) {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing old[idx] own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            return old.with(idx, { ...old[idx], enabled: newData.enabled });
-          }
-          return [
-            ...old,
-            {
-              createdAt: new Date(),
-              enabled: newData.enabled,
-              modelId: newData.modelId,
-              updatedAt: new Date(),
-              userId: "",
-            },
-          ];
-        });
+        );
         return { prev };
       },
       onSuccess: () => {
@@ -99,12 +107,18 @@ export const ModelsTable = ({
   const sortedModels = useMemo(() => {
     if (initialSortRef.current === null) {
       // First render: enabled models first, then the rest
-      const enabledSet = new Set(enabledModels.map((model) => model.id));
+      const enabledSet = new Set(
+        enabledModels.map((model: { readonly id: string }) => model.id)
+      );
       const sorted = [
         ...enabledModels,
-        ...allModels.filter((model) => !enabledSet.has(model.id)),
+        ...allModels.filter(
+          (model: { readonly id: string }) => !enabledSet.has(model.id)
+        ),
       ];
-      initialSortRef.current = sorted.map((model) => model.id);
+      initialSortRef.current = sorted.map(
+        (model: { readonly id: string }) => model.id
+      );
       return sorted;
     }
     // Subsequent renders: maintain original order
@@ -121,7 +135,11 @@ export const ModelsTable = ({
     }
     const query = search.toLowerCase();
     return sortedModels.filter(
-      (model) =>
+      (model: {
+        readonly name: { readonly toLowerCase: () => string };
+        readonly owned_by: { readonly toLowerCase: () => string };
+        readonly id: { readonly toLowerCase: () => string };
+      }) =>
         model.name.toLowerCase().includes(query) ||
         // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading toLowerCase from model.owned_by; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
         model.owned_by?.toLowerCase().includes(query) ||
@@ -180,4 +198,4 @@ export const ModelsTable = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, react/jsx-max-depth */
