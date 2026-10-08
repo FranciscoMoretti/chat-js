@@ -101,7 +101,7 @@
     "tools/chatjs/generate-image/image-input.ts": "fe64a2dfd2ba6989a64ff7b9728da1d303013f8cb55e2b8ce134a9ad2e3aa1ef",
     "tools/chatjs/generate-image/image-model.ts": "f91697897c7e5ee8487a08c2a7e311c205bfb27e20c90e8cd8374b84e1dea972",
     "tools/chatjs/generate-image/image-request.ts": "4bdae6b761a9f70f6bdca809cb7321d2bb26768ab71a9ead6345fc75aacc3143",
-    "tools/chatjs/generate-image/renderer.tsx": "4df324c9438d335be041c6e8759944a5da5b94da40ab644ad0f2ae5339938ecf",
+    "tools/chatjs/generate-image/renderer.tsx": "aa7e5d83475665bdaa5a10647b51a9874c4c414f60ea73b9f66dc0483d42ca1f",
     "tools/chatjs/generate-image/schemas.ts": "162d640a70f6488f2761a9f5dca91ec84ddabcfe682e162ab0c025af6a6e8b63",
     "tools/chatjs/generate-image/tool.ts": "1aef1dd0e99b8eaac7897ebf4ad181bb4c08cf1db16ff2fb7fd857b280cc1d0f",
     "tools/chatjs/generate-video/chatjs.json": "a741668d0dfc7b64e879a3f0befc0c8bbf979e0cebaabc5b7cc2fb0f90a4f66c",

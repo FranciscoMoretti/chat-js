@@ -7,13 +7,17 @@ import { createRoot } from "react-dom/client";
 import { expect, test } from "vitest";
 /* oxlint-enable sort-imports */
 
+import { MessageAttachment } from "@/components/ai-elements/message";
+// oxlint-disable-next-line sort-imports -- The formatter orders the component source paths while the rule orders Favicon before MessageAttachment.
+import { Favicon } from "@/components/favicon";
+
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 import { GenerateImageRenderer } from "../src/tools/generate-image/renderer";
 /* oxlint-enable import/no-relative-parent-imports */
 
 /* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "../../../apps/chat/app/globals.css";
+import "../../../apps/chat/tests/visual/sandbox.css";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/no-relative-parent-imports */
@@ -43,6 +47,9 @@ test("image tool loading, success, and unavailable states", async () => {
   ctx.fillStyle = "#2563eb";
   ctx.fillRect(0, 0, 300, 256);
   const imageUrl = canvas.toDataURL();
+  const response = await fetch(imageUrl);
+  const imageBlob = await response.blob();
+  const blobUrl = URL.createObjectURL(imageBlob);
   // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
   await act(() =>
     root.render(
@@ -79,6 +86,23 @@ test("image tool loading, success, and unavailable states", async () => {
             toolCallId: "missing",
           }}
         />
+        <MessageAttachment
+          data={{
+            filename: "Data attachment",
+            mediaType: "image/png",
+            type: "file",
+            url: imageUrl,
+          }}
+        />
+        <MessageAttachment
+          data={{
+            filename: "Blob attachment",
+            mediaType: "image/png",
+            type: "file",
+            url: blobUrl,
+          }}
+        />
+        <Favicon url={imageUrl} srcSet={`${imageUrl} 2x`} width="100%" />
       </>
     )
   );
@@ -103,10 +127,41 @@ test("image tool loading, success, and unavailable states", async () => {
       throw new Error("Image actions missing");
     }
     await expect.poll(() => getComputedStyle(actions).opacity).toBe("1");
+    const successImage = container.querySelector<HTMLImageElement>(
+      'img[alt="Blue sky"]'
+    );
+    if (!successImage) {
+      throw new Error("Generated image missing");
+    }
+    expect(successImage.getAttribute("src")).toBe(imageUrl);
+    expect(successImage.loading).toBe("eager");
+    expect(successImage.getAttribute("srcset")).toBeNull();
+    const blobImage = container.querySelector<HTMLImageElement>(
+      'img[alt="Blob attachment"]'
+    );
+    if (!blobImage) {
+      throw new Error("Blob attachment missing");
+    }
+    await expect.poll(() => blobImage.naturalWidth).toBe(300);
+    expect(getComputedStyle(blobImage).objectFit).toBe("cover");
     await takeSnapshot("image-tool-states");
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Flush React's native image-preview click before inspecting the mounted dialog.
+    await act(() => button.click());
+    const modalImage = document.querySelector<HTMLImageElement>(
+      '[role="dialog"] img'
+    );
+    if (!modalImage) {
+      throw new Error("Expanded image missing");
+    }
+    await expect.poll(() => modalImage.naturalWidth).toBe(300);
+    expect(modalImage.getBoundingClientRect().width).toBe(300);
+    expect(modalImage.getBoundingClientRect().height).toBe(256);
+    expect(getComputedStyle(modalImage).objectFit).toBe("contain");
+    await takeSnapshot("image-tool-intrinsic-modal");
   } finally {
     // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- React act must be awaited to flush queued work before assertions; its synchronous overload is typed void.
     await act(() => root.unmount());
+    URL.revokeObjectURL(blobUrl);
     container.remove();
     style.remove();
   }

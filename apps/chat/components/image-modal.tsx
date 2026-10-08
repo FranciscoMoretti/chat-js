@@ -1,6 +1,7 @@
 "use client";
 
 import { CopyIcon, DownloadIcon, ImageOffIcon, XIcon } from "lucide-react";
+import Image from "next/image";
 import React from "react";
 import type { JSX as ReactJSX } from "react";
 import { toast } from "sonner";
@@ -124,7 +125,7 @@ const ImageActions = ({
 /* oxlint-disable react/jsx-no-literals -- ImageModal renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
-/* oxlint-disable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-undefined: undefined preserves the optional prop, cache, or missing-value contract; null is a different value; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships;  */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp -- ImageModal: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships;  */
 
 const ImageModal = ({
   isOpen,
@@ -184,15 +185,18 @@ const ImageModal = ({
                 <span>Image unavailable</span>
               </output>
             ) : (
-              <>
-                {/* oxlint-disable-next-line next/no-img-element -- Expanded images use arbitrary attachment URLs. */}
-                <img
-                  alt={imageName ?? "Expanded image"}
-                  className="max-h-[90vh] max-w-[90vw] object-contain"
-                  onError={handleImageError}
-                  src={imageUrl || undefined}
-                />
-              </>
+              <Image
+                alt={imageName ?? "Expanded image"}
+                loading="eager"
+                unoptimized
+                // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
+                className="h-auto max-h-[90vh] w-auto max-w-[90vw] object-contain"
+                // Auto CSS sizing keeps unknown attachment dimensions intrinsic; zero hints reserve no artificial aspect ratio.
+                height={0}
+                width={0}
+                onError={handleImageError}
+                src={imageUrl}
+              />
             )
           }
         </button>
@@ -209,6 +213,6 @@ const ImageModal = ({
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ImageActions, ImageModal); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, no-undefined, react/jsx-max-depth, react/no-multi-comp */
+/* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp */
 export { ImageActions, ImageModal };
 /* oxlint-enable import/no-named-export */

@@ -13,13 +13,16 @@ import {
   PaperclipIcon,
   XIcon,
 } from "lucide-react";
+import Image from "next/image";
 /* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- The native Next Image default import precedes React type imports in the pinned formatter order. */
 import type {
   ComponentProps,
   HTMLAttributes,
   ReactElement,
   JSX as ReactJSX,
 } from "react";
+/* oxlint-enable sort-imports */
 import React, {
   createContext,
   memo,
@@ -37,15 +40,16 @@ import { Button } from "@/components/ui/button";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ButtonGroup, ButtonGroupText } from "@/components/ui/button-group";
 /* oxlint-enable sort-imports */
+/* oxlint-disable import/max-dependencies -- Native Next Image and the readonly reader add explicit framework contracts to this existing shared message surface. */
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-/* oxlint-disable import/max-dependencies -- @/lib/utils import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { cn } from "@/lib/utils";
 /* oxlint-enable import/max-dependencies */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { cn } from "@/lib/utils";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import "streamdown/styles.css";
@@ -57,14 +61,16 @@ type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
 };
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- Message: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, from, ...props }: MessageProps). */
-
-const Message = ({
-  className,
-  from,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageProps): React.JSX.Element => (
+const Message = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    from,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(
       "group flex w-full max-w-[80%] gap-2",
@@ -76,18 +82,21 @@ const Message = ({
     {...props}
   />
 );
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageContentProps). */
+/* oxlint-disable react/no-multi-comp -- MessageContent: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageContent = ({
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageContentProps): React.JSX.Element => (
+const MessageContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageContentProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(
       "is-user:dark flex w-fit flex-col gap-2 overflow-hidden text-sm",
@@ -101,18 +110,22 @@ const MessageContent = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type MessageActionsProps = ComponentProps<"div">;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageActionsProps). */
+/* oxlint-disable react/no-multi-comp -- MessageActions: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageActions = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageActionsProps): React.JSX.Element => (
+const MessageActions = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageActionsProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn("flex items-center gap-1", className)}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward MessageActions's native div attributes, preserving caller events and accessibility props.
@@ -121,24 +134,28 @@ const MessageActions = ({
     {children}
   </div>
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 type MessageActionProps = ComponentProps<typeof Button> & {
   tooltip?: string;
   label?: string;
 };
 
-/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
+/* oxlint-disable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- MessageAction: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including label). */
 
-const MessageAction = ({
-  tooltip,
-  children,
-  label,
-  variant = "ghost",
-  size = "icon-sm",
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, children, label, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageActionProps): React.JSX.Element => {
+const MessageAction = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    tooltip,
+    children,
+    label,
+    variant = "ghost",
+    size = "icon-sm",
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes tooltip, children, label, variant, size from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageActionProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const button = (
     <Button
       size={size}
@@ -168,19 +185,19 @@ const MessageAction = ({
 
   return button;
 };
-/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
-
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- MessageBranchContextType: typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including branches: ReactElement[]). */
+/* oxlint-enable react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
 
 interface MessageBranchContextType {
   currentBranch: number;
   totalBranches: number;
   goToPrevious: () => void;
   goToNext: () => void;
-  branches: ReactElement[];
-  setBranches: (branches: ReactElement[]) => void;
+  branches: readonly ReadonlyNativeSurface<ReactElement>[];
+  setBranches: (
+    branches: readonly ReadonlyNativeSurface<ReactElement>[]
+  ) => void;
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
+
 /* oxlint-disable unicorn/no-null -- MessageBranchContext: unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const MessageBranchContext = createContext<MessageBranchContextType | null>(
@@ -205,17 +222,24 @@ type MessageBranchProps = HTMLAttributes<HTMLDivElement> & {
   onBranchChange?: (branchIndex: number) => void;
 };
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageBranch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- MessageBranch: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
-const MessageBranch = ({
-  defaultBranch = 0,
-  onBranchChange,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultBranch, onBranchChange, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchProps): ReactJSX.Element => {
+// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
+const MessageBranch = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    defaultBranch = 0,
+    onBranchChange,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes defaultBranch, onBranchChange, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   const [currentBranch, setCurrentBranch] = useState(defaultBranch);
-  const [branches, setBranches] = useState<ReactElement[]>([]);
+  const [branches, setBranches] = useState<
+    readonly ReadonlyNativeSurface<ReactElement>[]
+  >([]);
 
   const handleBranchChange = useCallback(
     (newBranch: number) => {
@@ -262,17 +286,21 @@ const MessageBranch = ({
     </MessageBranchContext.Provider>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 type MessageBranchContentProps = HTMLAttributes<HTMLDivElement>;
 
-/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types -- MessageBranchContent: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchContentProps). */
+/* oxlint-disable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types -- MessageBranchContent: typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
 
-const MessageBranchContent = ({
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchContentProps) => {
+const MessageBranchContent = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchContentProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
   const childrenArray = useMemo(() => {
     if (Array.isArray(children)) {
@@ -285,7 +313,6 @@ const MessageBranchContent = ({
   // Use useEffect to update branches when they change
   useEffect(() => {
     if (branches.length !== childrenArray.length) {
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- #594: Branch rendering retains caller-provided element keys; Children.toArray would normalize keys and change the existing branch identity contract.
       setBranches(childrenArray);
     }
   }, [childrenArray, branches, setBranches]);
@@ -307,20 +334,24 @@ const MessageBranchContent = ({
     </div>
   ));
 };
-/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable typescript/explicit-function-return-type, typescript/explicit-module-boundary-types */
 
 type MessageBranchSelectorProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
 };
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null -- MessageBranchSelector: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp, unicorn/no-null -- MessageBranchSelector: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const MessageBranchSelector = ({
-  className: _className,
-  from: _from,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchSelectorProps): React.JSX.Element | null => {
+const MessageBranchSelector = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className: _className,
+    from: _from,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, from from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchSelectorProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element | null => {
   const { totalBranches } = useMessageBranch();
 
   // Don't render if there's only one branch
@@ -338,17 +369,21 @@ const MessageBranchSelector = ({
     />
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types, unicorn/no-null */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp, unicorn/no-null */
 
 type MessageBranchPreviousProps = ComponentProps<typeof Button>;
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageBranchPrevious: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, ...props }: MessageBranchPreviousProps). */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- MessageBranchPrevious: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageBranchPrevious = ({
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchPreviousProps): React.JSX.Element => {
+const MessageBranchPrevious = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchPreviousProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { goToPrevious, totalBranches } = useMessageBranch();
 
   return (
@@ -366,18 +401,22 @@ const MessageBranchPrevious = ({
     </Button>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 type MessageBranchNextProps = ComponentProps<typeof Button>;
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageBranchNext: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types. */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- MessageBranchNext: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageBranchNext = ({
-  children,
-  className: _className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchNextProps): React.JSX.Element => {
+const MessageBranchNext = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className: _className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchNextProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { goToNext, totalBranches } = useMessageBranch();
 
   return (
@@ -395,18 +434,22 @@ const MessageBranchNext = ({
     </Button>
   );
 };
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 type MessageBranchPageProps = HTMLAttributes<HTMLSpanElement>;
 /* oxlint-disable react/jsx-no-literals -- MessageBranchPage renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageBranchPage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageBranchPageProps). */
+/* oxlint-disable no-magic-numbers, react/no-multi-comp -- MessageBranchPage: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageBranchPage = ({
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageBranchPageProps): React.JSX.Element => {
+const MessageBranchPage = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageBranchPageProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => {
   const { currentBranch, totalBranches } = useMessageBranch();
 
   return (
@@ -424,15 +467,19 @@ const MessageBranchPage = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers, react/no-multi-comp */
 
 type MessageResponseProps = ComponentProps<typeof Streamdown>;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageResponse: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, ...props }: MessageResponseProps). */
+/* oxlint-disable react/no-multi-comp -- MessageResponse: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const MessageResponse = memo(
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ({ className, ...props }: MessageResponseProps): React.JSX.Element => (
+  (
+    /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    { className, ...props }: MessageResponseProps
+    /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  ): React.JSX.Element => (
     <Streamdown
       // oxlint-disable-next-line react/forbid-component-props -- Streamdown accepts className in its styling contract; preserve this caller's layout and appearance.
       className={cn(
@@ -444,9 +491,12 @@ const MessageResponse = memo(
       {...props}
     />
   ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  (
+    prevProps: { readonly children?: string | undefined },
+    nextProps: { readonly children?: string | undefined }
+  ) => prevProps.children === nextProps.children
 );
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 MessageResponse.displayName = "MessageResponse";
 
@@ -457,15 +507,19 @@ type MessageAttachmentProps = HTMLAttributes<HTMLDivElement> & {
 };
 /* oxlint-disable react/jsx-no-literals -- MessageAttachment renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions -- MessageAttachment: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including event); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including data.filename). */
+/* oxlint-disable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions -- MessageAttachment: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including data.filename). */
 
-const MessageAttachment = ({
-  data,
-  className,
-  onRemove,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes data, className, onRemove from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageAttachmentProps): ReactJSX.Element => {
+const MessageAttachment = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    data,
+    className,
+    onRemove,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes data, className, onRemove from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageAttachmentProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): ReactJSX.Element => {
   // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: Empty text or a falsy optional value deliberately selects the fallback; nullish coalescing would preserve that empty value.
   const filename = data.filename || "";
   const mediaType =
@@ -488,9 +542,11 @@ const MessageAttachment = ({
         // oxlint-disable-next-line no-ternary -- Keep JSX child as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
         isImage ? (
           <>
-            {/* oxlint-disable-next-line next/no-img-element -- Attachment URLs may be blob or data URLs. */}
-            <img
+            <Image
               alt={filename || "attachment"}
+              loading="eager"
+              unoptimized
+              // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
               className="size-full object-cover"
               height={100}
               src={data.url}
@@ -501,7 +557,7 @@ const MessageAttachment = ({
                 aria-label="Remove attachment"
                 // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="bg-background/80 hover:bg-background absolute top-2 right-2 size-6 rounded-full p-0 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-                onClick={(event) => {
+                onClick={(event: { readonly stopPropagation: () => void }) => {
                   event.stopPropagation();
                   onRemove();
                 }}
@@ -533,7 +589,7 @@ const MessageAttachment = ({
                 aria-label="Remove attachment"
                 // oxlint-disable-next-line react/forbid-component-props -- Button accepts className in its styling contract; preserve this caller's layout and appearance.
                 className="hover:bg-accent size-6 shrink-0 rounded-full p-0 opacity-0 transition-opacity group-hover:opacity-100 [&>svg]:size-3"
-                onClick={(event) => {
+                onClick={(event: { readonly stopPropagation: () => void }) => {
                   event.stopPropagation();
                   onRemove();
                 }}
@@ -551,18 +607,22 @@ const MessageAttachment = ({
   );
 };
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, react-perf/jsx-no-new-function-as-prop, react/jsx-max-depth, react/no-multi-comp, typescript/strict-boolean-expressions */
 
 type MessageAttachmentsProps = ComponentProps<"div">;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null -- MessageAttachments: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { children, className, ...props }: MessageAttachmentsProps); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- MessageAttachments: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including children); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
-const MessageAttachments = ({
-  children,
-  className,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageAttachmentsProps): React.JSX.Element | null => {
+const MessageAttachments = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    children,
+    className,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes children, className from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageAttachmentsProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element | null => {
   if (!children) {
     return null;
   }
@@ -580,18 +640,22 @@ const MessageAttachments = ({
     </div>
   );
 };
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
 
 type MessageToolbarProps = ComponentProps<"div">;
 
-/* oxlint-disable react/no-multi-comp, typescript/prefer-readonly-parameter-types -- MessageToolbar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/prefer-readonly-parameter-types: React, query, editor, and primitive APIs provide these existing mutable prop and callback types (including { className, children, ...props }: MessageToolbarProps). */
+/* oxlint-disable react/no-multi-comp -- MessageToolbar: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
-const MessageToolbar = ({
-  className,
-  children,
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  ...props
-}: MessageToolbarProps): React.JSX.Element => (
+const MessageToolbar = (
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
+  {
+    className,
+    children,
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, children from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
+    ...props
+  }: MessageToolbarProps
+  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+): React.JSX.Element => (
   <div
     className={cn(
       "mt-4 flex w-full items-center justify-between gap-4",
@@ -604,7 +668,7 @@ const MessageToolbar = ({
   </div>
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Message, MessageAction, MessageActions, MessageAttachment, MessageAttachments, MessageBranch, MessageBranchContent, MessageBranchNext, MessageBranchPage, MessageBranchPrevious, MessageBranchSelector, MessageContent, MessageResponse, MessageToolbar); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable max-lines -- message keeps its cohesive feature and related render helpers together; splitting this module requires a separate public-boundary review. This exception covers the file-length metric. */
 export {

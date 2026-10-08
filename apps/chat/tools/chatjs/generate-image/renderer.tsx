@@ -1,6 +1,8 @@
 "use client";
 
 import { ImageOffIcon } from "lucide-react";
+// oxlint-disable-next-line sort-imports -- The formatter places the native Next Image default import after ImageOffIcon.
+import Image from "next/image";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import React, { useState } from "react";
 /* oxlint-enable sort-imports */
@@ -85,9 +87,11 @@ const GenerateImageView = ({
                   onClick={(): void => setDialogOpen(true)}
                   type="button"
                 >
-                  {/* oxlint-disable-next-line next/no-img-element -- Review debt #623: preserve provider URLs and the shared image-error fallback until Next/Image provider handling is verified. */}
-                  <img
+                  <Image
                     alt={output.prompt}
+                    loading="eager"
+                    unoptimized
+                    // oxlint-disable-next-line react/forbid-component-props -- Next Image forwards className to its native image; preserve the existing sizing and object-fit contract.
                     className="h-auto w-full max-w-full"
                     height={512}
                     onError={handleImageError}
