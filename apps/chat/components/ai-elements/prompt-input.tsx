@@ -611,9 +611,7 @@ type PromptInputSelectProps = ComponentProps<typeof Select>;
 /* oxlint-disable react/no-multi-comp -- PromptInputSelect: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 const PromptInputSelect = (
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Readonly keeps Select's native ReactNode children contract and passes TypeScript; Oxlint rejects this shallow readonly projection, while ReadonlyNativeSurface recursively rewrites ReactElement/ReactPortal children and fails the Select receiving type. */
-  props: Readonly<PromptInputSelectProps>
-  /* oxlint-enable typescript/prefer-readonly-parameter-types */
+  props: ReadonlyNativeSurface<PromptInputSelectProps>
 ): React.JSX.Element => (
   <Select
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward PromptInputSelect's Select prop contract, preserving caller options, children and callbacks.
