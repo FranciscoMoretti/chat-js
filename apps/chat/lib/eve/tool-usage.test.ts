@@ -71,7 +71,7 @@ test.each([
 ])("preserves native exceptions unchanged: %s", async (failure) => {
   await expect(
     executeWithToolUsage(context(), () => {
-      // oxlint-disable-next-line typescript/only-throw-error -- #601: This test deliberately injects a non-Error failure to verify rejection and abort handling for arbitrary provider reasons.
+      // oxlint-disable-next-line typescript/only-throw-error -- #601: Preserve the plain-object provider failure's rejection identity.
       throw failure;
     })
   ).rejects.toBe(failure);
