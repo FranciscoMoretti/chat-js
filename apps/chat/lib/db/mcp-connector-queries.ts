@@ -1,7 +1,6 @@
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
-
-import { db } from "@/lib/db/client";
 import type { McpConnector } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
 import { mcpConnector } from "@/lib/db/schema";
 /* oxlint-disable sort-imports -- Keep database/schema initialization before Pino logger initialization; their complete runtime graphs have not been proved to commute. */
 import { createModuleLogger } from "@/lib/logger";

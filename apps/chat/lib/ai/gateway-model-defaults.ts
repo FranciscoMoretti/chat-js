@@ -1,5 +1,4 @@
 import type { GatewayModelDefaults } from "@chat-js/gateways/defaults";
-
 // oxlint-disable-next-line sort-imports -- Oxfmt groups the external defaults type before the local Gateway type; both are erased and retain the generated declaration contracts.
 import type { Gateway } from "./gateway";
 

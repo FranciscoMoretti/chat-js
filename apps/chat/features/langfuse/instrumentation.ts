@@ -1,7 +1,6 @@
 import type { InstrumentationRegistration } from "@/lib/installation-contracts";
-import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
-
 import { getLangfuseEnvironment } from "./credentials";
+import { isPlaywrightTestEnvironment } from "@/lib/playwright-test-environment";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (register); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve register's awaited sequencing and rejected-Promise behavior. */
 

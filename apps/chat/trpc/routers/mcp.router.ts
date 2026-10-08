@@ -1,15 +1,14 @@
-import { TRPCError } from "@trpc/server";
-import { assertUrlIsSafeToFetch } from "guarded-fetch";
-import { z } from "zod";
-
-import { installedFeatures } from "@/features/installed";
-/* oxlint-disable sort-imports -- Keep preceding package initialization before environment validation reached through MCP setup; sorting would change which runtime graph completes before validation can throw. */
-import { requireMcpCredentials } from "@/features/mcp/setup";
-import { MCP_NAME_MAX_LENGTH, generateMcpNameId } from "@/lib/ai/mcp-name-id";
 import type {
   ConnectionStatusResult,
   DiscoveryResult,
 } from "@/lib/ai/mcp/cache";
+import { MCP_NAME_MAX_LENGTH, generateMcpNameId } from "@/lib/ai/mcp-name-id";
+import { MissingCredentialsError } from "@/lib/required-credentials";
+import { TRPCError } from "@trpc/server";
+import { assertUrlIsSafeToFetch } from "guarded-fetch";
+import { z } from "zod";
+/* oxlint-disable sort-imports -- Keep preceding package initialization before environment validation reached through MCP setup; sorting would change which runtime graph completes before validation can throw. */
+import { requireMcpCredentials } from "@/features/mcp/setup";
 /* oxlint-enable sort-imports */
 /* oxlint-disable sort-imports -- Keep MCP setup environment validation before Next cache branch selection and cache logger initialization; their runtime graphs have not been proved to commute. */
 import {
@@ -22,6 +21,8 @@ import {
   getOrCreateMcpClient,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
+import { createModuleLogger } from "@/lib/logger";
+import { installedFeatures } from "@/features/installed";
 /* oxlint-disable sort-imports -- Keep MCP client/provider lock-pool initialization before a direct MCP database-query edge; moving that edge earlier changes the first-evaluation trace of lock, database and logger modules. */
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies. */
 import {
@@ -34,8 +35,6 @@ import {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
-import { createModuleLogger } from "@/lib/logger";
-import { MissingCredentialsError } from "@/lib/required-credentials";
 /* oxlint-enable import/max-dependencies */
 /* oxlint-enable sort-imports */
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";

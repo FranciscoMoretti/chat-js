@@ -4,9 +4,8 @@ import type {
   OAuthTokens,
 } from "@ai-sdk/mcp";
 import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
-
-import { db } from "@/lib/db/client";
 import type { McpOAuthSession } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
 import { mcpOAuthSession } from "@/lib/db/schema";
 /* oxlint-disable sort-imports -- Keep database/schema initialization before Pino logger initialization; their complete runtime graphs have not been proved to commute. */
 import { createModuleLogger } from "@/lib/logger";

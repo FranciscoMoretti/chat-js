@@ -1,10 +1,10 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import postgres from "postgres";
 
 /* oxlint-disable sort-imports -- Keep pinned postgres protocol-buffer and helper initialization before Zod database-schema initialization; their complete runtime graphs have not been proved to commute. */
 import { databaseConnection } from "@/lib/db/connection";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const OAUTH_LOCK_POOL_IDLE_TIMEOUT_SECONDS = 20;
 const MAXIMUM_OAUTH_LOCK_CONNECTIONS = 2;

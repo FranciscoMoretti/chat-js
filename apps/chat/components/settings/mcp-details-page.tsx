@@ -32,11 +32,11 @@ import { SettingsPageContent } from "@/components/settings/settings-page";
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
 import { Label } from "@/components/ui/label";
+/* oxlint-enable import/max-dependencies */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-/* oxlint-enable import/max-dependencies */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useTRPC } from "@/trpc/react";
 
 const HTTP_STATUS_REGEX = /HTTP (?<status>\d{3})/u;

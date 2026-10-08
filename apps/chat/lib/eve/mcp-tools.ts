@@ -1,33 +1,30 @@
+import type { ModelMessage, Tool } from "ai";
 /* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
 import { createHash } from "node:crypto";
-
-import type { ModelMessage, Tool } from "ai";
 /* oxlint-enable import/no-nodejs-modules */
 /* oxlint-disable sort-imports -- Keep the Node crypto module initialized before the pinned AI SDK gateway, schema and identifier factories; independence of their runtime initialization is not proven. */
 import { asSchema, jsonSchema } from "ai";
+/* oxlint-enable sort-imports */
+import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 import Ajv from "ajv";
 import Ajv2020 from "ajv/dist/2020.js";
+import type { McpConnector } from "@/lib/db/schema";
 import type { ToolContext } from "eve/tools";
-
-import { installedFeatures } from "@/features/installed";
 import { requireMcpCredentials } from "@/features/mcp/setup";
-// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies.
-import { createToolId } from "@/lib/ai/mcp-name-id";
 /* oxlint-disable sort-imports -- Keep MCP setup environment validation before MCP client OAuth-provider lock-pool, database and logger initialization; these runtime graphs have not been proved to commute. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
+/* oxlint-enable sort-imports */
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies.
+import { createToolId } from "@/lib/ai/mcp-name-id";
+import { installedFeatures } from "@/features/installed";
 /* oxlint-disable sort-imports -- Keep MCP client/provider lock-pool initialization before a direct MCP database-query edge; moving that edge earlier changes the first-evaluation trace of lock, database and logger modules. */
 import {
   getMcpConnectorById,
   getMcpConnectorsByUserId,
 } from "@/lib/db/mcp-queries";
-import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 import { eveMcpResult } from "@/lib/eve/mcp-result";
-/* oxlint-enable sort-imports */
-import { createModuleLogger } from "@/lib/logger";
-
-/* oxlint-enable sort-imports */
-import { describeMcpTool, executeMcpTool } from "./mcp-adapter";
 
 // Read-only native session/approval metadata and cancellation used by MCP adapters.
 type McpToolContext = Readonly<{

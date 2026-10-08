@@ -1,9 +1,9 @@
 "use client";
 import { Camera, Paperclip } from "lucide-react";
+import type { ComposerControlProps } from "@/components/composer/control";
 import React from "react";
 import { toast } from "sonner";
 
-import type { ComposerControlProps } from "@/components/composer/control";
 /* oxlint-disable-next-line sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";

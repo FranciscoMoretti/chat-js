@@ -1,11 +1,13 @@
-/* oxlint-disable import/no-nodejs-modules -- The server provider uses native UUID generation for persisted OAuth state. */
-import { randomUUID } from "node:crypto";
-
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+import type { McpOAuthSession } from "@/lib/db/schema";
+import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-disable import/no-nodejs-modules -- The server provider uses native UUID generation for persisted OAuth state. */
+import { randomUUID } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
 import { z } from "zod";
 
@@ -13,7 +15,6 @@ import { z } from "zod";
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
 /* oxlint-enable sort-imports */
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
-import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
 /* oxlint-disable sort-imports -- The lock module creates its PostgreSQL pool before the queries barrel loads database/schema/logger initialization; sorting this group reverses those effects. */
 import {
   createOAuthSession,
@@ -25,10 +26,8 @@ import {
   setOAuthCodeVerifierOnceByState,
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
-import type { McpOAuthSession } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const log = createModuleLogger("mcp-oauth-provider");
 const refreshTokensSchema = z.object({

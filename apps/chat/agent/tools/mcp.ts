@@ -8,8 +8,8 @@ import {
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "@/lib/eve/mcp-tools";
-import type { McpToolContext } from "@/lib/eve/mcp-tools";
 import { eveTurnGuest, eveTurnTool } from "@/lib/eve/turn-tools";
+import type { McpToolContext } from "@/lib/eve/mcp-tools";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("eve.mcp-registration");

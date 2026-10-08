@@ -1,11 +1,10 @@
 "use client";
+import { Badge } from "@/components/ui/badge";
+import { Favicon } from "@/components/favicon";
 import { Globe } from "lucide-react";
 import React from "react";
-
-import { Favicon } from "@/components/favicon";
 import { getGoogleFaviconUrl } from "@/components/get-google-favicon-url";
 import { getUrlWithoutParams } from "@/components/get-url-without-params";
-import { Badge } from "@/components/ui/badge";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorHeader); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- ConnectorHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 

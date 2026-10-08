@@ -1,19 +1,20 @@
 /* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useDropzone } from "react-dropzone";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { toast } from "sonner";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { config } from "@/lib/config";
 import type {
   AttachmentUploadInput,
   AttachmentUploadIntegration,
 } from "@/lib/installation-contracts";
-/* oxlint-enable sort-imports */
+
+import React, { useEffect, useRef, useState } from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { useDropzone } from "react-dropzone";
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { toast } from "sonner";
+/* oxlint-enable sort-imports */
+
+/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 import { useSession } from "@/providers/session-provider";
 

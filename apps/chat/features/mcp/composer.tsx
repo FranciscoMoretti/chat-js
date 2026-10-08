@@ -3,14 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Plug, Settings } from "lucide-react";
+/* oxlint-enable sort-imports */
+import type { ComposerControlProps } from "@/components/composer/control";
 import React from "react";
 import { toast } from "sonner";
 
-/* oxlint-enable sort-imports */
-import type { ComposerControlProps } from "@/components/composer/control";
 /* oxlint-disable sort-imports -- Preserve InternalLink's existing module evaluation position after sonner; InternalLink captures config.appPrefix at module scope through electron-auth, and no source effect proof establishes that reordering these initializations is equivalent. */
 import { InternalLink } from "@/components/internal-link";
 /* oxlint-enable sort-imports */
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DropdownMenuCheckboxItem,
@@ -23,9 +24,9 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
-import { installedFeatures } from "@/features/installed";
 /* oxlint-enable sort-imports */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-no-literals -- ConnectorsControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */

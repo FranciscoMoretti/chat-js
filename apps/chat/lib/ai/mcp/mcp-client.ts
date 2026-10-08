@@ -1,18 +1,17 @@
-import {
-  auth,
-  experimental_createMCPClient as createMCPClient,
-} from "@ai-sdk/mcp";
 import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Tool } from "ai";
-
+import {
+  auth,
+  experimental_createMCPClient as createMCPClient,
+} from "@ai-sdk/mcp";
 import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { Tool } from "ai";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getBaseUrl } from "@/lib/url";
 
 const log = createModuleLogger("mcp-client");

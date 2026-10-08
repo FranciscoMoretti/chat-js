@@ -42,13 +42,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
-import { installedFeatures } from "@/features/installed";
 /* oxlint-enable sort-imports */
 import type { McpConnector } from "@/lib/db/schema";
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
-import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { Separator } from "@/components/ui/separator";
+import { installedFeatures } from "@/features/installed";
+import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-no-literals -- CustomConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
