@@ -1,4 +1,3 @@
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
 import { defineAgent } from "eve";
@@ -17,7 +16,9 @@ export default defineAgent({
   model: mockModel(async ({ lastUserMessage, toolResults, tools }) => {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from lastUserMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
     if (lastUserMessage?.startsWith("slow")) {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5000);
+      });
     }
     if (lastUserMessage === "fail") {
       throw new Error("Deterministic provider failure");

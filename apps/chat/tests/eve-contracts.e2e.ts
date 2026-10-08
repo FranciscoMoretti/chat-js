@@ -2,7 +2,6 @@
  * import/max-dependencies (#524): import from "drizzle-orm" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/eve-billing"; "../lib/db/eve-deletion"; "../lib/db/eve-queries"; "../lib/db/schema" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
@@ -10,16 +9,16 @@
 /* oxlint-disable unicorn/consistent-function-scoping -- One-off helpers stay beside the scenario state they coordinate. */
 import { eq, sql } from "drizzle-orm";
 import type { MessageStreamEvent } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+/* oxlint-disable eslint/sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { afterAll, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 
 import { db } from "../lib/db/client";
 import { recordEveUsage } from "../lib/db/eve-billing";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { completeEveConversationDeletion } from "../lib/db/eve-deletion";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-enable eslint/sort-imports */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   beginEveConversationDeletion,
   createEveConversation,
@@ -34,7 +33,7 @@ import {
   recordEveConversationActivity,
   updateEveConversationMetadata,
 } from "../lib/db/eve-queries";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import {
   eveChat,
   eveConversation,
@@ -43,14 +42,14 @@ import {
   userCredit,
 } from "../lib/db/schema";
 import { env } from "../lib/env";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createToolResult } from "../lib/eve/tool-result";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 import { ingestEveUsage } from "../lib/eve/usage";
 import { insertEveConversationFixtures } from "./eve-conversation-fixture";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { assertEveTestDatabase } from "./eve-test-database";
-/* oxlint-enable sort-imports */
+/* oxlint-enable eslint/sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
 
 assertEveTestDatabase(env.DATABASE_URL);
@@ -139,10 +138,9 @@ test("billing replay is atomic, rounds per turn and preserves unknown costs", as
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async */
-/* oxlint-disable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return --
+/* oxlint-disable max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return --
  * max-statements (#512): test("concurrent retry reserves once and cannot cross owners") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("concurrent retry reserves once and cannot cross owners") uses 1, 50, 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("concurrent retry reserves once and cannot cross owners") accepts result; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("concurrent retry reserves once and cannot cross owners") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  * typescript/strict-void-return (#611): test("concurrent retry reserves once and cannot cross owners")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
@@ -151,7 +149,9 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
   let starts = 0;
   const start = async (): Promise<string> => {
     starts += 1;
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
     return `test-${crypto.randomUUID()}`;
   };
   const results = await Promise.allSettled(
@@ -161,7 +161,10 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
   );
   expect(starts).toBe(1);
   expect(
-    results.filter((result) => result.status === "fulfilled").length
+    results.filter(
+      (result: Readonly<{ status: "fulfilled" | "rejected" }>) =>
+        result.status === "fulfilled"
+    ).length
   ).toBeGreaterThan(0);
   const bound = await createEveConversation(owner, operation, "hello", start);
   await expect(
@@ -178,7 +181,7 @@ test("concurrent retry reserves once and cannot cross owners", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-statements, no-magic-numbers, typescript/promise-function-async, typescript/strict-void-return */
 /* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("a lost create reply is recovered through the same native operation") uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * typescript/promise-function-async (#606): test("a lost create reply is recovered through the same native operation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -291,11 +294,10 @@ test("activity projection is owner-scoped, monotonic, and independent of metadat
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("fork reservations retain ancestry and reject changed sources on retry") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("fork reservations retain ancestry and reject changed sources on retry") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("fork reservations retain ancestry and reject changed sources on retry") uses 1, 2, 3 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("fork reservations retain ancestry and reject changed sources on retry") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("fork reservations retain ancestry and reject changed sources on retry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("fork reservations retain ancestry and reject changed sources on retry", async () => {
@@ -355,12 +357,10 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
   const family = await listEveConversationBranches(owner, nested.id);
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading rootId from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   expect(family?.rootId).toBe(root.id);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading branches from family; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(family?.branches.map((item) => item.id)).toEqual([
-    root.id,
-    branch.id,
-    nested.id,
-  ]);
+  expect(
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing absent-family short circuit and single branches read.
+    family?.branches.map((item: Readonly<{ id: string }>) => item.id)
+  ).toEqual([root.id, branch.id, nested.id]);
   expect(
     await listEveConversationBranches("not-owner", nested.id)
   ).toBeUndefined();
@@ -373,7 +373,7 @@ test("fork reservations retain ancestry and reject changed sources on retry", as
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("database constraints reject partial and cross-owner branch ancestry") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -499,11 +499,10 @@ test.each(["codeExecution", "webSearch"])(
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["deleting", "deleted"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, uses 1, 60_000 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test.each(["deleting", "deleted"] as const)("%s conversations are fenced from access, preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test.each(["deleting", "deleted"] as const)(
@@ -545,7 +544,8 @@ test.each(["deleting", "deleted"] as const)(
 
     const recoveryConversations = await listEveConversations(owner);
     const recoveryRow = recoveryConversations.items.find(
-      (row) => row.conversationId === bound.id
+      (row: Readonly<{ conversationId: string }>) =>
+        row.conversationId === bound.id
     );
     // Pending deletion remains discoverable so its owner can resume cleanup.
     // The transcript and native access above remain fenced throughout.
@@ -596,7 +596,7 @@ test.each(["deleting", "deleted"] as const)(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("deletion fences the entire owned family and is retryable") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -636,10 +636,9 @@ test("deletion fences the entire owned family and is retryable", async () => {
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, no-undefined, typescript/promise-function-async --
  * max-statements (#512): test("deletion waits for document commits and fences a concurrent fork") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-undefined (#519): test("deletion waits for document commits and fences a concurrent fork") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/prefer-readonly-parameter-types (#565): test("deletion waits for document commits and fences a concurrent fork") accepts tx; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("deletion waits for document commits and fences a concurrent fork") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("deletion waits for document commits and fences a concurrent fork", async () => {
@@ -651,6 +650,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
   );
   const locked = Promise.withResolvers<undefined>();
   const release = Promise.withResolvers<undefined>();
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.execute() to perform the native database transaction/write operation.
   const documentWrite = db.transaction(async (tx) => {
     await tx.execute(
       sql`select pg_advisory_xact_lock(hashtextextended(${`eve-document:${root.id}`}, 0))`
@@ -662,6 +662,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
   const deletion = beginEveConversationDeletion(owner, root.id);
   try {
     await vi.waitFor(async () => {
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Drizzle tx callback calls tx.execute() to perform the native database transaction/write operation.
       const available = await db.transaction(async (tx) => {
         const [row] = await tx.execute<{ locked: boolean }>(
           sql`select pg_try_advisory_xact_lock(hashtextextended(${`eve-family:${owner}`}, 0)) as locked`
@@ -693,7 +694,7 @@ test("deletion waits for document commits and fences a concurrent fork", async (
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, no-undefined, typescript/promise-function-async */
 
 /* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): test("unresolved creation prevents a partial family deletion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
@@ -911,9 +912,8 @@ test("copy reservations must be fresh roots and creation kinds are enforced by P
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
  * no-magic-numbers (#517): test("auxiliary model calls settle once per actual attempt even without a valid annot uses 2, 0, 0.005, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("auxiliary model calls settle once per actual attempt even without a valid annot accepts entry; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("auxiliary model calls settle once per actual attempt even without a valid annot preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("auxiliary model calls settle once per actual attempt even without a valid annotation", async () => {
@@ -938,12 +938,22 @@ test("auxiliary model calls settle once per actual attempt even without a valid 
     .from(eveUsage)
     .where(eq(eveUsage.sessionId, sessionId));
   expect(entries).toHaveLength(2);
-  expect(entries.reduce((sum, entry) => sum + Number(entry.costUsd), 0)).toBe(
-    0.005
-  );
-  expect(entries.reduce((sum, entry) => sum + entry.chargedCents, 0)).toBe(1);
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly costUsd: string | null }) =>
+        sum + Number(entry.costUsd),
+      0
+    )
+  ).toBe(0.005);
+  expect(
+    entries.reduce(
+      (sum, entry: { readonly chargedCents: number }) =>
+        sum + entry.chargedCents,
+      0
+    )
+  ).toBe(1);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable max-lines -- #509: This eve-contracts.e2e.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */

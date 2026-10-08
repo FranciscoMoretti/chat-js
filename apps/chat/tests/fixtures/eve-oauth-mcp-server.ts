@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash, randomUUID } from "node:crypto";; import { createServer } from "node:http";; import type { IncomingMessage, ServerResponse } from "node:http";; its Node runtime boundary deliberately permits these built-ins.
  */
-/* oxlint-disable eslint/no-promise-executor-return -- These Promise executors directly register callback APIs whose return values are ignored. */
 /* oxlint-disable eslint/no-shadow -- Nested callback names mirror the protocol fields and transaction APIs under test. */
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, timer, stream, or browser event APIs into awaited Promises. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
@@ -63,10 +62,10 @@ function pkceChallenge(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
- * typescript/prefer-readonly-parameter-types (#565): readBody accepts request: IncomingMessage; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/promise-function-async --
  * typescript/promise-function-async (#606): readBody preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- readBody changes the caller's original stream encoding with setEncoding and attaches consuming listeners; preserve this native writer and lifecycle ownership.
 function readBody(request: IncomingMessage): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let body = "";
@@ -78,12 +77,10 @@ function readBody(request: IncomingMessage): Promise<string> {
     request.on("error", reject);
   });
 }
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): sendJson accepts response: ServerResponse; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 function sendJson(
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- sendJson writes status/headers through writeHead then ends the original response; preserve this live ServerResponse writer, without a readonly method facade returning a mutable receiver.
   response: ServerResponse,
   status: number,
   value: unknown
@@ -94,16 +91,14 @@ function sendJson(
 }
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (startEveOAuthMcpServer); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve startEveOAuthMcpServer's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
-/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return --
+/* oxlint-disable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, typescript/strict-void-return --
  * jsdoc/require-returns (#535): startEveOAuthMcpServer's existing documentation covers its purpose while TypeScript carries the shape; meaningful parameter/return guarantees require authored domain documentation, not placeholder tags.
  * max-lines-per-function (#510): startEveOAuthMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): startEveOAuthMcpServer keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): startEveOAuthMcpServer uses 401, 200, 201, 400, 302, 50, 202, 404 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): startEveOAuthMcpServer uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  * typescript/explicit-function-return-type (#560): Keep startEveOAuthMcpServer's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- * typescript/prefer-readonly-parameter-types (#565): startEveOAuthMcpServer accepts response: ServerResponse; request: IncomingMessage; url: URL; params: URLSearchParams; error; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/strict-boolean-expressions (#610): startEveOAuthMcpServer intentionally keeps the existing falsy-value behavior of client?.redirectUris.includes(redirectUri); valid; token; address; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * typescript/strict-void-return (#611): startEveOAuthMcpServer's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
@@ -126,6 +121,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   };
   let origin = "";
 
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- sendJson writes status/headers through writeHead then ends the original response; preserve this live ServerResponse writer, without a readonly method facade returning a mutable receiver.
   function reject(response: ServerResponse): void {
     response
       .writeHead(401, {
@@ -147,6 +143,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     };
   }
 
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
   function sendProtectedResourceMetadata(response: ServerResponse): void {
     sendJson(response, 200, {
       authorization_servers: [origin],
@@ -155,6 +152,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     });
   }
 
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
   function sendAuthorizationServerMetadata(response: ServerResponse): void {
     sendJson(response, 200, {
       authorization_endpoint: `${origin}/authorize`,
@@ -169,7 +167,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   async function registerClient(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original IncomingMessage writer passed into readBody, which changes its stream encoding with setEncoding and attaches consuming listeners; recursive native socket projection also fails this receiver (TS2345).
     request: IncomingMessage,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): Promise<void> {
     const body = registrationInput.parse(JSON.parse(await readBody(request)));
@@ -184,7 +184,11 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     });
   }
 
-  function authorize(url: URL, response: ServerResponse): void {
+  function authorize(
+    url: { readonly searchParams: Readonly<Pick<URLSearchParams, "get">> },
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
+    response: ServerResponse
+  ): void {
     const clientId = url.searchParams.get("client_id") ?? "";
     const redirectUri = url.searchParams.get("redirect_uri") ?? "";
     const state = url.searchParams.get("state") ?? "";
@@ -213,8 +217,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   function issueAuthorizationCodeTokens(
-    params: URLSearchParams,
+    params: Readonly<Pick<URLSearchParams, "get">>,
     clientId: string,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): void {
     const code = codes.get(params.get("code") ?? "");
@@ -236,8 +241,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   function issueRefreshTokens(
-    params: URLSearchParams,
+    params: Readonly<Pick<URLSearchParams, "get">>,
     clientId: string,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): void {
     const token = params.get("refresh_token") ?? "";
@@ -252,7 +258,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   async function exchangeToken(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original IncomingMessage writer passed into readBody, which changes its stream encoding with setEncoding and attaches consuming listeners; recursive native socket projection also fails this receiver (TS2345).
     request: IncomingMessage,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): Promise<void> {
     const params = new URLSearchParams(await readBody(request));
@@ -267,7 +275,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     }
     if (params.get("grant_type") === "refresh_token") {
       // Let concurrent clients present the same old token before rotation completes.
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 50);
+      });
       issueRefreshTokens(params, clientId, response);
       return;
     }
@@ -275,6 +285,7 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   function sendMcpResult(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse,
     id: string | number,
     result: unknown
@@ -283,7 +294,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   async function handleMcp(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original IncomingMessage writer passed into readBody, which changes its stream encoding with setEncoding and attaches consuming listeners; recursive native socket projection also fails this receiver (TS2345).
     request: IncomingMessage,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): Promise<void> {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading replace from request.headers.authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
@@ -338,7 +351,9 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   }
 
   async function route(
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original IncomingMessage writer passed into readBody, which changes its stream encoding with setEncoding and attaches consuming listeners; recursive native socket projection also fails this receiver (TS2345).
     request: IncomingMessage,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
     response: ServerResponse
   ): Promise<void> {
     try {
@@ -381,21 +396,30 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
     }
   }
 
-  const server = createServer((request, response) => {
-    void (async () => {
-      try {
-        await route(request, response);
-      } catch (error) {
-        if (error instanceof Error) {
-          response.destroy(error);
-        } else {
-          response.destroy(new Error(String(error)));
+  const server = createServer(
+    (
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve the original IncomingMessage writer passed into readBody, which changes its stream encoding with setEncoding and attaches consuming listeners; recursive native socket projection also fails this receiver (TS2345).
+      request: IncomingMessage,
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This HTTP protocol writer forwards the original ServerResponse into writeHead/end/destroy operations, mutating its outgoing status, headers and lifecycle; preserve the native writer alias.
+      response
+    ) => {
+      void (async () => {
+        try {
+          await route(request, response);
+        } catch (error) {
+          if (error instanceof Error) {
+            response.destroy(error);
+          } else {
+            response.destroy(new Error(String(error)));
+          }
         }
-      }
-    })();
-  });
+      })();
+    }
+  );
 
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  await new Promise<void>((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
   const address = server.address();
   if (!address || typeof address === "string") {
     throw new Error("OAuth MCP fixture did not receive a loopback address.");
@@ -404,15 +428,15 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
   return {
     async close(): Promise<void> {
       server.closeAllConnections();
-      await new Promise<void>((resolve, reject) =>
-        server.close((error) => {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error: Readonly<Error> | undefined) => {
           if (error) {
             reject(error);
             return;
           }
           resolve();
-        })
-      );
+        });
+      });
     },
     counters,
     invalidateAccessTokens(): void {
@@ -425,6 +449,6 @@ export async function startEveOAuthMcpServer(): Promise<EveOAuthMcpServer> {
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions, typescript/strict-void-return */
+/* oxlint-enable jsdoc/require-returns, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions, typescript/strict-void-return */
 
 /* oxlint-disable max-lines -- #509: This eve-oauth-mcp-server.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
