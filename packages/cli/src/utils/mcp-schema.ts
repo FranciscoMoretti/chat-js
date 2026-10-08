@@ -53,8 +53,7 @@ const assertMcpApprovalSchema = async (cwd: string): Promise<void> => {
   ) {
     const [, columns] = connector.initializer.arguments;
     if (
-      // oxlint-disable-next-line no-undefined -- A parsed call can omit the second argument even though TypeScript indexes its NodeArray as an Expression.
-      columns !== undefined &&
+      typeof columns === "object" &&
       ts.isObjectLiteralExpression(columns) &&
       columns.properties.some(
         (property: CompilerNodeReader): boolean =>

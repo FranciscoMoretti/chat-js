@@ -238,6 +238,21 @@ test("MCP installation requires the approval schema before changing an older sca
       await Bun.file(path.join(root, "trpc/routers/mcp.router.ts")).exists()
     ).toBe(false);
     expect(await readFile(schemaFile, "utf-8")).toBe(oldSchema);
+    const missingColumnsSchema = schema.replace(
+      /const mcpConnector = pgTable\([\s\S]*?\n\);/u,
+      'const mcpConnector = pgTable("McpConnector");'
+    );
+    expect(missingColumnsSchema).not.toBe(schema);
+    await writeFile(schemaFile, missingColumnsSchema);
+    // oxlint-disable-next-line typescript/await-thenable, typescript/no-confusing-void-expression -- Await Bun's asynchronous rejection matcher before checking the missing-call-argument path.
+    await expect(
+      installPlan(root, plan, { overwrite: true }, (): Promise<void> =>
+        Promise.reject(
+          new Error("registration must not run before the schema upgrade")
+        )
+      )
+    ).rejects.toThrow("db:generate script");
+    expect(await readFile(schemaFile, "utf-8")).toBe(missingColumnsSchema);
     await writeFile(schemaFile, schema);
     await installPlan(root, plan, {}, async (): Promise<void> => {
       await syncFeatures(root, { addUi: true, expectedMcp: true });
