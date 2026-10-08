@@ -21,10 +21,10 @@ export default defineConfig({
   ],
   options: { typeAware: true },
   overrides: [
-    // #533: The Forge launcher is CommonJS; Electron declarations augment the global Window namespace.
-    // This zero-offset rule does not honor source disable directives.
+    // #721: Node executes the Forge launcher as CommonJS; ESM syntax would break it.
+    // Oxlint reports at offset zero and ignores source disable directives.
     {
-      files: ["apps/electron/scripts/run-forge.cjs", "apps/chat/electron.d.ts"],
+      files: ["apps/electron/scripts/run-forge.cjs"],
       rules: { "import/unambiguous": "off" },
     },
     {
