@@ -1,23 +1,13 @@
 "use client";
 import { format, isWithinInterval } from "date-fns";
-import React from "react";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-import { cn } from "@/lib/utils";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { weatherInput, weatherResult } from "./schemas";
-/* oxlint-enable sort-imports */
+import React from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
+import { cn } from "@/lib/utils";
+import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
@@ -187,12 +177,13 @@ const roundUp = (num: number): number => Math.ceil(num);
 
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 const WeatherCard = ({
   weatherAtLocation,
-}: ReadonlyNativeSurface<{ weatherAtLocation: WeatherAtLocation }>) => {
+}: ReadonlyNativeSurface<{
+  weatherAtLocation: WeatherAtLocation;
+}>): React.JSX.Element => {
   const currentHigh = Math.max(
     ...weatherAtLocation.hourly.temperature_2m.slice(0, 24)
   );
@@ -277,13 +268,11 @@ const WeatherCard = ({
 };
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/only-export-components */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable react/only-export-components -- Registry consumers require the colocated render helper or metadata exports; the published module is not solely a Fast Refresh boundary. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const GetWeatherView = ({
   tool,
@@ -291,7 +280,7 @@ const GetWeatherView = ({
   tool: GetWeatherRendererTool;
   messageId: string;
   isReadonly: boolean;
-}>) => {
+}>): React.JSX.Element => {
   if (tool.state !== "output-available") {
     return (
       <div className="skeleton" key={tool.toolCallId}>
@@ -308,7 +297,6 @@ const GetWeatherView = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (GetWeatherRenderer); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/only-export-components */
 /* oxlint-enable react/no-multi-comp */
 

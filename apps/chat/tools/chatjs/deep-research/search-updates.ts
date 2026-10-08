@@ -1,12 +1,9 @@
 import { Client } from "eve/client";
+import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
+import type { WebSearchUpdate } from "@/tools/platform/research-updates-schema";
 import type { WorkflowToolContext } from "eve/tools";
-
 import { getEveConnectionOptions } from "@/lib/eve/connection-options";
 import { toolOutputSchema } from "@/lib/eve/tool-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ResearchUpdateSchema } from "@/tools/platform/research-updates-schema";
-/* oxlint-enable sort-imports */
-import type { WebSearchUpdate } from "@/tools/platform/research-updates-schema";
 
 type Context = Readonly<
   Omit<WorkflowToolContext, "abortSignal"> & {

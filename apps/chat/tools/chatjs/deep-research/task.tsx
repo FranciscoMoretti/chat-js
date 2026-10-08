@@ -1,23 +1,15 @@
 import { Loader2, SearchIcon } from "lucide-react";
-import { motion } from "motion/react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-import { WebSourceBadge } from "@/components/source-badge";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
 import type { ResearchUpdate } from "@/tools/platform/research-updates-schema";
-
 import { UpdateTitle } from "./update-title";
+import { WebSourceBadge } from "@/components/source-badge";
+import { motion } from "motion/react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ResearchTask); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- ResearchTask renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -31,7 +23,7 @@ export const ResearchTask = ({
   update: ReadonlyNativeSurface<ResearchUpdate>;
   minimal: boolean;
   isRunning: boolean;
-}>) => (
+}>): React.JSX.Element => (
   <div className="group">
     {!minimal && (
       <div className="flex items-center gap-2">
@@ -126,6 +118,4 @@ export const ResearchTask = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */

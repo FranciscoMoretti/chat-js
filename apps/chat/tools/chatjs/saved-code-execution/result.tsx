@@ -1,26 +1,21 @@
 "use client";
 import type { EveMessagePart } from "eve/client";
 import React from "react";
-
-/* oxlint-disable sort-imports -- Oxfmt groups these imports by source path, while the native rule orders type and value bindings differently; the import order still preserves runtime evaluation. */
-import { toolOutputSchema } from "@/lib/eve/tool-result";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
-/* oxlint-enable sort-imports */
-
 import { eveCodeExecutionResult } from "./schemas";
+import { toolOutputSchema } from "@/lib/eve/tool-result";
+// oxlint-disable-next-line sort-imports -- tool-result initializes the shared Zod registry before CodeExecutionChart loads Next image and ReactDOM devtools hooks; preserve that observable initialization order.
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (EveDocumentRunResult); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- EveDocumentRunResult renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 export const EveDocumentRunResult = ({
   part,
 }: ReadonlyNativeSurface<{
   part: Extract<EveMessagePart, { type: "dynamic-tool" }>;
-}>) => {
+}>): React.JSX.Element => {
   if (part.state === "output-error") {
     return <p role="alert">{part.errorText}</p>;
   }
@@ -50,6 +45,4 @@ export const EveDocumentRunResult = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */

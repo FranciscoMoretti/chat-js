@@ -1,23 +1,14 @@
 "use client";
 
-import { useTheme } from "next-themes";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { parse, unparse } from "papaparse";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import "react-data-grid/lib/styles.css";
 import React, { memo, useMemo, useState } from "react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep React Data Grid's type-only contracts separate from its runtime component binding as required by consistent-type-specifier-style. */
+import { parse, unparse } from "papaparse";
+// oxlint-disable-next-line sort-imports -- Papa’s browser factory can register jQuery.fn.parse before react-data-grid loads ReactDOM and invokes its devtools hook; preserve plugin visibility at that callback.
 import type { CellClickArgs, CellMouseEvent } from "react-data-grid";
 import DataGrid, { textEditor } from "react-data-grid";
-/* oxlint-enable sort-imports */
-
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { cn } from "@/lib/utils";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import "react-data-grid/lib/styles.css";
-/* oxlint-enable sort-imports */
+import { useTheme } from "next-themes";
 
 interface SheetEditorProps {
   content: string;
@@ -33,21 +24,19 @@ const MIN_COLS = 26;
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/id-length -- Short callback indices and coordinate keys match the surrounding collection or external data shape; renaming public keys would change the contract. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const PureSpreadsheetEditor = ({
   content,
   saveContent,
   status: _status,
   isCurrentVersion: _isCurrentVersion,
   isReadonly,
-}: ReadonlyNativeSurface<SheetEditorProps>) => {
+}: ReadonlyNativeSurface<SheetEditorProps>): React.JSX.Element => {
   const { resolvedTheme } = useTheme();
 
   const parseData = useMemo(() => {
@@ -146,12 +135,11 @@ const PureSpreadsheetEditor = ({
 
     const updatedData = newRows.map(
       (row: ReadonlyNativeSurface<Record<string, string | number>>) =>
-        columns
-          .slice(1)
-          .map(
-            (col: ReadonlyNativeSurface<(typeof columns)[number]>) =>
-              row[col.key] || ""
-          )
+        columns.slice(1).map(
+          (col: ReadonlyNativeSurface<(typeof columns)[number]>) =>
+            // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve the existing CSV fallback: numeric zero and empty strings serialize as blank; nullish coalescing would serialize zero as "0".
+            row[col.key] || ""
+        )
     );
 
     const newCsvContent = unparse(updatedData);
@@ -187,14 +175,12 @@ const PureSpreadsheetEditor = ({
     />
   );
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/id-length */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 

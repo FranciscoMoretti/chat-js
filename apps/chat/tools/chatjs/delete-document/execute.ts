@@ -1,21 +1,13 @@
-import type { ToolContext } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   getEveDocumentRevision,
   removeEveDocumentFromConversation,
 } from "@/lib/db/eve-documents";
-/* oxlint-enable sort-imports */
-import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ToolContext } from "eve/tools";
 import { deleteDocumentAvailable } from "./availability";
-/* oxlint-enable sort-imports */
 import { deleteDocumentInput } from "./schemas";
+import { installedDocumentKinds } from "@/tools/chatjs/installed-features";
+import { resolveEveConversationScope } from "@/lib/eve/conversation-scope";
+import type { z } from "zod";
 
 type Context = Readonly<
   Pick<ToolContext, "session" | "callId" | "approval"> & {

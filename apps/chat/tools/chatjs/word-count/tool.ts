@@ -1,15 +1,9 @@
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ToolUsage } from "@/lib/eve/tool-usage";
-/* oxlint-enable sort-imports */
+import { defineTool } from "eve/tools";
 import { executeWithToolUsage } from "@/lib/eve/tool-usage";
-
+import { toolResultToModelOutput } from "@/lib/eve/tool-model-output";
 import { wordCountInput } from "./schemas";
+import type { z } from "zod";
 
 const UNBILLED_TOOL_COST_USD = 0;
 const EMPTY_COUNT = 0;

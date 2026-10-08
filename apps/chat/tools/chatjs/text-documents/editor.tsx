@@ -5,36 +5,22 @@ import {
   $convertToMarkdownString,
   TRANSFORMERS,
 } from "@lexical/markdown";
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import React, { memo, useEffect, useRef } from "react";
+import { createEditorConfig, handleEditorChange } from "./editor-config";
+import { $getRoot } from "lexical";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-/* oxlint-enable sort-imports */
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
+import type { EditorState } from "lexical";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
-/* oxlint-enable sort-imports */
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EditorState } from "lexical";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { $getRoot } from "lexical";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import React, { memo, useEffect, useRef } from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { createEditorConfig, handleEditorChange } from "./editor-config";
-/* oxlint-enable sort-imports */
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+/* oxlint-enable import/max-dependencies */
 
 interface EditorProps {
   content: string;
@@ -46,7 +32,6 @@ interface EditorProps {
 }
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 // Content update plugin
 const ContentUpdatePlugin = ({
@@ -59,7 +44,7 @@ const ContentUpdatePlugin = ({
   status: "streaming" | "idle";
   onSaveContent: (content: string, debounce: boolean) => void;
   isReadonly?: boolean;
-}>) => {
+}>): React.JSX.Element => {
   const [editor] = useLexicalComposerContext();
   const isProgrammaticUpdate = useRef(false);
 
@@ -106,11 +91,9 @@ const ContentUpdatePlugin = ({
 };
 /* oxlint-disable react/jsx-no-literals -- PureEditor renders authored tool output labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
@@ -121,7 +104,7 @@ const PureEditor = ({
   onSaveContent,
   status,
   isReadonly,
-}: ReadonlyNativeSurface<EditorProps>) => {
+}: ReadonlyNativeSurface<EditorProps>): React.JSX.Element => {
   const initialConfig = createEditorConfig();
 
   const editorConfig = {
@@ -164,7 +147,6 @@ const PureEditor = ({
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 const areEqual = (

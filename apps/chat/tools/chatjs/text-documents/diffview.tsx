@@ -1,23 +1,15 @@
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-/* oxlint-enable sort-imports */
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-/* oxlint-disable sort-imports -- Keep the value and type-only bindings for the same package separate as required by consistent-type-specifier-style. */
-import type { ChangeObject } from "diff";
-import { diffWords } from "diff";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { $createParagraphNode, $getRoot, TextNode } from "lexical";
-/* oxlint-enable sort-imports */
 import type { EditorConfig, LexicalEditor, SerializedTextNode } from "lexical";
 import React, { useEffect } from "react";
-
+import type { ChangeObject } from "diff";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { createEditorConfig } from "./editor-config";
+import { diffWords } from "diff";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 const DiffType = {
   Deleted: -1,
@@ -146,10 +138,12 @@ class DiffTextNode extends TextNode {
 /* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 // Proper diff computation using the diff library
-const computeProperDiff = (oldText: string, newText: string) => {
+const computeProperDiff = (
+  oldText: string,
+  newText: string
+): { text: string; type: number }[] => {
   const changes = diffWords(oldText, newText);
 
   return changes.map((change: Readonly<ChangeObject<string>>) => {
@@ -169,10 +163,8 @@ const computeProperDiff = (oldText: string, newText: string) => {
   });
 };
 /* oxlint-enable eslint/init-declarations */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const DiffContentPlugin = ({
   oldContent,
@@ -180,7 +172,7 @@ const DiffContentPlugin = ({
 }: ReadonlyNativeSurface<{
   oldContent: string;
   newContent: string;
-}>) => {
+}>): null => {
   const [editor] = useLexicalComposerContext();
 
   useEffect((): void => {
@@ -212,7 +204,6 @@ const DiffContentPlugin = ({
   return null;
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-statements */
 
 interface DiffEditorProps {
@@ -222,8 +213,6 @@ interface DiffEditorProps {
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (DiffView); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This prop reflects the current render values; preserve the existing update behavior rather than add unmeasured memoization. */
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -232,7 +221,7 @@ interface DiffEditorProps {
 export const DiffView = ({
   oldContent,
   newContent,
-}: ReadonlyNativeSurface<DiffEditorProps>) => {
+}: ReadonlyNativeSurface<DiffEditorProps>): React.JSX.Element => {
   const initialConfig = {
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing createEditorConfig() own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     ...createEditorConfig(),
@@ -264,6 +253,4 @@ export const DiffView = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 /* oxlint-enable react-perf/jsx-no-new-object-as-prop */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/no-multi-comp */
