@@ -185,7 +185,6 @@ const readToolDefinition = async (
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const collectDefinitions = async (
   cwd: string,
   directory: string,
@@ -195,7 +194,8 @@ const collectDefinitions = async (
   index = 0
 ): Promise<void> => {
   const entry = entries[index];
-  if (!entry) {
+  // oxlint-disable-next-line no-undefined -- Native readdir yields concrete Dirent entries until this recursive index reaches exhaustion; compare the absent result explicitly.
+  if (entry === undefined) {
     return;
   }
   if (entry.isSymbolicLink()) {
@@ -217,7 +217,6 @@ const collectDefinitions = async (
   await collectDefinitions(cwd, directory, entries, definitions, index + 1);
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/max-statements */
@@ -407,7 +406,7 @@ const sourceFor = (
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
+/* oxlint-disable typescript/strict-boolean-expressions -- Preserve the explicit executor absence and empty-export sentinels when checking the generated registry. */
 const validateToolDependencies = (
   definitions: readonly ReadonlyInput<ToolDefinition>[]
 ): void => {
@@ -426,7 +425,10 @@ const validateToolDependencies = (
       );
     }
   }
-  const runners = definitions.filter((item) => item.documentRunExport);
+  const runners = definitions.filter(
+    ({ documentRunExport }) =>
+      typeof documentRunExport === "string" && documentRunExport !== ""
+  );
   if (runners.length > 1) {
     throw new Error("Only one saved-document executor can be installed.");
   }
