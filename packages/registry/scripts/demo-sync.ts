@@ -232,14 +232,21 @@ const generateDemo = async (): Promise<Map<string, string>> => {
     stopServer = (): void => {
       void server.stop(true);
     };
-    // oxlint-disable-next-line typescript/no-unsafe-assignment -- Shadcn metadata is an open JSON extension point; preserve third-party fields while inspecting the ChatJS discriminator rather than impose a new stripping schema.
-    const components = JSON.parse(
+    const parsedComponents: unknown = JSON.parse(
       await readFile(path.join(demoRoot, "components.json"), "utf-8")
     );
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- The demo installer edits generated shadcn configuration while preserving its extensible registry metadata.
-    components.registries = {
-      "@chatjs": `http://127.0.0.1:${server.port}/{name}.json`,
-    };
+    if (
+      typeof parsedComponents !== "object" ||
+      parsedComponents === null ||
+      Array.isArray(parsedComponents)
+    ) {
+      throw new Error("Demo components.json must contain an object");
+    }
+    const components = Object.assign(parsedComponents, {
+      registries: {
+        "@chatjs": `http://127.0.0.1:${server.port}/{name}.json`,
+      },
+    });
     await mkdir(path.join(temporary, "app"), { recursive: true });
     await Promise.all([
       writeFile(
