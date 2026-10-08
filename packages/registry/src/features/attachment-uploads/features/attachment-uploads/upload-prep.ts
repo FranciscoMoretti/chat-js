@@ -4,11 +4,21 @@ import imageCompression from "browser-image-compression";
 
 const FILE_EXTENSION_REGEX = /\.[^.]+$/u;
 
+const imageExtension = (mimeType: string): string => {
+  if (mimeType === "image/jpeg") {
+    return "jpg";
+  }
+  if (mimeType === "image/png") {
+    return "png";
+  }
+  const [, extension] = mimeType.split("/");
+  return extension ?? "jpg";
+};
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve compressImageIfNeeded's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
 const compressImageIfNeeded = async (
   file: Readonly<File>,
   {
@@ -58,15 +68,7 @@ const compressImageIfNeeded = async (
     }
 
     const base = file.name.replace(FILE_EXTENSION_REGEX, "");
-    let ext: string;
-    if (outputMime === "image/jpeg") {
-      ext = "jpg";
-    } else if (outputMime === "image/png") {
-      ext = "png";
-    } else {
-      ext = outputMime.split("/")[1] ?? "jpg";
-    }
-    return new File([resultBlob], `${base}.${ext}`, {
+    return new File([resultBlob], `${base}.${imageExtension(outputMime)}`, {
       lastModified: Date.now(),
       type: outputMime,
     });
@@ -77,13 +79,11 @@ const compressImageIfNeeded = async (
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (processFilesForUpload); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve processFilesForUpload's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable eslint/init-declarations */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-continue -- Skipping an ineligible item here keeps the remaining per-item operation inside the same loop and cleanup scope. */
 export const processFilesForUpload = async (
   files: readonly Readonly<File>[],
   options: Readonly<{
@@ -109,15 +109,15 @@ export const processFilesForUpload = async (
       const maybeCompressed = await compressImageIfNeeded(file, options);
       if (maybeCompressed.size > maxBytes) {
         stillOversized.push(file);
-        continue;
+      } else {
+        prepared.push(maybeCompressed);
       }
-      prepared.push(maybeCompressed);
     } else if (file.type === "application/pdf") {
       if (file.size > maxBytes) {
         stillOversized.push(file);
-        continue;
+      } else {
+        prepared.push(file);
       }
-      prepared.push(file);
     } else {
       unsupportedFiles.push(file);
     }
@@ -127,5 +127,4 @@ export const processFilesForUpload = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/no-continue */
 /* oxlint-enable eslint/max-statements */

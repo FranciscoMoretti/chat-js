@@ -74,24 +74,18 @@ catch (error) { console.log(error.code + ":" + error.integration); process.exitC
           CI_PLAYWRIGHT: "false",
           LANGFUSE_PUBLIC_KEY: "",
           LANGFUSE_SECRET_KEY: "",
-          // oxlint-disable-next-line no-ternary -- Keep PLAYWRIGHT as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          PLAYWRIGHT: playwright ? "true" : "false",
+          PLAYWRIGHT: String(playwright),
           PLAYWRIGHT_TEST_BASE_URL: "",
         },
       }
     );
-    expect(child.exitCode).toBe(
-      // oxlint-disable-next-line no-ternary -- Keep expect(child.exitCode).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      runtime === "nodejs" && !playwright
-        ? MISSING_CREDENTIALS_EXIT_CODE
-        : SUCCESS_EXIT_CODE
-    );
-    expect(child.stdout.trim()).toBe(
-      // oxlint-disable-next-line no-ternary -- Keep expect(child.stdout.trim()).toBe argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      runtime === "nodejs" && !playwright
-        ? "CHATJS_MISSING_CREDENTIALS:langfuse"
-        : "registered"
-    );
+    if (runtime === "nodejs" && !playwright) {
+      expect(child.exitCode).toBe(MISSING_CREDENTIALS_EXIT_CODE);
+      expect(child.stdout.trim()).toBe("CHATJS_MISSING_CREDENTIALS:langfuse");
+    } else {
+      expect(child.exitCode).toBe(SUCCESS_EXIT_CODE);
+      expect(child.stdout.trim()).toBe("registered");
+    }
   });
   /* oxlint-enable oxc/no-async-await */
 }

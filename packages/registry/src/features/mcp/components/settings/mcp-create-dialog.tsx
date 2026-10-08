@@ -83,6 +83,24 @@ const mcpConnectorFormSchema = z.object({
 /* oxlint-enable eslint/no-magic-numbers */
 
 type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
+
+type ReadonlyFormEvent = Readonly<{
+  bubbles: boolean;
+  cancelable: boolean;
+  defaultPrevented: boolean;
+  eventPhase: number;
+  isTrusted: boolean;
+  timeStamp: number;
+  type: string;
+  nativeEvent: object;
+  target: unknown;
+  currentTarget: unknown;
+  preventDefault: () => void;
+  persist: () => void;
+  stopPropagation: () => void;
+  isDefaultPrevented: () => boolean;
+  isPropagationStopped: () => boolean;
+}>;
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpCreateDialog); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- McpCreateDialog renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
@@ -94,7 +112,6 @@ type McpConnectorFormValues = z.infer<typeof mcpConnectorFormSchema>;
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react/jsx-props-no-spreading -- Forward the component or form-library prop contract intact, including accessibility and event bindings. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
 // oxlint-disable-next-line max-statements -- Connector form setup and its Action failure owner share this component lifecycle.
 export const McpCreateDialog = ({
   open,
@@ -220,8 +237,7 @@ export const McpCreateDialog = ({
           <form
             className="space-y-4"
 
-            // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- react-hook-form handleSubmit calls preventDefault and persist on this original event; preserve the native event writer contract and form identity.
-            onSubmit={(event) => {
+            onSubmit={(event: ReadonlyFormEvent) => {
               startEventAction(async () => {
                 try {
                   await form.handleSubmit(handleSubmit)(event);
@@ -418,7 +434,6 @@ export const McpCreateDialog = ({
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable react/jsx-props-no-spreading */
 /* oxlint-enable react/jsx-max-depth */

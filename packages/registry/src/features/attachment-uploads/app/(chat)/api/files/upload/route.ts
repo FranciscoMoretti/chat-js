@@ -11,10 +11,9 @@ import { config } from "@/lib/config";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { reserveEveUpload, writeEveUpload } from "@/lib/db/eve-files";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable-next-line sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // Allow multipart headers and fields without buffering an unbounded request.

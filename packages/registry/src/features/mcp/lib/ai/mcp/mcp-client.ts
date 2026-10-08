@@ -1,26 +1,30 @@
-import {
-  auth,
-  experimental_createMCPClient as createMCPClient,
-} from "@ai-sdk/mcp";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ListPromptsResult,
   ListResourcesResult,
 } from "@modelcontextprotocol/sdk/types.js";
-/* oxlint-enable sort-imports */
-import type { Tool } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import {
+  auth,
+  experimental_createMCPClient as createMCPClient,
+} from "@ai-sdk/mcp";
 import { McpOAuthClientProvider } from "@/lib/ai/mcp/mcp-oauth-provider";
-/* oxlint-enable sort-imports */
 import { OAuthAuthorizationRequiredError } from "@/lib/ai/mcp/oauth-authorization-required-error";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { Tool } from "ai";
 import { config } from "@/lib/config";
 import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { getBaseUrl } from "@/lib/url";
 
 const log = createModuleLogger("mcp-client");
+
+const INITIAL_CONNECTION_GENERATION = 0;
+const MCP_CONNECTION_TIMEOUT_MS = 30_000;
+
+const getMcpErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+};
 
 type McpClientInstance = Awaited<ReturnType<typeof createMCPClient>>;
 
@@ -32,23 +36,13 @@ type McpClientStatus =
   | "incompatible";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (MCPClient); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
-/* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
-/* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 /**
  * MCP Client wrapper with OAuth support.
  * Uses @ai-sdk/mcp's createMCPClient with authProvider for OAuth flow.
  */
 export class MCPClient {
   private client?: McpClientInstance;
-  private generation = 0;
+  private generation = INITIAL_CONNECTION_GENERATION;
   private connectionAbort?: AbortController;
   private connectPromise?: Promise<McpClientInstance | undefined>;
   private readonly invalidateCache?: () => void;
@@ -66,6 +60,7 @@ export class MCPClient {
     oauthClientSecret?: string | null;
   };
 
+  // oxlint-disable-next-line eslint/max-params -- Preserve the public connector identity, display name, transport configuration, and invalidation callback arguments used by both client factories.
   public constructor(
     id: string,
     name: string,
@@ -85,7 +80,7 @@ export class MCPClient {
     this.oauthProvider = this.createOAuthProvider();
   }
 
-  private createOAuthProvider() {
+  private createOAuthProvider(): McpOAuthClientProvider {
     const { generation } = this;
     const baseUrl = getBaseUrl();
 
@@ -112,7 +107,7 @@ export class MCPClient {
       oauthClientSecret: this.serverConfig.oauthClientSecret,
       onRedirectToAuthorization: (
         authorizationUrl: ReadonlyNativeSurface<URL>
-      ) => {
+      ): never => {
         if (generation !== this.generation) {
           throw new Error("MCP connection was closed");
         }
@@ -137,12 +132,13 @@ export class MCPClient {
     return this.authorizationUrl;
   }
 
-  public get serverInfo() {
+  public get serverInfo(): McpClientInstance["serverInfo"] | undefined {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Class client is absent before connection and reset to undefined by close; serverInfo getter must remain absent then.
     return this.client?.serverInfo;
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connect's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line eslint/max-statements -- Register the caller cancellation listener after shared initialization and remove it in finally; moving statements would change which callers join the shared promise.
   public async connect(
     oauthState?: string,
     abortSignal?: Readonly<
@@ -162,6 +158,7 @@ export class MCPClient {
       // oxlint-disable-next-line promise/prefer-await-to-then -- Shared initialization clears independently of any cancelled caller's wait.
       const promise = this.connectOnce(oauthState).finally((): void => {
         if (this.connectPromise === promise) {
+          // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
           this.connectPromise = undefined;
         }
       });
@@ -184,6 +181,7 @@ export class MCPClient {
   }
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve connectOnce's awaited sequencing and rejected-Promise behavior. */
+  // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- OAuth adoption, guarded SDK initialization, generation checks, client assignment, and error classification form one ordered connection attempt.
   private async connectOnce(
     oauthState?: string
   ): Promise<McpClientInstance | undefined> {
@@ -195,7 +193,7 @@ export class MCPClient {
     this.connectionAbort = new AbortController();
     const signal = AbortSignal.any([
       this.connectionAbort.signal,
-      AbortSignal.timeout(30_000),
+      AbortSignal.timeout(MCP_CONNECTION_TIMEOUT_MS),
     ]);
     this.connectionStatus = "connecting";
 
@@ -210,7 +208,7 @@ export class MCPClient {
         initializationOptions: { signal },
         transport: {
           authProvider: oauthProvider,
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
           fetch: oauthProvider.fetch as typeof globalThis.fetch,
           headers: this.serverConfig.headers,
           type: this.serverConfig.type,
@@ -224,12 +222,14 @@ export class MCPClient {
         throw new Error("MCP connection was closed");
       }
       this.client = client;
+      // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
       this.authorizationUrl = undefined;
       this.connectionStatus = "connected";
       return this.client;
     } catch (error) {
       if (generation !== this.generation || signal.aborted) {
         if (generation === this.generation) {
+          // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
           this.authorizationUrl = undefined;
           this.connectionStatus = "disconnected";
         }
@@ -242,8 +242,8 @@ export class MCPClient {
           { authUrl: error.authorizationUrl.toString(), connectorId: this.id },
           "OAuth authorization required"
         );
-        // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-        return;
+        // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
+        return undefined;
       }
 
       this.connectionStatus = "disconnected";
@@ -255,7 +255,10 @@ export class MCPClient {
   /**
    * Lightweight connection test - just checks if we can connect without full discovery.
    * Returns connection status without fetching tools/resources/prompts.
+   * @param {Readonly<Pick<AbortSignal, "throwIfAborted" | "reason" | "addEventListener" | "removeEventListener" | "aborted">> | undefined} abortSignal - Cancels this caller while shared initialization continues.
+   * @returns {Promise<{ status: McpClientStatus; needsAuth: boolean; error?: string; }>} The connection or authorization status.
    */
+  // oxlint-disable-next-line eslint/max-statements, eslint/max-lines-per-function -- Keep cached status fast paths, the awaited connection attempt, and error classification in the same status operation.
   public async attemptConnection(
     abortSignal?: Readonly<
       Pick<
@@ -283,9 +286,11 @@ export class MCPClient {
     }
 
     try {
+      // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
       await this.connect(undefined, abortSignal);
       // Check if OAuth is required (authorizationUrl gets set during connect)
-      if (this.authorizationUrl) {
+      // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
+      if (this.authorizationUrl !== undefined) {
         return { needsAuth: true, status: "authorizing" };
       }
       return {
@@ -294,14 +299,12 @@ export class MCPClient {
         status: this.client ? "connected" : "disconnected",
       };
     } catch (error) {
-      const errorMessage =
-        // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = getMcpErrorMessage(error);
       log.error(
         {
           connectorId: this.id,
           errorMessage,
-          // oxlint-disable-next-line no-ternary -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+          // oxlint-disable-next-line no-ternary, eslint/no-undefined -- Keep errorStack as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary. Preserve the explicit absent errorStack own-key sentinel.
           errorStack: error instanceof Error ? error.stack : undefined,
         },
         "attemptConnection failed"
@@ -327,6 +330,8 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve finishAuth's awaited sequencing and rejected-Promise behavior. */
   /**
    * Called after callback receives code to complete the OAuth flow.
+   * @param {string} code - Authorization code received by the callback.
+   * @param {string} state - State used to restore the verifier session.
    */
   public async finishAuth(code: string, state: string): Promise<void> {
     const { generation, oauthProvider } = this;
@@ -336,7 +341,7 @@ export class MCPClient {
     // Use the auth function from @ai-sdk/mcp to complete the OAuth flow
     await auth(oauthProvider, {
       authorizationCode: code,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion, typescript/no-unnecessary-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- Bun requires preconnect on @ai-sdk/mcp's FetchFunction, but oauthProvider.fetch omits it to keep requests guarded. MCP calls only the guarded fetch; removing this assertion fails Registry type-checking (TS2741).
       fetchFn: oauthProvider.fetch as typeof globalThis.fetch,
       serverUrl: this.serverConfig.url,
     });
@@ -344,6 +349,7 @@ export class MCPClient {
     if (generation !== this.generation) {
       throw new Error("MCP connection was closed");
     }
+    // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
     this.authorizationUrl = undefined;
     // Don't set to connected - tokens are saved, next connect() will use them
   }
@@ -351,6 +357,8 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve tools's awaited sequencing and rejected-Promise behavior. */
   /**
    * Get tools from the MCP server, already in AI SDK format.
+   * @param {Parameters<McpClientInstance["tools"]>} args - Native SDK schema options.
+   * @returns {Promise<Record<string, Tool>>} The discovered SDK tools.
    */
   public async tools(
     // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original MCP SDK tools argument tuple; deep readonly schema inputs fail client.tools (TS2345).
@@ -371,6 +379,7 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listResources's awaited sequencing and rejected-Promise behavior. */
   /**
    * List resources from the MCP server.
+   * @returns {Promise<ListResourcesResult>} The native MCP resource result.
    */
   public async listResources(): Promise<ListResourcesResult> {
     const { client } = this;
@@ -388,6 +397,7 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve listPrompts's awaited sequencing and rejected-Promise behavior. */
   /**
    * List prompts from the MCP server.
+   * @returns {Promise<ListPromptsResult>} The native MCP prompt result.
    */
   public async listPrompts(): Promise<ListPromptsResult> {
     const { client } = this;
@@ -406,14 +416,18 @@ export class MCPClient {
   /**
    * Close the connection to the MCP server.
    */
+  // oxlint-disable-next-line eslint/max-statements -- Abort initialization and reset the generation/provider/client before awaiting close, then invalidate cached status after cleanup.
   public async close(): Promise<void> {
     this.generation += 1;
     // oxlint-disable-next-line oxc/no-optional-chaining -- Connection abort controller is optional before the first initialization; close also works before connecting.
     this.connectionAbort?.abort(new Error("MCP connection was closed"));
+    // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
     this.connectPromise = undefined;
     this.oauthProvider = this.createOAuthProvider();
     const { client } = this;
+    // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
     this.client = undefined;
+    // oxlint-disable-next-line eslint/no-undefined -- Preserve the explicit optional argument, absent state value, or error own-key sentinel in the native client lifecycle.
     this.authorizationUrl = undefined;
     this.connectionStatus = "disconnected";
     try {
@@ -429,6 +443,8 @@ export class MCPClient {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handlePotentialAuthError's awaited sequencing and rejected-Promise behavior. */
   /**
    * Check if an error is an auth error (401/403) and invalidate caches if so.
+   * @param {unknown} error - Failure from a connected SDK operation.
+   * @param {unknown} origin - Client whose failure is being handled.
    */
   private async handlePotentialAuthError(
     error: unknown,
@@ -437,8 +453,7 @@ export class MCPClient {
     if (this.client !== origin) {
       return;
     }
-    // oxlint-disable-next-line no-ternary -- Keep errorMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = getMcpErrorMessage(error);
     const isAuthError =
       errorMessage.includes("401") ||
       errorMessage.includes("403") ||
@@ -456,15 +471,5 @@ export class MCPClient {
   /* oxlint-enable oxc/no-async-await */
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-/* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable eslint/no-undefined */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-module-boundary-types */
-/* oxlint-enable jsdoc/require-returns */
-/* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */

@@ -1,6 +1,7 @@
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import postgres from "postgres";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep pinned postgres protocol-buffer and helper initialization before Zod database-schema initialization; their complete runtime graphs have not been proved to commute. */
 import { databaseConnection } from "@/lib/db/connection";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
@@ -20,26 +21,6 @@ const lockPool = postgres(connectionConfig.url, {
   prepare: false,
 });
 
-type ReadonlyNativeSurface<Value> = Value extends
-  | string
-  | number
-  | bigint
-  | boolean
-  | symbol
-  | null
-  | undefined
-  ? Value
-  : Value extends (...parameters: readonly never[]) => unknown
-    ? Value
-    : Value extends abstract new (...parameters: readonly never[]) => unknown
-      ? Value
-      : Value extends object
-        ? {
-            readonly [Property in keyof Value]: ReadonlyNativeSurface<
-              Value[Property]
-            >;
-          }
-        : Value;
 const cancelInactiveQuery = (): void => {
   // No advisory-lock query is waiting to be cancelled.
 };

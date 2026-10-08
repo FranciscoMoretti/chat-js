@@ -1,21 +1,21 @@
-/* oxlint-disable import/no-nodejs-modules -- This code runs on the Node/Bun server or installer and requires the built-in operating-system API. */
-import { randomUUID } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   OAuthClientMetadata,
   OAuthClientProvider,
   OAuthTokens,
 } from "@ai-sdk/mcp";
+import type { McpOAuthSession } from "@/lib/db/schema";
+import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+/* oxlint-disable import/no-nodejs-modules -- The server provider uses native UUID generation for persisted OAuth state. */
+import { randomUUID } from "node:crypto";
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-enable sort-imports */
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Zod initializes its global schema registry before guarded-fetch loads Undici and installs its global dispatcher; retain this runtime initialization order. */
 import { mcpFetch } from "@/lib/ai/mcp/mcp-fetch";
 /* oxlint-enable sort-imports */
 import { withMcpOAuthRefreshLock } from "@/lib/db/mcp-oauth-lock";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- The lock module creates its PostgreSQL pool before the queries barrel loads database/schema/logger initialization; sorting this group reverses those effects. */
 import {
   createOAuthSession,
   deleteSessionByState,
@@ -27,13 +27,7 @@ import {
   updateSessionByState,
 } from "@/lib/db/mcp-queries";
 /* oxlint-enable sort-imports */
-import type { OAuthClientInformationFull } from "@/lib/db/mcp-queries";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { McpOAuthSession } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line sort-imports -- Oxfmt separates the readonly type import after runtime modules; sort-imports orders their binding names together.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const log = createModuleLogger("mcp-oauth-provider");
 const refreshTokensSchema = z.object({
@@ -119,7 +113,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
   private saveClientInformationPromise: Promise<void> | null = null;
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Constructor retains and later resets the caller's state property, and exposes the same metadata object through the mutable SDK getter; a readonly ownership change would alter those aliases.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- The same caller config is retained and state is later reset; the SDK getter forwards its mutable clientMetadata alias. A deep readonly metadata projection fails assignment at this.config (TS2322: readonly redirect_uris versus string[]).
   public constructor(config: {
     readonly mcpConnectorId: string;
     readonly oauthClientId?: string | null;
@@ -163,7 +157,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve doInitializeOAuth's awaited sequencing and rejected-Promise behavior. */
   // If state was provided (e.g., from callback), adopt it
 
-  /* oxlint-disable eslint/max-statements -- This initialization coordinates supplied-state reconciliation, authenticated-session reuse and fresh-session persistence; the ordered state-machine reduction remains under review. */
+  /* oxlint-disable eslint/max-statements -- This initialization coordinates supplied-state reconciliation, authenticated-session reuse and fresh-session persistence; keep state publication on the existing sides of its database awaits. */
   private async doInitializeOAuth(): Promise<void> {
     if (typeof this.config.state === "string" && this.config.state !== "") {
       const session = await getSessionByState({ state: this.config.state });
@@ -257,7 +251,6 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve clientInformation's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- Client registration chooses configured credentials or validates stored credentials and reconciles pinned authorization-server metadata; a smaller registration boundary remains under review. */
   public async clientInformation(): Promise<
     OAuthClientInformationFull | undefined
   > {
@@ -280,45 +273,47 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       authData?.clientInfo,
       "client information"
     );
-    if (clientInfo && authData) {
-      // Security: if redirect URI changed and no tokens yet, invalidate
-      if (
-        !authData.tokens &&
-        // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
-        clientInfo.redirect_uris[0] !== this.redirectUrl
-      ) {
-        log.warn(
-          {
-            currentRedirectUri: this.redirectUrl,
-            // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
-            savedRedirectUri: clientInfo.redirect_uris[0],
-            state: authData.state,
-          },
-          "clientInformation: redirect URI mismatch, invalidating session"
-        );
-        // Keep another in-flight authorization's session intact and start a new local state.
-        // oxlint-disable-next-line eslint/no-undefined -- Discard the cached session after invalidation or redirect reconciliation so a later read reloads or initializes it.
-        this.cachedAuthData = undefined;
-        // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
-        this.cachedAuthorizationUrl = null;
-        this.initialized = false;
-        this.currentOAuthState = "";
-        // oxlint-disable-next-line eslint/no-undefined -- Clear the same caller-owned optional state property before fresh OAuth initialization; null would not represent an absent optional state.
-        this.config.state = undefined;
-        await this.initializeOAuth();
-        // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
-        return;
-      }
-      return clientInfo;
+    // Security: if redirect URI changed and no tokens yet, invalidate
+    if (
+      clientInfo &&
+      authData &&
+      !authData.tokens &&
+      // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
+      clientInfo.redirect_uris[0] !== this.redirectUrl
+    ) {
+      log.warn(
+        {
+          currentRedirectUri: this.redirectUrl,
+          // oxlint-disable-next-line eslint/no-magic-numbers -- OAuth client metadata selects the first registered redirect URI by its zero-based array index.
+          savedRedirectUri: clientInfo.redirect_uris[0],
+          state: authData.state,
+        },
+        "clientInformation: redirect URI mismatch, invalidating session"
+      );
+      this.resetRegistration();
+      await this.initializeOAuth();
+      // oxlint-disable-next-line typescript/consistent-return -- Registration reconciliation awaits fresh initialization then returns no credentials; explicit undefined conflicts with pinned eslint/no-undefined.
+      return;
     }
+    return clientInfo;
   }
-  /* oxlint-enable eslint/max-statements */
   /* oxlint-enable oxc/no-async-await */
+  // Keep other in-flight sessions intact while resetting this registration in order.
+  private resetRegistration(): void {
+    // oxlint-disable-next-line eslint/no-undefined -- Discard the cached session after invalidation or redirect reconciliation so a later read reloads or initializes it.
+    this.cachedAuthData = undefined;
+    // oxlint-disable-next-line unicorn/no-null -- Null marks an idle coalesced promise or absent cached authorization URL; preserve this existing cache-state sentinel rather than exchanging it for an undefined convention exception.
+    this.cachedAuthorizationUrl = null;
+    this.initialized = false;
+    this.currentOAuthState = "";
+    // oxlint-disable-next-line eslint/no-undefined -- Clear the same caller-owned optional state property before fresh OAuth initialization; null would not represent an absent optional state.
+    this.config.state = undefined;
+  }
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveClientInformation's awaited sequencing and rejected-Promise behavior. */
   public async saveClientInformation(
     clientCredentials: Parameters<
       typeof setOAuthClientInfoOnceByState
-      // oxlint-disable-next-line eslint/no-magic-numbers -- Zero means no persisted refreshes are awaiting SDK acknowledgement; use the local count rather than an unrelated numeric alias.
+      // oxlint-disable-next-line eslint/no-magic-numbers -- Select the database first-write function's first parameter contract by its tuple index; no runtime numeric value is introduced.
     >[0]["clientInfo"]
   ): Promise<void> {
     if (this.saveClientInformationPromise) {
@@ -365,9 +360,9 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
    * @returns {Promise<Response>} Transport response after any successful token rotation is persisted.
    */
   public fetch =
-    /* oxlint-disable eslint/max-lines-per-function -- SDK transport and refresh requests share this entry point and connector-lock transaction; reducing the refresh workflow length remains under review. */ async (
+    /* oxlint-disable eslint/max-lines-per-function -- SDK transport and refresh requests share this entry point and connector-lock transaction; keep ordinary forwarding and refresh-token arbitration at this SDK entry point. */ async (
       input: string | ReadonlyNativeSurface<URL | Request>,
-      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native Request and RequestInit unchanged into Request; readonly header/body projections are not accepted by the native transport constructor.
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward this RequestInit unchanged into Request; the native constructor rejects deep readonly HeadersInit tuples (TS2345: readonly [string, string][] versus mutable [string, string][]).
       init?: RequestInit
     ): Promise<Response> => {
       const request = new Request(input, init);
@@ -390,7 +385,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
       const observedAccessToken = this.cachedAuthData?.tokens?.access_token;
       return await withMcpOAuthRefreshLock(
         this.config.mcpConnectorId,
-        /* oxlint-disable eslint/max-statements -- The refresh lock covers cancellation, latest-session validation, credential reuse, transport and atomic token persistence; splitting this transaction remains under review. */
+        /* oxlint-disable eslint/max-statements -- The refresh lock covers cancellation, latest-session validation, credential reuse, transport and atomic token persistence; these operations must stay inside the existing connector lock with its original callback lifetime. */
         async () => {
           request.signal.throwIfAborted();
           const latest = await getSessionByState({
@@ -402,9 +397,12 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
             latest?.tokens,
             "tokens"
           );
+          // oxlint-disable-next-line oxc/no-optional-chaining -- The decoded credentials may be absent; capture their optional refresh token once before rejecting missing or empty credentials.
+          const refreshToken = latestTokens?.refresh_token;
           if (
-            // oxlint-disable-next-line oxc/no-optional-chaining, typescript/strict-boolean-expressions -- decodeStoredCredentials returns undefined for absent credentials; absent refresh_token must reject the refreshed-session reuse path before sending a refresh request. Reject absent or empty refresh tokens before sending a refresh request; the stored-token schema produces optional string credentials.
-            !latestTokens?.refresh_token ||
+            !latestTokens ||
+            typeof refreshToken !== "string" ||
+            refreshToken === "" ||
             !latest ||
             latest.mcpConnectorId !== this.config.mcpConnectorId ||
             latest.serverUrl !== this.config.serverUrl
@@ -473,8 +471,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve redirectToAuthorization's awaited sequencing and rejected-Promise behavior. */
   public async redirectToAuthorization(
-    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- This writer sets state on the caller's original authorizationUrl.searchParams; preserve that caller-visible native mutation.
-    authorizationUrl: URL
+    authorizationUrl: ReadonlyNativeSurface<URL>
   ): Promise<void> {
     // If the SDK calls redirect twice, keep the first URL stable.
     authorizationUrl.searchParams.set("state", this.state());
@@ -490,7 +487,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve saveCodeVerifier's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- The first-write PKCE operation combines cached-verifier reconciliation, optimistic cache state and a coalesced persistence promise; its statement reduction remains under review. */
+  /* oxlint-disable eslint/max-statements -- The first-write PKCE operation combines cached-verifier reconciliation, optimistic cache state and a coalesced persistence promise; keep optimistic cache publication before the coalesced database promise and its finally reset. */
   public async saveCodeVerifier(pkceVerifier: string): Promise<void> {
     if (this.saveCodeVerifierPromise) {
       await this.saveCodeVerifierPromise;
@@ -562,7 +559,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   }
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve adoptState's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- State adoption validates connector/server ownership before publishing the session and initialization flag; a smaller transition boundary remains under review. */
+  /* oxlint-disable eslint/max-statements -- State adoption validates connector/server ownership before publishing the session and initialization flag; keep validation errors and logs before the original ordered cache publication. */
   /**
    * Adopt state from another instance (multi-instance support).
    * Used when the callback needs to reconcile with an existing session.
@@ -616,7 +613,7 @@ export class McpOAuthClientProvider implements OAuthClientProvider {
   /* oxlint-enable eslint/max-statements */
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve invalidateCredentials's awaited sequencing and rejected-Promise behavior. */
-  /* oxlint-disable eslint/max-statements -- Each SDK invalidation scope requires a distinct database operation followed by its matching cache/state reset; reducing these branch statements remains under review. */
+  /* oxlint-disable eslint/max-statements -- Each SDK invalidation scope requires a distinct database operation followed by its matching cache/state reset; each branch preserves its database await and its distinct ordered cache reset. */
   public async invalidateCredentials(
     scope: "all" | "client" | "tokens" | "verifier"
   ): Promise<void> {

@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Plug, Settings } from "lucide-react";
 /* oxlint-enable sort-imports */
+import type { ComposerControlProps } from "@/components/composer/control";
 import React from "react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ComposerControlProps } from "@/components/composer/control";
-/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Preserve InternalLink's existing module evaluation position after sonner; InternalLink captures config.appPrefix at module scope through electron-auth, and no source effect proof establishes that reordering these initializations is equivalent. */
 import { InternalLink } from "@/components/internal-link";
+/* oxlint-enable sort-imports */
+
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   DropdownMenuCheckboxItem,
@@ -24,17 +25,14 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 /* oxlint-enable sort-imports */
-import { installedFeatures } from "@/features/installed";
-// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { installedFeatures } from "@/features/installed";
 import { useSession } from "@/providers/session-provider";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-no-literals -- ConnectorsControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
@@ -42,7 +40,9 @@ import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
-const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
+const ConnectorsControl = ({
+  disabled,
+}: ComposerControlProps): React.JSX.Element | null => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -191,9 +191,7 @@ const ConnectorsControl = ({ disabled }: ComposerControlProps) => {
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/no-null */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable eslint/max-statements */
 
 ConnectorsControl.isAvailable = (): boolean => installedFeatures.has("mcp");

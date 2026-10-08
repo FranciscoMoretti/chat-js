@@ -1,7 +1,13 @@
 /* oxlint-disable oxc/no-async-await -- Native async Actions and operations preserve awaited sequencing and route rejections to their declared owner. */
 "use client";
 
+import type {
+  AttachmentUploadInput,
+  AttachmentUploadIntegration,
+} from "@/lib/installation-contracts";
+
 import React, { useEffect, useRef, useState } from "react";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useDropzone } from "react-dropzone";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { toast } from "sonner";
@@ -10,13 +16,6 @@ import { toast } from "sonner";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  AttachmentUploadInput,
-  AttachmentUploadIntegration,
-} from "@/lib/installation-contracts";
-/* oxlint-enable sort-imports */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useSession } from "@/providers/session-provider";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -27,14 +26,38 @@ import { uploadAttachment } from "./upload";
 import { processFilesForUpload } from "./upload-prep";
 /* oxlint-enable sort-imports */
 
+type UploadPasteCaptureEvent = Readonly<{
+  clipboardData: Readonly<{
+    files: Readonly<Pick<FileList, "length" | typeof Symbol.iterator>>;
+  }>;
+  preventDefault: () => void;
+  stopPropagation: () => void;
+}>;
+
+interface UploadComposer {
+  input: React.JSX.Element;
+  onAttach: (accept: string, capture?: "user" | "environment") => void;
+  rootProps: Readonly<Record<string, never>> | UploadComposerRootProps;
+}
+
+interface UploadComposerRootProps {
+  onPasteCapture: (event: UploadPasteCaptureEvent) => void;
+  role: "group";
+}
+
+interface UploadsResult {
+  composer: (disabled: boolean) => UploadComposer;
+  uploadQueue: string[];
+}
+
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 
-/* oxlint-disable typescript/strict-void-return -- The receiving framework deliberately ignores this callback result and owns its completion/error handling. */
-type UploadInput = ReadonlyNativeSurface<AttachmentUploadInput>;
-const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
+const useUploads = ({
+  attachmentCount,
+  onUploaded,
+}: ReadonlyNativeSurface<AttachmentUploadInput>): UploadsResult => {
   const [, startEventAction] = React.useTransition();
   const input = useRef<HTMLInputElement>(null);
   const { data: session } = useSession();
@@ -51,7 +74,7 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
     if (lock.current || files.length === 0) {
       return;
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+    // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard on session when checking its user.
     if (!session?.user) {
       toast.error("Sign in to attach files.");
       return;
@@ -154,17 +177,7 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
         : {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing getRootProps({ role: "group" }) own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
             ...getRootProps({ role: "group" }),
-            onPasteCapture: (
-              event: Readonly<{
-                clipboardData: Readonly<{
-                  files: Readonly<
-                    Pick<FileList, "length" | typeof Symbol.iterator>
-                  >;
-                }>;
-                preventDefault: () => void;
-                stopPropagation: () => void;
-              }>
-            ): void => {
+            onPasteCapture: (event: UploadPasteCaptureEvent): void => {
               if (event.clipboardData.files.length > 0) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -181,9 +194,7 @@ const useUploads = ({ attachmentCount, onUploaded }: UploadInput) => {
   /* oxlint-enable oxc/no-async-await */
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (attachmentUploads); the enabled import/no-default-export convention rejects the default-export alternative. */
-/* oxlint-enable typescript/strict-void-return */
 /* oxlint-enable eslint/no-magic-numbers */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
@@ -195,5 +206,3 @@ export const attachmentUploads = {
   useUploads,
 } satisfies AttachmentUploadIntegration;
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
-
-/* oxlint-enable oxc/no-async-await */

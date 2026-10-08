@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 import { requireMcpCredentials } from "@/features/mcp/setup";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
@@ -18,8 +19,6 @@ import {
 } from "@/lib/db/mcp-queries";
 import { createModuleLogger } from "@/lib/logger";
 import { loadMcpOAuthCallbackSearchParams } from "@/lib/nuqs/mcp-search-params.server";
-// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
 /* oxlint-enable sort-imports */

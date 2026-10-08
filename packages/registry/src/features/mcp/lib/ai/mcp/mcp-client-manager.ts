@@ -1,5 +1,5 @@
 import { invalidateAllMcpCaches } from "@/lib/ai/mcp/cache";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep Next cache and its logger initialization before MCP client OAuth-provider lock-pool, database and logger initialization; independence of these runtime graphs is not proven. */
 import { MCPClient } from "@/lib/ai/mcp/mcp-client";
 /* oxlint-enable sort-imports */
 

@@ -55,14 +55,38 @@ test("compresses large accepted images with configured limits", async () => {
   const [compressedFile] = prepared.files;
   const [compressionCall = []] = compression.mock.calls;
   const [, compressionOptions] = compressionCall;
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading name from compressedFile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the test's existing undefined short-circuit when the compressed file is absent.
   expect(compressedFile?.name).toBe("photo.png");
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading size from compressedFile; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the test's existing undefined short-circuit when the compressed file is absent.
   expect(compressedFile?.size).toBe(COMPRESSED_IMAGE_TEXT.length);
   expect(compressionOptions).toMatchObject({
     maxSizeMB: options.maxBytes / BYTES_PER_MEBIBYTE,
     maxWidthOrHeight: options.maxDimension,
   });
+});
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+test("preserves MIME getter order during image compression", async () => {
+  const image = new File(["oversized image data"], "photo.original", {
+    type: "image/png",
+  });
+  const mimeTypes = [
+    "image/png",
+    "image/png",
+    "image/png",
+    "image/png",
+    "image/jpeg",
+  ];
+  Object.defineProperty(image, "type", {
+    get: () => mimeTypes.shift() ?? "image/png",
+  });
+
+  const prepared = await processFilesForUpload([image], options);
+
+  expect(mimeTypes).toEqual([]);
+  expect(prepared.files.map((file: Readonly<File>) => file.name)).toEqual([
+    "photo.jpg",
+  ]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
