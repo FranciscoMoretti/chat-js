@@ -1,8 +1,7 @@
-import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
-// oxlint-disable-next-line sort-imports -- Register the shared hoisted env mock before SDK dependencies, preserving the original test's mock-before-import schedule.
 import { APIError, Sandbox } from "@vercel/sandbox";
 import type { Mock, MockInstance } from "vitest";
 import { assert, describe, expect, it, vi } from "vitest";
+import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
 
 const { envMock, configureSandboxCredentials } = setupSandboxTestEnvironment();
 

@@ -1,7 +1,6 @@
-import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
-// oxlint-disable-next-line sort-imports -- Initialize the shared mock registration before this file's SDK imports; setup hooks are registered explicitly once below.
 import { describe, expect, it, vi } from "vitest";
 import { getVercelOidcTokenSync } from "@vercel/oidc";
+import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
 
 const { configureSandboxCredentials } = setupSandboxTestEnvironment();
 const jwt = (payload: unknown): string =>

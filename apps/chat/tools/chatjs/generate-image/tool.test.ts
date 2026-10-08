@@ -184,10 +184,8 @@ it("forwards cancellation to EVE", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses the selected native model and accounts nested model tokens") uses 0.000011 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 it("uses the selected native model and accounts nested model tokens", async () => {
+  const expectedTokenCostUsd = 0.000011;
   mocks.definition.mockResolvedValue({
     apiModelId: "google/image",
     id: "selected",
@@ -211,12 +209,11 @@ it("uses the selected native model and accounts nested model tokens", async () =
     session: { ...context.session, auth: { current, initiator: current } },
   });
   expect(mocks.languageModel).toHaveBeenCalledWith("google/image");
-  expect(result.usage.costUsd).toBeCloseTo(0.000011);
+  expect(result.usage.costUsd).toBeCloseTo(expectedTokenCostUsd);
   expect(mocks.image).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "http://127.0.0.1/private",   "https://attacker.example/image.png",   "https://attacker.'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 it.each([
   "http://127.0.0.1/private",
   "https://attacker.example/image.png",

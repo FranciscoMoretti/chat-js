@@ -29,15 +29,13 @@ beforeEach(() => {
 });
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): the two missing-configuration/invalid-URL scenarios assert costUsd is exactly 0 in each zero-cost receipt.
- */
 test.each([
   ["missing configuration", "https://example.com"],
   ["invalid URL", "file:///private"],
 ])(
   "%s produces a zero-cost receipt without calling Firecrawl",
   async (reason, url) => {
+    const noChargeUsd = 0;
     if (reason === "missing configuration") {
       mocks.env.FIRECRAWL_API_KEY = "";
     }
@@ -48,13 +46,12 @@ test.each([
       },
       testToolContext()
     );
-    expect(toolResultSchema.parse(result).usage.costUsd).toBe(0);
+    expect(toolResultSchema.parse(result).usage.costUsd).toBe(noChargeUsd);
     expect(mocks.scrape).not.toHaveBeenCalled();
   }
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([false, true])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
 test.each([false, true])(
   "provider completion keeps unknown cost explicit (failure=%s)",
