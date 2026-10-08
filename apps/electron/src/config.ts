@@ -9,7 +9,7 @@ const EMPTY_URL_LENGTH = 0;
 
 const resolveAppUrl = (
   environment: Readonly<
-    Pick<NodeJS.ProcessEnv, "ELECTRON_APP_URL" | "NODE_ENV">
+    Partial<Pick<NodeJS.ProcessEnv, "ELECTRON_APP_URL" | "NODE_ENV">>
   >
 ): string => {
   const configuredUrl = environment.ELECTRON_APP_URL;
