@@ -1,15 +1,12 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
-import React from "react";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   Panel as ResizablePrimitivePanel,
   PanelGroup as ResizablePrimitivePanelGroup,
   PanelResizeHandle as ResizablePrimitivePanelResizeHandle,
 } from "react-resizable-panels";
-/* oxlint-enable sort-imports */
-
+import { GripVertical } from "lucide-react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 const ResizablePanelGroup = (
@@ -33,7 +30,7 @@ const ResizablePanelGroup = (
 );
 
 const ResizablePanel = ResizablePrimitivePanel;
-/* oxlint-disable react/no-multi-comp, typescript/strict-boolean-expressions -- ResizableHandle: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including withHandle). */
+/* oxlint-disable react/no-multi-comp -- ResizableHandle shares this module with the panel primitives it composes. */
 
 const ResizableHandle = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
@@ -56,7 +53,7 @@ const ResizableHandle = (
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ResizableHandle's ResizablePrimitivePanelResizeHandle prop contract, preserving caller options, children and callbacks.
     {...props}
   >
-    {withHandle && (
+    {withHandle === true && (
       <div className="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-sm border">
         <GripVertical
           // oxlint-disable-next-line react/forbid-component-props -- GripVertical accepts className in its styling contract; preserve this caller's layout and appearance.
@@ -67,7 +64,7 @@ const ResizableHandle = (
   </ResizablePrimitivePanelResizeHandle>
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (ResizableHandle, ResizablePanel, ResizablePanelGroup); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-enable react/no-multi-comp */
 
 export { ResizableHandle, ResizablePanel, ResizablePanelGroup };
 /* oxlint-enable import/no-named-export */

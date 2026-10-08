@@ -1,13 +1,10 @@
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   HTMLAttributes as ReactHTMLAttributes,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 const badgeVariants = cva(
   "focus:ring-ring inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none",

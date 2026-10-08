@@ -1,19 +1,16 @@
 "use client";
 
-import {
-  Root as SwitchPrimitivesRoot,
-  Thumb as SwitchPrimitivesThumb,
-} from "@radix-ui/react-switch";
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
   ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import {
+  Root as SwitchPrimitivesRoot,
+  Thumb as SwitchPrimitivesThumb,
+} from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 /* oxlint-disable react/react-in-jsx-scope -- Switch uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Switch = reactForwardRef<

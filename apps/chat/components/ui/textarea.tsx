@@ -1,12 +1,9 @@
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 /* oxlint-disable react/react-in-jsx-scope -- Textarea uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Textarea = reactForwardRef<

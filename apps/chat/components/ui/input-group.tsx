@@ -1,18 +1,16 @@
 "use client";
 
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
+  PointerEvent as ReactPointerEvent,
 } from "react";
-/* oxlint-enable sort-imports */
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import type { VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 /* oxlint-disable react/react-in-jsx-scope -- InputGroup uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroup = (
@@ -70,7 +68,9 @@ const inputGroupAddonVariants = cva(
     },
   }
 );
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- InputGroupAddon: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+const PRIMARY_POINTER_BUTTON = 0;
+
+/* oxlint-disable react/no-multi-comp -- InputGroupAddon shares its alignment variants and native control wrappers with this module. */
 
 /* oxlint-disable react/react-in-jsx-scope -- InputGroupAddon uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const InputGroupAddon = (
@@ -88,31 +88,43 @@ const InputGroupAddon = (
     data-align={align}
     data-slot="input-group-addon"
     onPointerDown={(
-      /* oxlint-disable typescript/prefer-readonly-parameter-types -- The original native event is forwarded to its caller or native handler; retain event methods and mutable target DOM identity. */
-      event
-      /* oxlint-enable typescript/prefer-readonly-parameter-types */
+      event: Readonly<
+        Pick<ReactPointerEvent<HTMLDivElement>, "button" | "preventDefault">
+      > & {
+        readonly target: unknown;
+        readonly currentTarget: {
+          readonly parentElement: Readonly<
+            Pick<HTMLElement, "querySelector">
+          > | null;
+        };
+      }
     ) => {
       if (
-        event.button !== 0 ||
+        event.button !== PRIMARY_POINTER_BUTTON ||
         !(event.target instanceof Element) ||
         event.target.closest("button, a, input, textarea, select")
       ) {
         return;
       }
       event.preventDefault();
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading focus from event.currentTarget.parentElement.querySelector(...); read querySelector from event.currentTarget.parentElement; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-      event.currentTarget.parentElement
-        ?.querySelector<HTMLInputElement | HTMLTextAreaElement>(
-          "input, textarea"
-        )
-        ?.focus();
+
+      const parent = event.currentTarget.parentElement;
+      if (!parent) {
+        return;
+      }
+      const input = parent.querySelector<
+        HTMLInputElement | HTMLTextAreaElement
+      >("input, textarea");
+      if (input) {
+        input.focus();
+      }
     }}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward InputGroupAddon's native div attributes, preserving caller events and accessibility props.
     {...props}
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 const inputGroupButtonVariants = cva(
   "flex items-center gap-2 text-sm shadow-none",

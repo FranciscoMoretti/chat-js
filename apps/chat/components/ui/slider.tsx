@@ -1,21 +1,22 @@
 "use client";
 
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 import {
   Range as SliderPrimitiveRange,
   Root as SliderPrimitiveRoot,
   Thumb as SliderPrimitiveThumb,
   Track as SliderPrimitiveTrack,
 } from "@radix-ui/react-slider";
-import { useMemo as useReactMemo } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-/* oxlint-enable sort-imports */
-
 import { cn } from "@/lib/utils";
-/* oxlint-disable id-length, max-lines-per-function, no-magic-numbers -- Slider: id-length: retain conventional event, index, and generic identifiers in this existing callback contract; max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+import { useMemo as useReactMemo } from "react";
+
+const DEFAULT_SLIDER_MIN = 0;
+const DEFAULT_SLIDER_MAX = 100;
+
+/* oxlint-disable max-lines-per-function -- Slider keeps the controlled/default value selection and matching thumb rendering together. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Slider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Slider = (
@@ -24,8 +25,8 @@ const Slider = (
     className,
     defaultValue,
     value,
-    min = 0,
-    max = 100,
+    min = DEFAULT_SLIDER_MIN,
+    max = DEFAULT_SLIDER_MAX,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, defaultValue, value, min, max from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<typeof SliderPrimitiveRoot>
@@ -73,7 +74,7 @@ const Slider = (
       </SliderPrimitiveTrack>
       {Array.from(
         { length: sliderValues.length },
-        (_, index): ReactJSX.Element => (
+        (unusedValue, index): ReactJSX.Element => (
           <SliderPrimitiveThumb
             // oxlint-disable-next-line react/forbid-component-props -- SliderPrimitiveThumb accepts className in its styling contract; preserve this caller's layout and appearance.
             className="border-primary bg-background ring-ring/50 block size-4 shrink-0 rounded-full border shadow-sm transition-[color,box-shadow] hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
@@ -87,7 +88,7 @@ const Slider = (
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (Slider); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable id-length, max-lines-per-function, no-magic-numbers */
+/* oxlint-enable max-lines-per-function */
 
 export { Slider };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

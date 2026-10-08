@@ -32,7 +32,8 @@ const ActionContainer = (
 /* oxlint-enable react/react-in-jsx-scope */
 
 type ActionContainerLinkProps = ReactComponentProps<typeof InternalLink>;
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- ActionContainerLink: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including -1); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+const DISABLED_LINK_TAB_INDEX = -1;
+/* oxlint-disable react/no-multi-comp -- ActionContainerLink: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- ActionContainerLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const ActionContainerLink = (
@@ -48,13 +49,13 @@ const ActionContainerLink = (
   <InternalLink
     // oxlint-disable-next-line react/forbid-component-props -- InternalLink accepts className in its styling contract; preserve this caller's layout and appearance.
     className={cn("absolute inset-0 z-10", className)}
-    tabIndex={tabIndex ?? -1}
+    tabIndex={tabIndex ?? DISABLED_LINK_TAB_INDEX}
     // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward ActionContainerLink's InternalLink prop contract, preserving caller options, children and callbacks.
     {...props}
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 type ActionContainerTopProps = ReactComponentProps<"div">;
 /* oxlint-disable react/no-multi-comp -- ActionContainerTop: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */

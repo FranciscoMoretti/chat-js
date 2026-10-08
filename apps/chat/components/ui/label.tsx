@@ -1,13 +1,10 @@
 "use client";
 
-import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import { Root as LabelPrimitiveRoot } from "@radix-ui/react-label";
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Label uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */

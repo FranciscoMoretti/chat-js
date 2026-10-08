@@ -1,18 +1,13 @@
-import { Slot } from "@radix-ui/react-slot";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-/* oxlint-enable sort-imports */
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentProps as ReactComponentProps,
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
   JSX as ReactJSX,
   ReactNode as ReactReactNode,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 /* oxlint-disable react/react-in-jsx-scope -- Breadcrumb uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Breadcrumb = reactForwardRef<
@@ -92,7 +87,6 @@ const BreadcrumbItem = reactForwardRef<
 /* oxlint-enable react/react-in-jsx-scope */
 
 BreadcrumbItem.displayName = "BreadcrumbItem";
-/* oxlint-disable typescript/strict-boolean-expressions -- BreadcrumbLink: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including asChild). */
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbLink uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const BreadcrumbLink = reactForwardRef<
@@ -110,7 +104,7 @@ const BreadcrumbLink = reactForwardRef<
     /* oxlint-enable typescript/prefer-readonly-parameter-types */
   ) => {
     // oxlint-disable-next-line no-ternary -- Keep Comp as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const Comp = asChild ? Slot : "a";
+    const Comp = asChild === true ? Slot : "a";
 
     return (
       <Comp
@@ -124,7 +118,7 @@ const BreadcrumbLink = reactForwardRef<
   }
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable typescript/strict-boolean-expressions */
+
 BreadcrumbLink.displayName = "BreadcrumbLink";
 
 /* oxlint-disable react/react-in-jsx-scope -- BreadcrumbPage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */

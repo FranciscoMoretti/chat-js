@@ -15,10 +15,8 @@ import type {
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
-
-import { buttonVariants } from "@/components/ui/button";
-// oxlint-disable-next-line eslint/sort-imports -- Pinned Oxfmt restores the button module before this erased type import; its module-path order conflicts with the binding order required here.
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- AlertDialog uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */

@@ -14,6 +14,8 @@ import type {
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
 
+const DEFAULT_SIDE_OFFSET = 4;
+
 /* oxlint-disable react/react-in-jsx-scope -- HoverCard uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const HoverCard = (
   props: Readonly<
@@ -45,7 +47,7 @@ const HoverCardTrigger = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- HoverCardContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 4); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- HoverCardContent: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- HoverCardContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 
@@ -54,7 +56,7 @@ const HoverCardContent = (
   {
     className,
     align = "center",
-    sideOffset = 4,
+    sideOffset = DEFAULT_SIDE_OFFSET,
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, align, sideOffset from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
     ...props
   }: ReactComponentProps<typeof HoverCardPrimitiveContent>
@@ -77,7 +79,7 @@ const HoverCardContent = (
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (HoverCard, HoverCardContent, HoverCardTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 export { HoverCard, HoverCardContent, HoverCardTrigger };
 /* oxlint-enable import/no-named-export */

@@ -7,17 +7,14 @@ import {
   Root as AccordionPrimitiveRoot,
   Trigger as AccordionPrimitiveTrigger,
 } from "@radix-ui/react-accordion";
-import { ChevronDown } from "lucide-react";
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
   ComponentRef as ReactComponentRef,
   JSX as ReactJSX,
 } from "react";
-/* oxlint-enable sort-imports */
-
+import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 const Accordion = AccordionPrimitiveRoot;
 

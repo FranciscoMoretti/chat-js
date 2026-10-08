@@ -1,18 +1,26 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
-import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { PanelLeftIcon } from "lucide-react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   CSSProperties as ReactCSSProperties,
   ComponentProps as ReactComponentProps,
   JSX as ReactJSX,
 } from "react";
+import { Button } from "@/components/ui/button";
+/* oxlint-disable sort-imports -- Button initializes the UUID crypto binding through utils before Sheet initializes ReactDOM and calls its external DevTools hooks; preserve that observable initialization order. */
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 /* oxlint-enable sort-imports */
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   createContext as reactCreateContext,
   useCallback as useReactCallback,
@@ -22,39 +30,25 @@ import {
   useState as useReactState,
 } from "react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PanelLeftIcon } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-/* oxlint-enable sort-imports */
 import { Skeleton } from "@/components/ui/skeleton";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- @/hooks/use-mobile import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
-import { useIsMobile } from "@/hooks/use-mobile";
-/* oxlint-enable import/max-dependencies */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import { Slot } from "@radix-ui/react-slot";
+import type { VariantProps } from "class-variance-authority";
+/* oxlint-disable import/max-dependencies -- These 12 direct dependencies compose the existing native controls and their shared behavior; retain explicit imports rather than hiding this dependency count behind a barrel. */
 import { cn } from "@/lib/utils";
-/* oxlint-enable sort-imports */
+/* oxlint-enable import/max-dependencies */
+import { cva } from "class-variance-authority";
+
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
-/* oxlint-disable no-magic-numbers -- SIDEBAR_COOKIE_MAX_AGE: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 60). */
 
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-/* oxlint-enable no-magic-numbers */
+// Persist the sidebar preference for one week, in seconds.
+const SIDEBAR_COOKIE_MAX_AGE = 604_800;
+const MILLISECONDS_PER_SECOND = 1000;
+
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const mobileSidebarStyle: ReactCSSProperties & {
@@ -89,7 +83,7 @@ const useSidebar = (): SidebarContextProps => {
   return context;
 };
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers -- SidebarProvider: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 1000); typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable max-lines-per-function -- SidebarProvider keeps controlled/mobile state, preference persistence, keyboard cleanup and the shared context together. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarProvider = (
@@ -133,7 +127,8 @@ const SidebarProvider = (
       if ("cookieStore" in window) {
         // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
         void window.cookieStore.set({
-          expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
+          expires:
+            Date.now() + SIDEBAR_COOKIE_MAX_AGE * MILLISECONDS_PER_SECOND,
           name: SIDEBAR_COOKIE_NAME,
           path: "/",
           value: String(openState),
@@ -221,8 +216,8 @@ const SidebarProvider = (
 };
 /* oxlint-disable react/jsx-no-literals -- Sidebar renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
-/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-enable max-lines-per-function */
+/* oxlint-disable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp -- Sidebar: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- Sidebar uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const Sidebar = (
@@ -349,7 +344,7 @@ const Sidebar = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable max-lines-per-function, react/jsx-max-depth, react/no-multi-comp */
 
-/* oxlint-disable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp -- SidebarTrigger: ; react-perf/jsx-no-new-function-as-prop: this event callback captures current render state; memoization requires a separately verified dependency contract; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; typescript/explicit-module-boundary-types: preserve the existing inferred hook or component API, including callback and generic result relationships */
+/* oxlint-disable react/no-multi-comp -- SidebarTrigger shares the stateful sidebar module it consumes. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarTrigger uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarTrigger = (
@@ -363,6 +358,20 @@ const SidebarTrigger = (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
   const { toggleSidebar } = useSidebar();
+  const handleClick = useReactCallback<
+    NonNullable<ReactComponentProps<typeof Button>["onClick"]>
+  >(
+    (
+      /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forward the same full MouseEvent to the public onClick before toggleSidebar; finite event readers lose the caller's coordinates, modifiers, nativeEvent and mutable DOM targets. The shallow readonly native event remains flagged. */
+      event
+      /* oxlint-enable typescript/prefer-readonly-parameter-types */
+    ) => {
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
+      onClick?.(event);
+      toggleSidebar();
+    },
+    [onClick, toggleSidebar]
+  );
 
   return (
     <Button
@@ -370,15 +379,7 @@ const SidebarTrigger = (
       className={cn("size-7", className)}
       data-sidebar="trigger"
       data-slot="sidebar-trigger"
-      onClick={(
-        /* oxlint-disable typescript/prefer-readonly-parameter-types -- The original native event is forwarded to its caller or native handler; retain event methods and mutable target DOM identity. */
-        event
-        /* oxlint-enable typescript/prefer-readonly-parameter-types */
-      ) => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onClick; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-        onClick?.(event);
-        toggleSidebar();
-      }}
+      onClick={handleClick}
       size="icon"
       variant="ghost"
       // oxlint-disable-next-line react/jsx-props-no-spreading -- Forward SidebarTrigger's Button prop contract, preserving caller options, children and callbacks.
@@ -391,7 +392,7 @@ const SidebarTrigger = (
 };
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react-perf/jsx-no-new-function-as-prop, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- SidebarRail: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
@@ -904,7 +905,7 @@ const SidebarMenuBadge = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp -- SidebarMenuSkeleton: react-perf/jsx-no-new-object-as-prop: this prop object derives from current render state or feature styling; hoisting changes its ownership; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuSkeleton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuSkeleton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuSkeleton = (

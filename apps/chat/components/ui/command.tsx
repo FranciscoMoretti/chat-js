@@ -1,15 +1,5 @@
 "use client";
 
-import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon } from "lucide-react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   Dialog,
   DialogContent,
@@ -17,7 +7,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
+import { Command as CommandPrimitive } from "cmdk";
+import { SearchIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* oxlint-disable react/react-in-jsx-scope -- Command uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */

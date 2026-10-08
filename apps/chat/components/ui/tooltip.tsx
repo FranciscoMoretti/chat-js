@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+  ComponentProps as ReactComponentProps,
+  JSX as ReactJSX,
+} from "react";
 import {
   Arrow as TooltipPrimitiveArrow,
   Content as TooltipPrimitiveContent,
@@ -8,20 +12,15 @@ import {
   Root as TooltipPrimitiveRoot,
   Trigger as TooltipPrimitiveTrigger,
 } from "@radix-ui/react-tooltip";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentProps as ReactComponentProps,
-  JSX as ReactJSX,
-} from "react";
-/* oxlint-enable sort-imports */
-
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import { cn } from "@/lib/utils";
-/* oxlint-disable no-magic-numbers -- TooltipProvider: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0). */
+
+const DEFAULT_TOOLTIP_DELAY_DURATION = 0;
+const DEFAULT_SIDE_OFFSET = 0;
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipProvider uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const TooltipProvider = ({
-  delayDuration = 0,
+  delayDuration = DEFAULT_TOOLTIP_DELAY_DURATION,
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes delayDuration from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
   ...props
 }: Readonly<
@@ -35,7 +34,6 @@ const TooltipProvider = ({
   />
 );
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers */
 /* oxlint-disable react/no-multi-comp -- Tooltip: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- Tooltip uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
@@ -72,7 +70,7 @@ const TooltipTrigger = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable no-magic-numbers, react/no-multi-comp -- TooltipContent: no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/no-multi-comp: these related render helpers share this feature module and its local state and props contract. */
+/* oxlint-disable react/no-multi-comp -- TooltipContent: these related render helpers share this feature module and its local state and props contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- TooltipContent uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 
@@ -80,7 +78,7 @@ const TooltipContent = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
     className,
-    sideOffset = 0,
+    sideOffset = DEFAULT_SIDE_OFFSET,
     children,
     variant = "primary",
     // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding props excludes className, sideOffset, children, variant from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
@@ -118,7 +116,7 @@ const TooltipContent = (
 );
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Tooltip, TooltipContent, TooltipProvider, TooltipTrigger); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable no-magic-numbers, react/no-multi-comp */
+/* oxlint-enable react/no-multi-comp */
 
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };
 /* oxlint-enable import/no-named-export */

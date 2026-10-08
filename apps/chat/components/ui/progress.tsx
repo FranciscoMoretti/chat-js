@@ -12,6 +12,9 @@ import React from "react";
 
 import { cn } from "@/lib/utils";
 
+const FULL_PROGRESS = 100;
+const EMPTY_PROGRESS = 0;
+
 const Progress = (
   /* oxlint-disable typescript/prefer-readonly-parameter-types -- Forwards the original native element or primitive props, including ref/event callbacks and component constructors; their exact callable and DOM contracts remain flagged by the faithful readonly rule control. */
   {
@@ -22,13 +25,13 @@ const Progress = (
   }: ReactComponentProps<typeof ProgressPrimitiveRoot>
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
-  const indicatorStyle = React.useMemo(
-    (): { readonly transform: string } => ({
-      // oxlint-disable-next-line no-magic-numbers, typescript/strict-boolean-expressions, typescript/prefer-nullish-coalescing -- Percentage math uses 100 as full progress and 0 as the missing/NaN fallback; preserve the existing zero branch for all falsy numeric values.
-      transform: `translateX(-${100 - (value || 0)}%)`,
-    }),
-    [value]
-  );
+  const indicatorStyle = React.useMemo((): { readonly transform: string } => {
+    let progressValue = value ?? EMPTY_PROGRESS;
+    if (Number.isNaN(progressValue)) {
+      progressValue = EMPTY_PROGRESS;
+    }
+    return { transform: `translateX(-${FULL_PROGRESS - progressValue}%)` };
+  }, [value]);
   return (
     <ProgressPrimitiveRoot
       // oxlint-disable-next-line react/forbid-component-props -- Radix ProgressPrimitiveRoot accepts className for its track styling.

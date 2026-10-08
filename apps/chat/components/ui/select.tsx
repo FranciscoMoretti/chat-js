@@ -1,5 +1,11 @@
 "use client";
 
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import type {
+  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
+  ComponentRef as ReactComponentRef,
+  JSX as ReactJSX,
+} from "react";
 import {
   Content as SelectPrimitiveContent,
   Group as SelectPrimitiveGroup,
@@ -17,19 +23,8 @@ import {
   Value as SelectPrimitiveValue,
   Viewport as SelectPrimitiveViewport,
 } from "@radix-ui/react-select";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-/* oxlint-enable sort-imports */
-import { forwardRef as reactForwardRef } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ComponentPropsWithoutRef as ReactComponentPropsWithoutRef,
-  ComponentRef as ReactComponentRef,
-  JSX as ReactJSX,
-} from "react";
-/* oxlint-enable sort-imports */
-
 import { cn } from "@/lib/utils";
+import { forwardRef as reactForwardRef } from "react";
 
 const Select = SelectPrimitiveRoot;
 
@@ -215,7 +210,7 @@ const SelectLabel = reactForwardRef<
 /* oxlint-enable react/react-in-jsx-scope */
 
 SelectLabel.displayName = SelectPrimitiveLabel.displayName;
-/* oxlint-disable react/jsx-max-depth -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
+/* oxlint-disable react/jsx-max-depth -- SelectItem: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 
 /* oxlint-disable react/react-in-jsx-scope -- SelectItem uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SelectItem = reactForwardRef<

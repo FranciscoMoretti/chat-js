@@ -1,12 +1,9 @@
+import React from "react";
+import { Separator } from "@/components/ui/separator";
 import { Slot } from "@radix-ui/react-slot";
 import type { VariantProps } from "class-variance-authority";
-import { cva } from "class-variance-authority";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { cva } from "class-variance-authority";
 
 const buttonGroupVariants = cva(
   "flex w-fit items-stretch has-[>[data-slot=button-group]]:gap-2 [&>*]:focus-visible:relative [&>*]:focus-visible:z-10 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
