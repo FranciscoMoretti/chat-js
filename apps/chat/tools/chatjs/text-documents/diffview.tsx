@@ -36,10 +36,10 @@ type SerializedDiffTextNode = SerializedTextNode & {
 /* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
-/* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 // Custom diff text node that supports styling
+/* oxlint-disable eslint/no-underscore-dangle -- This Lexical node's clone and serialization contract uses Lexical 0.32.1's double-underscore base and custom backing fields. */
 class DiffTextNode extends TextNode {
   public __diffType?: DiffTypeValue;
 
@@ -138,9 +138,9 @@ class DiffTextNode extends TextNode {
   }
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 }
+/* oxlint-enable eslint/no-underscore-dangle */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-underscore-dangle */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */

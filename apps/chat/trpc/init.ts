@@ -101,10 +101,9 @@ const { createCallerFactory } = trpc;
 const createTRPCRouter = trpc.router;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve timingMiddleware's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types --
  * no-console (#514): timingMiddleware emits operational command/error diagnostics through console; selecting another logging transport requires a runtime-specific decision.
  * no-magic-numbers (#517): timingMiddleware uses 400, 100 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * no-underscore-dangle (#520): timingMiddleware accesses the established _config field convention; renaming requires changing the owning SDK or backing-field contract.
  * typescript/prefer-readonly-parameter-types (#565): timingMiddleware accepts { next: runNext, path }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
  */
 /**
@@ -116,6 +115,7 @@ const createTRPCRouter = trpc.router;
 const timingMiddleware = trpc.middleware(async ({ next: runNext, path }) => {
   const start = Date.now();
 
+  // oxlint-disable-next-line eslint/no-underscore-dangle -- @trpc/server 11.16.0 marks TRPCRootObject._config @internal; its isDev value is the SDK's authoritative runtime configuration.
   if (trpc._config.isDev) {
     // Add an artificial delay in development.
     const waitMs = Math.floor(Math.random() * 400) + 100;
@@ -130,7 +130,7 @@ const timingMiddleware = trpc.middleware(async ({ next: runNext, path }) => {
   return result;
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-console, no-magic-numbers, no-underscore-dangle, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-console, no-magic-numbers, typescript/prefer-readonly-parameter-types */
 
 /**
  * Public (unauthenticated) procedure

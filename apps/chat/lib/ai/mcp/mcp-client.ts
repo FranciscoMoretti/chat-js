@@ -36,7 +36,6 @@ type McpClientStatus =
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable eslint/max-params -- This adapter implements the existing positional callback contract; changing it requires updating every caller. */
 /* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable eslint/no-underscore-dangle -- This identifier follows an external/internal protocol field or an intentionally unused destructured binding. */
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
@@ -54,7 +53,7 @@ export class MCPClient {
   private readonly invalidateCache?: () => void;
   private oauthProvider: McpOAuthClientProvider;
   private authorizationUrl?: URL;
-  private _status: McpClientStatus = "disconnected";
+  private connectionStatus: McpClientStatus = "disconnected";
 
   private readonly id: string;
   private readonly name: string;
@@ -128,7 +127,7 @@ export class MCPClient {
     if (this.client) {
       return "connected";
     }
-    return this._status;
+    return this.connectionStatus;
   }
 
   public getAuthorizationUrl(): URL | undefined {
@@ -186,7 +185,7 @@ export class MCPClient {
       this.connectionAbort.signal,
       AbortSignal.timeout(30_000),
     ]);
-    this._status = "connecting";
+    this.connectionStatus = "connecting";
 
     try {
       // Adopt state if provided (for callback reconciliation).
@@ -214,19 +213,19 @@ export class MCPClient {
       }
       this.client = client;
       this.authorizationUrl = undefined;
-      this._status = "connected";
+      this.connectionStatus = "connected";
       return this.client;
     } catch (error) {
       if (generation !== this.generation || signal.aborted) {
         if (generation === this.generation) {
           this.authorizationUrl = undefined;
-          this._status = "disconnected";
+          this.connectionStatus = "disconnected";
         }
         throw error;
       }
       // If OAuth required error, status becomes "authorizing"
       if (error instanceof OAuthAuthorizationRequiredError) {
-        this._status = "authorizing";
+        this.connectionStatus = "authorizing";
         log.info(
           { authUrl: error.authorizationUrl.toString(), connectorId: this.id },
           "OAuth authorization required"
@@ -235,7 +234,7 @@ export class MCPClient {
         return;
       }
 
-      this._status = "disconnected";
+      this.connectionStatus = "disconnected";
       throw error;
     }
   }
@@ -289,7 +288,7 @@ export class MCPClient {
       if (
         errorMessage.includes("does not support dynamic client registration")
       ) {
-        this._status = "incompatible";
+        this.connectionStatus = "incompatible";
         return {
           error:
             "Server requires pre-configured OAuth credentials (does not support dynamic client registration)",
@@ -392,7 +391,7 @@ export class MCPClient {
     const { client } = this;
     this.client = undefined;
     this.authorizationUrl = undefined;
-    this._status = "disconnected";
+    this.connectionStatus = "disconnected";
     try {
       // oxlint-disable-next-line oxc/no-optional-chaining -- Close snapshots possibly absent class client then resets it. await client?.close() also preserves a microtask yield when no client exists; an if(client) without await would change invalidation timing.
       await client?.close();
@@ -438,7 +437,6 @@ export class MCPClient {
 /* oxlint-enable jsdoc/require-param */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/no-undefined */
-/* oxlint-enable eslint/no-underscore-dangle */
 /* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-params */
 /* oxlint-enable eslint/no-magic-numbers */
