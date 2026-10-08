@@ -36,13 +36,12 @@ export default defineConfig({
         "promise/prefer-await-to-then": "error",
       },
     },
-    // EVE derives the public tool name from this filename.
-    // Oxlint reports this rule at offset zero and cannot honor source directives.
+    // EVE uses discovered tool filenames verbatim as IDs for deepResearch and webSearch; confirm_note is preserved by its explicit map key.
+    // Oxlint 1.82 reports filename-case at offset zero and ignores source directives; a native probe reproduced this for both remaining exceptions.
     {
       files: [
         "agent/tools/deepResearch.ts",
         "agent/subagents/researcher/tools/webSearch.ts",
-        "tests/eve-fixture/agent/tools/confirm_note.ts",
       ],
       rules: { "unicorn/filename-case": "off" },
     },

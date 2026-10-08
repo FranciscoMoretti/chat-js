@@ -111,11 +111,14 @@ const external = externalGatewayFixture();
 /* oxlint-disable eslint/max-statements -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the test setup, action, and assertions together so this scenario remains independently understandable. */
 /* oxlint-disable eslint/no-magic-numbers -- These values are concrete test inputs and expected results; naming each literal would make the fixture harder to compare with its assertions. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types -- This parameter participates in the existing SDK or mutable state contract; recursively readonly types would change assignability or permitted updates. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
 const registryServer = Bun.serve({
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fetch's awaited sequencing and rejected-Promise behavior. */
-  async fetch(request): Promise<Response> {
+  async fetch(
+    request: Readonly<Pick<Request, "url" | "json">> & {
+      readonly headers: Readonly<Pick<Headers, "get">>;
+    }
+  ): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (path === "/paid-counter.json") {
       return Response.json(nativeToolFixture);
@@ -389,7 +392,6 @@ export const readPage = defineTool({description: "External fixture",inputSchema:
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve beforeAll's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/strict-boolean-expressions */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
@@ -621,7 +623,7 @@ const verifyResearchInstallation = async (cwd: string, gateway: string) => {
     ]);
     await run(cwd, ["bun", "run", "lint"]);
     expect(
-      await Bun.file(nodePath.join(cwd, "agent/tools/confirm_note.ts")).exists()
+      await Bun.file(nodePath.join(cwd, "agent/tools/confirm-note.ts")).exists()
     ).toBe(false);
     expect(
       await Bun.file(

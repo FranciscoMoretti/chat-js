@@ -277,7 +277,7 @@ const normalizeStandaloneLintConfig = async (
   await writeFile(
     lintPath,
     standaloneLint.replace(
-      '        "tests/eve-fixture/agent/tools/confirm_note.ts",\n',
+      '        "tests/eve-fixture/agent/tools/confirm-note.ts",\n',
       ""
     )
   );
