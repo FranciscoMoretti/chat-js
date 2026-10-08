@@ -60,6 +60,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-turbo-unit-${{ hashFiles('bun.lock') }}-
       - run: bun install --frozen-lockfile
+      - name: Test effective lint-import policy
+        run: bun test scripts/lint-import-policy.test.ts
       - name: Test hosted cleanup scheduler
         run: bun run test:hosting
       - if: steps.affected.outputs.run == 'true'
