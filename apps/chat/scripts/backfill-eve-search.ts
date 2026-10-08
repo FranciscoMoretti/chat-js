@@ -73,7 +73,7 @@ const main = async (): Promise<void> => {
     cursor = batch.at(-1)?.id;
     console.info(`Search backfill: ${indexed} indexed, ${failed} failed.`);
   }
-  // oxlint-disable-next-line unicorn/no-process-exit, no-ternary -- #571: The one-shot backfill terminates with its aggregate result while the shared database pool remains open.; no-ternary: Keep process.exit argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+  // oxlint-disable-next-line unicorn/no-process-exit, no-ternary -- unicorn/no-process-exit: The one-shot command has no database teardown and must terminate after reporting its aggregate status.; no-ternary: Keep the exit-code selection inline; if/else assignment conflicts with pinned unicorn/prefer-ternary.
   process.exit(failed ? 1 : 0);
 };
 /* oxlint-enable oxc/no-async-await */

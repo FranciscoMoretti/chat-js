@@ -124,7 +124,7 @@ const handleCancel: <PromptValue>(
 ) => asserts value is Exclude<PromptValue, symbol> = (value) => {
   if (isCancel(value)) {
     cancel("Operation cancelled.");
-    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
+    // oxlint-disable-next-line unicorn/no-process-exit -- Required prompt cancellation exits with status 1 before its sentinel reaches command logic.
     process.exit(PROMPT_CANCEL_EXIT_CODE);
   }
 };
@@ -815,7 +815,7 @@ const promptObservability = async (yes: boolean): Promise<string[]> => {
   });
   if (isCancel(result)) {
     cancel("Operation cancelled.");
-    // oxlint-disable-next-line unicorn/no-process-exit -- #571: A cancelled CLI prompt must terminate before its cancellation sentinel reaches command logic.
+    // oxlint-disable-next-line unicorn/no-process-exit -- Keep optional-prompt cancellation at status 0 while stopping the caller before installation proceeds.
     process.exit(OBSERVABILITY_CANCEL_EXIT_CODE);
   }
   return result;
