@@ -8,7 +8,6 @@ import { mkdir } from "node:fs/promises";
 // oxlint-disable-next-line eslint/sort-imports -- Keep Playwright type-only imports separate from runtime bindings; moving them has no runtime module-order effect.
 import type { Page, Request, Response } from "@playwright/test";
 /* oxlint-disable promise/avoid-new -- These fixtures adapt callback, or browser event APIs into awaited Promises. */
-/* oxlint-disable unicorn/prefer-ternary -- Explicit branches make stateful route behavior and cleanup order visible. */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -467,6 +466,7 @@ test("normal navigation and sidebar search use Eve without sending to the old ch
       exact: true,
       name: "Expand sidebar",
     });
+    // oxlint-disable-next-line unicorn/prefer-ternary -- This browser flow awaits exactly one click based on the visible sidebar control; eslint/no-ternary also rejects the ternary form.
     if (await expand.isVisible()) {
       await expand.click();
     } else {

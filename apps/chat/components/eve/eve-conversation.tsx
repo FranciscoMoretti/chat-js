@@ -537,7 +537,7 @@ const EveConversation = ({
                 onSuggestion={(suggestion) => {
                   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                   void run(async () => {
-                    // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
+                    // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
                     if (modelIds.length > 1) {
                       await fork.compare(
                         draftMessage(suggestion, []),
@@ -682,7 +682,7 @@ const EveConversation = ({
               onSubmit={() => {
                 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve callbacks in this statement's awaited sequencing and rejected-Promise behavior. */
                 void run(async () => {
-                  // oxlint-disable-next-line unicorn/prefer-ternary -- The branches perform distinct async recovery operations.
+                  // oxlint-disable-next-line unicorn/prefer-ternary -- Keep the awaited multi-model fork and single-model send paths explicit inside run's catch/finally; eslint/no-ternary also rejects the ternary form.
                   if (modelIds.length > 1) {
                     await fork.compare(
                       draftMessage(draft, files.attachments),
