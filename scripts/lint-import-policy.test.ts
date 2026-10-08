@@ -133,10 +133,13 @@ test("root and standalone configs keep the unassigned-import rule narrow", async
 });
 
 test("policy assertions reject lookalike values in unrelated entries", () => {
-  const decoyConfig = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.scss"]}]],"other/import-rule": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"files": ["**/next-env.d.ts"],"rules": {"import/no-unassigned-import": "deny"}},{"files": ["**/other-generated.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
+  const wrongRootOptions = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.scss"]}]],"other/import-rule": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"files": ["**/next-env.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
+  const wrongNextEnvSeverity = `{"rules":{"import/no-unassigned-import": ["deny",[{"allow": ["**/*.css","server-only"]}]]},"overrides":[{"files": ["**/next-env.d.ts"],"rules": {"import/no-unassigned-import": "deny"}},{"files": ["**/other-generated.d.ts"],"rules": {"import/no-unassigned-import": "allow"}}]}`;
 
-  expect(decoyConfig).toMatch(legacyRuleAllowList);
-  expect(decoyConfig).toMatch(legacyNextEnvOverride);
-  expect(() => assertEffectivePolicy(decoyConfig)).toThrow();
+  expect(wrongRootOptions).toMatch(legacyRuleAllowList);
+  expect(() => assertEffectivePolicy(wrongRootOptions)).toThrow();
+
+  expect(wrongNextEnvSeverity).toMatch(legacyNextEnvOverride);
+  expect(() => assertEffectivePolicy(wrongNextEnvSeverity)).toThrow();
 });
 /* oxlint-enable oxc/no-async-await */
