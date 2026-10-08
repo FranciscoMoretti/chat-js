@@ -1,4 +1,3 @@
-/* oxlint-disable unicorn/prefer-structured-clone -- Exercise persisted JSON wire data, including omitted undefined values. */
 import type { MessageStreamEvent } from "eve/client";
 /* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
@@ -112,6 +111,7 @@ const toolEvent = (
     result: {
       callId: "call-external",
       kind: "tool-result",
+      // oxlint-disable-next-line unicorn/prefer-structured-clone -- #806: EVE action events carry JSON wire output; omit optional undefined object fields before validating the event payload.
       output: z.json().parse(JSON.parse(JSON.stringify(output))),
       toolName: "externalPaidTool",
     },
@@ -141,11 +141,7 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
   );
   record.mockResolvedValue(true);
   await ingestEveUsage("owner", "session", toolEvent(output));
-  await ingestEveUsage(
-    "owner",
-    "session",
-    toolEvent(JSON.parse(JSON.stringify(output)), "replayed-event")
-  );
+  await ingestEveUsage("owner", "session", toolEvent(output, "replayed-event"));
   expect(record).toHaveBeenCalledTimes(2);
   expect(record.mock.calls[0]).toEqual(record.mock.calls[1]);
   expect(record.mock.calls[0][0]).toEqual({
@@ -171,6 +167,25 @@ it("ingests receipts from arbitrary installed names with the same ledger identit
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types, unicorn/max-nested-calls */
+
+it("omits undefined receipt fields from persisted EVE action events", async () => {
+  const { executeWithToolUsage } = await import("./tool-usage");
+  const output = await executeWithToolUsage(
+    { abortSignal: new AbortController().signal },
+    () => ({ answer: "unpriced result" })
+  );
+  const event = toolEvent(output);
+  expect(event).toMatchObject({
+    data: {
+      result: { output: { kind: "chatjs.tool-result", usage: {} } },
+    },
+    type: "action.result",
+  });
+  expect(event).not.toHaveProperty("data.result.output.updates");
+  expect(event).not.toHaveProperty("data.result.output.usage.costUsd");
+});
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve subsequent tests' awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-undefined, typescript/prefer-readonly-parameter-types --
  * no-undefined (#519): it("retains unpriced and malformed external receipts for reconciliation") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.

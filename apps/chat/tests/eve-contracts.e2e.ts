@@ -432,15 +432,15 @@ test.each(["codeExecution", "webSearch"])(
   async (toolName) => {
     const sessionId = crypto.randomUUID();
     const callId = crypto.randomUUID();
+    const result = createToolResult({ message: "42", chart: "" }, 0.05);
+    expect(JSON.stringify(result)).not.toContain('"updates"');
     const event: MessageStreamEvent = {
       data: {
         result: {
           callId,
           kind: "tool-result",
-          // oxlint-disable-next-line typescript/no-unsafe-assignment, unicorn/prefer-structured-clone -- The event carries persisted JSON, not in-memory optional undefined fields. Round-trip the controlled tool-result fixture through JSON to exercise persisted protocol values rather than in-memory undefined fields.
-          output: JSON.parse(
-            JSON.stringify(createToolResult({ message: "42", chart: "" }, 0.05))
-          ),
+          // oxlint-disable-next-line typescript/no-unsafe-assignment, unicorn/prefer-structured-clone -- #806: EVE action events carry persisted JSON; the receipt has `updates: undefined`, which the wire omits.
+          output: JSON.parse(JSON.stringify(result)),
           toolName,
         },
         sequence: 0,
