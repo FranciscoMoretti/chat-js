@@ -1,8 +1,9 @@
-import type { Sql } from "postgres";
+import type { PostgresLifecycleQuery } from "./compatibility";
 import postgres from "postgres";
 import { z } from "zod";
 
 const STREAM_POSITION_BATCH_SIZE = 500;
+const EMPTY_SESSION_COUNT = 0;
 
 const positionRows = z.array(
   z.object({
@@ -12,19 +13,17 @@ const positionRows = z.array(
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresStreamPositions's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements -- Read bounded stream-name batches through the supplied connection, parse rows before exposing positions and associate each row only with an authorized session; keep the query ownership checks visible together. */
 /**
  * Metadata-only adapter for Eve 0.61.0 and world-postgres 5.0.0-beta.40.
  * Uses the same default stream name and non-EOF chunk count as getReadable /
  * streams.getInfo. Callers must supply only owner-authorized sessions.
  * Missing streams are omitted, never certified as empty or settled.
- * @param {Sql} connection Existing PostgreSQL connection used for bounded metadata reads.
+ * @param {PostgresLifecycleQuery} connection Existing PostgreSQL connection used for bounded metadata reads.
  * @param {readonly string[]} sessionIds Owner-authorized native session identities mapped to their default user streams.
  * @returns {Promise<Map<string, number>>} Positions for existing stream groups, including zero non-EOF chunks; missing streams are omitted.
  */
 const readEvePostgresStreamPositions = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
-  connection: Sql,
+  connection: PostgresLifecycleQuery,
   sessionIds: readonly string[]
 ): Promise<Map<string, number>> => {
   const sessionsByStream = new Map(
@@ -37,22 +36,19 @@ const readEvePostgresStreamPositions = async (
     offset < names.length;
     offset += STREAM_POSITION_BATCH_SIZE
   ) {
-    const batch = names.slice(offset, offset + STREAM_POSITION_BATCH_SIZE);
-
     const rows = positionRows.parse(
       // oxlint-disable-next-line eslint/no-await-in-loop -- Issue authorized stream-name batches sequentially on the supplied connection; a rejected batch prevents later queries and preserves result insertion order.
       await connection`
       select stream_id as "streamId",
         count(*) filter (where eof = false) as length
       from workflow.workflow_stream_chunks
-      where stream_id in ${connection(batch)}
+      where stream_id in ${connection(names.slice(offset, offset + STREAM_POSITION_BATCH_SIZE))}
       group by stream_id
     `
     );
     for (const row of rows) {
       const sessionId = sessionsByStream.get(row.streamId);
-      // oxlint-disable-next-line typescript/strict-boolean-expressions -- An unmapped or empty session identity must not become an authorized returned position.
-      if (sessionId) {
+      if (typeof sessionId === "string" && sessionId !== "") {
         positions.set(sessionId, row.length);
       }
     }
@@ -61,7 +57,6 @@ const readEvePostgresStreamPositions = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getEvePostgresStreamPositions's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements */
 
 /** Open a short-lived connection for owner-authorized native stream metadata.
  * @param {string} databaseUrl PostgreSQL connection URL for the workflow world.
@@ -72,8 +67,7 @@ const getEvePostgresStreamPositions = async (
   databaseUrl: string,
   sessionIds: readonly string[]
 ): Promise<Map<string, number>> => {
-  // oxlint-disable-next-line no-magic-numbers -- Empty authorized input needs no database connection.
-  if (sessionIds.length === 0) {
+  if (sessionIds.length === EMPTY_SESSION_COUNT) {
     return new Map<string, number>();
   }
   const connection = postgres(databaseUrl, {

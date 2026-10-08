@@ -1,4 +1,4 @@
-import type { Sql } from "postgres";
+import type { Helper, ParameterOrFragment, PendingQuery, Row } from "postgres";
 
 // Exact migration boundary of @workflow/world-postgres 5.0.0-beta.40 and
 // graphile-worker 0.16.6. New migrations require native acceptance and review of
@@ -17,12 +17,24 @@ const fencedTables = [
   "workflow_stream_chunks",
 ];
 
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (assertPostgresLifecycleCompatibility); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+// Native tag/list capability only: preserve the actual callable connection and
+// mutable native query outputs without exposing unused connection lifecycle state.
+/* oxlint-disable import/no-named-export -- App modules use named exports; the pinned import/no-default-export rule rejects the alternative. */
+export interface PostgresLifecycleQuery {
+  <Rows extends readonly (object | undefined)[] = Row[]>(
+    template: Readonly<TemplateStringsArray>,
+    // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Preserve native tag overload assignability, including mutable Helper.rest and PendingQuery fragments; readonly fragment alternatives reject original Sql/TransactionSql without wrappers or casts.
+    ...parameters: readonly ParameterOrFragment<never>[]
+  ): PendingQuery<Rows>;
+  (values: readonly string[]): Helper<readonly string[], []>;
+}
+/* oxlint-enable import/no-named-export */
+
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (assertPostgresLifecycleCompatibility); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve assertPostgresLifecycleCompatibility's awaited sequencing and rejected-Promise behavior. */
 
 export const assertPostgresLifecycleCompatibility = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
-  connection: Sql
+  connection: PostgresLifecycleQuery
 ): Promise<void> => {
   const [workflow] = await connection`
     select max(created_at)::text as boundary from workflow_drizzle.workflow_migrations
@@ -72,5 +84,5 @@ export const assertPostgresLifecycleCompatibility = async (
     );
   }
 };
-/* oxlint-enable import/prefer-default-export, import/no-named-export */
+/* oxlint-enable import/no-named-export */
 /* oxlint-enable oxc/no-async-await */

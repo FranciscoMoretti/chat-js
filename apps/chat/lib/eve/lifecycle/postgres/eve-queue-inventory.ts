@@ -1,49 +1,26 @@
-import type { Sql, TransactionSql } from "postgres";
+import type { PostgresLifecycleQuery } from "./compatibility";
 import { z } from "zod";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (readEvePostgresQueueInventory); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readEvePostgresQueueInventory's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, no-magic-numbers --
- * max-lines-per-function (#510): readEvePostgresQueueInventory keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): readEvePostgresQueueInventory uses 1, 10_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
-/**
- * Internal metadata-only inventory for Workflow Postgres beta.40's Graphile
- * transport. Caller authorizes run IDs and supplies its configured queue task.
- * Includes resilient child creation even when its run row does not exist yet.
- * This read neither locks nor removes jobs; later cleanup must recheck ownership.
- * @param {Sql | TransactionSql} connection Existing native connection or transaction for the configured queue metadata read.
- * @param {{ readonly runIds: readonly string[]; readonly taskIdentifier: string }} input Authorized native run identities and configured task; validated before querying.
- * @returns {Promise<{ jobs: { id: string; locked: boolean; runId: string | null }[]; unsupportedJobIds: string[] }>} Matching queued jobs, including parent/root associations, and task jobs lacking supported run metadata. Run-less health checks are excluded; oversized inventory rejects.
- */
-export const readEvePostgresQueueInventory = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Execute metadata reads through the native Postgres tag and interpolation overloads; preserving those callable signatures retains SDK mutable members and the rule finding.
-  connection: Sql | TransactionSql,
-  input: {
-    readonly runIds: readonly string[];
-    readonly taskIdentifier: string;
-  }
-): Promise<{
-  jobs: { id: string; locked: boolean; runId: string | null }[];
-  unsupportedJobIds: string[];
-}> => {
-  const { runIds, taskIdentifier } = z
-    .object({
-      runIds: z.array(z.string().min(1)).min(1).max(10_000),
-      taskIdentifier: z.string().min(1),
-    })
-    .parse(input);
-  const rows = z
-    .array(
-      z.object({
-        id: z.string(),
-        locked: z.boolean(),
-        runId: z.string().nullable(),
-        unsupported: z.boolean(),
-      })
-    )
-    .parse(
-      await connection`
+const nonemptyStringLength = 1;
+const queueInventoryLimit = 10_000;
+const queueRows = z.array(
+  z.object({
+    id: z.string(),
+    locked: z.boolean(),
+    runId: z.string().nullable(),
+    unsupported: z.boolean(),
+  })
+);
+
+const readQueueMessages = async (
+  connection: PostgresLifecycleQuery,
+  runIds: readonly string[],
+  taskIdentifier: string
+): Promise<z.output<typeof queueRows>> =>
+  queueRows.parse(
+    await connection`
     with messages as materialized (
       select job.id::text as id,
         (job.locked_at is not null or job.locked_by is not null) as locked,
@@ -69,8 +46,38 @@ export const readEvePostgresQueueInventory = async (
       or body #>> '{runInput,attributes,$eve.root}' in ${connection(runIds)}
     order by id limit 10001
   `
-    );
-  if (rows.length > 10_000) {
+  );
+
+/**
+ * Internal metadata-only inventory for Workflow Postgres beta.40's Graphile
+ * transport. Caller authorizes run IDs and supplies its configured queue task.
+ * Includes resilient child creation even when its run row does not exist yet.
+ * This read neither locks nor removes jobs; later cleanup must recheck ownership.
+ * @param {PostgresLifecycleQuery} connection Existing native connection or transaction for the configured queue metadata read.
+ * @param {{ readonly runIds: readonly string[]; readonly taskIdentifier: string }} input Authorized native run identities and configured task; validated before querying.
+ * @returns {Promise<{ jobs: { id: string; locked: boolean; runId: string | null }[]; unsupportedJobIds: string[] }>} Matching queued jobs, including parent/root associations, and task jobs lacking supported run metadata. Run-less health checks are excluded; oversized inventory rejects.
+ */
+export const readEvePostgresQueueInventory = async (
+  connection: PostgresLifecycleQuery,
+  input: {
+    readonly runIds: readonly string[];
+    readonly taskIdentifier: string;
+  }
+): Promise<{
+  jobs: { id: string; locked: boolean; runId: string | null }[];
+  unsupportedJobIds: string[];
+}> => {
+  const { runIds, taskIdentifier } = z
+    .object({
+      runIds: z
+        .array(z.string().min(nonemptyStringLength))
+        .min(nonemptyStringLength)
+        .max(queueInventoryLimit),
+      taskIdentifier: z.string().min(nonemptyStringLength),
+    })
+    .parse(input);
+  const rows = await readQueueMessages(connection, runIds, taskIdentifier);
+  if (rows.length > queueInventoryLimit) {
     throw new Error("Queue inventory exceeds the supported limit.");
   }
   return {
@@ -84,4 +91,3 @@ export const readEvePostgresQueueInventory = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, no-magic-numbers */
