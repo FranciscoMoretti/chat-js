@@ -1,7 +1,6 @@
 /* oxlint-disable import/no-relative-parent-imports --
  * import/no-relative-parent-imports (#530): Keep the explicit "../components/eve/eve-response-group-cards"; "../components/response-choice-cards" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable jsx-a11y/prefer-tag-over-role -- The fixture preserves the production-compatible role markup used by its visual contract. */
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -103,7 +102,7 @@ const Fixture = (): React.JSX.Element => {
           selectedOperationId={selected}
         />
       </section>
-      <p role="status">Selected operation: {selected}</p>
+      <output className="block">Selected operation: {selected}</output>
       <section aria-label="Single candidate">
         <EveResponseGroupCards
           candidates={candidates.slice(0, 1)}

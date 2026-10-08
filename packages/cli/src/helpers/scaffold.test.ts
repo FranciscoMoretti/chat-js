@@ -18,9 +18,11 @@ import { tmpdir } from "node:os";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration fixture resolves platform-specific project and installation paths.
 import pathModule from "node:path";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line import/no-nodejs-modules -- This Bun integration test supplies the same file URL exposed by Node's native ESM import.meta.
+import { pathToFileURL } from "node:url";
 // oxlint-disable-next-line import/no-nodejs-modules -- This Bun test evaluates generated Node configuration with controlled native runtime bindings.
-import { runInNewContext } from "node:vm";
+import { SourceTextModule, SyntheticModule, createContext } from "node:vm";
+/* oxlint-enable sort-imports */
 
 import ts from "typescript";
 import { z } from "zod";
@@ -896,7 +898,7 @@ describe("scaffoldElectron", (): void => {
     const { outputText } = ts.transpileModule(source, {
       compilerOptions: {
         esModuleInterop: true,
-        module: ts.ModuleKind.CommonJS,
+        module: ts.ModuleKind.ESNext,
         target: ts.ScriptTarget.ES2022,
       },
     });
@@ -905,51 +907,81 @@ describe("scaffoldElectron", (): void => {
       command: string;
       nodeEnv?: string;
     }[] = [];
-    const configModule: {
-      default?: { hooks: Record<string, () => Promise<void>> };
-    } = {};
-    runInNewContext(outputText, {
-      __dirname: electronDir,
-      exports: configModule,
-      process: { env: {} },
-      require: (id: string) => {
-        if (id === "node:child_process") {
-          return {
-            spawnSync: (
-              command: string,
-              args: readonly string[],
-              options: { readonly env: Readonly<NodeJS.ProcessEnv> }
-            ) => {
-              commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
-              return { status: 0 };
-            },
-          };
-        }
-        if (id === "node:fs") {
-          return { existsSync, readFileSync };
-        }
-        if (id === "node:path") {
-          return pathModule;
-        }
-        if (id.startsWith("@electron-forge/maker-")) {
-          return {
-            MakerDMG: Object,
-            MakerDeb: Object,
-            MakerRpm: Object,
-            MakerSquirrel: Object,
-            MakerZIP: Object,
-          };
-        }
-        throw new Error(`Unexpected Forge dependency: ${id}`);
+    const context = createContext({ process: { env: {} } });
+    const configPath = pathModule.join(electronDir, "forge.config.ts");
+    const configModule = new SourceTextModule(outputText, {
+      context,
+      identifier: configPath,
+      // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Node's vm.initializeImportMeta contract requires populating the supplied mutable import.meta object.
+      initializeImportMeta: (meta): void => {
+        meta.dirname = electronDir;
+        meta.filename = configPath;
+        meta.url = pathToFileURL(configPath).href;
       },
     });
-    expect(configModule.default).toBeDefined();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.generateAssets; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-    await configModule.default?.hooks.generateAssets?.();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.preStart; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-    await configModule.default?.hooks.preStart?.();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling configModule.default.hooks.prePackage; read hooks from configModule.default; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-    await configModule.default?.hooks.prePackage?.();
+    await configModule.link((specifier: Readonly<string>): SyntheticModule => {
+      let moduleExports: Record<string, unknown> = {};
+
+      if (specifier === "node:child_process") {
+        moduleExports = {
+          spawnSync: (
+            command: string,
+            args: readonly string[],
+            options: { readonly env: Readonly<NodeJS.ProcessEnv> }
+          ) => {
+            commands.push({ args, command, nodeEnv: options.env.NODE_ENV });
+            return { status: 0 };
+          },
+        };
+      } else if (specifier === "node:fs") {
+        moduleExports = { existsSync, readFileSync };
+      } else if (specifier === "node:path") {
+        moduleExports = { default: pathModule };
+      } else {
+        const makerExportNameBySpecifier: Readonly<Record<string, string>> = {
+          "@electron-forge/maker-deb": "MakerDeb",
+          "@electron-forge/maker-dmg": "MakerDMG",
+          "@electron-forge/maker-rpm": "MakerRpm",
+          "@electron-forge/maker-squirrel": "MakerSquirrel",
+          "@electron-forge/maker-zip": "MakerZIP",
+        };
+        const makerExportName = makerExportNameBySpecifier[specifier];
+        if (makerExportName === undefined) {
+          throw new Error(`Unexpected Forge dependency: ${specifier}`);
+        }
+        moduleExports = { [makerExportName]: Object };
+      }
+
+      return new SyntheticModule(
+        Object.keys(moduleExports),
+        function initializeMockModule(): void {
+          for (const [name, value] of Object.entries(moduleExports)) {
+            this.setExport(name, value);
+          }
+        },
+        { context, identifier: specifier }
+      );
+    });
+    await configModule.evaluate();
+    const config = z
+      .object({
+        hooks: z.object({
+          generateAssets: z.custom<() => Promise<void>>(
+            (value): boolean => typeof value === "function"
+          ),
+          prePackage: z.custom<() => Promise<void>>(
+            (value): boolean => typeof value === "function"
+          ),
+          preStart: z.custom<() => Promise<void>>(
+            (value): boolean => typeof value === "function"
+          ),
+        }),
+      })
+      .parse(Reflect.get(configModule.namespace, "default"));
+    expect(config).toBeDefined();
+    await config.hooks.generateAssets();
+    await config.hooks.preStart();
+    await config.hooks.prePackage();
     expect(commands).toEqual([
       { args: ["run", "prebuild"], command: "npm", nodeEnv: undefined },
       { args: ["run", "build"], command: "npm", nodeEnv: "development" },

@@ -9,7 +9,6 @@ import { drizzle } from "drizzle-orm/node-postgres";
 /* oxlint-enable sort-imports */
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Pool } from "pg";
 /* oxlint-enable sort-imports */
@@ -100,9 +99,8 @@ test("batched default-stream positions match the provider without counting EOF o
   await streamer.streams.close(runId, name);
   const updated = await readEvePostgresStreamPositions(positionConnection, ids);
   expect(updated.get(sessionId)).toBe(3);
-  expect(updated.get(sessionId)).toBe(
-    (await streamer.streams.getInfo(runId, name)).tailIndex + 1
-  );
+  const streamInfo = await streamer.streams.getInfo(runId, name);
+  expect(updated.get(sessionId)).toBe(streamInfo.tailIndex + 1);
   expect(await readEvePostgresStreamPositions(positionConnection, [])).toEqual(
     new Map()
   );
@@ -178,6 +176,7 @@ test("zero, relative-tail, and empty streams preserve their sequences", async ()
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("a resumed live stream delivers appended chunks once and terminates at EOF") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
+// oxlint-disable-next-line eslint/max-statements -- Keep setup, chunk delivery, stream closure, and EOF assertions ordered within the resume scenario.
 test("a resumed live stream delivers appended chunks once and terminates at EOF", async () => {
   const name = await fixture(["consumed"], false);
   const stream = await streamer.streams.get(runId, name, 1);
@@ -185,9 +184,11 @@ test("a resumed live stream delivers appended chunks once and terminates at EOF"
   try {
     const next = reader.read();
     await streamer.streams.write(runId, name, encoder.encode("new"));
-    expect(new TextDecoder().decode((await next).value)).toBe("new");
+    const nextChunk = await next;
+    expect(new TextDecoder().decode(nextChunk.value)).toBe("new");
     await streamer.streams.close(runId, name);
-    expect((await reader.read()).done).toBe(true);
+    const completedRead = await reader.read();
+    expect(completedRead.done).toBe(true);
   } finally {
     await reader.cancel();
   }
@@ -209,9 +210,11 @@ test("a future cursor skips new chunks until its absolute index is reached", asy
     await streamer.streams.write(runId, name, encoder.encode("one"));
     await streamer.streams.write(runId, name, encoder.encode("two"));
     await streamer.streams.write(runId, name, encoder.encode("three"));
-    expect(new TextDecoder().decode((await next).value)).toBe("three");
+    const nextChunk = await next;
+    expect(new TextDecoder().decode(nextChunk.value)).toBe("three");
     await streamer.streams.close(runId, name);
-    expect((await reader.read()).done).toBe(true);
+    const completedRead = await reader.read();
+    expect(completedRead.done).toBe(true);
   } finally {
     await reader.cancel();
   }

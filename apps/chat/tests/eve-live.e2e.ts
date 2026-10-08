@@ -5,7 +5,6 @@
  */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/sort-keys -- Fixture field order mirrors serialized protocol and persistence payloads. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { mkdir } from "node:fs/promises";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
@@ -404,8 +403,9 @@ test("a definitive model rejection unlocks the composer and releases the operati
     .fill("Retain my draft");
   const firstRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  const firstRequestResult = await firstRequest;
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-  const first = (await firstRequest).postDataJSON();
+  const first = firstRequestResult.postDataJSON();
   await expect(
     page.getByRole("alert").filter({ hasText: "This model is not available" })
   ).toBeVisible();
@@ -419,8 +419,9 @@ test("a definitive model rejection unlocks the composer and releases the operati
   ).toHaveText("Retain my draft");
   const secondRequest = page.waitForRequest("**/api/agent-conversations");
   await page.getByRole("button", { exact: true, name: "Send" }).click();
+  const secondRequestResult = await secondRequest;
   // oxlint-disable-next-line typescript/no-unsafe-assignment -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
-  const second = (await secondRequest).postDataJSON();
+  const second = secondRequestResult.postDataJSON();
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.
   expect(second.operationId).not.toBe(first.operationId);
   // oxlint-disable-next-line typescript/no-unsafe-member-access -- Capture actual creation request JSON for retry and model assertions rather than normalizing the wire payload before checking it.

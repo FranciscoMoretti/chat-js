@@ -4,7 +4,6 @@
 /* oxlint-disable eslint/func-style -- Hoisted test helpers keep scenario setup readable and stable. */
 /* oxlint-disable eslint/no-await-in-loop -- Integration steps and transaction fixtures intentionally run in order. */
 /* oxlint-disable eslint/require-await -- Async mocks preserve the Promise-returning production callback contract. */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { eq, inArray } from "drizzle-orm";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { afterAll, expect, test, vi } from "vitest";
@@ -97,6 +96,7 @@ async function conversation() {
  * typescript/prefer-readonly-parameter-types (#565): test("assignment, filtered history and removal retain native identity") accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("assignment, filtered history and removal retain native identity") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line max-statements -- Keep assignment, filtered-list checks, and detachment assertions in their existing database order.
 test("assignment, filtered history and removal retain native identity", async () => {
   const row = await conversation();
   expect(await assignEveConversationProject(owner, row.id, ownProject)).toEqual(
@@ -107,21 +107,27 @@ test("assignment, filtered history and removal retain native identity", async ()
     instructions: "Owner-only instructions",
     name: "Owner project",
   });
+  const conversationsInProject = await listEveConversations(owner, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(conversationsInProject.items).toEqual([
+    expect.objectContaining({ id: row.id, projectId: ownProject }),
+  ]);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (await listEveConversations(owner, { projectId: ownProject, search: "" }))
-      .items
-  ).toEqual([expect.objectContaining({ id: row.id, projectId: ownProject })]);
-  expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item) => item.conversationId === row.id
+    )
   ).toBe(false);
   await assignEveConversationProject(owner, row.id, null);
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- A detached conversation may be absent; preserve the undefined result for that valid state. The app guidance prefers optional chaining.
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -131,6 +137,7 @@ test("assignment, filtered history and removal retain native identity", async ()
  * unicorn/max-nested-calls (#568): test("both application checks and database constraints reject cross-owner assignment" keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * unicorn/no-null (#570): test("both application checks and database constraints reject cross-owner assignment" preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line max-statements -- Check application-level cross-owner rejection before the database constraint rejects the invalid assignment.
 test("both application checks and database constraints reject cross-owner assignment", async () => {
   const row = await conversation();
   await assignEveConversationProject(owner, row.id, ownProject);
@@ -142,14 +149,11 @@ test("both application checks and database constraints reject cross-owner assign
   ).toBeNull();
   expect(await assignEveConversationProject(stranger, row.id, null)).toBeNull();
   expect(await getEveConversationProject(stranger, row.id)).toBeNull();
-  expect(
-    (
-      await listEveConversations(stranger, {
-        projectId: ownProject,
-        search: "",
-      })
-    ).items
-  ).toEqual([]);
+  const strangerProjectConversations = await listEveConversations(stranger, {
+    projectId: ownProject,
+    search: "",
+  });
+  expect(strangerProjectConversations.items).toEqual([]);
   await expect(
     db
       .update(eveChatProject)
@@ -164,8 +168,9 @@ test("both application checks and database constraints reject cross-owner assign
         )
       )
   ).rejects.toThrow();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect((await getEveConversationProject(owner, row.id))?.id).toBe(ownProject);
+  const existingProject = await getEveConversationProject(owner, row.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- A missing project is a valid result; preserve the undefined value for that state. The app guidance prefers optional chaining.
+  expect(existingProject?.id).toBe(ownProject);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -175,6 +180,7 @@ test("both application checks and database constraints reject cross-owner assign
  * typescript/prefer-readonly-parameter-types (#565): test("deleting a project detaches its Eve conversations without erasing their session accepts item; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * unicorn/no-null (#570): test("deleting a project detaches its Eve conversations without erasing their session preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line max-statements -- Verify deletion detaches the conversation before checking its unassigned listing and rejected reassignment.
 test("deleting a project detaches its Eve conversations without erasing their sessions", async () => {
   const projectId = crypto.randomUUID();
   await db
@@ -184,14 +190,17 @@ test("deleting a project detaches its Eve conversations without erasing their se
   await assignEveConversationProject(owner, row.id, projectId);
   await db.delete(project).where(eq(project.id, projectId));
   expect(await getEveConversationProject(owner, row.id)).toBeNull();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from (await getEveConversation(owner, row.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect((await getEveConversation(owner, row.id))?.sessionId).toBe(
-    row.sessionId
-  );
+  const detachedConversation = await getEveConversation(owner, row.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- A detached conversation may be absent; preserve the undefined result for that valid state. The app guidance prefers optional chaining.
+  expect(detachedConversation?.sessionId).toBe(row.sessionId);
+  const conversationsWithoutProject = await listEveConversations(owner, {
+    projectId: null,
+    search: "",
+  });
   expect(
-    (
-      await listEveConversations(owner, { projectId: null, search: "" })
-    ).items.some((item) => item.conversationId === row.id)
+    conversationsWithoutProject.items.some(
+      (item) => item.conversationId === row.id
+    )
   ).toBe(true);
   expect(
     await assignEveConversationProject(owner, row.id, projectId)
@@ -258,12 +267,12 @@ test("fork paths share their chat project and retry cannot restore an old assign
       { fork: { beforeTurnId: "turn_0", conversationId: source.id } }
     );
   const fork = await createFork();
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, fork.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect((await getEveConversationProject(owner, fork.id))?.id).toBe(
-    ownProject
-  );
+  const forkProject = await getEveConversationProject(owner, fork.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- A missing project is a valid result; preserve the undefined value for that state. The app guidance prefers optional chaining.
+  expect(forkProject?.id).toBe(ownProject);
   await assignEveConversationProject(owner, source.id, null);
-  expect((await createFork()).id).toBe(fork.id);
+  const repeatedFork = await createFork();
+  expect(repeatedFork.id).toBe(fork.id);
   expect(await getEveConversationProject(owner, fork.id)).toBeNull();
   await beginEveConversationDeletion(owner, source.id);
   await completeEveConversationDeletion(owner, source.id);
@@ -291,6 +300,7 @@ test("fork paths share their chat project and retry cannot restore an old assign
  * typescript/strict-boolean-expressions (#610): test("an unresolved fork retains its project route for creation recovery") intentionally keeps the existing falsy-value behavior of pending; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): test("an unresolved fork retains its project route for creation recovery") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
+// oxlint-disable-next-line max-statements -- Preserve the unresolved-fork recovery checks in order so project retention is tested before clearing it.
 test("an unresolved fork retains its project route for creation recovery", async () => {
   const source = await conversation();
   await assignEveConversationProject(owner, source.id, ownProject);
@@ -310,10 +320,9 @@ test("an unresolved fork retains its project route for creation recovery", async
   if (!pending) {
     throw new Error("Missing unresolved fork");
   }
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from (await getEveConversationProject(owner, pending.id)); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect((await getEveConversationProject(owner, pending.id))?.id).toBe(
-    ownProject
-  );
+  const pendingProject = await getEveConversationProject(owner, pending.id);
+  // oxlint-disable-next-line oxc/no-optional-chaining -- A missing project is a valid result; preserve the undefined value for that state. The app guidance prefers optional chaining.
+  expect(pendingProject?.id).toBe(ownProject);
   expect(
     await assignEveConversationProject(owner, pending.id, null)
   ).toBeNull();

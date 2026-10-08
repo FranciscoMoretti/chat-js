@@ -2,7 +2,6 @@
  * import/max-dependencies (#524): import from "@playwright/test" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/env"; "../lib/eve/connection-options"; "../lib/eve/reconcile-usage" dependency within this package instead of introducing an alias or barrel API.
  */
-/* oxlint-disable unicorn/no-await-expression-member -- Direct awaited assertions keep each test action tied to its expectation. */
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
@@ -123,6 +122,7 @@ test("native code execution renders real output and reconciles its fixed charge 
  * typescript/prefer-readonly-parameter-types (#565): test("Python results render an interactive chart and survive reload") accepts { page, }; route; data; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("Python results render an interactive chart and survive reload") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
+// oxlint-disable-next-line eslint/max-lines-per-function -- Keep browser navigation, real tool output, and desktop/mobile canvas assertions in one end-to-end scenario.
 test("Python results render an interactive chart and survive reload", async ({
   page,
 }) => {
@@ -162,12 +162,18 @@ test("Python results render an interactive chart and survive reload", async ({
   await page.setViewportSize({ height: 844, width: 390 });
   await expect(page.locator("canvas")).toBeVisible();
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading width from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    .poll(async () => (await page.locator("canvas").boundingBox())?.width)
+    .poll(async () => {
+      const boundingBox = await page.locator("canvas").boundingBox();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading width from boundingBox after await page.locator("canvas").boundingBox(); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      return boundingBox?.width;
+    })
     .toBeLessThan(390);
   await expect
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading x from (await page.locator("canvas").boundingBox()); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    .poll(async () => (await page.locator("canvas").boundingBox())?.x)
+    .poll(async () => {
+      const boundingBox = await page.locator("canvas").boundingBox();
+      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading x from boundingBox after await page.locator("canvas").boundingBox(); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+      return boundingBox?.x;
+    })
     .toBeGreaterThanOrEqual(0);
   await page.locator("canvas").screenshot({
     animations: "disabled",
