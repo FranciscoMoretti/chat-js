@@ -5,8 +5,8 @@ import { setTimeout as delay } from "node:timers/promises";
 
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { checkHealth } from "./dev-health";
-/* oxlint-enable sort-imports */
 import { shouldRestartAfterReadinessFailures } from "./dev-recovery";
+/* oxlint-enable sort-imports */
 
 const INITIAL_RESTART_BACKOFF_MS = 5000;
 const BACKOFF_MULTIPLIER = 2;
@@ -106,13 +106,13 @@ const terminate = (signal: NodeJS.Signals): void => {
     }
   }
 };
+const handleShutdownSignal = (): void => {
+  stopping = true;
+  terminate("SIGTERM");
+};
 const signals: NodeJS.Signals[] = ["SIGTERM", "SIGINT"];
 for (const signal of signals) {
-  // oxlint-disable-next-line eslint/no-loop-func -- Signal handlers intentionally update the shared shutdown flag.
-  process.on(signal, (): void => {
-    stopping = true;
-    terminate("SIGTERM");
-  });
+  process.on(signal, handleShutdownSignal);
 }
 let backoff = INITIAL_RESTART_BACKOFF_MS;
 let failedStartups = NO_READINESS_FAILURES;

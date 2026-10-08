@@ -1,5 +1,7 @@
-// oxlint-disable-next-line eslint/max-classes-per-file -- Keep the related admission error variants alongside their shared query contract.
 import { beforeEach, expect, it, vi } from "vitest";
+
+import { CreationConflictError } from "@/lib/db/creation-conflict-error";
+import { CreationProjectNotFoundError } from "@/lib/db/creation-project-not-found-error";
 
 import { createEveConversationOperation } from "./create-conversation-operation";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
@@ -22,8 +24,8 @@ vi.mock("./checkpoint-readiness", () => ({
   waitForEveCheckpoint: mocks.readiness,
 }));
 vi.mock("@/lib/db/eve-queries", () => ({
-  CreationConflictError: class extends Error {},
-  CreationProjectNotFoundError: class extends Error {},
+  CreationConflictError,
+  CreationProjectNotFoundError,
   createEveConversation: mocks.reserve,
   getEveConversation: mocks.source,
   getEveCreation: mocks.creation,
@@ -123,6 +125,33 @@ it("does not allocate a native child before the initial checkpoint is ready", as
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers, no-undefined, typescript/prefer-readonly-parameter-types */
+/* oxlint-disable no-magic-numbers --
+ * no-magic-numbers (#517): This case asserts the HTTP status code for the public project-not-found response.
+ */
+it("maps project admission errors to not-found responses", async () => {
+  mocks.readiness.mockRejectedValue(
+    new CreationProjectNotFoundError("Project not found.")
+  );
+  const response = await createEveConversationOperation("owner", input);
+  expect(response.status).toBe(404);
+  expect(await response.json()).toEqual({
+    code: "project_not_found",
+    creationRejected: true,
+    error: "Project not found.",
+  });
+});
+it("preserves conflict error identity and response codes", async () => {
+  mocks.readiness.mockRejectedValue(
+    new CreationConflictError("Creation is unresolved.")
+  );
+  const response = await createEveConversationOperation("owner", input);
+  expect(response.status).toBe(409);
+  expect(await response.json()).toMatchObject({
+    code: "creation_conflict",
+    error: "Creation is unresolved.",
+  });
+});
+/* oxlint-enable no-magic-numbers */
 it("recovers an already allocated native operation without needing its checkpoint again", async () => {
   mocks.creation.mockResolvedValue({ state: "reserved" });
   mocks.request.mockResolvedValue(
