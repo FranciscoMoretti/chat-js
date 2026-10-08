@@ -30,8 +30,12 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
         >[typeof SDK_PARAMETER_INDEX]
       >
     | undefined {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from this.requests.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    return this.requests.at(LAST_REQUEST_INDEX)?.options;
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return globalThis.undefined;
+    }
+    return request.options;
   }
 
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve sendMessages's awaited sequencing and rejected-Promise behavior. */
@@ -56,19 +60,28 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
 
   public emit(...chunks: readonly ReadonlyDeep<UIMessageChunk>[]): void {
     for (const chunk of chunks) {
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      this.requests.at(LAST_REQUEST_INDEX)?.controller.enqueue(chunk);
+      const request =
+        this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+      if (request !== globalThis.undefined) {
+        request.controller.enqueue(chunk);
+      }
     }
   }
 
   public finish(): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    this.requests.at(LAST_REQUEST_INDEX)?.controller.close();
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.close();
+    }
   }
 
   public fail(error: Readonly<Error>): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    this.requests.at(LAST_REQUEST_INDEX)?.controller.error(error);
+    const request =
+      this.requests.at(LAST_REQUEST_INDEX) ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      request.controller.error(error);
+    }
   }
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

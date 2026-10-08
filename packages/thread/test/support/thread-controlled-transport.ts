@@ -40,15 +40,17 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
             controller,
             options,
           });
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading addEventListener from options.abortSignal; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          options.abortSignal?.addEventListener(
-            "abort",
-            (): void => {
-              controller.enqueue({ type: "abort" });
-              controller.close();
-            },
-            { once: true }
-          );
+          const abortSignal = options.abortSignal ?? globalThis.undefined;
+          if (abortSignal !== globalThis.undefined) {
+            abortSignal.addEventListener(
+              "abort",
+              (): void => {
+                controller.enqueue({ type: "abort" });
+                controller.close();
+              },
+              { once: true }
+            );
+          }
         },
       })
     );
@@ -85,33 +87,41 @@ export class ControlledTransport implements ChatTransport<UIMessage> {
   }
 
   public emit(requestIndex: number, chunk: ReadonlyDeep<UIMessageChunk>): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    this.requests[requestIndex]?.controller.enqueue(chunk);
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.enqueue(chunk);
   }
 
   public finish(requestIndex: number): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    this.requests[requestIndex]?.controller.close();
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.close();
   }
 
   public fail(requestIndex: number, error: Readonly<Error>): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    this.requests[requestIndex]?.controller.error(error);
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request === globalThis.undefined) {
+      return;
+    }
+    request.controller.error(error);
   }
 
   public emitText(requestIndex: number, messageId: string, text: string): void {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading controller from this.requests[requestIndex]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    const controller = this.requests[requestIndex]?.controller;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from controller; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    controller?.enqueue({ messageId, type: "start" });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from controller; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    controller?.enqueue({ id: "text", type: "text-start" });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from controller; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    controller?.enqueue({ delta: text, id: "text", type: "text-delta" });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading enqueue from controller; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    controller?.enqueue({ id: "text", type: "text-end" });
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading close from controller; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    controller?.close();
+    const request = this.requests[requestIndex] ?? globalThis.undefined;
+    if (request !== globalThis.undefined) {
+      const controller = request.controller ?? globalThis.undefined;
+      if (controller !== globalThis.undefined) {
+        controller.enqueue({ messageId, type: "start" });
+        controller.enqueue({ id: "text", type: "text-start" });
+        controller.enqueue({ delta: text, id: "text", type: "text-delta" });
+        controller.enqueue({ id: "text", type: "text-end" });
+        controller.close();
+      }
+    }
   }
 }
 /* oxlint-enable import/prefer-default-export, import/no-named-export */

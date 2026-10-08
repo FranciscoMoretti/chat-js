@@ -116,8 +116,9 @@ describe("ThreadRunChat", (): void => {
     await request;
 
     expect(host.tree.getMessage("client-response")).toBeUndefined();
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(host.tree.getMessage("server-id")?.id).toBe("server-id");
+    expect(host.tree.getMessage("server-id")).toMatchObject({
+      id: "server-id",
+    });
     expect(spec.messageId).toBe("server-id");
   });
   /* oxlint-enable oxc/no-async-await */
@@ -174,8 +175,9 @@ describe("ThreadRunChat", (): void => {
     transport.finish();
 
     await waitFor((): boolean => transport.requests.length === 2);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading options from transport.requests[1]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(transport.requests[1]?.options.messageId).toBe("assistant-1");
+    expect(transport.requests.at(1)).toMatchObject({
+      options: { messageId: "assistant-1" },
+    });
     transport.emit(
       { messageId: "assistant-1", type: "start" },
       { id: "second", type: "text-start" },
@@ -192,19 +194,20 @@ describe("ThreadRunChat", (): void => {
         .getChildren(spec.parentMessageId)
         .map(({ id }: Readonly<Pick<UIMessage, "id">>): string => id)
     ).toEqual(["assistant-1"]);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from host.tree.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(host.tree.getMessage("assistant-1")?.parts).toEqual([
-      expect.objectContaining({
-        output: { temperature: 22 },
-        state: "output-available",
-        toolCallId: "tool-1",
-        type: "dynamic-tool",
-      }),
-      expect.objectContaining({
-        text: "It is 22 degrees.",
-        type: "text",
-      }),
-    ]);
+    expect(host.tree.getMessage("assistant-1")).toMatchObject({
+      parts: [
+        expect.objectContaining({
+          output: { temperature: 22 },
+          state: "output-available",
+          toolCallId: "tool-1",
+          type: "dynamic-tool",
+        }),
+        expect.objectContaining({
+          text: "It is 22 degrees.",
+          type: "text",
+        }),
+      ],
+    });
     expect(host.status).toBe("ready");
   });
   /* oxlint-enable oxc/no-async-await */

@@ -120,8 +120,11 @@ const HookHarness = ({
   const helpers = useThread(options);
   onRender(helpers);
   return createElement("div", {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling onCommit; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result.
-    ref: () => onCommit?.(helpers.setMessages),
+    ref: () => {
+      if (onCommit) {
+        onCommit(helpers.setMessages);
+      }
+    },
   });
 };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve renderUseThread's awaited sequencing and rejected-Promise behavior. */
@@ -517,8 +520,10 @@ describe("useThread", (): void => {
 
     await act(async (): Promise<void> => {
       transport.finish(0);
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading finished from run; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      await run?.finished;
+      if (!run) {
+        throw new TypeError("Expected startRun to return a run");
+      }
+      await run.finished;
     });
     expect(hook.current.status).toBe("ready");
     await hook.unmount();

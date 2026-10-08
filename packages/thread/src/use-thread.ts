@@ -223,16 +223,15 @@ const useSelectedController = <TMessage extends UIMessage>({
   });
   const [previousExternalThread, setPreviousExternalThread] =
     useState(externalThread);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  const [previousThreadId, setPreviousThreadId] = useState(ownOptions?.id);
+  const [previousThreadId, setPreviousThreadId] = useState(
+    ownOptions && ownOptions.id
+  );
   if (
     previousExternalThread !== externalThread ||
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    previousThreadId !== ownOptions?.id
+    previousThreadId !== (ownOptions && ownOptions.id)
   ) {
     setPreviousExternalThread(externalThread);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    setPreviousThreadId(ownOptions?.id);
+    setPreviousThreadId(ownOptions && ownOptions.id);
     setThread(externalThread ?? createOwnedThread(ownOptions, dispatchers));
   }
   return thread;
@@ -271,16 +270,11 @@ const useThreadController = <TMessage extends UIMessage>(
   // oxlint-disable-next-line no-ternary -- Keep ownOptions as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const ownOptions = hasExternalThread ? OMITTED_HOOK_INPUT : options;
   const callbacks = {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onData from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onData: ownOptions?.onData,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onError from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onError: ownOptions?.onError,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onFinish from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onFinish: ownOptions?.onFinish,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading onToolCall from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    onToolCall: ownOptions?.onToolCall,
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sendAutomaticallyWhen from ownOptions; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    sendAutomaticallyWhen: ownOptions?.sendAutomaticallyWhen,
+    onData: ownOptions && ownOptions.onData,
+    onError: ownOptions && ownOptions.onError,
+    onFinish: ownOptions && ownOptions.onFinish,
+    onToolCall: ownOptions && ownOptions.onToolCall,
+    sendAutomaticallyWhen: ownOptions && ownOptions.sendAutomaticallyWhen,
   };
   const dispatchers = useLatestDispatchers<TMessage>(callbacks);
   const thread = useSelectedController<TMessage>({

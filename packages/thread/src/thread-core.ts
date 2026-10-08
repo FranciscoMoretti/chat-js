@@ -475,25 +475,28 @@ abstract class ThreadCore<
     target: UIMessage<Metadata, Data, Tools>;
   }> {
     const { parentMessageId, target } = this.readTree((tree) => {
-      const cursorTarget =
-        // oxlint-disable-next-line no-ternary -- Keep cursorTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        typeof tree.cursorId === "string" && tree.cursorId !== ""
-          ? tree.getMessage(tree.cursorId)
-          : ABSENT_MESSAGE_TARGET;
-      const selectedTarget =
-        // oxlint-disable-next-line no-ternary -- Keep selectedTarget as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        messageId === ABSENT_MESSAGE_TARGET || messageId === ROOT_MESSAGE_ID
-          ? cursorTarget
-          : tree.getMessage(messageId);
-      let targetParentMessageId: string | null = ROOT_MESSAGE_ID;
-      if (selectedTarget) {
-        targetParentMessageId =
-          // oxlint-disable-next-line no-ternary -- Keep = operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          selectedTarget.role === "assistant"
-            ? (tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID)
-            : selectedTarget.id;
+      let selectedTarget: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof tree.cursorId === "string" && tree.cursorId !== "") {
+        selectedTarget = tree.getMessage(tree.cursorId);
       }
-      return { parentMessageId: targetParentMessageId, target: selectedTarget };
+      if (
+        messageId !== ABSENT_MESSAGE_TARGET &&
+        messageId !== ROOT_MESSAGE_ID
+      ) {
+        selectedTarget = tree.getMessage(messageId);
+      }
+      if (!selectedTarget) {
+        return { parentMessageId: ROOT_MESSAGE_ID, target: selectedTarget };
+      }
+      if (selectedTarget.role === "assistant") {
+        return {
+          parentMessageId:
+            tree.getParentId(selectedTarget.id) ?? ROOT_MESSAGE_ID,
+          target: selectedTarget,
+        };
+      }
+      return { parentMessageId: selectedTarget.id, target: selectedTarget };
     });
     if (!target) {
       throw new Error(`message ${messageId} not found`);
@@ -558,11 +561,10 @@ abstract class ThreadCore<
           messages: UIMessage<Metadata, Data, Tools>[]
         ) => UIMessage<Metadata, Data, Tools>[])
   ): void {
-    const nextMessages =
-      // oxlint-disable-next-line no-ternary -- Keep nextMessages as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      typeof messages === "function"
-        ? messages(this.getSnapshot().messages)
-        : messages;
+    let nextMessages = messages;
+    if (typeof nextMessages === "function") {
+      nextMessages = nextMessages(this.getSnapshot().messages);
+    }
     this.#runs.select(NO_SELECTED_RUN);
     this.updateTree((tree): void => tree.setPath(nextMessages));
   }
@@ -664,16 +666,16 @@ abstract class ThreadCore<
     originMessage: UIMessage<Metadata, Data, Tools> | undefined;
   }> {
     const { cursorId, originMessage } = this.readTree((tree) => {
-      // oxlint-disable-next-line no-ternary -- Keep originCursorId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      const originCursorId = from === OMITTED_RUN_ORIGIN ? tree.cursorId : from;
-      return {
-        cursorId: originCursorId,
-        originMessage:
-          // oxlint-disable-next-line no-ternary -- Keep originMessage as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          typeof originCursorId === "string" && originCursorId !== ""
-            ? tree.getMessage(originCursorId)
-            : ABSENT_MESSAGE_TARGET,
-      };
+      let originCursorId = from;
+      if (originCursorId === OMITTED_RUN_ORIGIN) {
+        originCursorId = tree.cursorId;
+      }
+      let resolvedOriginMessage: UIMessage<Metadata, Data, Tools> | undefined =
+        ABSENT_MESSAGE_TARGET;
+      if (typeof originCursorId === "string" && originCursorId !== "") {
+        resolvedOriginMessage = tree.getMessage(originCursorId);
+      }
+      return { cursorId: originCursorId, originMessage: resolvedOriginMessage };
     });
     if (typeof cursorId === "string" && cursorId !== "" && !originMessage) {
       throw new Error(`Unknown message ${cursorId}`);
@@ -706,10 +708,10 @@ abstract class ThreadCore<
   ): void {
     this.updateTree((tree): void => {
       const existingMessage = tree.getMessage(message.id);
-      // oxlint-disable-next-line no-ternary -- Keep attachmentId as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      const attachmentId = existingMessage
-        ? (tree.getParentId(message.id) ?? ROOT_MESSAGE_ID)
-        : cursorId;
+      let attachmentId = cursorId;
+      if (existingMessage) {
+        attachmentId = tree.getParentId(message.id) ?? ROOT_MESSAGE_ID;
+      }
       tree.upsertMessage(message, attachmentId);
       if (follow) {
         tree.setCursor(message.id);
@@ -746,8 +748,12 @@ abstract class ThreadCore<
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve stopRun's awaited sequencing and rejected-Promise behavior. */
   public async stopRun(runId: string): Promise<void> {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading chat from this.#runs.get(...); preserve one receiver evaluation, skipped accesses and the existing Promise.resolve() fallback.
-    await (this.#runs.get(runId)?.chat.stop() ?? Promise.resolve());
+    const run = this.#runs.get(runId);
+    if (run) {
+      await (run.chat.stop() ?? Promise.resolve());
+      return;
+    }
+    await Promise.resolve();
   }
   /* oxlint-enable oxc/no-async-await */
   // oxlint-disable-next-line typescript/promise-function-async -- Forward the overridable public stopRun result: a custom controller may return a shared promise or throw synchronously, both observable through stopRunForMessage.
@@ -814,12 +820,10 @@ abstract class ThreadCore<
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing indexes own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...indexes,
       activeRuns: runSnapshot.activeRuns,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading error from selectedRun; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-      error: selectedRun?.error,
+      error: selectedRun && selectedRun.error,
       messages: tree.getPath(),
       runs: runSnapshot.runs,
-      // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading status from selectedRun; preserve one receiver evaluation, skipped accesses and the existing "ready" fallback.
-      status: selectedRun?.status ?? "ready",
+      status: (selectedRun && selectedRun.status) ?? "ready",
       treeStatus: runSnapshot.status,
     };
   }
@@ -963,9 +967,16 @@ abstract class ThreadCore<
     const owner = this.findAssistantOwningPart({
       id: approvalId,
       label: "Tool approval",
-      matches: (part): boolean =>
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from part.approval; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-        isToolLookupPart(part) && part.approval?.id === approvalId,
+      matches: (part): boolean => {
+        if (!isToolLookupPart(part)) {
+          return false;
+        }
+        const approval = part.approval ?? globalThis.undefined;
+        if (approval === globalThis.undefined) {
+          return approval === approvalId;
+        }
+        return approval.id === approvalId;
+      },
     });
     if (!owner) {
       throw new Error(`No run owns tool approval ${approvalId}`);
