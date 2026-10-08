@@ -4,13 +4,11 @@ import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 /* oxlint-enable sort-imports */
 import type { JSX as ReactJSX } from "react";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 
 import { SettingsHeader } from "@/components/settings/settings-header";
 import { SettingsNav } from "@/components/settings/settings-nav";
 import { auth } from "@/lib/auth";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable react/jsx-max-depth -- SettingsLayoutShell: react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries */
 

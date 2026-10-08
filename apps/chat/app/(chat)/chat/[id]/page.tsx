@@ -1,7 +1,4 @@
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
-/* oxlint-enable sort-imports */
 
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveChatPage } from "@/components/eve/eve-chat-page";
@@ -15,7 +12,7 @@ const ConversationPage = async ({
       readonly id: string;
     }>
   >;
-}): Promise<ReactJSX.Element> => {
+}): Promise<React.JSX.Element> => {
   const resolvedResult1 = await params;
   return <EveChatPage conversationId={resolvedResult1.id} />;
 };

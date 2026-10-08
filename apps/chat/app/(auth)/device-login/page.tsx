@@ -28,17 +28,16 @@ const DeviceLoginFallback = (): React.JSX.Element => (
 );
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve DeviceLoginContent's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type -- react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginContent creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
-react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries.
-typescript/explicit-function-return-type (#560): Keep DeviceLoginContent's return type inferred from its schema, SDK, or implementation result; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp -- react-perf/jsx-no-jsx-as-prop (#555): Server Suspense constructs the fallback for the request; retaining its render position preserves the streaming shell.
+react/no-multi-comp (#552): DeviceLoginContent keeps related render components together; extraction changes component, state, and layout boundaries. */
 
 const DeviceLoginContent = async ({
   searchParams,
 }: {
   readonly searchParams: Readonly<
-    Promise<Record<string, string | readonly string[] | undefined>>
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
   >;
-}) => {
+}): Promise<React.JSX.Element> => {
   const resolvedSearchParams = await searchParams;
   const query = toSearchParamRecord(resolvedSearchParams);
   const isCompletedView = query.done === "1";
@@ -61,16 +60,16 @@ const DeviceLoginContent = async ({
   );
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp, typescript/explicit-function-return-type */
+/* oxlint-enable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp */
 
-/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp -- react-perf/jsx-no-jsx-as-prop (#555): DeviceLoginRoute creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
-react/no-multi-comp (#552): DeviceLoginRoute keeps related render components together; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable react-perf/jsx-no-jsx-as-prop, react/no-multi-comp -- react-perf/jsx-no-jsx-as-prop (#555): The route retains the existing outer Suspense fallback and desktop feature gate.
+react/no-multi-comp (#552): The shell and request-time content form the nested Suspense route architecture. */
 
 const DeviceLoginRoute = ({
   searchParams,
 }: {
   readonly searchParams: Readonly<
-    Promise<Record<string, string | readonly string[] | undefined>>
+    Promise<Readonly<Record<string, string | readonly string[] | undefined>>>
   >;
 }): React.JSX.Element => {
   if (!config.desktopApp.enabled) {

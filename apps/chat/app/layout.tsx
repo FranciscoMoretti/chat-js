@@ -1,10 +1,9 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "react" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
-import type { Metadata } from "next";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { Geist, Geist_Mono } from "next/font/google";
-/* oxlint-enable sort-imports */
+import type { Metadata, Viewport } from "next";
+import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
 import Script from "next/script";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -26,9 +25,6 @@ import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
 import { env } from "@/lib/env";
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
-import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-enable sort-imports */
 
 const metadata: Metadata = {
   description: config.appDescription,
@@ -43,10 +39,10 @@ const metadata: Metadata = {
 };
 
 const viewport = {
-  interactiveWidget: "resizes-content" as const,
+  interactiveWidget: "resizes-content",
   // Disable auto-zoom on mobile Safari
   maximumScale: 1,
-};
+} satisfies Viewport;
 
 const geist = Geist({
   display: "swap",
@@ -81,11 +77,11 @@ const THEME_COLOR_SCRIPT = `\
 })();`;
 
 /* oxlint-disable node/no-process-env, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- node/no-process-env (#537): RootLayout reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
-react/jsx-max-depth (#548): RootLayout keeps related render components together; }>; { id, Component }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration.
+react/jsx-max-depth (#548): The root html/body, provider order and installed components form the application layout contract.
 typescript/strict-boolean-expressions (#610): RootLayout intentionally keeps the existing falsy-value behavior of process.env.PLAYWRIGHT; distinguishing empty, zero, and absent states requires a domain behavior decision.
-unicorn/no-null (#570): RootLayout preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+unicorn/no-null (#570): React accepts null as an empty child for the disabled development script. */
 
-// oxlint-disable-next-line max-lines-per-function -- Readonly annotations expand this existing cohesive handler; preserve its authorization, state and awaited operation sequence.
+// oxlint-disable-next-line max-lines-per-function -- Keep the root document, scripts and ordered providers in the single Next.js root layout.
 const RootLayout = ({
   children,
 }: {
@@ -134,11 +130,15 @@ const RootLayout = ({
         </ThemeProvider>
       </NuqsAdapter>
       {installedLayoutComponents.map(
-        (
-          /* oxlint-disable typescript/prefer-readonly-parameter-types -- This reader retains the native React component constructor and callable signatures; the faithful readonly control preserves them and the native rule still flags that graph. */
-          { id, Component }
-          /* oxlint-enable typescript/prefer-readonly-parameter-types */
-        ) => (
+        ({
+          id,
+          Component,
+        }: {
+          readonly id: string;
+          readonly Component: React.JSXElementConstructor<
+            Readonly<React.Attributes>
+          >;
+        }) => (
           <Component key={id} />
         )
       )}

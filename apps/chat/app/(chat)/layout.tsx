@@ -1,59 +1,41 @@
+/* oxlint-disable sort-imports -- Native adjacent comparisons require moving runtime imports; preserve Next request API, React, feature and provider evaluation order; moving declarations changes the eager auth/database/request-context module evaluation order. */
 import { cookies, headers } from "next/headers";
-import type { JSX as ReactJSX } from "react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import React, { Suspense } from "react";
-/* oxlint-enable sort-imports */
 
 import { getChatModels } from "@/app/actions/get-chat-models";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { AppSidebar } from "@/components/app-sidebar";
-/* oxlint-enable sort-imports */
 import { ChatLoadingShell } from "@/components/chat-loading-shell";
 import { EveDeletionProvider } from "@/components/eve/eve-deletion-provider";
 import { EveRuntimeProvider } from "@/components/eve/eve-runtime-provider";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-/* oxlint-enable sort-imports */
 import type { AppModelId } from "@/lib/ai/app-model-id";
 /* oxlint-disable import/max-dependencies -- @/lib/config import: import/max-dependencies: these direct dependencies compose this feature without hiding imports behind a barrel. */
 import { config } from "@/lib/config";
 /* oxlint-enable import/max-dependencies */
 import { isPlaywrightTestEnvironment } from "@/lib/constants";
 import { resolveEvePrincipal } from "@/lib/eve/principal";
-/* oxlint-disable sort-imports -- These type-only reader imports extend the existing runtime import groups; preserve module evaluation order and the formatter grouping. */
 import type { ReadonlyReactNode } from "@/lib/readonly-react-node";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-/* oxlint-enable sort-imports */
 import { ChatModelsProvider } from "@/providers/chat-models-provider";
 import { DefaultModelProvider } from "@/providers/default-model-provider";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { SessionProvider, SessionSeed } from "@/providers/session-provider";
-/* oxlint-enable sort-imports */
 import { preloadQuery } from "@/trpc/preload-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { TRPCReactProvider } from "@/trpc/react";
-/* oxlint-enable sort-imports */
-/* oxlint-disable import/no-relative-parent-imports -- ../../lib/auth import: import/no-relative-parent-imports: the fixture imports its adjacent feature directly without creating a test-only alias. */
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { HydrateClient, getQueryClient, trpc } from "@/trpc/server";
-/* oxlint-enable import/no-relative-parent-imports */
 
-// oxlint-disable-next-line import/no-relative-parent-imports -- The existing route imports its app-owned server helper; preserve the direct module dependency and evaluation order.
-import { auth } from "../../lib/auth";
+import { auth } from "@/lib/auth";
 /* oxlint-enable sort-imports */
 
 const sidebarInsetClassName = "[--header-height:calc(var(--spacing)*13)]";
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve ChatLayoutDynamic's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; }); typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including session?.user?.id); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, react/jsx-max-depth, typescript/strict-boolean-expressions, unicorn/no-null -- ChatLayoutDynamic: max-lines-per-function: keep this cohesive render, state lifecycle, or integration scenario together; extraction needs a separate ownership decision; max-statements: the ordered state transitions and rendering guards belong to this cohesive feature operation; no-magic-numbers: these existing UI dimensions, timing values, marker offsets, or fixture expectations are part of this feature behavior (including 0); react/jsx-max-depth: the existing accessible component hierarchy preserves layout, provider, and interaction boundaries; typescript/explicit-function-return-type: preserve contextual callback and hook inference without widening this existing generic or state-dependent result; }); typescript/strict-boolean-expressions: the native session ID truthiness check intentionally rejects absent and empty IDs with one getter traversal; an explicit two-part guard raises native complexity above the pinned limit. unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
 
 const ChatLayoutDynamic = async ({
   children,
 }: {
   readonly children: ReadonlyReactNode;
-}): Promise<ReactJSX.Element> => {
+}): Promise<React.JSX.Element> => {
   const [cookieStore, headersRes, chatModels] = await Promise.all([
     cookies(),
     headers(),
@@ -83,9 +65,9 @@ const ChatLayoutDynamic = async ({
     if (!modelExists) {
       defaultModel = default_chat_model;
     } else if (isAnonymous) {
-      const isModelAvailable = (
-        ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[]
-      ).includes(cookieModel);
+      const anonymousModels: readonly AppModelId[] =
+        ANONYMOUS_LIMITS.AVAILABLE_MODELS;
+      const isModelAvailable = anonymousModels.includes(cookieModel);
       if (!isModelAvailable) {
         defaultModel = default_chat_model;
       }
@@ -93,8 +75,8 @@ const ChatLayoutDynamic = async ({
   }
 
   if (isAnonymous) {
-    const anonymousModels =
-      ANONYMOUS_LIMITS.AVAILABLE_MODELS as readonly AppModelId[];
+    const anonymousModels: readonly AppModelId[] =
+      ANONYMOUS_LIMITS.AVAILABLE_MODELS;
     if (!anonymousModels.includes(defaultModel)) {
       defaultModel = anonymousModels[0] ?? default_chat_model;
     }
@@ -150,7 +132,7 @@ const ChatLayout = async ({
   children,
 }: {
   readonly children: ReadonlyReactNode;
-}): Promise<ReactJSX.Element> => {
+}): Promise<React.JSX.Element> => {
   const cookieStore = await cookies();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading value from cookieStore.get(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
