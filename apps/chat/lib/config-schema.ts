@@ -11,9 +11,6 @@ import type {
 
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 import type { ToolName } from "./ai/types";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "./readonly-native-surface";
-/* oxlint-enable sort-imports */
 
 // Helper to create typed model ID schemas
 const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();
@@ -477,6 +474,20 @@ type ConfigInputForGateway<Gateway extends GatewayType> = Omit<
 // Each installation selects one gateway and its corresponding model IDs.
 type ConfigInput = ConfigInputForGateway<GatewayType>;
 
+// Configuration readers consume data, including readonly nested arrays. Open
+// SDK string intersections accept every string; keep curated literal unions
+// narrow while reading those open fields as strings. defineConfig retains the
+// original provider types and autocomplete contract.
+type ReadonlyConfigData<Value> = Value extends string
+  ? string extends Value
+    ? string
+    : Value
+  : Value extends readonly (infer Item)[]
+    ? readonly ReadonlyConfigData<Item>[]
+    : Value extends object
+      ? { readonly [Key in keyof Value]: ReadonlyConfigData<Value[Key]> }
+      : Value;
+
 /**
  * Preserve literal gateway/model selections for configuration autocomplete.
  * Defaults and runtime validation are applied later by applyDefaults.
@@ -489,7 +500,7 @@ const defineConfig = <const InputConfig extends ConfigInput>(
 
 const mergeToolsConfig = (
   defaults: Readonly<Record<string, unknown>>,
-  user: ReadonlyNativeSurface<AiToolsInputFor<GatewayType>> | undefined
+  user: ReadonlyConfigData<AiToolsInputFor<GatewayType>> | undefined
 ): Record<string, unknown> => {
   if (!user) {
     return defaults;
@@ -515,7 +526,7 @@ const mergeToolsConfig = (
 };
 
 // Apply defaults to partial config
-const applyDefaults = (input: ReadonlyNativeSurface<ConfigInput>): Config => {
+const applyDefaults = (input: ReadonlyConfigData<ConfigInput>): Config => {
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading gateway from input.ai; preserve one receiver evaluation, skipped accesses and the existing gatewayType fallback. The app guidance prefers optional chaining.
   const gateway = input.ai?.gateway ?? gatewayType;
   const gatewayDefaults = gatewayModelDefaults;

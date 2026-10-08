@@ -114,7 +114,7 @@ export const POST = async (request: ReadonlyNativeSurface<Request>) => {
     if (!validatedFile.success) {
       const errorMessage = validatedFile.error.issues
         .map(
-          (issue: ReadonlyNativeSurface<z.core.$ZodIssue>): string =>
+          (issue: Readonly<Pick<z.core.$ZodIssue, "message">>): string =>
             issue.message
         )
         .join(", ");

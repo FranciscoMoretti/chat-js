@@ -11,7 +11,7 @@
     "agent/subagents/researcher/tools/webSearch.ts": "4d8e76cd8e200998976091bfe9988e8e247fd632272523a674a2df8eda29184e",
     "agent/tools/deepResearch.ts": "c9f08a60665353458d19da96899eabc0b9975e0512dbed65112a2fc4fbf99027",
     "agent/tools/mcp.ts": "c6e8a78b6ce95e3e3c996f2b0910e85af81be5cfef9d9490cc7edaf34faa6407",
-    "app/(chat)/api/files/upload/route.ts": "30d0db1a6949cd235df745fe89315acd7ae6241eb8f736342703fa4f20eb945d",
+    "app/(chat)/api/files/upload/route.ts": "0ce40ba04bcf760d1ab0736aae3aad50b6d2557ef9164bdb7ebb79017778bc83",
     "app/(chat)/settings/connectors/[connectorId]/page.tsx": "c5e1992a6fd8fce9613b2ec4ea9ad97acd4dba6b2426b501ca28a0a54d5f2402",
     "app/(chat)/settings/connectors/page.tsx": "10135efa207dbf64beb6635aa789a6c368a2447de841509163e39e098eeb6b61",
     "app/api/mcp/oauth/callback/route.ts": "ed0923cea6d348e6622c66b7a73f8443d997267347be8e5de6fc7241234df570",

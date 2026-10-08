@@ -13,11 +13,16 @@ import type { ToolUsage } from "./tool-usage";
 
 // Gateway records are Zod-parsed or generated literals; retain the selected pricing object while skipping an unused full ModelData projection.
 const pricingForModel = (
-  fetchedModels: ReadonlyNativeSurface<AiGatewayModel[]>,
+  fetchedModels: readonly {
+    readonly id: string;
+    readonly pricing: ReadonlyNativeSurface<AiGatewayModel["pricing"]>;
+  }[],
   modelId: string
 ): ReadonlyNativeSurface<AiGatewayModel["pricing"]> | undefined =>
   // oxlint-disable-next-line oxc/no-optional-chaining -- An absent model has no pricing; keep the existing undefined result and return the selected model's original pricing object.
-  fetchedModels.find((model) => model.id === modelId)?.pricing;
+  fetchedModels.find(
+    (model: Readonly<Pick<AiGatewayModel, "id">>) => model.id === modelId
+  )?.pricing;
 
 const tokenCost = (
   tokens: number | undefined,
