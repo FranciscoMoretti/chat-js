@@ -26,8 +26,10 @@ const routes = async (): Promise<WorkerRewrites | undefined> => {
   const config = await configure("phase-production-build", {
     defaultConfig: {},
   });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling config.rewrites; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
-  return await config.rewrites?.();
+  if (typeof config.rewrites !== "function") {
+    throw new TypeError("Expected the EVE routing fixture to supply rewrites");
+  }
+  return await config.rewrites();
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */

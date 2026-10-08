@@ -1,10 +1,10 @@
-/* oxlint-disable import/no-nodejs-modules -- the node:fs import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
+/* oxlint-disable import/no-nodejs-modules -- Vite loads this Node config, which inspects the built docs directory on disk. */
 import { existsSync, statSync } from "node:fs";
 /* oxlint-enable import/no-nodejs-modules */
 import type { Plugin } from "vitest/config";
 import { defineConfig } from "vitest/config";
 
-/* oxlint-disable import/no-nodejs-modules -- the node:path import: This command runs in Node/Bun and requires the imported filesystem/process/path API. */
+/* oxlint-disable import/no-nodejs-modules -- Vite loads this Node config, which joins filesystem paths for the built docs middleware. */
 import path from "node:path";
 /* oxlint-enable import/no-nodejs-modules */
 
@@ -14,7 +14,7 @@ import { uiverifyPlugin } from "@uiverify/vitest/plugin";
 const root = import.meta.dirname;
 const dist = path.join(root, "dist");
 
-/* oxlint-disable node/no-sync -- serveBuiltDocs: Startup/discovery consumes this synchronous OS/filesystem API before dependent commands run. */
+/* oxlint-disable node/no-sync -- serveBuiltDocs: Keep this request-path check synchronous so request.url is rewritten before Connect next reaches Vite's downstream public-file middleware. */
 const serveBuiltDocs = (): Plugin => ({
   configureServer(
     server: Readonly<{
@@ -41,8 +41,8 @@ const serveBuiltDocs = (): Plugin => ({
             publicPath = `${publicPath.replace(/\/$/u, "")}/index.html`;
           }
 
-          // oxlint-disable-next-line no-ternary -- Keep template interpolation as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          request.url = `${publicPath}${query ? `?${query}` : ""}`;
+          const querySuffix = query && `?${query}`;
+          request.url = `${publicPath}${querySuffix ?? ""}`;
         }
 
         next();

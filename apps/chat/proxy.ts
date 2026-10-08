@@ -44,20 +44,16 @@ const isAuthPage = (pathname: string): boolean =>
   pathname.startsWith("/register") ||
   isDeviceLoginPage(pathname);
 
-/* oxlint-disable unicorn/no-null --
- * unicorn/no-null (#570): getSafeReturnTo preserves explicit null in its storage/API state; undefined has different serialization and presence semantics.
- */
 const getSafeReturnTo = (
   url: Readonly<{ searchParams: Readonly<{ get: URLSearchParams["get"] }> }>
-): string | null => {
+): string => {
   const returnTo = url.searchParams.get("returnTo");
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading startsWith from returnTo; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
   if (returnTo?.startsWith("/") !== true || returnTo.startsWith("//")) {
-    return null;
+    return "/";
   }
   return returnTo;
 };
-/* oxlint-enable unicorn/no-null */
 type ReadonlyRedirectUrl = Readonly<
   Omit<URL, "searchParams"> & { searchParams: Readonly<URLSearchParams> }
 >;
@@ -72,11 +68,11 @@ const resolvePageResponse = ({
   readonly isDeviceLoginRoute: boolean;
   readonly isLoggedIn: boolean;
   readonly pathname: string;
-  readonly returnTo: string | null;
+  readonly returnTo: string;
   readonly url: ReadonlyRedirectUrl;
 }): NextResponse | undefined => {
   if (isLoggedIn && isAuthPage(pathname) && !isDeviceLoginRoute) {
-    return NextResponse.redirect(new URL(returnTo ?? "/", url));
+    return NextResponse.redirect(new URL(returnTo, url));
   }
 
   if (isAuthPage(pathname) || isPublicPage(pathname)) {

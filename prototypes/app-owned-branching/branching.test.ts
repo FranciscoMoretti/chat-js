@@ -313,12 +313,11 @@ test("lost snapshot response remains fenced; recovery reuses original receipt an
     complete(
       sql,
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        ...provider,
         async capture(key, vm) {
           await provider.capture(key, vm);
           throw new Error("lost provider reply");
         },
+        restore: provider.restore,
       },
       owner,
       capture.id
@@ -373,8 +372,12 @@ test("pending checkpoint after process death is recoverable; changed intent and 
     })
   ).rejects.toThrow("checkpoint not ready");
   await expect(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    reserve(sql, { ...capture, intent: "different-boundary" })
+    reserve(sql, {
+      id: capture.id,
+      intent: "different-boundary",
+      owner: capture.owner,
+      source: capture.source,
+    })
   ).rejects.toThrow("conflicting operation");
   await expect(
     complete(sql, mockProvider(sql), "bob", capture.id)
@@ -402,8 +405,7 @@ test("child creation is idempotent through lost replies, including after child c
     fork(
       sql,
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        ...provider,
+        capture: provider.capture,
         async restore(key, vm) {
           await provider.restore(key, vm);
           throw new Error("lost restore reply");
@@ -418,12 +420,19 @@ test("child creation is idempotent through lost replies, including after child c
   const rows9 = await sql`select head from branch where id='child'`;
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading head from rows9[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
   expect(rows9[0]?.head).toBe("child-1");
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  await reserve(sql, { ...capture, id: "other" });
+  await reserve(sql, {
+    id: "other",
+    intent: capture.intent,
+    owner: capture.owner,
+    source: capture.source,
+  });
   await complete(sql, provider, owner, "other");
   await expect(
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing request own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    fork(sql, provider, { ...request, checkpoint: "other" })
+    fork(sql, provider, {
+      checkpoint: "other",
+      child: request.child,
+      owner: request.owner,
+    })
   ).rejects.toThrow("conflicting child");
 });
 /* oxlint-enable oxc/no-async-await */
@@ -557,8 +566,12 @@ test("resource grants are owner checked and retained after source branch removal
 test("separate idle captures retain manual edits even when transcript head is unchanged", async () => {
   await checkpoint();
   await editDocument(sql, owner, "root", { doc: "revision-2" });
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing capture own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-  await reserve(sql, { ...capture, id: "later", intent: "before-next-turn" });
+  await reserve(sql, {
+    id: "later",
+    intent: "before-next-turn",
+    owner: capture.owner,
+    source: capture.source,
+  });
   await complete(sql, mockProvider(sql), owner, "later");
   await fork(sql, mockProvider(sql), {
     checkpoint: "boundary",
@@ -609,8 +622,7 @@ test("deletion during child restore fences publication", async () => {
     fork(
       sql,
       {
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing provider own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-        ...provider,
+        capture: provider.capture,
         async restore(key, vm) {
           await provider.restore(key, vm);
           await removeBranch(sql, owner, "child");

@@ -16,7 +16,7 @@ const contentSections = [
 ] as const;
 
 /* oxlint-disable import/no-default-export -- blume.config.ts: This framework/tool loader consumes the default entrypoint; changing export shape would break discovery. */
-/* oxlint-disable eslint/id-length -- blume.config.ts: The local index/OS/library binding retains its conventional API notation. */
+/* oxlint-disable eslint/id-length -- The one-character x key is Blume's documented SEO schema field for X attribution. */
 export default defineConfig({
   ai: {
     // Publish monorepo agent skills at /.well-known/agent-skills/

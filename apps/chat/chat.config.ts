@@ -12,6 +12,35 @@ const DEVELOPMENT_REQUESTS_PER_MINUTE = 60;
 const PRODUCTION_REQUESTS_PER_MONTH = 10;
 const DEVELOPMENT_REQUESTS_PER_MONTH = 1000;
 const MAX_ATTACHMENT_BYTES = 1_048_576;
+
+const getAnonymousLimits = (
+  production: boolean
+): Readonly<{
+  credits: number;
+  rateLimit: Readonly<{
+    requestsPerMinute: number;
+    requestsPerMonth: number;
+  }>;
+}> => {
+  if (production) {
+    return {
+      credits: PRODUCTION_ANONYMOUS_CREDITS,
+      rateLimit: {
+        requestsPerMinute: PRODUCTION_REQUESTS_PER_MINUTE,
+        requestsPerMonth: PRODUCTION_REQUESTS_PER_MONTH,
+      },
+    };
+  }
+  return {
+    credits: DEVELOPMENT_ANONYMOUS_CREDITS,
+    rateLimit: {
+      requestsPerMinute: DEVELOPMENT_REQUESTS_PER_MINUTE,
+      requestsPerMonth: DEVELOPMENT_REQUESTS_PER_MONTH,
+    },
+  };
+};
+const anonymousLimits = getAnonymousLimits(isProd);
+
 /**
  * ChatJS Configuration
  *
@@ -72,20 +101,8 @@ const config = defineConfig({
   },
   anonymous: {
     availableTools: [],
-    // oxlint-disable-next-line no-ternary -- Keep credits as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    credits: isProd
-      ? PRODUCTION_ANONYMOUS_CREDITS
-      : DEVELOPMENT_ANONYMOUS_CREDITS,
-    rateLimit: {
-      // oxlint-disable-next-line no-ternary -- Keep requestsPerMinute as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      requestsPerMinute: isProd
-        ? PRODUCTION_REQUESTS_PER_MINUTE
-        : DEVELOPMENT_REQUESTS_PER_MINUTE,
-      // oxlint-disable-next-line no-ternary -- Keep requestsPerMonth as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      requestsPerMonth: isProd
-        ? PRODUCTION_REQUESTS_PER_MONTH
-        : DEVELOPMENT_REQUESTS_PER_MONTH,
-    },
+    credits: anonymousLimits.credits,
+    rateLimit: anonymousLimits.rateLimit,
   },
   appDescription:
     "Build and deploy AI chat applications in minutes. ChatJS provides authentication, streaming, tool calling, and all the features you need for production-ready AI conversations.",

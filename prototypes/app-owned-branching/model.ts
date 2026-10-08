@@ -216,9 +216,8 @@ const append = async (
     message: Message;
   }>
 ): Promise<void> => {
-  const parsed = message.parse(input.message);
-  // oxlint-disable-next-line oxc/no-rest-spread-properties -- Rest binding payload excludes annotation from the remaining enumerable own-key snapshot; preserve this selected-field read/exclusion order and forwarding contract.
-  const { annotation, ...payload } = parsed;
+  const { annotation, parts, role } = message.parse(input.message);
+  const payload = { parts, role };
   await sql.begin(async (tx: SqlQueries) => {
     const ownedBranchRecord = await ownedBranch(tx, input.owner, input.branch);
     await requireResources(tx, input.owner, {
@@ -545,7 +544,7 @@ const modelHistory = async (
     role,
   }));
 };
-/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (append, beginWriter, complete, editDocument, endWriter, fork, history, message, modelHistory, removeBranch, reserve, validatePrefix, writeFile); the enabled import/no-default-export convention rejects the default-export alternative. */
+/* oxlint-disable import/no-named-export -- Keep the existing named module bindings (append, beginWriter, complete, editDocument, endWriter, fork, history, modelHistory, removeBranch, reserve, validatePrefix, writeFile); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable max-lines -- modelHistory: This module is one coordinated protocol/lifecycle implementation; splitting requires an ownership and public API decision. */
@@ -557,7 +556,6 @@ export {
   endWriter,
   fork,
   history,
-  message,
   modelHistory,
   removeBranch,
   reserve,

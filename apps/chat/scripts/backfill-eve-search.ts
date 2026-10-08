@@ -1,13 +1,9 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../lib/db/client"; "../lib/db/schema"; "../lib/eve/search-backfill"; "../lib/eve/server" dependency within this package instead of introducing an alias or barrel API.
- */
 import { and, asc, eq, gt } from "drizzle-orm";
 
-import { assertEveConfigured } from "../lib/eve/server";
-import { backfillEveSearchConversation } from "../lib/eve/search-backfill";
-import { db } from "../lib/db/client";
-import { eveConversation } from "../lib/db/schema";
-/* oxlint-enable import/no-relative-parent-imports */
+import { assertEveConfigured } from "@/lib/eve/server";
+import { backfillEveSearchConversation } from "@/lib/eve/search-backfill";
+import { db } from "@/lib/db/client";
+import { eveConversation } from "@/lib/db/schema";
 
 const DATABASE_SHUTDOWN_TIMEOUT_SECONDS = 5;
 const MILLISECONDS_PER_SECOND = 1000;
@@ -21,6 +17,7 @@ const SUCCESS_EXIT_STATUS = 0;
 const INITIAL_PROGRESS_COUNT = 0;
 const BACKFILL_COUNT_INCREMENT = 1;
 const LAST_BATCH_INDEX = -1;
+const INITIAL_BACKFILL_CURSOR = "";
 
 type DatabaseShutdownOutcome =
   | { kind: "complete" }
@@ -86,12 +83,11 @@ const selectNextBatch = async (
 
 /* oxlint-disable eslint/no-await-in-loop -- Fetch each snapshot and index each conversation in order to bound database load and make retries predictable. */
 /* oxlint-disable oxc/no-async-await -- Await each conversation update before advancing the cursor so failed records remain retryable. */
-/* oxlint-disable init-declarations -- main initializes the optional cursor only after the first successful page, while counters start at named values. */
 /* oxlint-disable no-console -- The backfill loop reports progress and per-record failures through this CLI's stdout/stderr. */
 /* oxlint-disable max-statements -- main coordinates configuration, batch selection, per-record failures, progress, and the final exit status in their required order. */
 const main = async (): Promise<number> => {
   assertEveConfigured();
-  let cursor: string | undefined;
+  let cursor = INITIAL_BACKFILL_CURSOR;
   let indexed = INITIAL_PROGRESS_COUNT;
   let failed = INITIAL_PROGRESS_COUNT;
   while (true) {
@@ -117,8 +113,7 @@ const main = async (): Promise<number> => {
         }
       }
     }
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from batch.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    cursor = batch.at(LAST_BATCH_INDEX)?.id;
+    cursor = batch[batch.length + LAST_BATCH_INDEX].id;
     console.info(`Search backfill: ${indexed} indexed, ${failed} failed.`);
   }
   if (failed > INITIAL_PROGRESS_COUNT) {
@@ -128,7 +123,6 @@ const main = async (): Promise<number> => {
 };
 /* oxlint-enable eslint/no-await-in-loop */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations */
 /* oxlint-enable max-statements */
 /* oxlint-enable no-console */
 
