@@ -63,12 +63,16 @@ const rejectRequest = (
     return Response.json({ error: message }, { status });
   };
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve checkTurnAdmission's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params, no-undefined -- max-params (#511): checkTurnAdmission keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-undefined (#519): checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
+/* oxlint-disable no-undefined -- checkTurnAdmission uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 const checkTurnAdmission = async (
   request: ReadonlyNativeSurface<Request>,
-  principal: Readonly<EvePrincipal>,
-  sessionId: string,
+  {
+    principal,
+    sessionId,
+  }: {
+    readonly principal: Readonly<EvePrincipal>;
+    readonly sessionId: string;
+  },
   command: ReadonlyNativeSurface<
     Exclude<Awaited<ReturnType<typeof readCommand>>, Response>
   >
@@ -91,7 +95,7 @@ const checkTurnAdmission = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-params, no-undefined */
+/* oxlint-enable no-undefined */
 /* oxlint-disable no-undefined --
  * no-undefined (#519): selectionsConflict uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
@@ -111,9 +115,8 @@ const parseToolSelection = (
     .safeParse(header ?? body);
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve readCommand's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-undefined */
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, unicorn/no-null -- init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, unicorn/no-null -- init-declarations (#507): readCommand assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-params (#511): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): readCommand keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): readCommand preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readCommand = async (
@@ -130,8 +133,13 @@ const readCommand = async (
       >
     >;
   },
-  ownerId: string,
-  conversationId: string
+  {
+    conversationId,
+    ownerId,
+  }: {
+    readonly conversationId: string;
+    readonly ownerId: string;
+  }
 ): Promise<
   | Response
   | {
@@ -212,7 +220,7 @@ const readCommand = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve handle's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, unicorn/no-null */
 /* oxlint-disable max-lines-per-function, max-statements, no-undefined -- max-lines-per-function (#510): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-statements (#512): handle keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 no-undefined (#519): handle uses undefined for absent or optional values; context: { params: Promise<{ path: string[]; }>; }; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
@@ -257,12 +265,12 @@ const handle = async (
   ) {
     return rejectRequest(request, "Invalid command query.", HTTP_BAD_REQUEST);
   }
-  const command = await readCommand(
-    request,
-    policy,
-    principal.ownerId,
-    conversation.id
-  );
+  // Capture owner before the conversation getter, matching the original argument order.
+  const { ownerId } = principal;
+  const command = await readCommand(request, policy, {
+    conversationId: conversation.id,
+    ownerId,
+  });
   if (command instanceof Response) {
     return command;
   }
@@ -270,8 +278,7 @@ const handle = async (
   try {
     const admission = await checkTurnAdmission(
       request,
-      principal,
-      policy.sessionId,
+      { principal, sessionId: policy.sessionId },
       command
     );
     if (admission instanceof Response) {

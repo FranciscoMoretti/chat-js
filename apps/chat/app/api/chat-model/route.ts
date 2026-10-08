@@ -1,8 +1,6 @@
-import { cookies } from "next/headers";
-/* oxlint-disable sort-imports -- Preserve the next/headers then next/server runtime import order; this erased type binding is compared against the neighboring runtime bindings by the native sorter. */
 import type { NextRequest } from "next/server";
-/* oxlint-enable sort-imports */
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 const MODEL_COOKIE_MAX_AGE_SECONDS = 31_536_000;
 
