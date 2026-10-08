@@ -4,40 +4,68 @@ import { z } from "zod";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { keyFromFileUrl } from "@/lib/file-url";
 
-interface ImageContextUserMessage {
+/** SDK fields this reader does not inspect remain optional and opaque. */
+type IgnoredSdkFields<Value> = Value extends object
+  ? { readonly [Key in keyof Value]?: unknown }
+  : unknown;
+
+type UserContentPart = Exclude<
+  Extract<ModelMessage, { role: "user" }>["content"],
+  string
+>[number];
+type ToolContentPart = Extract<
+  ModelMessage,
+  { role: "tool" }
+>["content"][number];
+
+interface ImageContextUserMessage extends IgnoredSdkFields<
+  Extract<ModelMessage, { role: "user" }>
+> {
   readonly role: "user";
   readonly content:
     | string
-    | readonly (
-        | {
-            readonly type: "file";
-            readonly mediaType: string;
-            readonly data: unknown;
-            readonly filename?: string;
-          }
-        | { readonly type: "text" | "image" }
-      )[];
+    | readonly (IgnoredSdkFields<UserContentPart> &
+        (
+          | {
+              readonly type: "file";
+              readonly mediaType: string;
+              readonly data: unknown;
+              readonly filename?: string;
+            }
+          | { readonly type: "text" | "image" }
+        ))[];
 }
-type ImageContextMessage =
-  | ImageContextUserMessage
-  | {
-      readonly role: "tool";
-      readonly content: readonly (
-        | {
-            readonly type: "tool-result";
-            readonly toolName: string;
-            readonly toolCallId: string;
-            readonly output: {
-              readonly type: string;
-              readonly value?: unknown;
-            };
-          }
-        | { readonly type: "tool-approval-response" }
-      )[];
-    }
-  | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> };
+type ImageContextMessage = IgnoredSdkFields<ModelMessage> &
+  (
+    | ImageContextUserMessage
+    | {
+        readonly role: "tool";
+        readonly content: readonly (IgnoredSdkFields<ToolContentPart> &
+          (
+            | {
+                readonly type: "tool-result";
+                readonly toolName: string;
+                readonly toolCallId: string;
+                readonly output: {
+                  readonly type: string;
+                  readonly value?: unknown;
+                } & IgnoredSdkFields<
+                  Extract<ToolContentPart, { type: "tool-result" }>["output"]
+                >;
+              }
+            | { readonly type: "tool-approval-response" }
+          ))[];
+      }
+    | { readonly role: Exclude<ModelMessage["role"], "user" | "tool"> }
+  );
 
 /* oxlint-enable sort-imports */
+
+/** Preserve the native array check while retaining the readonly content element contract. */
+const isImageContentArray: (
+  content: ImageContextUserMessage["content"]
+) => content is Exclude<ImageContextUserMessage["content"], string> =
+  Array.isArray;
 
 const imageResult = z.object({
   imageUrl: z.string(),
@@ -53,8 +81,7 @@ const latestImageAttachments = (
     }): message is ImageContextUserMessage => message.role === "user"
   );
   const attachments: FileUIPart[] = [];
-  /* oxlint-disable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/strict-boolean-expressions -- Array.isArray uses a native any[] predicate that widens this readonly content; preserve the existing array guard and validated file-part branch. */
-  if (user && Array.isArray(user.content)) {
+  if (user && isImageContentArray(user.content)) {
     for (const part of user.content) {
       if (
         part.type === "file" &&
@@ -71,7 +98,7 @@ const latestImageAttachments = (
       }
     }
   }
-  /* oxlint-enable typescript/no-unsafe-assignment, typescript/no-unsafe-call, typescript/no-unsafe-member-access, typescript/strict-boolean-expressions */
+
   return attachments;
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveImageContext); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
@@ -84,48 +111,45 @@ const latestImageAttachments = (
  * @param {readonly ModelMessage[]} messages Ordered native branch messages. Only the latest user message supplies inline image attachments.
  * @returns {{ attachments: FileUIPart[]; lastGeneratedImage: { imageUrl: string; name: string } | null }} Inline data-image attachments and the last valid generateImage storage-file result in branch order, or null when no such result exists.
  */
-export const eveImageContext =
-  /* oxlint-disable typescript/no-unnecessary-type-parameters -- The generic readonly reader accepts full SDK event/message literals without rejecting their additional fields. */
-  <Message extends ImageContextMessage>(
-    messages: readonly Message[]
-  ): {
-    attachments: FileUIPart[];
-    lastGeneratedImage: { imageUrl: string; name: string } | null;
-  } => {
-    const attachments = latestImageAttachments(messages);
-    /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
-    let lastGeneratedImage: {
-      imageUrl: string;
-      name: string;
-    } | null = null;
-    /* oxlint-enable unicorn/no-null */
-    for (const message of messages) {
-      if (message.role !== "tool") {
+export const eveImageContext = (
+  messages: readonly ImageContextMessage[]
+): {
+  attachments: FileUIPart[];
+  lastGeneratedImage: { imageUrl: string; name: string } | null;
+} => {
+  const attachments = latestImageAttachments(messages);
+  /* oxlint-disable unicorn/no-null -- The public image context uses null until a valid generated storage image is found; callers distinguish that absence from an image descriptor. */
+  let lastGeneratedImage: {
+    imageUrl: string;
+    name: string;
+  } | null = null;
+  /* oxlint-enable unicorn/no-null */
+  for (const message of messages) {
+    if (message.role !== "tool") {
+      continue;
+    }
+    for (const part of message.content) {
+      if (
+        part.type !== "tool-result" ||
+        part.toolName !== "generateImage" ||
+        part.output.type !== "json"
+      ) {
         continue;
       }
-      for (const part of message.content) {
-        if (
-          part.type !== "tool-result" ||
-          part.toolName !== "generateImage" ||
-          part.output.type !== "json"
-        ) {
-          continue;
-        }
-        const parsed = imageResult.safeParse(part.output.value);
-        if (
-          parsed.success &&
-          parsed.data.imageUrl.startsWith("/api/files/") &&
-          keyFromFileUrl(parsed.data.imageUrl) !== null
-        ) {
-          lastGeneratedImage = {
-            imageUrl: parsed.data.imageUrl,
-            name: `generated-image-${part.toolCallId}.png`,
-          };
-        }
+      const parsed = imageResult.safeParse(part.output.value);
+      if (
+        parsed.success &&
+        parsed.data.imageUrl.startsWith("/api/files/") &&
+        keyFromFileUrl(parsed.data.imageUrl) !== null
+      ) {
+        lastGeneratedImage = {
+          imageUrl: parsed.data.imageUrl,
+          name: `generated-image-${part.toolCallId}.png`,
+        };
       }
     }
-    return { attachments, lastGeneratedImage };
-  };
-/* oxlint-enable typescript/no-unnecessary-type-parameters */
+  }
+  return { attachments, lastGeneratedImage };
+};
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable max-statements, no-continue */
