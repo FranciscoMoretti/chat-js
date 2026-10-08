@@ -8,7 +8,7 @@ import type { z } from "zod";
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): weather uses 10, 11, 12, 13, 14, 15, 16, 17 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): the complete weather fixture uses a 900-second interval, 20-degree current temperature, zero elevation/coordinates/generation time/UTC offset, hourly temperatures 10–17, and eight hourly records.
  */
 const weather: WeatherAtLocation = {
   current: { interval: 900, temperature_2m: 20, time: "2026-09-08T20:00" },
@@ -37,7 +37,7 @@ const weather: WeatherAtLocation = {
 };
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- * react-perf/jsx-no-new-object-as-prop (#558): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting. */
+/* oxlint-disable react-perf/jsx-no-new-object-as-prop -- This single static server render supplies an output fixture whose current.time varies by table row; prop identity across renders is not part of this renderer test. */
 test.each([
   ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
   ["2026-09-08T20:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]],
@@ -48,7 +48,7 @@ test.each([
       messageId="weather-test"
       tool={{
         input: { latitude: 0, longitude: 0 },
-        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing weather own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement. Keep the existing weather.current own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+        // oxlint-disable-next-line oxc/no-rest-spread-properties -- Preserve the full schema-valid weather output and replace only current.time for this row; Object.assign conflicts with pinned eslint/prefer-object-spread.
         output: { ...weather, current: { ...weather.current, time } },
         state: "output-available",
         toolCallId: "weather-test",

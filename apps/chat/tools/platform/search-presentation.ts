@@ -26,11 +26,72 @@ const searchQueriesSchema = z
   )
   .max(MAX_SEARCH_QUERIES)
   .describe(`Array of search queries. Maximum ${MAX_SEARCH_QUERIES} queries.`);
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeMultiQuerySearch's awaited sequencing and rejected-Promise behavior. */
+type SearchExecution = Parameters<typeof multiQueryWebSearchStep>[number];
+type SearchResponse = Awaited<ReturnType<typeof multiQueryWebSearchStep>>;
 
-/* oxlint-disable max-lines-per-function, max-statements -- This operation sequences start/search/completion progress writes and logging; keep failure and callback ordering together. */
+const writeSearchLifecycle = (options: {
+  readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+  readonly enabled: boolean;
+  readonly title: string;
+  readonly toolCallId: string;
+  readonly type: "started" | "completed";
+}): void => {
+  if (!options.enabled) {
+    return;
+  }
+  // oxlint-disable-next-line oxc/no-optional-chaining -- The app's preferred nullish guard skips timestamps and payload construction without a writer.
+  options.dataStream?.write({
+    data: {
+      timestamp: Date.now(),
+      title: options.title,
+      toolCallId: options.toolCallId,
+      type: options.type,
+    },
+    type: "data-researchUpdate",
+  });
+};
+
+const completeSearch = <Searches extends readonly unknown[]>(
+  options: {
+    readonly completeTitle: string;
+    readonly dataStream: Readonly<ToolProgressWriter> | undefined;
+    readonly log: Readonly<
+      Pick<ReturnType<typeof createModuleLogger>, "debug" | "error">
+    >;
+    readonly queries: SearchExecution["queries"];
+    readonly toolCallId: string;
+    readonly writeTopLevelUpdates: boolean;
+  },
+  { searches, error }: { readonly searches: Searches; readonly error?: string }
+): { searches: Searches; error?: string } => {
+  const hasError = Boolean(error);
+  if (hasError) {
+    options.log.error(
+      { error, queriesCount: options.queries.length },
+      "multiQueryWebSearchStep returned error"
+    );
+  }
+  writeSearchLifecycle({
+    dataStream: options.dataStream,
+    enabled: options.writeTopLevelUpdates,
+    title: options.completeTitle,
+    toolCallId: options.toolCallId,
+    type: "completed",
+  });
+  const totalSteps = 1;
+  options.log.debug(
+    { completedSteps: totalSteps, resultGroups: searches.length, totalSteps },
+    "executeMultiQuerySearch complete"
+  );
+  if (hasError) {
+    // oxlint-disable-next-line sort-keys -- Preserve the serialized result order: searches precedes the optional error field.
+    return { searches, error };
+  }
+  return { searches };
+};
 
 // Common search execution logic
+// oxlint-disable-next-line oxc/no-async-await -- Complete progress and response shaping only after the single awaited search, preserving rejected-Promise behavior.
 const executeMultiQuerySearch = async ({
   search_queries,
   search,
@@ -40,84 +101,44 @@ const executeMultiQuerySearch = async ({
   title,
   completeTitle,
 }: {
-  readonly search_queries: readonly {
-    readonly query: string;
-    readonly maxResults: number;
-  }[];
-  readonly search: (
-    query: { readonly query: string; readonly maxResults: number },
-    index: number
-  ) => Promise<
-    { readonly title: string; readonly url: string; readonly content: string }[]
-  >;
+  readonly search_queries: SearchExecution["queries"];
+  readonly search: SearchExecution["search"];
   readonly dataStream?: Readonly<ToolProgressWriter>;
   readonly toolCallId: string;
   readonly writeTopLevelUpdates: boolean;
   readonly title: string;
   readonly completeTitle: string;
-}): Promise<Awaited<ReturnType<typeof multiQueryWebSearchStep>>> => {
+}): Promise<SearchResponse> => {
   const log = createModuleLogger("tools/web-search");
   log.debug(
     { queriesCount: search_queries.length },
     "executeMultiQuerySearch start"
   );
-  if (writeTopLevelUpdates) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    dataStream?.write({
-      data: {
-        timestamp: Date.now(),
-        title,
-        toolCallId,
-        type: "started",
-      },
-      type: "data-researchUpdate",
-    });
-  }
-
-  const totalSteps = 1;
-
-  const { searches: searchResults, error } = await multiQueryWebSearchStep({
+  writeSearchLifecycle({
+    dataStream,
+    enabled: writeTopLevelUpdates,
+    title,
+    toolCallId,
+    type: "started",
+  });
+  const response = await multiQueryWebSearchStep({
     dataStream,
     queries: search_queries,
     search,
     toolCallId,
   });
-  const hasError = Boolean(error);
-  if (hasError) {
-    log.error(
-      { error, queriesCount: search_queries.length },
-      "multiQueryWebSearchStep returned error"
-    );
-  }
-
-  if (writeTopLevelUpdates) {
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading write from dataStream; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-    dataStream?.write({
-      data: {
-        timestamp: Date.now(),
-        title: completeTitle,
-        toolCallId,
-        type: "completed",
-      },
-      type: "data-researchUpdate",
-    });
-  }
-  log.debug(
+  return completeSearch(
     {
-      completedSteps: totalSteps,
-      resultGroups: searchResults.length,
-      totalSteps,
+      completeTitle,
+      dataStream,
+      log,
+      queries: search_queries,
+      toolCallId,
+      writeTopLevelUpdates,
     },
-    "executeMultiQuerySearch complete"
+    response
   );
-  if (hasError) {
-    // oxlint-disable-next-line sort-keys -- Preserve the serialized result order: searches precedes the optional error field.
-    return { searches: searchResults, error };
-  }
-  return { searches: searchResults };
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements */
 export { DEFAULT_MAX_RESULTS, executeMultiQuerySearch, searchQueriesSchema };
 /* oxlint-enable import/no-named-export */

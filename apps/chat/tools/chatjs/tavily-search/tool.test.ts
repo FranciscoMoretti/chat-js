@@ -33,7 +33,7 @@ const collect = async <SearchValue>(
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): this query fixture asserts maxResults 3 and days 7, receipt cost 0.05, the final stream item via at(-1), and more than one yielded item.
  */
 test("native search streams sources and seals a final cost receipt", async () => {
   search.mockResolvedValue({
@@ -52,6 +52,10 @@ test("native search streams sources and seals a final cost receipt", async () =>
       testToolContext({ callId: "call" })
     )
   );
+  const finalResult = results.at(-1);
+  if (!finalResult) {
+    throw new Error("Expected a final search result");
+  }
   expect(search).toHaveBeenCalledWith(
     "news",
     expect.objectContaining({
@@ -62,13 +66,12 @@ test("native search streams sources and seals a final cost receipt", async () =>
       topic: "news",
     })
   );
-  expect(results.at(-1)).toMatchObject({
+  expect(finalResult).toMatchObject({
     output: { searches: [{ results: [{ title: "Source" }] }] },
     status: "success",
     usage: { costUsd: 0.05 },
   });
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading updates from results.at(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  expect(results.at(-1)?.updates).toContainEqual(
+  expect(finalResult.updates).toContainEqual(
     expect.objectContaining({
       results: [expect.objectContaining({ source: "web", title: "Source" })],
       status: "completed",

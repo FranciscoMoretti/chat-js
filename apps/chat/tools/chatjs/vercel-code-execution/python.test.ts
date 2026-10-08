@@ -1,4 +1,6 @@
 import { expect, it, vi } from "vitest";
+import type { Logger } from "pino";
+import type { MockInstance } from "vitest";
 import { Sandbox } from "@vercel/sandbox";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 import pino from "pino";
@@ -16,33 +18,54 @@ vi.mock(
     },
   })
 );
+const SUCCESS_EXIT_CODE = 0;
+const FAILED_EXIT_CODE = 1;
+const PIP_COMMAND_ORDINAL = 2;
+const CHART_COMMAND_COUNT = 2;
+const FALLBACK_COMMAND_COUNT = 3;
+
+const createPipRedactionFixture = (
+  packageUrl: string,
+  exitCode: number
+): {
+  log: Logger;
+  info: MockInstance<Logger["info"]>;
+  error: MockInstance<Logger["error"]>;
+} => {
+  const log = pino({ level: "silent" });
+  const info = vi.spyOn(log, "info");
+  const error = vi.spyOn(log, "error");
+  mocks.runCommand.mockReset();
+  mocks.runCommand
+    .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
+    .mockResolvedValueOnce({
+      exitCode,
+      stderr: (): string => `Could not install ${packageUrl}`,
+    })
+    .mockResolvedValueOnce({
+      exitCode: SUCCESS_EXIT_CODE,
+      stderr: (): string => "",
+      stdout: (): string => '{"success":true}',
+    })
+    .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
+  return {
+    error,
+    info,
+    log,
+  };
+};
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-statements, no-magic-numbers --
- * max-statements (#512): it.each([0, 1])("does not log package credentials when pip exits with %s") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): it.each([0, 1])("does not log package credentials when pip exits with %s") uses 0, 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
-it.each([0, 1])(
+it.each([SUCCESS_EXIT_CODE, FAILED_EXIT_CODE])(
   "does not log package credentials when pip exits with %s",
   async (exitCode) => {
     const secret = "fake-private-package-token";
     const packageUrl = `https://user:${secret}@packages.example.com/private.whl`;
-    const log = pino({ level: "silent" });
-    const info = vi.spyOn(log, "info");
-    const error = vi.spyOn(log, "error");
-    mocks.runCommand.mockReset();
-    mocks.runCommand
-      .mockResolvedValueOnce({ exitCode: 0 })
-      .mockResolvedValueOnce({
-        exitCode,
-        stderr: (): string => `Could not install ${packageUrl}`,
-      })
-      .mockResolvedValueOnce({
-        exitCode: 0,
-        stderr: (): string => "",
-        stdout: (): string => '{"success":true}',
-      })
-      .mockResolvedValueOnce({ exitCode: 1 });
+    const { log, info, error } = createPipRedactionFixture(
+      packageUrl,
+      exitCode
+    );
 
     await executePythonInSandbox({
       code: `!pip install ${packageUrl}\nprint(4)`,
@@ -51,7 +74,7 @@ it.each([0, 1])(
       sandbox: await Sandbox.create(),
     });
 
-    expect(mocks.runCommand).toHaveBeenNthCalledWith(2, {
+    expect(mocks.runCommand).toHaveBeenNthCalledWith(PIP_COMMAND_ORDINAL, {
       args: ["install", packageUrl],
       cmd: "pip",
     });
@@ -62,7 +85,7 @@ it.each([0, 1])(
     expect(JSON.stringify([info.mock.calls, error.mock.calls])).not.toContain(
       secret
     );
-    if (exitCode !== 0) {
+    if (exitCode !== SUCCESS_EXIT_CODE) {
       expect(error).toHaveBeenCalledWith(
         { exitCode, requestId: "test-request" },
         "dynamic package installation failed"
@@ -71,31 +94,71 @@ it.each([0, 1])(
   }
 );
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, no-magic-numbers */
 
-/* oxlint-disable no-magic-numbers -- These sandbox output boundary fixtures use fixed command-count expectations. */
 it.each([
-  ['{"type":"line","elements":[],"extension":true}', true],
-  ["null", false],
-  ["[]", false],
-  ['"text"', false],
-  ["false", false],
-  ["42", false],
-  ["{", false],
-] as const)(
-  "chart envelope %s is accepted only when it is an object",
+  {
+    chart: '{"type":"line","elements":[],"extension":true}',
+    commandCount: CHART_COMMAND_COUNT,
+    expectedChart: { elements: [], extension: true, type: "line" },
+  },
+  {
+    chart: "null",
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+  {
+    chart: "[]",
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+  {
+    chart: '"text"',
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+  {
+    chart: "false",
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+  {
+    chart: "42",
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+  {
+    chart: "{",
+    commandCount: FALLBACK_COMMAND_COUNT,
+    expectedChart: "",
+  },
+])(
+  "chart envelope $chart is accepted only when it is an object",
   // oxlint-disable-next-line oxc/no-async-await -- Await the mocked sandbox command lifecycle for each wire-envelope fixture.
-  async (chart, accepted): Promise<void> => {
+  async ({
+    chart,
+    expectedChart,
+    commandCount,
+  }: Readonly<{
+    chart: string;
+    expectedChart:
+      | string
+      | Readonly<{
+          elements: readonly never[];
+          extension: boolean;
+          type: string;
+        }>;
+    commandCount: number;
+  }>): Promise<void> => {
     mocks.runCommand.mockReset();
     mocks.runCommand
-      .mockResolvedValueOnce({ exitCode: 0 })
+      .mockResolvedValueOnce({ exitCode: SUCCESS_EXIT_CODE })
       .mockResolvedValueOnce({
-        exitCode: 0,
+        exitCode: SUCCESS_EXIT_CODE,
         stderr: (): string => "",
         stdout: (): string =>
           `printed output\n__CHART_JSON__:${chart}\n{"success":true}`,
       })
-      .mockResolvedValueOnce({ exitCode: 1 });
+      .mockResolvedValueOnce({ exitCode: FAILED_EXIT_CODE });
     const result = await executePythonInSandbox({
       code: "print('output')",
       log: pino({ level: "silent" }),
@@ -103,12 +166,7 @@ it.each([
       sandbox: await Sandbox.create(),
     });
     expect(result.message).toBe("printed output");
-    expect(result.chart).toEqual(
-      // oxlint-disable-next-line no-ternary -- Compare each fixture with its success/error wire result without evaluating the unused branch.
-      accepted ? { elements: [], extension: true, type: "line" } : ""
-    );
-    // oxlint-disable-next-line no-ternary -- The expected command count follows the fixture success/error branch.
-    expect(mocks.runCommand).toHaveBeenCalledTimes(accepted ? 2 : 3);
+    expect(result.chart).toEqual(expectedChart);
+    expect(mocks.runCommand).toHaveBeenCalledTimes(commandCount);
   }
 );
-/* oxlint-enable no-magic-numbers */

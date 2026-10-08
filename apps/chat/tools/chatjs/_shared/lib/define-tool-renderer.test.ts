@@ -64,15 +64,17 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable max-params --
- * max-params (#511): renderResult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-const renderResult = (
-  toolName: string,
-  input: unknown,
-  output: unknown,
-  isReadonly = true
-): string =>
+const renderResult = ({
+  toolName,
+  input,
+  output,
+  isReadonly = true,
+}: {
+  readonly input: unknown;
+  readonly isReadonly?: boolean;
+  readonly output: unknown;
+  readonly toolName: string;
+}): string =>
   renderToStaticMarkup(
     createElement(EveToolResult, {
       isReadonly,
@@ -87,19 +89,23 @@ const renderResult = (
       },
     })
   );
-/* oxlint-enable max-params */
 
 test("dispatches a custom registry renderer and preserves view context", () => {
-  const html = renderResult(
-    "customEcho",
-    { text: "hello" },
-    { echoed: "hello" }
-  );
+  const html = renderResult({
+    input: { text: "hello" },
+    output: { echoed: "hello" },
+    toolName: "customEcho",
+  });
   expect(html).toContain("hello");
   expect(html).toContain('data-message="message-fixture"');
   expect(html).toContain('data-readonly="true"');
   expect(
-    renderResult("customEcho", { text: "hello" }, { echoed: "hello" }, false)
+    renderResult({
+      input: { text: "hello" },
+      isReadonly: false,
+      output: { echoed: "hello" },
+      toolName: "customEcho",
+    })
   ).toContain('data-readonly="false"');
 });
 
@@ -108,7 +114,11 @@ test("validates custom input and output before invoking its typed renderer", () 
     [{ text: 7 }, { echoed: "hello" }],
     [{ text: "hello" }, { echoed: { invalid: true } }],
   ]) {
-    const html = renderResult("customEcho", input, output);
+    const html = renderResult({
+      input,
+      output,
+      toolName: "customEcho",
+    });
     expect(html).toContain('role="alert"');
     expect(html).not.toContain("data-message");
   }
@@ -116,19 +126,23 @@ test("validates custom input and output before invoking its typed renderer", () 
 
 test("uses the installed word count renderer and rejects malformed persisted results", () => {
   expect(
-    renderResult(
-      "wordCount",
-      { text: "one two" },
-      {
+    renderResult({
+      input: { text: "one two" },
+      output: {
         characters: 7,
         charactersNoSpaces: 6,
         sentences: 1,
         words: 2,
-      }
-    )
+      },
+      toolName: "wordCount",
+    })
   ).toContain("Words");
   expect(
-    renderResult("wordCount", { text: "one two" }, { words: {} })
+    renderResult({
+      input: { text: "one two" },
+      output: { words: {} },
+      toolName: "wordCount",
+    })
   ).toContain("This tool result could not be displayed.");
 });
 
@@ -152,25 +166,23 @@ test("shows a failed tool instead of its loading skeleton", () => {
   expect(html).not.toContain("skeleton");
 });
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test("validates receipt progress and retains completed evidence when execution fails" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- */
 test("validates receipt progress and retains completed evidence when execution fails", () => {
+  const noCharge = 0;
   const updates = [
     { label: "Source found" },
     { label: 42 },
     { unexpected: "ignored" },
   ];
-  const success = renderResult(
-    "customEcho",
-    { text: "hello" },
-    createToolResult({ echoed: "hello" }, 0, updates)
-  );
-  const failure = renderResult(
-    "customEcho",
-    { text: "hello" },
-    createToolError(0, updates)
-  );
+  const success = renderResult({
+    input: { text: "hello" },
+    output: createToolResult({ echoed: "hello" }, noCharge, updates),
+    toolName: "customEcho",
+  });
+  const failure = renderResult({
+    input: { text: "hello" },
+    output: createToolError(noCharge, updates),
+    toolName: "customEcho",
+  });
   for (const html of [success, failure]) {
     expect(html).toContain("Source found");
     expect(html).not.toContain("42");
@@ -178,4 +190,3 @@ test("validates receipt progress and retains completed evidence when execution f
   }
   expect(failure).toContain("The tool did not complete.");
 });
-/* oxlint-enable no-magic-numbers */

@@ -1,258 +1,154 @@
+import { setupSandboxTestEnvironment } from "./sandbox-test-environment";
+// oxlint-disable-next-line sort-imports -- Register the shared hoisted env mock before SDK dependencies, preserving the original test's mock-before-import schedule.
 import { APIError, Sandbox } from "@vercel/sandbox";
-import {
-  afterEach,
-  assert,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
-import { getVercelOidcTokenSync } from "@vercel/oidc";
+import type { Mock, MockInstance } from "vitest";
+import { assert, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): envMock uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
-const envMock: {
-  VERCEL_PROJECT_ID: string | undefined;
-  VERCEL_SANDBOX_RUNTIME: string | undefined;
-  VERCEL_SANDBOX_RUNTIME_PYTHON: string | undefined;
-  VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: string | undefined;
-  VERCEL_TEAM_ID: string | undefined;
-  VERCEL_TOKEN: string | undefined;
-} = {
-  VERCEL_PROJECT_ID: undefined,
-  VERCEL_SANDBOX_RUNTIME: undefined,
-  VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: undefined,
-  VERCEL_SANDBOX_RUNTIME_PYTHON: undefined,
-  VERCEL_TEAM_ID: undefined,
-  VERCEL_TOKEN: undefined,
+const { envMock, configureSandboxCredentials } = setupSandboxTestEnvironment();
+
+const LOOKUP_AND_CONFIRM_CALLS = 2;
+
+const createCleanupFixture = (): {
+  stop: Mock<Sandbox["stop"]>;
+  log: { info: Mock; warn: Mock };
+  remove: Mock<Sandbox["delete"]>;
+} => {
+  const stop = vi.fn<Sandbox["stop"]>();
+  const log = { info: vi.fn(), warn: vi.fn() };
+  const remove = vi.fn<Sandbox["delete"]>().mockResolvedValue();
+  return { log, remove, stop };
 };
-/* oxlint-enable no-undefined */
 
-vi.mock("@/lib/env", () => ({
-  env: envMock,
-}));
-
-const jwt = (payload: unknown): string =>
-  `header.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.signature`;
-
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
-beforeEach(() => {
-  vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
-  for (const key of Object.keys(envMock).filter(
-    (candidate): candidate is keyof typeof envMock =>
-      Object.hasOwn(envMock, candidate)
-  )) {
-    envMock[key] = undefined;
-  }
+const createStoppedSession = (): Awaited<ReturnType<Sandbox["stop"]>> => ({
+  createdAt: 0,
+  cwd: "/tmp",
+  id: "session",
+  memory: 128,
+  region: "test",
+  requestedAt: 0,
+  status: "stopped",
+  timeout: 30_000,
+  updatedAt: 0,
+  vcpus: 1,
 });
-/* oxlint-enable no-undefined */
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
-});
+const createSandboxFixture = (
+  identity: Readonly<{ name: string; persistent: boolean }>
+): {
+  sandbox: Sandbox;
+  stop: Mock<Sandbox["stop"]>;
+  remove: Mock<Sandbox["delete"]>;
+  get: MockInstance<typeof Sandbox.get>;
+} => {
+  configureSandboxCredentials();
+  const stop = vi
+    .fn<Sandbox["stop"]>()
+    .mockResolvedValue(createStoppedSession());
+  const remove = vi.fn<Sandbox["delete"]>().mockResolvedValue();
+  const sandbox = new Sandbox({
+    routes: [],
+    sandbox: {
+      createdAt: 0,
+      currentSessionId: "session",
+      name: identity.name,
+      persistent: identity.persistent,
+      status: "running",
+      updatedAt: 0,
+    },
+  });
+  vi.spyOn(sandbox, "delete").mockImplementation(remove);
+  vi.spyOn(sandbox, "stop").mockImplementation(stop);
+  const get = vi.spyOn(Sandbox, "get");
+  return {
+    get,
+    remove,
+    sandbox,
+    stop,
+  };
+};
+
+const runtimeScenarios: readonly Readonly<{
+  language: "python" | "javascript";
+  name: string;
+  overrides: Readonly<Partial<typeof envMock>>;
+  runtime: string;
+}>[] = [
+  {
+    language: "python",
+    name: "uses Python defaults when no override is set",
+    overrides: {},
+    runtime: "python3.13",
+  },
+  {
+    language: "javascript",
+    name: "uses JavaScript defaults when no override is set",
+    overrides: {},
+    runtime: "node22",
+  },
+  {
+    language: "python",
+    name: "honors VERCEL_SANDBOX_RUNTIME_PYTHON override for python",
+    overrides: {
+      VERCEL_SANDBOX_RUNTIME_PYTHON: "python3.12",
+    },
+    runtime: "python3.12",
+  },
+  {
+    language: "javascript",
+    name: "honors VERCEL_SANDBOX_RUNTIME_JAVASCRIPT override for javascript",
+    overrides: {
+      VERCEL_SANDBOX_RUNTIME_JAVASCRIPT: "node20",
+    },
+    runtime: "node20",
+  },
+  {
+    language: "python",
+    name: "falls back to legacy VERCEL_SANDBOX_RUNTIME for python",
+    overrides: {
+      VERCEL_SANDBOX_RUNTIME: "python3.11",
+    },
+    runtime: "python3.11",
+  },
+  {
+    language: "python",
+    name: "prefers VERCEL_SANDBOX_RUNTIME_PYTHON over legacy VERCEL_SANDBOX_RUNTIME",
+    overrides: {
+      VERCEL_SANDBOX_RUNTIME: "python3.11",
+      VERCEL_SANDBOX_RUNTIME_PYTHON: "python3.12",
+    },
+    runtime: "python3.12",
+  },
+  {
+    language: "javascript",
+    name: "does not use legacy VERCEL_SANDBOX_RUNTIME for javascript",
+    overrides: {
+      VERCEL_SANDBOX_RUNTIME: "python3.11",
+    },
+    runtime: "node22",
+  },
+];
 
 describe("getSandboxRuntime", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("uses Python defaults when no override is set", async () => {
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("python")).toBe("python3.13");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("uses JavaScript defaults when no override is set", async () => {
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("javascript")).toBe("node22");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("honors VERCEL_SANDBOX_RUNTIME_PYTHON override for python", async () => {
-    envMock.VERCEL_SANDBOX_RUNTIME_PYTHON = "python3.12";
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("python")).toBe("python3.12");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("honors VERCEL_SANDBOX_RUNTIME_JAVASCRIPT override for javascript", async () => {
-    envMock.VERCEL_SANDBOX_RUNTIME_JAVASCRIPT = "node20";
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("javascript")).toBe("node20");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("falls back to legacy VERCEL_SANDBOX_RUNTIME for python", async () => {
-    envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("python")).toBe("python3.11");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("prefers VERCEL_SANDBOX_RUNTIME_PYTHON over legacy VERCEL_SANDBOX_RUNTIME", async () => {
-    envMock.VERCEL_SANDBOX_RUNTIME_PYTHON = "python3.12";
-    envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("python")).toBe("python3.12");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("does not use legacy VERCEL_SANDBOX_RUNTIME for javascript", async () => {
-    envMock.VERCEL_SANDBOX_RUNTIME = "python3.11";
-    const { getSandboxRuntime } = await import("./execution-sandbox");
-
-    expect(getSandboxRuntime("javascript")).toBe("node22");
-  });
+  /* oxlint-disable oxc/no-async-await -- Await module loading after each row's environment overrides before asserting synchronous runtime selection. */
+  it.each(runtimeScenarios)(
+    "$name",
+    async ({ language, overrides, runtime }) => {
+      Object.assign(envMock, overrides);
+      const { getSandboxRuntime } = await import("./execution-sandbox");
+      expect(getSandboxRuntime(language)).toBe(runtime);
+    }
+  );
   /* oxlint-enable oxc/no-async-await */
 });
 
-/* oxlint-disable max-lines-per-function, no-undefined, node/no-sync --
- * max-lines-per-function (#510): describe("resolveSandboxAuth") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): describe("resolveSandboxAuth") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * node/no-sync (#538): describe("resolveSandboxAuth") uses getVercelOidcTokenSync() within its synchronous fixture setup contract; asynchronous conversion changes its callers and lifecycle.
- */
-describe("resolveSandboxAuth", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("resolves request-scoped OIDC credentials without an environment token", async () => {
-    const token = jwt({ owner_id: "team", project_id: "project" });
-    vi.stubEnv("VERCEL_OIDC_TOKEN", undefined);
-    vi.stubGlobal(Symbol.for("@vercel/request-context"), {
-      get: () => ({ headers: { "x-vercel-oidc-token": token } }),
-    });
-    expect(getVercelOidcTokenSync()).toBe(token);
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
+/* oxlint-disable oxc/no-async-await -- Preserve the cleanup gate's explicit observation and rejection sequencing. */
 
-    expect(resolveSandboxAuth()).toEqual({
-      projectId: "project",
-      teamId: "team",
-      token,
-    });
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("resolves the provider scope from an OIDC token", async () => {
-    const token = jwt({ owner_id: "team", project_id: "project" });
-    vi.stubEnv("VERCEL_OIDC_TOKEN", token);
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(resolveSandboxAuth()).toEqual({
-      projectId: "project",
-      teamId: "team",
-      token,
-    });
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("pins explicitly configured opaque credentials", async () => {
-    Object.assign(envMock, {
-      VERCEL_PROJECT_ID: "project",
-      VERCEL_TEAM_ID: "team",
-      VERCEL_TOKEN: "opaque",
-    });
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(resolveSandboxAuth()).toEqual({
-      projectId: "project",
-      teamId: "team",
-      token: "opaque",
-    });
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("rejects a configured JWT whose scope disagrees with configuration", async () => {
-    Object.assign(envMock, {
-      VERCEL_PROJECT_ID: "project",
-      VERCEL_TEAM_ID: "team",
-      VERCEL_TOKEN: jwt({ owner_id: "other", project_id: "project" }),
-    });
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(() => resolveSandboxAuth()).toThrow("scope do not match");
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("rejects an incomplete JWT that could override configured scope", async () => {
-    Object.assign(envMock, {
-      VERCEL_PROJECT_ID: "project",
-      VERCEL_TEAM_ID: "team",
-      VERCEL_TOKEN: jwt({ owner_id: "other" }),
-    });
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(() => resolveSandboxAuth()).toThrow(
-      "Sandbox provider identity is unavailable."
-    );
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("does not expose malformed token contents in errors", async () => {
-    vi.stubEnv("VERCEL_OIDC_TOKEN", jwt({ private: "secret-payload" }));
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(() => resolveSandboxAuth()).toThrow(
-      "Sandbox provider identity is unavailable."
-    );
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("rejects missing credentials without leaking provider errors", async () => {
-    const { resolveSandboxAuth } = await import("./execution-sandbox");
-
-    expect(() => resolveSandboxAuth()).toThrow(
-      "Sandbox provider identity is unavailable."
-    );
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("uses each request's token for execution and cleanup instead of a stale environment token", async () => {
-    vi.stubEnv(
-      "VERCEL_OIDC_TOKEN",
-      jwt({ owner_id: "stale", project_id: "stale" })
-    );
-    let token = jwt({ owner_id: "team", project_id: "first" });
-    vi.stubGlobal(Symbol.for("@vercel/request-context"), {
-      get: () => ({ headers: { "x-vercel-oidc-token": token } }),
-    });
-    const { resolveSandboxAuth, codeSandboxCleanupCapability } =
-      await import("./execution-sandbox");
-
-    expect(resolveSandboxAuth()).toEqual({
-      projectId: "first",
-      teamId: "team",
-      token,
-    });
-    token = jwt({ owner_id: "team", project_id: "second" });
-    expect(
-      codeSandboxCleanupCapability.createCleanupSession().provider
-    ).toEqual({
-      projectId: "second",
-      teamId: "team",
-      token,
-    });
-  });
-  /* oxlint-enable oxc/no-async-await */
-});
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, no-undefined, node/no-sync */
-
-/* oxlint-disable max-statements, typescript/promise-function-async --
- * max-statements (#512): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): it("sandbox cleanup waits for terminal stop and propagates a failed confirmation") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
+/* oxlint-disable max-statements -- Stop-gate failure assertions cover pending state, exact SDK options, rejection, warning, and deletion; keep these oracles in the test. */
 it("sandbox cleanup waits for terminal stop and propagates a failed confirmation", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<never>();
-  const stop = vi.fn<Sandbox["stop"]>().mockReturnValue(gate.promise);
-  const log = { info: vi.fn(), warn: vi.fn() };
-  const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
+  const { stop, log, remove } = createCleanupFixture();
+  stop.mockReturnValue(gate.promise);
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   let settled = false;
   // oxlint-disable-next-line promise/prefer-await-to-then -- Observe cleanup settlement while keeping the stop confirmation pending for assertions.
@@ -282,7 +178,7 @@ it("sandbox cleanup waits for terminal stop and propagates a failed confirmation
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/promise-function-async */
+/* oxlint-enable max-statements */
 
 it("creates disposable sandboxes rather than enabling the SDK persistence default", async () => {
   const { createSandbox } = await import("./execution-sandbox");
@@ -300,15 +196,11 @@ it("creates disposable sandboxes rather than enabling the SDK persistence defaul
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-statements --
- * max-statements (#512): it("does not report successful cleanup until deletion has completed") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
 it("does not report successful cleanup until deletion has completed", async () => {
   const { cleanupSandbox } = await import("./execution-sandbox");
   const gate = Promise.withResolvers<undefined>();
-  const stop = vi.fn<Sandbox["stop"]>();
-  const remove = vi.fn<Sandbox["delete"]>().mockReturnValue(gate.promise);
-  const log = { info: vi.fn(), warn: vi.fn() };
+  const { stop, log, remove } = createCleanupFixture();
+  remove.mockReturnValue(gate.promise);
   const pending = cleanupSandbox({ delete: remove, stop }, log, "fixture");
   const rejected = expect(pending).rejects.toThrow("delete unavailable");
   await vi.waitFor(() => expect(remove).toHaveBeenCalledOnce());
@@ -317,128 +209,61 @@ it("does not report successful cleanup until deletion has completed", async () =
   await rejected;
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null --
- * max-lines-per-function (#510): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): describe("codeSandboxCleanupCapability") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): describe("codeSandboxCleanupCapability") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): describe("codeSandboxCleanupCapability") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * unicorn/no-null (#570): describe("codeSandboxCleanupCapability") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
- */
-describe("codeSandboxCleanupCapability", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-  it("deletes an exact disposable sandbox and confirms provider absence", async () => {
-    Object.assign(envMock, {
-      VERCEL_PROJECT_ID: "project",
-      VERCEL_TEAM_ID: "team",
-      VERCEL_TOKEN: "opaque",
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable max-statements -- Keep provider identity, absence confirmation and stop/delete call assertions in this end-to-end cleanup case. */
+it("codeSandboxCleanupCapability deletes an exact disposable sandbox and confirms provider absence", async () => {
+  const { sandbox, stop, remove, get } = createSandboxFixture({
+    name: "owned",
+    persistent: false,
+  });
+  /* oxlint-disable unicorn/no-null -- An empty provider 404 response confirms sandbox absence. */
+  get
+    .mockResolvedValueOnce(sandbox)
+    .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
+  /* oxlint-enable unicorn/no-null */
+  try {
+    const { codeSandboxCleanupCapability } =
+      await import("./execution-sandbox");
+    const cleanup = codeSandboxCleanupCapability.createCleanupSession();
+    expect(cleanup.provider).toMatchObject({
+      projectId: "project",
+      teamId: "team",
     });
-    const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
-      createdAt: 0,
-      cwd: "/tmp",
-      id: "session",
-      memory: 128,
-      region: "test",
-      requestedAt: 0,
-      status: "stopped",
-      timeout: 30_000,
-      updatedAt: 0,
-      vcpus: 1,
-    });
-    const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
-    const sandbox = new Sandbox({
-      routes: [],
-      sandbox: {
-        createdAt: 0,
-        currentSessionId: "session",
-        name: "owned",
-        persistent: false,
-        status: "running",
-        updatedAt: 0,
-      },
-    });
-    vi.spyOn(sandbox, "delete").mockImplementation(remove);
-    vi.spyOn(sandbox, "stop").mockImplementation(stop);
-    const get = vi
-      .spyOn(Sandbox, "get")
-      .mockResolvedValueOnce(sandbox)
-      .mockRejectedValueOnce(new APIError(new Response(null, { status: 404 })));
+    await cleanup.deleteAndConfirmAbsent("owned");
+    expect(get).toHaveBeenCalledTimes(LOOKUP_AND_CONFIRM_CALLS);
+    expect(get).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "owned", resume: false })
+    );
+    expect(stop).toHaveBeenCalledOnce();
+    expect(remove).toHaveBeenCalledOnce();
+  } finally {
+    get.mockRestore();
+  }
+});
+/* oxlint-enable max-statements */
+/* oxlint-enable oxc/no-async-await */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([     { name: "foreign", persistent: false },     { name: "owned", persistent: true },   ])'s awaited sequencing and rejected-Promise behavior. */
+it.each([
+  { name: "foreign", persistent: false },
+  { name: "owned", persistent: true },
+])(
+  "codeSandboxCleanupCapability refuses unsafe sandbox identity %#",
+  async (identity: Readonly<{ name: string; persistent: boolean }>) => {
+    const { sandbox, stop, remove, get } = createSandboxFixture(identity);
+    get.mockResolvedValue(sandbox);
     try {
       const { codeSandboxCleanupCapability } =
         await import("./execution-sandbox");
       const cleanup = codeSandboxCleanupCapability.createCleanupSession();
-      expect(cleanup.provider).toMatchObject({
-        projectId: "project",
-        teamId: "team",
-      });
-      await cleanup.deleteAndConfirmAbsent("owned");
-      expect(get).toHaveBeenCalledTimes(2);
-      expect(get).toHaveBeenCalledWith(
-        expect.objectContaining({ name: "owned", resume: false })
+      await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
+        "identity or persistence"
       );
-      expect(stop).toHaveBeenCalledOnce();
-      expect(remove).toHaveBeenCalledOnce();
+      expect(stop).not.toHaveBeenCalled();
+      expect(remove).not.toHaveBeenCalled();
     } finally {
       get.mockRestore();
     }
-  });
-  /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([     { name: "foreign", persistent: false },     { name: "owned", persistent: true },   ])'s awaited sequencing and rejected-Promise behavior. */
-  it.each([
-    { name: "foreign", persistent: false },
-    { name: "owned", persistent: true },
-  ])(
-    "refuses unsafe sandbox identity %#",
-    async (identity: Readonly<{ name: string; persistent: boolean }>) => {
-      Object.assign(envMock, {
-        VERCEL_PROJECT_ID: "project",
-        VERCEL_TEAM_ID: "team",
-        VERCEL_TOKEN: "opaque",
-      });
-      const stop = vi.fn<Sandbox["stop"]>().mockResolvedValue({
-        createdAt: 0,
-        cwd: "/tmp",
-        id: "session",
-        memory: 128,
-        region: "test",
-        requestedAt: 0,
-        status: "stopped",
-        timeout: 30_000,
-        updatedAt: 0,
-        vcpus: 1,
-      });
-      const remove = vi.fn<Sandbox["delete"]>(() => Promise.resolve());
-      const sandbox = new Sandbox({
-        routes: [],
-        sandbox: {
-          createdAt: 0,
-          currentSessionId: "session",
-          name: identity.name,
-          persistent: identity.persistent,
-          status: "running",
-          updatedAt: 0,
-        },
-      });
-      vi.spyOn(sandbox, "delete").mockImplementation(remove);
-      vi.spyOn(sandbox, "stop").mockImplementation(stop);
-      const get = vi.spyOn(Sandbox, "get").mockResolvedValue(sandbox);
-      try {
-        const { codeSandboxCleanupCapability } =
-          await import("./execution-sandbox");
-        const cleanup = codeSandboxCleanupCapability.createCleanupSession();
-        await expect(cleanup.deleteAndConfirmAbsent("owned")).rejects.toThrow(
-          "identity or persistence"
-        );
-        expect(stop).not.toHaveBeenCalled();
-        expect(remove).not.toHaveBeenCalled();
-      } finally {
-        get.mockRestore();
-      }
-    }
-  );
-  /* oxlint-enable oxc/no-async-await */
-});
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async, unicorn/no-null */
-
-/* oxlint-disable max-lines -- #509: This sandbox.test.ts module keeps its existing fixture/scenario boundaries; splitting it requires an ownership design. EOF-scoped exception applies only to this file-level line metric. */
+  }
+);
+/* oxlint-enable oxc/no-async-await */

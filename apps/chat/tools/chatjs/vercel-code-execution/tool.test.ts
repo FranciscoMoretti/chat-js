@@ -52,6 +52,23 @@ vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
 }));
 
 const sandbox = { id: "isolated-sandbox", name: "owned-sandbox" };
+const executorCases = [
+  {
+    language: "python",
+    unused: mocks.javascript,
+    used: mocks.python,
+  },
+  {
+    language: "javascript",
+    unused: mocks.python,
+    used: mocks.javascript,
+  },
+] as const satisfies readonly {
+  language: "python" | "javascript";
+  used: typeof mocks.python;
+  unused: typeof mocks.javascript;
+}[];
+
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.ownership.mockReturnValue({
@@ -70,11 +87,19 @@ beforeEach(() => {
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["python", "javascript"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-undefined --
- * no-undefined (#519): it.each(["python", "javascript"] as const)("dispatches %s to the sandbox and cleans u uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
+ * no-undefined (#519): the create call expects an omitted sandbox-name argument as undefined before the auth object; null would be a different argument and type.
  */
-it.each(["python", "javascript"] as const)(
-  "dispatches %s to the sandbox and cleans up",
-  async (language) => {
+it.each(executorCases)(
+  "dispatches $language to the sandbox and cleans up",
+  async ({
+    language,
+    used,
+    unused,
+  }: {
+    readonly language: "python" | "javascript";
+    readonly used: unknown;
+    readonly unused: unknown;
+  }) => {
     // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
     const result = await codeExecution.execute?.(
       { code: "source", language, title: "Calculate" },
@@ -90,11 +115,7 @@ it.each(["python", "javascript"] as const)(
       undefined,
       expect.objectContaining({ projectId: "project" })
     );
-    // oxlint-disable-next-line no-ternary -- Keep executor as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const executor = language === "python" ? mocks.python : mocks.javascript;
-    // oxlint-disable-next-line no-ternary -- Keep unused as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    const unused = language === "python" ? mocks.javascript : mocks.python;
-    expect(executor).toHaveBeenCalledWith(
+    expect(used).toHaveBeenCalledWith(
       expect.objectContaining({ code: "source", sandbox })
     );
     expect(unused).not.toHaveBeenCalled();
@@ -130,15 +151,14 @@ it("normalizes execution errors and cleans up the sandbox", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/promise-function-async --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("reserves a named sandbox and releases ownership after provider cleanup") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/promise-function-async (#606): it("reserves a named sandbox and releases ownership after provider cleanup") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("reserves a named sandbox and releases ownership after provider cleanup", async () => {
   const sandboxOwnership = {
-    created: vi.fn(() => Promise.resolve()),
-    release: vi.fn(() => Promise.resolve()),
-    reserve: vi.fn(() => Promise.resolve(sandbox.name)),
+    created: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    release: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    reserve: vi.fn<() => Promise<string>>().mockResolvedValue(sandbox.name),
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   const abortSignal = new AbortController().signal;
@@ -164,21 +184,21 @@ it("reserves a named sandbox and releases ownership after provider cleanup", asy
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/promise-function-async */
+/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, no-undefined, typescript/promise-function-async --
+/* oxlint-disable max-statements --
  * max-statements (#512): it("cancelling execution starts sandbox cleanup and observes its completion") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): it("cancelling execution starts sandbox cleanup and observes its completion") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/promise-function-async (#606): it("cancelling execution starts sandbox cleanup and observes its completion") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 it("cancelling execution starts sandbox cleanup and observes its completion", async () => {
   const execution = Promise.withResolvers<never>();
   const cleanup = Promise.withResolvers<undefined>();
   mocks.javascript.mockReturnValue(execution.promise);
+  /* oxlint-disable typescript/promise-function-async -- Reject execution as the cleanup side effect, then return the exact deferred cleanup promise observed by the test. */
   mocks.cleanup.mockImplementation(() => {
     execution.reject(new Error("Sandbox stopped"));
     return cleanup.promise;
   });
+  /* oxlint-enable typescript/promise-function-async */
   const controller = new AbortController();
   // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when calling codeExecution.execute; preserve one receiver evaluation, skipped call arguments and the undefined short-circuit result. The app guidance prefers optional chaining.
   const result = codeExecution.execute?.(
@@ -193,21 +213,21 @@ it("cancelling execution starts sandbox cleanup and observes its completion", as
   controller.abort();
   await vi.waitFor(() => expect(mocks.cleanup).toHaveBeenCalledOnce());
 
+  // oxlint-disable-next-line no-undefined -- Resolve the cleanup gate with its declared no-value result.
   cleanup.resolve(undefined);
   await expect(result).rejects.toBe(controller.signal.reason);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, no-undefined, typescript/promise-function-async */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable typescript/promise-function-async --
- * typescript/promise-function-async (#606): it("retains ownership when creation outcome is unknown") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- */
 it("retains ownership when creation outcome is unknown", async () => {
   const sandboxOwnership = {
-    created: vi.fn(() => Promise.resolve()),
-    release: vi.fn(() => Promise.resolve()),
-    reserve: vi.fn(() => Promise.resolve("reserved-sandbox")),
+    created: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    release: vi.fn<() => Promise<void>>().mockResolvedValue(),
+    reserve: vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValue("reserved-sandbox"),
   };
   mocks.ownership.mockReturnValue(sandboxOwnership);
   mocks.create.mockRejectedValueOnce(new Error("lost create response"));
@@ -227,7 +247,6 @@ it("retains ownership when creation outcome is unknown", async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/promise-function-async */
 
 it("retains the completed execution charge when its result is invalid", async () => {
   mocks.python.mockResolvedValue({ chart: 42, message: "4" });

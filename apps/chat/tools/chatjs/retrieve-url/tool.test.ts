@@ -30,20 +30,21 @@ beforeEach(() => {
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each(["missing configuration", "invalid URL"])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): test.each(["missing configuration", "invalid URL"])("%s produces a zero-cost receipt  uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): the two missing-configuration/invalid-URL scenarios assert costUsd is exactly 0 in each zero-cost receipt.
  */
-test.each(["missing configuration", "invalid URL"])(
+test.each([
+  ["missing configuration", "https://example.com"],
+  ["invalid URL", "file:///private"],
+])(
   "%s produces a zero-cost receipt without calling Firecrawl",
-  async (reason) => {
+  async (reason, url) => {
     if (reason === "missing configuration") {
       mocks.env.FIRECRAWL_API_KEY = "";
     }
     const { retrieveUrl } = await import("./tool");
     const result = await retrieveUrl.execute(
       {
-        url:
-          // oxlint-disable-next-line no-ternary -- Keep url as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          reason === "invalid URL" ? "file:///private" : "https://example.com",
+        url,
       },
       testToolContext()
     );

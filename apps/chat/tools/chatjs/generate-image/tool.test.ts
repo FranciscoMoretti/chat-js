@@ -100,9 +100,6 @@ beforeEach(() => {
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("uses native image context for editing and persists provider cost") uses first-call ordinal 1 as the fixture assertion target.
- */
 it("uses native image context for editing and persists provider cost", async () => {
   mocks.images.mockReturnValue({
     attachments: [
@@ -118,8 +115,8 @@ it("uses native image context for editing and persists provider cost", async () 
     },
   });
   const result = await execute();
-  expect(mocks.image).toHaveBeenNthCalledWith(
-    1,
+  expect(mocks.image).toHaveBeenCalledOnce();
+  expect(mocks.image).toHaveBeenCalledWith(
     expect.objectContaining({
       prompt: {
         images: [Buffer.from("previous"), Buffer.from("attachment")],
@@ -135,20 +132,15 @@ it("uses native image context for editing and persists provider cost", async () 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): it("generates from a prompt without edit images") uses first-call ordinal 1 as the fixture assertion target.
- */
 it("generates from a prompt without edit images", async () => {
   await execute();
-  expect(mocks.image).toHaveBeenNthCalledWith(
-    1,
+  expect(mocks.image).toHaveBeenCalledOnce();
+  expect(mocks.image).toHaveBeenCalledWith(
     expect.objectContaining({ prompt: "Blue sky" })
   );
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): it("retains provider cost if authorized storage fails") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
@@ -163,9 +155,9 @@ it("retains provider cost if authorized storage fails", async () => {
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-disable typescript/promise-function-async -- * typescript/promise-function-async (#606): it("forwards cancellation to EVE") preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections. */
 it("forwards cancellation to EVE", async () => {
   const controller = new AbortController();
+  /* oxlint-disable typescript/promise-function-async -- Return the exact pending provider promise after registering its abort listener; an async callback would wrap that promise. */
   mocks.image.mockImplementation(
     ({
       abortSignal,
@@ -183,6 +175,7 @@ it("forwards cancellation to EVE", async () => {
       return pending.promise;
     }
   );
+  /* oxlint-enable typescript/promise-function-async */
   const result = execute(testToolContext({ abortSignal: controller.signal }));
   await vi.waitFor(() => expect(mocks.image).toHaveBeenCalledOnce());
   controller.abort();
@@ -190,7 +183,6 @@ it("forwards cancellation to EVE", async () => {
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/promise-function-async */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("uses the selected native model and accounts nested model tokens") uses 0.000011 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
