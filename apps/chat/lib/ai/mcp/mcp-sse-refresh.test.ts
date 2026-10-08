@@ -1,10 +1,7 @@
-import { createMCPClient } from "@ai-sdk/mcp";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { OAuthClientProvider, OAuthTokens } from "@ai-sdk/mcp";
-/* oxlint-enable sort-imports */
 import { expect, test } from "vitest";
-
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createMCPClient } from "@ai-sdk/mcp";
 
 const serverUrl = "https://mcp.test/";
 const endpointUrl = `${serverUrl}messages`;
@@ -13,12 +10,11 @@ const tokenEndpoint = `${authorizationServerUrl}token`;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test.each([{ timing: "simultaneous" }, { timing: "after-save" }])'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, no-undefined, unicorn/no-null --
- * init-declarations (#507): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re uses 1, 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * no-undefined (#519): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * unicorn/no-null (#570): test.each([{ timing: "simultaneous" }, { timing: "after-save" }])("SSE $timing 401 re preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
+ * init-declarations: The SSE controller is unavailable until the transport invokes stream.start; initialize it through that actual native callback.
+ * max-lines-per-function, max-statements: This native SDK integration fixture serves SSE, resource discovery, authorization discovery, token refresh and resource requests against shared token state. The two barriers distinguish overlapping 401s from a 401 arriving after token persistence, and client.close remains in finally.
+ * no-magic-numbers: Counters and expectations distinguish the first refresh and two old-token requests; these are independent scenario assertions.
+ * no-undefined: Completion barriers resolve with undefined without adding a payload or changing their Promise types.
+ * unicorn/no-null: Bodyless HTTP responses use the native null sentinel; parsed JSON may also contain null and must be excluded before testing its request ID.
  */
 test.each([{ timing: "simultaneous" }, { timing: "after-save" }])(
   "SSE $timing 401 responses share one complete OAuth refresh",

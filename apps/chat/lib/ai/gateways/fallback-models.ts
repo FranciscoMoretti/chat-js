@@ -1,11 +1,8 @@
-import type { AiGatewayModel } from "@chat-js/gateways/models";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   models as fallbackModels,
   generatedForGateway,
 } from "@/lib/ai/models.generated";
-/* oxlint-enable sort-imports */
+import type { AiGatewayModel } from "@chat-js/gateways/models";
 import { createModuleLogger } from "@/lib/logger";
 
 const log = createModuleLogger("ai/gateways/fallback");

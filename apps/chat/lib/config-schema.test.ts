@@ -1,9 +1,7 @@
-import { expect, test } from "vitest";
-
-import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
-/* oxlint-disable sort-imports -- Preserve module import order; the config schema consumes the generated gateway defaults. */
 import { applyDefaults, defineConfig } from "./config-schema";
-/* oxlint-enable sort-imports */
+
+import { expect, test } from "vitest";
+import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
 
 test("partial tool and workflow overrides retain required sibling defaults", () => {
   const input = defineConfig({

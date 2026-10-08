@@ -1,7 +1,5 @@
-import { clsx } from "clsx";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ClassValue } from "clsx";
-/* oxlint-enable sort-imports */
+import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { v7 as uuidv7 } from "uuid";
 

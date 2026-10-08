@@ -1,23 +1,16 @@
-import { devToolsMiddleware } from "@ai-sdk/devtools";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { ImageModel, LanguageModelMiddleware } from "ai";
 import type {
   LanguageModelV4,
   SharedV4ProviderOptions,
 } from "@ai-sdk/provider";
-/* oxlint-enable sort-imports */
-import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ImageModel, LanguageModelMiddleware } from "ai";
-/* oxlint-enable sort-imports */
 import { extractReasoningMiddleware, wrapLanguageModel } from "ai";
-
-import { getActiveGateway } from "./active-gateway";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AppModelId } from "./app-models";
-/* oxlint-enable sort-imports */
-import { getAppModelDefinition } from "./app-models";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { InstalledGateway } from "./gateways/registry";
+
+import { devToolsMiddleware } from "@ai-sdk/devtools";
+import { getActiveGateway } from "./active-gateway";
+import { getAppModelDefinition } from "./app-models";
+import { getModelProviderOptions as modelProviderOptions } from "@chat-js/gateways/provider-options";
 
 type ActiveGatewayImageModelId = Parameters<
   InstalledGateway["createImageModel"]

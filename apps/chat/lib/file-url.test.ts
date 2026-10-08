@@ -1,17 +1,11 @@
-/* oxlint-disable import/no-nodejs-modules --
- * import/no-nodejs-modules (#529): This test harness requires import assert from "node:assert/strict";; its Node runtime boundary deliberately permits these built-ins.
- */
-import assert from "node:assert/strict";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/no-nodejs-modules -- These maintained tests use Node built-in assertions. */
 import { describe, it } from "vitest";
-/* oxlint-enable sort-imports */
-
 import {
   getFileImageProps,
   isFileStorageKey,
   keyFromFileUrl,
 } from "./file-url";
+import assert from "node:assert/strict";
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable unicorn/no-null --

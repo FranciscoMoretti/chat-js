@@ -1,7 +1,5 @@
-import type { AiGatewayModel } from "@chat-js/gateways/models";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
+import type { AiGatewayModel } from "@chat-js/gateways/models";
 
 import { toModelData } from "./to-model-data";
 

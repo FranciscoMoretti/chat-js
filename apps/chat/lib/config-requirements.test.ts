@@ -1,12 +1,10 @@
-import { expect, test } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   authEnvRequirements,
   formatRequirementDescription,
   getMissingRequirement,
 } from "./config-requirements";
-/* oxlint-enable sort-imports */
+
+import { expect, test } from "vitest";
 import type { EnvRequirement } from "./config-requirements";
 
 const sandbox: EnvRequirement = {

@@ -1,46 +1,42 @@
 /* oxlint-disable import/max-dependencies --
  * import/max-dependencies (#524): import from "@better-auth/electron" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
  */
+import { authSessionOptions } from "./auth-session-options";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { lastLoginMethod } from "better-auth/plugins";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
+import { lastLoginMethod } from "better-auth/plugins";
+import { nextCookies } from "better-auth/next-js";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { authSessionOptions } from "./auth-session-options";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line sort-imports -- Keep env createEnv validation before config applyDefaults validation and electron-auth-plugin construction; alphabetizing these runtime declarations can change which initialization error is observed first.
 import { config } from "./config";
 import { db } from "./db/client";
 import { schema } from "./db/schema";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+// oxlint-disable-next-line sort-imports -- Keep env createEnv validation before config applyDefaults validation and electron-auth-plugin construction; alphabetizing these runtime declarations can change which initialization error is observed first.
 import { ELECTRON_TRUSTED_ORIGINS } from "./electron-auth";
-/* oxlint-enable sort-imports */
 import { electronAuthPlugin } from "./electron-auth-plugin";
 import { getBaseUrl } from "./url";
 /* oxlint-enable import/max-dependencies */
 
-/* oxlint-disable node/no-process-env, typescript/strict-boolean-expressions --
- * node/no-process-env (#537): baseUrl reads process.env at the environment/configuration boundary; moving this access requires preserving runtime and test override behavior.
- * typescript/strict-boolean-expressions (#610): baseUrl intentionally keeps the existing falsy-value behavior of env.APP_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
-const baseUrl =
-  // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
-  env.APP_URL ||
-  // oxlint-disable-next-line no-ternary -- Keep || operand as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  (process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl());
+/* oxlint-disable node/no-process-env -- Preserve the deployment environment read at the existing configuration boundary. */
+let baseUrl = env.APP_URL;
+if (typeof baseUrl !== "string" || baseUrl === "") {
+  /* oxlint-disable no-ternary -- Preserve lazy selection of the production URL or runtime base URL; pinned unicorn/prefer-ternary requires this value selection. */
+  baseUrl =
+    process.env.VERCEL_ENV === "production" ? config.appUrl : getBaseUrl();
+  /* oxlint-enable no-ternary */
+}
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (auth); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable node/no-process-env, typescript/strict-boolean-expressions */
+/* oxlint-enable node/no-process-env */
 
-/* oxlint-disable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions --
+interface SocialProviderCredentials {
+  clientId: string;
+  clientSecret: string;
+}
+
+/* oxlint-disable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
  * no-magic-numbers (#517): auth uses 0 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
  * no-undefined (#519): auth uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep auth's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
  * typescript/strict-boolean-expressions (#610): auth intentionally keeps the existing falsy-value behavior of env.VERCEL_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 export const auth = betterAuth({
@@ -64,7 +60,11 @@ export const auth = betterAuth({
     development: env.NODE_ENV === "development",
   }),
 
-  socialProviders: (() => {
+  socialProviders: ((): {
+    readonly github: SocialProviderCredentials | undefined;
+    readonly google: SocialProviderCredentials | undefined;
+    readonly vercel: SocialProviderCredentials | undefined;
+  } => {
     const googleId = env.AUTH_GOOGLE_ID;
     const googleSecret = env.AUTH_GOOGLE_SECRET;
     const githubId = env.AUTH_GITHUB_ID;
@@ -99,7 +99,7 @@ export const auth = betterAuth({
         ? { clientId: vercelId, clientSecret: vercelSecret }
         : undefined;
 
-    return { github, google, vercel } as const;
+    return { github, google, vercel };
   })(),
   trustedOrigins: [
     baseUrl,
@@ -113,7 +113,7 @@ export const auth = betterAuth({
 });
 /* oxlint-enable import/no-named-export */
 /* oxlint-disable import/no-named-export -- Keep the named type bindings (Session); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-enable no-magic-numbers, no-undefined, typescript/explicit-function-return-type, typescript/strict-boolean-expressions */
+/* oxlint-enable no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
 
 // Infer session type from the auth instance for type safety
 export type Session = typeof auth.$Infer.Session;

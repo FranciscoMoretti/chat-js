@@ -1,15 +1,15 @@
-import { FilesError } from "files-sdk";
-
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   downloadFile,
   getFileMetadata,
   getFileProviderUrl,
   storageSupportsRange,
 } from "./file-storage";
-/* oxlint-enable sort-imports */
+import { FilesError } from "files-sdk";
+
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+
+const HTTP_OK = 200;
+const HTTP_PARTIAL_CONTENT = 206;
 
 const RANGE_HEADER = /^bytes=(?:(?<start>\d+)-(?<end>\d*)|-(?<suffix>\d+))$/u;
 
@@ -124,8 +124,8 @@ const createDownloadResponse = async (
   }
   return new Response(file.stream(), {
     headers,
-    // oxlint-disable-next-line no-magic-numbers, no-ternary -- HTTP distinguishes partial content (206) from a complete download (200).; no-ternary: Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    status: range ? 206 : 200,
+    // oxlint-disable-next-line no-ternary -- Keep status as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    status: range ? HTTP_PARTIAL_CONTENT : HTTP_OK,
   });
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (createFileContentResponse); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

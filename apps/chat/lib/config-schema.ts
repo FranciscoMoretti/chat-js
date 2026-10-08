@@ -1,16 +1,14 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type {
   GatewayImageModelIdMap,
   GatewayModelIdMap,
   GatewayType,
   GatewayVideoModelIdMap,
 } from "@/lib/ai/gateways/registry";
-/* oxlint-enable sort-imports */
 
 import { gatewayModelDefaults, gatewayType } from "./ai/gateway-model-defaults";
+
 import type { ToolName } from "./ai/types";
+import { z } from "zod";
 
 // Helper to create typed model ID schemas
 const toolName = (): z.ZodCustom<ToolName, ToolName> => z.custom<ToolName>();
@@ -40,9 +38,11 @@ const gatewayVideoModelId = <Gateway extends GatewayType>(): z.ZodCustom<
     (value) => typeof value === "string"
   );
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): deepResearchToolConfigSchema uses 1, 20, 10 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MINIMUM_RESEARCH_COUNT = 1;
+const MAX_CONCURRENT_RESEARCH_UNITS = 20;
+const MAX_RESEARCHER_ITERATIONS = 10;
+const MAX_SEARCH_QUERIES = 10;
+
 const deepResearchToolConfigSchema = z.object({
   allowClarification: z
     .boolean()
@@ -52,30 +52,135 @@ const deepResearchToolConfigSchema = z.object({
   maxConcurrentResearchUnits: z
     .number()
     .int()
-    .min(1)
-    .max(20)
+    .min(MINIMUM_RESEARCH_COUNT)
+    .max(MAX_CONCURRENT_RESEARCH_UNITS)
     .describe("Topics researched in parallel per iteration"),
   maxResearcherIterations: z
     .number()
     .int()
-    .min(1)
-    .max(10)
+    .min(MINIMUM_RESEARCH_COUNT)
+    .max(MAX_RESEARCHER_ITERATIONS)
     .describe("Maximum supervisor loop iterations"),
   maxSearchQueries: z
     .number()
     .int()
-    .min(1)
-    .max(10)
+    .min(MINIMUM_RESEARCH_COUNT)
+    .max(MAX_SEARCH_QUERIES)
     .describe("Max search queries per research topic"),
 });
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls --
- * max-lines-per-function (#510): createAiSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/explicit-function-return-type (#560): Keep createAiSchema's return type inferred from its schema, SDK, or implementation result; an independent annotation requires selecting the intended public type boundary.
- * unicorn/max-nested-calls (#568): createAiSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
-const createAiSchema = <Gateway extends GatewayType>(gateway: Gateway) =>
+type AiToolsSchema<Gateway extends GatewayType> = z.ZodObject<{
+  code: z.ZodObject<{
+    edits: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+  }>;
+  deepResearch: z.ZodObject<{
+    allowClarification: z.ZodBoolean;
+    defaultModel: z.ZodCustom<
+      GatewayModelIdMap[Gateway],
+      GatewayModelIdMap[Gateway]
+    >;
+    finalReportModel: z.ZodCustom<
+      GatewayModelIdMap[Gateway],
+      GatewayModelIdMap[Gateway]
+    >;
+    maxConcurrentResearchUnits: z.ZodNumber;
+    maxResearcherIterations: z.ZodNumber;
+    maxSearchQueries: z.ZodNumber;
+  }>;
+  followupSuggestions: z.ZodObject<{
+    default: z.ZodCustom<
+      GatewayModelIdMap[Gateway],
+      GatewayModelIdMap[Gateway]
+    >;
+    enabled: z.ZodBoolean;
+  }>;
+  image: z.ZodObject<{
+    default: z.ZodOptional<
+      z.ZodCustom<
+        GatewayImageModelIdMap[Gateway],
+        GatewayImageModelIdMap[Gateway]
+      >
+    >;
+  }>;
+  sheet: z.ZodObject<{
+    analyze: z.ZodCustom<
+      GatewayModelIdMap[Gateway],
+      GatewayModelIdMap[Gateway]
+    >;
+    format: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+  }>;
+  text: z.ZodObject<{
+    polish: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+  }>;
+  video: z.ZodObject<{
+    default: z.ZodOptional<
+      z.ZodCustom<
+        GatewayVideoModelIdMap[Gateway],
+        GatewayVideoModelIdMap[Gateway]
+      >
+    >;
+  }>;
+}>;
+
+const createAiToolsSchema = <
+  Gateway extends GatewayType,
+>(): AiToolsSchema<Gateway> =>
+  z
+    .object({
+      code: z.object({
+        edits: gatewayModelId<Gateway>(),
+      }),
+      deepResearch: deepResearchToolConfigSchema.extend({
+        defaultModel: gatewayModelId<Gateway>(),
+        finalReportModel: gatewayModelId<Gateway>(),
+      }),
+      followupSuggestions: z.object({
+        default: gatewayModelId<Gateway>(),
+        enabled: z.boolean(),
+      }),
+      image: z.object({
+        default: gatewayImageModelId<Gateway>().optional(),
+      }),
+      sheet: z.object({
+        analyze: gatewayModelId<Gateway>(),
+        format: gatewayModelId<Gateway>(),
+      }),
+      text: z.object({
+        polish: gatewayModelId<Gateway>(),
+      }),
+      video: z.object({
+        default: gatewayVideoModelId<Gateway>().optional(),
+      }),
+    })
+    .describe("Default model and runtime configuration grouped by tool");
+
+type AiSchema<Gateway extends GatewayType> = z.ZodObject<{
+  anonymousModels: z.ZodArray<
+    z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>
+  >;
+  curatedDefaults: z.ZodArray<
+    z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>
+  >;
+  disabledModels: z.ZodArray<
+    z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>
+  >;
+  gateway: z.ZodLiteral<Gateway>;
+  providerOrder: z.ZodArray<z.ZodString>;
+  tools: AiToolsSchema<Gateway>;
+  workflows: z.ZodObject<{
+    chat: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+    chatImageCompatible: z.ZodCustom<
+      GatewayModelIdMap[Gateway],
+      GatewayModelIdMap[Gateway]
+    >;
+    pdf: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+    title: z.ZodCustom<GatewayModelIdMap[Gateway], GatewayModelIdMap[Gateway]>;
+  }>;
+}>;
+
+const createAiSchema = <Gateway extends GatewayType>(
+  gateway: Gateway
+): AiSchema<Gateway> =>
   z.object({
     anonymousModels: z
       .array(gatewayModelId<Gateway>())
@@ -90,34 +195,7 @@ const createAiSchema = <Gateway extends GatewayType>(gateway: Gateway) =>
     providerOrder: z
       .array(z.string())
       .describe("Provider sort order in model selector"),
-    tools: z
-      .object({
-        code: z.object({
-          edits: gatewayModelId<Gateway>(),
-        }),
-        deepResearch: deepResearchToolConfigSchema.extend({
-          defaultModel: gatewayModelId<Gateway>(),
-          finalReportModel: gatewayModelId<Gateway>(),
-        }),
-        followupSuggestions: z.object({
-          default: gatewayModelId<Gateway>(),
-          enabled: z.boolean(),
-        }),
-        image: z.object({
-          default: gatewayImageModelId<Gateway>().optional(),
-        }),
-        sheet: z.object({
-          analyze: gatewayModelId<Gateway>(),
-          format: gatewayModelId<Gateway>(),
-        }),
-        text: z.object({
-          polish: gatewayModelId<Gateway>(),
-        }),
-        video: z.object({
-          default: gatewayVideoModelId<Gateway>().optional(),
-        }),
-      })
-      .describe("Default model and runtime configuration grouped by tool"),
+    tools: createAiToolsSchema<Gateway>(),
     workflows: z
       .object({
         chat: gatewayModelId<Gateway>(),
@@ -127,7 +205,6 @@ const createAiSchema = <Gateway extends GatewayType>(gateway: Gateway) =>
       })
       .describe("Default model for shared app workflows"),
   });
-/* oxlint-enable max-lines-per-function, typescript/explicit-function-return-type, unicorn/max-nested-calls */
 
 const installedGatewaySchema = createAiSchema(gatewayType);
 
@@ -136,6 +213,55 @@ const aiConfigSchema = installedGatewaySchema.default({
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing gatewayModelDefaults own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...gatewayModelDefaults,
 });
+
+const createOrganizationSchema = (): z.ZodObject<{
+  contact: z.ZodObject<{ legalEmail: z.ZodEmail; privacyEmail: z.ZodEmail }>;
+  name: z.ZodString;
+}> =>
+  z.object({
+    contact: z.object({ legalEmail: z.email(), privacyEmail: z.email() }),
+    name: z.string(),
+  });
+
+const createPoliciesSchema = (): z.ZodObject<{
+  privacy: z.ZodObject<{
+    lastUpdated: z.ZodOptional<z.ZodString>;
+    title: z.ZodString;
+  }>;
+  terms: z.ZodObject<{
+    lastUpdated: z.ZodOptional<z.ZodString>;
+    title: z.ZodString;
+  }>;
+}> =>
+  z.object({
+    privacy: z.object({
+      lastUpdated: z.string().optional(),
+      title: z.string(),
+    }),
+    terms: z.object({ lastUpdated: z.string().optional(), title: z.string() }),
+  });
+
+const createServicesSchema = (): z.ZodObject<{
+  aiProviders: z.ZodArray<z.ZodString>;
+  hosting: z.ZodString;
+  paymentProcessors: z.ZodArray<z.ZodString>;
+}> =>
+  z.object({
+    aiProviders: z.array(z.string()),
+    hosting: z.string(),
+    paymentProcessors: z.array(z.string()),
+  });
+
+const createAcceptedAttachmentTypesSchema = (): z.ZodObject<{
+  "application/pdf": z.ZodArray<z.ZodString>;
+  "image/jpeg": z.ZodArray<z.ZodString>;
+  "image/png": z.ZodArray<z.ZodString>;
+}> =>
+  z.object({
+    "application/pdf": z.array(z.string()),
+    "image/jpeg": z.array(z.string()),
+    "image/png": z.array(z.string()),
+  });
 
 const pricingConfigSchema = z.object({
   currency: z.string().optional(),
@@ -179,33 +305,24 @@ const ANONYMOUS_DEFAULTS: z.input<typeof anonymousConfigObjectSchema> = {
 const anonymousConfigSchema =
   anonymousConfigObjectSchema.default(ANONYMOUS_DEFAULTS);
 
-/* oxlint-disable unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-unicorn/max-nested-calls (#568): attachmentsConfigObjectSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const attachmentsConfigObjectSchema = z.object({
-  acceptedTypes: z
-    .object({
-      "application/pdf": z.array(z.string()),
-      "image/jpeg": z.array(z.string()),
-      "image/png": z.array(z.string()),
-    })
-    .describe("Accepted MIME types with their file extensions"),
+  acceptedTypes: createAcceptedAttachmentTypesSchema().describe(
+    "Accepted MIME types with their file extensions"
+  ),
   maxBytes: z.number().describe("Max file size in bytes after compression"),
   maxDimension: z.number().describe("Max image dimension"),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable no-magic-numbers -- moving it below executable initialization can obscure ordering and API ownership.
-no-magic-numbers (#517): ATTACHMENTS_DEFAULTS uses 1024 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+const BYTES_PER_KIBIBYTE = 1024;
 const ATTACHMENTS_DEFAULTS = {
   acceptedTypes: {
     "application/pdf": [".pdf"],
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"],
   },
-  maxBytes: 1024 * 1024,
+  maxBytes: BYTES_PER_KIBIBYTE * BYTES_PER_KIBIBYTE,
   maxDimension: 2048,
 };
-/* oxlint-enable no-magic-numbers */
 
 const attachmentsConfigSchema =
   attachmentsConfigObjectSchema.default(ATTACHMENTS_DEFAULTS);
@@ -261,8 +378,6 @@ const DESKTOP_APP_DEFAULTS = {
 const desktopAppConfigSchema =
   desktopAppConfigObjectSchema.default(DESKTOP_APP_DEFAULTS);
 
-/* oxlint-disable unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-unicorn/max-nested-calls (#568): configDescriptionSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const configDescriptionSchema = z.object({
   ai: installedGatewaySchema,
   anonymous: anonymousConfigObjectSchema,
@@ -283,34 +398,12 @@ const configDescriptionSchema = z.object({
     minimumAge: z.number(),
     refundPolicy: z.string(),
   }),
-  organization: z.object({
-    contact: z.object({
-      legalEmail: z.email(),
-      privacyEmail: z.email(),
-    }),
-    name: z.string(),
-  }),
-  policies: z.object({
-    privacy: z.object({
-      lastUpdated: z.string().optional(),
-      title: z.string(),
-    }),
-    terms: z.object({
-      lastUpdated: z.string().optional(),
-      title: z.string(),
-    }),
-  }),
+  organization: createOrganizationSchema(),
+  policies: createPoliciesSchema(),
   pricing: pricingConfigSchema.optional(),
-  services: z.object({
-    aiProviders: z.array(z.string()),
-    hosting: z.string(),
-    paymentProcessors: z.array(z.string()),
-  }),
+  services: createServicesSchema(),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
-/* oxlint-disable unicorn/max-nested-calls -- moving it below executable initialization can obscure ordering and API ownership.
-unicorn/max-nested-calls (#568): configSchema keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 const configSchema = z.object({
   ai: aiConfigSchema,
   anonymous: anonymousConfigSchema,
@@ -337,50 +430,24 @@ const configSchema = z.object({
       minimumAge: 13,
       refundPolicy: "no-refunds",
     }),
-  organization: z
-    .object({
-      contact: z.object({
-        legalEmail: z.email(),
-        privacyEmail: z.email(),
-      }),
-      name: z.string(),
-    })
-    .default({
-      contact: {
-        legalEmail: "legal@your-domain.com",
-        privacyEmail: "privacy@your-domain.com",
-      },
-      name: "Your Organization",
-    }),
-  policies: z
-    .object({
-      privacy: z.object({
-        lastUpdated: z.string().optional(),
-        title: z.string(),
-      }),
-      terms: z.object({
-        lastUpdated: z.string().optional(),
-        title: z.string(),
-      }),
-    })
-    .default({
-      privacy: { title: "Privacy Policy" },
-      terms: { title: "Terms of Service" },
-    }),
+  organization: createOrganizationSchema().default({
+    contact: {
+      legalEmail: "legal@your-domain.com",
+      privacyEmail: "privacy@your-domain.com",
+    },
+    name: "Your Organization",
+  }),
+  policies: createPoliciesSchema().default({
+    privacy: { title: "Privacy Policy" },
+    terms: { title: "Terms of Service" },
+  }),
   pricing: pricingConfigSchema.optional(),
-  services: z
-    .object({
-      aiProviders: z.array(z.string()),
-      hosting: z.string(),
-      paymentProcessors: z.array(z.string()),
-    })
-    .default({
-      aiProviders: ["OpenAI", "Anthropic", "Google"],
-      hosting: "Vercel",
-      paymentProcessors: [],
-    }),
+  services: createServicesSchema().default({
+    aiProviders: ["OpenAI", "Anthropic", "Google"],
+    hosting: "Vercel",
+    paymentProcessors: [],
+  }),
 });
-/* oxlint-enable unicorn/max-nested-calls */
 
 // Output types (after defaults applied)
 type Config = z.infer<typeof configSchema>;

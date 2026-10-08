@@ -1,7 +1,6 @@
 import type { AppModelDefinition, AppModelId } from "@/lib/ai/app-models";
-import { getAppModelDefinition } from "@/lib/ai/app-models";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { getAppModelDefinition } from "@/lib/ai/app-models";
 
 const CENTS_PER_DOLLAR = 100;
 const NO_TOKEN_USAGE = 0;

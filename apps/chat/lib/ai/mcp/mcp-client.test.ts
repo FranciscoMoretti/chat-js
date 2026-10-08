@@ -1,11 +1,30 @@
 import { beforeEach, expect, it, vi } from "vitest";
 
 import { MCPClient } from "./mcp-client";
+import type { MCPClientConfig } from "@ai-sdk/mcp";
+import type { McpOAuthClientProvider } from "./mcp-oauth-provider";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 const mocks = vi.hoisted(() => ({
-  close: vi.fn(),
-  create: vi.fn(),
-  provider: vi.fn(),
+  close: vi.fn<() => Promise<void>>(),
+  create: vi.fn<
+    (
+      config: ReadonlyNativeSurface<
+        MCPClientConfig & {
+          initializationOptions: { signal: AbortSignal };
+          transport: { authProvider: unknown };
+        }
+      >
+    ) => Promise<unknown>
+  >(),
+  provider:
+    vi.fn<
+      (
+        ...options: ReadonlyNativeSurface<
+          ConstructorParameters<typeof McpOAuthClientProvider>
+        >
+      ) => unknown
+    >(),
   tools: vi.fn(),
 }));
 vi.mock("@ai-sdk/mcp", () => ({
@@ -25,17 +44,13 @@ vi.mock("./cache", () => {
   throw new Error("Runtime client must not load Next.js cache APIs");
 });
 
-/* oxlint-disable no-undefined --
- * no-undefined (#519): beforeEach uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- */
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.close.mockResolvedValue(undefined);
+  mocks.close.mockResolvedValue();
   mocks.tools.mockResolvedValue({});
   mocks.create.mockResolvedValue({ close: mocks.close, tools: mocks.tools });
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-undefined */
 
 it("connects, discovers and closes without web cache dependencies", async () => {
   const client = new MCPClient("id", "Test", {
@@ -49,24 +64,17 @@ it("connects, discovers and closes without web cache dependencies", async () => 
   await client.close();
   expect(client.status).toBe("disconnected");
   expect(mocks.close).toHaveBeenCalledOnce();
-  expect(mocks.create).toHaveBeenCalledWith(
-    expect.objectContaining({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      transport: expect.objectContaining({
-        headers: { Authorization: "test" },
-        type: "http",
-      }),
-    })
-  );
+  expect(mocks.create.mock.calls).toMatchObject([
+    [{ transport: { headers: { Authorization: "test" }, type: "http" } }],
+  ]);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable no-magic-numbers, typescript/strict-void-return --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): it("notifies the web owner after disconnect and authentication errors") uses 2 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/strict-void-return (#611): it("notifies the web owner after disconnect and authentication errors")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 it("notifies the web owner after disconnect and authentication errors", async () => {
-  const invalidate = vi.fn();
+  const invalidate = vi.fn<() => void>();
   const client = new MCPClient(
     "id",
     "Test",
@@ -82,7 +90,7 @@ it("notifies the web owner after disconnect and authentication errors", async ()
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers, typescript/strict-void-return */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("concurrent connection requests share one transport and close it once") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -128,11 +136,8 @@ it("a failed connection can be retried without retaining a failed promise", asyn
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable typescript/strict-void-return --
- * typescript/strict-void-return (#611): it("domain errors mentioning tokens do not invalidate authentication")'s void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
- */
 it("domain errors mentioning tokens do not invalidate authentication", async () => {
-  const invalidate = vi.fn();
+  const invalidate = vi.fn<() => void>();
   const client = new MCPClient(
     "id",
     "Test",
@@ -147,7 +152,6 @@ it("domain errors mentioning tokens do not invalidate authentication", async () 
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/strict-void-return */
 
 /* oxlint-disable no-undefined --
  * no-undefined (#519): it("OAuth secrets go to the provider and never the resource transport") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
@@ -160,22 +164,18 @@ it("OAuth secrets go to the provider and never the resource transport", async ()
     url: "https://resource.example.test/mcp",
   });
   await client.connect();
-  expect(mocks.provider).toHaveBeenCalledWith(
-    expect.objectContaining({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      clientMetadata: expect.objectContaining({
-        token_endpoint_auth_method: "client_secret_basic",
-      }),
-      oauthClientId: "configured-id",
-      oauthClientSecret: "configured-secret",
-    })
-  );
-  expect(mocks.create).toHaveBeenCalledWith(
-    expect.objectContaining({
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-      transport: expect.objectContaining({ headers: undefined }),
-    })
-  );
+  expect(mocks.provider.mock.calls).toMatchObject([
+    [
+      {
+        clientMetadata: { token_endpoint_auth_method: "client_secret_basic" },
+        oauthClientId: "configured-id",
+        oauthClientSecret: "configured-secret",
+      },
+    ],
+  ]);
+  expect(mocks.create.mock.calls).toMatchObject([
+    [{ transport: { headers: undefined } }],
+  ]);
   await client.close();
 });
 /* oxlint-enable oxc/no-async-await */
@@ -216,14 +216,12 @@ it("connection initialization always receives a cancellation signal", async () =
     url: "https://mcp.test",
   });
   await client.connect();
-  // oxlint-disable-next-line typescript/no-unsafe-assignment, typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #595: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.create.mock.calls[0]; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+  // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve missing-call detection before asserting the captured initialization signal.
   const signal = mocks.create.mock.calls[0]?.[0].initializationOptions.signal;
   expect(signal).toBeInstanceOf(AbortSignal);
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(signal.aborted).toBe(false);
+  expect(signal).toHaveProperty("aborted", false);
   await client.close();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
-  expect(signal.aborted).toBe(true);
+  expect(signal).toHaveProperty("aborted", true);
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
@@ -251,7 +249,6 @@ it("callers cancel their shared connection waits independently", async () => {
   firstAbort.abort(new Error("first cancelled"));
   await expect(first).rejects.toThrow("first cancelled");
   expect(
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.create.mock.calls[0][0].initializationOptions.signal.aborted
   ).toBe(false);
   gate.resolve(undefined);
@@ -294,10 +291,9 @@ it("a fresh connection starts immediately after closing a pending attempt", asyn
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each(["tools", "listResources", "listPrompts"] as const)'s awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable max-statements, no-magic-numbers, no-undefined */
 
-/* oxlint-disable max-statements, typescript/promise-function-async, typescript/strict-void-return --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * typescript/promise-function-async (#606): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late  preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-void-return (#611): it.each(["tools", "listResources", "listPrompts"] as const)("a retired client's late 's void callback contract discards its result; changing the callback API or operation order solely to hide the return value is unnecessary.
  */
 it.each(["tools", "listResources", "listPrompts"] as const)(
   "a retired client's late %s auth error cannot close its replacement",
@@ -306,7 +302,7 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
     const oldMethod = vi.fn(() => gate.promise);
     const oldClose = vi.fn();
     const replacementClose = vi.fn();
-    const invalidate = vi.fn();
+    const invalidate = vi.fn<() => void>();
     mocks.create
       .mockResolvedValueOnce({
         close: oldClose,
@@ -336,7 +332,7 @@ it.each(["tools", "listResources", "listPrompts"] as const)(
 );
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/promise-function-async, typescript/strict-void-return */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined --
  * max-statements (#512): it("a retired provider's late OAuth redirect cannot authorise or close its replacemen keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -348,7 +344,6 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   mocks.create.mockImplementationOnce(async () => {
     const [[providerConfig]] = mocks.provider.mock.calls;
     await gate.promise;
-    // oxlint-disable-next-line typescript/no-unsafe-call, typescript/no-unsafe-member-access -- #596: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     await providerConfig.onRedirectToAuthorization(
       new URL("https://auth.test?state=retired")
     );
@@ -362,9 +357,7 @@ it("a retired provider's late OAuth redirect cannot authorise or close its repla
   const rejected = expect(first).rejects.toThrow("closed");
   await client.close();
   await client.connect();
-  // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
   expect(mocks.create.mock.calls[0][0].transport.authProvider).not.toBe(
-    // oxlint-disable-next-line typescript/no-unsafe-member-access -- #597: This mcp-client fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     mocks.create.mock.calls[1][0].transport.authProvider
   );
   gate.resolve(undefined);

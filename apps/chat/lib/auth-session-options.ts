@@ -2,6 +2,9 @@
 import { createHash } from "node:crypto";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authSessionOptions); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 
+const COOKIE_NAMESPACE_DIGEST_LENGTH = 16;
+const SESSION_CACHE_MAX_AGE_SECONDS = 300;
+
 /**
  * Localhost cookies span ports; isolate local app/database pairs and bypass cached development sessions.
  * @param {{ readonly baseUrl: string; readonly databaseUrl: string; readonly development: boolean; }} options Deployment inputs used to isolate the session cookie namespace.
@@ -31,15 +34,17 @@ export const authSessionOptions = ({
       .update("\0")
       .update(database.toString())
       .digest("hex")
-      // oxlint-disable-next-line no-magic-numbers -- The cookie namespace uses the first 16 hexadecimal digest characters; preserve its existing scope identifier.
-      .slice(0, 16);
+      // oxlint-disable-next-line no-magic-numbers -- Digest slicing starts at its first hexadecimal character, at index zero.
+      .slice(0, COOKIE_NAMESPACE_DIGEST_LENGTH);
     cookiePrefix = `chatjs-dev-${scope}`;
   }
   return {
     advanced: { cookiePrefix },
     session: {
-      // oxlint-disable-next-line no-magic-numbers -- The session cookie cache lasts five minutes; maxAge is measured in seconds.
-      cookieCache: { enabled: !development, maxAge: 60 * 5 },
+      cookieCache: {
+        enabled: !development,
+        maxAge: SESSION_CACHE_MAX_AGE_SECONDS,
+      },
     },
   };
 };

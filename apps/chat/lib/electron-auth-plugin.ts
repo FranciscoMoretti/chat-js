@@ -1,17 +1,11 @@
-import { electron } from "@better-auth/electron";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { AuthContext } from "better-auth";
-
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   ELECTRON_APP_SCHEME,
   ELECTRON_AUTH_CLIENT_ID,
   ELECTRON_AUTH_COOKIE_PREFIX,
 } from "./electron-auth";
-/* oxlint-enable sort-imports */
+import type { AuthContext } from "better-auth";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { electron } from "@better-auth/electron";
 
 const plugin = electron({
   clientID: ELECTRON_AUTH_CLIENT_ID,

@@ -1,17 +1,10 @@
-import { config } from "@/lib/config";
-import { gatewayEnv } from "@/lib/env";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createModuleLogger } from "@/lib/logger";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Gateway } from "./gateway";
-/* oxlint-enable sort-imports */
-import { getFallbackModels } from "./gateways/fallback-models";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { GatewayProvider } from "./gateways/registry";
-/* oxlint-enable sort-imports */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { config } from "@/lib/config";
+import { createModuleLogger } from "@/lib/logger";
+import { gatewayEnv } from "@/lib/env";
+import { getFallbackModels } from "./gateways/fallback-models";
 
 // oxlint-disable-next-line unicorn/no-null -- Module-local null marks an adapter not yet created; lazy initialization reuses the existing provider on later calls.
 let activeGateway: GatewayProvider | null = null;
