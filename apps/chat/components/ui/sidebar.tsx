@@ -123,10 +123,8 @@ const SidebarProvider = (
 
       // This sets the cookie to keep the sidebar state.
       // Prefer Cookie Store API when available
-      // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
-      if ("cookieStore" in window) {
-        // oxlint-disable-next-line unicorn/prefer-global-this -- #572: The optional Cookie Store API is narrowed through the browser Window interface.
-        void window.cookieStore.set({
+      if ("cookieStore" in globalThis) {
+        void globalThis.cookieStore.set({
           expires:
             Date.now() + SIDEBAR_COOKIE_MAX_AGE * MILLISECONDS_PER_SECOND,
           name: SIDEBAR_COOKIE_NAME,
@@ -238,6 +236,10 @@ const Sidebar = (
   /* oxlint-enable typescript/prefer-readonly-parameter-types */
 ): ReactJSX.Element => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const hasInsetSpacing = variant === "floating" || variant === "inset";
+  const hasFlushEdges = !hasInsetSpacing;
+  const isLeft = side === "left";
+  const isRight = !isLeft;
 
   if (collapsible === "none") {
     return (
@@ -303,25 +305,25 @@ const Sidebar = (
           "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
           "group-data-[collapsible=offcanvas]:w-0",
           "group-data-[side=right]:rotate-180",
-          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
+          hasInsetSpacing &&
+            "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]",
+          hasFlushEdges &&
+            "group-data-[collapsible=icon]:w-(--sidebar-width-icon)"
         )}
         data-slot="sidebar-gap"
       />
       <div
         className={cn(
           "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          side === "left"
-            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+          isLeft &&
+            "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]",
+          isRight &&
+            "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
           // Adjust the padding for floating and inset variants.
-          // oxlint-disable-next-line no-ternary -- Keep cn argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-          variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          hasInsetSpacing &&
+            "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]",
+          hasFlushEdges &&
+            "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className
         )}
         data-slot="sidebar-container"
@@ -767,7 +769,7 @@ const sidebarMenuButtonVariants = cva(
     },
   }
 );
-/* oxlint-disable react/no-multi-comp, typescript/strict-boolean-expressions -- SidebarMenuButton: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including tooltip). */
+/* oxlint-disable react/no-multi-comp -- SidebarMenuButton shares the sidebar context and styling contract with this component family. */
 
 /* oxlint-disable react/react-in-jsx-scope -- SidebarMenuButton uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const SidebarMenuButton = (
@@ -805,7 +807,8 @@ const SidebarMenuButton = (
     />
   );
 
-  if (!tooltip) {
+  const hasTooltip = Boolean(tooltip);
+  if (!hasTooltip) {
     return button;
   }
 
@@ -827,7 +830,7 @@ const SidebarMenuButton = (
   );
 };
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/strict-boolean-expressions */
+/* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable react/no-multi-comp -- SidebarMenuAction: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract */
 

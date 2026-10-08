@@ -103,7 +103,7 @@ const useFormField = (): FormFieldState => {
     formMessageId: `${id}-form-item-message`,
     id,
     name: fieldContext.name,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing fieldState own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Preserve getFieldState's native five-field order after the ID/name fields; an explicit projection in that order fails pinned sort-keys, while sorting it changes this hook's enumerable key order.
     ...fieldState,
   };
 };
@@ -224,7 +224,7 @@ const FormDescription = (
 /* oxlint-enable react/react-in-jsx-scope */
 /* oxlint-enable react/no-multi-comp */
 
-/* oxlint-disable react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null -- FormMessage: react/no-multi-comp: these related render helpers share this feature module and its local state and props contract; typescript/strict-boolean-expressions: the existing empty, missing, or optional value deliberately selects this feature fallback (including body); unicorn/no-null: null is the existing React empty-render, ref, or API/cache sentinel; undefined has a different contract. */
+/* oxlint-disable react/no-multi-comp, unicorn/no-null -- FormMessage shares the field context with this component family; null preserves its native empty-render contract. */
 
 /* oxlint-disable react/react-in-jsx-scope -- FormMessage uses the configured react-jsx automatic runtime, which imports JSX helpers without a React value binding. */
 const FormMessage = (
@@ -239,8 +239,9 @@ const FormMessage = (
   const { error, formMessageId } = useFormField();
   // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
   const body = error ? (error.message ?? "") : props.children;
+  const hasMessage = Boolean(body);
 
-  if (!body) {
+  if (!hasMessage) {
     return null;
   }
 
@@ -258,7 +259,7 @@ const FormMessage = (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, useFormField); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable react/react-in-jsx-scope */
-/* oxlint-enable react/no-multi-comp, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable react/no-multi-comp, unicorn/no-null */
 
 /* oxlint-disable react/only-export-components -- form.tsx exports: react/only-export-components: consumers also import the associated type, variants, or helper from this established module API. */
 

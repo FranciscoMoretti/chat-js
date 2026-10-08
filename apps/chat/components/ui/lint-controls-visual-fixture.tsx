@@ -13,13 +13,16 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Spinner } from "@/components/ui/spinner";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (LintControlsVisualFixture); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable react/jsx-no-literals -- LintControlsVisualFixture renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-disable no-magic-numbers, react/jsx-max-depth -- Keep the fixture counter and accessible composer hierarchy together for captures. */
+/* oxlint-disable react/jsx-max-depth -- Keep the accessible composer hierarchy together for captures. */
+
+const INITIAL_ACTION_COUNT = 0;
+const ACTION_INCREMENT = 1;
 
 export const LintControlsVisualFixture = (): ReactJSX.Element => {
-  const [actions, setActions] = useState(0);
+  const [actions, setActions] = useState(INITIAL_ACTION_COUNT);
   const [inline, setInline] = useState(true);
   const incrementActions = useCallback(() => {
-    setActions((count) => count + 1);
+    setActions((count) => count + ACTION_INCREMENT);
   }, []);
   const changeShimmerElement = useCallback(() => {
     setInline((value) => !value);
@@ -63,4 +66,4 @@ export const LintControlsVisualFixture = (): ReactJSX.Element => {
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable react/jsx-no-literals */
-/* oxlint-enable no-magic-numbers, react/jsx-max-depth */
+/* oxlint-enable react/jsx-max-depth */
