@@ -19,10 +19,40 @@ const DATABASE_SHUTDOWN_TIMEOUT_SECONDS = 5;
 const MILLISECONDS_PER_SECOND = 1000;
 const DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS =
   DATABASE_SHUTDOWN_TIMEOUT_SECONDS * MILLISECONDS_PER_SECOND;
+const SHUTDOWN_TERMINATION_GRACE_MILLISECONDS = 250;
 const SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS = 250;
 const BACKFILL_BATCH_SIZE = 50;
 const FAILURE_EXIT_STATUS = 1;
 const SUCCESS_EXIT_STATUS = 0;
+
+type DatabaseShutdownOutcome =
+  | { kind: "complete" }
+  | { error: unknown; kind: "failure" };
+
+const createDelay = (
+  milliseconds: number
+): { cancel: () => void; promise: Promise<boolean> } => {
+  const delaySignal = Promise.withResolvers<boolean>();
+  const timer = setTimeout(() => {
+    delaySignal.resolve(true);
+  }, milliseconds);
+  return {
+    cancel: () => {
+      clearTimeout(timer);
+      delaySignal.resolve(false);
+    },
+    promise: delaySignal.promise,
+  };
+};
+
+const endDatabaseClient = async (): Promise<DatabaseShutdownOutcome> => {
+  try {
+    await db.$client.end({ timeout: DATABASE_SHUTDOWN_TIMEOUT_SECONDS });
+    return { kind: "complete" };
+  } catch (error) {
+    return { error, kind: "failure" };
+  }
+};
 
 /* oxlint-disable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined --
  * init-declarations (#507): main assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
@@ -101,39 +131,44 @@ const main = async (): Promise<number> => {
   return SUCCESS_EXIT_STATUS;
 };
 
-/* oxlint-disable promise/avoid-new, eslint/no-promise-executor-return, typescript/strict-void-return --
- * Node's Writable.write callback signals when pending stdout/stderr output has flushed; wrap it in Promises so the timeout path can bound the flush before exiting.
- */
 const flushOutputBeforeForcedExit = async (): Promise<void> => {
+  const stdoutFlushed = Promise.withResolvers<boolean>();
+  const stderrFlushed = Promise.withResolvers<boolean>();
+  process.stdout.write("", () => {
+    stdoutFlushed.resolve(true);
+  });
+  process.stderr.write("", () => {
+    stderrFlushed.resolve(true);
+  });
+  const flushDeadline = createDelay(SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS);
   await Promise.race([
-    Promise.all([
-      new Promise<void>((resolve) => {
-        process.stdout.write("", () => resolve());
-      }),
-      new Promise<void>((resolve) => {
-        process.stderr.write("", () => resolve());
-      }),
-    ]),
-    new Promise<void>((resolve) => {
-      setTimeout(() => resolve(), SHUTDOWN_OUTPUT_FLUSH_TIMEOUT_MILLISECONDS);
-    }),
+    Promise.all([stdoutFlushed.promise, stderrFlushed.promise]),
+    flushDeadline.promise,
   ]);
+  flushDeadline.cancel();
 };
-/* oxlint-enable promise/avoid-new, eslint/no-promise-executor-return, typescript/strict-void-return */
 
 const shutdownDatabase = async (exitStatus: number): Promise<number> => {
-  let shutdownExitStatus = exitStatus;
-  const shutdownStartedAt = performance.now();
-  try {
-    await db.$client.end({ timeout: DATABASE_SHUTDOWN_TIMEOUT_SECONDS });
-  } catch (error) {
-    console.error("Search backfill database shutdown failed.", error);
-    shutdownExitStatus = FAILURE_EXIT_STATUS;
-  }
-  if (
-    performance.now() - shutdownStartedAt >=
-    DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS
-  ) {
+  const deadline = createDelay(DATABASE_SHUTDOWN_TIMEOUT_MILLISECONDS);
+  const shutdown = endDatabaseClient();
+  const firstOutcome = await Promise.race([shutdown, deadline.promise]);
+  if (typeof firstOutcome === "boolean") {
+    const terminationGrace = createDelay(
+      SHUTDOWN_TERMINATION_GRACE_MILLISECONDS
+    );
+    const finalShutdownOutcome = await Promise.race([
+      shutdown,
+      terminationGrace.promise,
+    ]);
+    if (
+      typeof finalShutdownOutcome === "object" &&
+      finalShutdownOutcome.kind === "failure"
+    ) {
+      console.error(
+        "Search backfill database shutdown failed.",
+        finalShutdownOutcome.error
+      );
+    }
     console.error(
       "Search backfill database shutdown timed out; forcing process exit."
     );
@@ -141,7 +176,15 @@ const shutdownDatabase = async (exitStatus: number): Promise<number> => {
     // oxlint-disable-next-line unicorn/no-process-exit -- postgres@3.4.9 end({ timeout }) can resolve after its deadline while a half-open peer keeps the socket active; this CLI must exit after a bounded output-flush window.
     process.exit(FAILURE_EXIT_STATUS);
   }
-  return shutdownExitStatus;
+  deadline.cancel();
+  if (firstOutcome.kind === "failure") {
+    console.error(
+      "Search backfill database shutdown failed.",
+      firstOutcome.error
+    );
+    return FAILURE_EXIT_STATUS;
+  }
+  return exitStatus;
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-enable init-declarations, max-statements, no-console, no-continue, no-magic-numbers, no-undefined */
