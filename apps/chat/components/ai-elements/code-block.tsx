@@ -135,13 +135,13 @@ const CodeBlock = ({
           {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! overflow-auto dark:hidden [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // oxlint-disable-next-line react/no-danger -- Shiki codeToHtml escapes source text and supplies the trusted syntax-highlighting markup.
+            // oxlint-disable-next-line react/no-danger -- codeToHtml escapes source; line labels are numeric text in static spans.
             dangerouslySetInnerHTML={{ __html: html }}
           />
           {/* Shiki returns escaped, trusted HTML for syntax highlighting. */}
           <div
             className="[&>pre]:bg-background! [&>pre]:text-foreground! hidden overflow-auto dark:block [&_code]:font-mono [&_code]:text-sm [&>pre]:m-0 [&>pre]:p-4 [&>pre]:text-sm"
-            // oxlint-disable-next-line react/no-danger -- Shiki codeToHtml escapes source text and supplies the trusted syntax-highlighting markup.
+            // oxlint-disable-next-line react/no-danger -- codeToHtml escapes source; line labels are numeric text in static spans.
             dangerouslySetInnerHTML={{ __html: darkHtml }}
           />
           {children && (
