@@ -1,9 +1,6 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
-import { toolResultSchema } from "@/lib/eve/tool-result";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
-/* oxlint-enable sort-imports */
+import { toolResultSchema } from "@/lib/eve/tool-result";
 
 const mocks = vi.hoisted(() => ({
   env: { FIRECRAWL_API_KEY: "test-key" },
@@ -17,13 +14,14 @@ vi.mock("@mendable/firecrawl-js", () => ({
     public extract = mocks.extract;
   },
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn() }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/logger",
+  (): { createModuleLogger: () => { error: () => void } } => ({
+    createModuleLogger: (): { error: () => void } => ({
+      error: vi.fn<() => void>(),
+    }),
+  })
+);
 beforeEach(() => {
   vi.resetModules();
   vi.resetAllMocks();

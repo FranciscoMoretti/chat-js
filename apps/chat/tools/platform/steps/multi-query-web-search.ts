@@ -1,18 +1,15 @@
 import type { ToolProgressWriter } from "@/lib/ai/tool-context";
+import { deduplicateByDomainAndUrl } from "./search-utils";
 import { generateUUID } from "@/lib/utils";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { deduplicateByDomainAndUrl } from "./search-utils";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): SearchQuery preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
 type SearchQuery = {
   readonly maxResults: number;
   readonly query: string;
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResult preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
 type MultiQuerySearchResult = {
   query: SearchQuery;
   results: {
@@ -23,16 +20,15 @@ type MultiQuerySearchResult = {
 };
 /* oxlint-enable typescript/consistent-type-definitions */
 
-/* oxlint-disable typescript/consistent-type-definitions -- typescript/consistent-type-definitions (#559): MultiQuerySearchResponse preserves its current alias/interface semantics; declaration merging and implicit index-signature assignability differ between those forms. */
+/* oxlint-disable typescript/consistent-type-definitions -- Search tool results cross the recursive ToolOutput JSON index-signature boundary; an interface loses implicit index-signature compatibility (native TS2345 in Registry search callers). */
 type MultiQuerySearchResponse = {
   error?: string;
   searches: MultiQuerySearchResult[];
 };
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable typescript/consistent-type-definitions */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve multiQueryWebSearchStep's awaited sequencing and rejected-Promise behavior. */
 
-/* oxlint-disable max-lines-per-function, max-statements -- max-lines-per-function (#510): multiQueryWebSearchStep keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): multiQueryWebSearchStep keeps its ordered workflow and input contract together; search: ( qu; query: SearchQuery; query; query; obj; deep-readonly conversion changes assignability at its SDK/public API boundary and needs an ownership-contract migration. */
+/* oxlint-disable max-lines-per-function, max-statements -- The shared try/catch owns running/completed writes, concurrent searches, and failure progress under one update ID; moving writes outside it changes callback-error handling. */
 
 const multiQueryWebSearchStep = async ({
   queries,
@@ -104,13 +100,14 @@ const multiQueryWebSearchStep = async ({
         queries: queries.map(
           (query: Readonly<Pick<SearchQuery, "query">>) => query.query
         ),
-        // oxlint-disable-next-line oxc/no-map-spread -- #541: Tag search output without mutating the collected provider results.
         results: allResults.map(
           (
             result: Readonly<{ content: string; title: string; url: string }>
+            // oxlint-disable-next-line sort-keys -- Keep the original serialized progress-result order, adding source after content/title/url.
           ) => ({
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing result own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            ...result,
+            content: result.content,
+            title: result.title,
+            url: result.url,
             source: "web",
           })
         ),

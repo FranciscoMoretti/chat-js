@@ -7,14 +7,19 @@ import { expect, it, vi } from "vitest";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
 
 const mocks = vi.hoisted(() => ({ runCommand: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@vercel/sandbox")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@vercel/sandbox", () => ({
-  Sandbox: { create: () => ({ runCommand: mocks.runCommand }) },
-}));
+vi.mock(
+  "@vercel/sandbox",
+  (): {
+    Sandbox: { create: () => { runCommand: typeof mocks.runCommand } };
+  } => ({
+    Sandbox: {
+      create: (): { runCommand: typeof mocks.runCommand } => ({
+        runCommand: mocks.runCommand,
+      }),
+    },
+  })
+);
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([0, 1])'s awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable max-statements, no-magic-numbers --
  * max-statements (#512): it.each([0, 1])("does not log package credentials when pip exits with %s") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.

@@ -10,23 +10,23 @@ import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { createToolError, createToolResult } from "@/lib/eve/tool-result";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-// oxlint-disable-next-line eslint/sort-imports -- Keep the type-only UI contract beside the other type imports without changing runtime import order.
 import type { ui as chatjsUi } from "@/tools/chatjs/ui";
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/components/eve/eve-document-tool")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): vi.mock("@/components/eve/eve-document-tool") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-vi.mock("@/components/eve/eve-document-tool", () => ({
-  EveDocumentTool: () => null,
-}));
+vi.mock(
+  "@/components/eve/eve-document-tool",
+  (): { EveDocumentTool: () => null } => ({
+    EveDocumentTool: (): null => null,
+  })
+);
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve vi.mock's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 
-/* oxlint-disable id-length -- * id-length (#506): vi.mock("@/tools/chatjs/ui") uses z as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology. */
 vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
-  const { z } = await import("zod");
+  const { z: zod } = await import("zod");
   const { createElement: reactCreateElement } = await import("react");
   const { defineToolRenderer } = await import("@/lib/ai/define-tool-renderer");
   const original = await importOriginal<{ ui: typeof chatjsUi }>();
@@ -35,8 +35,8 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing original.ui own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...original.ui,
       "tool-customEcho": defineToolRenderer({
-        inputSchema: z.object({ text: z.string() }),
-        outputSchema: z.object({ echoed: z.string() }),
+        inputSchema: zod.object({ text: zod.string() }),
+        outputSchema: zod.object({ echoed: zod.string() }),
         render: ({
           tool,
           messageId,
@@ -63,14 +63,12 @@ vi.mock("@/tools/chatjs/ui", async (importOriginal) => {
             {},
             updates.map((update) => update.label).join(", ")
           ),
-        updateSchema: z.object({ label: z.string() }),
+        updateSchema: zod.object({ label: zod.string() }),
       }),
     },
   };
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length */
-
 /* oxlint-disable max-params --
  * max-params (#511): renderResult keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  */

@@ -3,17 +3,14 @@ import { renderToStaticMarkup } from "react-dom/server";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { expect, test } from "vitest";
 /* oxlint-enable sort-imports */
-import type { z } from "zod";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { GetWeatherRenderer } from "./renderer";
-/* oxlint-enable sort-imports */
 import type { weatherResult } from "./schemas";
+import type { z } from "zod";
 
 type WeatherAtLocation = z.output<typeof weatherResult>;
 
-/* oxlint-disable id-length, no-magic-numbers --
- * id-length (#506): weather uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): weather uses 10, 11, 12, 13, 14, 15, 16, 17 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 const weather: WeatherAtLocation = {
@@ -29,7 +26,10 @@ const weather: WeatherAtLocation = {
   generationtime_ms: 0,
   hourly: {
     temperature_2m: [10, 11, 12, 13, 14, 15, 16, 17],
-    time: Array.from({ length: 8 }, (_, i) => `2026-09-08T${10 + i}:00`),
+    time: Array.from(
+      { length: 8 },
+      (_hour, hourIndex) => `2026-09-08T${10 + hourIndex}:00`
+    ),
   },
   hourly_units: { temperature_2m: "°C", time: "iso8601" },
   latitude: 0,
@@ -38,7 +38,7 @@ const weather: WeatherAtLocation = {
   timezone_abbreviation: "UTC",
   utc_offset_seconds: 0,
 };
-/* oxlint-enable id-length, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop -- * react-perf/jsx-no-new-object-as-prop (#558): test.each([ ["2026-09-08T12:00", ["12PM", "1PM", "2PM", "3PM", "4PM", "5PM"]], ["2026 creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting. */
 test.each([

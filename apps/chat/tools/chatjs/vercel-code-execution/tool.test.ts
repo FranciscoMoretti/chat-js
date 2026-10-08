@@ -1,10 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
-
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { codeExecution } from "./tool";
-/* oxlint-enable sort-imports */
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({
   cleanup: vi.fn(),
@@ -30,13 +26,26 @@ vi.mock("@/tools/chatjs/_shared/code-execution/python", () => ({
 vi.mock("@/tools/chatjs/_shared/code-execution/javascript", () => ({
   executeJavaScriptInSandbox: mocks.javascript,
 }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/logger")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ debug: vi.fn(), error: vi.fn(), info: vi.fn() }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/logger",
+  (): {
+    createModuleLogger: () => {
+      debug: () => void;
+      error: () => void;
+      info: () => void;
+    };
+  } => ({
+    createModuleLogger: (): {
+      debug: () => void;
+      error: () => void;
+      info: () => void;
+    } => ({
+      debug: vi.fn<() => void>(),
+      error: vi.fn<() => void>(),
+      info: vi.fn<() => void>(),
+    }),
+  })
+);
 
 vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
   eveCodeSandboxOwnership: mocks.ownership,

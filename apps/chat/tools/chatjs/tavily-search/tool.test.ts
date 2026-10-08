@@ -1,31 +1,24 @@
 import { expect, test, vi } from "vitest";
+import { testToolContext } from "@/tests/helpers/eve-tool-context";
+import { webSearch } from "./tool";
+import { webSearchInput } from "./schemas";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { testToolContext } from "@/tests/helpers/eve-tool-context";
-/* oxlint-enable sort-imports */
-
-import { webSearchInput } from "./schemas";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { webSearch } from "./tool";
-/* oxlint-enable sort-imports */
-
 const { search } = vi.hoisted(() => ({ search: vi.fn() }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@tavily/core")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@tavily/core", () => ({ tavily: () => ({ search }) }));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock("@tavily/core", (): { tavily: () => { search: typeof search } } => ({
+  tavily: (): { search: typeof search } => ({ search }),
+}));
 vi.mock("@/lib/env", () => ({ env: { TAVILY_API_KEY: "test-key" } }));
 
 vi.mock("@/lib/utils", () => ({ generateUUID: (): string => "search-update" }));
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve collect's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, typescript/explicit-function-return-type -- * id-length (#506): collect uses T as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
- * typescript/explicit-function-return-type (#560): Keep collect's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary. */
-const collect = async <T>(
-  value: Readonly<T> | Readonly<Promise<T>> | Readonly<AsyncIterable<T>>
-) => {
+const collect = async <SearchValue>(
+  value:
+    | Readonly<SearchValue>
+    | Readonly<Promise<SearchValue>>
+    | Readonly<AsyncIterable<SearchValue>>
+): Promise<SearchValue[]> => {
   const result = await value;
   if (
     typeof result !== "object" ||
@@ -38,7 +31,6 @@ const collect = async <T>(
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("native search streams sources and seals a final cost receipt") uses -1, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

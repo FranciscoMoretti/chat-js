@@ -23,26 +23,21 @@ vi.mock(import("ai"), async (original) => ({
   experimental_generateVideo: mocks.generate,
 }));
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/tool-models")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("@/lib/eve/tool-models", () => ({
   eveToolModelProvider: {
-    createVideoModel: (id: string) => {
+    createVideoModel: (id: string): MockVideoModelV4 => {
       mocks.model(id);
       return new MockVideoModelV4();
     },
     getModelDefinition: mocks.definition,
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/eve/generated-files")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/eve/generated-files", () => ({
-  eveGeneratedFileUploader: () => mocks.upload,
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/eve/generated-files",
+  (): { eveGeneratedFileUploader: () => typeof mocks.upload } => ({
+    eveGeneratedFileUploader: () => mocks.upload,
+  })
+);
 vi.mock("@/lib/config", () => ({
   config: {
     ai: { tools: { video: { default: "default-video" } } },
@@ -142,10 +137,11 @@ it("accepts saved results without file IDs", () => {
   expect(generateVideoResult.parse(saved)).toEqual(saved);
 });
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/lib/ai/active-gateway")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-vi.mock("@/lib/ai/active-gateway", () => ({
-  getActiveGateway: () => ({ fetchModels: () => [] }),
-}));
-/* oxlint-enable typescript/explicit-function-return-type */
+vi.mock(
+  "@/lib/ai/active-gateway",
+  (): { getActiveGateway: () => { fetchModels: () => never[] } } => ({
+    getActiveGateway: (): { fetchModels: () => never[] } => ({
+      fetchModels: (): never[] => [],
+    }),
+  })
+);

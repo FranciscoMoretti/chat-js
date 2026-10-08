@@ -12,14 +12,16 @@ vi.mock("@/components/sandbox", () => ({
   ),
 }));
 
-/* oxlint-disable typescript/explicit-function-return-type, unicorn/no-null --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
+/* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts") preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
  */
-vi.mock("@/tools/chatjs/_shared/code-execution/interactive-charts", () => ({
-  default: () => null,
-}));
-/* oxlint-enable typescript/explicit-function-return-type, unicorn/no-null */
+vi.mock(
+  "@/tools/chatjs/_shared/code-execution/interactive-charts",
+  (): { default: () => null } => ({
+    default: (): null => null,
+  })
+);
+/* oxlint-enable unicorn/no-null */
 
 /* oxlint-disable react-perf/jsx-no-new-object-as-prop --
  * react-perf/jsx-no-new-object-as-prop (#558): test("passes validated partial code to the sandbox while input is streaming") creates render-local values that capture current state; memoization needs dependency and consumer-identity review rather than unconditional hoisting.
