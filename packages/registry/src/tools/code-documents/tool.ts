@@ -1,18 +1,13 @@
-import type { ToolContext } from "eve/tools";
-import { defineTool } from "eve/tools";
-import type { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   eveDocumentCreateInput,
   eveDocumentEditInput,
   eveDocumentWriteResult,
 } from "@/lib/eve/document-contracts";
-/* oxlint-enable sort-imports */
-import { executeEveDocumentTool } from "@/lib/eve/document-tools";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ToolContext } from "eve/tools";
 import { codeGuidelines } from "./guidelines";
+import { defineTool } from "eve/tools";
+import { executeEveDocumentTool } from "@/lib/eve/document-tools";
+import type { z } from "zod";
 
 type CreateCodeDocumentInput = Readonly<
   Omit<z.infer<typeof eveDocumentCreateInput>, "fileIds"> & {
@@ -31,8 +26,6 @@ type ReadonlyDocumentToolContext = Readonly<
     abortSignal: Readonly<AbortSignal>;
   }
 >;
-
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable oxc/no-async-await -- Await the async executor before schema parsing; enabled promise/prefer-await-to-then and typescript/promise-function-async reject the equivalent .then(parse) callback. */
 const createCodeDocument = defineTool({

@@ -1,10 +1,7 @@
 import type { FileUIPart } from "ai";
-
 import { downloadFile } from "@/lib/file-storage";
-import { keyFromFileUrl } from "@/lib/file-url";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { getBaseUrl } from "@/lib/url";
-/* oxlint-enable sort-imports */
+import { keyFromFileUrl } from "@/lib/file-url";
 
 const INLINE_IMAGE =
   /^data:image\/(?:png|jpeg|webp|gif);base64,(?<base64>[A-Za-z0-9+/=]+)$/u;

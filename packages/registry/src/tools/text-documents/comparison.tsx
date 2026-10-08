@@ -1,18 +1,9 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import dynamic from "next/dynamic";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import React from "react";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { DocumentSkeleton } from "@/components/document-skeleton";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Button } from "@/components/ui/button";
-/* oxlint-enable sort-imports */
+import { DocumentSkeleton } from "@/components/document-skeleton";
+import React from "react";
+import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/react";
 
 /* oxlint-disable typescript/promise-function-async -- Return the existing promise directly to preserve its identity and the current synchronous-throw boundary. */
@@ -30,9 +21,6 @@ const DiffView = dynamic(
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 /* oxlint-enable typescript/promise-function-async */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
 export const EveDocumentComparison = ({
@@ -47,7 +35,7 @@ export const EveDocumentComparison = ({
   readonly previousRevisionId: string;
   readonly content: string;
   readonly version: number;
-}) => {
+}): React.JSX.Element => {
   const trpc = useTRPC();
   const previous = useQuery(
     trpc.eve.document.queryOptions({
@@ -93,6 +81,3 @@ export const EveDocumentComparison = ({
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 /* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */

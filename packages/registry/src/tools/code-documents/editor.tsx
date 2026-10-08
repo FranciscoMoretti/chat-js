@@ -1,21 +1,16 @@
 "use client";
 
+import { Compartment, EditorState, Transaction } from "@codemirror/state";
+import React, { memo, useEffect, useRef } from "react";
+import { EditorView } from "@codemirror/view";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { ViewUpdate } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { python } from "@codemirror/lang-python";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { Compartment, EditorState, Transaction } from "@codemirror/state";
-/* oxlint-enable sort-imports */
+// oxlint-disable-next-line sort-imports -- CodeMirror modules allocate shared public Facet/provider IDs with nextID++; moving Python, oneDark or basicSetup changes exported language IDs (native control Python 130→135, JavaScript 119→176).
 import { oneDark } from "@codemirror/theme-one-dark";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { EditorView } from "@codemirror/view";
-/* oxlint-enable sort-imports */
-import type { ViewUpdate } from "@codemirror/view";
+// oxlint-disable-next-line sort-imports -- CodeMirror modules allocate shared public Facet/provider IDs with nextID++; moving Python, oneDark or basicSetup changes exported language IDs (native control Python 130→135, JavaScript 119→176).
 import { basicSetup } from "codemirror";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import React, { memo, useEffect, useRef } from "react";
-/* oxlint-enable sort-imports */
-
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 
 interface EditorProps {
   content: string;
@@ -27,8 +22,7 @@ interface EditorProps {
   status: "streaming" | "idle";
 }
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-const getLanguageExtension = (language: string) => {
+const getLanguageExtension = (language: string): ReturnType<typeof python> => {
   switch (language) {
     case "typescript": {
       return javascript({ jsx: false, typescript: true });
@@ -47,10 +41,7 @@ const getLanguageExtension = (language: string) => {
     }
   }
 };
-/* oxlint-enable typescript/explicit-function-return-type */
-
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable typescript/strict-boolean-expressions -- This value-producing condition preserves the current nullish/empty sentinel behavior; coercing it would change the returned value. */
@@ -59,7 +50,7 @@ const PureCodeEditor = ({
   onSaveContent,
   isReadonly,
   language = "python",
-}: ReadonlyNativeSurface<EditorProps>) => {
+}: ReadonlyNativeSurface<EditorProps>): React.JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
@@ -133,7 +124,6 @@ const PureCodeEditor = ({
 /* oxlint-enable typescript/strict-boolean-expressions */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */

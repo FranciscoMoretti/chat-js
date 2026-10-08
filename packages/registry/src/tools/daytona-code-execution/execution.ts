@@ -1,15 +1,12 @@
-/* oxlint-disable eslint/max-params, eslint/max-statements -- This lifecycle coordinator keeps allocation, confirmation, cancellation and release in one ordered transaction with its four explicit dependencies. */
 import type { CodeExecutionInput } from "@/lib/eve/code-executor";
-import { createModuleLogger } from "@/lib/logger";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { CodeExecutionResult } from "@/tools/chatjs/_shared/code-execution/types";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { createDaytonaProvider } from "./sandbox";
+import { createModuleLogger } from "@/lib/logger";
+// oxlint-disable-next-line sort-imports -- Preserve Pino/config initialization before Daytona → axios → https-proxy-agent/debug mutates process.env.DEBUG and probes tty.isatty; sorting commandSandbox first reverses those host effects.
+import { commandSandbox } from "./sandbox";
 import { executeJavaScriptInSandbox } from "@/tools/chatjs/_shared/code-execution/javascript";
 import { executePythonInSandbox } from "@/tools/chatjs/_shared/code-execution/python";
-import type { CodeExecutionResult } from "@/tools/chatjs/_shared/code-execution/types";
-/* oxlint-enable sort-imports */
-
-import { commandSandbox } from "./sandbox";
-import type { createDaytonaProvider } from "./sandbox";
 
 interface SandboxOwnership {
   reserve: (
@@ -32,6 +29,7 @@ const observeCleanup = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeInDaytona's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable eslint/max-params, eslint/max-statements -- This exported lifecycle contract takes input, provider, ownership and cancellation; its ordered reserve/create/confirm/run/finally-release sequence must preserve cancellation and cleanup failure precedence. */
 const executeInDaytona = async (
   input: CodeExecutionInput,
   selected: ReadonlyNativeSurface<ReturnType<typeof createDaytonaProvider>>,
@@ -75,6 +73,7 @@ const executeInDaytona = async (
     await ownership.release();
   }
 };
+/* oxlint-enable eslint/max-params, eslint/max-statements */
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeInDaytona); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-enable oxc/no-async-await */
 export { executeInDaytona };

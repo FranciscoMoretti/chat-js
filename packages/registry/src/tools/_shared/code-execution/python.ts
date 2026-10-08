@@ -4,26 +4,45 @@ import type {
   ExecutionSandbox,
 } from "./types";
 
+type PythonExecutionContext = Readonly<{
+  sandbox: Readonly<ExecutionSandbox>;
+  requestId: string;
+  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
+}>;
+
+interface PythonExecutionInfo {
+  error?: { name: string; value: string; traceback: string };
+  success: boolean;
+}
+
+interface PythonExecutionOutput {
+  chartData: Record<string, unknown> | null;
+  execInfo: PythonExecutionInfo;
+  outputText: string;
+}
+
 const WHITESPACE_REGEX = /\s+/u;
 const PACKAGE_SPEC_SPLIT_RE = /[=<>![\s]/u;
 const isJsonObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const PROCESS_SUCCESS = 0;
+const PACKAGE_NAME_INDEX = 0;
+const EMPTY_PACKAGE_COUNT = 0;
+const LAST_LINE_INDEX = -1;
+const MISSING_CHART_INDEX = -1;
+const CHART_LINE_COUNT = 1;
+const EMPTY_STDERR_LENGTH = 0;
+
 const CHART_JSON_PREFIX = "__CHART_JSON__:";
 
-/* oxlint-disable eslint/no-magic-numbers -- Split the package requirement at its first version/operator delimiter; index 0 is the package name passed to pip. */
 const packageName = (spec: string): string =>
-  spec.split(PACKAGE_SPEC_SPLIT_RE)[0].toLowerCase();
+  spec.split(PACKAGE_SPEC_SPLIT_RE)[PACKAGE_NAME_INDEX].toLowerCase();
 /* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- Sandbox exit code 0 is the success sentinel; retain the exact process status check. */
-/* oxlint-disable eslint/max-params -- Keep the private installer inputs explicit at its sole call site; a configuration object adds no distinct domain contract. */
 const installBasePackages = async (
-  sandbox: Readonly<ExecutionSandbox>,
   basePackages: readonly string[],
-  requestId: string,
-  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>
+  { sandbox, requestId, log }: PythonExecutionContext
 ): Promise<{
   success: boolean;
   result?: CodeExecutionResult;
@@ -32,7 +51,7 @@ const installBasePackages = async (
     args: ["install", ...basePackages],
     cmd: "pip",
   });
-  if (installStep.exitCode !== 0) {
+  if (installStep.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await installStep.stderr();
     const standardOutput =
       // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -53,29 +72,13 @@ const installBasePackages = async (
   log.info({ requestId }, "base packages installed");
   return { success: true };
 };
-/* oxlint-enable eslint/max-params */
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/max-statements -- This helper filters pip install lines, excludes base packages, and reports an install failure before execution. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep extra-package filtering and its failure fallback together around their shared parsed code and package list. */
-/* oxlint-disable eslint/max-params -- Keep the private helper's code, package list, and execution context explicit at its sole call site. */
-
-/* oxlint-disable eslint/no-magic-numbers -- Empty package lists and process exit code 0 are the two protocol sentinels used by this installer. */
-const processExtraPackages = async (
+const pythonPackagePlan = (
   code: string,
-  basePackages: readonly string[],
-  sandbox: Readonly<ExecutionSandbox>,
-  requestId: string,
-  log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>
-): Promise<{
-  codeToRun: string;
-  installResult: {
-    success: boolean;
-    result?: CodeExecutionResult;
-  };
-}> => {
+  basePackages: readonly string[]
+): { codeWithoutPipLines: string; extraPackages: string[] } => {
   const basePackageNames = new Set(
     basePackages.map((basePackageName) => basePackageName.toLowerCase())
   );
@@ -96,8 +99,29 @@ const processExtraPackages = async (
   const codeWithoutPipLines = lines
     .filter((line) => !line.trim().startsWith("!pip install "))
     .join("\n");
+  return { codeWithoutPipLines, extraPackages };
+};
 
-  if (extraPackages.length === 0) {
+interface PythonPackagePreparation {
+  codeToRun: string;
+  installResult: {
+    success: boolean;
+    result?: CodeExecutionResult;
+  };
+}
+
+/* oxlint-disable eslint/max-statements -- These 12 statements keep dynamic installation, stderr-before-stdout fallback, failure logging, and the original-source failure result in one awaited operation; an asynchronous helper would introduce additional Promise settlement steps. */
+const processExtraPackages = async (
+  code: string,
+  basePackages: readonly string[],
+  { sandbox, requestId, log }: PythonExecutionContext
+): Promise<PythonPackagePreparation> => {
+  const { codeWithoutPipLines, extraPackages } = pythonPackagePlan(
+    code,
+    basePackages
+  );
+
+  if (extraPackages.length === EMPTY_PACKAGE_COUNT) {
     return { codeToRun: codeWithoutPipLines, installResult: { success: true } };
   }
 
@@ -109,7 +133,7 @@ const processExtraPackages = async (
     args: ["install", ...extraPackages],
     cmd: "pip",
   });
-  if (dynamicInstall.exitCode !== 0) {
+  if (dynamicInstall.exitCode !== PROCESS_SUCCESS) {
     const errorOutput = await dynamicInstall.stderr();
     const standardOutput =
       // oxlint-disable-next-line no-ternary -- Keep standardOutput as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -136,12 +160,8 @@ const processExtraPackages = async (
     installResult: { success: true },
   };
 };
-/* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/no-magic-numbers */
-
-/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
+/* oxlint-enable oxc/no-async-await */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the generated Python preamble and its code/path interpolations in one template to preserve script syntax. */
 const createWrappedCode = (codeToRun: string, chartPath: string): string => `
@@ -199,33 +219,21 @@ except Exception as e:
 /* oxlint-enable eslint/max-lines-per-function */
 
 /* oxlint-disable eslint/max-statements -- Parse the status trailer, remove optional chart output, and retain the raw-output fallback for malformed protocol text. */
-/* oxlint-disable eslint/max-lines-per-function -- Keep the sandbox output parsing and fallback branches together so they share one protocol state. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-/* oxlint-disable eslint/no-magic-numbers -- Use -1 as Array.at's last-line index and findIndex's missing-line sentinel; 0 is the process-success code. */
 const parseExecutionOutput = async (
   execResult: Readonly<{
     stdout: () => Promise<string>;
     exitCode: number;
   }>
-): Promise<{
-  outputText: string;
-  chartData: Record<string, unknown> | null;
-  execInfo: {
-    success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  };
-}> => {
+): Promise<PythonExecutionOutput> => {
   const stdout = await execResult.stdout();
-  let execInfo: {
-    success: boolean;
-    error?: { name: string; value: string; traceback: string };
-  } = { success: true };
+  let execInfo: PythonExecutionInfo = { success: true };
   let outputText = "";
   let chartData: Record<string, unknown> | null = null;
 
   try {
     const outLines = (stdout ?? "").trim().split("\n");
-    const lastLine = outLines.at(-1);
+    const lastLine = outLines.at(LAST_LINE_INDEX);
     // oxlint-disable-next-line typescript/no-unsafe-assignment -- The sandbox protocol emits this JSON envelope; validating a new schema would change compatibility with saved executions.
     execInfo = JSON.parse(lastLine ?? "{}");
     outLines.pop();
@@ -233,7 +241,7 @@ const parseExecutionOutput = async (
     const chartLineIdx = outLines.findIndex((line) =>
       line.startsWith(CHART_JSON_PREFIX)
     );
-    if (chartLineIdx !== -1) {
+    if (chartLineIdx !== MISSING_CHART_INDEX) {
       const raw = outLines[chartLineIdx].slice(CHART_JSON_PREFIX.length);
       try {
         const value: unknown = JSON.parse(raw);
@@ -243,13 +251,13 @@ const parseExecutionOutput = async (
       } catch {
         // Ignore malformed chart JSON from the sandboxed snippet.
       }
-      outLines.splice(chartLineIdx, 1);
+      outLines.splice(chartLineIdx, CHART_LINE_COUNT);
     }
 
     outputText = outLines.join("\n");
   } catch {
     outputText = stdout ?? "";
-    if (execResult.exitCode !== 0) {
+    if (execResult.exitCode !== PROCESS_SUCCESS) {
       execInfo = {
         error: {
           name: "SandboxExecutionError",
@@ -265,25 +273,19 @@ const parseExecutionOutput = async (
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable eslint/no-magic-numbers -- Sandbox command exit code 0 means the chart file exists and is ready to encode. */
-/* oxlint-disable eslint/max-params -- Keep the file-check command's four direct operation inputs visible at its sole call site. */
 // oxlint-disable-next-line typescript/consistent-return -- This lookup or optional operation intentionally returns no value when the target is absent; callers already handle the value-or-undefined contract.
 const checkForChart = async (
-  sandbox: Readonly<ExecutionSandbox>,
   chartPath: string,
-  requestId: string,
-  log: Readonly<Pick<CodeExecutionContext["log"], "info">>
+  { sandbox, requestId, log }: PythonExecutionContext
 ): Promise<{ base64: string; format: string } | undefined> => {
   const chartCheck = await sandbox.runCommand({
     args: ["-f", chartPath],
     cmd: "test",
   });
-  if (chartCheck.exitCode === 0) {
+  if (chartCheck.exitCode === PROCESS_SUCCESS) {
     const base64Command = await sandbox.runCommand({
       args: ["-w", "0", chartPath],
       cmd: "base64",
@@ -294,10 +296,7 @@ const checkForChart = async (
   }
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable eslint/max-params */
-/* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-disable eslint/no-magic-numbers -- A zero-length trimmed stderr string is the empty-output case before formatting the response. */
 const buildResponseMessage = ({
   outputText,
   stderr,
@@ -319,7 +318,7 @@ const buildResponseMessage = ({
   if (outputText) {
     message += `${outputText}\n`;
   }
-  if (stderr && stderr.trim().length > 0) {
+  if (stderr && stderr.trim().length > EMPTY_STDERR_LENGTH) {
     message += `${stderr}\n`;
   }
   if (execInfo.error) {
@@ -331,7 +330,6 @@ const buildResponseMessage = ({
 };
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executePythonInSandbox); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Production also denies promise/prefer-await-to-then and typescript/promise-function-async; a promise-chain rewrite triggers both. */
-/* oxlint-enable eslint/no-magic-numbers */
 
 /* oxlint-disable eslint/max-statements -- This entry point installs dependencies, runs the sandbox, then parses output and checks for a chart. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered Python execution stages together because later stages consume earlier install and output results. */
@@ -346,6 +344,7 @@ export const executePythonInSandbox = async ({
     log: Readonly<Pick<CodeExecutionContext["log"], "error" | "info">>;
   }
 >): Promise<CodeExecutionResult> => {
+  const execution = { log, requestId, sandbox };
   const basePackages = [
     "matplotlib",
     "pandas",
@@ -355,12 +354,7 @@ export const executePythonInSandbox = async ({
   ] as const;
   const chartPath = "/tmp/chart.png";
 
-  const baseInstallResult = await installBasePackages(
-    sandbox,
-    basePackages,
-    requestId,
-    log
-  );
+  const baseInstallResult = await installBasePackages(basePackages, execution);
   if (!baseInstallResult.success) {
     return baseInstallResult.result ?? { chart: "", message: "Unknown error" };
   }
@@ -368,9 +362,7 @@ export const executePythonInSandbox = async ({
   const { codeToRun, installResult } = await processExtraPackages(
     code,
     basePackages,
-    sandbox,
-    requestId,
-    log
+    execution
   );
   if (!installResult.success) {
     return installResult.result ?? { chart: "", message: "Unknown error" };
@@ -398,7 +390,7 @@ export const executePythonInSandbox = async ({
     return { chart: chartData, message: message.trim() };
   }
 
-  const chartOut = await checkForChart(sandbox, chartPath, requestId, log);
+  const chartOut = await checkForChart(chartPath, execution);
   return {
     chart: chartOut ?? "",
     message: message.trim(),

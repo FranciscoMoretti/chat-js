@@ -17,15 +17,20 @@ const researchAgentFiles = [
   "agent/subagents/researcher/hooks/billing.ts",
 ];
 
-/* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
+const SUBAGENT_DIRECTORY_START = 0;
+const SUBAGENT_DIRECTORY_DEPTH = 3;
 const researchAgentDirectories = [
   ...new Set(
     researchAgentFiles
       .filter((file) => file.startsWith("agent/subagents/"))
-      .map((file) => file.split("/").slice(0, 3).join("/"))
+      .map((file) =>
+        file
+          .split("/")
+          .slice(SUBAGENT_DIRECTORY_START, SUBAGENT_DIRECTORY_DEPTH)
+          .join("/")
+      )
   ),
 ];
-/* oxlint-enable eslint/no-magic-numbers */
 
 const researchItem: RegistryItem = {
   description:

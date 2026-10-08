@@ -1,16 +1,10 @@
 "use client";
+import { codeExecutionInput, codeExecutionResult } from "./schemas";
+import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
 import React from "react";
-
 import { SandboxComposed } from "@/components/sandbox";
 import type { ToolRendererProps } from "@/lib/ai/define-tool-renderer";
 import { defineToolRenderer } from "@/lib/ai/define-tool-renderer";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { CodeExecutionChart } from "@/tools/chatjs/_shared/code-execution/code-execution-chart";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { codeExecutionInput, codeExecutionResult } from "./schemas";
-/* oxlint-enable sort-imports */
 
 type CodeExecutionTool = ToolRendererProps<
   typeof codeExecutionInput,
@@ -30,11 +24,10 @@ type CodeExecutionViewTool = Readonly<{
   }>;
 }>;
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 const CodeExecutionView = ({
   tool,
-}: Readonly<{ tool: CodeExecutionViewTool }>) => {
+}: Readonly<{ tool: CodeExecutionViewTool }>): React.JSX.Element => {
   const args = tool.input ?? {
     code: "",
     icon: "default",
@@ -74,7 +67,6 @@ const CodeExecutionView = ({
   );
 };
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 const CodeExecution = defineToolRenderer({
