@@ -31,14 +31,18 @@ import {
 import { eveConversation, eveResponseGroup, user } from "../lib/db/schema";
 /* oxlint-enable sort-imports */
 import { env } from "../lib/env";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep the mocked operation, its fixture adapter and test database guard in the existing module evaluation order. */
 import { createEveConversationOperation } from "../lib/eve/create-conversation-operation";
-/* oxlint-enable sort-imports */
+import { eveMessageTitle } from "../lib/eve/message-input";
 import { createEveResponseGroup } from "../lib/eve/response-group";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { ReadonlyNativeSurface } from "../lib/readonly-native-surface";
 import { assertEveTestDatabase } from "./eve-test-database";
 /* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies, import/no-relative-parent-imports */
+
+type ReadonlyCreateOperation = ReadonlyNativeSurface<
+  Parameters<typeof createEveConversationOperation>["1"]
+>;
 
 vi.mock("server-only", () => ({}));
 vi.mock("../lib/eve/create-conversation-operation", () => ({
@@ -53,8 +57,7 @@ await db.insert(user).values({
   name: "Response group test",
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve afterAll's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions --
- * typescript/prefer-readonly-parameter-types (#565): afterAll accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
+/* oxlint-disable typescript/strict-boolean-expressions --
  * typescript/strict-boolean-expressions (#610): afterAll intentionally keeps the existing falsy-value behavior of rows.filter((row) => row.parentConversationId); distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 afterAll(async () => {
@@ -64,7 +67,10 @@ afterAll(async () => {
     .select()
     .from(eveConversation)
     .where(eq(eveConversation.ownerId, owner));
-  for (const row of rows.filter((row) => row.parentConversationId)) {
+  for (const row of rows.filter(
+    (row: Readonly<{ parentConversationId: string | null }>) =>
+      row.parentConversationId
+  )) {
     await db.delete(eveConversation).where(eq(eveConversation.id, row.id));
   }
   await db.delete(eveConversation).where(eq(eveConversation.ownerId, owner));
@@ -72,13 +78,12 @@ afterAll(async () => {
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types, typescript/strict-boolean-expressions */
+/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async --
  * max-lines-per-function (#510): test("parallel reservations and partial dispatch retries keep ordered exact identitie keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): test("parallel reservations and partial dispatch retries keep ordered exact identitie keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): test("parallel reservations and partial dispatch retries keep ordered exact identitie uses 3, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("parallel reservations and partial dispatch retries keep ordered exact identitie accepts operation; candidate; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("parallel reservations and partial dispatch retries keep ordered exact identitie preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("parallel reservations and partial dispatch retries keep ordered exact identities", async () => {
@@ -106,15 +111,14 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   let failSecond = true;
   const nativeCalls: string[] = [];
   vi.mocked(createEveConversationOperation).mockImplementation(
-    async (ownerId, operation) => {
+    async (ownerId, operation: ReadonlyCreateOperation) => {
       if (operation.modelId === "model-b" && failSecond) {
         return Response.json({ error: "Unavailable" }, { status: 503 });
       }
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
-        // oxlint-disable-next-line typescript/no-base-to-string -- These response-group fixtures submit string messages; coercion preserves the mock launcher contract without constraining the production message union.
-        String(operation.message),
+        eveMessageTitle(operation.message),
         (id) => {
           nativeCalls.push(id);
           return Promise.resolve(`session-${id}`);
@@ -133,7 +137,9 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
   failSecond = false;
   const retried = await createEveResponseGroup(owner, input);
   expect(retried.candidates.map((candidate) => candidate.operationId)).toEqual(
-    left.candidates.map((candidate) => candidate.operationId)
+    left.candidates.map(
+      (candidate: { readonly operationId: string }) => candidate.operationId
+    )
   );
   expect(
     retried.candidates.every((candidate) => candidate.state === "bound")
@@ -153,7 +159,7 @@ test("parallel reservations and partial dispatch retries keep ordered exact iden
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, typescript/promise-function-async */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("unconfirmed initial creation never starts independent secondary roots") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
@@ -178,9 +184,8 @@ test("unconfirmed initial creation never starts independent secondary roots", as
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async --
+/* oxlint-disable max-statements, typescript/promise-function-async --
  * max-statements (#512): test("continuation candidates share one source checkpoint and reject inaccessible sou keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/prefer-readonly-parameter-types (#565): test("continuation candidates share one source checkpoint and reject inaccessible sou accepts operation; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  * typescript/promise-function-async (#606): test("continuation candidates share one source checkpoint and reject inaccessible sou preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
  */
 test("continuation candidates share one source checkpoint and reject inaccessible sources", async () => {
@@ -192,12 +197,11 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
   );
   vi.mocked(createEveConversationOperation)
     .mockReset()
-    .mockImplementation(async (ownerId, operation) => {
+    .mockImplementation(async (ownerId, operation: ReadonlyCreateOperation) => {
       const binding = await createEveConversation(
         ownerId,
         operation.operationId,
-        // oxlint-disable-next-line typescript/no-base-to-string -- These response-group fixtures submit string messages; coercion preserves the mock launcher contract without constraining the production message union.
-        String(operation.message),
+        eveMessageTitle(operation.message),
         (id) => Promise.resolve(`continued-${id}`),
         { fork: operation.fork, initialModelId: operation.modelId }
       );
@@ -233,11 +237,10 @@ test("continuation candidates share one source checkpoint and reject inaccessibl
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable max-statements, typescript/prefer-readonly-parameter-types, typescript/promise-function-async */
+/* oxlint-enable max-statements, typescript/promise-function-async */
 
-/* oxlint-disable no-magic-numbers, typescript/prefer-readonly-parameter-types --
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("definitive rejection is distinct from uncertainty and repeated model choices re uses 5, 0, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
- * typescript/prefer-readonly-parameter-types (#565): test("definitive rejection is distinct from uncertainty and repeated model choices re accepts candidate; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
  */
 test("definitive rejection is distinct from uncertainty and repeated model choices remain independent", async () => {
   const input = {
@@ -246,11 +249,17 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
     operationId: crypto.randomUUID(),
   };
   const group = await reserveEveResponseGroup(owner, input);
-  expect(group.candidates.map((candidate) => candidate.modelId)).toEqual(
-    input.modelIds
-  );
   expect(
-    new Set(group.candidates.map((candidate) => candidate.operationId)).size
+    group.candidates.map(
+      (candidate: { readonly modelId: string }) => candidate.modelId
+    )
+  ).toEqual(input.modelIds);
+  expect(
+    new Set(
+      group.candidates.map(
+        (candidate: { readonly operationId: string }) => candidate.operationId
+      )
+    ).size
   ).toBe(5);
   vi.mocked(createEveConversationOperation)
     .mockReset()
@@ -273,7 +282,7 @@ test("definitive rejection is distinct from uncertainty and repeated model choic
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. Native-session fixture resolves "must-not-create" for createEveConversation; synchronous return would fail its create callback contract. Native-session fixture resolves "must-not-create-root" for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable no-magic-numbers, typescript/prefer-readonly-parameter-types */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null --
  * max-lines-per-function (#510): test("deleting a partial family erases group payloads and fences unstarted candidates keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -354,9 +363,6 @@ test("deleting a partial family erases group payloads and fences unstarted candi
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. */
 /* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers, unicorn/no-null */
 
-/* oxlint-disable typescript/prefer-readonly-parameter-types --
- * typescript/prefer-readonly-parameter-types (#565): test("group reservation racing retirement cannot leave an active unstarted group") accepts row; deep-readonly conversion changes assignability at its fixture/mock boundary and needs an ownership-contract migration.
- */
 test("group reservation racing retirement cannot leave an active unstarted group", async () => {
   const root = await createEveConversation(
     owner,
@@ -380,7 +386,13 @@ test("group reservation racing retirement cannot leave an active unstarted group
     .where(eq(eveResponseGroup.operationId, input.operationId));
   expect(
     rows.every(
-      (row) => row.deleted && row.candidates === null && row.inputHash === null
+      (
+        row: Readonly<{
+          candidates: unknown;
+          deleted: boolean;
+          inputHash: string | null;
+        }>
+      ) => row.deleted && row.candidates === null && row.inputHash === null
     )
   ).toBe(true);
   await expect(
@@ -393,7 +405,6 @@ test("group reservation racing retirement cannot leave an active unstarted group
 });
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. Native-session fixture resolves `session-${id}` for createEveConversation; synchronous return would fail its create callback contract. */
-/* oxlint-enable typescript/prefer-readonly-parameter-types */
 
 /* oxlint-disable unicorn/no-null --
  * unicorn/no-null (#570): test("pre-contract groups block erasure until an exact replay recovers their source i preserves explicit null in its scenario payloads and expectations; undefined has different serialization and presence semantics.
