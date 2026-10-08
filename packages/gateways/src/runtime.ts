@@ -9,7 +9,7 @@ interface GatewayLogger {
 
 interface GatewayOptions {
   env?: Record<string, string | undefined>;
-  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Exported fetch callbacks must keep the native mutable Request/RequestInit tuple; readonly header tuples are incompatible with existing typeof fetch callbacks. */
+  /* oxlint-disable typescript/prefer-readonly-parameter-types -- Keep the existing callback surface, which accepts ordinary callbacks without Bun's fetch.preconnect property. Shallow Readonly projections still trigger Oxlint; a deep readonly RequestInit cannot forward readonly header tuples to native fetch. */
   fetch?: (
     ...args: Parameters<typeof globalThis.fetch>
   ) => ReturnType<typeof globalThis.fetch>;
@@ -51,7 +51,7 @@ class GatewayRuntime {
     this.env = options.env ?? process.env;
     this.fetch =
       options.fetch ??
-      /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly tuple conversion or async adoption changes that boundary. */
+      /* oxlint-disable typescript/prefer-readonly-parameter-types, typescript/promise-function-async -- Forward the exact native argument objects and promise from dynamically selected global fetch; readonly parameter conversion or async adoption changes that boundary. */
       ((
         ...args: Parameters<typeof globalThis.fetch>
       ): ReturnType<typeof globalThis.fetch> => globalThis.fetch(...args));

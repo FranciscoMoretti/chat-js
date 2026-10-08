@@ -2,11 +2,8 @@ import type {
   Experimental_VideoModelV4,
   LanguageModelV4,
 } from "@ai-sdk/provider";
-import type { ImageModel } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { AiGatewayModel } from "./models.ts";
-/* oxlint-enable sort-imports */
+import type { ImageModel } from "ai";
 
 interface GatewayProvider<
   TGateway extends string = string,

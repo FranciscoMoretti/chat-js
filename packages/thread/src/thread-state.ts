@@ -1,12 +1,7 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { MessageTree } from "./message-tree";
-/* oxlint-enable sort-imports */
-import type { SnapshotInput } from "./message-tree-readers";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ThreadState, ThreadStateSnapshot } from "./types";
-/* oxlint-enable sort-imports */
+import { MessageTree } from "./message-tree";
+import type { SnapshotInput } from "./message-tree-readers";
+import type { UIMessage } from "ai";
 
 const NO_THREAD_ERROR = globalThis.undefined;
 

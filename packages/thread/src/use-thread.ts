@@ -1,8 +1,8 @@
-import type { UseChatHelpers } from "@ai-sdk/react";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { UIMessage } from "ai";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type {
+  CanonicalMessage,
+  ThreadInit,
+  ThreadStateSnapshot,
+} from "./types";
 import {
   useCallback,
   useEffect,
@@ -11,30 +11,21 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-/* oxlint-enable sort-imports */
-
 import type { AbstractThread } from "./abstract-thread";
+import { SnapshotStore } from "./thread-snapshot-store";
 import { Thread } from "./thread";
+import type { UIMessage } from "ai";
+import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UseThreadHelpers } from "./thread-hook-helpers";
 import { createThreadHelpers } from "./thread-hook-helpers";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { SnapshotStore } from "./thread-snapshot-store";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  CanonicalMessage,
-  ThreadInit,
-  ThreadStateSnapshot,
-} from "./types";
-/* oxlint-enable sort-imports */
 
 const FIRST_PARAMETER_INDEX = 0;
 
-// oxlint-disable-next-line eslint/no-undefined -- An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
-const OMITTED_HOOK_INPUT = undefined;
+// An absent external controller or owned-controller options uses undefined in React state and optional ThreadInit forwarding; this preserves the existing omitted-value contract.
+const OMITTED_HOOK_INPUT = globalThis.undefined;
 
-// oxlint-disable-next-line eslint/no-undefined -- The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
-const NO_SUPPLIED_THREAD = undefined;
+// The supplied-controller guard must exclude exactly undefined; null and other JavaScript values are not the TypeScript optional thread discriminant.
+const NO_SUPPLIED_THREAD = globalThis.undefined;
 
 const useIsomorphicLayoutEffect =
   // oxlint-disable-next-line unicorn/prefer-global-this, no-ternary -- #572: This tests for a browser window; globalThis also exists during server rendering.; no-ternary: Keep useIsomorphicLayoutEffect as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
@@ -117,8 +108,11 @@ class LatestThreadDispatchers<TMessage extends UIMessage> {
     messages: Parameters<
       UseChatHelpers<CanonicalMessage<TMessage>>["setMessages"]
     >[typeof FIRST_PARAMETER_INDEX]
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading setMessages from this.#thread; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-  ): void => this.#thread?.setMessages(messages);
+  ): void => {
+    if (this.#thread) {
+      this.#thread.setMessages(messages);
+    }
+  };
 }
 
 type ExternalThreadOptions<TMessage extends UIMessage> = ThreadHookOptions & {

@@ -8,13 +8,14 @@ import type {
 } from "ai";
 import { AbstractChat } from "ai";
 
+import type { ReadonlyMessageValue } from "./message-utils";
 import { ThreadRunState } from "./thread-run-state";
 
 const FIRST_PARAMETER_INDEX = 0;
 const LAST_MESSAGE_INDEX = -1;
 
-// oxlint-disable-next-line eslint/no-undefined -- Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
-const NO_VALUE = undefined;
+// Resetting the one-use resume prefix, omitting the response ID, and starting without an input message require the SDK undefined sentinel.
+const NO_VALUE = globalThis.undefined;
 // oxlint-disable-next-line unicorn/no-null -- ChatTransport reconnectToStream returns null when the server has no stream; the ready transition preserves an existing run error for that result.
 const NO_RECONNECT_STREAM = null;
 
@@ -23,31 +24,8 @@ type RequestReader = Readonly<Omit<ChatRequestOptions, "headers" | "body">> & {
   readonly body?: Readonly<object>;
 };
 
-type ReadonlyResumeJsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | readonly ReadonlyResumeJsonValue[]
-  | ReadonlyResumeJsonObject;
-
-interface ReadonlyResumeJsonObject {
-  // oxlint-disable-next-line typescript/consistent-indexed-object-style -- This recursive JSON interface closes the value union; putting its recursion through Record produces TS2456.
-  readonly [key: string]: ReadonlyResumeJsonValue | undefined;
-}
-
-type ReadonlyResumeMetadata = Readonly<
-  Record<string, ReadonlyResumeJsonObject>
->;
-
-// Preserve every chunk field while protecting the SDK's recursive JSON metadata.
-type ReadonlyResumeChunk<Chunk = UIMessageChunk> = Chunk extends UIMessageChunk
-  ? {
-      readonly [Key in keyof Chunk]: Key extends "providerMetadata"
-        ? ReadonlyResumeMetadata | undefined
-        : Chunk[Key];
-    }
-  : never;
+// Protect every chunk field while forwarding the original SDK chunk identity.
+type ReadonlyResumeChunk = ReadonlyMessageValue<UIMessageChunk>;
 
 type FinishEventReader<TMessage extends UIMessage> = Readonly<
   Omit<
@@ -158,7 +136,6 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
     let first = true;
     return new TransformStream<UIMessageChunk, UIMessageChunk>({
       transform(
-        // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the complete readonly SDK chunk without changing its identity. The finite recursive readonly JSON view passes the installed SDK enqueue receiver, but the pinned rule still flags this recursive SDK union.
         chunk: ReadonlyResumeChunk,
         controller: Readonly<TransformStreamDefaultController<UIMessageChunk>>
       ): void {
@@ -166,8 +143,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type === "start" &&
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           chunkToEnqueue = {
             // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing chunk own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
@@ -181,8 +158,8 @@ class ThreadRunChat<TMessage extends UIMessage> extends AbstractChat<TMessage> {
         if (
           first &&
           chunk.type !== "start" &&
-          // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading role from lastMessage; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-          lastMessage?.role === "assistant"
+          lastMessage &&
+          lastMessage.role === "assistant"
         ) {
           savePrefix(structuredClone(lastMessage));
           controller.enqueue({

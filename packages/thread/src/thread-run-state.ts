@@ -1,5 +1,4 @@
 import type { ChatState, ChatStatus, UIMessage } from "ai";
-
 import type { ThreadRunHost, ThreadRunSpec } from "./ai-sdk-run-chat";
 
 const CURRENT_RESPONSE_OFFSET = 1;

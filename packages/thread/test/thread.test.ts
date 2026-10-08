@@ -1,36 +1,29 @@
-import { describe, expect, test } from "bun:test";
-
-/* oxlint-disable sort-imports -- Keep the existing runtime test import before this type-only declaration; Oxfmt groups runtime and type imports in this order. */
 import type { DataUIPart, UIMessage, UIMessageChunk } from "ai";
-/* oxlint-enable sort-imports */
-
-import { getMessageText } from "#thread-source/message-utils";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyMessageValue } from "#thread-source/message-utils";
-/* oxlint-enable sort-imports */
-import { Thread } from "#thread-source/thread";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   MemoryThreadState,
   createThreadStateSnapshot,
 } from "#thread-source/thread-state";
-/* oxlint-enable sort-imports */
-import type { ThreadState } from "#thread-source/types";
+import { describe, expect, test } from "bun:test";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { RecordingThreadState } from "./support/recording-thread-state";
-/* oxlint-enable sort-imports */
-import { StateBackedThread } from "./support/state-backed-thread";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { ControlledTransport } from "./support/thread-controlled-transport";
-/* oxlint-enable sort-imports */
+import type { ReadonlyMessageValue } from "#thread-source/message-utils";
+import { RecordingThreadState } from "./support/recording-thread-state";
 import { ResumeTransport } from "./support/thread-resume-transport";
+import { StateBackedThread } from "./support/state-backed-thread";
+import { Thread } from "#thread-source/thread";
+import type { ThreadState } from "#thread-source/types";
+import { getMessageText } from "#thread-source/message-utils";
 
-const user = (id: string): UIMessage => ({
+const textMessage = (id: string, role: UIMessage["role"]): UIMessage => ({
   id,
   parts: [{ text: id, type: "text" }],
-  role: "user",
+  role,
 });
+
+const user = (id: string): UIMessage => textMessage(id, "user");
+
+const assistantMessage = (id: string): UIMessage =>
+  textMessage(id, "assistant");
 
 const assistantWithTool = (id: string): UIMessage => ({
   id,
@@ -80,7 +73,6 @@ const waitFor = async (
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */
 /* oxlint-disable eslint/init-declarations -- The value is assigned by the following guarded operation; an invented initial value would hide an uninitialized control-flow branch. */
-/* oxlint-disable eslint/no-undefined -- Undefined represents an omitted optional argument or absent value in the existing TypeScript/SDK contract. */
 describe("Thread", (): void => {
   test("creates a complete initial snapshot for custom state adapters", (): void => {
     const snapshot = createThreadStateSnapshot({
@@ -318,11 +310,7 @@ describe("Thread", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("continues the selected assistant without creating a sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistant = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-1"),
-      role: "assistant" as const,
-    };
+    const assistant = assistantMessage("assistant-1");
     const chat = new Thread({
       messages: [user("user-1"), assistant],
       transport,
@@ -350,17 +338,14 @@ describe("Thread", (): void => {
   /* oxlint-enable oxc/no-async-await */
   test("keeps hidden branches when reconciling the selected path", (): void => {
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
     });
     chat.addMessage(user("user-2"), "assistant-1");
-    // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-2") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-    chat.addMessage({ ...user("assistant-2"), role: "assistant" }, "user-2");
+    chat.addMessage(assistantMessage("assistant-2"), "user-2");
 
     chat.setMessages([
       user("user-1"),
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      { ...user("assistant-1"), role: "assistant" },
+      assistantMessage("assistant-1"),
       user("user-3"),
     ]);
 
@@ -450,8 +435,7 @@ describe("Thread", (): void => {
         nodes: [
           { message: user("user-active"), parentId: null },
           {
-            // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-ready") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-            message: { ...user("assistant-ready"), role: "assistant" },
+            message: assistantMessage("assistant-ready"),
             parentId: null,
           },
         ],
@@ -464,7 +448,7 @@ describe("Thread", (): void => {
     const runCount = chat.getSnapshot().runs.length;
 
     expect(
-      chat.sendMessage(undefined, {
+      chat.sendMessage(globalThis.undefined, {
         tree: { follow: false, from: "assistant-ready" },
       })
     ).rejects.toThrow("max active runs");
@@ -601,7 +585,7 @@ describe("Thread", (): void => {
     expect(run.getSnapshot()).toMatchObject({ error, status: "error" });
     chat.clearError();
     expect(run.getSnapshot()).toMatchObject({
-      error: undefined,
+      error: globalThis.undefined,
       status: "ready",
     });
   });
@@ -813,18 +797,17 @@ describe("Thread", (): void => {
     });
     const message = requireMessage(chat.getMessage("assistant-1"));
     expect(getMessageText(message)).toBe("prefix suffix");
-    expect(
-      message.parts.filter(
-        (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
-          part.type === "dynamic-tool"
-      )
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-    ).toEqual([
-      expect.objectContaining({
+    const toolParts = message.parts.filter(
+      (part: Readonly<Pick<UIMessage["parts"][number], "type">>) =>
+        part.type === "dynamic-tool"
+    );
+    expect(toolParts).toHaveLength(1);
+    expect(toolParts).toMatchObject([
+      {
         output: "found",
         state: "output-available",
         toolCallId: "restored-tool",
-      }),
+      },
     ]);
   });
   /* oxlint-enable oxc/no-async-await */
@@ -912,8 +895,7 @@ describe("Thread", (): void => {
   test("regenerates a root assistant as a root sibling", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [{ ...user("assistant-1"), role: "assistant" }],
+      messages: [assistantMessage("assistant-1")],
       transport,
     });
 
@@ -941,8 +923,7 @@ describe("Thread", (): void => {
   test("does not follow regeneration after navigating to another branch", async (): Promise<void> => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
     chat.addMessage(user("other-root"), null);
@@ -966,8 +947,7 @@ describe("Thread", (): void => {
   test("rejects an unknown explicit regeneration target", (): void => {
     const transport = new ControlledTransport();
     const chat = new Thread({
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-1") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      messages: [user("user-1"), { ...user("assistant-1"), role: "assistant" }],
+      messages: [user("user-1"), assistantMessage("assistant-1")],
       transport,
     });
 
@@ -981,16 +961,8 @@ describe("Thread", (): void => {
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
   test("regenerates an assistant whose parent is an assistant", async (): Promise<void> => {
     const transport = new ControlledTransport();
-    const assistantParent = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       messages: [assistantParent, assistantChild],
       transport,
@@ -1023,16 +995,8 @@ describe("Thread", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
   test("restores assistant-to-assistant edges as tree data", (): void => {
-    const assistantParent = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-parent") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-parent"),
-      role: "assistant" as const,
-    };
-    const assistantChild = {
-      // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing user("assistant-child") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
-      ...user("assistant-child"),
-      role: "assistant" as const,
-    };
+    const assistantParent = assistantMessage("assistant-parent");
+    const assistantChild = assistantMessage("assistant-child");
     const chat = new Thread({
       initialTree: {
         cursorId: assistantChild.id,
@@ -1108,28 +1072,28 @@ describe("Thread", (): void => {
       id: "approval-b",
     });
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-a")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({ output: "A only", toolCallId: "tool-a" })
+    const firstParts = requireMessage(chat.getMessage("assistant-a")).parts;
+    const secondParts = requireMessage(chat.getMessage("assistant-b")).parts;
+    const firstTool = firstParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-a"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-b")?.parts).not.toContainEqual(
-      expect.objectContaining({ output: "A only" })
+    expect(firstTool).toMatchObject({ output: "A only", toolCallId: "tool-a" });
+    expect(
+      secondParts.some(
+        (part: Readonly<{ type: string; output?: unknown }>): boolean =>
+          part.output === "A only"
+      )
+    ).toBe(false);
+    const secondTool = secondParts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-b"
     );
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from chat.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(chat.getMessage("assistant-b")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-b",
-        }),
-        state: "approval-responded",
-        toolCallId: "tool-b",
-      })
-    );
+    expect(secondTool).toMatchObject({
+      approval: { approved: true, id: "approval-b" },
+      state: "approval-responded",
+      toolCallId: "tool-b",
+    });
   });
   /* oxlint-enable oxc/no-async-await */
   /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
@@ -1167,19 +1131,17 @@ describe("Thread", (): void => {
       toolCallId: "tool-1",
     });
 
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading parts from restored.getMessage(...); preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
-    expect(restored.getMessage("assistant-1")?.parts).toContainEqual(
-      // oxlint-disable-next-line typescript/no-unsafe-argument -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-      expect.objectContaining({
-        // oxlint-disable-next-line typescript/no-unsafe-assignment -- This test deliberately supplies a partial mock or asymmetric matcher; runtime assertions verify the exercised contract.
-        approval: expect.objectContaining({
-          approved: true,
-          id: "approval-1",
-        }),
-        output: "restored output",
-        toolCallId: "tool-1",
-      })
+    const restoredTool = requireMessage(
+      restored.getMessage("assistant-1")
+    ).parts.find(
+      (part: Readonly<{ type: string; toolCallId?: string }>): boolean =>
+        part.type === "dynamic-tool" && part.toolCallId === "tool-1"
     );
+    expect(restoredTool).toMatchObject({
+      approval: { approved: true, id: "approval-1" },
+      output: "restored output",
+      toolCallId: "tool-1",
+    });
   });
   /* oxlint-enable oxc/no-async-await */
   test("rejects missing restored tool and approval ownership", (): void => {
@@ -1368,7 +1330,6 @@ describe("Thread", (): void => {
   });
   /* oxlint-enable oxc/no-async-await */
 });
-/* oxlint-enable eslint/no-undefined */
 /* oxlint-enable eslint/init-declarations */
 /* oxlint-enable unicorn/max-nested-calls */
 /* oxlint-enable unicorn/no-null */

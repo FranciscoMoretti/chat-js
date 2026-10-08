@@ -1,3 +1,5 @@
+/// <reference types="bun" />
+
 // oxlint-disable-next-line node/no-top-level-await -- This Bun build executable completes library bundling before updating the React entry directive.
 const result = await Bun.build({
   entrypoints: [

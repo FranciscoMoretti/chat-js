@@ -1,12 +1,7 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { AbstractThread } from "./abstract-thread";
-/* oxlint-enable sort-imports */
-import { MemoryThreadState } from "./thread-state";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { CanonicalMessage, ThreadInit } from "./types";
-/* oxlint-enable sort-imports */
+import { AbstractThread } from "./abstract-thread";
+import { MemoryThreadState } from "./thread-state";
+import type { UIMessage } from "ai";
 
 class Thread<
   TMessage extends UIMessage = UIMessage,

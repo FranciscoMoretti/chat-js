@@ -1,5 +1,4 @@
 import type { ChatTransport, UIMessage } from "ai";
-
 import type { ThreadRunHost } from "./ai-sdk-run-chat";
 
 type RunHostSource<TMessage extends UIMessage> = Pick<

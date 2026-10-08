@@ -1,6 +1,3 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   ABSENT_MESSAGE,
   ROOT_PARENT_ID,
@@ -9,12 +6,10 @@ import {
   assertParentUnchanged,
   validateMessagePath,
 } from "./message-tree-guards";
-/* oxlint-enable sort-imports */
-import { readMessageTreeIndexes } from "./message-tree-readers";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { SnapshotInput, TreeStorageReader } from "./message-tree-readers";
-/* oxlint-enable sort-imports */
 import type { MessageTreeSnapshot } from "./types";
+import type { UIMessage } from "ai";
+import { readMessageTreeIndexes } from "./message-tree-readers";
 
 const EMPTY_CHILD_COUNT = 0;
 const SIBLING_INSERTION_START = 0;
@@ -223,8 +218,15 @@ class MessageTree<TMessage extends UIMessage = UIMessage> {
 
   public setPath(messages: readonly Readonly<TMessage>[]): void {
     this.updatePath(messages);
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading id from messages.at(...); preserve one receiver evaluation, skipped accesses and the existing ROOT_PARENT_ID fallback.
-    this.#cursorId = messages.at(LAST_PATH_INDEX)?.id ?? ROOT_PARENT_ID;
+    const lastMessage = messages.at(LAST_PATH_INDEX);
+    if (
+      lastMessage === ROOT_PARENT_ID ||
+      lastMessage === globalThis.undefined
+    ) {
+      this.#cursorId = ROOT_PARENT_ID;
+      return;
+    }
+    this.#cursorId = lastMessage.id ?? ROOT_PARENT_ID;
   }
 
   public updatePath(messages: readonly Readonly<TMessage>[]): void {

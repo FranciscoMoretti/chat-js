@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-/* oxlint-disable import/no-relative-parent-imports -- These relative imports connect package-local modules and remain valid in the published standalone layout. */
+/* oxlint-disable import/no-relative-parent-imports -- This monorepo contract test imports the unexported Registry adapter source directly; the test file is excluded from published gateway artifacts. */
 import { LiteLLMGateway } from "../../registry/src/gateways/litellm/gateway";
 /* oxlint-enable import/no-relative-parent-imports */
 

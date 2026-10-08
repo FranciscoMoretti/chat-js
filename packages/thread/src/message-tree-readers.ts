@@ -1,8 +1,5 @@
-import type { UIMessage } from "ai";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { MessageTreeSnapshot } from "./types";
-/* oxlint-enable sort-imports */
+import type { UIMessage } from "ai";
 
 type SnapshotInput<TMessage extends UIMessage> = Readonly<
   Omit<MessageTreeSnapshot<TMessage>, "nodes">

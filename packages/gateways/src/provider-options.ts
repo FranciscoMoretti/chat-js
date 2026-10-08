@@ -15,15 +15,17 @@ const getOpenAIProviderOptions = (
   }
   // Vercel IDs include the provider prefix; direct OpenAI IDs do not.
   const modelName = apiModelId.split("/").pop() ?? apiModelId;
-  return {
+  const options: OpenAIResponsesProviderOptions = {
     reasoningSummary: "auto",
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (modelName === "gpt-5" ||     modelName === "gpt-5-mini" ||     modelName === "gpt-5-nano"       ? { reasoningEffort: "low" }       : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    ...(modelName === "gpt-5" ||
+  };
+  if (
+    modelName === "gpt-5" ||
     modelName === "gpt-5-mini" ||
     modelName === "gpt-5-nano"
-      ? { reasoningEffort: "low" }
-      : {}),
-  };
+  ) {
+    options.reasoningEffort = "low";
+  }
+  return options;
 };
 
 const getModelProviderOptions = (
@@ -40,32 +42,32 @@ const getModelProviderOptions = (
       };
     }
     case "anthropic": {
-      return {
-        // oxlint-disable-next-line no-ternary -- Keep SatisfiesExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        anthropic: (model.reasoning
-          ? {
-              thinking: {
-                budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
-                type: "enabled",
-              },
-            }
-          : {}) satisfies AnthropicProviderOptions,
-      };
+      if (model.reasoning) {
+        return {
+          anthropic: {
+            thinking: {
+              budgetTokens: ANTHROPIC_REASONING_BUDGET_TOKENS,
+              type: "enabled",
+            },
+          } satisfies AnthropicProviderOptions,
+        };
+      }
+      return { anthropic: {} satisfies AnthropicProviderOptions };
     }
     case "xai": {
       return { xai: {} };
     }
     case "google": {
-      return {
-        // oxlint-disable-next-line no-ternary -- Keep SatisfiesExpression as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-        google: (model.reasoning
-          ? {
-              thinkingConfig: {
-                thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
-              },
-            }
-          : {}) satisfies GoogleLanguageModelOptions,
-      };
+      if (model.reasoning) {
+        return {
+          google: {
+            thinkingConfig: {
+              thinkingBudget: GOOGLE_REASONING_BUDGET_TOKENS,
+            },
+          } satisfies GoogleLanguageModelOptions,
+        };
+      }
+      return { google: {} satisfies GoogleLanguageModelOptions };
     }
     default: {
       return {};
