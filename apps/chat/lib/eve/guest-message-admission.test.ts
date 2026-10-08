@@ -1,17 +1,17 @@
-import { beforeEach, expect, it, vi } from "vitest";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   admitGuestMessage,
   settleGuestMessage,
 } from "./guest-message-admission";
-/* oxlint-enable sort-imports */
+import { beforeEach, expect, it, vi } from "vitest";
 import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
+// oxlint-disable-next-line import/no-nodejs-modules -- Reservation fixtures use the same native UUID return type as the database reservation API.
+import { randomUUID } from "node:crypto";
+import type { reserveEveGuestMessage } from "@/lib/db/eve-guests";
 
 const mocks = vi.hoisted(() => ({
   commit: vi.fn(),
   release: vi.fn(),
-  reserve: vi.fn(),
+  reserve: vi.fn<typeof reserveEveGuestMessage>(),
 }));
 vi.mock("../db/eve-guests", () => ({
   commitEveGuestMessage: mocks.commit,
@@ -34,8 +34,8 @@ vi.mock("../types/anonymous", () => ({
 }));
 const input = { message: "hello", modelId: "cheap" };
 const admission = {
-  operationId: crypto.randomUUID(),
-  reservationId: crypto.randomUUID(),
+  operationId: randomUUID(),
+  reservationId: randomUUID(),
 };
 const request = new Request("http://localhost/api/eve/v1/session/native", {
   headers: { [EVE_MESSAGE_OPERATION_HEADER]: admission.operationId },
@@ -76,11 +76,13 @@ it("permits dispatch only for the first reservation and never marks replays as u
   expect(await admitGuestMessage(request, "owner", "native", input)).toEqual(
     admission
   );
-  for (const status of ["replay", "conflict"]) {
-    mocks.reserve.mockResolvedValue({
-      reservationId: admission.reservationId,
-      status,
-    });
+  const repeatedResults: Awaited<ReturnType<typeof reserveEveGuestMessage>>[] =
+    [
+      { reservationId: admission.reservationId, status: "replay" },
+      { status: "conflict" },
+    ];
+  for (const result of repeatedResults) {
+    mocks.reserve.mockResolvedValue(result);
     // oxlint-disable-next-line eslint/no-await-in-loop -- Each case completes before the shared fixture or mock state is reused.
     const repeated = await admitGuestMessage(request, "owner", "native", input);
     expect(repeated).toBeInstanceOf(Response);
@@ -110,7 +112,7 @@ it("distinguishes content and destination in quota identity", async () => {
   ]) {
     // oxlint-disable-next-line eslint/no-await-in-loop, oxc/no-rest-spread-properties -- Each case completes before the shared fixture or mock state is reused. Rest/spread: Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
     await admitGuestMessage(request, "owner", sessionId, { ...input, message });
-    // oxlint-disable-next-line typescript/no-unsafe-member-access, oxc/no-optional-chaining -- #597: This guest-message-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. Optional chain: Keep the existing nullish guard when reading 0 from mocks.reserve.mock.lastCall; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
+    // oxlint-disable-next-line oxc/no-optional-chaining -- lastCall is absent before any invocation; the typed reserve mock records the exact guest reservation input tuple.
     hashes.push(mocks.reserve.mock.lastCall?.[0].requestHash);
   }
   expect(new Set(hashes).size).toBe(3);

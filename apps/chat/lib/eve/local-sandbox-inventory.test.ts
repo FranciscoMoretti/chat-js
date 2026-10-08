@@ -1,6 +1,7 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { mkdir, mkdtemp, readFile, rm, symlink, writeFile, } from "node:fs/promises";; import { tmpdir } from "node:os";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
+import { expect, test } from "vitest";
 import {
   mkdir,
   mkdtemp,
@@ -9,16 +10,10 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import nodePath from "node:path";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
-
 import { readLocalEveSandboxInventory } from "./local-sandbox-inventory";
+import { tmpdir } from "node:os";
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 

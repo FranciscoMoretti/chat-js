@@ -2,38 +2,30 @@
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
-import { createHash } from "node:crypto";
-
 import { parseSessionTranscriptSeed } from "eve/transcript";
-
-import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import { createFileId } from "@/lib/file-storage";
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- eve/transcript installs the global Zod postprocessor; copy-documents constructs document schemas. Keep EVE initialization before those app schemas. */
 import {
   eveCopyDocumentResources,
   prepareEveCopyDocuments,
 } from "./copy-documents";
 /* oxlint-enable sort-imports */
-import type { EveCopyPlan } from "./copy-journal-contract";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   eveCopyInlineAttachments,
   materializeEveCopyTranscript,
 } from "./copy-transcript";
-/* oxlint-enable sort-imports */
+import type { EveCopyPlan } from "./copy-journal-contract";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import { createFileId } from "@/lib/file-storage";
+import { createHash } from "node:crypto";
 import type { prepareEveCopyTranscript } from "./copy-transcript";
+import type { snapshotPublicEveCopyDocuments } from "@/lib/db/eve-copy-documents";
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveCopyPlan); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveCopyPlan's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
-/* oxlint-disable max-lines-per-function, max-params, max-statements, typescript/promise-function-async, typescript/strict-boolean-expressions -- * max-lines-per-function (#510): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements -- * max-lines-per-function (#510): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): prepareEveCopyPlan preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
- * typescript/strict-boolean-expressions (#610): prepareEveCopyPlan intentionally keeps the existing falsy-value behavior of documentId; revisionId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+ * max-statements (#512): prepareEveCopyPlan keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Allocate destination identities and rewrite an authorized public projection and ancestry.
  * Inputs must come from server authorization, never browser-supplied content.
@@ -44,7 +36,7 @@ import type { prepareEveCopyTranscript } from "./copy-transcript";
  * @returns {Promise<EveCopyPlan>} Copy plan with allocated identities, source descriptors, and remapped document boundaries; no destination files are written here.
  */
 export const prepareEveCopyPlan = async (
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the native Seed to transcript materialization; the cloned output retains native mutable attachment/message contracts.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- EveChannelInput.resolveSeed returns SessionTranscriptSeed with mutable messages and parts arrays (eve execution/session-transcript-seed.d.ts). materializeEveCopyTranscript accepts and returns that Seed; deep readonly arrays are not assignable at this boundary.
   projection: Readonly<
     Pick<ReturnType<typeof prepareEveCopyTranscript>, "resources" | "seed">
   >,
@@ -108,6 +100,7 @@ export const prepareEveCopyPlan = async (
   const seed = await materializeEveCopyTranscript(
     projection.seed,
     allocations,
+    // oxlint-disable-next-line typescript/promise-function-async -- The metadata resolver throws synchronously for a missing allocation and otherwise returns the resolved file promise unchanged.
     (key) => {
       const file = metadata.get(key);
       if (!file) {
@@ -126,7 +119,12 @@ export const prepareEveCopyPlan = async (
         (head: Readonly<{ documentId: string; revisionId: string }>) => {
           const documentId = allocations.documents.get(head.documentId);
           const revisionId = allocations.revisions.get(head.revisionId);
-          if (!(documentId && revisionId)) {
+          if (
+            typeof documentId !== "string" ||
+            documentId === "" ||
+            typeof revisionId !== "string" ||
+            revisionId === ""
+          ) {
             throw new Error("Missing copied document boundary allocation.");
           }
           return { documentId, revisionId };
@@ -161,4 +159,4 @@ export const prepareEveCopyPlan = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-params, max-statements, typescript/promise-function-async, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements */

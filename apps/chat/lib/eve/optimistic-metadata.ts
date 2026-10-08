@@ -3,7 +3,6 @@ import type {
   QueryClient,
   QueryKey,
 } from "@tanstack/react-query";
-
 import type {
   getEveChatIdentity,
   listEveConversations,

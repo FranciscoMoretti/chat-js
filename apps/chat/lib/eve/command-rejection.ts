@@ -1,5 +1,4 @@
 import { ClientError } from "eve/client";
-
 import { isEveAdmissionBusy } from "./admission-retry";
 
 const code = "chatjs_command_rejected";

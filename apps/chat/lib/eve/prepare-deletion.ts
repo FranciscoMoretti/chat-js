@@ -1,17 +1,16 @@
 import { requireEveDeletionLifecycle } from "./deletion-lifecycle";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- deletion-lifecycle builds env and lifecycle schemas before retire-session loads eve/client and installs the shared Zod postprocessor. */
 import {
   retireEveFamilyForDeletion,
   retireEveSessionForDeletion,
 } from "./retire-session";
-/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveFamilyDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyDeletion's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable sort-imports */
 
-/* oxlint-disable max-statements, typescript/strict-boolean-expressions --
- * max-statements (#512): prepareEveFamilyDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/strict-boolean-expressions (#610): prepareEveFamilyDeletion intentionally keeps the existing falsy-value behavior of sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+/* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (prepareEveFamilyDeletion); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
+/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve prepareEveFamilyDeletion's awaited sequencing and rejected-Promise behavior. */
+
+/* oxlint-disable max-statements --
+ * max-statements (#512): prepareEveFamilyDeletion keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /** Authorize and retire the whole family before fencing work for external-resource inventory.
  * @param {string} ownerId Owner whose conversation family is authorized and retired.
  * @param {string} conversationId Conversation used to resolve the deletion family.
@@ -46,7 +45,7 @@ export const prepareEveFamilyDeletion = async (
   const streamIds = new Set<string>();
   for (const conversation of family.conversations) {
     const { sessionId } = conversation;
-    if (!sessionId) {
+    if (typeof sessionId !== "string" || sessionId === "") {
       throw new Error("Resolve the missing session binding before cleanup.");
     }
     // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
@@ -73,4 +72,4 @@ export const prepareEveFamilyDeletion = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-statements, typescript/strict-boolean-expressions */
+/* oxlint-enable max-statements */

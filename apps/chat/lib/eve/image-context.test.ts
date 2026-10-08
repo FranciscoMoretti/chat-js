@@ -1,8 +1,5 @@
-import type { ModelMessage } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, test } from "vitest";
-/* oxlint-enable sort-imports */
-
+import type { ModelMessage } from "ai";
 import { eveImageContext } from "./image-context";
 
 /* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, unicorn/no-null --

@@ -1,8 +1,6 @@
-/* oxlint-disable typescript/explicit-function-return-type -- Hoisted SDK mocks retain their inferred spy types for these accounting assertions. */
 /* oxlint-disable import/no-relative-parent-imports -- The contract test exercises the canonical registry adapter without installing Daytona into the Vercel demo. */
 /* oxlint-disable unicorn/no-null -- Null is a malformed output fixture checked at the executor boundary. */
 import { beforeEach, expect, it, vi } from "vitest";
-
 import { testToolContext } from "@/tests/helpers/eve-tool-context";
 
 const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
@@ -10,14 +8,20 @@ vi.mock("@/lib/env", () => ({
   env: { DAYTONA_API_KEY: "test", DAYTONA_ORGANIZATION_ID: "org" },
 }));
 vi.mock("@/lib/logger", () => ({
-  createModuleLogger: () => ({ error: vi.fn() }),
+  createModuleLogger: (): { error: ReturnType<typeof vi.fn> } => ({
+    error: vi.fn(),
+  }),
 }));
 vi.mock("@/lib/eve/code-sandbox-ownership", () => ({
   eveCodeSandboxOwnership: vi.fn(),
 }));
 vi.mock(
   "../../../../packages/registry/src/tools/daytona-code-execution/sandbox",
-  () => ({ createDaytonaProvider: () => ({ cleanup: {} }) })
+  () => ({
+    createDaytonaProvider: (): { cleanup: Record<string, never> } => ({
+      cleanup: {},
+    }),
+  })
 );
 vi.mock(
   "../../../../packages/registry/src/tools/daytona-code-execution/execution",
@@ -28,7 +32,7 @@ beforeEach(() => {
   mocks.execute.mockReset();
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the mocked canonical executor import and execution result before checking its cost receipt. */
 it("the selected typed executor returns exactly one completed usage receipt", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");
@@ -43,7 +47,7 @@ it("the selected typed executor returns exactly one completed usage receipt", as
   });
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the mocked canonical executor import and execution result before checking its cost receipt. */
 it("failed cleanup or invalid output does not receive a completed execution charge", async () => {
   const { executeCode } =
     await import("../../../../packages/registry/src/tools/daytona-code-execution/tool");

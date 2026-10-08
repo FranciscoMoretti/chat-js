@@ -1,11 +1,10 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { mkdir, readdir, writeFile } from "node:fs/promises";; import nodePath from "node:path";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { mkdir, readdir, writeFile } from "node:fs/promises";
-/* oxlint-enable sort-imports */
+import { createHash } from "node:crypto";
 import nodePath from "node:path";
+
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fenceLocalEveSandboxMutations); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve fenceLocalEveSandboxMutations's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */

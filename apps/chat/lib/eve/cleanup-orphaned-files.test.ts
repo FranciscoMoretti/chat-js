@@ -1,11 +1,11 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
 import { cleanupEveOrphanedFiles } from "./cleanup-orphaned-files";
+import type { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
 
 const mocks = vi.hoisted(() => ({
   complete: vi.fn(),
   inventory: vi.fn(),
-  prepare: vi.fn(),
+  prepare: vi.fn<typeof prepareEveOrphanedFilePurge>(),
   remove: vi.fn(),
 }));
 vi.mock("../db/eve-orphaned-files", () => ({
@@ -31,7 +31,7 @@ beforeEach(() => {
     Promise.resolve(keys.map((fileKey) => ({ key: fileKey, ownerId: "owner" })))
   );
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await completion or rejection of the inventory sweep before asserting provider deletions and durable fence completion. */
 /* oxlint-enable typescript/promise-function-async */
 test("only submits old valid keys and deletes the ownership-filtered result", async () => {
   mocks.inventory.mockImplementation(function* fixtureOutput() {
@@ -66,15 +66,14 @@ test("only submits old valid keys and deletes the ownership-filtered result", as
   expect(mocks.complete).toHaveBeenCalledWith("owner", [key]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable id-length, no-magic-numbers, no-undefined --
- * id-length (#506): test("a failed batch retains its deletion fence without starving subsequent batches") uses _; i as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable oxc/no-async-await -- Await completion or rejection of the inventory sweep before asserting provider deletions and durable fence completion. */
+/* oxlint-disable no-magic-numbers, no-undefined --
  * no-magic-numbers (#517): test("a failed batch retains its deletion fence without starving subsequent batches") uses 24, 100, 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): test("a failed batch retains its deletion fence without starving subsequent batches") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
 test("a failed batch retains its deletion fence without starving subsequent batches", async () => {
-  const keys = Array.from({ length: 101 }, (_, i) =>
-    String(i).padStart(24, "0")
+  const keys = Array.from({ length: 101 }, (_unused, fileIndex) =>
+    String(fileIndex).padStart(24, "0")
   );
   mocks.inventory.mockImplementation(function* fixtureOutput() {
     for (const fileKey of keys) {
@@ -89,12 +88,10 @@ test("a failed batch retains its deletion fence without starving subsequent batc
   expect(
     mocks.prepare.mock.calls.map(
       ([fileKeys]: Readonly<(typeof mocks.prepare.mock.calls)[number]>) =>
-        /* oxlint-disable typescript/no-unsafe-return, typescript/no-unsafe-member-access -- #598: This cleanup-orphaned-files fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #597: This cleanup-orphaned-files fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. */
         fileKeys.length
-      /* oxlint-enable typescript/no-unsafe-return, typescript/no-unsafe-member-access */
     )
   ).toEqual([100, 1]);
   expect(mocks.complete).toHaveBeenCalledExactlyOnceWith("owner", [keys[100]]);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable id-length, no-magic-numbers, no-undefined */
+/* oxlint-enable no-magic-numbers, no-undefined */

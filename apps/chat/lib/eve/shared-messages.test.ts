@@ -1,9 +1,6 @@
-import type { EveMessagePart } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { expect, it } from "vitest";
-/* oxlint-enable sort-imports */
-
 import { sharedEveMessages, sharedEvePart } from "./shared-messages";
+import type { EveMessagePart } from "eve/client";
 
 it("shares transcript content without authorization challenges or runtime metadata", () => {
   const messages = sharedEveMessages([
@@ -102,8 +99,8 @@ it.each([
 );
 
 /* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers --
- * max-lines-per-function (#510): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * max-statements (#512): it("removes owner approval and execution fields while preserving every tool status") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+ * max-lines-per-function (#510): Exercise all native tool states against the same private approval/execution fields and assert their public projection; the status matrix is one privacy contract.
+ * max-statements (#512): Exercise all native tool states against the same private approval/execution fields and assert their public projection; the status matrix is one privacy contract.
  * no-magic-numbers (#517): it("removes owner approval and execution fields while preserving every tool status") uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 it("removes owner approval and execution fields while preserving every tool status", () => {

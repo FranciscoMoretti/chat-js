@@ -1,5 +1,4 @@
 import { beforeEach, expect, it, vi } from "vitest";
-
 import { fetchEveChannelFile } from "./channel-files";
 
 const mocks = vi.hoisted(() => ({ download: vi.fn(), owned: vi.fn() }));
@@ -8,7 +7,7 @@ vi.mock("../file-storage", () => ({ downloadFile: mocks.download }));
 
 const key = "abcdefghijklmnopqrstuvwx.png";
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): owner uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
+ * no-magic-numbers (#517): Parameter index 1 selects the native fetch context, whose authenticated principal type validates this fixture.
  */
 const owner = {
   attributes: {},
@@ -33,7 +32,7 @@ beforeEach(() => {
     new Blob(["image bytes"], { type: "image/png" })
   );
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await attachment ownership/storage results and rejection assertions before inspecting the spies; the promise-chain alternative conflicts with promise/prefer-await-to-then. */
 /* oxlint-enable no-undefined */
 
 /* oxlint-disable no-magic-numbers --
@@ -55,7 +54,7 @@ it("checks the destination owner before reading local storage, regardless of the
   expect(result?.mediaType).toBe("image/png");
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await attachment ownership/storage results and rejection assertions before inspecting the spies; the promise-chain alternative conflicts with promise/prefer-await-to-then. */
 /* oxlint-enable no-magic-numbers */
 
 it("never reads a foreign or deleted file after an ownership rejection", async () => {
@@ -66,7 +65,7 @@ it("never reads a foreign or deleted file after an ownership rejection", async (
   expect(mocks.download).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await attachment ownership/storage results and rejection assertions before inspecting the spies; the promise-chain alternative conflicts with promise/prefer-await-to-then. */
 it("does not resolve files without authenticated session context", async () => {
   await expect(fetchEveChannelFile(`/api/files/${key}`)).rejects.toThrow(
     "authenticated owner"
@@ -75,7 +74,7 @@ it("does not resolve files without authenticated session context", async () => {
   expect(mocks.download).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it.each([   "https://foreign.example/private",   "/api/files/../../private",   "https://foreign.exam's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await attachment ownership/storage results and rejection assertions before inspecting the spies; the promise-chain alternative conflicts with promise/prefer-await-to-then. */
 it.each([
   "https://foreign.example/private",
   "/api/files/../../private",

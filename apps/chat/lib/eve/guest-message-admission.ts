@@ -1,42 +1,36 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
-/* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
-import { createHash } from "node:crypto";
 
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { UiToolName } from "@/lib/ai/types";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   commitEveGuestMessage,
   releaseEveGuestMessage,
   reserveEveGuestMessage,
 } from "@/lib/db/eve-guests";
-/* oxlint-enable sort-imports */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { ANONYMOUS_LIMITS } from "@/lib/types/anonymous";
-/* oxlint-enable sort-imports */
-
-import { rejectEveCommand } from "./command-rejection";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { guestRequestIpHash } from "./guest-admission";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
-/* oxlint-enable sort-imports */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { UiToolName } from "@/lib/ai/types";
+import { createHash } from "node:crypto";
+import { rejectEveCommand } from "./command-rejection";
+// oxlint-disable-next-line sort-imports -- command-rejection installs EVE's shared Zod postprocessor before message-delivery and guest-admission construct their app schemas.
+import { EVE_MESSAGE_OPERATION_HEADER } from "./message-delivery";
+import { guestRequestIpHash } from "./guest-admission";
+import { z } from "zod";
+
+const HTTP_BAD_REQUEST = 400;
+const HTTP_FORBIDDEN = 403;
+const HTTP_CONFLICT = 409;
+const HTTP_TOO_MANY_REQUESTS = 429;
+const HTTP_UNAVAILABLE = 503;
+
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve admitGuestMessage's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements -- init-declarations (#507): admitGuestMessage assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
 max-lines-per-function (#510): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 max-params (#511): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
-no-magic-numbers (#517): admitGuestMessage uses 400, 403, 503, 429 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+max-statements (#512): admitGuestMessage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold. */
 /**
  * Only the first reservation may dispatch: eve's session POST has no replay key.
  *
@@ -69,7 +63,10 @@ const admitGuestMessage = async (
     .uuid()
     .safeParse(request.headers.get(EVE_MESSAGE_OPERATION_HEADER));
   if (!operationId.success) {
-    return rejectEveCommand("A message operation ID is required.", 400);
+    return rejectEveCommand(
+      "A message operation ID is required.",
+      HTTP_BAD_REQUEST
+    );
   }
   if (
     !ANONYMOUS_LIMITS.AVAILABLE_MODELS.some(
@@ -80,22 +77,28 @@ const admitGuestMessage = async (
         (tool) => tool === input.selectedTool
       ))
   ) {
-    return rejectEveCommand("Sign in to use this model or tool.", 403);
+    return rejectEveCommand(
+      "Sign in to use this model or tool.",
+      HTTP_FORBIDDEN
+    );
   }
   let ipHash: string;
   try {
     ipHash = guestRequestIpHash(request);
   } catch {
-    return rejectEveCommand("Guest admission is unavailable.", 503);
+    return rejectEveCommand(
+      "Guest admission is unavailable.",
+      HTTP_UNAVAILABLE
+    );
   }
   const result = await reserveEveGuestMessage({
-    ownerId,
+    ipHash,
     operationId: operationId.data,
+    ownerId,
     requestHash: createHash("sha256")
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing input own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       .update(JSON.stringify({ kind: "message", sessionId, ...input }))
       .digest("hex"),
-    ipHash,
     requestsPerMinute: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MINUTE,
     requestsPerMonth: ANONYMOUS_LIMITS.RATE_LIMIT.REQUESTS_PER_MONTH,
   });
@@ -109,23 +112,22 @@ const admitGuestMessage = async (
     // This is deliberately not chatjs_command_rejected: the original may have run.
     return Response.json(
       {
+        code: "chatjs_message_operation_exists",
         error:
           "This message operation already exists. Reconnect before sending again.",
-        code: "chatjs_message_operation_exists",
       },
-      { status: 409 }
+      { status: HTTP_CONFLICT }
     );
   }
   return rejectEveCommand(
     "Guest message limit reached. Sign in to continue.",
-    429
+    HTTP_TOO_MANY_REQUESTS
   );
 };
 /* oxlint-enable oxc/no-async-await */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve settleGuestMessage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-magic-numbers */
-/* oxlint-disable no-magic-numbers, unicorn/no-null -- no-magic-numbers (#517): settleGuestMessage uses 409 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
-unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
+/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements */
+/* oxlint-disable unicorn/no-null --unicorn/no-null (#570): settleGuestMessage preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const settleGuestMessage = async (
   response: ReadonlyNativeSurface<Response>,
   ownerId: string,
@@ -144,7 +146,7 @@ const settleGuestMessage = async (
   }
   // Native dispatch explicitly reports a session that never admitted the command.
   const inactive =
-    response.status === 409 &&
+    response.status === HTTP_CONFLICT &&
     z.object({ code: z.literal("session_not_active") }).safeParse(
       await response
         .clone()
@@ -161,6 +163,6 @@ const settleGuestMessage = async (
 };
 /* oxlint-disable import/no-named-export -- Keep the existing named module bindings (admitGuestMessage, settleGuestMessage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable no-magic-numbers, unicorn/no-null */
+/* oxlint-enable unicorn/no-null */
 export { admitGuestMessage, settleGuestMessage };
 /* oxlint-enable import/no-named-export */

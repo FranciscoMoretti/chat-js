@@ -1,19 +1,14 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This test harness requires import { createHash } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   admitGuestCreation,
   guestRequestIpHash,
   settleGuestCreation,
 } from "./guest-admission";
-/* oxlint-enable sort-imports */
+import { beforeEach, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
+
 /* oxlint-enable import/no-nodejs-modules */
 
 /* oxlint-disable no-undefined --
@@ -181,7 +176,7 @@ it("binds quota to the complete creation intent and retains native operation rep
     expect.objectContaining({
       operationId: input.operationId,
       ownerId: "guest",
-      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: This guest-admission fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
+      // oxlint-disable-next-line typescript/no-unsafe-assignment -- #595: Vitest's expect.stringMatching returns any in its ExpectStatic matcher contract; this property is an asymmetric matcher consumed by toHaveBeenCalledWith, not an application requestHash.
       requestHash: expect.stringMatching(HASH),
       requestsPerMinute: 5,
     }),

@@ -1,6 +1,5 @@
 import type { UiToolName } from "@/lib/ai/types";
 import { env } from "@/lib/env";
-
 import { getEveConnectionOptions } from "./connection-options";
 import { resolveWorkflowWorld } from "./world-config";
 
@@ -23,12 +22,12 @@ const assertEveConfigured = (): void => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve eveRequest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable max-params -- Existing exported request API accepts owner, path, native request options and optional model/tool headers. Fetch RequestInit accepts mutable header tuple arrays and body streams; a deep readonly wrapper is not assignable to the native fetch contract. */
+/* oxlint-disable max-params -- The exported request API accepts owner, path, request options and optional model/tool headers; existing callers depend on these positional arguments. */
 const eveRequest = async (
   owner: string,
   path: string,
 
-  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward the original native RequestInit/fetch tuple; readonly header tuples are rejected by the native request receiver.
+  // oxlint-disable-next-line typescript/prefer-readonly-parameter-types -- Forward native RequestInit unchanged except enforced headers/cache/redirect; Next.js requires mutable next.tags, which is rejected when projected deeply readonly.
   init: RequestInit = {},
   modelId?: string,
   selectedTool?: UiToolName
@@ -46,7 +45,8 @@ const eveRequest = async (
   if (typeof selectedTool === "string") {
     headers.set("x-chatjs-tool", selectedTool);
   }
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Preserve fetch BodyInit presence semantics: an empty string sends no JSON content-type, while populated text, buffers and streams do.
+
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- BodyInit combines text, buffers and streams with null/undefined; retain no content-type for empty text or absent bodies. Explicit null comparisons also conflict with unicorn/no-null.
   if (init.body) {
     headers.set("content-type", "application/json");
   }

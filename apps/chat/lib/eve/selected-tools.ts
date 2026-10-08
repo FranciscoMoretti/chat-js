@@ -23,15 +23,14 @@ export const selectedEveTools = (
   if (!selectedTool) {
     return null;
   }
-  // oxlint-disable-next-line no-ternary -- Keep names as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-  const names = canvasTools.includes(selectedTool)
-    ? canvasTools
-    : [selectedTool];
 
-  if (names.some((name) => name.endsWith("Document"))) {
-    return [...names, "readDocument"];
+  if (canvasTools.includes(selectedTool)) {
+    return [...canvasTools, "readDocument"];
   }
-  return names;
+  if (selectedTool.endsWith("Document")) {
+    return [selectedTool, "readDocument"];
+  }
+  return [selectedTool];
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable unicorn/no-null */

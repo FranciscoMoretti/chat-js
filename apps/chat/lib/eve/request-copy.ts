@@ -1,14 +1,8 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import type { EveCopyInput } from "./copy-input";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
 import { conversationBinding } from "./contracts";
 import { eveCopyInput } from "./copy-input";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveCopyInput } from "./copy-input";
-/* oxlint-enable sort-imports */
+import { z } from "zod";
 
 const COPY_REQUEST_TIMEOUT_MS = 45_000;
 

@@ -2,18 +2,15 @@
  * import/no-nodejs-modules (#529): This test harness requires import { randomUUID } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
 /* oxlint-disable eslint/no-await-in-loop -- Sequential adversarial requests keep each authorization assertion explicit. */
-import { randomUUID } from "node:crypto";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { afterEach, expect, test, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
 import {
   issueGuestCredential,
   newGuestClaims,
   readGuestCredential,
 } from "./disposable-guest";
 import { authenticateDisposableGuest } from "./disposable-guest-auth";
+import { randomUUID } from "node:crypto";
+
 /* oxlint-enable import/no-nodejs-modules */
 
 vi.mock("../env", () => ({
@@ -23,31 +20,24 @@ vi.mock("../env", () => ({
 }));
 afterEach(() => vi.useRealTimers());
 
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep claims's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const claims = () => ({
+const claims = (): ReturnType<typeof newGuestClaims> & {
+  sessionId: string;
+} => ({
   // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing newGuestClaims("test-model") own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
   ...newGuestClaims("test-model"),
   sessionId: "session-owned",
 });
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-disable no-undefined, typescript/explicit-function-return-type --
- * no-undefined (#519): request uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/explicit-function-return-type (#560): Keep request's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
-const request = (token: string, path: string, body?: unknown) =>
+
+const request = (token: string, path: string, body?: unknown): Request =>
   new Request(`https://chat.example/eve/v1/${path}`, {
-    // oxlint-disable-next-line no-ternary -- Keep body as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: JSON.stringify(body),
     headers: {
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
-    // oxlint-disable-next-line no-ternary -- Keep method as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    // oxlint-disable-next-line no-undefined, no-ternary -- Request method distinguishes an omitted body from null; unicorn/no-typeof-undefined rejects the equivalent typeof comparison.
     method: body === undefined ? "GET" : "POST",
   });
-/* oxlint-enable no-undefined, typescript/explicit-function-return-type */
 
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("credentials are signed, expire, and cannot be edited to name another session") uses 1 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.

@@ -1,60 +1,47 @@
 /* oxlint-disable import/no-nodejs-modules --
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHash } from "node:crypto";; import { constants } from "node:fs";; import { open, realpath } from "node:fs/promises";; import nodePath from "node:path";; import { isDeepStrictEqual } from "node:util";; its Node runtime boundary deliberately permits these built-ins.
  */
-import { createHash } from "node:crypto";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { constants } from "node:fs";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/max-dependencies -- Sandbox coverage directly uses native filesystem, database, schema and authorization boundaries. */
 import { open, realpath } from "node:fs/promises";
-/* oxlint-enable sort-imports */
-import nodePath from "node:path";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { isDeepStrictEqual } from "node:util";
-
-import postgres from "postgres";
-/* oxlint-enable sort-imports */
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
-import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-// oxlint-disable-next-line import/max-dependencies -- The readonly DTO type is an explicit dependency alongside this existing integration boundary; aggregating imports would hide the same coupling.
 import { assertEveConfigured } from "./server";
-/* oxlint-enable sort-imports */
+import { constants } from "node:fs";
+import { createHash } from "node:crypto";
+import { env } from "@/lib/env";
+import { isDeepStrictEqual } from "node:util";
+import nodePath from "node:path";
+import postgres from "postgres";
+import { verifyEveSandboxCoverage } from "@/lib/eve/lifecycle/postgres/eve-sandbox-coverage-proof";
+import { z } from "zod";
+/* oxlint-enable import/max-dependencies */
+
 /* oxlint-enable import/no-nodejs-modules */
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): identitySchema uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MIN_IDENTITY_VALUE_LENGTH = 1;
+const IDENTITY_VERSION = 1;
+const RECEIPT_SNAPSHOT_VERSION = 2;
+const COVERAGE_READ_TIMEOUT_MS = 15_000;
+const MAX_IDENTITY_FILE_BYTES = 16_384;
+const MAX_DATABASE_CONNECTIONS = 1;
+
 const identitySchema = z.strictObject({
-  appRoot: z.string().min(1),
+  appRoot: z.string().min(MIN_IDENTITY_VALUE_LENGTH),
   backendName: z.literal("microsandbox"),
-  sessionId: z.string().min(1),
-  version: z.literal(1),
+  sessionId: z.string().min(MIN_IDENTITY_VALUE_LENGTH),
+  version: z.literal(IDENTITY_VERSION),
 });
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): receiptSchema uses 1, 2 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const receiptSchema = z.strictObject({
   local: identitySchema,
-  sessionId: z.string().min(1),
-  snapshotVersion: z.literal(2),
-  version: z.literal(1),
+  sessionId: z.string().min(MIN_IDENTITY_VALUE_LENGTH),
+  snapshotVersion: z.literal(RECEIPT_SNAPSHOT_VERSION),
+  version: z.literal(IDENTITY_VERSION),
 });
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (verifyLocalEveFamilyCoverage); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve verifyLocalEveFamilyCoverage's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable max-lines-per-function, max-statements, no-magic-numbers -- * max-lines-per-function (#510): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-statements -- * max-lines-per-function (#510): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): verifyLocalEveFamilyCoverage keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): verifyLocalEveFamilyCoverage uses 15_000, 16_384 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions. */
+ */
 /**
  * Verify native and local sandbox identity evidence for every retired family inventory.
  * Call only after family authorization, retirement and native/local fences.
@@ -74,7 +61,9 @@ export const verifyLocalEveFamilyCoverage = async (
 ): Promise<void> => {
   assertEveConfigured();
   const canonicalRoot = await realpath(appRoot);
-  const connection = postgres(env.WORKFLOW_POSTGRES_URL ?? "", { max: 1 });
+  const connection = postgres(env.WORKFLOW_POSTGRES_URL ?? "", {
+    max: MAX_DATABASE_CONNECTIONS,
+  });
   try {
     for (const inventory of inventories) {
       // oxlint-disable-next-line eslint/no-await-in-loop -- Process one resource at a time so fencing and cleanup stay ordered and bounded.
@@ -97,7 +86,7 @@ export const verifyLocalEveFamilyCoverage = async (
                 "x-chatjs-owner": ownerId,
               },
               redirect: "error",
-              signal: AbortSignal.timeout(15_000),
+              signal: AbortSignal.timeout(COVERAGE_READ_TIMEOUT_MS),
             }
           );
           if (!response.ok) {
@@ -110,7 +99,7 @@ export const verifyLocalEveFamilyCoverage = async (
             appRoot: canonicalRoot,
             backendName: "microsandbox",
             sessionId,
-            version: 1,
+            version: IDENTITY_VERSION,
           };
           if (
             receipt.sessionId !== sessionId ||
@@ -139,7 +128,7 @@ export const verifyLocalEveFamilyCoverage = async (
           );
           try {
             const stat = await file.stat();
-            if (!stat.isFile() || stat.size > 16_384) {
+            if (!stat.isFile() || stat.size > MAX_IDENTITY_FILE_BYTES) {
               throw new Error("Invalid sandbox identity file.");
             }
             const local = identitySchema.parse(
@@ -162,4 +151,4 @@ export const verifyLocalEveFamilyCoverage = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable max-lines-per-function, max-statements, no-magic-numbers */
+/* oxlint-enable max-lines-per-function, max-statements */

@@ -1,9 +1,7 @@
-import type { MessageStreamEvent } from "eve/client";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import { beforeEach, expect, it, vi } from "vitest";
-/* oxlint-enable sort-imports */
-
+import type { MessageStreamEvent } from "eve/client";
 import { reconcileEveOwnerUsage } from "./reconcile-usage";
+import type { withManagedUsageReconciliation } from "@/lib/db/eve-billing";
 
 const mocks = vi.hoisted(() => ({
   advanceChild: vi.fn(),
@@ -18,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   },
   events: new Map<string, MessageStreamEvent[]>(),
   ingest: vi.fn(),
-  managed: vi.fn(),
+  managed: vi.fn<typeof withManagedUsageReconciliation>(),
   positions: vi.fn(),
   read: vi.fn<(sessionId: string) => Promise<void>>(),
   recover: vi.fn(),
@@ -47,15 +45,18 @@ vi.mock("./stream-positions", () => ({
 vi.mock("./server", () => ({ assertEveConfigured: vi.fn() }));
 vi.mock("./activity", () => ({ ingestEveActivity: vi.fn() }));
 vi.mock("./usage", () => ({ ingestEveUsage: mocks.ingest }));
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep vi.mock("eve/client")'s return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
 vi.mock("eve/client", () => ({
   Client: class {
     public sessions = {
-      attach: (sessionId: string) => ({
+      attach: (
+        sessionId: string
+      ): {
+        stream: (options: unknown) => AsyncGenerator<MessageStreamEvent, void>;
+      } => ({
         /* oxlint-disable oxc/no-async-await -- Modern targets support the async-iterator protocol; preserve stream's asynchronous iteration and rejection behavior. */
-        async *stream(options: unknown) {
+        async *stream(
+          options: unknown
+        ): AsyncGenerator<MessageStreamEvent, void> {
           mocks.streamOptions(options);
           await mocks.read(sessionId);
           yield* mocks.events.get(sessionId) ?? [];
@@ -65,10 +66,8 @@ vi.mock("eve/client", () => ({
     };
   },
 }));
-/* oxlint-enable typescript/explicit-function-return-type */
 
-/* oxlint-disable id-length, no-magic-numbers --
- * id-length (#506): beforeEach uses _ as local notation or callback/type parameters; a length-only rename does not establish clearer domain terminology.
+/* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): beforeEach uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
 beforeEach(() => {
@@ -80,7 +79,7 @@ beforeEach(() => {
   mocks.cursor.mockResolvedValue(0);
   mocks.positions.mockResolvedValue(new Map());
   mocks.bindings.mockResolvedValue(
-    Array.from({ length: 8 }, (_, index) => ({
+    Array.from({ length: 8 }, (_value, index) => ({
       sessionId: String(index),
       state: "bound",
       usageStreamIndex: 0,
@@ -88,7 +87,7 @@ beforeEach(() => {
   );
 });
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable id-length, no-magic-numbers */
+/* oxlint-enable no-magic-numbers */
 
 /* oxlint-disable max-statements, no-magic-numbers, no-undefined, typescript/promise-function-async --
  * max-statements (#512): it("keeps four reads busy when one conversation is slow") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
@@ -266,16 +265,16 @@ it("resumes managed reads at the persisted billing cursor without following live
  */
 it("reconciles only the target during a managed owner cooldown, then sweeps when due", async () => {
   mocks.env.VERCEL = "1";
+  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(false, new Set())
   );
   await reconcileEveOwnerUsage("owner", "target");
   expect(mocks.read.mock.calls).toEqual([["target"]]);
   expect(mocks.bindings).not.toHaveBeenCalled();
   mocks.read.mockClear();
+  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(true, new Set())
   );
   await reconcileEveOwnerUsage("owner", "target");
@@ -303,8 +302,8 @@ it("replays historical unpriced evidence even when its stream cursor already adv
     { sessionId: "failed-attempt", state: "bound", usageStreamIndex: 20 },
   ]);
   mocks.cursor.mockResolvedValue(20);
+  // oxlint-disable-next-line typescript/promise-function-async -- Forward the reconciliation promise directly so this scheduling fixture observes its original settlement.
   mocks.managed.mockImplementationOnce((_owner, reconcile) =>
-    // oxlint-disable-next-line typescript/no-unsafe-return, typescript/no-unsafe-call -- #598: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration. #596: This reconcile-usage fixture inspects controlled mock or JSON payloads; fully modeling the mock boundary requires a separate test-contract migration.
     reconcile(false, new Set(["failed-attempt"]))
   );
   await reconcileEveOwnerUsage("owner", "failed-attempt");

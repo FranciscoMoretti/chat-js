@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
 import { assertEveConfigured, eveRequest } from "./server";
 
 const FIRST_CALL = 0;
@@ -29,7 +28,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("EVE deployment authentication", () => {
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Await the request or SDK health check before inspecting the fetch URL, redirect mode and protection headers. */
   it("authenticates internal requests to this project's protected preview", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
     vi.stubGlobal("fetch", fetcher);
@@ -43,7 +42,7 @@ describe("EVE deployment authentication", () => {
     expect(headers.get("x-chatjs-owner")).toBe("owner");
   });
   /* oxlint-enable oxc/no-async-await */
-  /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+  /* oxlint-disable oxc/no-async-await -- Await the request or SDK health check before inspecting the fetch URL, redirect mode and protection headers. */
   it("does not send the project deployment credential to a separate worker", async () => {
     mocks.env.EVE_INTERNAL_ORIGIN = "https://worker.example.com";
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
@@ -58,7 +57,7 @@ describe("EVE deployment authentication", () => {
   /* oxlint-enable oxc/no-async-await */
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the request or SDK health check before inspecting the fetch URL, redirect mode and protection headers. */
 it("sends protocol requests directly to the named chat worker", async () => {
   const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response());
   vi.stubGlobal("fetch", fetcher);
@@ -75,7 +74,7 @@ it("sends protocol requests directly to the named chat worker", async () => {
   );
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the request or SDK health check before inspecting the fetch URL, redirect mode and protection headers. */
 it("routes the real SDK directly to the named chat worker", async () => {
   const { Client } = await import("eve/client");
   const { getEveConnectionOptions } = await import("./connection-options");

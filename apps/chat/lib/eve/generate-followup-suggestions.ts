@@ -1,15 +1,11 @@
-import { Output, generateText } from "ai";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { HookModelCall, TurnCompletedHookResult } from "eve/hooks";
-/* oxlint-enable sort-imports */
-
-import { config } from "@/lib/config";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
+import { Output, generateText } from "ai";
 import type { FollowupContext } from "./followup-context";
-/* oxlint-enable sort-imports */
+import { config } from "@/lib/config";
 import { eveFollowupSuggestions } from "./followup-suggestions";
 import { resolveEveModel } from "./model-selection";
+
+const FOLLOWUP_TIMEOUT_MS = 15_000;
 
 type NativeFollowupUsage = NonNullable<HookModelCall["usage"]>;
 type ReadonlyFollowupUsage = Readonly<
@@ -42,14 +38,15 @@ interface FollowupStep {
  * @param {Readonly<FollowupContext>} context User and completed assistant text supplying auxiliary suggestion generation.
  * @returns {Promise<TurnCompletedHookResult | undefined>} No result when disabled/empty; otherwise native model usage and validated suggestion metadata, retaining billed attempts even when output parsing fails.
  */
-// oxlint-disable-next-line eslint/max-lines-per-function -- Readonly parameter declarations add type-only lines to this existing cohesive operation; preserve its ordered runtime behavior.
+
 export const generateEveFollowupSuggestions = async (
   context: FollowupContext
 ): Promise<TurnCompletedHookResult | undefined> => {
   if (
     !(config.ai.tools.followupSuggestions.enabled && context.assistant.trim())
   ) {
-    return;
+    // oxlint-disable-next-line no-undefined -- Disabled suggestions intentionally have no hook result; an explicit value keeps all async return paths consistent.
+    return undefined;
   }
   const modelId = config.ai.tools.followupSuggestions.default;
   const modelCalls: HookModelCall[] = [];
@@ -61,8 +58,7 @@ export const generateEveFollowupSuggestions = async (
       model: resolved.model,
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the existing resolved.modelOptions own-key composition and positional override order; the pinned eslint/prefer-object-spread rule rejects the Object.assign replacement.
       ...resolved.modelOptions,
-      // oxlint-disable-next-line no-magic-numbers -- Bound optional follow-up generation to fifteen seconds without failing the completed answer.
-      abortSignal: AbortSignal.timeout(15_000),
+      abortSignal: AbortSignal.timeout(FOLLOWUP_TIMEOUT_MS),
       maxOutputTokens: 512,
       // Hidden provider retries would lose per-attempt usage evidence.
       maxRetries: 0,
@@ -75,7 +71,6 @@ export const generateEveFollowupSuggestions = async (
           role: "user",
         },
       ],
-
       onStepEnd(step: FollowupStep): void {
         modelCalls.push({
           modelId,
@@ -86,7 +81,6 @@ export const generateEveFollowupSuggestions = async (
       output: Output.object({ schema: eveFollowupSuggestions }),
     });
     // Usage is captured before reading output: malformed JSON can still cost money.
-    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       modelCalls,
       responseMetadata: eveFollowupSuggestions.parse(result.output),
@@ -96,7 +90,6 @@ export const generateEveFollowupSuggestions = async (
     if (attempted && modelCalls.length === 0) {
       modelCalls.push({ failed: true, modelId });
     }
-    // oxlint-disable-next-line typescript/consistent-return -- #580: generateEveFollowupSuggestions has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return { modelCalls };
   }
 };

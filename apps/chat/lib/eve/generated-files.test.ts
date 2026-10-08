@@ -1,5 +1,4 @@
 import { beforeEach, expect, test, vi } from "vitest";
-
 import { eveGeneratedFileUploader } from "./generated-files";
 
 const mocks = vi.hoisted(() => ({
@@ -23,8 +22,8 @@ vi.mock("./conversation-scope", () => ({
 }));
 
 /* oxlint-disable max-params, typescript/promise-function-async --
- * max-params (#511): beforeEach keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * typescript/promise-function-async (#606): beforeEach preserves the returned promise and synchronous throw timing; adding async would wrap the promise and convert immediate throws into rejections.
+ * max-params (#511): The writeEveGeneratedFile mock preserves the native four-argument callback position (owner, conversation, key, write).
+ * typescript/promise-function-async (#606): This mock directly forwards the upload callback promise; making it async introduces the conflicting oxc/no-async-await rule.
  */
 beforeEach(() => {
   vi.resetAllMocks();
@@ -38,17 +37,18 @@ beforeEach(() => {
   mocks.upload.mockResolvedValue({ url: "fixture-url" });
 });
 /* oxlint-enable max-params, typescript/promise-function-async */
-/* oxlint-disable typescript/explicit-function-return-type --
- * typescript/explicit-function-return-type (#560): Keep context's return type inferred from its fixture/mock result; an independent annotation requires selecting the intended public type boundary.
- */
+
 const context = (
   signal: Readonly<AbortSignal> = new AbortController().signal
-) => ({
+): {
+  abortSignal: Readonly<AbortSignal>;
+  session: { auth: { initiator: { principalId: string } }; id: string };
+} => ({
   abortSignal: signal,
   session: { auth: { initiator: { principalId: "owner" } }, id: "session" },
 });
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable typescript/explicit-function-return-type */
+/* oxlint-disable oxc/no-async-await -- Await the uploader or its rejection before checking reservation, durable-write and storage ordering. */
+
 /* oxlint-disable no-magic-numbers --
  * no-magic-numbers (#517): test("reserves a recoverable key and enters the deletion lock before external upload" uses 0 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  */
@@ -69,21 +69,19 @@ test("reserves a recoverable key and enters the deletion lock before external up
   );
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve test's awaited sequencing and rejected-Promise behavior. */
+/* oxlint-disable oxc/no-async-await -- Await the uploader or its rejection before checking reservation, durable-write and storage ordering. */
 /* oxlint-enable no-magic-numbers */
-/* oxlint-disable unicorn/max-nested-calls --
- * unicorn/max-nested-calls (#568): test("reservation failure and cancellation prevent external upload") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+
 test("reservation failure and cancellation prevent external upload", async () => {
   mocks.reserve.mockRejectedValueOnce(new Error("deleting"));
   await expect(
     eveGeneratedFileUploader(context())("image.png", "bytes")
   ).rejects.toThrow("deleting");
   expect(mocks.upload).not.toHaveBeenCalled();
-  await expect(
-    eveGeneratedFileUploader(context(AbortSignal.abort()))("image.png", "bytes")
-  ).rejects.toThrow();
+  const abortedUploader = eveGeneratedFileUploader(
+    context(AbortSignal.abort())
+  );
+  await expect(abortedUploader("image.png", "bytes")).rejects.toThrow();
   expect(mocks.upload).not.toHaveBeenCalled();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable unicorn/max-nested-calls */

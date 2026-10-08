@@ -1,11 +1,4 @@
-import type { UserContent } from "ai";
-/* oxlint-disable import/max-dependencies --
-
- * import/max-dependencies (#524): import from "zod" participates in this module's explicit integration boundary; hiding dependencies behind aggregators would not reduce coupling.
- */
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable import/max-dependencies -- Creation coordinates database reservation, native lookup/dispatch, checkpoint readiness, message preparation and logging through their direct modules. */
 import {
   CreationConflictError,
   CreationProjectNotFoundError,
@@ -13,36 +6,28 @@ import {
   getEveConversation,
   getEveCreation,
 } from "@/lib/db/eve-queries";
-/* oxlint-enable sort-imports */
-import { createModuleLogger } from "@/lib/logger";
-// oxlint-disable-next-line eslint/sort-imports -- Preserve runtime module evaluation order and keep type-only declarations beside the owning module; the pinned binding-order rule requires a different grouping.
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
-import { waitForEveCheckpoint } from "./checkpoint-readiness";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { EveForkInput, createConversationInput } from "./contracts";
-/* oxlint-enable sort-imports */
-import { eveConversationTitleFallback } from "./conversation-title";
-import { eveCreationContentHash } from "./creation-content-hash";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   EveCreationTransportError,
   requestEveCreation,
 } from "./creation-transport";
-/* oxlint-enable sort-imports */
-import { eveMessageFileKeys } from "./file-references";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+import type { EveForkInput, createConversationInput } from "./contracts";
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
+import type { UserContent } from "ai";
+import { createModuleLogger } from "@/lib/logger";
+import { eveConversationTitleFallback } from "./conversation-title";
+import { eveCreationContentHash } from "./creation-content-hash";
 import { eveMessageDeliveryMetadata } from "./message-delivery";
-/* oxlint-enable sort-imports */
+import { eveMessageFileKeys } from "./file-references";
 import { eveMessageTitle } from "./message-input";
 import { loadEveModelDefinition } from "./model-selection";
 import { prepareEveMessage } from "./prepare-message";
+import { waitForEveCheckpoint } from "./checkpoint-readiness";
+import { z } from "zod";
+/* oxlint-enable import/max-dependencies */
 
 type PreparedContentPart<Part> = {
   readonly [Field in keyof Part]: Field extends "type" ? Part[Field] : unknown;
 };
-
-/* oxlint-enable import/max-dependencies */
 
 const logger = createModuleLogger("eve/creation");
 const OPERATION_LOOKUP_TIMEOUT_MS = 15_000;
@@ -51,9 +36,7 @@ const MINIMUM_SESSION_IDENTIFIER_LENGTH = 1;
 const HTTP_NOT_FOUND = 404;
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve resolveFork's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): resolveFork intentionally keeps the existing falsy-value behavior of source?.sessionId; input.beforeMessageId; input.checkpointId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
+
 const resolveFork = async (
   ownerId: string,
   input: EveForkInput | undefined
@@ -69,34 +52,36 @@ const resolveFork = async (
   | undefined
 > => {
   if (!input) {
-    return;
+    // oxlint-disable-next-line no-undefined -- Preserve the optional fork result contract.
+    return undefined;
   }
   const source = await getEveConversation(ownerId, input.conversationId);
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading sessionId from source; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (!source?.sessionId || source.state !== "bound") {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
+  if (
+    !source ||
+    typeof source.sessionId !== "string" ||
+    source.sessionId === "" ||
+    source.state !== "bound"
+  ) {
     return Response.json(
       { creationRejected: true, error: "Source conversation not found." },
-      { status: 404 }
+      { status: HTTP_NOT_FOUND }
     );
   }
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public fork inputs may expose string getters; preserve one guard read followed by the original second result read, including changed values and throws.
   if (input.beforeMessageId) {
-    // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
     return {
       beforeMessageId: input.beforeMessageId,
       sessionId: source.sessionId,
     };
   }
-  // oxlint-disable-next-line typescript/consistent-return -- #580: resolveFork has an optional result; absent or inapplicable records intentionally return undefined rather than a fabricated value.
   return {
     beforeTurnId: input.beforeTurnId,
     sessionId: source.sessionId,
-    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary -- Conditional spread (input.checkpointId ? { checkpointId: input.checkpointId } : {}) preserves the selected branch's own keys/values and positional overrides, including absent keys when a branch contributes none; pinned eslint/prefer-object-spread rejects Object.assign.; no-ternary: Keep object spread as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
+    // oxlint-disable-next-line oxc/no-rest-spread-properties, no-ternary, typescript/strict-boolean-expressions -- Preserve the conditional own-key omission and one getter read for the guard followed by the original second result read; Object.assign and if/else conflict with the pinned prefer-object-spread and prefer-ternary rules.
     ...(input.checkpointId ? { checkpointId: input.checkpointId } : {}),
   };
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable typescript/strict-boolean-expressions */
 
 const creationFailure = (cause: unknown): Response => {
   if (cause instanceof CreationProjectNotFoundError) {
@@ -125,12 +110,10 @@ const creationFailure = (cause: unknown): Response => {
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (executeEveConversationCreation); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve executeEveConversationCreation's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/strict-boolean-expressions -- * init-declarations (#507): executeEveConversationCreation assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
- * max-lines-per-function (#510): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable max-lines-per-function, max-params, max-statements, no-undefined -- * max-lines-per-function (#510): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-params (#511): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): executeEveConversationCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): executeEveConversationCreation intentionally keeps the existing falsy-value behavior of await getEveCreation(ownerId, input.operationId); fork.beforeTurnId; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+ * no-undefined (#519): executeEveConversationCreation uses undefined for absent or optional values; substituting null would alter its type and serialization contract. */
 /**
  * Executes an admitted creation command while retaining its journaled operation identity.
  * @param {string} ownerId Owner used to resolve source conversations and reserve the creation.
@@ -149,7 +132,9 @@ export const executeEveConversationCreation = async (
 ): Promise<Response> => {
   let preparedMessage = initialPreparedMessage;
   try {
+    // oxlint-disable-next-line init-declarations -- A recovered durable reservation needs no fork resolution; fork stays absent until the first missing native operation requires it.
     let fork: Exclude<Awaited<ReturnType<typeof resolveFork>>, Response>;
+    // oxlint-disable-next-line typescript/strict-boolean-expressions -- getEveCreation destructures the first query row and can return undefined at runtime, although its current ConversationRow return annotation omits that absence.
     if (!(await getEveCreation(ownerId, input.operationId))) {
       const resolved = await resolveFork(ownerId, input.fork);
       if (resolved instanceof Response) {
@@ -195,7 +180,12 @@ export const executeEveConversationCreation = async (
           }
           fork = resolved;
         }
-        if (fork && "beforeTurnId" in fork && fork.beforeTurnId) {
+        if (
+          fork &&
+          "beforeTurnId" in fork &&
+          typeof fork.beforeTurnId === "string" &&
+          fork.beforeTurnId !== ""
+        ) {
           await waitForEveCheckpoint(
             ownerId,
             fork.sessionId,
@@ -275,4 +265,4 @@ export const executeEveConversationCreation = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-params, max-statements, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, max-params, max-statements, no-undefined */

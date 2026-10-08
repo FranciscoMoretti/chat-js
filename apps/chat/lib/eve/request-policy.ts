@@ -1,60 +1,60 @@
 /* oxlint-disable eslint/sort-keys -- Property order is part of persisted EVE request and transcript hashes; keep the original wire representation. */
+import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { inputResponseSchema } from "eve/client";
+// oxlint-disable-next-line sort-imports -- eve/client installs the global Zod postprocessor. Keep it before message-input and ai/types construct app schemas.
+import { eveMessageInput } from "./message-input";
+import { frontendToolsSchema } from "@/lib/ai/types";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { frontendToolsSchema } from "@/lib/ai/types";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
-import { eveMessageInput } from "./message-input";
+const MIN_IDENTIFIER_LENGTH = 1;
+const MAX_MODEL_IDENTIFIER_LENGTH = 200;
+const MAX_TURN_IDENTIFIER_LENGTH = 200;
+const MIN_INPUT_RESPONSES = 1;
+const MAX_INPUT_RESPONSES = 16;
 
 const streamIndex = /^\d{1,12}$/u;
 const sessionPath =
   /^\/eve\/v1\/session\/(?<sessionId>[A-Za-z0-9_-]+)(?:\/(?<operation>stream|cancel))?$/u;
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): message uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
 const message = z
   .object({
     message: eveMessageInput,
     selectedTool: frontendToolsSchema.optional(),
-    modelId: z.string().min(1).max(200).optional(),
+    modelId: z
+      .string()
+      .min(MIN_IDENTIFIER_LENGTH)
+      .max(MAX_MODEL_IDENTIFIER_LENGTH)
+      .optional(),
   })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers, unicorn/max-nested-calls --
- * no-magic-numbers (#517): respond uses 1, 16 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * unicorn/max-nested-calls (#568): respond keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- */
+/* oxlint-disable unicorn/max-nested-calls -- The response schema nests the validated request record inside its bounded array. */
 const respond = z
   .object({
     inputResponses: z
       .array(
         z
           .object({
-            requestId: z.string().min(1),
+            requestId: z.string().min(MIN_IDENTIFIER_LENGTH),
             optionId: z.string().optional(),
             text: z.string().optional(),
           })
           .strict()
           .refine((value) => inputResponseSchema.safeParse(value).success)
       )
-      .min(1)
-      .max(16),
+      .min(MIN_INPUT_RESPONSES)
+      .max(MAX_INPUT_RESPONSES),
   })
   .strict();
-/* oxlint-enable no-magic-numbers, unicorn/max-nested-calls */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): cancel uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+/* oxlint-enable unicorn/max-nested-calls */
 // Attached/resumed EVE clients cancel the active turn without a turn ID.
 const cancel = z
-  .object({ turnId: z.string().min(1).max(200).optional() })
+  .object({
+    turnId: z
+      .string()
+      .min(MIN_IDENTIFIER_LENGTH)
+      .max(MAX_TURN_IDENTIFIER_LENGTH)
+      .optional(),
+  })
   .strict();
-/* oxlint-enable no-magic-numbers */
 /* oxlint-disable unicorn/no-null -- Unsupported path/method combinations return the existing null policy sentinel. */
 const parseSessionRequest = (
   path: string,

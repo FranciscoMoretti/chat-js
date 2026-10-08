@@ -1,20 +1,11 @@
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env-schema" dependency within this package instead of introducing an alias or barrel API.
- */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { getEveRuntimeEnvOptions } from "../env-schema";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import {
   configureWorkflowEnvironment,
   resolveEveEnvironment,
   resolveWorkflowDatabaseUrl,
 } from "./environment";
-/* oxlint-enable sort-imports */
-/* oxlint-enable import/no-relative-parent-imports */
+import { getEveRuntimeEnvOptions } from "@/lib/env-schema";
+import { z } from "zod";
 
 const base = {
   AUTH_SECRET: "existing-application-secret-at-least-32-characters",
@@ -23,11 +14,10 @@ const base = {
 };
 const schema = z.object(getEveRuntimeEnvOptions({}));
 
-/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions --
+/* oxlint-disable max-lines-per-function, no-magic-numbers, no-undefined --
  * max-lines-per-function (#510): describe("EVE environment defaults") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * no-magic-numbers (#517): describe("EVE environment defaults") uses 32 as scenario inputs, expected counts, statuses, or timing fixtures; extracting arbitrary shared constants would couple independent cases.
  * no-undefined (#519): describe("EVE environment defaults") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
- * typescript/strict-boolean-expressions (#610): describe("EVE environment defaults") intentionally keeps the existing falsy-value behavior of DATABASE_URL; distinguishing empty, zero, and absent states requires a domain behavior decision.
  */
 describe("EVE environment defaults", () => {
   it("requires an independent gateway secret even when AUTH_SECRET is present", () => {
@@ -195,8 +185,11 @@ describe("EVE environment defaults", () => {
       // oxlint-disable-next-line oxc/no-rest-spread-properties -- Keep the fresh shallow copy of source rather than sharing its source identity; pinned eslint/prefer-object-spread rejects Object.assign.
       const worker: Record<string, string | undefined> = { ...source };
       configureWorkflowEnvironment(worker);
-      // oxlint-disable-next-line typescript/prefer-nullish-coalescing -- #602: An empty environment value means unset here and must fall back to the configured default.
-      expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL || undefined);
+      if (typeof DATABASE_URL === "string" && DATABASE_URL !== "") {
+        expect(worker.WORKFLOW_POSTGRES_URL).toBe(DATABASE_URL);
+      } else {
+        expect(worker.WORKFLOW_POSTGRES_URL).toBeUndefined();
+      }
       expect(schema.safeParse(resolveEveEnvironment(source)).success).toBe(
         false
       );
@@ -238,7 +231,7 @@ describe("EVE environment defaults", () => {
     ).toBe(true);
   });
 });
-/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable max-lines-per-function, no-magic-numbers, no-undefined */
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -246,10 +239,9 @@ afterEach(() => {
   vi.resetModules();
 });
 
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable import/no-relative-parent-imports, max-statements --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
- * max-statements (#512): it("the application env resolves defaults with an explicit gateway secret") keeps its scenario setup, action, and assertions together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
+/* oxlint-disable oxc/no-async-await -- Await the fresh environment module after stubbing deployment variables; schema initialization must observe the test settings. */
+/* oxlint-disable max-statements --
+ * max-statements (#512): This module-initialization scenario must stub every deployment secret before resetModules/import, then inspect the resulting EVE and workflow defaults together.
  */
 it("the application env resolves defaults with an explicit gateway secret", async () => {
   for (const key of [
@@ -264,7 +256,7 @@ it("the application env resolves defaults with an explicit gateway secret", asyn
   vi.stubEnv("VERCEL", "");
   vi.stubEnv("DATABASE_URL", base.DATABASE_URL);
   vi.stubEnv("VERCEL_URL", "deployment.vercel.app");
-  const { env } = await import("../env");
+  const { env } = await import("@/lib/env");
   expect(env.EVE_GATEWAY_SECRET).toBe(
     resolveEveEnvironment(base).EVE_GATEWAY_SECRET
   );
@@ -272,37 +264,32 @@ it("the application env resolves defaults with an explicit gateway secret", asyn
   expect(env.WORKFLOW_POSTGRES_URL).toBe(base.DATABASE_URL);
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-relative-parent-imports, max-statements */
+/* oxlint-disable oxc/no-async-await -- Await the fresh environment module after stubbing deployment variables; schema initialization must observe the test settings. */
+/* oxlint-enable max-statements */
 
-/* oxlint-disable import/no-relative-parent-imports --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env" dependency within this package instead of introducing an alias or barrel API.
- */
 it("does not expose server credentials to client components", async () => {
   vi.stubGlobal("window", {});
   vi.stubEnv("AUTH_SECRET", base.AUTH_SECRET);
   vi.stubEnv("EVE_GATEWAY_SECRET", base.EVE_GATEWAY_SECRET);
   vi.stubEnv("VERCEL", "");
-  const { env } = await import("../env");
+  const { env } = await import("@/lib/env");
   expect(() => env.EVE_GATEWAY_SECRET).toThrow();
   expect(() => env.WORKFLOW_POSTGRES_URL).toThrow();
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve it's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable import/no-relative-parent-imports */
+/* oxlint-disable oxc/no-async-await -- Await the fresh environment module after stubbing deployment variables; schema initialization must observe the test settings. */
 
-/* oxlint-disable import/no-relative-parent-imports, no-undefined --
- * import/no-relative-parent-imports (#530): Keep the explicit "../env-schema" dependency within this package instead of introducing an alias or barrel API.
+/* oxlint-disable no-undefined --
  * no-undefined (#519): it("normalizes the schema's Playwright fallback URL") uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
  */
 it("normalizes the schema's Playwright fallback URL", async () => {
   vi.stubEnv("PLAYWRIGHT", "True");
   vi.stubEnv("PLAYWRIGHT_TEST_BASE_URL", "http://[::1]:3110/chat?test=1#chat");
   vi.resetModules();
-  const { serverEnvSchema } = await import("../env-schema");
+  const { serverEnvSchema } = await import("@/lib/env-schema");
   expect(serverEnvSchema.EVE_INTERNAL_ORIGIN.parse(undefined)).toBe(
     "http://[::1]:3110"
   );
 });
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable import/no-relative-parent-imports, no-undefined */
+/* oxlint-enable no-undefined */

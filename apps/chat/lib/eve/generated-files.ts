@@ -1,17 +1,13 @@
-import type { ToolContext } from "eve/tools";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import {
   reserveEveGeneratedFile,
   writeEveGeneratedFile,
 } from "@/lib/db/eve-files";
-/* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep DB/env initialization before storage config parsing; alphabetical binding order reverses validation and allocation order. */
 import { createFileId, uploadFileAtKey } from "@/lib/file-storage";
 /* oxlint-enable sort-imports */
 import type { FileUploader } from "@/lib/file-storage";
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-
+import type { ToolContext } from "eve/tools";
 import { resolveEveConversationScope } from "./conversation-scope";
 
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (eveGeneratedFileUploader); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

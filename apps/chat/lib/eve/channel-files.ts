@@ -1,11 +1,10 @@
 import type { EveChannelInput } from "eve/channels/eve";
-
 import { assertEveFilesOwned } from "@/lib/db/eve-files";
 import { downloadFile } from "@/lib/file-storage";
 import { keyFromFileUrl } from "@/lib/file-url";
 
 /* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): FileContext uses 1 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
+ * no-magic-numbers (#517): The native fetchFile callback takes URL first and context second; index 1 selects that SDK parameter without duplicating its type.
  */
 type FileContext = Parameters<NonNullable<EveChannelInput["fetchFile"]>>[1];
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (fetchEveChannelFile); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */

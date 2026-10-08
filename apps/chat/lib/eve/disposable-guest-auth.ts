@@ -1,34 +1,30 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
-/* oxlint-enable sort-imports */
-
 import { readGuestCredential } from "./disposable-guest";
 import { safeStreamQuery } from "./request-policy";
+import { z } from "zod";
 
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): message uses 1, 16_000 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+const MIN_FIELD_LENGTH = 1;
+const MAX_MESSAGE_LENGTH = 16_000;
+const MAX_TURN_ID_LENGTH = 200;
+const BEARER_PREFIX = "Bearer ";
+
 const message = z
-  .object({ message: z.string().trim().min(1).max(16_000) })
+  .object({
+    message: z.string().trim().min(MIN_FIELD_LENGTH).max(MAX_MESSAGE_LENGTH),
+  })
   .strict();
-/* oxlint-enable no-magic-numbers */
-/* oxlint-disable no-magic-numbers --
- * no-magic-numbers (#517): cancel uses 1, 200 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- */
+
 const cancel = z
-  .object({ turnId: z.string().min(1).max(200).optional() })
+  .object({
+    turnId: z.string().min(MIN_FIELD_LENGTH).max(MAX_TURN_ID_LENGTH).optional(),
+  })
   .strict();
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (authenticateDisposableGuest); the enabled import/no-default-export convention rejects the default-export alternative. The app guidance also requires named exports. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve authenticateDisposableGuest's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-enable no-magic-numbers */
 
-/* oxlint-disable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null -- * init-declarations (#507): authenticateDisposableGuest assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
+/* oxlint-disable init-declarations, max-lines-per-function, max-statements, unicorn/no-null -- * init-declarations (#507): authenticateDisposableGuest assigns these bindings along its control-flow paths; eager undefined initialization would conflict with no-undefined and obscure definite assignment.
  * max-lines-per-function (#510): authenticateDisposableGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
  * max-statements (#512): authenticateDisposableGuest keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
- * no-magic-numbers (#517): authenticateDisposableGuest uses 7 in its existing protocol/math/layout contract; naming and changing those domain constants requires separate semantic decisions.
- * typescript/strict-boolean-expressions (#610): authenticateDisposableGuest intentionally keeps the existing falsy-value behavior of authorization?.startsWith("Bearer "); claims.sessionId; distinguishing empty, zero, and absent states requires a domain behavior decision.
  * unicorn/no-null (#570): authenticateDisposableGuest preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 /** EVE's stream route delegates ownership checks to channel auth. Bind every
  * permitted operation to the exact server-issued session credential.
@@ -48,14 +44,16 @@ export const authenticateDisposableGuest = async (
   const authorization = request.headers.get("authorization");
   const claims = readGuestCredential(
     // oxlint-disable-next-line oxc/no-optional-chaining, no-ternary -- Keep the existing nullish guard when reading startsWith from authorization; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.; no-ternary: Keep readGuestCredential argument as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-    authorization?.startsWith("Bearer ") ? authorization.slice(7) : null
+    authorization?.startsWith(BEARER_PREFIX) === true
+      ? authorization.slice(BEARER_PREFIX.length)
+      : null
   );
   if (!claims) {
     return null;
   }
   const url = new URL(request.url);
   let body: z.ZodType | undefined;
-  if (claims.sessionId) {
+  if (typeof claims.sessionId === "string" && claims.sessionId !== "") {
     const path = `/eve/v1/session/${claims.sessionId}`;
     if (request.method === "GET" && url.pathname === `${path}/stream`) {
       if (!safeStreamQuery(url.searchParams)) {
@@ -99,4 +97,4 @@ export const authenticateDisposableGuest = async (
 };
 /* oxlint-enable import/prefer-default-export, import/no-named-export */
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable init-declarations, max-lines-per-function, max-statements, no-magic-numbers, typescript/strict-boolean-expressions, unicorn/no-null */
+/* oxlint-enable init-declarations, max-lines-per-function, max-statements, unicorn/no-null */

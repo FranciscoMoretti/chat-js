@@ -2,12 +2,9 @@
  * import/no-nodejs-modules (#529): This server/tooling module requires import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";; its Node runtime boundary deliberately permits these built-ins.
  */
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-
+import { env } from "@/lib/env";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { env } from "@/lib/env";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/no-nodejs-modules */
 
 const MINUTES_PER_HOUR = 60;
@@ -52,17 +49,14 @@ const newGuestClaims = (
   ownerId: randomUUID(),
 });
 
-// Preserve the empty/absent-token gate while making its string narrowing explicit.
-const hasCredentialText = (value: string | null): value is string =>
-  Boolean(value);
-
 /* oxlint-disable max-statements, unicorn/no-null -- max-statements (#512): readGuestCredential keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.
 unicorn/no-null (#570): readGuestCredential preserves explicit null in its storage/API state; undefined has different serialization and presence semantics. */
 const readGuestCredential = (
   token: string | null
 ): z.infer<typeof claimsSchema> | null => {
   if (
-    !hasCredentialText(token) ||
+    token === null ||
+    token === "" ||
     token.length > MAXIMUM_CREDENTIAL_CHARACTERS
   ) {
     return null;

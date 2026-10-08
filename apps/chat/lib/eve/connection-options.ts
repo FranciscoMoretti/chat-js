@@ -26,9 +26,11 @@ export const getEveConnectionOptions = (
         hostname !== "" &&
         new URL(host).origin === `https://${hostname}`
     );
-  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Test the optional secret once for nonempty truthiness, preserving getter order and narrowing the subsequent header assignment.
-  if (sameDeployment && env.VERCEL_AUTOMATION_BYPASS_SECRET) {
-    headers["x-vercel-protection-bypass"] = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+  if (sameDeployment) {
+    const bypassSecret = env.VERCEL_AUTOMATION_BYPASS_SECRET;
+    if (typeof bypassSecret === "string" && bypassSecret !== "") {
+      headers["x-vercel-protection-bypass"] = bypassSecret;
+    }
   }
   return {
     auth: { bearer: env.EVE_GATEWAY_SECRET ?? "" },

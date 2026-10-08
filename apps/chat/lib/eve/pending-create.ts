@@ -1,15 +1,9 @@
-import { z } from "zod";
-
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { UiToolName } from "@/lib/ai/types";
-/* oxlint-enable sort-imports */
-
-import { createConversationInput } from "./contracts";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { EveForkInput, EveForkKind } from "./contracts";
-/* oxlint-enable sort-imports */
 import type { ReadonlyEveMessageInput } from "./readonly-message-types";
+import type { UiToolName } from "@/lib/ai/types";
+import { createConversationInput } from "./contracts";
 import { eveResponseGroupInput } from "./response-group-input";
+import { z } from "zod";
 
 const SINGLE_MODEL_COUNT = 1;
 const FIRST_MODEL_INDEX = 0;
@@ -25,24 +19,19 @@ type CreationScope =
   | { conversationId: string; projectId?: never }
   | { projectId: string; conversationId?: never };
 
-/* oxlint-disable typescript/strict-boolean-expressions --
- * typescript/strict-boolean-expressions (#610): keyFor intentionally keeps the existing falsy-value behavior of scope?.conversationId; scope?.projectId; distinguishing empty, zero, and absent states requires a domain behavior decision.
- */
 const keyFor = (ownerId: string, scope?: Readonly<CreationScope>): string => {
   let suffix = "";
-  // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading conversationId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  if (scope?.conversationId) {
+  // oxlint-disable-next-line typescript/strict-boolean-expressions -- Public scopes may expose string getters; keep one truthiness read before the original second interpolation read, including its value or throw.
+  if (scope && scope.conversationId) {
     suffix = `:fork:${scope.conversationId}`;
-    // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading projectId from scope; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result. The app guidance prefers optional chaining.
-  } else if (scope?.projectId) {
+    // oxlint-disable-next-line typescript/strict-boolean-expressions -- Read projectId only after the conversation guard fails, then preserve the original second interpolation read.
+  } else if (scope && scope.projectId) {
     suffix = `:project:${scope.projectId}`;
   }
   return `chatjs.eve.pending:${ownerId}${suffix}`;
 };
-/* oxlint-enable typescript/strict-boolean-expressions */
 
-/* oxlint-disable no-undefined, typescript/strict-boolean-expressions -- no-undefined (#519): readCreationRequest uses undefined for absent or optional values; substituting null would alter its type and serialization contract.
-typescript/strict-boolean-expressions (#610): readCreationRequest intentionally keeps the existing falsy-value behavior of stored; distinguishing empty, zero, and absent states requires a domain behavior decision. */
+/* oxlint-disable no-undefined -- Absent pending storage returns undefined to preserve the optional request contract. */
 const readCreationRequest = (
   storage: StorageAccess,
   ownerId: string,
@@ -50,12 +39,12 @@ const readCreationRequest = (
 ): z.output<typeof creationRequest> | undefined => {
   const stored = storage.getItem(keyFor(ownerId, scope));
 
-  if (stored) {
+  if (stored !== null && stored !== "") {
     return creationRequest.parse(JSON.parse(stored));
   }
   return undefined;
 };
-/* oxlint-enable no-undefined, typescript/strict-boolean-expressions */
+/* oxlint-enable no-undefined */
 
 /* oxlint-disable max-params -- max-params (#511): prepareResponseGroupCreation keeps its ordered workflow and input contract together; extracting smaller units requires choosing domain boundaries rather than satisfying a numeric threshold.*/
 const prepareResponseGroupCreation = (

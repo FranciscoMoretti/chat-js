@@ -1,11 +1,11 @@
+import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
 import { completeEveFilePurge } from "@/lib/db/eve-file-purge";
 import { prepareEveOrphanedFilePurge } from "@/lib/db/eve-orphaned-files";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
+/* oxlint-disable sort-imports -- Keep DB/env initialization before storage config parsing; sorting this multi-binding import first reverses validation and allocation order. */
 import { deleteFilesByUrls, iterateStoredFiles } from "@/lib/file-storage";
 /* oxlint-enable sort-imports */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import { createFileUrl, isFileStorageKey } from "@/lib/file-url";
-/* oxlint-enable sort-imports */
+
+const MAX_ORPHAN_PURGE_BATCH_SIZE = 100;
 
 type OrphanedFile = Awaited<
   ReturnType<typeof prepareEveOrphanedFilePurge>
@@ -16,7 +16,7 @@ type OrphanedFile = Awaited<
 /* oxlint-disable max-statements, no-magic-numbers --
 
  * max-statements (#512): The sweep shares batch storage, confirmed-deletion counts and accumulated failures; provider removal must finish before each owner's durable completion, while one failed batch must not starve later inventory.
- * no-magic-numbers (#517): Zero marks empty inventory/error queues and the initial deletion subtotal; batches of 100 match the orphan-fencing query's maximum admitted key count.
+ * no-magic-numbers (#517): Zero distinguishes empty inventories, pending batches and accumulated provider failures.
   */
 /** Only inventoried EVE-owned orphans are eligible; legacy storage is untouched.
  * @param {Readonly<Date>} cutoff Objects uploaded before this time may enter the fenced orphan purge.
@@ -58,7 +58,7 @@ export const cleanupEveOrphanedFiles = async (
   for await (const file of iterateStoredFiles()) {
     if (isFileStorageKey(file.pathname) && file.uploadedAt < cutoff) {
       batch.push(file.pathname);
-      if (batch.length === 100) {
+      if (batch.length === MAX_ORPHAN_PURGE_BATCH_SIZE) {
         await purge(batch);
         batch = [];
       }
