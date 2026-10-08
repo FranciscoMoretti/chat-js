@@ -37,12 +37,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-/* oxlint-enable sort-imports */
-import { config } from "@/lib/config";
 /* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { McpConnector } from "@/lib/db/schema";
+import { config } from "@/lib/config";
 /* oxlint-enable sort-imports */
+import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable import/max-dependencies */
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (McpConnectDialog); the enabled import/no-default-export convention rejects the default-export alternative. */

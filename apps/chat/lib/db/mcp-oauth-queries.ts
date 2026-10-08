@@ -6,11 +6,11 @@ import type {
 import { and, desc, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { mcpOAuthSession } from "@/lib/db/schema";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpOAuthSession } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
+import { mcpOAuthSession } from "@/lib/db/schema";
+/* oxlint-disable sort-imports -- Keep database/schema initialization before Pino logger initialization; their complete runtime graphs have not been proved to commute. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
 const AUTHENTICATED_SESSION_LIMIT = 1;
 const EMPTY_UPDATE_COUNT = 0;

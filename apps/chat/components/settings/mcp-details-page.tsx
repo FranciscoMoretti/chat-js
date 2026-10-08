@@ -28,15 +28,14 @@ import { ConnectorHeader } from "@/components/settings/connector-header";
 import { McpConnectDialog } from "@/components/settings/mcp-connect-dialog";
 import { SettingsPageContent } from "@/components/settings/settings-page";
 /* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Button } from "@/components/ui/button";
 /* oxlint-enable sort-imports */
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
 import { Label } from "@/components/ui/label";
-/* oxlint-enable import/max-dependencies */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
+/* oxlint-enable import/max-dependencies */
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useTRPC } from "@/trpc/react";
 
@@ -74,8 +73,6 @@ const formatMcpError = (message: string): string => {
 /* oxlint-enable eslint/no-magic-numbers */
 /* oxlint-enable eslint/max-statements */
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-
 /* oxlint-disable eslint/no-magic-numbers -- These literals encode local protocol limits, indexing, or fixture expectations; keep them beside the operation whose units they describe. */
 const DetailsSection = ({
   title,
@@ -85,7 +82,7 @@ const DetailsSection = ({
   readonly title: string;
   readonly icon: ReadonlyNativeSurface<React.ReactNode>;
   readonly items: readonly { readonly name: string; readonly key: string }[];
-}) => {
+}): React.JSX.Element => {
   const count = items.length;
 
   return (
@@ -124,12 +121,9 @@ const DetailsSection = ({
 /* oxlint-disable react/jsx-no-literals -- DiscoveryContent renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 /* oxlint-enable eslint/no-magic-numbers */
 
-/* oxlint-enable typescript/explicit-function-return-type */
-
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react-perf/jsx-no-jsx-as-prop -- This render slot receives the current JSX state; hoisting it would separate the slot from its captured render inputs. */
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
@@ -163,7 +157,7 @@ const DiscoveryContent = ({
     }[];
     readonly prompts: readonly { readonly name: string }[];
   } | null;
-}) => {
+}): React.JSX.Element | null => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -282,7 +276,6 @@ const DiscoveryContent = ({
 /* oxlint-enable react/jsx-max-depth */
 /* oxlint-enable react-perf/jsx-no-jsx-as-prop */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable react/no-multi-comp */
 /* oxlint-enable eslint/max-statements */
@@ -730,5 +723,3 @@ export const McpDetailsPage = ({
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-
-/* oxlint-enable import/max-dependencies */

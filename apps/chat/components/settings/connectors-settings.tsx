@@ -1,4 +1,3 @@
-/* oxlint-disable import/max-dependencies -- This component composes its existing settings/query/UI modules plus a type-only readonly reader contract; splitting imports would introduce runtime indirection. */
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,22 +42,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-/* oxlint-enable sort-imports */
 import { Separator } from "@/components/ui/separator";
 import { installedFeatures } from "@/features/installed";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type { McpConnector } from "@/lib/db/schema";
 /* oxlint-enable sort-imports */
+import type { McpConnector } from "@/lib/db/schema";
 import type { McpConnectorsDialog } from "@/lib/nuqs/mcp-search-params";
 import { mcpConnectorsSettingsSearchParams } from "@/lib/nuqs/mcp-search-params";
-// oxlint-disable-next-line sort-imports -- Oxfmt places this separate readonly type import after runtime imports; sort-imports instead orders their binding names together.
 import type { ReadonlyNativeSurface } from "@/lib/readonly-native-surface";
 import { useTRPC } from "@/trpc/react";
 /* oxlint-disable react/jsx-no-literals -- CustomConnectorRow renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 /* oxlint-disable react/jsx-max-depth -- This nesting expresses the component library composition and accessibility structure; flattening it can change DOM behavior. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
@@ -79,7 +74,7 @@ const CustomConnectorRow = ({
   readonly onUninstall: () => void;
   readonly onDisconnect: () => void;
   readonly isDisconnecting: boolean;
-}) => {
+}): React.JSX.Element => {
   const trpc = useTRPC();
 
   const { data: authStatus } = useQuery({
@@ -119,7 +114,7 @@ const CustomConnectorRow = ({
     return connectionStatus?.error ?? "Unable to reach server";
   })();
 
-  const actionLabel = (() => {
+  const actionLabel = ((): string => {
     if (isTestingConnection) {
       return "Loading";
     }
@@ -300,12 +295,10 @@ const CustomConnectorRow = ({
 /* oxlint-enable unicorn/no-null */
 /* oxlint-enable react/jsx-max-depth */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable eslint/max-lines-per-function */
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 
 const BuiltInConnectorRow = ({
   connector,
@@ -316,7 +309,7 @@ const BuiltInConnectorRow = ({
     readonly type: "http" | "sse";
     readonly url: string;
   };
-}) => {
+}): React.JSX.Element => {
   const href: `/settings/connectors/${string}` = `/settings/connectors/${connector.id}`;
   return (
     <div className="flex w-full items-center gap-3 py-3 text-left">
@@ -336,7 +329,6 @@ const BuiltInConnectorRow = ({
 /* oxlint-enable react/jsx-no-literals */
 /* oxlint-disable react/jsx-no-literals -- ConnectorsSettings renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-enable typescript/explicit-function-return-type */
 /* oxlint-enable react/no-multi-comp */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
@@ -687,5 +679,3 @@ export const ConnectorsSettings = (): React.JSX.Element => {
 /* oxlint-enable eslint/max-statements */
 
 /* oxlint-disable max-lines -- Keep this cohesive contract and its cases together; splitting it solely for a line quota would obscure shared setup or state transitions. */
-
-/* oxlint-enable import/max-dependencies */

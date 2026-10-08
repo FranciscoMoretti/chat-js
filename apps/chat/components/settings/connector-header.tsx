@@ -2,16 +2,12 @@
 import { Globe } from "lucide-react";
 import React from "react";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Favicon } from "@/components/favicon";
-/* oxlint-enable sort-imports */
 import { getGoogleFaviconUrl } from "@/components/get-google-favicon-url";
 import { getUrlWithoutParams } from "@/components/get-url-without-params";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { Badge } from "@/components/ui/badge";
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (ConnectorHeader); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable react/jsx-no-literals -- ConnectorHeader renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
-/* oxlint-enable sort-imports */
 
 /* oxlint-disable eslint/max-lines-per-function -- Keep the ordered validation, state transitions, and cleanup in one operation so their sequencing remains reviewable. */
 

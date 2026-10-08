@@ -2,14 +2,13 @@ import type { ToolDefinition, ToolModelOutput } from "eve/tools";
 import { defineDynamic, defineTool } from "eve/tools";
 import { parse, stringify } from "superjson";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
-import type { McpToolContext } from "@/lib/eve/mcp-tools";
+/* oxlint-disable-next-line sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import {
   discoverEveMcpTools,
   executeEveMcpTool,
   requestEveMcpApproval,
 } from "@/lib/eve/mcp-tools";
-/* oxlint-enable sort-imports */
+import type { McpToolContext } from "@/lib/eve/mcp-tools";
 import { eveTurnGuest, eveTurnTool } from "@/lib/eve/turn-tools";
 import { createModuleLogger } from "@/lib/logger";
 
@@ -37,10 +36,10 @@ export default defineDynamic({
       // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading principalId from context.session.auth.initiator; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
       const ownerId = context.session.auth.initiator?.principalId;
       const timeoutSignal = AbortSignal.timeout(30_000);
-      // oxlint-disable-next-line no-ternary -- Keep discoverySignal as a lazy value selection; if/else assignment of these branches conflicts with pinned unicorn/prefer-ternary.
-      const discoverySignal = context.abortSignal
-        ? AbortSignal.any([context.abortSignal, timeoutSignal])
-        : timeoutSignal;
+      const discoverySignal =
+        (context.abortSignal &&
+          AbortSignal.any([context.abortSignal, timeoutSignal])) ??
+        timeoutSignal;
       const tools = await discoverEveMcpTools(ownerId, discoverySignal).catch(
         (error: unknown) => {
           if (timeoutSignal.aborted) {

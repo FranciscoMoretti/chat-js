@@ -2,29 +2,28 @@ import { TRPCError } from "@trpc/server";
 import { assertUrlIsSafeToFetch } from "guarded-fetch";
 import { z } from "zod";
 
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { installedFeatures } from "@/features/installed";
-/* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep preceding package initialization before environment validation reached through MCP setup; sorting would change which runtime graph completes before validation can throw. */
 import { requireMcpCredentials } from "@/features/mcp/setup";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
 import { MCP_NAME_MAX_LENGTH, generateMcpNameId } from "@/lib/ai/mcp-name-id";
+import type {
+  ConnectionStatusResult,
+  DiscoveryResult,
+} from "@/lib/ai/mcp/cache";
 /* oxlint-enable sort-imports */
+/* oxlint-disable sort-imports -- Keep MCP setup environment validation before Next cache branch selection and cache logger initialization; their runtime graphs have not been proved to commute. */
 import {
   createCachedConnectionStatus,
   createCachedDiscovery,
   invalidateAllMcpCaches,
-} from "@/lib/ai/mcp/cache";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
-import type {
-  ConnectionStatusResult,
-  DiscoveryResult,
 } from "@/lib/ai/mcp/cache";
 /* oxlint-enable sort-imports */
 import {
   getOrCreateMcpClient,
   removeMcpClient,
 } from "@/lib/ai/mcp/mcp-client-manager";
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
+/* oxlint-disable sort-imports -- Keep MCP client/provider lock-pool initialization before a direct MCP database-query edge; moving that edge earlier changes the first-evaluation trace of lock, database and logger modules. */
+/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting imports would hide the dependency boundary without reducing dependencies. */
 import {
   createMcpConnector,
   deleteMcpConnector,
@@ -35,16 +34,11 @@ import {
   getMcpConnectorsByUserId,
   updateMcpConnector,
 } from "@/lib/db/mcp-queries";
-/* oxlint-enable sort-imports */
 import { createModuleLogger } from "@/lib/logger";
-/* oxlint-disable import/max-dependencies -- This integration composes its explicit adapters here; splitting the imports would hide the dependency boundary without reducing dependencies. */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { MissingCredentialsError } from "@/lib/required-credentials";
-/* oxlint-enable sort-imports */
 /* oxlint-enable import/max-dependencies */
-/* oxlint-disable sort-imports -- Preserve runtime module evaluation order; sort-imports requires different binding-syntax groups. */
-import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 /* oxlint-enable sort-imports */
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 
 // Procedure callbacks read only the authenticated user identity from tRPC context.
 type McpProcedureContext = Readonly<{ user: Readonly<{ id: string }> }>;
@@ -99,11 +93,11 @@ const assertMcpReady = (): void => {
 };
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve validateAndGenerateNameId's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Validates and generates a nameId from a connector name.
  * Throws TRPCError if the name is invalid or the namespace already exists.
+ * @param {Readonly<{ name: string; userId: string | null; excludeId?: string; }>} options - Candidate name, namespace owner, and connector excluded during rename.
+ * @returns {Promise<string>} The validated available connector namespace.
  */
 const validateAndGenerateNameId = async ({
   name,
@@ -143,19 +137,16 @@ const validateAndGenerateNameId = async ({
   return result.nameId;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable jsdoc/require-returns */
 
 type Permission = "own" | "own-or-global";
 
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getConnectorWithPermission's awaited sequencing and rejected-Promise behavior. */
-/* oxlint-disable jsdoc/require-returns -- The comment documents lifecycle behavior; the TypeScript return contract remains the authoritative result description. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable jsdoc/require-param -- This comment documents the API invariant; parameter names and TypeScript annotations describe the inputs without duplicating them in tags. */
 /**
  * Fetches connector and validates user permission.
  * - "own": user must own the connector (userId === ctx.user.id)
  * - "own-or-global": user must own OR connector is global (userId === null)
+ * @param {Readonly<{ id: string; userId: string; permission: Permission; }>} options - Connector identity and required ownership permission.
+ * @returns {Promise<McpConnectorRow>} The connector after permission validation.
  */
 const getConnectorWithPermission = async ({
   id,
@@ -165,7 +156,7 @@ const getConnectorWithPermission = async ({
   readonly id: string;
   readonly userId: string;
   readonly permission: Permission;
-}) => {
+}): Promise<McpConnectorRow> => {
   const connector = await getMcpConnectorById({ id });
   if (!connector) {
     throw new TRPCError({ code: "NOT_FOUND", message: "Connector not found" });
@@ -187,9 +178,6 @@ const getConnectorWithPermission = async ({
   return connector;
 };
 /* oxlint-enable oxc/no-async-await */
-/* oxlint-enable jsdoc/require-param */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable jsdoc/require-returns */
 
 const displayConnectorUrl = (value: string): string => {
   const url = new URL(value);
@@ -220,9 +208,17 @@ type PublicConnectorInput = Readonly<
   }
 >;
 
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
-/* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
-const publicConnector = (connector: PublicConnectorInput) => ({
+type PublicConnector = {
+  -readonly [
+    Property in keyof PublicConnectorInput
+  ]: PublicConnectorInput[Property];
+} & {
+  oauthClientId: null;
+  oauthClientSecret: null;
+};
+
+/* oxlint-disable unicorn/no-null -- Connector responses explicitly redact both OAuth credential fields with null. */
+const publicConnector = (connector: PublicConnectorInput): PublicConnector => ({
   createdAt: connector.createdAt,
   enabled: connector.enabled,
   id: connector.id,
@@ -239,7 +235,6 @@ const publicConnector = (connector: PublicConnectorInput) => ({
 /* oxlint-disable import/prefer-default-export, import/no-named-export -- Keep the existing named module bindings (mcpRouter); the enabled import/no-default-export convention rejects the default-export alternative. */
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve mcpRouter's awaited sequencing and rejected-Promise behavior. */
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
 
 /* oxlint-disable eslint/max-statements -- These statements express one ordered operation with shared validation and cleanup; preserve the existing sequencing. */
 /* oxlint-disable unicorn/max-nested-calls -- Keep this data transformation together so its argument evaluation order and contextual type inference remain explicit. */

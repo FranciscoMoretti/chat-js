@@ -3,9 +3,8 @@ import { Camera, Paperclip } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { ComposerControlProps } from "@/components/composer/control";
-/* oxlint-enable sort-imports */
+/* oxlint-disable-next-line sort-imports -- Preserve runtime module evaluation order; sort-imports requires different local-binding order. */
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { LoginPrompt } from "@/components/upgrade-cta/login-prompt";
 import { installedFeatures } from "@/features/installed";
@@ -27,12 +26,13 @@ const loginPrompt = (
 );
 /* oxlint-disable react/jsx-no-literals -- AttachFilesControl renders authored interface labels, status copy and display punctuation; no translation-layer contract is defined here. */
 
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-const AttachFilesControl = ({ disabled, onAttach }: AttachControlProps) => {
+const AttachFilesControl = ({
+  disabled,
+  onAttach,
+}: AttachControlProps): React.JSX.Element | null => {
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads")) {
     return null;
@@ -41,7 +41,7 @@ const AttachFilesControl = ({ disabled, onAttach }: AttachControlProps) => {
     <DropdownMenuItem
       disabled={disabled}
       onSelect={(): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard on session when checking its user.
         if (!session?.user) {
           toast(loginPrompt);
           return;
@@ -59,16 +59,15 @@ const AttachFilesControl = ({ disabled, onAttach }: AttachControlProps) => {
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 
 /* oxlint-disable react/no-multi-comp -- These private render helpers belong to the same UI composition and share its local types and state assumptions. */
-/* oxlint-disable typescript/explicit-module-boundary-types -- This exported adapter derives its result from the schema or SDK contract; duplicating that type would erase inference or drift from the source. */
-/* oxlint-disable typescript/explicit-function-return-type -- Preserve the inferred structural or generic result so caller-specific schema and SDK types are not widened. */
 /* oxlint-disable unicorn/no-null -- Null is an explicit SDK, serialized-data, or React absence sentinel; replacing it would change the contract. */
 
 /* oxlint-disable react-perf/jsx-no-new-function-as-prop -- The handler captures the current render state; changing its identity policy requires profiling and lifecycle review. */
-const TakePhotoControl = ({ disabled, onAttach }: AttachControlProps) => {
+const TakePhotoControl = ({
+  disabled,
+  onAttach,
+}: AttachControlProps): React.JSX.Element | null => {
   const mobile = useIsMobile();
   const { data: session } = useSession();
   if (!installedFeatures.has("attachment-uploads") || !mobile) {
@@ -78,7 +77,7 @@ const TakePhotoControl = ({ disabled, onAttach }: AttachControlProps) => {
     <DropdownMenuItem
       disabled={disabled}
       onSelect={(): void => {
-        // oxlint-disable-next-line oxc/no-optional-chaining -- Keep the existing nullish guard when reading user from session; preserve one receiver evaluation, skipped accesses and the undefined short-circuit result.
+        // oxlint-disable-next-line oxc/no-optional-chaining -- Preserve the existing nullish guard on session when checking its user.
         if (!session?.user) {
           toast(loginPrompt);
           return;
@@ -95,8 +94,6 @@ const TakePhotoControl = ({ disabled, onAttach }: AttachControlProps) => {
 /* oxlint-enable react-perf/jsx-no-new-function-as-prop */
 
 /* oxlint-enable unicorn/no-null */
-/* oxlint-enable typescript/explicit-function-return-type */
-/* oxlint-enable typescript/explicit-module-boundary-types */
 /* oxlint-enable react/no-multi-comp */
 
 AttachFilesControl.isAvailable = (): boolean =>

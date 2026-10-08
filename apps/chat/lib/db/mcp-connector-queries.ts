@@ -1,11 +1,11 @@
 import { and, desc, eq, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { mcpConnector } from "@/lib/db/schema";
-/* oxlint-disable sort-imports -- Keep separate type declarations, Oxfmt grouping and runtime module order; their combined ordering conflicts with sort-imports. */
 import type { McpConnector } from "@/lib/db/schema";
-/* oxlint-enable sort-imports */
+import { mcpConnector } from "@/lib/db/schema";
+/* oxlint-disable sort-imports -- Keep database/schema initialization before Pino logger initialization; their complete runtime graphs have not been proved to commute. */
 import { createModuleLogger } from "@/lib/logger";
+/* oxlint-enable sort-imports */
 
 const log = createModuleLogger("mcp-queries");
 /* oxlint-disable oxc/no-async-await -- Modern configured runtimes support native async; preserve getMcpConnectorsByUserId's awaited sequencing and rejected-Promise behavior. */
